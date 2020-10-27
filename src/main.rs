@@ -1,3 +1,10 @@
+use bevy::prelude::*;
+
+pub mod hello;
+
 fn main() {
-    println!("Hello, world!");
+    App::build()
+        .add_default_plugins()
+        .add_plugin(hello::HelloPlugin)
+        .run();
 }
