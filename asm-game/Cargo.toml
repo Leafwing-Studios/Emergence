@@ -1,0 +1,11 @@
+[package]
+name = "asm-prototype"
+version = "0.1.0"
+authors = ["Alice Cecile <alice.i.cecile@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.2.1"
+asm-lib = { path = "../asm-lib" }

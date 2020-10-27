@@ -1,6 +1,5 @@
+use asm_lib::hello;
 use bevy::prelude::*;
-
-pub mod hello;
 
 fn main() {
     App::build()
