@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::config::MAP_SIZE;
 
 pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
@@ -8,5 +9,5 @@ impl Plugin for TerrainPlugin {
 }
 
 fn generate_terrain() {
-    dbg!(crate::config::MAP_SIZE);
+    dbg!(MAP_SIZE);
 }
