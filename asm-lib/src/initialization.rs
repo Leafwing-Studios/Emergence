@@ -73,9 +73,9 @@ fn generate_entities(world: &mut World, resources: &mut Resources) {
     let mut rng = &mut rand::thread_rng();
     let positions = possible_positions.choose_multiple(&mut rng, n_entities).shuffle();
 	
-	// Hive generation
-
 	let i = 0;
+
+	// Hive generation
 	let hive_positions = positions[i..(n_hive+i)];
 	i += n_hive;
 
@@ -85,8 +85,6 @@ fn generate_entities(world: &mut World, resources: &mut Resources) {
     println!("Hive generated.");
 
 	// Plant generation
-
-	let i = 0;
 	let plant_positions = positions[i..(n_plant+i)];
 	i += n_plant;
 
@@ -95,10 +93,7 @@ fn generate_entities(world: &mut World, resources: &mut Resources) {
     world.spawn_batch(plants);
 	println!("Plants generated.");
 	
-
 	// Fungi generation
-
-	let i = 0;
 	let fungi_positions = positions[i..(n_fungi+i)];
 	i += n_plant;
 
