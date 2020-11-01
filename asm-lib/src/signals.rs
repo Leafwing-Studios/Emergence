@@ -10,8 +10,8 @@ impl Plugin for SignalsPlugin {
     }
 }
 
-fn generate_signals(){}
+fn generate_signals(mut commands: Commands){}
 
-fn propagate_signals(){}
+fn propagate_signals(mut commands: Commands){}
 
-fn decay_signals(){}
+fn decay_signals(mut commands: Commands){}

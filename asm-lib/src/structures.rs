@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::utils::Position;
+
 pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut AppBuilder) {
@@ -9,8 +11,8 @@ impl Plugin for StructuresPlugin {
     }
 }
 
-fn generate_structures(){}
+fn generate_structures(mut commands: Commands){}
 
-fn grow_structures(){}
+fn grow_structures(mut commands: Commands){}
 
-fn propagate_structures(){}
+fn propagate_structures(mut commands: Commands){}

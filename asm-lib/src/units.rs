@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::utils::Position;
+
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut AppBuilder) {
@@ -10,10 +12,10 @@ impl Plugin for UnitsPlugin {
     }
 }
 
-fn generate_units(){}
+fn generate_units(mut commands: Commands){}
 
-fn plan(){}
+fn plan(mut commands: Commands){}
 
-fn act(){}
+fn act(mut commands: Commands){}
 
-fn maintain_units(){}
+fn maintain_units(mut commands: Commands){}
