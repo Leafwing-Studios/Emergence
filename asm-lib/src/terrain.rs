@@ -9,10 +9,7 @@ struct MapGeneration{
     map_size: isize
 }
 
-#[derive(Bundle, Debug)]
-struct Tile{
-    position: Position
-}
+struct Tile{}
 
 pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
@@ -34,13 +31,12 @@ fn generate_terrain(world: &mut World, resources: &mut Resources) {
 
     let positions = (0..map_size).cartesian_product(0..map_size);
 
-    let tiles = positions.map(|(x, y)| (Tile{position: Position{x, y}}, ));
-
+    let tiles = positions.map(|(x, y)| (Tile{}, Position{x, y}));
 
     world.spawn_batch(tiles);
     println!("Terrain generated.");
 }
 
-fn render_terrain(tiles: &Tile){    
-    println!("Tile: ({}, {})", tiles.position.x, tiles.position.y);    
+fn render_terrain(_tile: &Tile, position: &Position){    
+    println!("Tile: ({}, {})", position.x, position.y);    
 }
