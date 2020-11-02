@@ -1,5 +1,6 @@
 pub mod config;
 pub mod generation;
+pub mod graphics;
 pub mod pheromones;
 pub mod signals;
 pub mod structures;
