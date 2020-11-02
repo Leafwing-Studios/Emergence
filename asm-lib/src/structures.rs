@@ -1,10 +1,5 @@
 use bevy::prelude::*;
 use crate::utils::Position;
-
-#[derive(Copy, Clone)]
-struct StructureGeneration{
-    n_structures: usize
-}
 pub struct Structure{}
 pub struct Plant{}
 
