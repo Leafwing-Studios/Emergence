@@ -6,7 +6,7 @@ pub struct Position {
 
 pub enum ID {
 	Empty,
-	Hive,
+	Ant,
 	Plant,
 	Fungus
 }

@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use crate::utils::Position;
 use crate::units::build_hive;
 use crate::structures::{build_plant, build_fungi};
-use crate::terrain::{build_tile};
+use crate::terrain::build_tile;
 
 use crate::config::MAP_SIZE;
 use crate::config::{N_HIVE, N_PLANT, N_FUNGI};
@@ -66,14 +66,14 @@ fn generate_entities(world: &mut World, resources: &mut Resources) {
 	let n_plant = config.n_plant;
 	let n_fungi = config.n_fungi;
 
-	let n_entities =n_hive + n_plant + n_fungi;
+	let n_entities = n_hive + n_plant + n_fungi;
 
 	let map_size = config.map_size;
 
     let possible_positions = (0..map_size).cartesian_product(0..map_size);
     let mut rng = &mut rand::thread_rng();
-    let mut positions = possible_positions.choose_multiple(&mut rng, n_entities);
-	positions.shuffle(&mut rng);
+    let mut entity_positions = possible_positions.choose_multiple(&mut rng, n_entities);
+	entity_positions.shuffle(&mut rng);
 
 	let build_pairs: &[(fn (Position), usize)] = &[
 		(build_hive, n_hive),
@@ -81,7 +81,7 @@ fn generate_entities(world: &mut World, resources: &mut Resources) {
 		(build_fungi, n_fungi),
 	];
 
-	let mut iter = positions.into_iter();
+	let mut iter = entity_positions.into_iter();
 	for (build, n) in build_pairs {
 		let build_iter = iter.by_ref().take(*n).map(|(x, y)| build(Position{x, y}));
 		world.spawn_batch(build_iter);

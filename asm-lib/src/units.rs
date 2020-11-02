@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use crate::utils::Position;
 
 pub struct Unit{}
-pub struct Hive{}
+pub struct Ant{}
 pub fn build_hive(position: Position){
-    (Unit{}, Hive{}, position);
+    (Unit{}, Ant{}, position);
 }
 
 pub struct UnitsPlugin;
