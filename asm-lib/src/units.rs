@@ -3,6 +3,10 @@ use crate::utils::Position;
 
 pub struct Unit{}
 pub struct Hive{}
+pub fn build_hive(position: Position){
+    (Unit{}, Hive{}, position);
+}
+
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut AppBuilder) {

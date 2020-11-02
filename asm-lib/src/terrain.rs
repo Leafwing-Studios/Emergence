@@ -3,6 +3,10 @@ use crate::utils::Position;
 
 struct Tile{}
 
+pub fn build_tile(position: Position){
+    (Tile{}, position);
+}
+
 pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut AppBuilder) {
