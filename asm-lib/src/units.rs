@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 pub struct Unit {}
 pub struct Ant {}
-pub fn build_hive(position: Position) -> impl Bundle {
+pub fn build_ant(position: Position) -> impl Bundle {
     (Unit {}, Ant {}, position)
 }
 

@@ -4,7 +4,7 @@ pub const TILE_SIZE: u32 = 10;
 
 pub const MAP_SIZE: isize = 10;
 
-pub const N_HIVE: usize = 2;
+pub const N_ANT: usize = 2;
 pub const N_PLANT: usize = 5;
 pub const N_FUNGI: usize = 3;
 
