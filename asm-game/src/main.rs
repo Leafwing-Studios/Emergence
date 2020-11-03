@@ -3,6 +3,14 @@ use bevy::prelude::*;
 
 fn main() {
     App::build()
+        .add_resource(WindowDescriptor {
+            title: "Assimilation".to_string(),
+            width: config::WINDOW_WIDTH,
+            height: config::WINDOW_HEIGHT,
+            vsync: true,
+            resizable: false,
+            ..Default::default()
+        })
         .add_default_plugins()
         .add_plugin(generation::GenerationPlugin)
         .add_plugin(graphics::GraphicsPlugin)
