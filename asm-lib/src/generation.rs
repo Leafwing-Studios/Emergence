@@ -71,19 +71,19 @@ fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
 	let mut entity_positions = possible_positions.choose_multiple(&mut rng, n_entities);
 	entity_positions.shuffle(&mut rng);
 
-	let build_tuples: &[(usize, fn(Position))] = &[
-		(n_hive, build_hive),
-		(n_plant, build_plant),
-		(n_fungi, build_fungi),
-	];
-
-	for &(n, build) in build_tuples {
-		let positions = entity_positions.split_off(entity_positions.len() - n);
-		let build_iter = positions
-			.into_iter()
-			.map(move |(x, y)| build(Position { x, y }));
-		commands.spawn_batch(build_iter);
+	macro_rules! build_entity {
+		($n:ident, $build:ident) => {
+			let positions = entity_positions.split_off(entity_positions.len() - $n);
+			let build_iter = positions
+				.into_iter()
+				.map(move |(x, y)| $build(Position { x, y }));
+			commands.spawn_batch(build_iter);
+		};
 	}
+
+	build_entity!(n_hive, build_hive);
+	build_entity!(n_plant, build_plant);
+	build_entity!(n_fungi, build_fungi);
 
 	println!("Entities generated.");
 }
