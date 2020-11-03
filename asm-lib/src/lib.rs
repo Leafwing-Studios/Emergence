@@ -1,3 +1,5 @@
+#![allow(dead_code, unused)]
+
 pub mod config;
 pub mod generation;
 pub mod graphics;
