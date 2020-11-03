@@ -11,7 +11,7 @@ fn main() {
             resizable: false,
             ..Default::default()
         })
-        .add_default_plugins()
+        .add_plugins(DefaultPlugins)
         .add_plugin(generation::GenerationPlugin)
         .add_plugin(graphics::GraphicsPlugin)
         .add_plugin(pheromones::PheromonesPlugin)
