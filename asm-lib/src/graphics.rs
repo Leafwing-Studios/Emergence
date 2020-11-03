@@ -9,27 +9,48 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
-pub struct TileMaterial(Handle<ColorMaterial>);
-pub struct AntMaterial(Handle<ColorMaterial>);
-pub struct PlantMaterial(Handle<ColorMaterial>);
-pub struct FungiMaterial(Handle<ColorMaterial>);
+trait MaterialHandle {
+    fn new(h: Handle<ColorMaterial>) -> Self;
+}
+
+macro_rules! material {
+    ($name:ident) => {
+        pub struct $name(Handle<ColorMaterial>);
+        impl MaterialHandle for $name {
+            fn new(h: Handle<ColorMaterial>) -> Self {
+                Self(h)
+            }
+        }
+    };
+}
+
+material!(TileMaterial);
+material!(PlantMaterial);
+material!(FungiMaterial);
+material!(AntMaterial);
+
+fn insert_material<T: MaterialHandle + Resource>(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    path: &str,
+) {
+    let handle = asset_server.load(path);
+    commands.insert_resource(T::new(materials.add(handle.into())));
+}
 
 fn setup_graphics(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let tile_handle = asset_server.load("path-tile.png");
-    let ant_handle = asset_server.load("ant.png");
-    let plant_handle = asset_server.load("clover.png");
-    let fungi_handle = asset_server.load("mushroom-gills.png");
+    commands.spawn(Camera2dComponents::default());
 
-    commands
-        .spawn(Camera2dComponents::default())
-        .insert_resource(TileMaterial(materials.add(tile_handle.into())))
-        .insert_resource(AntMaterial(materials.add(ant_handle.into())))
-        .insert_resource(PlantMaterial(materials.add(plant_handle.into())))
-        .insert_resource(FungiMaterial(materials.add(fungi_handle.into())));
+    let (commands, asset_server, materials) = (&mut commands, &asset_server, &mut materials);
+    insert_material::<TileMaterial>(commands, asset_server, materials, "path-tile.png");
+    insert_material::<AntMaterial>(commands, asset_server, materials, "ant-tile.png");
+    insert_material::<PlantMaterial>(commands, asset_server, materials, "plant-tile.png");
+    insert_material::<FungiMaterial>(commands, asset_server, materials, "fungi-tile.png");
 }
 
 fn render(mut commands: Commands, plant_material: Res<PlantMaterial>) {
