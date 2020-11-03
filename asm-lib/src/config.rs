@@ -1,3 +1,7 @@
+pub const WINDOW_WIDTH: u32 = 1920;
+pub const WINDOW_HEIGHT: u32 = 1080;
+pub const TILE_SIZE: u32 = 10;
+
 pub const MAP_SIZE: isize = 10;
 
 pub const N_HIVE: usize = 2;
