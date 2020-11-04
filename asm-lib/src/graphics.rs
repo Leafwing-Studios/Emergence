@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::config::{MAP_SIZE, TILE_SIZE};
+use crate::config::{MAP_SIZE, TILE_BUFFER, TILE_SIZE};
 use crate::utils::Position;
 
 pub struct GraphicsPlugin;
@@ -25,7 +25,7 @@ fn setup_graphics(
 pub fn position_to_pixels(position: &Position) -> Transform {
     const SQRT_3: f32 = 1.73205080757;
     let (alpha, beta) = (position.alpha as f32, position.beta as f32);
-    let scale = 0.6 * TILE_SIZE as f32;
+    let scale = (0.5 + TILE_BUFFER) * TILE_SIZE as f32;
 
     let x = scale * (SQRT_3 * alpha + SQRT_3 / 2.0 * beta);
     let y = scale * (3.0 / 2.0 * beta);
