@@ -1,6 +1,7 @@
+use bevy::prelude::*;
+
 use crate::config::TILE_SIZE;
 use crate::utils::Position;
-use bevy::prelude::*;
 
 pub struct Tile {}
 

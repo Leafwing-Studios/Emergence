@@ -1,5 +1,7 @@
-use crate::utils::Position;
 use bevy::prelude::*;
+
+use crate::utils::Position;
+
 pub struct Structure {}
 pub struct Plant {}
 

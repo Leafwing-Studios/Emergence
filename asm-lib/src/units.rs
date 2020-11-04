@@ -1,5 +1,6 @@
-use crate::utils::Position;
 use bevy::prelude::*;
+
+use crate::utils::Position;
 
 pub struct Unit {}
 pub struct Ant {}
