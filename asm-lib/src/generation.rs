@@ -90,16 +90,9 @@ fn generate_entities(
 	let mut rng = &mut rand::thread_rng();
 	let mut entity_positions = possible_positions.choose_multiple(&mut rng, n_entities);
 	entity_positions.shuffle(&mut rng);
-	/*
-	macro_rules! build_entity {
-		($n:ident, $build:ident, $material:ident) => {
-			let positions = entity_positions.split_off(entity_positions.len() - $n);
-			let build_iter = positions
-				.into_iter()
-				.map(move |(x, y)| $build(Position { x, y }));
-			commands.spawn_batch(build_iter);
-		};
-	} */
+
+	// TODO: Figure out how to swap this to spawn_batch
+	// The main challenge is figuring out how to add the extra components
 
 	// Ant
 	let handle = asset_server.get_handle("ant.png");
@@ -127,7 +120,6 @@ fn generate_entities(
 			.with(Plant {})
 			.with(position);
 	}
-
 	// Fungi
 	let handle = asset_server.get_handle("fungi.png");
 	let my_material = materials.add(handle.into());
