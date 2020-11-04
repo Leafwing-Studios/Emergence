@@ -7,7 +7,8 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup_graphics.system());
+        app.add_startup_system(setup_graphics.system())
+            .add_system(update_positions.system());
     }
 }
 
@@ -21,7 +22,7 @@ fn setup_graphics(
     commands.spawn(Camera2dComponents::default());
 }
 
-pub fn position_to_pixels(position: &Position) -> (f32, f32) {
+pub fn position_to_pixels(position: &Position) -> Transform {
     // Scaling factor for vertical compression of hexes
     const SQRT3_OVER_2: f32 = 0.866;
 
@@ -36,7 +37,7 @@ pub fn position_to_pixels(position: &Position) -> (f32, f32) {
 
     let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32 * SQRT3_OVER_2;
 
-    (screen_x, screen_y)
+    Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0))
 }
 
 pub fn make_sprite_components(
@@ -44,15 +45,17 @@ pub fn make_sprite_components(
     handle: Handle<ColorMaterial>,
     scale: f32,
 ) -> impl Bundle {
-    let (screen_x, screen_y) = position_to_pixels(position);
-
     SpriteComponents {
         material: handle,
-        transform: Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0)),
+        transform: position_to_pixels(position),
         sprite: Sprite::new(Vec2::new(
             scale * TILE_SIZE as f32,
             scale * TILE_SIZE as f32,
         )),
         ..Default::default()
     }
+}
+
+fn update_positions(position: &Position, mut transform: Mut<'_, Transform>) {
+    *transform = position_to_pixels(position);
 }
