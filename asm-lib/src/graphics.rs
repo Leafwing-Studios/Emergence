@@ -26,8 +26,19 @@ pub fn make_sprite_components(
     handle: Handle<ColorMaterial>,
     scale: f32,
 ) -> impl Bundle {
-    let screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
-    let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
+    // Scaling factor for vertical compression of hexes
+    const SQRT3_OVER_2: f32 = 0.866;
+
+    // Offset odd rows
+    let screen_x;
+    if position.y % 2 == 0 {
+        screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
+    } else {
+        screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32
+            + 0.5 * TILE_SIZE as f32;
+    }
+
+    let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32 * SQRT3_OVER_2;
 
     SpriteComponents {
         material: handle,
