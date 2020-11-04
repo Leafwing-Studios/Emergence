@@ -23,21 +23,14 @@ fn setup_graphics(
 }
 
 pub fn position_to_pixels(position: &Position) -> Transform {
-    // Scaling factor for vertical compression of hexes
-    const SQRT3_OVER_2: f32 = 0.866;
+    const SQRT_3: f32 = 1.73205080757;
+    let (alpha, beta) = (position.alpha as f32, position.beta as f32);
+    let scale = 0.6 * TILE_SIZE as f32;
 
-    // Offset odd rows
-    let screen_x;
-    if position.y % 2 == 0 {
-        screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
-    } else {
-        screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32
-            + 0.5 * TILE_SIZE as f32;
-    }
+    let x = scale * (SQRT_3 * alpha + SQRT_3 / 2.0 * beta);
+    let y = scale * (3.0 / 2.0 * beta);
 
-    let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32 * SQRT3_OVER_2;
-
-    Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0))
+    Transform::from_translation(Vec3::new(x, y, 0.0))
 }
 
 pub fn make_sprite_components(

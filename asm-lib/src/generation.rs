@@ -59,8 +59,8 @@ fn generate_terrain(
 	let handle = asset_server.get_handle("tile.png");
 	let my_material = materials.add(handle.into());
 
-	for (x, y) in positions {
-		let position = Position { x, y };
+	for (alpha, beta) in positions {
+		let position = Position { alpha, beta };
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Tile {})
@@ -99,8 +99,8 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_ant);
 
-	for (x, y) in positions {
-		let position = Position { x, y };
+	for (alpha, beta) in positions {
+		let position = Position { alpha, beta };
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Unit {})
@@ -112,8 +112,8 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_plant);
 
-	for (x, y) in positions {
-		let position = Position { x, y };
+	for (alpha, beta) in positions {
+		let position = Position { alpha, beta };
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Structure {})
@@ -125,8 +125,8 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_fungi);
 
-	for (x, y) in positions {
-		let position = Position { x, y };
+	for (alpha, beta) in positions {
+		let position = Position { alpha, beta };
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Structure {})
