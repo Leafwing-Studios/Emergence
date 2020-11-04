@@ -59,8 +59,8 @@ fn generate_terrain(
 
 	for (x, y) in positions {
 		let scale = TILE_SIZE as f32;
-		let screen_x = x as f32 * scale;
-		let screen_y = y as f32 * scale;
+		let screen_x = (x as f32 - (0.5 * MAP_SIZE as f32)) * scale;
+		let screen_y = (y as f32 - (0.5 * MAP_SIZE as f32)) * scale;
 
 		commands
 			.spawn(SpriteComponents {
