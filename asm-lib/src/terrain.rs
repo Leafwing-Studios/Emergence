@@ -2,7 +2,7 @@ use crate::config::TILE_SIZE;
 use crate::utils::Position;
 use bevy::prelude::*;
 
-struct Tile {}
+pub struct Tile {}
 
 pub fn build_tile(
     position: Position,

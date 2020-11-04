@@ -4,18 +4,18 @@ use rand::prelude::{IteratorRandom, SliceRandom};
 use std::convert::TryInto;
 
 use crate::structures::{build_fungi, build_plant};
-use crate::terrain::build_tile;
+use crate::terrain::Tile;
 use crate::units::build_ant;
 use crate::utils::Position;
 
-use crate::config::MAP_SIZE;
+use crate::config::{MAP_SIZE, TILE_SIZE};
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
 
 pub struct GenerationPlugin;
 impl Plugin for GenerationPlugin {
 	fn build(&self, app: &mut AppBuilder) {
-		app.add_resource(GenerationConfig::new());
-		//			.add_startup_system(generate_terrain.system())
+		app.add_resource(GenerationConfig::new())
+			.add_startup_system(generate_terrain.system());
 		//.add_startup_system(generate_entities.system());
 	}
 }
@@ -54,9 +54,25 @@ fn generate_terrain(
 
 	let positions = (0..map_size).cartesian_product(0..map_size);
 
-	let tiles = positions.map(|(x, y)| (build_tile(Position { x, y }, asset_server, materials)));
+	let handle = asset_server.get_handle("tile.png");
+	let my_material = materials.add(handle.into());
 
-	commands.spawn_batch(tiles);
+	for (x, y) in positions {
+		let scale = TILE_SIZE as f32;
+		let screen_x = x as f32 * scale;
+		let screen_y = y as f32 * scale;
+
+		commands
+			.spawn(SpriteComponents {
+				material: my_material.clone(),
+				transform: Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0)),
+				sprite: Sprite::new(Vec2::new(scale, scale)),
+				..Default::default()
+			})
+			.with(Tile {})
+			.with(Position { x, y });
+	}
+
 	println!("Terrain generated.");
 }
 
