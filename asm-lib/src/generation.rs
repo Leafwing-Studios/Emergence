@@ -3,7 +3,6 @@ use itertools::Itertools as _;
 use rand::prelude::{IteratorRandom, SliceRandom};
 use std::convert::TryInto;
 
-use crate::graphics::{AntMaterial, FungiMaterial, PlantMaterial, TileMaterial};
 use crate::structures::{build_fungi, build_plant};
 use crate::terrain::build_tile;
 use crate::units::build_ant;
@@ -11,6 +10,15 @@ use crate::utils::Position;
 
 use crate::config::MAP_SIZE;
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
+
+pub struct GenerationPlugin;
+impl Plugin for GenerationPlugin {
+	fn build(&self, app: &mut AppBuilder) {
+		app.add_resource(GenerationConfig::new());
+		//			.add_startup_system(generate_terrain.system())
+		//.add_startup_system(generate_entities.system());
+	}
+}
 
 #[derive(Copy, Clone)]
 pub struct GenerationConfig {
@@ -32,19 +40,11 @@ impl GenerationConfig {
 	}
 }
 
-pub struct GenerationPlugin;
-impl Plugin for GenerationPlugin {
-	fn build(&self, app: &mut AppBuilder) {
-		app.add_resource(GenerationConfig::new())
-			.add_startup_system(generate_terrain.system())
-			.add_startup_system(generate_entities.system());
-	}
-}
-
 fn generate_terrain(
 	mut commands: Commands,
 	config: Res<GenerationConfig>,
-	tile_material: Res<TileMaterial>,
+	asset_server: Res<AssetServer>,
+	mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
 	println!("Generating terrain.");
 
@@ -54,7 +54,7 @@ fn generate_terrain(
 
 	let positions = (0..map_size).cartesian_product(0..map_size);
 
-	let tiles = positions.map(|(x, y)| (build_tile(Position { x, y })));
+	let tiles = positions.map(|(x, y)| (build_tile(Position { x, y }, asset_server, materials)));
 
 	commands.spawn_batch(tiles);
 	println!("Terrain generated.");
@@ -77,7 +77,7 @@ fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
 	entity_positions.shuffle(&mut rng);
 
 	macro_rules! build_entity {
-		($n:ident, $build:ident) => {
+		($n:ident, $build:ident, $material:ident) => {
 			let positions = entity_positions.split_off(entity_positions.len() - $n);
 			let build_iter = positions
 				.into_iter()
@@ -86,9 +86,9 @@ fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
 		};
 	}
 
-	build_entity!(n_ant, build_ant);
-	build_entity!(n_plant, build_plant);
-	build_entity!(n_fungi, build_fungi);
+	build_entity!(n_ant, build_ant, ant_material);
+	build_entity!(n_plant, build_plant, plant_material);
+	build_entity!(n_fungi, build_fungi, fungi_material);
 
 	println!("Entities generated.");
 }
