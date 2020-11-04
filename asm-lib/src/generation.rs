@@ -3,12 +3,13 @@ use itertools::Itertools as _;
 use rand::prelude::{IteratorRandom, SliceRandom};
 use std::convert::TryInto;
 
+use crate::graphics::make_sprite_components;
 use crate::structures::{build_fungi, build_plant};
 use crate::terrain::Tile;
 use crate::units::build_ant;
 use crate::utils::Position;
 
-use crate::config::{MAP_SIZE, TILE_SIZE};
+use crate::config::MAP_SIZE;
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
 
 pub struct GenerationPlugin;
@@ -58,19 +59,11 @@ fn generate_terrain(
 	let my_material = materials.add(handle.into());
 
 	for (x, y) in positions {
-		let scale = TILE_SIZE as f32;
-		let screen_x = (x as f32 - (0.5 * MAP_SIZE as f32)) * scale;
-		let screen_y = (y as f32 - (0.5 * MAP_SIZE as f32)) * scale;
-
+		let position = Position { x, y };
 		commands
-			.spawn(SpriteComponents {
-				material: my_material.clone(),
-				transform: Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0)),
-				sprite: Sprite::new(Vec2::new(scale, scale)),
-				..Default::default()
-			})
+			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Tile {})
-			.with(Position { x, y });
+			.with(position);
 	}
 
 	println!("Terrain generated.");

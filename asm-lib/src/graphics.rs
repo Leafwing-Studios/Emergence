@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+use crate::config::{MAP_SIZE, TILE_SIZE};
+use crate::utils::Position;
+
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
@@ -16,4 +19,23 @@ fn setup_graphics(
     let _assets = asset_server.load_folder("");
 
     commands.spawn(Camera2dComponents::default());
+}
+
+pub fn make_sprite_components(
+    position: &Position,
+    handle: Handle<ColorMaterial>,
+    scale: f32,
+) -> impl Bundle {
+    let screen_x = (position.x as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
+    let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32;
+
+    SpriteComponents {
+        material: handle,
+        transform: Transform::from_translation(Vec3::new(screen_x, screen_y, 0.0)),
+        sprite: Sprite::new(Vec2::new(
+            scale * TILE_SIZE as f32,
+            scale * TILE_SIZE as f32,
+        )),
+        ..Default::default()
+    }
 }
