@@ -21,11 +21,7 @@ fn setup_graphics(
     commands.spawn(Camera2dComponents::default());
 }
 
-pub fn make_sprite_components(
-    position: &Position,
-    handle: Handle<ColorMaterial>,
-    scale: f32,
-) -> impl Bundle {
+pub fn position_to_pixels(position: &Position) -> (f32, f32) {
     // Scaling factor for vertical compression of hexes
     const SQRT3_OVER_2: f32 = 0.866;
 
@@ -39,6 +35,16 @@ pub fn make_sprite_components(
     }
 
     let screen_y = (position.y as f32 - (0.5 * MAP_SIZE as f32)) * TILE_SIZE as f32 * SQRT3_OVER_2;
+
+    (screen_x, screen_y)
+}
+
+pub fn make_sprite_components(
+    position: &Position,
+    handle: Handle<ColorMaterial>,
+    scale: f32,
+) -> impl Bundle {
+    let (screen_x, screen_y) = position_to_pixels(position);
 
     SpriteComponents {
         material: handle,
