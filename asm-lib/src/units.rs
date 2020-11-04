@@ -4,9 +4,6 @@ use crate::utils::Position;
 
 pub struct Unit {}
 pub struct Ant {}
-pub fn build_ant(position: Position) -> impl Bundle {
-    (Unit {}, Ant {}, position)
-}
 
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {

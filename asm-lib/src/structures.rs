@@ -4,15 +4,7 @@ use crate::utils::Position;
 
 pub struct Structure {}
 pub struct Plant {}
-
-pub fn build_plant(position: Position) -> impl Bundle {
-    (Structure {}, Plant {}, position)
-}
 pub struct Fungi {}
-
-pub fn build_fungi(position: Position) -> impl Bundle {
-    (Structure {}, Fungi {}, position)
-}
 
 pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {

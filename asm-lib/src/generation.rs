@@ -4,9 +4,9 @@ use rand::prelude::{IteratorRandom, SliceRandom};
 use std::convert::TryInto;
 
 use crate::graphics::make_sprite_components;
-use crate::structures::{build_fungi, build_plant};
+use crate::structures::{Fungi, Plant, Structure};
 use crate::terrain::Tile;
-use crate::units::build_ant;
+use crate::units::{Ant, Unit};
 use crate::utils::Position;
 
 use crate::config::MAP_SIZE;
@@ -16,8 +16,8 @@ pub struct GenerationPlugin;
 impl Plugin for GenerationPlugin {
 	fn build(&self, app: &mut AppBuilder) {
 		app.add_resource(GenerationConfig::new())
-			.add_startup_system(generate_terrain.system());
-		//.add_startup_system(generate_entities.system());
+			.add_startup_system(generate_terrain.system())
+			.add_startup_system(generate_entities.system());
 	}
 }
 
@@ -41,6 +41,7 @@ impl GenerationConfig {
 	}
 }
 
+// TODO: make reusable terrain and entity generators
 fn generate_terrain(
 	mut commands: Commands,
 	config: Res<GenerationConfig>,
@@ -69,7 +70,12 @@ fn generate_terrain(
 	println!("Terrain generated.");
 }
 
-fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
+fn generate_entities(
+	mut commands: Commands,
+	config: Res<GenerationConfig>,
+	asset_server: Res<AssetServer>,
+	mut materials: ResMut<Assets<ColorMaterial>>,
+) {
 	println!("Generating entities.");
 
 	let n_ant = config.n_ant;
@@ -84,7 +90,7 @@ fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
 	let mut rng = &mut rand::thread_rng();
 	let mut entity_positions = possible_positions.choose_multiple(&mut rng, n_entities);
 	entity_positions.shuffle(&mut rng);
-
+	/*
 	macro_rules! build_entity {
 		($n:ident, $build:ident, $material:ident) => {
 			let positions = entity_positions.split_off(entity_positions.len() - $n);
@@ -93,11 +99,48 @@ fn generate_entities(mut commands: Commands, config: Res<GenerationConfig>) {
 				.map(move |(x, y)| $build(Position { x, y }));
 			commands.spawn_batch(build_iter);
 		};
+	} */
+
+	// Ant
+	let handle = asset_server.get_handle("ant.png");
+	let my_material = materials.add(handle.into());
+	let positions = entity_positions.split_off(entity_positions.len() - n_ant);
+
+	for (x, y) in positions {
+		let position = Position { x, y };
+		commands
+			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.with(Unit {})
+			.with(Ant {})
+			.with(position);
+	}
+	// Plant
+	let handle = asset_server.get_handle("plant.png");
+	let my_material = materials.add(handle.into());
+	let positions = entity_positions.split_off(entity_positions.len() - n_plant);
+
+	for (x, y) in positions {
+		let position = Position { x, y };
+		commands
+			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.with(Structure {})
+			.with(Plant {})
+			.with(position);
 	}
 
-	build_entity!(n_ant, build_ant, ant_material);
-	build_entity!(n_plant, build_plant, plant_material);
-	build_entity!(n_fungi, build_fungi, fungi_material);
+	// Fungi
+	let handle = asset_server.get_handle("fungi.png");
+	let my_material = materials.add(handle.into());
+	let positions = entity_positions.split_off(entity_positions.len() - n_fungi);
+
+	for (x, y) in positions {
+		let position = Position { x, y };
+		commands
+			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.with(Structure {})
+			.with(Fungi {})
+			.with(position);
+	}
 
 	println!("Entities generated.");
 }
