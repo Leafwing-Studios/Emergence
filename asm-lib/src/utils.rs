@@ -1,11 +1,30 @@
+use auto_ops::impl_op_ex;
 use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
+use std::ops;
 
 #[derive(Debug)]
 pub struct Position {
 	pub x: isize,
 	pub y: isize,
 }
+
+impl_op_ex!(+ |a: Position, b: Position| -> Position {
+	 Position{
+		 x: a.x + b.x,
+		 y: a.y + b.y
+	}
+});
+
+impl_op_ex!(-|a: Position, b: Position| -> Position {
+	Position {
+		x: a.x - b.x,
+		y: a.y - b.y,
+	}
+});
+
+impl_op_ex!(+= |a: &mut Position, b: &Position| { a.x += b.x; a.y += b.y;});
+impl_op_ex!(-= |a: &mut Position, b: &Position| { a.x -= b.x; a.y -= b.y;});
 
 #[derive(Debug)]
 pub enum HexDirection {
