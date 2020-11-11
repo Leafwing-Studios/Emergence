@@ -33,18 +33,11 @@ pub fn position_to_pixels(position: &Position) -> Transform {
     Transform::from_translation(Vec3::new(x, y, 0.0))
 }
 
-pub fn make_sprite_components(
-    position: &Position,
-    handle: Handle<ColorMaterial>,
-    scale: f32,
-) -> impl Bundle {
+pub fn make_sprite_components(position: &Position, handle: Handle<ColorMaterial>) -> impl Bundle {
     SpriteComponents {
         material: handle,
         transform: position_to_pixels(position),
-        sprite: Sprite::new(Vec2::new(
-            scale * TILE_SIZE as f32,
-            scale * TILE_SIZE as f32,
-        )),
+        sprite: Sprite::new(Vec2::new(TILE_SIZE as f32, TILE_SIZE as f32)),
         ..Default::default()
     }
 }

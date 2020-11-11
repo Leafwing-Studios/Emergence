@@ -63,7 +63,7 @@ fn generate_terrain(
 	let positions = Position::hexagon(center, config.map_size);
 	for position in positions {
 		commands
-			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Tile {})
 			.with(position);
 	}
@@ -103,7 +103,7 @@ fn generate_entities(
 
 	for position in positions {
 		commands
-			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Unit {})
 			.with(Ant {})
 			.with(position);
@@ -115,7 +115,7 @@ fn generate_entities(
 
 	for position in positions {
 		commands
-			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Structure {})
 			.with(Plant {})
 			.with(position);
@@ -127,7 +127,7 @@ fn generate_entities(
 
 	for position in positions {
 		commands
-			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
+			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Structure {})
 			.with(Fungi {})
 			.with(position);
