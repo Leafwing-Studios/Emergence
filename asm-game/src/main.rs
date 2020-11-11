@@ -12,6 +12,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(diagnostics::DiagnosticsPlugin)
         .add_plugin(generation::GenerationPlugin)
         .add_plugin(graphics::GraphicsPlugin)
         .add_plugin(pheromones::PheromonesPlugin)

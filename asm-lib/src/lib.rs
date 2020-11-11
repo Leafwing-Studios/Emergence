@@ -1,6 +1,7 @@
 //#![allow(dead_code, unused)]
 
 pub mod config;
+pub mod diagnostics;
 pub mod generation;
 pub mod graphics;
 pub mod pheromones;
