@@ -3,7 +3,7 @@ pub const WINDOW_HEIGHT: u32 = 1080;
 pub const TILE_SIZE: u32 = 48;
 pub const TILE_BUFFER: f32 = 0.1;
 
-pub const MAP_SIZE: isize = 20;
+pub const MAP_SIZE: isize = 10;
 
 pub const N_ANT: usize = 10;
 pub const N_PLANT: usize = 20;

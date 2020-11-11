@@ -8,7 +8,7 @@ use std::ops;
 // See: https://www.redblobgames.com/grids/hexagons/
 // alpha == q, beta == r from that article
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Position {
 	pub alpha: isize,
 	pub beta: isize,
@@ -21,12 +21,77 @@ impl Position {
 			+ (self.beta - b.beta).abs())
 			/ 2
 	}
+
+	pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
+		self + direction.offset() * distance
+	}
+
+	pub fn ring(self, radius: isize) -> Vec<Position> {
+		let mut positions: Vec<Position> = Vec::new();
+
+		if radius == 0 {
+			positions.push(self);
+			return positions;
+		}
+
+		let mut current_position = self.translate(&HexDirection::East, radius);
+
+		let mut current_direction = HexDirection::Southwest;
+
+		for i in 0..6 {
+			for j in 0..radius {
+				positions.push(current_position);
+				current_position = current_position.translate(&current_direction, 1);
+			}
+
+			current_direction = current_direction.rotate(1);
+		}
+		return positions;
+	}
+
+	pub fn hexagon(self, radius: isize) -> Vec<Position> {
+		let mut positions: Vec<Position> = Vec::new();
+
+		for i in 0..radius {
+			positions.extend(Position::ring(self, i));
+		}
+
+		return positions;
+	}
 }
 
 impl_op_ex!(+ |a: Position, b: Position| -> Position {
 	 Position{
 		 alpha: a.alpha + b.alpha,
 		 beta: a.beta + b.beta
+	}
+});
+
+impl_op_ex!(*|a: Position, c: usize| -> Position {
+	Position {
+		alpha: a.alpha * c as isize,
+		beta: a.beta * c as isize,
+	}
+});
+
+impl_op_ex!(*|c: usize, a: Position| -> Position {
+	Position {
+		alpha: a.alpha * c as isize,
+		beta: a.beta * c as isize,
+	}
+});
+
+impl_op_ex!(*|a: Position, c: isize| -> Position {
+	Position {
+		alpha: a.alpha * c,
+		beta: a.beta * c,
+	}
+});
+
+impl_op_ex!(*|c: isize, a: Position| -> Position {
+	Position {
+		alpha: a.alpha * c,
+		beta: a.beta * c,
 	}
 });
 
@@ -57,24 +122,40 @@ pub enum HexDirection {
 
 impl Distribution<HexDirection> for Standard {
 	fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> HexDirection {
-		let options = Uniform::from(1..=6);
+		let options = Uniform::from(0..5);
 		let choice = options.sample(&mut rng);
 
-		use HexDirection::*;
-		match choice {
-			1 => East,
-			2 => Southeast,
-			3 => Southwest,
-			4 => West,
-			5 => Northwest,
-			6 => Northeast,
-			_ => unreachable!(),
-		}
+		HexDirection::from_int(choice)
 	}
 }
 
 impl HexDirection {
-	pub fn offset(self) -> Position {
+	fn from_int(choice: isize) -> HexDirection {
+		let int_direction = choice.rem_euclid(6);
+		use HexDirection::*;
+		match int_direction {
+			0 => East,
+			1 => Southeast,
+			2 => Southwest,
+			3 => West,
+			4 => Northwest,
+			5 => Northeast,
+			_ => unreachable!(),
+		}
+	}
+
+	fn to_int(self) -> u8 {
+		use HexDirection::*;
+		match self {
+			East => 0,
+			Southeast => 1,
+			Southwest => 2,
+			West => 3,
+			Northwest => 4,
+			Northeast => 5,
+		}
+	}
+	pub fn offset(&self) -> Position {
 		use HexDirection::*;
 		match self {
 			East => Position { alpha: 1, beta: 0 },
@@ -84,6 +165,11 @@ impl HexDirection {
 			Northwest => Position { alpha: -1, beta: 1 },
 			Northeast => Position { alpha: 0, beta: 1 },
 		}
+	}
+
+	// Positive steps rotates clockwise, negative steps rotate counterclockwise
+	pub fn rotate(self, steps: isize) -> HexDirection {
+		HexDirection::from_int((self.to_int() as isize + steps.rem_euclid(6)))
 	}
 }
 

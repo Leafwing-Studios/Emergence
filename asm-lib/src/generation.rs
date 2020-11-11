@@ -59,8 +59,9 @@ fn generate_terrain(
 	let handle = asset_server.get_handle("tile.png");
 	let my_material = materials.add(handle.into());
 
-	for (alpha, beta) in positions {
-		let position = Position { alpha, beta };
+	let center = Position { alpha: 0, beta: 0 };
+	let positions = Position::hexagon(center, config.map_size);
+	for position in positions {
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Tile {})
@@ -84,12 +85,13 @@ fn generate_entities(
 
 	let n_entities = n_ant + n_plant + n_fungi;
 
-	let map_size = config.map_size;
-
-	let possible_positions = (0..map_size).cartesian_product(0..map_size);
+	let center = Position { alpha: 0, beta: 0 };
+	let possible_positions = Position::hexagon(center, config.map_size);
 	let mut rng = &mut rand::thread_rng();
-	let mut entity_positions = possible_positions.choose_multiple(&mut rng, n_entities);
-	entity_positions.shuffle(&mut rng);
+	let mut entity_positions: Vec<_> = possible_positions
+		.choose_multiple(&mut rng, n_entities)
+		.cloned()
+		.collect();
 
 	// TODO: Figure out how to swap this to spawn_batch
 	// The main challenge is figuring out how to add the extra components
@@ -99,8 +101,7 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_ant);
 
-	for (alpha, beta) in positions {
-		let position = Position { alpha, beta };
+	for position in positions {
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Unit {})
@@ -112,8 +113,7 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_plant);
 
-	for (alpha, beta) in positions {
-		let position = Position { alpha, beta };
+	for position in positions {
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Structure {})
@@ -125,8 +125,7 @@ fn generate_entities(
 	let my_material = materials.add(handle.into());
 	let positions = entity_positions.split_off(entity_positions.len() - n_fungi);
 
-	for (alpha, beta) in positions {
-		let position = Position { alpha, beta };
+	for position in positions {
 		commands
 			.spawn(make_sprite_components(&position, my_material.clone(), 1.0))
 			.with(Structure {})
