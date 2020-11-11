@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 auto_ops = "0.1.0"
-bevy = "0.3"
+bevy = { git = "https://github.com/bevyengine/bevy", rev = "e769974d6ac28787a600e3cd56f5543e86401b9b"}
 itertools = "0.9.0"
 rand = "0.7.3"

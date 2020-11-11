@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::config::{MAP_SIZE, TILE_BUFFER, TILE_SIZE};
+use crate::config::{TILE_BUFFER, TILE_SIZE};
 use crate::utils::Position;
 
 pub struct GraphicsPlugin;
@@ -12,11 +12,7 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
-fn setup_graphics(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+fn setup_graphics(commands: &mut Commands, asset_server: Res<AssetServer>) {
     let _assets = asset_server.load_folder("");
 
     commands.spawn(Camera2dComponents::default());
@@ -42,6 +38,8 @@ pub fn make_sprite_components(position: &Position, handle: Handle<ColorMaterial>
     }
 }
 
-fn update_positions(position: &Position, mut transform: Mut<'_, Transform>) {
-    *transform = position_to_pixels(position);
+fn update_positions(mut query: Query<(&Position, &mut Transform)>) {
+    for (position, mut transform) in query.iter_mut() {
+        *transform = position_to_pixels(position);
+    }
 }

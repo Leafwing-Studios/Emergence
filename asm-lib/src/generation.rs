@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use itertools::Itertools as _;
-use rand::prelude::{IteratorRandom, SliceRandom};
+use rand::prelude::SliceRandom;
 use std::convert::TryInto;
 
 use crate::graphics::make_sprite_components;
@@ -43,7 +42,7 @@ impl GenerationConfig {
 
 // TODO: make reusable terrain and entity generators
 fn generate_terrain(
-	mut commands: Commands,
+	commands: &mut Commands,
 	config: Res<GenerationConfig>,
 	asset_server: Res<AssetServer>,
 	mut materials: ResMut<Assets<ColorMaterial>>,
@@ -53,8 +52,6 @@ fn generate_terrain(
 	let map_size = config.map_size;
 
 	assert!(map_size > 0);
-
-	let positions = (0..map_size).cartesian_product(0..map_size);
 
 	let handle = asset_server.get_handle("tile.png");
 	let my_material = materials.add(handle.into());
@@ -72,7 +69,7 @@ fn generate_terrain(
 }
 
 fn generate_entities(
-	mut commands: Commands,
+	commands: &mut Commands,
 	config: Res<GenerationConfig>,
 	asset_server: Res<AssetServer>,
 	mut materials: ResMut<Assets<ColorMaterial>>,

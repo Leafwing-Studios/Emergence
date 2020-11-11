@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-use crate::config::TILE_SIZE;
-use crate::utils::Position;
-
 pub struct Tile {}
 
 pub struct TerrainPlugin;

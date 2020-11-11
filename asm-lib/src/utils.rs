@@ -1,7 +1,6 @@
 use auto_ops::impl_op_ex;
 use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
-use std::ops;
 
 // We're using a horizontal layout hex grid
 // with an "axial coordinate" system
@@ -38,8 +37,8 @@ impl Position {
 
 		let mut current_direction = HexDirection::Southwest;
 
-		for i in 0..6 {
-			for j in 0..radius {
+		for _ in 0..6 {
+			for _ in 0..radius {
 				positions.push(current_position);
 				current_position = current_position.translate(&current_direction, 1);
 			}
@@ -169,7 +168,7 @@ impl HexDirection {
 
 	// Positive steps rotates clockwise, negative steps rotate counterclockwise
 	pub fn rotate(self, steps: isize) -> HexDirection {
-		HexDirection::from_int((self.to_int() as isize + steps.rem_euclid(6)))
+		HexDirection::from_int(self.to_int() as isize + steps.rem_euclid(6))
 	}
 }
 
