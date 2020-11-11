@@ -10,3 +10,5 @@ pub const N_PLANT: usize = 20;
 pub const N_FUNGI: usize = 10;
 
 pub const PHEROMONE_CAPACITY: f32 = 100.0;
+pub const PHEROMONE_REGEN_RATE: f32 = 10.0;
+pub const PHEROMONE_SPENDING_RATE: f32 = 30.0;
