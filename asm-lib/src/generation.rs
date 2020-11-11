@@ -3,12 +3,14 @@ use rand::prelude::SliceRandom;
 use std::convert::TryInto;
 
 use crate::graphics::make_sprite_components;
+use crate::organisms::Mass;
 use crate::structures::{Fungi, Plant, Structure};
 use crate::terrain::Tile;
 use crate::units::{Ant, Unit};
 use crate::utils::Position;
 
 use crate::config::MAP_SIZE;
+use crate::config::STRUCTURE_STARTING_MASS;
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
 
 pub struct GenerationPlugin;
@@ -115,6 +117,9 @@ fn generate_entities(
 			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Structure {})
 			.with(Plant {})
+			.with(Mass {
+				mass: STRUCTURE_STARTING_MASS,
+			})
 			.with(position);
 	}
 	// Fungi
@@ -127,6 +132,9 @@ fn generate_entities(
 			.spawn(make_sprite_components(&position, my_material.clone()))
 			.with(Structure {})
 			.with(Fungi {})
+			.with(Mass {
+				mass: STRUCTURE_STARTING_MASS,
+			})
 			.with(position);
 	}
 

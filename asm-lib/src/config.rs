@@ -12,3 +12,8 @@ pub const N_FUNGI: usize = 10;
 pub const PHEROMONE_CAPACITY: f32 = 100.0;
 pub const PHEROMONE_REGEN_RATE: f32 = 10.0;
 pub const PHEROMONE_SPENDING_RATE: f32 = 30.0;
+
+pub const STRUCTURE_STARTING_MASS: f32 = 0.5;
+pub const STRUCTURE_DESPAWN_MASS: f32 = 1.0;
+pub const STRUCTURE_GROWTH_RATE: f32 = 1.0;
+pub const STRUCTURE_UPKEEP_RATE: f32 = 1.0;
