@@ -13,13 +13,12 @@ impl Plugin for PheromonesPlugin {
             supply: PHEROMONE_CAPACITY,
         })
         .add_system(regen_pheromones.system())
-        .add_system(spend_pheromones.system())
-        .add_system(display_pheromones.system());
+        .add_system(spend_pheromones.system());
     }
 }
 
-struct Pheromones {
-    supply: f32,
+pub struct Pheromones {
+    pub supply: f32,
 }
 
 struct PheromonesConfig {
@@ -47,8 +46,4 @@ fn spend_pheromones(
         let spent_pheromones = (config.spending_rate * time.delta_seconds).min(pheromones.supply);
         pheromones.supply -= spent_pheromones;
     }
-}
-
-fn display_pheromones(pheromones: Res<Pheromones>) {
-    dbg!(pheromones.supply);
 }

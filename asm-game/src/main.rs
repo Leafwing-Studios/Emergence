@@ -12,7 +12,6 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(diagnostics::DiagnosticsPlugin)
         .add_plugin(generation::GenerationPlugin)
         .add_plugin(graphics::GraphicsPlugin)
         .add_plugin(pheromones::PheromonesPlugin)
@@ -20,5 +19,6 @@ fn main() {
         .add_plugin(structures::StructuresPlugin)
         .add_plugin(terrain::TerrainPlugin)
         .add_plugin(units::UnitsPlugin)
+        .add_plugin(ui::UiPlugin)
         .run();
 }
