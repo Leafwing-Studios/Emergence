@@ -51,7 +51,7 @@ impl Position {
 	pub fn hexagon(self, radius: isize) -> Vec<Position> {
 		let mut positions: Vec<Position> = Vec::new();
 
-		for i in 0..radius {
+		for i in 0..=radius {
 			positions.extend(Position::ring(self, i));
 		}
 
