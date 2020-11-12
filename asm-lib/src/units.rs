@@ -23,12 +23,12 @@ fn act(time: Res<Time>, mut timer: ResMut<UnitTimer>, mut query: Query<(&Unit, &
     if timer.0.finished {
         for (_, mut position) in query.iter_mut() {
             let rng = &mut rand::thread_rng();
-            let direction: HexDirection = rng.sample(Standard);
+            //let direction: HexDirection = rng.sample(Standard);
+            let direction = HexDirection::East;
+            let new_position = position.translate(&direction, 1);
 
-            let offset = direction.offset();
-
-            position.alpha += offset.alpha;
-            position.beta += offset.beta;
+            position.alpha = new_position.alpha;
+            position.beta = new_position.beta;
         }
     }
 }

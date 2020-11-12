@@ -2,10 +2,60 @@ use auto_ops::impl_op_ex;
 use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
 
+use crate::config::MAP_SIZE;
+
+#[derive(Debug, Clone, Copy)]
+pub struct CubePosition {
+	pub alpha: isize,
+	pub beta: isize,
+	pub gamma: isize,
+}
+
+impl CubePosition {
+	pub fn to_axial(self) -> Position {
+		Position {
+			alpha: self.alpha,
+			beta: self.beta,
+		}
+	}
+}
+
 // We're using a horizontal layout hex grid
 // with an "axial coordinate" system
 // See: https://www.redblobgames.com/grids/hexagons/
 // alpha == q, beta == r from that article
+
+static ORIGIN: Position = Position { alpha: 0, beta: 0 };
+
+const MIRROR_DISTANCE: isize = 2 * MAP_SIZE + 1;
+
+// FIXME: coordinates are wrong. See: https://www.redblobgames.com/grids/hexagons/#wraparound for formula
+static MIRROR_CENTERS: [Position; 6] = [
+	Position {
+		alpha: MIRROR_DISTANCE,
+		beta: 0,
+	},
+	Position {
+		alpha: MIRROR_DISTANCE,
+		beta: -MIRROR_DISTANCE,
+	},
+	Position {
+		alpha: 0,
+		beta: -MIRROR_DISTANCE,
+	},
+	Position {
+		alpha: -MIRROR_DISTANCE,
+		beta: 0,
+	},
+	Position {
+		alpha: -MIRROR_DISTANCE,
+		beta: MIRROR_DISTANCE,
+	},
+	Position {
+		alpha: 0,
+		beta: MIRROR_DISTANCE,
+	},
+];
 
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
@@ -14,14 +64,48 @@ pub struct Position {
 }
 
 impl Position {
+	pub fn to_cubic(self) -> CubePosition {
+		CubePosition {
+			alpha: self.alpha,
+			beta: self.beta,
+			gamma: -self.alpha - self.beta,
+		}
+	}
+
+	fn wrap(self) -> Position {
+		dbg!(self);
+		let d = self.dist(ORIGIN);
+		dbg!(d);
+
+		if d <= MAP_SIZE {
+			return self;
+		}
+
+		let mut proposal = self;
+
+		for i in MIRROR_CENTERS.iter() {
+			if self.dist(*i) <= MAP_SIZE {
+				proposal.alpha = self.alpha - i.alpha;
+				proposal.beta = self.beta - i.beta;
+				break;
+			}
+		}
+
+		return proposal;
+	}
+
 	pub fn dist(self, b: Position) -> isize {
-		((self.alpha - b.alpha).abs()
-			+ (self.alpha + self.beta - b.alpha - b.beta).abs()
-			+ (self.beta - b.beta).abs())
-			/ 2
+		let (a, b) = (self.to_cubic(), b.to_cubic());
+		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2
 	}
 
 	pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
+		let proposed_position = self + direction.offset() * distance;
+
+		return proposed_position.wrap();
+	}
+
+	fn translate_unchecked(self, direction: &HexDirection, distance: isize) -> Position {
 		self + direction.offset() * distance
 	}
 
@@ -33,14 +117,14 @@ impl Position {
 			return positions;
 		}
 
-		let mut current_position = self.translate(&HexDirection::East, radius);
+		let mut current_position = self.translate_unchecked(&HexDirection::East, radius);
 
 		let mut current_direction = HexDirection::Southwest;
 
 		for _ in 0..6 {
 			for _ in 0..radius {
 				positions.push(current_position);
-				current_position = current_position.translate(&current_direction, 1);
+				current_position = current_position.translate_unchecked(&current_direction, 1);
 			}
 
 			current_direction = current_direction.rotate(1);

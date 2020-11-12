@@ -29,7 +29,6 @@ pub struct GenerationConfig {
 
 impl GenerationConfig {
 	fn new() -> GenerationConfig {
-		assert!((N_ANT + N_PLANT + N_FUNGI) <= (MAP_SIZE * MAP_SIZE).try_into().unwrap());
 		GenerationConfig {
 			map_size: MAP_SIZE,
 			n_ant: N_ANT,
