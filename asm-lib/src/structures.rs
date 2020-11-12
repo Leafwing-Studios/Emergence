@@ -61,8 +61,7 @@ impl Plugin for StructuresPlugin {
         })
         .add_system(photosynthesize.system())
         .add_system(upkeep.system())
-        .add_system(cleanup.system())
-        .add_system(debug_mass.system());
+        .add_system(cleanup.system());
     }
 }
 
@@ -96,14 +95,4 @@ fn cleanup(
             commands.despawn(ent);
         }
     }
-}
-
-fn debug_mass(query: Query<&Mass>) {
-    let mut total_mass: f32 = 0.0;
-
-    for i in query.iter() {
-        total_mass += i.mass;
-    }
-
-    dbg!(total_mass);
 }
