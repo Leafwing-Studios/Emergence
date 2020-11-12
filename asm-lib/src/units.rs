@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use rand::distributions::Standard;
 use rand::Rng;
 
+use crate::graphics::make_sprite_components;
 use crate::utils::{HexDirection, Position};
 
 pub struct Unit {}
@@ -30,4 +31,12 @@ fn act(time: Res<Time>, mut timer: ResMut<UnitTimer>, mut query: Query<(&Unit, &
             position.beta += offset.beta;
         }
     }
+}
+
+pub fn build_ant(commands: &mut Commands, handle: Handle<ColorMaterial>, position: Position) {
+    commands
+        .spawn(make_sprite_components(&position, handle))
+        .with(Unit {})
+        .with(Ant {})
+        .with(position);
 }

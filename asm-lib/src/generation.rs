@@ -2,15 +2,12 @@ use bevy::prelude::*;
 use rand::prelude::SliceRandom;
 use std::convert::TryInto;
 
-use crate::graphics::make_sprite_components;
-use crate::organisms::Mass;
-use crate::structures::{Fungi, Plant, Structure};
-use crate::terrain::Tile;
-use crate::units::{Ant, Unit};
+use crate::structures::{build_fungi, build_plant, StructureConfig};
+use crate::terrain::build_tile;
+use crate::units::build_ant;
 use crate::utils::Position;
 
 use crate::config::MAP_SIZE;
-use crate::config::STRUCTURE_STARTING_MASS;
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
 
 pub struct GenerationPlugin;
@@ -42,32 +39,24 @@ impl GenerationConfig {
 	}
 }
 
-// TODO: make reusable terrain and entity generators
 fn generate_terrain(
 	commands: &mut Commands,
 	config: Res<GenerationConfig>,
 	asset_server: Res<AssetServer>,
 	mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-	println!("Generating terrain.");
-
 	let map_size = config.map_size;
 
 	assert!(map_size > 0);
 
-	let handle = asset_server.get_handle("tile.png");
-	let my_material = materials.add(handle.into());
-
 	let center = Position { alpha: 0, beta: 0 };
 	let positions = Position::hexagon(center, config.map_size);
-	for position in positions {
-		commands
-			.spawn(make_sprite_components(&position, my_material.clone()))
-			.with(Tile {})
-			.with(position);
-	}
+	let tile_handle = asset_server.get_handle("tile.png");
 
-	println!("Terrain generated.");
+	for position in positions {
+		let fresh_handle = materials.add(tile_handle.clone().into());
+		build_tile(commands, fresh_handle, position);
+	}
 }
 
 fn generate_entities(
@@ -75,9 +64,8 @@ fn generate_entities(
 	config: Res<GenerationConfig>,
 	asset_server: Res<AssetServer>,
 	mut materials: ResMut<Assets<ColorMaterial>>,
+	structure_config: Res<StructureConfig>,
 ) {
-	println!("Generating entities.");
-
 	let n_ant = config.n_ant;
 	let n_plant = config.n_plant;
 	let n_fungi = config.n_fungi;
@@ -96,47 +84,26 @@ fn generate_entities(
 	// The main challenge is figuring out how to add the extra components
 
 	// Ant
-	let handle = asset_server.get_handle("ant.png");
-	let my_material = materials.add(handle.into());
+	let ant_handle = asset_server.get_handle("ant.png");
 	let positions = entity_positions.split_off(entity_positions.len() - n_ant);
-
 	for position in positions {
-		commands
-			.spawn(make_sprite_components(&position, my_material.clone()))
-			.with(Unit {})
-			.with(Ant {})
-			.with(position);
+		let fresh_handle = materials.add(ant_handle.clone().into());
+		build_ant(commands, fresh_handle, position);
 	}
+
 	// Plant
-	let handle = asset_server.get_handle("plant.png");
-	let my_material = materials.add(handle.into());
+	let plant_handle = asset_server.get_handle("plant.png");
 	let positions = entity_positions.split_off(entity_positions.len() - n_plant);
-
 	for position in positions {
-		commands
-			.spawn(make_sprite_components(&position, my_material.clone()))
-			.with(Structure {})
-			.with(Plant {})
-			.with(Mass {
-				mass: STRUCTURE_STARTING_MASS,
-			})
-			.with(position);
+		let fresh_handle = materials.add(plant_handle.clone().into());
+		build_plant(commands, fresh_handle, position, &structure_config);
 	}
+
 	// Fungi
-	let handle = asset_server.get_handle("fungi.png");
-	let my_material = materials.add(handle.into());
+	let fungi_handle = asset_server.get_handle("fungi.png");
 	let positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-
 	for position in positions {
-		commands
-			.spawn(make_sprite_components(&position, my_material.clone()))
-			.with(Structure {})
-			.with(Fungi {})
-			.with(Mass {
-				mass: STRUCTURE_STARTING_MASS,
-			})
-			.with(position);
+		let fresh_handle = materials.add(fungi_handle.clone().into());
+		build_fungi(commands, fresh_handle, position, &structure_config);
 	}
-
-	println!("Entities generated.");
 }

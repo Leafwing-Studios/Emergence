@@ -3,7 +3,9 @@ use bevy::prelude::*;
 use crate::config::{
     STRUCTURE_DESPAWN_MASS, STRUCTURE_GROWTH_RATE, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE,
 };
+use crate::graphics::make_sprite_components;
 use crate::organisms::Mass;
+use crate::utils::Position;
 
 pub struct Structure {}
 pub struct Plant {}
@@ -14,6 +16,38 @@ pub struct StructureConfig {
     upkeep_rate: f32,
     starting_mass: f32,
     despawn_mass: f32,
+}
+
+pub fn build_plant(
+    commands: &mut Commands,
+    handle: Handle<ColorMaterial>,
+    position: Position,
+    config: &Res<StructureConfig>,
+) {
+    commands
+        .spawn(make_sprite_components(&position, handle))
+        .with(Structure {})
+        .with(Plant {})
+        .with(position)
+        .with(Mass {
+            mass: config.starting_mass,
+        });
+}
+
+pub fn build_fungi(
+    commands: &mut Commands,
+    handle: Handle<ColorMaterial>,
+    position: Position,
+    config: &Res<StructureConfig>,
+) {
+    commands
+        .spawn(make_sprite_components(&position, handle))
+        .with(Structure {})
+        .with(Fungi {})
+        .with(position)
+        .with(Mass {
+            mass: config.starting_mass,
+        });
 }
 
 pub struct StructuresPlugin;
