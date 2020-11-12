@@ -86,7 +86,6 @@ fn upkeep(
     }
 }
 
-// FIXME: entities are not getting despawned appropriately
 fn cleanup(
     commands: &mut Commands,
     config: Res<StructureConfig>,
