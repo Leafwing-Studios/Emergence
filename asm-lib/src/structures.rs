@@ -56,11 +56,11 @@ fn upkeep(
 fn cleanup(
     commands: &mut Commands,
     config: Res<StructureConfig>,
-    query: Query<(&Structure, &Entity, &Mass)>,
+    query: Query<(&Structure, Entity, &Mass)>,
 ) {
     for (_, ent, i) in query.iter() {
         if i.mass <= config.despawn_mass {
-            commands.despawn(*ent);
+            commands.despawn(ent);
         }
     }
 }
