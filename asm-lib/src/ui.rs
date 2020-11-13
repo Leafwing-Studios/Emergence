@@ -46,6 +46,7 @@ fn build_ui(
 						font: asset_server.load("fonts/FiraSans-Bold.ttf"),
 						style: TextStyle {
 							font_size: 60.0,
+							alignment: TextAlignment::default(),
 							color: Color::WHITE,
 						},
 					},
@@ -63,6 +64,7 @@ fn build_ui(
 						font: asset_server.load("fonts/FiraSans-Bold.ttf"),
 						style: TextStyle {
 							font_size: 60.0,
+							alignment: TextAlignment::default(),
 							color: Color::WHITE,
 						},
 					},
