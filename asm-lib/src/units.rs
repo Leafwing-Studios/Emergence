@@ -22,14 +22,21 @@ fn act(time: Res<Time>, mut timer: ResMut<UnitTimer>, mut query: Query<(&Unit, &
     timer.0.tick(time.delta_seconds);
     if timer.0.finished {
         for (_, mut position) in query.iter_mut() {
-            let rng = &mut rand::thread_rng();
-            //let direction: HexDirection = rng.sample(Standard);
-            let direction = HexDirection::East;
-            let new_position = position.translate(&direction, 1);
-
-            position.alpha = new_position.alpha;
-            position.beta = new_position.beta;
+            *position = wander(*position);
         }
+    }
+}
+
+fn wander(position: Position) -> Position {
+    let rng = &mut rand::thread_rng();
+
+    //TODO: add failsafe for fully surrounded case
+    let direction: HexDirection = rng.sample(Standard);
+    let target = position.translate(&direction, 1).check();
+
+    match target {
+        Some(x) => x,
+        None => wander(position),
     }
 }
 

@@ -27,36 +27,6 @@ impl CubePosition {
 
 static ORIGIN: Position = Position { alpha: 0, beta: 0 };
 
-const MIRROR_DISTANCE: isize = 2 * MAP_SIZE + 1;
-
-// FIXME: coordinates are wrong. See: https://www.redblobgames.com/grids/hexagons/#wraparound for formula
-static MIRROR_CENTERS: [Position; 6] = [
-	Position {
-		alpha: MIRROR_DISTANCE,
-		beta: 0,
-	},
-	Position {
-		alpha: MIRROR_DISTANCE,
-		beta: -MIRROR_DISTANCE,
-	},
-	Position {
-		alpha: 0,
-		beta: -MIRROR_DISTANCE,
-	},
-	Position {
-		alpha: -MIRROR_DISTANCE,
-		beta: 0,
-	},
-	Position {
-		alpha: -MIRROR_DISTANCE,
-		beta: MIRROR_DISTANCE,
-	},
-	Position {
-		alpha: 0,
-		beta: MIRROR_DISTANCE,
-	},
-];
-
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
 	pub alpha: isize,
@@ -72,40 +42,12 @@ impl Position {
 		}
 	}
 
-	fn wrap(self) -> Position {
-		dbg!(self);
-		let d = self.dist(ORIGIN);
-		dbg!(d);
-
-		if d <= MAP_SIZE {
-			return self;
-		}
-
-		let mut proposal = self;
-
-		for i in MIRROR_CENTERS.iter() {
-			if self.dist(*i) <= MAP_SIZE {
-				proposal.alpha = self.alpha - i.alpha;
-				proposal.beta = self.beta - i.beta;
-				break;
-			}
-		}
-
-		return proposal;
-	}
-
 	pub fn dist(self, b: Position) -> isize {
 		let (a, b) = (self.to_cubic(), b.to_cubic());
 		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2
 	}
 
 	pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
-		let proposed_position = self + direction.offset() * distance;
-
-		return proposed_position.wrap();
-	}
-
-	fn translate_unchecked(self, direction: &HexDirection, distance: isize) -> Position {
 		self + direction.offset() * distance
 	}
 
@@ -117,14 +59,14 @@ impl Position {
 			return positions;
 		}
 
-		let mut current_position = self.translate_unchecked(&HexDirection::East, radius);
+		let mut current_position = self.translate(&HexDirection::East, radius);
 
 		let mut current_direction = HexDirection::Southwest;
 
 		for _ in 0..6 {
 			for _ in 0..radius {
 				positions.push(current_position);
-				current_position = current_position.translate_unchecked(&current_direction, 1);
+				current_position = current_position.translate(&current_direction, 1);
 			}
 
 			current_direction = current_direction.rotate(1);
@@ -140,6 +82,14 @@ impl Position {
 		}
 
 		return positions;
+	}
+
+	pub fn check(self) -> Option<Position> {
+		if self.dist(ORIGIN) > MAP_SIZE {
+			return None;
+		} else {
+			return Some(self);
+		}
 	}
 }
 
