@@ -206,13 +206,14 @@ impl HexDirection {
 	}
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ID {
-	Empty,
 	Ant,
 	Plant,
 	Fungus,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum SignalType {
 	Passive(ID),
 	Push(ID),
