@@ -11,4 +11,5 @@ auto_ops = "0.1.0"
 bevy = { git = "https://github.com/bevyengine/bevy", rev = "43aac1a78480e196f9b8b29339a34d78bc44b663"}
 itertools = "0.9.0"
 rand = "0.7.3"
-matrix = "0.22.0"
+ndarray = "0.13.1"
+num-traits = "0.2.14"

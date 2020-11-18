@@ -1,7 +1,6 @@
 use auto_ops::impl_op_ex;
 use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
-use matrix::prelude::*;
 
 use crate::config::MAP_SIZE;
 
@@ -213,12 +212,6 @@ pub enum ID {
 	Ant,
 	Plant,
 	Fungus,
-}
-
-impl matrix::Element for ID {
-	fn zero() -> ID{
-		ID::Nothing
-	}
 }
 
 #[derive(Debug, Clone, Copy)]

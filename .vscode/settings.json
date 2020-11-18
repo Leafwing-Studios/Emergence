@@ -8,6 +8,7 @@
 		"Fira",
 		"REGEN",
 		"itertools",
+		"ndarray",
 		"powf"
 	]
 }
