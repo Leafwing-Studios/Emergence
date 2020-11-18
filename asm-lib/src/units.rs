@@ -3,7 +3,7 @@ use rand::distributions::Standard;
 use rand::Rng;
 
 use crate::graphics::make_sprite_components;
-use crate::utils::{HexDirection, Position};
+use crate::utils::{HexDirection, Position, ID};
 
 pub struct Unit {}
 pub struct Ant {}
@@ -45,5 +45,6 @@ pub fn build_ant(commands: &mut Commands, handle: Handle<ColorMaterial>, positio
         .spawn(make_sprite_components(&position, handle))
         .with(Unit {})
         .with(Ant {})
+        .with(ID::Ant)
         .with(position);
 }

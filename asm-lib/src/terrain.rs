@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use ndarray::prelude::*;
 
-use crate::config::MAP_SIZE;
+use crate::config::MAP_DIAMETER;
 use crate::graphics::make_sprite_components;
 use crate::utils::{Position, ID};
 
@@ -12,13 +12,11 @@ struct Contents {
     id: Array2<ID>,
 }
 
-const MAP_DIAMETER: usize = (2 * MAP_SIZE + 1) as usize;
-
 pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_resource(Contents {
-            id: Array::from_elem((MAP_DIAMETER, MAP_DIAMETER).f(), ID::Nothing),
+            id: Array::from_elem((MAP_DIAMETER, MAP_DIAMETER), ID::Nothing),
         })
         .add_stage_after(stage::UPDATE, "BOOKKEEPING")
         .add_system_to_stage("BOOKKEEPING", update_contents.system());
@@ -32,8 +30,11 @@ pub fn build_tile(commands: &mut Commands, handle: Handle<ColorMaterial>, positi
         .with(position);
 }
 
-fn update_contents(
-    mut tile_query: Query<(&Position, &ID), (Changed<Position>, Without<Tile>)>,
-    mut contents: ResMut<Contents>,
-) {
+fn update_contents(tile_query: Query<(&Position, &ID)>, mut contents: ResMut<Contents>) {
+    dbg!(contents.clone());
+    contents.id = contents.id.map(|_| ID::Nothing);
+
+    for (position, id) in tile_query.iter() {
+        contents.id[position.to_array_ind()] = *id;
+    }
 }

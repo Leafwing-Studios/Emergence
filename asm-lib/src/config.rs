@@ -4,6 +4,7 @@ pub const TILE_SIZE: u32 = 48;
 pub const TILE_BUFFER: f32 = 0.0;
 
 pub const MAP_SIZE: isize = 1;
+pub const MAP_DIAMETER: usize = (2 * MAP_SIZE + 1) as usize;
 
 pub const N_ANT: usize = 1;
 pub const N_PLANT: usize = 0;

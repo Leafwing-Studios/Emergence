@@ -42,6 +42,13 @@ impl Position {
 		}
 	}
 
+	pub fn to_array_ind(self) -> (usize, usize) {
+		(
+			(self.alpha + MAP_SIZE) as usize,
+			(self.beta + MAP_SIZE) as usize,
+		)
+	}
+
 	pub fn dist(self, b: Position) -> isize {
 		let (a, b) = (self.to_cubic(), b.to_cubic());
 		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2

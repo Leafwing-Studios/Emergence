@@ -5,7 +5,7 @@ use crate::config::{
 };
 use crate::graphics::make_sprite_components;
 use crate::organisms::Mass;
-use crate::utils::Position;
+use crate::utils::{Position, ID};
 
 pub struct Structure {}
 pub struct Plant {}
@@ -28,6 +28,7 @@ pub fn build_plant(
         .spawn(make_sprite_components(&position, handle))
         .with(Structure {})
         .with(Plant {})
+        .with(ID::Plant)
         .with(position)
         .with(Mass {
             mass: config.starting_mass,
@@ -44,6 +45,7 @@ pub fn build_fungi(
         .spawn(make_sprite_components(&position, handle))
         .with(Structure {})
         .with(Fungi {})
+        .with(ID::Fungus)
         .with(position)
         .with(Mass {
             mass: config.starting_mass,
