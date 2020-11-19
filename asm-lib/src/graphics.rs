@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::config::{TILE_BUFFER, TILE_SIZE};
-use crate::utils::Position;
+use crate::position::Position;
 
 pub struct GraphicsPlugin;
 

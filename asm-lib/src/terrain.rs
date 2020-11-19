@@ -3,7 +3,8 @@ use ndarray::prelude::*;
 
 use crate::config::MAP_DIAMETER;
 use crate::graphics::make_sprite_components;
-use crate::utils::{Position, ID};
+use crate::id::ID;
+use crate::position::Position;
 
 pub struct Tile {}
 

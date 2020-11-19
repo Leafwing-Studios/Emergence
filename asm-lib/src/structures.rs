@@ -4,8 +4,9 @@ use crate::config::{
     STRUCTURE_DESPAWN_MASS, STRUCTURE_GROWTH_RATE, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE,
 };
 use crate::graphics::make_sprite_components;
+use crate::id::ID;
 use crate::organisms::Mass;
-use crate::utils::{Position, ID};
+use crate::position::Position;
 
 pub struct Structure {}
 pub struct Plant {}

@@ -3,7 +3,8 @@ use rand::distributions::Standard;
 use rand::Rng;
 
 use crate::graphics::make_sprite_components;
-use crate::utils::{HexDirection, Position, ID};
+use crate::id::ID;
+use crate::position::{HexDirection, Position};
 
 pub struct Unit {}
 pub struct Ant {}

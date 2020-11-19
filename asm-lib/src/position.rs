@@ -4,6 +4,7 @@ use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
 
 use crate::config::MAP_SIZE;
+use crate::id::ID;
 use crate::terrain::Contents;
 
 #[derive(Debug, Clone, Copy)]
@@ -253,20 +254,4 @@ impl HexDirection {
 	pub fn rotate(self, steps: isize) -> HexDirection {
 		HexDirection::from_int(self.to_int() as isize + steps.rem_euclid(6))
 	}
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ID {
-	Nothing,
-	Ant,
-	Plant,
-	Fungus,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum SignalType {
-	Passive(ID),
-	Push(ID),
-	Pull(ID),
-	Work,
 }

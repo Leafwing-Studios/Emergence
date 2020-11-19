@@ -3,11 +3,12 @@
 pub mod config;
 pub mod generation;
 pub mod graphics;
+pub mod id;
 pub mod organisms;
 pub mod pheromones;
+pub mod position;
 pub mod signals;
 pub mod structures;
 pub mod terrain;
 pub mod ui;
 pub mod units;
-pub mod utils;

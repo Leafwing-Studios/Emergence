@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use rand::prelude::SliceRandom;
 
+use crate::position::Position;
 use crate::structures::{build_fungi, build_plant, StructureConfig};
 use crate::terrain::build_tile;
 use crate::units::build_ant;
-use crate::utils::Position;
 
 use crate::config::MAP_SIZE;
 use crate::config::{N_ANT, N_FUNGI, N_PLANT};
