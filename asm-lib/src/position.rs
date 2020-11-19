@@ -1,11 +1,10 @@
 use auto_ops::impl_op_ex;
-use bevy::prelude::*;
 use rand::distributions::{Distribution, Standard, Uniform};
-use rand::Rng;
+use rand::seq::SliceRandom;
+use rand::{thread_rng, Rng};
 
 use crate::config::MAP_SIZE;
-use crate::id::ID;
-use crate::terrain::Contents;
+use crate::id::Contents;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -46,16 +45,12 @@ pub struct Position {
 
 // Core methods
 impl Position {
-	pub fn check(self) -> Option<Position> {
-		if self.dist(ORIGIN) > MAP_SIZE {
-			return None;
-		} else {
-			return Some(self);
-		}
+	pub fn inbounds(self) -> bool {
+		self.dist(ORIGIN) <= MAP_SIZE
 	}
 
 	pub fn dist(self, b: Position) -> isize {
-		let (a, b) = (self.to_cubic(), b.to_cubic());
+		let (a, b) = (CubePosition::from(self), CubePosition::from(b));
 		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2
 	}
 
@@ -66,44 +61,77 @@ impl Position {
 
 // Navigation methods
 impl Position {
-	pub fn neighbors(self) -> [Option<Position>; 6] {
-		let mut n = [None; 6];
-
-		for i in 0..6 {
-			n[i] = (self + NEIGHBORS[i]).check();
-		}
-
-		return n;
+	pub fn neighbors(self) -> Vec<Position> {
+		NEIGHBORS
+			.iter()
+			.map(|&p| self + p)
+			.filter(|p| p.inbounds())
+			.collect()
 	}
 
-	pub fn empty_neighbors(self, contents: Res<Contents>) -> [Option<Position>; 6] {
-		let mut n = self.neighbors();
+	pub fn neighbors_where(self, f: impl Fn(&Position) -> bool) -> Vec<Position> {
+		NEIGHBORS
+			.iter()
+			.map(|&p| self + p)
+			.filter(|p| p.inbounds() && f(p))
+			.collect()
+	}
 
-		for i in 0..6 {
-			if contents.id[self.to_array_ind()] != ID::Nothing {
-				n[i] = None;
-			}
+	pub fn empty_neighbors(self, contents: &Contents) -> Vec<Position> {
+		self.neighbors_where(|p| contents[p].is_none())
+	}
+
+	pub fn random_neighbor(self) -> Option<Position> {
+		self.neighbors().choose(&mut thread_rng()).copied()
+	}
+
+	pub fn random_empty_neighbor(self, contents: &Contents) -> Option<Position> {
+		self.empty_neighbors(contents)
+			.choose(&mut thread_rng())
+			.copied()
+	}
+}
+
+impl From<Position> for CubePosition {
+	fn from(p: Position) -> Self {
+		CubePosition {
+			alpha: p.alpha,
+			beta: p.beta,
+			gamma: -p.alpha - p.beta,
 		}
-
-		return n;
 	}
 }
 
 // Conversion methods
-impl Position {
-	pub fn to_cubic(self) -> CubePosition {
-		CubePosition {
-			alpha: self.alpha,
-			beta: self.beta,
-			gamma: -self.alpha - self.beta,
-		}
+impl From<Position> for (usize, usize) {
+	fn from(p: Position) -> (usize, usize) {
+		((p.alpha + MAP_SIZE) as usize, (p.beta + MAP_SIZE) as usize)
 	}
+}
 
-	pub fn to_array_ind(self) -> (usize, usize) {
-		(
-			(self.alpha + MAP_SIZE) as usize,
-			(self.beta + MAP_SIZE) as usize,
-		)
+impl<S> std::ops::Index<&Position> for ndarray::prelude::Array2<S> {
+	type Output = S;
+	fn index(&self, p: &Position) -> &S {
+		&self[<(usize, usize)>::from(*p)]
+	}
+}
+
+impl<S> std::ops::IndexMut<&Position> for ndarray::prelude::Array2<S> {
+	fn index_mut(&mut self, p: &Position) -> &mut S {
+		&mut self[<(usize, usize)>::from(*p)]
+	}
+}
+
+impl<S> std::ops::Index<Position> for ndarray::prelude::Array2<S> {
+	type Output = S;
+	fn index(&self, p: Position) -> &S {
+		&self[<(usize, usize)>::from(p)]
+	}
+}
+
+impl<S> std::ops::IndexMut<Position> for ndarray::prelude::Array2<S> {
+	fn index_mut(&mut self, p: Position) -> &mut S {
+		&mut self[<(usize, usize)>::from(p)]
 	}
 }
 

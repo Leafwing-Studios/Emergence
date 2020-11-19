@@ -1,10 +1,8 @@
 use bevy::prelude::*;
-use rand::distributions::Standard;
-use rand::Rng;
 
 use crate::graphics::make_sprite_components;
-use crate::id::ID;
-use crate::position::{HexDirection, Position};
+use crate::id::{Contents, ID};
+use crate::position::Position;
 
 pub struct Unit {}
 pub struct Ant {}
@@ -19,25 +17,26 @@ impl Plugin for UnitsPlugin {
 
 struct UnitTimer(Timer);
 
-fn act(time: Res<Time>, mut timer: ResMut<UnitTimer>, mut query: Query<(&Unit, &mut Position)>) {
+fn act(
+    time: Res<Time>,
+    contents: Res<Contents>,
+    mut timer: ResMut<UnitTimer>,
+    mut query: Query<(&Unit, &mut Position)>,
+) {
     timer.0.tick(time.delta_seconds);
     if timer.0.finished {
         for (_, mut position) in query.iter_mut() {
-            *position = wander(*position);
+            *position = wander(*position, &contents);
         }
     }
 }
 
-fn wander(position: Position) -> Position {
-    let rng = &mut rand::thread_rng();
-
-    //TODO: add failsafe for fully surrounded case
-    let direction: HexDirection = rng.sample(Standard);
-    let target = position.translate(&direction, 1).check();
+fn wander(position: Position, contents: &Contents) -> Position {
+    let target = position.random_empty_neighbor(contents);
 
     match target {
-        Some(x) => x,
-        None => wander(position),
+        Some(p) => p,
+        None => position,
     }
 }
 

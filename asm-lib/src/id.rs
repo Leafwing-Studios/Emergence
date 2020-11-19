@@ -1,6 +1,7 @@
+use ndarray::prelude::*;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ID {
-	Nothing,
 	Ant,
 	Plant,
 	Fungus,
@@ -13,3 +14,5 @@ pub enum SignalType {
 	Pull(ID),
 	Work,
 }
+
+pub type Contents = Array2<Option<ID>>;
