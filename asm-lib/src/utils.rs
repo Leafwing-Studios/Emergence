@@ -1,8 +1,10 @@
 use auto_ops::impl_op_ex;
+use bevy::prelude::*;
 use rand::distributions::{Distribution, Standard, Uniform};
 use rand::Rng;
 
 use crate::config::MAP_SIZE;
+use crate::terrain::Contents;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -26,6 +28,14 @@ impl CubePosition {
 // alpha == q, beta == r from that article
 
 static ORIGIN: Position = Position { alpha: 0, beta: 0 };
+static NEIGHBORS: [Position; 6] = [
+	Position { alpha: 1, beta: 0 },
+	Position { alpha: 1, beta: -1 },
+	Position { alpha: 0, beta: -1 },
+	Position { alpha: -1, beta: 0 },
+	Position { alpha: -1, beta: 1 },
+	Position { alpha: 0, beta: 1 },
+];
 
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
@@ -33,6 +43,52 @@ pub struct Position {
 	pub beta: isize,
 }
 
+// Core methods
+impl Position {
+	pub fn check(self) -> Option<Position> {
+		if self.dist(ORIGIN) > MAP_SIZE {
+			return None;
+		} else {
+			return Some(self);
+		}
+	}
+
+	pub fn dist(self, b: Position) -> isize {
+		let (a, b) = (self.to_cubic(), b.to_cubic());
+		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2
+	}
+
+	pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
+		self + direction.offset() * distance
+	}
+}
+
+// Navigation methods
+impl Position {
+	pub fn neighbors(self) -> [Option<Position>; 6] {
+		let mut n = [None; 6];
+
+		for i in 0..6 {
+			n[i] = (self + NEIGHBORS[i]).check();
+		}
+
+		return n;
+	}
+
+	pub fn empty_neighbors(self, contents: Res<Contents>) -> [Option<Position>; 6] {
+		let mut n = self.neighbors();
+
+		for i in 0..6 {
+			if contents.id[self.to_array_ind()] != ID::Nothing {
+				n[i] = None;
+			}
+		}
+
+		return n;
+	}
+}
+
+// Conversion methods
 impl Position {
 	pub fn to_cubic(self) -> CubePosition {
 		CubePosition {
@@ -48,16 +104,10 @@ impl Position {
 			(self.beta + MAP_SIZE) as usize,
 		)
 	}
+}
 
-	pub fn dist(self, b: Position) -> isize {
-		let (a, b) = (self.to_cubic(), b.to_cubic());
-		((a.alpha - b.alpha).abs() + (a.beta - b.beta).abs() + (a.gamma - b.gamma).abs()) / 2
-	}
-
-	pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
-		self + direction.offset() * distance
-	}
-
+// Generation methods
+impl Position {
 	pub fn ring(self, radius: isize) -> Vec<Position> {
 		let mut positions: Vec<Position> = Vec::new();
 
@@ -89,14 +139,6 @@ impl Position {
 		}
 
 		return positions;
-	}
-
-	pub fn check(self) -> Option<Position> {
-		if self.dist(ORIGIN) > MAP_SIZE {
-			return None;
-		} else {
-			return Some(self);
-		}
 	}
 }
 
@@ -198,12 +240,12 @@ impl HexDirection {
 	pub fn offset(&self) -> Position {
 		use HexDirection::*;
 		match self {
-			East => Position { alpha: 1, beta: 0 },
-			Southeast => Position { alpha: 1, beta: -1 },
-			Southwest => Position { alpha: 0, beta: -1 },
-			West => Position { alpha: -1, beta: 0 },
-			Northwest => Position { alpha: -1, beta: 1 },
-			Northeast => Position { alpha: 0, beta: 1 },
+			East => NEIGHBORS[0],
+			Southeast => NEIGHBORS[1],
+			Southwest => NEIGHBORS[2],
+			West => NEIGHBORS[3],
+			Northwest => NEIGHBORS[4],
+			Northeast => NEIGHBORS[5],
 		}
 	}
 

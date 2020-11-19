@@ -8,8 +8,8 @@ use crate::utils::{Position, ID};
 pub struct Tile {}
 
 #[derive(Debug, Clone)]
-struct Contents {
-    id: Array2<ID>,
+pub struct Contents {
+    pub id: Array2<ID>,
 }
 
 pub struct TerrainPlugin;
@@ -31,7 +31,6 @@ pub fn build_tile(commands: &mut Commands, handle: Handle<ColorMaterial>, positi
 }
 
 fn update_contents(tile_query: Query<(&Position, &ID)>, mut contents: ResMut<Contents>) {
-    dbg!(contents.clone());
     contents.id = contents.id.map(|_| ID::Nothing);
 
     for (position, id) in tile_query.iter() {
