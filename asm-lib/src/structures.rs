@@ -5,7 +5,7 @@ use crate::config::{
 };
 use crate::graphics::make_sprite_components;
 use crate::id::ID;
-use crate::organisms::Mass;
+use crate::organisms::{Mass, Impassable};
 use crate::position::Position;
 
 pub struct Structure {}
@@ -28,6 +28,7 @@ pub fn build_plant(
     commands
         .spawn(make_sprite_components(&position, handle))
         .with(Structure {})
+        .with(Impassable {})
         .with(Plant {})
         .with(ID::Plant)
         .with(position)
@@ -45,6 +46,7 @@ pub fn build_fungi(
     commands
         .spawn(make_sprite_components(&position, handle))
         .with(Structure {})
+        .with(Impassable {})
         .with(Fungi {})
         .with(ID::Fungus)
         .with(position)

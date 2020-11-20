@@ -4,6 +4,7 @@ use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
 use crate::config::MAP_SIZE;
+use crate::entity_map::EntityMap;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -81,6 +82,7 @@ impl Position {
 	}
 }
 
+// Conversion methods
 impl From<Position> for CubePosition {
 	fn from(p: Position) -> Self {
 		CubePosition {
@@ -88,13 +90,6 @@ impl From<Position> for CubePosition {
 			beta: p.beta,
 			gamma: -p.alpha - p.beta,
 		}
-	}
-}
-
-// Conversion methods
-impl From<Position> for (usize, usize) {
-	fn from(p: Position) -> (usize, usize) {
-		((p.alpha + MAP_SIZE) as usize, (p.beta + MAP_SIZE) as usize)
 	}
 }
 
