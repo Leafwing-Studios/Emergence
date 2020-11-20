@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::graphics::make_sprite_components;
-use crate::id::{Contents, ID};
+use crate::id::ID;
 use crate::position::Position;
+use crate::entity_map::EntityMap;
 
 pub struct Unit {}
 pub struct Ant {}
@@ -19,20 +20,19 @@ struct UnitTimer(Timer);
 
 fn act(
     time: Res<Time>,
-    contents: Res<Contents>,
     mut timer: ResMut<UnitTimer>,
     mut query: Query<(&Unit, &mut Position)>,
 ) {
     timer.0.tick(time.delta_seconds);
     if timer.0.finished {
         for (_, mut position) in query.iter_mut() {
-            *position = wander(*position, &contents);
+            *position = wander(*position);
         }
     }
 }
 
-fn wander(position: Position, contents: &Contents) -> Position {
-    let target = position.random_empty_neighbor(contents);
+fn wander(position: Position) -> Position {
+    let target = position.random_neighbor();
 
     match target {
         Some(p) => p,

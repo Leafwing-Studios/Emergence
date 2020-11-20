@@ -13,7 +13,7 @@ impl Plugin for SignalsPlugin {
 }
 
 #[derive(Debug)]
-struct EntityMap {
+pub struct EntityMap {
 	mm: MultiMap<Position, Entity>
 }
 

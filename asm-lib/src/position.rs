@@ -4,7 +4,6 @@ use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
 use crate::config::MAP_SIZE;
-use crate::id::Contents;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -77,18 +76,8 @@ impl Position {
 			.collect()
 	}
 
-	pub fn empty_neighbors(self, contents: &Contents) -> Vec<Position> {
-		self.neighbors_where(|p| contents[p].is_none())
-	}
-
 	pub fn random_neighbor(self) -> Option<Position> {
 		self.neighbors().choose(&mut thread_rng()).copied()
-	}
-
-	pub fn random_empty_neighbor(self, contents: &Contents) -> Option<Position> {
-		self.empty_neighbors(contents)
-			.choose(&mut thread_rng())
-			.copied()
 	}
 }
 
@@ -106,32 +95,6 @@ impl From<Position> for CubePosition {
 impl From<Position> for (usize, usize) {
 	fn from(p: Position) -> (usize, usize) {
 		((p.alpha + MAP_SIZE) as usize, (p.beta + MAP_SIZE) as usize)
-	}
-}
-
-impl<S> std::ops::Index<&Position> for ndarray::prelude::Array2<S> {
-	type Output = S;
-	fn index(&self, p: &Position) -> &S {
-		&self[<(usize, usize)>::from(*p)]
-	}
-}
-
-impl<S> std::ops::IndexMut<&Position> for ndarray::prelude::Array2<S> {
-	fn index_mut(&mut self, p: &Position) -> &mut S {
-		&mut self[<(usize, usize)>::from(*p)]
-	}
-}
-
-impl<S> std::ops::Index<Position> for ndarray::prelude::Array2<S> {
-	type Output = S;
-	fn index(&self, p: Position) -> &S {
-		&self[<(usize, usize)>::from(p)]
-	}
-}
-
-impl<S> std::ops::IndexMut<Position> for ndarray::prelude::Array2<S> {
-	fn index_mut(&mut self, p: Position) -> &mut S {
-		&mut self[<(usize, usize)>::from(p)]
 	}
 }
 
