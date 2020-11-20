@@ -37,7 +37,7 @@ static NEIGHBORS: [Position; 6] = [
 	Position { alpha: 0, beta: 1 },
 ];
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Position {
 	pub alpha: isize,
 	pub beta: isize,

@@ -1,6 +1,7 @@
 //#![allow(dead_code, unused)]
 
 pub mod config;
+pub mod entity_map;
 pub mod generation;
 pub mod graphics;
 pub mod id;
