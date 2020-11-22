@@ -4,6 +4,7 @@ use crate::graphics::make_sprite_components;
 use crate::id::ID;
 use crate::position::Position;
 use crate::entity_map::EntityMap;
+use crate::organisms::Impassable;
 
 pub struct Unit {}
 pub struct Ant {}
@@ -20,19 +21,23 @@ struct UnitTimer(Timer);
 
 fn act(
     time: Res<Time>,
+    entity_map: Res<EntityMap>,
     mut timer: ResMut<UnitTimer>,
     mut query: Query<(&Unit, &mut Position)>,
+    passable_query: Query<&Impassable>
 ) {
     timer.0.tick(time.delta_seconds);
     if timer.0.finished {
         for (_, mut position) in query.iter_mut() {
-            *position = wander(*position);
+            *position = wander(*position, &entity_map, &passable_query);
         }
     }
 }
 
-fn wander(position: Position) -> Position {
-    let target = position.random_neighbor();
+fn wander(position: Position,     
+    entity_map: &EntityMap,
+    passable_query: &Query<&Impassable>) -> Position {
+    let target = position.random_passable_neighbor(entity_map, passable_query);
 
     match target {
         Some(p) => p,

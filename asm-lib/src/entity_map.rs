@@ -3,8 +3,8 @@ use multimap::MultiMap;
 
 use crate::position::Position;
 
-pub struct SignalsPlugin;
-impl Plugin for SignalsPlugin {
+pub struct EntityMapPlugin;
+impl Plugin for EntityMapPlugin {
     fn build(&self, app: &mut AppBuilder){
 		app.add_stage_after(stage::UPDATE, "BOOKKEEPING")
 			.add_resource(EntityMap::new())
@@ -14,7 +14,7 @@ impl Plugin for SignalsPlugin {
 
 #[derive(Debug)]
 pub struct EntityMap {
-	mm: MultiMap<Position, Entity>
+	pub mm: MultiMap<Position, Entity>
 }
 
 impl EntityMap {
