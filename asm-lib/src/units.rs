@@ -13,7 +13,7 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_resource(UnitTimer(Timer::from_seconds(0.5, true)))
-            .add_system(act.system());
+            .add_system(act);
     }
 }
 
@@ -26,8 +26,8 @@ fn act(
     mut query: Query<(&Unit, &mut Position)>,
     passable_query: Query<&Impassable>
 ) {
-    timer.0.tick(time.delta_seconds);
-    if timer.0.finished {
+    timer.0.tick(time.delta_seconds());
+    if timer.0.finished() {
         for (_, mut position) in query.iter_mut() {
             *position = wander(*position, &entity_map, &passable_query);
         }

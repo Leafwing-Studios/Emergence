@@ -12,8 +12,8 @@ impl Plugin for PheromonesPlugin {
         .add_resource(Pheromones {
             supply: PHEROMONE_CAPACITY,
         })
-        .add_system(regen_pheromones.system())
-        .add_system(spend_pheromones.system());
+        .add_system(regen_pheromones)
+        .add_system(spend_pheromones);
     }
 }
 
@@ -33,7 +33,7 @@ fn regen_pheromones(
     time: Res<Time>,
 ) {
     pheromones.supply =
-        (pheromones.supply + config.regen_rate * time.delta_seconds).min(config.capacity);
+        (pheromones.supply + config.regen_rate * time.delta_seconds()).min(config.capacity);
 }
 
 fn spend_pheromones(
@@ -43,7 +43,7 @@ fn spend_pheromones(
     time: Res<Time>,
 ) {
     if keyboard_input.pressed(KeyCode::Space) {
-        let spent_pheromones = (config.spending_rate * time.delta_seconds).min(pheromones.supply);
+        let spent_pheromones = (config.spending_rate * time.delta_seconds()).min(pheromones.supply);
         pheromones.supply -= spent_pheromones;
     }
 }

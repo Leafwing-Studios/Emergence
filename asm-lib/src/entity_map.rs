@@ -8,7 +8,7 @@ impl Plugin for EntityMapPlugin {
     fn build(&self, app: &mut AppBuilder){
 		app.add_stage_after(stage::UPDATE, "BOOKKEEPING")
 			.add_resource(EntityMap::new())
-			.add_system_to_stage("BOOKKEEPING", update_entity_map.system());
+			.add_system_to_stage("BOOKKEEPING", update_entity_map);
 	}
 }
 

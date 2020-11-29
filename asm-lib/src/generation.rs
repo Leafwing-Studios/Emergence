@@ -13,8 +13,8 @@ pub struct GenerationPlugin;
 impl Plugin for GenerationPlugin {
 	fn build(&self, app: &mut AppBuilder) {
 		app.add_resource(GenerationConfig::new())
-			.add_startup_system(generate_terrain.system())
-			.add_startup_system(generate_entities.system());
+			.add_startup_system(generate_terrain)
+			.add_startup_system(generate_entities);
 	}
 }
 

@@ -7,15 +7,15 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup_graphics.system())
-            .add_system(update_positions.system());
+        app.add_startup_system(setup_graphics)
+            .add_system(update_positions);
     }
 }
 
 fn setup_graphics(commands: &mut Commands, asset_server: Res<AssetServer>) {
     let _assets = asset_server.load_folder("");
 
-    commands.spawn(Camera2dComponents::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 pub fn position_to_pixels(position: &Position) -> Transform {
@@ -30,7 +30,7 @@ pub fn position_to_pixels(position: &Position) -> Transform {
 }
 
 pub fn make_sprite_components(position: &Position, handle: Handle<ColorMaterial>) -> impl Bundle {
-    SpriteComponents {
+    SpriteBundle {
         material: handle,
         transform: position_to_pixels(position),
         sprite: Sprite::new(Vec2::new(TILE_SIZE as f32, TILE_SIZE as f32)),

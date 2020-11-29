@@ -6,9 +6,9 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
 	fn build(&self, app: &mut AppBuilder) {
 		app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-			.add_startup_system(build_ui.system())
-			.add_system(update_fps.system())
-			.add_system(update_pheromones.system());
+			.add_startup_system(build_ui)
+			.add_system(update_fps)
+			.add_system(update_pheromones);
 	}
 }
 
@@ -22,9 +22,9 @@ fn build_ui(
 ) {
 	commands
 		// 2d camera
-		.spawn(UiCameraComponents::default())
+		.spawn(UiCameraBundle::default())
 		// Root node
-		.spawn(NodeComponents {
+		.spawn(NodeBundle {
 			style: Style {
 				size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
 				justify_content: JustifyContent::SpaceBetween,
@@ -36,7 +36,7 @@ fn build_ui(
 		.with_children(|parent| {
 			parent
 				// FPS
-				.spawn(TextComponents {
+				.spawn(TextBundle {
 					style: Style {
 						align_self: AlignSelf::FlexEnd,
 						..Default::default()
@@ -54,7 +54,7 @@ fn build_ui(
 				})
 				.with(FpsText)
 				// Pheromones
-				.spawn(TextComponents {
+				.spawn(TextBundle {
 					style: Style {
 						align_self: AlignSelf::FlexEnd,
 						..Default::default()

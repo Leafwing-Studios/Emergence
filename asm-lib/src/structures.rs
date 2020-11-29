@@ -64,9 +64,9 @@ impl Plugin for StructuresPlugin {
             starting_mass: STRUCTURE_STARTING_MASS,
             despawn_mass: STRUCTURE_DESPAWN_MASS,
         })
-        .add_system(photosynthesize.system())
-        .add_system(upkeep.system())
-        .add_system(cleanup.system());
+        .add_system(photosynthesize)
+        .add_system(upkeep)
+        .add_system(cleanup);
     }
 }
 
@@ -76,7 +76,7 @@ fn photosynthesize(
     mut query: Query<(&Plant, &mut Mass)>,
 ) {
     for (_, mut i) in query.iter_mut() {
-        i.mass += config.growth_rate * time.delta_seconds * i.mass.powf(2.0 / 3.0);
+        i.mass += config.growth_rate * time.delta_seconds() * i.mass.powf(2.0 / 3.0);
     }
 }
 
@@ -86,7 +86,7 @@ fn upkeep(
     mut query: Query<(&Structure, &mut Mass)>,
 ) {
     for (_, mut i) in query.iter_mut() {
-        i.mass -= config.upkeep_rate * time.delta_seconds * i.mass;
+        i.mass -= config.upkeep_rate * time.delta_seconds() * i.mass;
     }
 }
 
