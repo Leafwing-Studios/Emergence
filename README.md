@@ -1,2 +1,3 @@
-# assimilation-prototype
-Testing core game mechanics for Assimilation.
+# *Emergence*
+
+An organic factory-builder about a new kind of civilization.
