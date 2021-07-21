@@ -1,103 +1,104 @@
 use bevy::prelude::*;
 
-use crate::config::{
-    STRUCTURE_DESPAWN_MASS, STRUCTURE_GROWTH_RATE, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE,
-};
-use crate::graphics::make_sprite_components;
+use crate::graphics::sprite_bundle_from_position;
 use crate::id::ID;
-use crate::organisms::{Mass, Impassable};
+use crate::organisms::{Composition, OrganismBundle};
 use crate::position::Position;
 
-pub struct Structure {}
-pub struct Plant {}
-pub struct Fungi {}
+#[derive(Bundle, Default)]
+pub struct StructureBundle {
+    structure: Structure,
+    #[bundle]
+    organism_bundle: OrganismBundle,
+}
 
-pub struct StructureConfig {
-    growth_rate: f32,
+// TODO: replace with better defaults
+#[derive(Clone, Default)]
+pub struct Structure {
     upkeep_rate: f32,
     starting_mass: f32,
     despawn_mass: f32,
 }
 
-pub fn build_plant(
-    commands: &mut Commands,
-    handle: Handle<ColorMaterial>,
-    position: Position,
-    config: &Res<StructureConfig>,
-) {
-    commands
-        .spawn(make_sprite_components(&position, handle))
-        .with(Structure {})
-        .with(Impassable {})
-        .with(Plant {})
-        .with(ID::Plant)
-        .with(position)
-        .with(Mass {
-            mass: config.starting_mass,
-        });
+#[derive(Clone, Default)]
+pub struct Plant {
+    photosynthesis_rate: f32,
 }
 
-pub fn build_fungi(
-    commands: &mut Commands,
-    handle: Handle<ColorMaterial>,
-    position: Position,
-    config: &Res<StructureConfig>,
-) {
-    commands
-        .spawn(make_sprite_components(&position, handle))
-        .with(Structure {})
-        .with(Impassable {})
-        .with(Fungi {})
-        .with(ID::Fungus)
-        .with(position)
-        .with(Mass {
-            mass: config.starting_mass,
-        });
+#[derive(Bundle, Default)]
+pub struct PlantBundle {
+    plant: Plant,
+    #[bundle]
+    structure_bundle: StructureBundle,
+}
+
+impl PlantBundle {
+    pub fn new(position: Position, material: Handle<ColorMaterial>) -> Self {
+        Self {
+            structure_bundle: StructureBundle {
+                organism_bundle: OrganismBundle {
+                    sprite_bundle: sprite_bundle_from_position(position, material),
+                    id: ID::Plant,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Fungi;
+
+#[derive(Bundle, Default)]
+pub struct FungiBundle {
+    fungi: Fungi,
+    #[bundle]
+    structure_bundle: StructureBundle,
+}
+
+impl FungiBundle {
+    pub fn new(position: Position, material: Handle<ColorMaterial>) -> Self {
+        Self {
+            structure_bundle: StructureBundle {
+                organism_bundle: OrganismBundle {
+                    sprite_bundle: sprite_bundle_from_position(position, material),
+                    id: ID::Fungus,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
 }
 
 pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_resource(StructureConfig {
-            growth_rate: STRUCTURE_GROWTH_RATE,
-            upkeep_rate: STRUCTURE_UPKEEP_RATE,
-            starting_mass: STRUCTURE_STARTING_MASS,
-            despawn_mass: STRUCTURE_DESPAWN_MASS,
-        })
-        .add_system(photosynthesize)
-        .add_system(upkeep)
-        .add_system(cleanup);
+        app.add_system(photosynthesize.system())
+            .add_system(upkeep.system())
+            .add_system(cleanup.system());
     }
 }
 
-fn photosynthesize(
-    config: Res<StructureConfig>,
-    time: Res<Time>,
-    mut query: Query<(&Plant, &mut Mass)>,
-) {
-    for (_, mut i) in query.iter_mut() {
-        i.mass += config.growth_rate * time.delta_seconds() * i.mass.powf(2.0 / 3.0);
+fn photosynthesize(time: Res<Time>, mut query: Query<(&Plant, &mut Composition)>) {
+    for (plant, mut comp) in query.iter_mut() {
+        comp.mass += plant.photosynthesis_rate * time.delta_seconds() * comp.mass.powf(2.0 / 3.0);
     }
 }
 
-fn upkeep(
-    config: Res<StructureConfig>,
-    time: Res<Time>,
-    mut query: Query<(&Structure, &mut Mass)>,
-) {
-    for (_, mut i) in query.iter_mut() {
-        i.mass -= config.upkeep_rate * time.delta_seconds() * i.mass;
+fn upkeep(time: Res<Time>, mut query: Query<(&Structure, &mut Composition)>) {
+    for (structure, mut comp) in query.iter_mut() {
+        comp.mass -= structure.upkeep_rate * time.delta_seconds() * comp.mass;
     }
 }
 
-fn cleanup(
-    commands: &mut Commands,
-    config: Res<StructureConfig>,
-    query: Query<(&Structure, Entity, &Mass)>,
-) {
-    for (_, ent, i) in query.iter() {
-        if i.mass <= config.despawn_mass {
-            commands.despawn(ent);
+fn cleanup(mut commands: Commands, query: Query<(&Structure, Entity, &Composition)>) {
+    for (structure, ent, comp) in query.iter() {
+        if comp.mass <= structure.despawn_mass {
+            commands.entity(ent).despawn();
         }
     }
 }

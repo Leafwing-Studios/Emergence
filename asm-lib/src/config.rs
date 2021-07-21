@@ -1,5 +1,5 @@
-pub const WINDOW_WIDTH: u32 = 1920;
-pub const WINDOW_HEIGHT: u32 = 1080;
+pub const WINDOW_WIDTH: f32 = 1920.0;
+pub const WINDOW_HEIGHT: f32 = 1080.0;
 pub const TILE_SIZE: u32 = 48;
 pub const TILE_BUFFER: f32 = 0.0;
 

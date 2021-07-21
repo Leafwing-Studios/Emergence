@@ -7,18 +7,18 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup_graphics)
-            .add_system(update_positions);
+        app.add_startup_system(setup_graphics.system())
+            .add_system(update_positions.system());
     }
 }
 
-fn setup_graphics(commands: &mut Commands, asset_server: Res<AssetServer>) {
+fn setup_graphics(mut commands: Commands, asset_server: Res<AssetServer>) {
     let _assets = asset_server.load_folder("");
 
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-pub fn position_to_pixels(position: &Position) -> Transform {
+pub fn position_to_pixels(position: Position) -> Transform {
     const SQRT_3: f32 = 1.73205080757;
     let (alpha, beta) = (position.alpha as f32, position.beta as f32);
     let scale = (0.5 + TILE_BUFFER) * TILE_SIZE as f32;
@@ -29,9 +29,12 @@ pub fn position_to_pixels(position: &Position) -> Transform {
     Transform::from_translation(Vec3::new(x, y, 0.0))
 }
 
-pub fn make_sprite_components(position: &Position, handle: Handle<ColorMaterial>) -> impl Bundle {
+pub fn sprite_bundle_from_position(
+    position: Position,
+    material: Handle<ColorMaterial>,
+) -> SpriteBundle {
     SpriteBundle {
-        material: handle,
+        material,
         transform: position_to_pixels(position),
         sprite: Sprite::new(Vec2::new(TILE_SIZE as f32, TILE_SIZE as f32)),
         ..Default::default()
@@ -39,7 +42,7 @@ pub fn make_sprite_components(position: &Position, handle: Handle<ColorMaterial>
 }
 
 fn update_positions(mut query: Query<(&Position, &mut Transform)>) {
-    for (position, mut transform) in query.iter_mut() {
+    for (&position, mut transform) in query.iter_mut() {
         *transform = position_to_pixels(position);
     }
 }

@@ -7,5 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", rev = "1f3d50619be31578a9ada10778b2f9ffe95d9567"}
+bevy = "0.5"
 asm-lib = { path = "../asm-lib" }

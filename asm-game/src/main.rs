@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 fn main() {
     App::build()
-        .add_resource(WindowDescriptor {
+        .insert_resource(WindowDescriptor {
             title: "Assimilation".to_string(),
             width: config::WINDOW_WIDTH,
             height: config::WINDOW_HEIGHT,

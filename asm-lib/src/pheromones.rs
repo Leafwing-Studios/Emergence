@@ -4,16 +4,16 @@ use bevy::prelude::*;
 pub struct PheromonesPlugin;
 impl Plugin for PheromonesPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_resource(PheromonesConfig {
+        app.insert_resource(PheromonesConfig {
             capacity: PHEROMONE_CAPACITY,
             regen_rate: PHEROMONE_REGEN_RATE,
             spending_rate: PHEROMONE_SPENDING_RATE,
         })
-        .add_resource(Pheromones {
+        .insert_resource(Pheromones {
             supply: PHEROMONE_CAPACITY,
         })
-        .add_system(regen_pheromones)
-        .add_system(spend_pheromones);
+        .add_system(regen_pheromones.system())
+        .add_system(spend_pheromones.system());
     }
 }
 
