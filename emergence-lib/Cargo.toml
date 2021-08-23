@@ -7,9 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-auto_ops = "0.1.0"
 bevy = "0.5"
-itertools = "0.9.0"
-rand = "0.7.3"
-num-traits = "0.2.14"
-multimap = "0.8.2"
+bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "51320caf8eb91a4388ae409b4971853ccc0c9fa5"}
