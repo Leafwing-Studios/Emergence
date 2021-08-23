@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "asm-game",
-    "asm-lib",
+    "emergence-game",
+    "emergence-lib",
 ]

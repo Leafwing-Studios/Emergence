@@ -1,10 +1,10 @@
-use asm_lib::*;
 use bevy::prelude::*;
+use emergence_lib::*;
 
 fn main() {
     App::build()
         .insert_resource(WindowDescriptor {
-            title: "Assimilation".to_string(),
+            title: "Emergence".to_string(),
             width: config::WINDOW_WIDTH,
             height: config::WINDOW_HEIGHT,
             vsync: true,
