@@ -63,7 +63,7 @@ fn spawn_tilemap(
             // Tile size in pixels
             Vec2::new(16.0, 16.0),
             // Texture size in pixels (of entire spritesheet)
-            Vec2::new(96.0, 256.0),
+            Vec2::new(96.0, 16.0),
         ),
         MapId::Main,
         LayerId::Ground,
