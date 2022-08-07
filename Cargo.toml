@@ -1,6 +1,7 @@
 [workspace]
+resolver="2"
 
 members = [
-    "emergence-game",
-    "emergence-lib",
+    "emergence_game",
+    "emergence_lib",
 ]

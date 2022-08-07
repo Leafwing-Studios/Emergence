@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(WindowDescriptor {
             title: "Emergence".to_string(),
-            vsync: true,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)

@@ -1,5 +1,5 @@
 [package]
-name = "emergence-game"
+name = "emergence_game"
 version = "0.1.0"
 authors = ["Alice Cecile <alice.i.cecile@gmail.com>"]
 edition = "2021"
@@ -7,5 +7,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.5"
-emergence-lib = { path = "../emergence-lib" }
+bevy = "0.8"
+emergence_lib = { path = "../emergence_lib" }
