@@ -8,5 +8,6 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(emergence_lib::tilemap::TilemapPlugin)
+        .add_plugin(emergence_lib::diffusion::DiffusionPlugin)
         .run();
 }

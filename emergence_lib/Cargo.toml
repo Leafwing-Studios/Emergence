@@ -8,4 +8,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.8"
-bevy_ecs_tilemap = "0.7"
+bevy_ecs_tilemap = { git = "https://github.com/Leafwing-Studios/bevy_ecs_tilemap", branch = "hex-neighbours"}
+bevy_pancam = "0.5.0"
