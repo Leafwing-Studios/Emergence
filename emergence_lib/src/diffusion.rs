@@ -131,6 +131,7 @@ fn initialize_signal(
         for &tile_id in tilemap_storage.iter() {
             if let Some(tile_id) = tile_id {
                 if let Ok(tile_pos) = tile_pos_q.get(tile_id) {
+                    // Initialize signal at the origin tile for testing purposes
                     let signal = if tile_pos.x == 0 && tile_pos.y == 0 {
                         Signal(1.0)
                     } else {
