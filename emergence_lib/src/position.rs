@@ -6,7 +6,10 @@ use rand::{thread_rng, Rng};
 
 use crate::config::MAP_SIZE;
 use crate::entity_map::EntityMap;
-use crate::organisms::Impassable;
+
+/// Marker component for tiles that are not passable
+#[derive(Component)]
+struct Impassable;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -39,7 +42,7 @@ static NEIGHBORS: [Position; 6] = [
     Position { alpha: 0, beta: 1 },
 ];
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+#[derive(Component, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
 pub struct Position {
     pub alpha: isize,
     pub beta: isize,
@@ -95,7 +98,7 @@ impl Position {
     pub fn passable_neighbors(
         self,
         entity_map: &EntityMap,
-        passable_query: &Query<&Impassable>,
+        passable_query: &Query<(), With<Impassable>>,
     ) -> Vec<Position> {
         let mut passable_neighbors: Vec<Position> = Vec::new();
 
@@ -130,7 +133,7 @@ impl Position {
     pub fn random_passable_neighbor(
         self,
         entity_map: &EntityMap,
-        passable_query: &Query<&Impassable>,
+        passable_query: &Query<(), With<Impassable>>,
     ) -> Option<Position> {
         self.passable_neighbors(entity_map, passable_query)
             .choose(&mut thread_rng())

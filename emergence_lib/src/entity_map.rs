@@ -7,7 +7,7 @@ pub struct EntityMapPlugin;
 impl Plugin for EntityMapPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<EntityMap>()
-            .add_system_to_stage(CoreStage::PostUpdate, update_entity_map.system());
+            .add_system_to_stage(CoreStage::PostUpdate, update_entity_map);
     }
 }
 
