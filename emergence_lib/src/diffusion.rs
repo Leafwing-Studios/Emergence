@@ -148,6 +148,8 @@ fn initialize_signal(
     }
 }
 
+pub const OUTGOING_RATE: f32 = 0.001;
+
 fn propagate_signal(
     tilemap_q: Query<(&TileStorage, &TilemapType)>,
     mut tile_outgoing_q: Query<(&TilePos, &Signal, &mut OutgoingSignal)>,
@@ -164,7 +166,7 @@ fn propagate_signal(
                     for neighbor_id in neighbors.into_iter() {
                         if let Ok(mut neighbor_incoming) = neighbor_incoming_q.get_mut(neighbor_id)
                         {
-                            let outgoing = 0.001 * this_signal.0;
+                            let outgoing = OUTGOING_RATE * this_signal.0;
                             neighbor_incoming.add(outgoing);
                             total_outgoing += outgoing;
                         }
