@@ -2,6 +2,8 @@ use bevy::app::CoreStage::PreUpdate;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
+use crate::utils::{ergonomic_sigmoid, linear_combination};
+
 pub struct DiffusionPlugin;
 
 const PROPAGATE: &'static str = "propagate_signal";
@@ -83,20 +85,16 @@ impl AlphaCompose for Color {
     }
 }
 
-/// Take a linear combination of `x` and `y`, by the factor `c`.
-///
-/// Formally: `linear_combination(x, y, c) = x * c + y * (1.0 - c)`.
-fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
-    x * c + y * (1.0 - c)
-}
-
 impl From<Signal> for Color {
     fn from(signal: Signal) -> Self {
+        // What are the possible values for a signal? [0, /inf)
+        // What are we mapping to? [0, 1]
+        // Use a shifted sigmoid to represent this
         Color::Rgba {
             red: 1.0,
             green: 0.0,
             blue: 0.0,
-            alpha: (signal.0 * 3.0).clamp(0.0, 1.0),
+            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 1.0),
         }
     }
 }
