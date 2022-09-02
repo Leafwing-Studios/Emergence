@@ -1,12 +1,12 @@
 /// Take a linear combination of `x` and `y`, by the factor `c`.
 ///
 /// Formally: `linear_combination(x, y, c) = x * c + y * (1.0 - c)`.
-pub const fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
+pub fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
 // f(x) = x^k / (C + x^k)
-pub const fn sigmoid(
+pub fn sigmoid(
     x: f32,
     vertical_scale: f32,
     horizontal_scale: f32,
@@ -16,7 +16,7 @@ pub const fn sigmoid(
     vertical_scale / (1. + f32::exp((x - horizontal_offset) / horizontal_scale)) + vertical_offset
 }
 
-pub const fn ergonomic_sigmoid(
+pub fn ergonomic_sigmoid(
     x: f32,
     min: f32,
     max: f32,
