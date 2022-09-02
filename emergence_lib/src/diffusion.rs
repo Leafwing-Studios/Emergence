@@ -105,6 +105,7 @@ impl From<&Signal> for Color {
     }
 }
 
+// Color::WHITE cannot be used, as it has the RGB variant, not the RGBA variant
 const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 
 impl From<Signal> for TileColor {
