@@ -9,7 +9,7 @@ use crate::entity_map::EntityMap;
 
 /// Marker component for tiles that are not passable
 #[derive(Component)]
-struct Impassable;
+pub struct Impassable;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
