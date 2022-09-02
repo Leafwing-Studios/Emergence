@@ -1,0 +1,15 @@
+[package]
+name = "emergence_lib"
+version = "0.1.0"
+authors = ["Alice Cecile <alice.i.cecile@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.8"
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main"}
+bevy_pancam = "0.6"
+multimap = "0.8"
+auto_ops = "0.3"
+rand = "0.8"

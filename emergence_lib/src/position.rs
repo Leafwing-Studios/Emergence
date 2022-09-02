@@ -1,12 +1,13 @@
 use auto_ops::impl_op_ex;
 use bevy::prelude::*;
 use rand::distributions::{Distribution, Standard, Uniform};
-use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 use crate::config::MAP_SIZE;
-use crate::entity_map::EntityMap;
-use crate::organisms::Impassable;
+
+/// Marker component for tiles that are not passable
+#[derive(Component)]
+pub struct Impassable;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubePosition {
@@ -39,7 +40,7 @@ static NEIGHBORS: [Position; 6] = [
     Position { alpha: 0, beta: 1 },
 ];
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+#[derive(Component, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
 pub struct Position {
     pub alpha: isize,
     pub beta: isize,
@@ -58,83 +59,6 @@ impl Position {
 
     pub fn translate(self, direction: &HexDirection, distance: isize) -> Position {
         self + direction.offset() * distance
-    }
-}
-
-// Navigation methods
-impl Position {
-    pub fn find_adjacent(self, entity_map: &EntityMap) -> Vec<Entity> {
-        let mut adjacent: Vec<Entity> = Vec::new();
-
-        for i in self.neighbors() {
-            let entities = entity_map.mm.get_vec(&i);
-            if entities.is_some() {
-                adjacent.extend(entities.unwrap());
-            }
-        }
-
-        adjacent
-    }
-
-    pub fn neighbors(self) -> Vec<Position> {
-        NEIGHBORS
-            .iter()
-            .map(|&p| self + p)
-            .filter(|p| p.inbounds())
-            .collect()
-    }
-
-    pub fn neighbors_where(self, f: impl Fn(&Position) -> bool) -> Vec<Position> {
-        NEIGHBORS
-            .iter()
-            .map(|&p| self + p)
-            .filter(|p| p.inbounds() && f(p))
-            .collect()
-    }
-
-    pub fn passable_neighbors(
-        self,
-        entity_map: &EntityMap,
-        passable_query: &Query<&Impassable>,
-    ) -> Vec<Position> {
-        let mut passable_neighbors: Vec<Position> = Vec::new();
-
-        for n in self.neighbors() {
-            let adjacent_entities = entity_map.mm.get_vec(&n).unwrap();
-
-            let mut passable = true;
-            for e in adjacent_entities {
-                passable = match passable_query.get(*e) {
-                    Ok(_) => false,
-                    Err(_) => true,
-                };
-
-                // Short-circuit once we've found at least one impassable entity in the relevant tile
-                if !passable {
-                    break;
-                }
-            }
-
-            if passable {
-                passable_neighbors.push(n);
-            }
-        }
-
-        passable_neighbors
-    }
-
-    pub fn random_neighbor(self) -> Option<Position> {
-        self.neighbors().choose(&mut thread_rng()).copied()
-    }
-
-    pub fn random_passable_neighbor(
-        self,
-        entity_map: &EntityMap,
-        passable_query: &Query<&Impassable>,
-    ) -> Option<Position> {
-        self.passable_neighbors(entity_map, passable_query)
-            .choose(&mut thread_rng())
-            .copied()
     }
 }
 
