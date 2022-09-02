@@ -68,11 +68,13 @@ impl AlphaCompose for Color {
                     alpha: other_alpha,
                 },
             ) => {
-                let alpha = lin_comb(1.0, other_alpha, self_alpha);
+                let alpha = linear_combination(1.0, other_alpha, self_alpha);
                 Color::Rgba {
-                    red: lin_comb(self_red, other_red * other_alpha, self_alpha) / alpha,
-                    green: lin_comb(self_green, other_green * other_alpha, self_alpha) / alpha,
-                    blue: lin_comb(self_blue, other_blue * other_alpha, self_alpha) / alpha,
+                    red: linear_combination(self_red, other_red * other_alpha, self_alpha) / alpha,
+                    green: linear_combination(self_green, other_green * other_alpha, self_alpha)
+                        / alpha,
+                    blue: linear_combination(self_blue, other_blue * other_alpha, self_alpha)
+                        / alpha,
                     alpha,
                 }
             }
@@ -83,8 +85,8 @@ impl AlphaCompose for Color {
 
 /// Take a linear combination of `x` and `y`, by the factor `c`.
 ///
-/// Formally: `lin_comb(x, y, c) = x * c + y * (1.0 - c)`.
-fn lin_comb(x: f32, y: f32, c: f32) -> f32 {
+/// Formally: `linear_combination(x, y, c) = x * c + y * (1.0 - c)`.
+fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
