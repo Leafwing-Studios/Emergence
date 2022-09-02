@@ -44,27 +44,39 @@ impl Signal {
     }
 }
 
-#[derive(Copy, Clone)]
-struct Rgba {
-    red: f32,
-    green: f32,
-    blue: f32,
-    alpha: f32,
+trait AlphaCompose {
+    fn over(&self, other: &Self) -> Self;
 }
 
-impl From<Rgba> for Color {
-    fn from(rgba: Rgba) -> Self {
-        let Rgba {
-            red,
-            green,
-            blue,
-            alpha,
-        } = rgba;
-        Color::Rgba {
-            red,
-            green,
-            blue,
-            alpha,
+impl AlphaCompose for Color {
+    /// Porter and Duff ["over" operation](https://en.wikipedia.org/wiki/Alpha_compositing) for blending two colours.
+    ///
+    /// `self` is blended over `other`.
+    fn over(&self, other: &Color) -> Color {
+        match (*self, *other) {
+            (
+                Color::Rgba {
+                    red: self_red,
+                    green: self_green,
+                    blue: self_blue,
+                    alpha: self_alpha,
+                },
+                Color::Rgba {
+                    red: other_red,
+                    green: other_green,
+                    blue: other_blue,
+                    alpha: other_alpha,
+                },
+            ) => {
+                let alpha = lin_comb(1.0, other_alpha, self_alpha);
+                Color::Rgba {
+                    red: lin_comb(self_red, other_red * other_alpha, self_alpha) / alpha,
+                    green: lin_comb(self_green, other_green * other_alpha, self_alpha) / alpha,
+                    blue: lin_comb(self_blue, other_blue * other_alpha, self_alpha) / alpha,
+                    alpha,
+                }
+            }
+            _ => unimplemented!(),
         }
     }
 }
@@ -76,33 +88,9 @@ fn lin_comb(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
-impl Rgba {
-    /// Porter and Duff ["over" operation](https://en.wikipedia.org/wiki/Alpha_compositing) for blending two colours.
-    ///
-    /// `self` is blended over `other`.
-    fn over(&self, other: Rgba) -> Rgba {
-        let alpha = lin_comb(1.0, other.alpha, self.alpha);
-        Rgba {
-            red: lin_comb(self.red, other.red * other.alpha, self.alpha) / alpha,
-            green: lin_comb(self.green, other.green * other.alpha, self.alpha) / alpha,
-            blue: lin_comb(self.blue, other.blue * other.alpha, self.alpha) / alpha,
-            alpha,
-        }
-    }
-
-    const fn new(red: f32, green: f32, blue: f32, alpha: f32) -> Rgba {
-        Rgba {
-            red,
-            green,
-            blue,
-            alpha,
-        }
-    }
-}
-
-impl From<Signal> for Rgba {
+impl From<Signal> for Color {
     fn from(signal: Signal) -> Self {
-        Rgba {
+        Color::Rgba {
             red: 1.0,
             green: 0.0,
             blue: 0.0,
@@ -111,25 +99,25 @@ impl From<Signal> for Rgba {
     }
 }
 
-impl From<&Signal> for Rgba {
+impl From<&Signal> for Color {
     fn from(signal: &Signal) -> Self {
         (*signal).into()
     }
 }
 
-const WHITE: Rgba = Rgba::new(1.0, 1.0, 1.0, 1.0);
+const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 
 impl From<Signal> for TileColor {
     fn from(signal: Signal) -> Self {
-        let signal_color: Rgba = signal.into();
-        TileColor(signal_color.over(WHITE).into())
+        let signal_color: Color = signal.into();
+        TileColor(signal_color.over(&RGBA_WHITE).into())
     }
 }
 
 impl From<&Signal> for TileColor {
     fn from(signal: &Signal) -> Self {
-        let signal_color: Rgba = signal.into();
-        TileColor(signal_color.over(WHITE).into())
+        let signal_color: Color = signal.into();
+        TileColor(signal_color.over(&RGBA_WHITE).into())
     }
 }
 
