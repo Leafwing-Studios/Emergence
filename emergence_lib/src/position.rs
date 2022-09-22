@@ -95,7 +95,7 @@ impl Position {
 
             current_direction = current_direction.rotate(1);
         }
-        return positions;
+        positions
     }
 
     pub fn hexagon(self, radius: isize) -> Vec<Position> {
@@ -105,7 +105,7 @@ impl Position {
             positions.extend(Position::ring(self, i));
         }
 
-        return positions;
+        positions
     }
 }
 
@@ -193,7 +193,7 @@ impl HexDirection {
         }
     }
 
-    fn to_int(self) -> u8 {
+    fn to_int(&self) -> u8 {
         use HexDirection::*;
         match self {
             East => 0,

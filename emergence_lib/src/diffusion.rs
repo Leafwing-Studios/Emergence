@@ -6,8 +6,8 @@ use crate::utils::{ergonomic_sigmoid, linear_combination};
 
 pub struct DiffusionPlugin;
 
-const PROPAGATE: &'static str = "propagate_signal";
-const UPDATE: &'static str = "update_signal";
+const PROPAGATE: &str = "propagate_signal";
+const UPDATE: &str = "update_signal";
 
 impl Plugin for DiffusionPlugin {
     fn build(&self, app: &mut App) {
@@ -112,14 +112,14 @@ const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 impl From<Signal> for TileColor {
     fn from(signal: Signal) -> Self {
         let signal_color: Color = signal.into();
-        TileColor(signal_color.over(&RGBA_WHITE).into())
+        TileColor(signal_color.over(&RGBA_WHITE))
     }
 }
 
 impl From<&Signal> for TileColor {
     fn from(signal: &Signal) -> Self {
         let signal_color: Color = signal.into();
-        TileColor(signal_color.over(&RGBA_WHITE).into())
+        TileColor(signal_color.over(&RGBA_WHITE))
     }
 }
 

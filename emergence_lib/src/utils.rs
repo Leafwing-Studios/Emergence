@@ -34,8 +34,8 @@ pub fn ergonomic_sigmoid(
     // -x = ln(1/y - 1)
     // x = -ln(1/y - 1)
     // Substituting y = 0.01 gives the answer
-    const BASE_FIRST_PERCENTILE: f32 = -4.595120;
-    const BASE_LAST_PERCENTILE: f32 = 4.595120;
+    const BASE_FIRST_PERCENTILE: f32 = -4.595_12;
+    const BASE_LAST_PERCENTILE: f32 = 4.595_12;
 
     const BASE_DELTA_X: f32 = BASE_LAST_PERCENTILE - BASE_FIRST_PERCENTILE;
     let horizontal_scale = delta_x / BASE_DELTA_X;
