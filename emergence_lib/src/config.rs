@@ -4,8 +4,8 @@ pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
 pub const TILE_PNG: &'static str = "tile2.png";
-pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 52.0, y: 60.0 };
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 52.0, y: 60.0 };
+pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 49.0, y: 57.0 };
+pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 49.0, y: 57.0 };
 
 // pub const TILE_PNG: &'static str = "tile.png";
 // pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 59.0, y: 59.0 };
