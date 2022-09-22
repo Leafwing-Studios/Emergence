@@ -1,4 +1,4 @@
-//! Modified from: https://github.com/bevyengine/bevy/tree/main/tools/ci/src
+//! Modified from [Bevy's CI runner](https://github.com/bevyengine/bevy/tree/main/tools/ci/src)
 
 use xshell::{cmd, Shell};
 
