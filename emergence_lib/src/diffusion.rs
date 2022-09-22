@@ -14,6 +14,7 @@ impl Plugin for DiffusionPlugin {
         app.add_stage_after(PreUpdate, PROPAGATE, SystemStage::parallel())
             .add_stage_after(PROPAGATE, UPDATE, SystemStage::parallel())
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_signal)
+            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_deltas)
             .add_system_to_stage(PROPAGATE, propagate_signal)
             .add_system_to_stage(UPDATE, update_signal);
     }
@@ -138,13 +139,21 @@ fn initialize_signal(
                         Signal(0.0)
                     };
                     let tile_color: TileColor = signal.into();
-                    commands
-                        .entity(tile_id)
-                        .insert(signal)
-                        .insert(tile_color)
-                        .insert(IncomingSignal::default())
-                        .insert(OutgoingSignal::default());
+                    commands.entity(tile_id).insert(signal).insert(tile_color);
                 }
+            }
+        }
+    }
+}
+
+fn initialize_deltas(mut commands: Commands, tilemap_storage_q: Query<&TileStorage>) {
+    for tilemap_storage in tilemap_storage_q.iter() {
+        for &tile_id in tilemap_storage.iter() {
+            if let Some(tile_id) = tile_id {
+                commands
+                    .entity(tile_id)
+                    .insert(IncomingSignal::default())
+                    .insert(OutgoingSignal::default());
             }
         }
     }
