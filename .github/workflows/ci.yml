@@ -115,7 +115,7 @@ jobs:
       - name: Installs cargo-deadlinks
         run: cargo install --force cargo-deadlinks
       - name: Checks dead links
-        run: cargo deadlinks --dir target/doc/bevy
+        run: cargo deadlinks --dir target/doc
 
   check-unused-dependencies:
     runs-on: ubuntu-latest
