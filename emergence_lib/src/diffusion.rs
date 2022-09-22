@@ -20,10 +20,10 @@ impl Plugin for DiffusionPlugin {
     }
 }
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct Signal(f32);
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct IncomingSignal(f32);
 
 impl IncomingSignal {
@@ -32,7 +32,7 @@ impl IncomingSignal {
     }
 }
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct OutgoingSignal(f32);
 
 impl OutgoingSignal {
@@ -88,14 +88,14 @@ impl AlphaCompose for Color {
 
 impl From<Signal> for Color {
     fn from(signal: Signal) -> Self {
-        // What are the possible values for a signal? [0, /inf)
+        // What are the possible values for a signal? [0, \infty)
         // What are we mapping to? [0, 1]
         // Use a shifted sigmoid to represent this
         Color::Rgba {
             red: 1.0,
             green: 0.0,
             blue: 0.0,
-            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 1.0),
+            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 0.3),
         }
     }
 }
@@ -192,14 +192,15 @@ fn propagate_signal(
 fn update_signal(
     mut commands: Commands,
     tilemap_q: Query<&TileStorage>,
-    mut tile_q: Query<(&mut Signal, &IncomingSignal, &OutgoingSignal)>,
+    mut tile_q: Query<(&mut Signal, &IncomingSignal, &OutgoingSignal, &TilePos)>,
 ) {
     for tile_storage in tilemap_q.iter() {
         for &tile_id in tile_storage.iter() {
             if let Some(tile_id) = tile_id {
-                if let Ok((mut signal, incoming, outgoing)) = tile_q.get_mut(tile_id) {
+                if let Ok((mut signal, incoming, outgoing, tile_pos)) = tile_q.get_mut(tile_id) {
                     signal.apply(incoming, outgoing);
                     let tile_color: TileColor = (*signal).into();
+                    info!("entity: {tile_id:?}, tile_pos: {tile_pos:?}, signal: {signal:?}, color: {tile_color:?}");
                     commands
                         .entity(tile_id)
                         .insert(tile_color)
