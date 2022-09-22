@@ -1,4 +1,4 @@
-//! Modified from: https://github.com/bevyengine/bevy/tree/main/tools/ci/src
+//! Modified from [Bevy's CI runner](https://github.com/bevyengine/bevy/tree/main/tools/ci/src)
 
 use xshell::{cmd, Shell};
 
@@ -32,10 +32,7 @@ fn main() {
         ("lints", Check::FORMAT | Check::CLIPPY),
         ("test", Check::TEST),
         ("doc", Check::DOC_TEST | Check::DOC_CHECK),
-        (
-            "compile",
-            Check::COMPILE_CHECK,
-        ),
+        ("compile", Check::COMPILE_CHECK),
         ("format", Check::FORMAT),
         ("clippy", Check::CLIPPY),
         ("doc-check", Check::DOC_CHECK),
@@ -72,10 +69,7 @@ fn main() {
         // See if clippy has any complaints.
         // --all-targets --all-features was removed because Emergence currently has no special
         // targets or features; please add them back as necessary
-        cmd!(
-            sh,
-            "cargo clippy --workspace -- {CLIPPY_FLAGS...}"
-        )
+        cmd!(sh, "cargo clippy --workspace -- {CLIPPY_FLAGS...}")
             .run()
             .expect("Please fix clippy errors in output above.");
     }
@@ -101,8 +95,8 @@ fn main() {
             sh,
             "cargo doc --workspace --all-features --no-deps --document-private-items"
         )
-            .run()
-            .expect("Please fix doc warnings in output above.");
+        .run()
+        .expect("Please fix doc warnings in output above.");
     }
 
     if what_to_run.contains(Check::COMPILE_CHECK) {

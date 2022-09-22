@@ -5,7 +5,6 @@ pub fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
-// f(x) = x^k / (C + x^k)
 pub fn sigmoid(
     x: f32,
     vertical_scale: f32,
@@ -13,7 +12,8 @@ pub fn sigmoid(
     vertical_offset: f32,
     horizontal_offset: f32,
 ) -> f32 {
-    vertical_scale / (1. + f32::exp((x - horizontal_offset) / horizontal_scale)) + vertical_offset
+    vertical_scale / (1. + f32::exp(-1.0 * (x - horizontal_offset) / horizontal_scale))
+        + vertical_offset
 }
 
 pub fn ergonomic_sigmoid(
@@ -34,8 +34,8 @@ pub fn ergonomic_sigmoid(
     // -x = ln(1/y - 1)
     // x = -ln(1/y - 1)
     // Substituting y = 0.01 gives the answer
-    const BASE_FIRST_PERCENTILE: f32 = -4.595120;
-    const BASE_LAST_PERCENTILE: f32 = 4.595120;
+    const BASE_FIRST_PERCENTILE: f32 = -4.595_12;
+    const BASE_LAST_PERCENTILE: f32 = 4.595_12;
 
     const BASE_DELTA_X: f32 = BASE_LAST_PERCENTILE - BASE_FIRST_PERCENTILE;
     let horizontal_scale = delta_x / BASE_DELTA_X;

@@ -66,7 +66,7 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
             storage: tilemap_storage,
             texture: TilemapTexture(texture_handle),
             tile_size,
-            transform: get_centered_transform_2d(&tilemap_size, &tile_size, 0.0),
+            transform: get_tilemap_center_transform(&tilemap_size, &tile_size, 0.0),
             map_type: TilemapType::Hexagon(HexCoordSystem::RowEven),
             ..Default::default()
         })
@@ -76,32 +76,23 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn spawn_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    tilemap_q: Query<
-        (
-            &Transform,
-            &TilemapType,
-            &TilemapGridSize,
-            &TilemapTileSize,
-            &TileStorage,
-        ),
-        With<MainTilemap>,
-    >,
+    tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize, &TileStorage), With<MainTilemap>>,
     tile_q: Query<&mut TilePos>,
 ) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font,
-        font_size: 10.0,
-        color: Color::RED,
+        font_size: 15.0,
+        color: Color::BLACK,
     };
     let text_alignment = TextAlignment::CENTER;
-    for (tilemap_transform, map_type, grid_size, tile_size, tilemap_storage) in tilemap_q.iter() {
-        let tile_size: Vec2 = (*tile_size).into();
+    for (tilemap_transform, map_type, grid_size, tilemap_storage) in tilemap_q.iter() {
         for tile_entity in tilemap_storage.iter() {
             let tile_pos = tile_q.get(tile_entity.unwrap()).unwrap();
-            let tile_pos_in_px = get_tile_pos_in_world_space(tile_pos, grid_size, map_type);
-            let mut transform = tilemap_transform.clone();
-            transform.translation += (tile_pos_in_px + 0.5 * tile_size).extend(2.0);
+            let tile_pos_transform = Transform::from_translation(
+                tile_pos.center_in_world(grid_size, map_type).extend(1.0),
+            );
+            let transform = *tilemap_transform * tile_pos_transform;
             commands.spawn_bundle(Text2dBundle {
                 text: Text::from_section(
                     format!("{}, {}", tile_pos.x, tile_pos.y),

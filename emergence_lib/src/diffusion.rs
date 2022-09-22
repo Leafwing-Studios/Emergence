@@ -6,23 +6,24 @@ use crate::utils::{ergonomic_sigmoid, linear_combination};
 
 pub struct DiffusionPlugin;
 
-const PROPAGATE: &'static str = "propagate_signal";
-const UPDATE: &'static str = "update_signal";
+const PROPAGATE: &str = "propagate_signal";
+const UPDATE: &str = "update_signal";
 
 impl Plugin for DiffusionPlugin {
     fn build(&self, app: &mut App) {
         app.add_stage_after(PreUpdate, PROPAGATE, SystemStage::parallel())
             .add_stage_after(PROPAGATE, UPDATE, SystemStage::parallel())
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_signal)
+            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_deltas)
             .add_system_to_stage(PROPAGATE, propagate_signal)
             .add_system_to_stage(UPDATE, update_signal);
     }
 }
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct Signal(f32);
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct IncomingSignal(f32);
 
 impl IncomingSignal {
@@ -31,7 +32,7 @@ impl IncomingSignal {
     }
 }
 
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone, Default, Debug)]
 struct OutgoingSignal(f32);
 
 impl OutgoingSignal {
@@ -87,14 +88,14 @@ impl AlphaCompose for Color {
 
 impl From<Signal> for Color {
     fn from(signal: Signal) -> Self {
-        // What are the possible values for a signal? [0, /inf)
+        // What are the possible values for a signal? [0, \infty)
         // What are we mapping to? [0, 1]
         // Use a shifted sigmoid to represent this
         Color::Rgba {
             red: 1.0,
             green: 0.0,
             blue: 0.0,
-            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 1.0),
+            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 0.3),
         }
     }
 }
@@ -111,14 +112,14 @@ const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 impl From<Signal> for TileColor {
     fn from(signal: Signal) -> Self {
         let signal_color: Color = signal.into();
-        TileColor(signal_color.over(&RGBA_WHITE).into())
+        TileColor(signal_color.over(&RGBA_WHITE))
     }
 }
 
 impl From<&Signal> for TileColor {
     fn from(signal: &Signal) -> Self {
         let signal_color: Color = signal.into();
-        TileColor(signal_color.over(&RGBA_WHITE).into())
+        TileColor(signal_color.over(&RGBA_WHITE))
     }
 }
 
@@ -138,13 +139,21 @@ fn initialize_signal(
                         Signal(0.0)
                     };
                     let tile_color: TileColor = signal.into();
-                    commands
-                        .entity(tile_id)
-                        .insert(signal)
-                        .insert(tile_color)
-                        .insert(IncomingSignal::default())
-                        .insert(OutgoingSignal::default());
+                    commands.entity(tile_id).insert(signal).insert(tile_color);
                 }
+            }
+        }
+    }
+}
+
+fn initialize_deltas(mut commands: Commands, tilemap_storage_q: Query<&TileStorage>) {
+    for tilemap_storage in tilemap_storage_q.iter() {
+        for &tile_id in tilemap_storage.iter() {
+            if let Some(tile_id) = tile_id {
+                commands
+                    .entity(tile_id)
+                    .insert(IncomingSignal::default())
+                    .insert(OutgoingSignal::default());
             }
         }
     }
