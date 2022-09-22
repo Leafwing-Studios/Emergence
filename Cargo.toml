@@ -4,4 +4,5 @@ resolver="2"
 members = [
     "emergence_game",
     "emergence_lib",
+    "tools/ci"
 ]
