@@ -1,4 +1,3 @@
-use bevy::app::CoreStage::PreUpdate;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
@@ -6,17 +5,12 @@ use crate::utils::{ergonomic_sigmoid, linear_combination};
 
 pub struct DiffusionPlugin;
 
-const PROPAGATE: &str = "propagate_signal";
-const UPDATE: &str = "update_signal";
-
 impl Plugin for DiffusionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_stage_after(PreUpdate, PROPAGATE, SystemStage::parallel())
-            .add_stage_after(PROPAGATE, UPDATE, SystemStage::parallel())
-            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_signal)
+        app.add_startup_system_to_stage(StartupStage::PostStartup, initialize_signal)
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_deltas)
-            .add_system_to_stage(PROPAGATE, propagate_signal)
-            .add_system_to_stage(UPDATE, update_signal);
+            .add_system(propagate_signal)
+            .add_system(update_signal.after(propagate_signal));
     }
 }
 
@@ -162,51 +156,37 @@ fn initialize_deltas(mut commands: Commands, tilemap_storage_q: Query<&TileStora
 pub const OUTGOING_RATE: f32 = 0.001;
 
 fn propagate_signal(
-    tilemap_q: Query<(&TileStorage, &TilemapType)>,
+    tilemap_q: Query<(&TilemapType, &TileStorage)>,
     mut tile_outgoing_q: Query<(&TilePos, &Signal, &mut OutgoingSignal)>,
     mut neighbor_incoming_q: Query<&mut IncomingSignal>,
 ) {
-    for (tile_storage, map_type) in tilemap_q.iter() {
-        for &tile_id in tile_storage.iter() {
-            if let Some(tile_id) = tile_id {
-                if let Ok((tile_pos, this_signal, mut this_outgoing)) =
-                    tile_outgoing_q.get_mut(tile_id)
-                {
-                    let neighbors = get_tile_neighbors(tile_pos, tile_storage, map_type);
-                    let mut total_outgoing = 0.0;
-                    for neighbor_id in neighbors.into_iter() {
-                        if let Ok(mut neighbor_incoming) = neighbor_incoming_q.get_mut(neighbor_id)
-                        {
-                            let outgoing = OUTGOING_RATE * this_signal.0;
-                            neighbor_incoming.add(outgoing);
-                            total_outgoing += outgoing;
-                        }
-                    }
-                    this_outgoing.add(total_outgoing);
+    for (map_type, tile_storage) in tilemap_q.iter() {
+        for (tile_pos, this_signal, mut this_outgoing) in tile_outgoing_q.iter_mut() {
+            let neighbors = get_tile_neighbors(tile_pos, tile_storage, map_type);
+            let mut total_outgoing = 0.0;
+            for neighbor_id in neighbors.into_iter() {
+                if let Ok(mut neighbor_incoming) = neighbor_incoming_q.get_mut(neighbor_id) {
+                    let outgoing = OUTGOING_RATE * this_signal.0;
+                    neighbor_incoming.add(outgoing);
+                    total_outgoing += outgoing;
                 }
             }
+            this_outgoing.add(total_outgoing);
         }
     }
 }
 
 fn update_signal(
     mut commands: Commands,
-    tilemap_q: Query<&TileStorage>,
-    mut tile_q: Query<(&mut Signal, &IncomingSignal, &OutgoingSignal)>,
+    mut tile_q: Query<(Entity, &mut Signal, &IncomingSignal, &OutgoingSignal)>,
 ) {
-    for tile_storage in tilemap_q.iter() {
-        for &tile_id in tile_storage.iter() {
-            if let Some(tile_id) = tile_id {
-                if let Ok((mut signal, incoming, outgoing)) = tile_q.get_mut(tile_id) {
-                    signal.apply(incoming, outgoing);
-                    let tile_color: TileColor = (*signal).into();
-                    commands
-                        .entity(tile_id)
-                        .insert(tile_color)
-                        .insert(IncomingSignal::default())
-                        .insert(OutgoingSignal::default());
-                }
-            }
-        }
+    for (tile_entity, mut signal, incoming, outgoing) in tile_q.iter_mut() {
+        signal.apply(incoming, outgoing);
+        let tile_color: TileColor = (*signal).into();
+        commands
+            .entity(tile_entity)
+            .insert(tile_color)
+            .insert(IncomingSignal::default())
+            .insert(OutgoingSignal::default());
     }
 }
