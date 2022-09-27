@@ -66,7 +66,7 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
             storage: tilemap_storage,
             texture: TilemapTexture(texture_handle),
             tile_size,
-            transform: get_tilemap_center_transform(&tilemap_size, &tile_size, 0.0),
+            transform: get_tilemap_center_transform(&tilemap_size, &grid_size, 0.0),
             map_type: TilemapType::Hexagon(HexCoordSystem::RowEven),
             ..Default::default()
         })
