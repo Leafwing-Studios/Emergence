@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.8"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "hex-functionality"}
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "hex-generation"}
 bevy_pancam = "0.6"
 auto_ops = "0.3"
 rand = "0.8"
