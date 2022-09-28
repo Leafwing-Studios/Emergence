@@ -1,3 +1,4 @@
+use crate::config::MAP_CENTER;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
@@ -89,7 +90,7 @@ impl From<Signal> for Color {
             red: 1.0,
             green: 0.0,
             blue: 0.0,
-            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 0.3),
+            alpha: ergonomic_sigmoid(signal.0, 0.0, 1.0, 0.0, 0.005),
         }
     }
 }
@@ -126,8 +127,8 @@ fn initialize_signal(
         for &tile_id in tilemap_storage.iter() {
             if let Some(tile_id) = tile_id {
                 if let Ok(tile_pos) = tile_pos_q.get(tile_id) {
-                    // Initialize signal at the origin tile for testing purposes
-                    let signal = if tile_pos.x == 0 && tile_pos.y == 0 {
+                    // Initialize signal at the center tile for testing purposes
+                    let signal = if tile_pos.x == MAP_CENTER.x && tile_pos.y == MAP_CENTER.y {
                         Signal(1.0)
                     } else {
                         Signal(0.0)
@@ -153,7 +154,7 @@ fn initialize_deltas(mut commands: Commands, tilemap_storage_q: Query<&TileStora
     }
 }
 
-pub const OUTGOING_RATE: f32 = 0.001;
+pub const OUTGOING_RATE: f32 = 0.005;
 
 fn propagate_signal(
     tilemap_q: Query<(&TilemapType, &TileStorage)>,
