@@ -32,8 +32,6 @@ fn spawn_camera(mut commands: Commands) {
 pub struct MainTilemap;
 
 fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // let tile_size = TilemapTileSize { x: 42.0, y: 48.0 };
-    // let grid_size = TilemapGridSize { x: 42.0, y: 48.0 };
     let tile_size = TERRAIN_TILE_SIZE;
     let grid_size = TERRAIN_GRID_SIZE;
     info!("Loading textures.");
