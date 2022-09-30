@@ -1,4 +1,6 @@
-use crate::config::{GRID_SIZE, TILE_PNG, TILE_SIZE};
+use crate::config::{
+    GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TILEMAP_SIZE, TILE_PNG, TILE_SIZE,
+};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapType;
 use bevy_ecs_tilemap::prelude::*;
@@ -30,28 +32,24 @@ fn spawn_camera(mut commands: Commands) {
 #[derive(Component)]
 pub struct MainTilemap;
 
-const TILEMAP_SIZE: TilemapSize = TilemapSize { x: 2, y: 2 };
-
 fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     // let tile_size = TilemapTileSize { x: 42.0, y: 48.0 };
     // let grid_size = TilemapGridSize { x: 42.0, y: 48.0 };
     let tile_size = TILE_SIZE;
     let grid_size = GRID_SIZE;
-    let tilemap_size = TILEMAP_SIZE;
     info!("Loading texture");
     let texture_handle = asset_server.load(TILE_PNG);
 
     let tilemap_entity = commands.spawn().id();
-    let mut tilemap_storage = TileStorage::empty(tilemap_size);
+    let mut tilemap_storage = TileStorage::empty(TILEMAP_SIZE);
 
     info!("Populating tilemap storage");
-    fill_tilemap_rect(
+    fill_tilemap_hexagon(
         // The texture to fill the region with
         TileTexture(0),
-        // Position of the anchor tile defining the region
-        TilePos { x: 0, y: 0 },
-        // Size of the region to fill
-        tilemap_size,
+        MAP_CENTER,
+        MAP_RADIUS,
+        MAP_COORD_SYSTEM,
         TilemapId(tilemap_entity),
         &mut commands,
         &mut tilemap_storage,
@@ -62,12 +60,12 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         .entity(tilemap_entity)
         .insert_bundle(TilemapBundle {
             grid_size,
-            size: tilemap_size,
+            size: TILEMAP_SIZE,
             storage: tilemap_storage,
             texture: TilemapTexture(texture_handle),
             tile_size,
-            transform: get_tilemap_center_transform(&tilemap_size, &tile_size, 0.0),
-            map_type: TilemapType::Hexagon(HexCoordSystem::RowEven),
+            transform: get_tilemap_center_transform(&TILEMAP_SIZE, &grid_size, 0.0),
+            map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })
         .insert(MainTilemap);
@@ -87,21 +85,22 @@ fn spawn_labels(
     };
     let text_alignment = TextAlignment::CENTER;
     for (tilemap_transform, map_type, grid_size, tilemap_storage) in tilemap_q.iter() {
-        for tile_entity in tilemap_storage.iter() {
-            let tile_pos = tile_q.get(tile_entity.unwrap()).unwrap();
-            let tile_pos_transform = Transform::from_translation(
-                tile_pos.center_in_world(grid_size, map_type).extend(1.0),
-            );
-            let transform = *tilemap_transform * tile_pos_transform;
-            commands.spawn_bundle(Text2dBundle {
-                text: Text::from_section(
-                    format!("{}, {}", tile_pos.x, tile_pos.y),
-                    text_style.clone(),
-                )
-                .with_alignment(text_alignment),
-                transform,
-                ..default()
-            });
+        for tile_entity in tilemap_storage.iter().filter_map(|e| e.as_ref()) {
+            if let Ok(tile_pos) = tile_q.get(*tile_entity) {
+                let tile_pos_transform = Transform::from_translation(
+                    tile_pos.center_in_world(grid_size, map_type).extend(1.0),
+                );
+                let transform = *tilemap_transform * tile_pos_transform;
+                commands.spawn_bundle(Text2dBundle {
+                    text: Text::from_section(
+                        format!("{}, {}", tile_pos.x, tile_pos.y),
+                        text_style.clone(),
+                    )
+                    .with_alignment(text_alignment),
+                    transform,
+                    ..default()
+                });
+            }
         }
     }
 }

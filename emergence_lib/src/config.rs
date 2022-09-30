@@ -1,11 +1,12 @@
-use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
+use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapSize, TilemapTileSize};
+use bevy_ecs_tilemap::tiles::TilePos;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
 pub const TILE_PNG: &str = "tile2.png";
-pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 49.0, y: 57.0 };
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 49.0, y: 57.0 };
+pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 // pub const TILE_PNG: &'static str = "tile.png";
 // pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 59.0, y: 59.0 };
@@ -13,8 +14,17 @@ pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 49.0, y: 57.0 };
 
 pub const TILE_BUFFER: f32 = 0.0;
 
-pub const MAP_SIZE: isize = 10;
-pub const MAP_DIAMETER: usize = (2 * MAP_SIZE + 1) as usize;
+pub const MAP_RADIUS: u32 = 10;
+pub const MAP_DIAMETER: u32 = 2 * MAP_RADIUS + 1;
+pub const TILEMAP_SIZE: TilemapSize = TilemapSize {
+    x: MAP_DIAMETER,
+    y: MAP_DIAMETER,
+};
+pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
+pub const MAP_CENTER: TilePos = TilePos {
+    x: MAP_RADIUS + 1,
+    y: MAP_RADIUS + 1,
+};
 
 pub const N_ANT: usize = 5;
 pub const N_PLANT: usize = 10;
