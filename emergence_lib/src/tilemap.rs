@@ -1,6 +1,5 @@
-use crate::config::{
-    GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TILEMAP_SIZE, TILE_PNG, TILE_SIZE,
-};
+use crate::config::{MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_GRID_SIZE, TERRAIN_TILE_SIZE};
+use crate::terrain::{generate_simple_random_terrain, TERRAIN_CHOICES};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapType;
 use bevy_ecs_tilemap::prelude::*;
@@ -35,36 +34,32 @@ pub struct MainTilemap;
 fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     // let tile_size = TilemapTileSize { x: 42.0, y: 48.0 };
     // let grid_size = TilemapGridSize { x: 42.0, y: 48.0 };
-    let tile_size = TILE_SIZE;
-    let grid_size = GRID_SIZE;
-    info!("Loading texture");
-    let texture_handle = asset_server.load(TILE_PNG);
+    let tile_size = TERRAIN_TILE_SIZE;
+    let grid_size = TERRAIN_GRID_SIZE;
+    info!("Loading textures.");
+    let texture = TilemapTexture::Vector(
+        TERRAIN_CHOICES
+            .iter()
+            .map(|t| asset_server.load(t.tile_texture_path()))
+            .collect(),
+    );
 
     let tilemap_entity = commands.spawn().id();
-    let mut tilemap_storage = TileStorage::empty(TILEMAP_SIZE);
+    let mut tile_storage = TileStorage::empty(MAP_SIZE);
 
-    info!("Populating tilemap storage");
-    fill_tilemap_hexagon(
-        // The texture to fill the region with
-        TileTexture(0),
-        MAP_CENTER,
-        MAP_RADIUS,
-        MAP_COORD_SYSTEM,
-        TilemapId(tilemap_entity),
-        &mut commands,
-        &mut tilemap_storage,
-    );
+    info!("Generating simple random terrain");
+    generate_simple_random_terrain(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
 
     info!("Inserting TilemapBundle");
     commands
         .entity(tilemap_entity)
         .insert_bundle(TilemapBundle {
             grid_size,
-            size: TILEMAP_SIZE,
-            storage: tilemap_storage,
-            texture: TilemapTexture(texture_handle),
+            size: MAP_SIZE,
+            storage: tile_storage,
+            texture,
             tile_size,
-            transform: get_tilemap_center_transform(&TILEMAP_SIZE, &grid_size, 0.0),
+            transform: get_tilemap_center_transform(&MAP_SIZE, &grid_size, 0.0),
             map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })

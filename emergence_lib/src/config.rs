@@ -4,9 +4,9 @@ use bevy_ecs_tilemap::tiles::TilePos;
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
-pub const TILE_PNG: &str = "tile2.png";
-pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
+pub const TERRAIN_PNGS: [&str; 3] = ["tile.png", "tile-impassable.png", "tile-higher.png"];
+pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+pub const TERRAIN_GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 // pub const TILE_PNG: &'static str = "tile.png";
 // pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 59.0, y: 59.0 };
@@ -16,7 +16,7 @@ pub const TILE_BUFFER: f32 = 0.0;
 
 pub const MAP_RADIUS: u32 = 10;
 pub const MAP_DIAMETER: u32 = 2 * MAP_RADIUS + 1;
-pub const TILEMAP_SIZE: TilemapSize = TilemapSize {
+pub const MAP_SIZE: TilemapSize = TilemapSize {
     x: MAP_DIAMETER,
     y: MAP_DIAMETER,
 };
