@@ -1,6 +1,6 @@
 # *Emergence*
 
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/bevyengine/bevy#license)
+![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 
 An organic factory-builder about a new kind of civilization.
 
