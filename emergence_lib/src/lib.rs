@@ -5,5 +5,6 @@ pub mod position;
 pub mod signals;
 pub mod structures;
 pub mod terrain;
+pub mod texture;
 pub mod tilemap;
 pub mod utils;

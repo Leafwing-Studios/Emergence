@@ -1,5 +1,7 @@
-use crate::config::{MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_GRID_SIZE, TERRAIN_TILE_SIZE};
-use crate::terrain::{generate_simple_random_terrain, TERRAIN_CHOICES};
+use crate::config::{
+    MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_GRID_SIZE, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
+};
+use crate::terrain::generate_simple_random_terrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapType;
 use bevy_ecs_tilemap::prelude::*;
@@ -36,9 +38,9 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     let grid_size = TERRAIN_GRID_SIZE;
     info!("Loading textures.");
     let texture = TilemapTexture::Vector(
-        TERRAIN_CHOICES
-            .iter()
-            .map(|t| asset_server.load(t.tile_texture_path()))
+        (&TERRAIN_TILE_IMAP)
+            .values()
+            .map(|&p| asset_server.load(p))
             .collect(),
     );
 

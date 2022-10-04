@@ -1,14 +1,32 @@
+use crate::organisms::OrganismType;
+use crate::terrain::TerrainType;
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapSize, TilemapTileSize};
 use bevy_ecs_tilemap::tiles::TilePos;
+use indexmap::{indexmap, IndexMap};
+use once_cell::sync::Lazy;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
-pub const TERRAIN_PLAIN_PNG: &str = "tile.png";
-pub const TERRAIN_IMPASSABLE_PNG: &str = "tile-impassable.png";
-pub const TERRAIN_HIGH_PNG: &str = "tile-higher.png";
+pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
+    indexmap! {
+        TerrainType::Plain => "tile.png",
+        TerrainType::High => "tile-high.png",
+        TerrainType::Impassable => "tile-impassable.png",
+    }
+});
 pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
 pub const TERRAIN_GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
+
+pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
+    indexmap! {
+        OrganismType::Ant => "tile-ant.png",
+        OrganismType::Fungus => "tile-fungus.png",
+        OrganismType::Plant => "tile-plant.png",
+    }
+});
+pub const ORGANISM_TILE_SIZE: TilemapTileSize = TERRAIN_TILE_SIZE;
+pub const ORGANISM_GRID_SIZE: TilemapGridSize = TERRAIN_GRID_SIZE;
 
 // pub const TILE_PNG: &'static str = "tile.png";
 // pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 59.0, y: 59.0 };

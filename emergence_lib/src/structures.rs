@@ -1,8 +1,9 @@
+use crate::organisms::{Composition, OrganismBundle, OrganismType};
+use crate::signals::SignalId;
+use crate::texture::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::prelude::TileTexture;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
-use crate::organisms::{Composition, OrganismBundle};
 
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
@@ -12,7 +13,7 @@ pub struct StructureBundle {
 }
 
 // TODO: replace with better defaults
-#[derive(Clone, Default)]
+#[derive(Component, Clone, Default)]
 pub struct Structure {
     upkeep_rate: f32,
     starting_mass: f32,
@@ -34,28 +35,22 @@ pub struct PlantBundle {
 }
 
 impl PlantBundle {
-    pub fn new(tilemap_id: TilemapId, position: TilePos, texture_index: u32) -> Self {
+    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
-                    id: ,
+                    signal_id: SignalId::Plant,
                     ..Default::default()
                 },
-                tile_bundle: TileBundle {
-                    position,
-                    texture: TileTexture(texture_index),
-                    tilemap_id,
-                    ..Default::default()
-                }
-                ..Default::default()
             },
+            tile_bundle: (OrganismType::Plant).into_tile(tilemap_id, position),
             ..Default::default()
         }
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Component, Clone, Default)]
 pub struct Fungi;
 
 #[derive(Bundle, Default)]
@@ -63,30 +58,33 @@ pub struct FungiBundle {
     fungi: Fungi,
     #[bundle]
     structure_bundle: StructureBundle,
+    #[bundle]
+    tile_bundle: TileBundle,
 }
 
 impl FungiBundle {
-    pub fn new(position: Position, material: Handle<ColorMaterial>) -> Self {
+    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
-                    sprite_bundle: sprite_bundle_from_position(position, material),
-                    id: ID::Fungus,
+                    signal_id: SignalId::Fungus,
                     ..Default::default()
                 },
                 ..Default::default()
             },
+            tile_bundle: (OrganismType::Fungus).into_tile(tilemap_id, position),
             ..Default::default()
         }
     }
 }
 
 pub struct StructuresPlugin;
+
 impl Plugin for StructuresPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(photosynthesize.system())
-            .add_system(upkeep.system())
-            .add_system(cleanup.system());
+    fn build(&self, app: &mut App) {
+        app.add_system(photosynthesize)
+            .add_system(upkeep)
+            .add_system(cleanup);
     }
 }
 

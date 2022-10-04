@@ -1,12 +1,10 @@
-use crate::config::{
-    MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TERRAIN_HIGH_PNG, TERRAIN_IMPASSABLE_PNG,
-    TERRAIN_PLAIN_PNG,
-};
+use crate::config::{MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TERRAIN_TILE_IMAP};
+use crate::texture::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::generate_hexagon;
-use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileStorage, TileTexture};
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTexture};
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::{thread_rng, Rng};
@@ -23,32 +21,25 @@ pub struct ImpassableTerrain;
 #[derive(Component, Clone, Copy, Default)]
 pub struct HighTerrain;
 
-#[derive(Clone, Copy)]
-pub enum Terrain {
+/// Available terrain types.
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+pub enum TerrainType {
     Plain,
     Impassable,
     High,
 }
 
-pub const TERRAIN_CHOICES: [Terrain; 3] = {
-    use Terrain::*;
-    [Plain, Impassable, High]
-};
-
-impl Terrain {
-    pub fn tile_texture(&self) -> TileTexture {
-        TileTexture(*self as u32)
+impl IntoTile for TerrainType {
+    fn tile_texture(&self) -> TileTexture {
+        TileTexture((&TERRAIN_TILE_IMAP).get_index_of(self).unwrap() as u32)
     }
 
-    pub fn tile_texture_path(&self) -> &'static str {
-        use Terrain::*;
-        match self {
-            Plain => TERRAIN_PLAIN_PNG,
-            Impassable => TERRAIN_IMPASSABLE_PNG,
-            High => TERRAIN_HIGH_PNG,
-        }
+    fn tile_texture_path(&self) -> &'static str {
+        (&TERRAIN_TILE_IMAP).get(self).unwrap()
     }
+}
 
+impl TerrainType {
     pub fn create_entity(
         &self,
         commands: &mut Commands,
@@ -57,20 +48,15 @@ impl Terrain {
     ) -> Entity {
         let mut builder = commands.spawn();
 
-        builder.insert_bundle(TileBundle {
-            position,
-            tilemap_id,
-            texture: self.tile_texture(),
-            ..Default::default()
-        });
+        builder.insert_bundle(self.into_tile(tilemap_id, position));
         match self {
-            Terrain::Plain => {
+            TerrainType::Plain => {
                 builder.insert(PlainTerrain);
             }
-            Terrain::Impassable => {
+            TerrainType::Impassable => {
                 builder.insert(ImpassableTerrain);
             }
-            Terrain::High => {
+            TerrainType::High => {
                 builder.insert(HighTerrain);
             }
         }
@@ -78,15 +64,15 @@ impl Terrain {
     }
 }
 
-impl Distribution<Terrain> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Terrain {
+impl Distribution<TerrainType> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TerrainType {
         let c: f32 = rng.gen();
         if c < 0.1 {
-            Terrain::High
+            TerrainType::High
         } else if c < 0.2 {
-            Terrain::Impassable
+            TerrainType::Impassable
         } else {
-            Terrain::Plain
+            TerrainType::Plain
         }
     }
 }
@@ -105,7 +91,7 @@ pub fn generate_simple_random_terrain(
 
     let mut rng = thread_rng();
     for position in tile_positions {
-        let terrain: Terrain = rng.gen();
+        let terrain: TerrainType = rng.gen();
         let entity = terrain.create_entity(commands, tilemap_id, position);
         tile_storage.set(&position, entity);
     }
