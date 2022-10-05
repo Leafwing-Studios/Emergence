@@ -2,7 +2,7 @@ use crate::config::ORGANISM_TILE_IMAP;
 use crate::signals::SignalId;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+use bevy_ecs_tilemap::tiles::TileTexture;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OrganismType {
@@ -34,8 +34,6 @@ pub struct Composition {
 #[derive(Bundle, Default)]
 pub struct OrganismBundle {
     pub organism: Organism,
-    pub position: TilePos,
     pub composition: Composition,
     pub signal_id: SignalId,
-    pub tile_texture: TileTexture,
 }

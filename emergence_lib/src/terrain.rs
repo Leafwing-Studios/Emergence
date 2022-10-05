@@ -1,13 +1,11 @@
-use crate::config::{MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TERRAIN_TILE_IMAP};
+use crate::config::TERRAIN_TILE_IMAP;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::prelude::generate_hexagon;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTexture};
+use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 /// The marker component for plain terrain.
 #[derive(Component, Clone, Copy)]
