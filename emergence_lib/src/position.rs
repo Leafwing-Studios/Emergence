@@ -1,8 +1,8 @@
-use crate::config::MAP_SIZE;
 use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexDirection;
+use bevy_ecs_tilemap::prelude::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::distributions::Distribution;
 use rand::seq::SliceRandom;
@@ -33,14 +33,15 @@ impl HexNeighborPositions {
         terrain_tile_storage: &TileStorage,
         organism_tile_storage: &TileStorage,
         impassable_query: &Query<&ImpassableTerrain>,
+        map_size: &TilemapSize,
     ) -> HexNeighborPositions {
         use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexRowDirection::*;
         let axial_pos = AxialPos::from(tile_pos);
         let predicate = |pos| {
             if let Some(terrain_entity) = terrain_tile_storage.get(&pos) {
-                if impassable_query.get(terrain_entity).is_err() {
+                if !impassable_query.get(terrain_entity).is_ok() {
                     if let Some(organism_entity) = organism_tile_storage.get(&pos) {
-                        if impassable_query.get(organism_entity).is_err() {
+                        if !impassable_query.get(organism_entity).is_ok() {
                             Some(pos)
                         } else {
                             None
@@ -59,27 +60,27 @@ impl HexNeighborPositions {
         HexNeighborPositions {
             north_west: axial_pos
                 .offset_compass_row(NorthWest)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
             west: axial_pos
                 .offset_compass_row(West)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
             south_west: axial_pos
                 .offset_compass_row(SouthWest)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
             south_east: axial_pos
                 .offset_compass_row(SouthEast)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
             east: axial_pos
                 .offset_compass_row(East)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
             north_east: axial_pos
                 .offset_compass_row(NorthEast)
-                .as_tile_pos_given_map_size(&MAP_SIZE)
+                .as_tile_pos_given_map_size(map_size)
                 .and_then(predicate),
         }
     }
@@ -100,3 +101,5 @@ impl HexNeighborPositions {
         possible_choices.choose(rng).cloned()
     }
 }
+
+pub fn get_possible_positions() {}

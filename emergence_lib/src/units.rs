@@ -1,11 +1,11 @@
-use crate::generation::{OrganismTilemap, TerrainTilemap};
+use crate::generation::{GenerationConfig, OrganismTilemap, TerrainTilemap};
 use crate::organisms::{OrganismBundle, OrganismType};
 use crate::pathfinding::get_random_passable_neighbor;
 use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
+use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 
@@ -60,6 +60,7 @@ struct UnitTimer(Timer);
 fn act(
     time: Res<Time>,
     mut timer: ResMut<UnitTimer>,
+    generation_config: Res<GenerationConfig>,
     mut query: Query<(&Unit, &mut TilePos)>,
     impassable_query: Query<&ImpassableTerrain>,
     terrain_tilemap_query: Query<&TileStorage, With<TerrainTilemap>>,
@@ -73,6 +74,7 @@ fn act(
                 &impassable_query,
                 &terrain_tilemap_query,
                 &organism_tilemap_query,
+                &generation_config.map_size,
             );
         }
     }
@@ -83,12 +85,14 @@ fn wander(
     impassable_query: &Query<&ImpassableTerrain>,
     terrain_tilemap_query: &Query<&TileStorage, With<TerrainTilemap>>,
     organism_tilemap_query: &Query<&TileStorage, With<OrganismTilemap>>,
+    map_size: &TilemapSize,
 ) -> TilePos {
     let target = get_random_passable_neighbor(
         position,
         impassable_query,
         terrain_tilemap_query,
         organism_tilemap_query,
+        map_size,
     );
 
     target.unwrap_or(*position)
