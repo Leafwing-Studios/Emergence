@@ -68,36 +68,36 @@ fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>)
         .insert(TerrainTilemap);
 }
 
-fn spawn_organism_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    info!("Spawning terrain tilemap...");
-    let texture = TilemapTexture::Vector(
-        (&ORGANISM_TILE_IMAP)
-            .values()
-            .map(|&p| asset_server.load(p))
-            .collect(),
-    );
-
-    let tilemap_entity = commands.spawn().id();
-    let mut tile_storage = TileStorage::empty(MAP_SIZE);
-
-    info!("Generating starting organisms...");
-    generate_starting_organisms(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
-
-    info!("Inserting TilemapBundle...");
-    commands
-        .entity(tilemap_entity)
-        .insert_bundle(TilemapBundle {
-            grid_size: GRID_SIZE,
-            size: MAP_SIZE,
-            storage: tile_storage,
-            texture,
-            tile_size: ORGANISM_TILE_SIZE,
-            transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, 0.0),
-            map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
-            ..Default::default()
-        })
-        .insert(OrganismTilemap);
-}
+// fn spawn_organism_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+//     info!("Spawning terrain tilemap...");
+//     let texture = TilemapTexture::Vector(
+//         (&ORGANISM_TILE_IMAP)
+//             .values()
+//             .map(|&p| asset_server.load(p))
+//             .collect(),
+//     );
+//
+//     let tilemap_entity = commands.spawn().id();
+//     let mut tile_storage = TileStorage::empty(MAP_SIZE);
+//
+//     info!("Generating starting organisms...");
+//     generate_starting_organisms(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
+//
+//     info!("Inserting TilemapBundle...");
+//     commands
+//         .entity(tilemap_entity)
+//         .insert_bundle(TilemapBundle {
+//             grid_size: GRID_SIZE,
+//             size: MAP_SIZE,
+//             storage: tile_storage,
+//             texture,
+//             tile_size: ORGANISM_TILE_SIZE,
+//             transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, 0.0),
+//             map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
+//             ..Default::default()
+//         })
+//         .insert(OrganismTilemap);
+// }
 
 fn spawn_labels(
     mut commands: Commands,
