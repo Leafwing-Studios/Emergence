@@ -1,16 +1,14 @@
 use crate::config::ORGANISM_TILE_IMAP;
 use crate::signals::SignalId;
-use crate::terrain::ImpassableTerrain;
-use crate::texture::IntoTile;
+use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
 
-/// Available organism types.
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OrganismType {
     Ant,
-    Plant,
     Fungus,
+    Plant,
 }
 
 impl IntoTile for OrganismType {
@@ -37,7 +35,6 @@ pub struct Composition {
 pub struct OrganismBundle {
     pub organism: Organism,
     pub position: TilePos,
-    pub impassable: ImpassableTerrain,
     pub composition: Composition,
     pub signal_id: SignalId,
     pub tile_texture: TileTexture,

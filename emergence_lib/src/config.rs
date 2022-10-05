@@ -8,29 +8,29 @@ use once_cell::sync::Lazy;
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
-pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
+/// Grid size should be the same for all tilemaps, since we want them to line up on top of each
+/// other.
+pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
+
+pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
+    use OrganismType::*;
     indexmap! {
-        TerrainType::Plain => "tile.png",
-        TerrainType::High => "tile-high.png",
-        TerrainType::Impassable => "tile-impassable.png",
+        Ant => "tile-ant.png",
+        Fungus => "tile-fungus.png",
+        Plant => "tile-plant.png",
+    }
+});
+pub const ORGANISM_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+
+pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
+    use TerrainType::*;
+    indexmap! {
+        High => "tile-high.png",
+        Impassable => "tile-impassable.png",
+        Plain => "tile-plain.png",
     }
 });
 pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
-pub const TERRAIN_GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
-
-pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
-    indexmap! {
-        OrganismType::Ant => "tile-ant.png",
-        OrganismType::Fungus => "tile-fungus.png",
-        OrganismType::Plant => "tile-plant.png",
-    }
-});
-pub const ORGANISM_TILE_SIZE: TilemapTileSize = TERRAIN_TILE_SIZE;
-pub const ORGANISM_GRID_SIZE: TilemapGridSize = TERRAIN_GRID_SIZE;
-
-// pub const TILE_PNG: &'static str = "tile.png";
-// pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 59.0, y: 59.0 };
-// pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 59.0, y: 59.0 };
 
 pub const TILE_BUFFER: f32 = 0.0;
 

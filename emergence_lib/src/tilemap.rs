@@ -1,5 +1,6 @@
 use crate::config::{
-    MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_GRID_SIZE, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
+    GRID_SIZE, MAP_COORD_SYSTEM, MAP_SIZE, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE,
+    TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
 };
 use crate::terrain::generate_simple_random_terrain;
 use bevy::prelude::*;
@@ -17,26 +18,27 @@ impl Plugin for TilemapPlugin {
                 StartupStage::Startup,
                 SystemSet::new()
                     .with_system(spawn_camera)
-                    .with_system(spawn_tilemap),
+                    .with_system(spawn_terrain_tilemap),
             )
             .add_startup_system_to_stage(StartupStage::PostStartup, spawn_labels);
     }
 }
 
 fn spawn_camera(mut commands: Commands) {
-    info!("Spawning camera");
+    info!("Spawning camera...");
     commands
         .spawn_bundle(Camera2dBundle::default())
         .insert(PanCam::default());
 }
 
 #[derive(Component)]
-pub struct MainTilemap;
+pub struct TerrainTilemap;
 
-fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let tile_size = TERRAIN_TILE_SIZE;
-    let grid_size = TERRAIN_GRID_SIZE;
-    info!("Loading textures.");
+#[derive(Component)]
+pub struct OrganismTilemap;
+
+fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+    info!("Spawning terrain tilemap...");
     let texture = TilemapTexture::Vector(
         (&TERRAIN_TILE_IMAP)
             .values()
@@ -47,29 +49,63 @@ fn spawn_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     let tilemap_entity = commands.spawn().id();
     let mut tile_storage = TileStorage::empty(MAP_SIZE);
 
-    info!("Generating simple random terrain");
+    info!("Generating simple random terrain...");
     generate_simple_random_terrain(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
 
-    info!("Inserting TilemapBundle");
+    info!("Inserting TilemapBundle...");
     commands
         .entity(tilemap_entity)
         .insert_bundle(TilemapBundle {
-            grid_size,
+            grid_size: GRID_SIZE,
             size: MAP_SIZE,
             storage: tile_storage,
             texture,
-            tile_size,
-            transform: get_tilemap_center_transform(&MAP_SIZE, &grid_size, 0.0),
+            tile_size: TERRAIN_TILE_SIZE,
+            transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, 0.0),
             map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })
-        .insert(MainTilemap);
+        .insert(TerrainTilemap);
+}
+
+fn spawn_organism_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+    info!("Spawning terrain tilemap...");
+    let texture = TilemapTexture::Vector(
+        (&ORGANISM_TILE_IMAP)
+            .values()
+            .map(|&p| asset_server.load(p))
+            .collect(),
+    );
+
+    let tilemap_entity = commands.spawn().id();
+    let mut tile_storage = TileStorage::empty(MAP_SIZE);
+
+    info!("Generating starting organisms...");
+    generate_starting_organisms(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
+
+    info!("Inserting TilemapBundle...");
+    commands
+        .entity(tilemap_entity)
+        .insert_bundle(TilemapBundle {
+            grid_size: GRID_SIZE,
+            size: MAP_SIZE,
+            storage: tile_storage,
+            texture,
+            tile_size: ORGANISM_TILE_SIZE,
+            transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, 0.0),
+            map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
+            ..Default::default()
+        })
+        .insert(OrganismTilemap);
 }
 
 fn spawn_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize, &TileStorage), With<MainTilemap>>,
+    tilemap_q: Query<
+        (&Transform, &TilemapType, &TilemapGridSize, &TileStorage),
+        With<TerrainTilemap>,
+    >,
     tile_q: Query<&mut TilePos>,
 ) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");

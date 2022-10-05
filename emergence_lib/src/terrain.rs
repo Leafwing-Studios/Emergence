@@ -1,5 +1,5 @@
 use crate::config::{MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, TERRAIN_TILE_IMAP};
-use crate::texture::IntoTile;
+use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::TilemapId;

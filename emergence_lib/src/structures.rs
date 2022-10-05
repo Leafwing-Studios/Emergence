@@ -1,6 +1,7 @@
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::signals::SignalId;
-use crate::texture::IntoTile;
+use crate::terrain::ImpassableTerrain;
+use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
@@ -32,6 +33,7 @@ pub struct PlantBundle {
     structure_bundle: StructureBundle,
     #[bundle]
     tile_bundle: TileBundle,
+    impassable: ImpassableTerrain,
 }
 
 impl PlantBundle {
@@ -44,7 +46,7 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: (OrganismType::Plant).into_tile(tilemap_id, position),
+            tile_bundle: OrganismType::Plant.into_tile(tilemap_id, position),
             ..Default::default()
         }
     }
@@ -72,7 +74,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: (OrganismType::Fungus).into_tile(tilemap_id, position),
+            tile_bundle: OrganismType::Fungus.into_tile(tilemap_id, position),
             ..Default::default()
         }
     }
