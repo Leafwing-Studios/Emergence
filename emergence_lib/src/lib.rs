@@ -1,3 +1,4 @@
+pub mod camera;
 pub mod config;
 pub mod diffusion;
 pub mod organisms;

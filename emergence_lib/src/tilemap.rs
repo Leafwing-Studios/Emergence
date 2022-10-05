@@ -3,29 +3,16 @@ use crate::terrain::generate_simple_random_terrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapType;
 use bevy_ecs_tilemap::prelude::*;
-use bevy_pancam::{PanCam, PanCamPlugin};
 
 pub struct TilemapPlugin;
 
 impl Plugin for TilemapPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
-            .add_plugin(PanCamPlugin)
-            .add_startup_system_set_to_stage(
-                StartupStage::Startup,
-                SystemSet::new()
-                    .with_system(spawn_camera)
-                    .with_system(spawn_terrain_tilemap),
-            )
+            .add_plugin(crate::camera::CameraPlugin)
+            .add_startup_system_to_stage(StartupStage::Startup, spawn_terrain_tilemap)
             .add_startup_system_to_stage(StartupStage::PostStartup, spawn_labels);
     }
-}
-
-fn spawn_camera(mut commands: Commands) {
-    info!("Spawning camera...");
-    commands
-        .spawn_bundle(Camera2dBundle::default())
-        .insert(PanCam::default());
 }
 
 #[derive(Component)]
