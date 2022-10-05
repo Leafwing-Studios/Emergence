@@ -1,3 +1,4 @@
+use crate::config::{STRUCTURE_DESPAWN_MASS, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE};
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
@@ -14,11 +15,19 @@ pub struct StructureBundle {
 }
 
 // TODO: replace with better defaults
-#[derive(Component, Clone, Default)]
+#[derive(Component, Clone)]
 pub struct Structure {
     upkeep_rate: f32,
-    starting_mass: f32,
     despawn_mass: f32,
+}
+
+impl Default for Structure {
+    fn default() -> Self {
+        Structure {
+            upkeep_rate: STRUCTURE_UPKEEP_RATE,
+            despawn_mass: STRUCTURE_DESPAWN_MASS,
+        }
+    }
 }
 
 #[derive(Component, Clone, Default)]
@@ -43,10 +52,13 @@ impl PlantBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
                     signal_id: SignalId::Plant,
+                    composition: Composition {
+                        mass: STRUCTURE_STARTING_MASS,
+                    },
                     ..Default::default()
                 },
             },
-            tile_bundle: OrganismType::Plant.into_tile(tilemap_id, position),
+            tile_bundle: OrganismType::Plant.as_tile_bundle(tilemap_id, position),
             ..Default::default()
         }
     }
@@ -74,7 +86,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismType::Fungus.into_tile(tilemap_id, position),
+            tile_bundle: OrganismType::Fungus.as_tile_bundle(tilemap_id, position),
             ..Default::default()
         }
     }

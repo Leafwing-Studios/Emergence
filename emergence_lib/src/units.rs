@@ -41,7 +41,7 @@ impl AntBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismType::Ant.into_tile(tilemap_id, position),
+            tile_bundle: OrganismType::Ant.as_tile_bundle(tilemap_id, position),
             ..Default::default()
         }
     }

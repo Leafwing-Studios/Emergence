@@ -1,7 +1,4 @@
-use crate::config::{
-    GRID_SIZE, MAP_COORD_SYSTEM, MAP_SIZE, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE,
-    TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
-};
+use crate::config::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE};
 use crate::terrain::generate_simple_random_terrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapType;

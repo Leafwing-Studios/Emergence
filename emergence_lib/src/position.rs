@@ -3,7 +3,6 @@ use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexDirection;
-use bevy_ecs_tilemap::prelude::{Neighbors, TilemapSize};
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::distributions::Distribution;
 use rand::seq::SliceRandom;
@@ -39,9 +38,9 @@ impl HexNeighborPositions {
         let axial_pos = AxialPos::from(tile_pos);
         let predicate = |pos| {
             if let Some(terrain_entity) = terrain_tile_storage.get(&pos) {
-                if !impassable_query.get(terrain_entity).is_ok() {
+                if impassable_query.get(terrain_entity).is_err() {
                     if let Some(organism_entity) = organism_tile_storage.get(&pos) {
-                        if !impassable_query.get(organism_entity).is_ok() {
+                        if impassable_query.get(organism_entity).is_err() {
                             Some(pos)
                         } else {
                             None
@@ -85,7 +84,7 @@ impl HexNeighborPositions {
         }
     }
 
-    pub fn choose_random<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Option<TilePos> {
+    pub fn choose_random<R: Rng + ?Sized>(&self, rng: &mut R) -> Option<TilePos> {
         let possible_choices = [
             self.north_west,
             self.west,
@@ -95,56 +94,9 @@ impl HexNeighborPositions {
             self.north_east,
         ]
         .into_iter()
-        .filter_map(|some_pos| some_pos)
+        .flatten()
         .collect::<Vec<TilePos>>();
 
         possible_choices.choose(rng).cloned()
     }
-}
-
-/// Get the neighbors of the given tile position.
-///
-/// This is a simplified, and therefore faster, version of
-/// [`get_neighbors`](bevy_ecs_tilemap::helpers::neighbors::get_neighbors).
-/// The simplification is due to the fact that we use a fixed coordinate system:  
-/// [`HexCoordSystem::Row`](bevy_ecs_tilemap::map::HexCoordSystem::Row).
-pub fn get_neighbor_positions(tile_pos: &TilePos, map_size: &TilemapSize) -> Neighbors<TilePos> {
-    use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexRowDirection::*;
-    let axial_pos = AxialPos::from(tile_pos);
-    Neighbors {
-        north: None,
-        north_west: axial_pos
-            .offset_compass_row(NorthWest)
-            .as_tile_pos_given_map_size(map_size),
-        west: axial_pos
-            .offset_compass_row(West)
-            .as_tile_pos_given_map_size(map_size),
-        south_west: axial_pos
-            .offset_compass_row(SouthWest)
-            .as_tile_pos_given_map_size(map_size),
-        south: None,
-        south_east: axial_pos
-            .offset_compass_row(SouthEast)
-            .as_tile_pos_given_map_size(map_size),
-        east: axial_pos
-            .offset_compass_row(East)
-            .as_tile_pos_given_map_size(map_size),
-        north_east: axial_pos
-            .offset_compass_row(NorthEast)
-            .as_tile_pos_given_map_size(map_size),
-    }
-}
-
-/// Get the neighbor entities of the given tile position.
-///
-/// This is a simplified, and therefore faster, version of
-/// [`get_neighbors`](bevy_ecs_tilemap::helpers::neighbors::get_neighbors).
-/// The simplification is due to the fact that we use a fixed coordinate system:
-/// [`HexCoordSystem::Row`](bevy_ecs_tilemap::map::HexCoordSystem::Row).
-pub fn get_neighbor_entities(
-    tile_pos: &TilePos,
-    map_size: &TilemapSize,
-    tile_storage: &TileStorage,
-) -> Neighbors<Entity> {
-    Neighbors::from_neighboring_pos(&get_neighbor_positions(tile_pos, map_size), tile_storage)
 }

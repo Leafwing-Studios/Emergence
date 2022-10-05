@@ -48,7 +48,7 @@ impl TerrainType {
     ) -> Entity {
         let mut builder = commands.spawn();
 
-        builder.insert_bundle(self.into_tile(tilemap_id, position));
+        builder.insert_bundle(self.as_tile_bundle(tilemap_id, position));
         match self {
             TerrainType::Plain => {
                 builder.insert(PlainTerrain);

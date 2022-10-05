@@ -6,7 +6,7 @@ pub trait IntoTile {
 
     fn tile_texture_path(&self) -> &'static str;
 
-    fn into_tile(&self, tilemap_id: TilemapId, position: TilePos) -> TileBundle {
+    fn as_tile_bundle(&self, tilemap_id: TilemapId, position: TilePos) -> TileBundle {
         TileBundle {
             position,
             tilemap_id,
