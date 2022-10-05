@@ -7,7 +7,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(emergence_lib::tilemap::TilemapPlugin)
+        .add_plugin(emergence_lib::generation::GenerationPlugin)
         .add_plugin(emergence_lib::diffusion::DiffusionPlugin)
         .run();
 }

@@ -76,23 +76,3 @@ impl Distribution<TerrainType> for Standard {
         }
     }
 }
-
-pub fn generate_simple_random_terrain(
-    commands: &mut Commands,
-    tilemap_id: TilemapId,
-    tile_storage: &mut TileStorage,
-) {
-    let tile_positions = generate_hexagon(
-        AxialPos::from_tile_pos_given_coord_system(&MAP_CENTER, MAP_COORD_SYSTEM),
-        MAP_RADIUS,
-    )
-    .into_iter()
-    .map(|axial_pos| axial_pos.as_tile_pos_given_coord_system(MAP_COORD_SYSTEM));
-
-    let mut rng = thread_rng();
-    for position in tile_positions {
-        let terrain: TerrainType = rng.gen();
-        let entity = terrain.create_entity(commands, tilemap_id, position);
-        tile_storage.set(&position, entity);
-    }
-}

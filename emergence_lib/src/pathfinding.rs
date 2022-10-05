@@ -1,6 +1,6 @@
+use crate::generation::{OrganismTilemap, TerrainTilemap};
 use crate::position::HexNeighborPositions;
 use crate::terrain::ImpassableTerrain;
-use crate::tilemap::{OrganismTilemap, TerrainTilemap};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::thread_rng;

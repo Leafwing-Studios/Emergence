@@ -1,17 +1,22 @@
-use crate::config::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_SIZE, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE};
-use crate::terrain::generate_simple_random_terrain;
+use crate::config::{
+    GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, TERRAIN_TILEMAP_Z,
+    TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
+};
+use crate::terrain::TerrainType;
 use bevy::prelude::*;
+use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::TilemapType;
 use bevy_ecs_tilemap::prelude::*;
+use rand::{thread_rng, Rng};
 
-pub struct TilemapPlugin;
+pub struct GenerationPlugin;
 
-impl Plugin for TilemapPlugin {
+impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
             .add_plugin(crate::camera::CameraPlugin)
-            .add_startup_system_to_stage(StartupStage::Startup, spawn_terrain_tilemap)
-            .add_startup_system_to_stage(StartupStage::PostStartup, spawn_labels);
+            .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
+            .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
     }
 }
 
@@ -21,7 +26,7 @@ pub struct TerrainTilemap;
 #[derive(Component)]
 pub struct OrganismTilemap;
 
-fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn generate_terrain(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("Spawning terrain tilemap...");
     let texture = TilemapTexture::Vector(
         (&TERRAIN_TILE_IMAP)
@@ -34,7 +39,19 @@ fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>)
     let mut tile_storage = TileStorage::empty(MAP_SIZE);
 
     info!("Generating simple random terrain...");
-    generate_simple_random_terrain(&mut commands, TilemapId(tilemap_entity), &mut tile_storage);
+    let tile_positions = generate_hexagon(
+        AxialPos::from_tile_pos_given_coord_system(&MAP_CENTER, MAP_COORD_SYSTEM),
+        MAP_RADIUS,
+    )
+    .into_iter()
+    .map(|axial_pos| axial_pos.as_tile_pos_given_coord_system(MAP_COORD_SYSTEM));
+
+    let mut rng = thread_rng();
+    for position in tile_positions {
+        let terrain: TerrainType = rng.gen();
+        let entity = terrain.create_entity(&mut commands, TilemapId(tilemap_entity), position);
+        tile_storage.set(&position, entity);
+    }
 
     info!("Inserting TilemapBundle...");
     commands
@@ -45,7 +62,7 @@ fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>)
             storage: tile_storage,
             texture,
             tile_size: TERRAIN_TILE_SIZE,
-            transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, 0.0),
+            transform: get_tilemap_center_transform(&MAP_SIZE, &GRID_SIZE, TERRAIN_TILEMAP_Z),
             map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })
@@ -83,7 +100,7 @@ fn spawn_terrain_tilemap(mut commands: Commands, asset_server: Res<AssetServer>)
 //         .insert(OrganismTilemap);
 // }
 
-fn spawn_labels(
+fn generate_debug_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     tilemap_q: Query<

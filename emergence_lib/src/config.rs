@@ -8,8 +8,7 @@ use once_cell::sync::Lazy;
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
-/// Grid size should be the same for all tilemaps, since we want them to line up on top of each
-/// other.
+// Grid size should be the same for all tilemaps, as we want them to be congruent.
 pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
@@ -21,6 +20,8 @@ pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy
     }
 });
 pub const ORGANISM_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+// We want the organism tilemap to be layered on top of the terrain tile map.
+pub const ORGANISM_TILEMAP_Z: f32 = 1.0;
 
 pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
     use TerrainType::*;
@@ -31,6 +32,7 @@ pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::
     }
 });
 pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+pub const TERRAIN_TILEMAP_Z: f32 = 0.0;
 
 pub const TILE_BUFFER: f32 = 0.0;
 

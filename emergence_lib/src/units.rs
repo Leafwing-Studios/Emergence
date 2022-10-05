@@ -1,8 +1,8 @@
+use crate::generation::{OrganismTilemap, TerrainTilemap};
 use crate::organisms::{OrganismBundle, OrganismType};
 use crate::pathfinding::get_random_passable_neighbor;
 use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
-use crate::tilemap::{OrganismTilemap, TerrainTilemap};
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
