@@ -31,6 +31,7 @@ pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::
         Plain => "tile-plain.png",
     }
 });
+
 pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
 pub const TERRAIN_TILEMAP_Z: f32 = 0.0;
 
