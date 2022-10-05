@@ -1,7 +1,25 @@
+use crate::config::ORGANISM_TILE_IMAP;
 use crate::signals::SignalId;
-use crate::terrain::ImpassableTerrain;
+use crate::tiles::IntoTile;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+use bevy_ecs_tilemap::tiles::TileTexture;
+
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+pub enum OrganismType {
+    Ant,
+    Fungus,
+    Plant,
+}
+
+impl IntoTile for OrganismType {
+    fn tile_texture(&self) -> TileTexture {
+        TileTexture(ORGANISM_TILE_IMAP.get_index_of(self).unwrap() as u32)
+    }
+
+    fn tile_texture_path(&self) -> &'static str {
+        ORGANISM_TILE_IMAP.get(self).unwrap()
+    }
+}
 
 /// The marker component for all organisms.
 #[derive(Component, Clone, Default)]
@@ -16,9 +34,6 @@ pub struct Composition {
 #[derive(Bundle, Default)]
 pub struct OrganismBundle {
     pub organism: Organism,
-    pub position: TilePos,
-    pub impassable: ImpassableTerrain,
     pub composition: Composition,
-    pub id: SignalId,
-    pub tile_texture: TileTexture,
+    pub signal_id: SignalId,
 }
