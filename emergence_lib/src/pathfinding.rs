@@ -14,17 +14,15 @@ pub fn get_random_passable_neighbor(
     map_size: &TilemapSize,
 ) -> Option<TilePos> {
     let mut rng = thread_rng();
-    for terrain_tile_storage in terrain_tilemap_query.iter() {
-        for organism_tile_storage in organism_tilemap_query.iter() {
-            return HexNeighborPositions::get_passable_neighbors(
-                current_pos,
-                terrain_tile_storage,
-                organism_tile_storage,
-                impassable_query,
-                map_size,
-            )
-            .choose_random(&mut rng);
-        }
-    }
-    None
+    let terrain_tile_storage = terrain_tilemap_query.single();
+    let organism_tile_storage = organism_tilemap_query.single();
+
+    HexNeighborPositions::get_passable_neighbors(
+        current_pos,
+        terrain_tile_storage,
+        organism_tile_storage,
+        impassable_query,
+        map_size,
+    )
+    .choose_random(&mut rng)
 }

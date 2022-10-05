@@ -13,11 +13,11 @@ pub enum OrganismType {
 
 impl IntoTile for OrganismType {
     fn tile_texture(&self) -> TileTexture {
-        TileTexture((&ORGANISM_TILE_IMAP).get_index_of(self).unwrap() as u32)
+        TileTexture(ORGANISM_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
     fn tile_texture_path(&self) -> &'static str {
-        (&ORGANISM_TILE_IMAP).get(self).unwrap()
+        ORGANISM_TILE_IMAP.get(self).unwrap()
     }
 }
 

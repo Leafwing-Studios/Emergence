@@ -29,11 +29,11 @@ pub enum TerrainType {
 
 impl IntoTile for TerrainType {
     fn tile_texture(&self) -> TileTexture {
-        TileTexture((&TERRAIN_TILE_IMAP).get_index_of(self).unwrap() as u32)
+        TileTexture(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
     fn tile_texture_path(&self) -> &'static str {
-        (&TERRAIN_TILE_IMAP).get(self).unwrap()
+        TERRAIN_TILE_IMAP.get(self).unwrap()
     }
 }
 

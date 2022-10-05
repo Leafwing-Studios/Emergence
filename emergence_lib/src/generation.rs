@@ -60,7 +60,7 @@ fn generate_terrain(
 ) {
     info!("Generating terrain tilemap...");
     let texture = TilemapTexture::Vector(
-        (&TERRAIN_TILE_IMAP)
+        TERRAIN_TILE_IMAP
             .values()
             .map(|&p| asset_server.load(p))
             .collect(),
@@ -111,7 +111,7 @@ fn generate_starting_organisms(
     impassable_query: Query<&ImpassableTerrain>,
 ) {
     let texture = TilemapTexture::Vector(
-        (&ORGANISM_TILE_IMAP)
+        ORGANISM_TILE_IMAP
             .values()
             .map(|&p| asset_server.load(p))
             .collect(),

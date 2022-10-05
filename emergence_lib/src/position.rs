@@ -39,9 +39,9 @@ impl HexNeighborPositions {
         let axial_pos = AxialPos::from(tile_pos);
         let predicate = |pos| {
             if let Some(terrain_entity) = terrain_tile_storage.get(&pos) {
-                if !impassable_query.get(terrain_entity).is_ok() {
+                if impassable_query.get(terrain_entity).is_err() {
                     if let Some(organism_entity) = organism_tile_storage.get(&pos) {
-                        if !impassable_query.get(organism_entity).is_ok() {
+                        if impassable_query.get(organism_entity).is_err() {
                             Some(pos)
                         } else {
                             None
