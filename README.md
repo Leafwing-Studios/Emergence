@@ -39,6 +39,6 @@ Standard best practices from within the [Bevy ecosystem](https://github.com/bevy
 Emergence is free, open source and permissively licensed with the Rust ecosystem's standard dual MIT/Apache license.
 Please don't rip off our game (unless it's dead, then fork it), but feel free to learn from it, upstream the clever bits and steal aggressively to make your own awesome games.
 
-Non-font assets under `emergence_game` are currently licensed under CC-0. Commissioned work will be licensed under CC-BY-SA.
+Non-font assets under `emergence_game` are currently licensed under CC-0. Commissioned work will be licensed under CC-BY-SA-NC (asset flippers suck).
 
-Like usual, any contributions made are accepted under the same license terms.
+Like usual, any contributions made are accepted under the same license terms. If you would like to modify or use these assets in your game, please reach out and we'll be happy to chat.
