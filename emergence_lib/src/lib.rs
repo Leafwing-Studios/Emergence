@@ -1,3 +1,7 @@
+#![deny(missing_docs)]
+#![forbid(unsafe_code)]
+#![warn(clippy::doc_markdown)]
+
 pub mod camera;
 pub mod config;
 pub mod diffusion;
