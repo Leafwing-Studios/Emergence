@@ -1,3 +1,5 @@
+//! Units are organisms that can move freely.
+
 use crate::generation::{GenerationConfig, OrganismTilemap, TerrainTilemap};
 use crate::organisms::{OrganismBundle, OrganismType};
 use crate::pathfinding::get_random_passable_neighbor;
@@ -9,9 +11,11 @@ use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 
+/// Marker component for [`UnitBundle`]
 #[derive(Component, Clone, Default)]
 pub struct Unit;
 
+/// An organism that can move around freely.
 #[derive(Bundle, Default)]
 pub struct UnitBundle {
     unit: Unit,
@@ -19,9 +23,11 @@ pub struct UnitBundle {
     organism_bundle: OrganismBundle,
 }
 
+/// Marker component for worker ants
 #[derive(Component, Clone, Default)]
 pub struct Ant;
 
+/// A worker ant
 #[derive(Bundle, Default)]
 pub struct AntBundle {
     ant: Ant,
@@ -32,6 +38,7 @@ pub struct AntBundle {
 }
 
 impl AntBundle {
+    /// Creates a new [`AntBundle`]
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             unit_bundle: UnitBundle {
@@ -47,6 +54,7 @@ impl AntBundle {
     }
 }
 
+/// Contains unit behavior
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
