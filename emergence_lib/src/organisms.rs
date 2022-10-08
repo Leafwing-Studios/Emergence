@@ -4,6 +4,7 @@ use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileTexture;
 
+/// The type of [`Organism`]
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OrganismType {
     Ant,

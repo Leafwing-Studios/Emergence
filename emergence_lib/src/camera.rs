@@ -1,6 +1,11 @@
+//! Camera controls and movement.
+//!
+//! This RTS-style camera can zoom and pan.
+
 use bevy::prelude::*;
 use bevy_pancam::{PanCam, PanCamPlugin};
 
+/// Camera logic
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -10,6 +15,7 @@ impl Plugin for CameraPlugin {
     }
 }
 
+/// Initialize the camera
 fn spawn_camera(mut commands: Commands) {
     info!("Spawning camera...");
     commands

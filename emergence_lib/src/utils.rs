@@ -1,3 +1,5 @@
+//! The metaphorical junk drawer.
+
 /// Take a linear combination of `x` and `y`, by the factor `c`.
 ///
 /// Formally: `linear_combination(x, y, c) = x * c + y * (1.0 - c)`.
@@ -5,6 +7,7 @@ pub fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
+/// A signmoid curve
 pub fn sigmoid(
     x: f32,
     vertical_scale: f32,
@@ -16,6 +19,7 @@ pub fn sigmoid(
         + vertical_offset
 }
 
+/// A sigmoid curve with more human-comprehensible parameterization
 pub fn ergonomic_sigmoid(
     x: f32,
     min: f32,

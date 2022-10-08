@@ -28,16 +28,19 @@ pub enum TerrainType {
 }
 
 impl IntoTile for TerrainType {
+    /// The associated tile texture
     fn tile_texture(&self) -> TileTexture {
         TileTexture(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
+    /// The path to the associated tile texture
     fn tile_texture_path(&self) -> &'static str {
         TERRAIN_TILE_IMAP.get(self).unwrap()
     }
 }
 
 impl TerrainType {
+    /// Creates a tile enttiy corresponding to `self`'s [`TerrainType`] variant
     pub fn create_entity(
         &self,
         commands: &mut Commands,
@@ -63,6 +66,7 @@ impl TerrainType {
 }
 
 impl Distribution<TerrainType> for Standard {
+    /// Choose a [`TerrainType`] at weighted-random
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TerrainType {
         let c: f32 = rng.gen();
         if c < 0.1 {

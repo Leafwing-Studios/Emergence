@@ -1,3 +1,5 @@
+//! Tools and strategies for procedural world generation.
+
 use crate::config::{
     GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, N_ANT, N_FUNGI, N_PLANT,
     ORGANISM_TILEMAP_Z, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE, TERRAIN_TILEMAP_Z,
@@ -11,6 +13,7 @@ use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
+/// Generate the world.
 pub struct GenerationPlugin;
 
 impl Plugin for GenerationPlugin {
@@ -24,6 +27,7 @@ impl Plugin for GenerationPlugin {
     }
 }
 
+/// Controls world generation strategy
 #[derive(Copy, Clone)]
 pub struct GenerationConfig {
     pub map_radius: u32,
@@ -47,12 +51,15 @@ impl Default for GenerationConfig {
     }
 }
 
+/// Marker component for entities that are part of the terrain's tilemap
 #[derive(Component)]
 pub struct TerrainTilemap;
 
+/// Marker component for entities that are part of the organisms tilemap
 #[derive(Component)]
 pub struct OrganismTilemap;
 
+/// Creates the world according to the provided [`GenerationConfig`].
 fn generate_terrain(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -103,6 +110,7 @@ fn generate_terrain(
         .insert(TerrainTilemap);
 }
 
+/// Randomize and place starting organisms
 fn generate_starting_organisms(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -201,6 +209,7 @@ fn generate_starting_organisms(
         .insert(OrganismTilemap);
 }
 
+/// Generate debug labels for tile positions
 fn generate_debug_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,

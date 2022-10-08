@@ -6,6 +6,9 @@ use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::thread_rng;
 
+/// Select a passable, adjacent neighboring tile at random.
+///
+/// Returns [`None`] if and only if no such tile exists.
 pub fn get_random_passable_neighbor(
     current_pos: &TilePos,
     impassable_query: &Query<&ImpassableTerrain>,

@@ -18,6 +18,7 @@ fn random_direction<R: Rng + ?Sized, D: Distribution<usize>>(
     HexDirection::from(choice)
 }
 
+/// Stores the [`TilePos`] of neighboring hex cells if present
 pub struct HexNeighborPositions {
     north_west: Option<TilePos>,
     west: Option<TilePos>,
@@ -28,6 +29,7 @@ pub struct HexNeighborPositions {
 }
 
 impl HexNeighborPositions {
+    /// Returns the set of neighboring cells that units can walk through
     pub fn get_passable_neighbors(
         tile_pos: &TilePos,
         terrain_tile_storage: &TileStorage,
@@ -85,6 +87,7 @@ impl HexNeighborPositions {
         }
     }
 
+    /// Choose a random neighbor
     pub fn choose_random<R: Rng + ?Sized>(&self, rng: &mut R) -> Option<TilePos> {
         let possible_choices = [
             self.north_west,
@@ -101,5 +104,3 @@ impl HexNeighborPositions {
         possible_choices.choose(rng).cloned()
     }
 }
-
-pub fn get_possible_positions() {}

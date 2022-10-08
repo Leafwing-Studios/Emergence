@@ -1,3 +1,8 @@
+//! Structures (or buildings) are plants and fungi that serve a role in the bustling organic factory.
+//!
+//! Typically, these will produce and transform resources (much like machines in other factory builders),
+//! but they can also be used for defense, researh, reproduction, storage and more exotic effects.
+
 use crate::config::{STRUCTURE_DESPAWN_MASS, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE};
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::signals::SignalId;
@@ -7,6 +12,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
 
+/// The data needed to build a structure
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
     structure: Structure,
@@ -14,6 +20,7 @@ pub struct StructureBundle {
     organism_bundle: OrganismBundle,
 }
 
+/// All structures must pay a cost to keep themselves alive
 // TODO: replace with better defaults
 #[derive(Component, Clone)]
 pub struct Structure {
@@ -30,11 +37,13 @@ impl Default for Structure {
     }
 }
 
+/// Plants can photosynthesize
 #[derive(Component, Clone, Default)]
 pub struct Plant {
     photosynthesis_rate: f32,
 }
 
+/// The data needed to make a plant
 #[derive(Bundle, Default)]
 pub struct PlantBundle {
     plant: Plant,
@@ -64,9 +73,11 @@ impl PlantBundle {
     }
 }
 
+/// Fungi cannot photosynthesize, and must instead decompose matter
 #[derive(Component, Clone, Default)]
 pub struct Fungi;
 
+/// The data needed to spawn [`Fungi`].
 #[derive(Bundle, Default)]
 pub struct FungiBundle {
     fungi: Fungi,
@@ -92,6 +103,7 @@ impl FungiBundle {
     }
 }
 
+/// The systems that make structures tick.
 pub struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
@@ -102,18 +114,21 @@ impl Plugin for StructuresPlugin {
     }
 }
 
+/// Plants capture energy from the sun
 fn photosynthesize(time: Res<Time>, mut query: Query<(&Plant, &mut Composition)>) {
     for (plant, mut comp) in query.iter_mut() {
         comp.mass += plant.photosynthesis_rate * time.delta_seconds() * comp.mass.powf(2.0 / 3.0);
     }
 }
 
+/// All structures must pay an upkeep cost to sustain the vital functions of life
 fn upkeep(time: Res<Time>, mut query: Query<(&Structure, &mut Composition)>) {
     for (structure, mut comp) in query.iter_mut() {
         comp.mass -= structure.upkeep_rate * time.delta_seconds() * comp.mass;
     }
 }
 
+/// If structures grow too weak, they die and are despawned
 fn cleanup(mut commands: Commands, query: Query<(&Structure, Entity, &Composition)>) {
     for (structure, ent, comp) in query.iter() {
         if comp.mass <= structure.despawn_mass {
