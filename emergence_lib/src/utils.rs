@@ -7,7 +7,8 @@ pub fn linear_combination(x: f32, y: f32, c: f32) -> f32 {
     x * c + y * (1.0 - c)
 }
 
-/// A signmoid curve
+/// A sigmoid curve
+
 pub fn sigmoid(
     x: f32,
     vertical_scale: f32,
