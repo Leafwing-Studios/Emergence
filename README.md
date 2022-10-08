@@ -1,6 +1,8 @@
 # *Emergence*
 
-![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/leafwing-studios/emergence#license)
+[![CI](https://github.com/bevyengine/bevy/workflows/CI/badge.svg)](https://github.com/leafwing-studios/emergence/actions)
+[![Discord](https://img.shields.io/discord/1027393534627692645?label=Discord&logo=Discord&style=plastic)](https://discord.gg/GyTG5KT352)
 
 An organic factory-builder set in a micro-scale, post-apocalyptic future.
 As the hive mind behind a growing, swarming, multi-species colony, you must learn to cultivate the world around you, adapting and literally evolving to face the hardships of a changing, alien world.
@@ -17,7 +19,9 @@ As the hive mind behind a growing, swarming, multi-species colony, you must lear
 
 ## Contributing
 
-While we're looking to one day release and sell this game, the code is open source*! As such, contributions are welcome. If this game appeals to you (or you just want to learn more about making real games in Bevy), feel free to chip in and learn!
+While we're looking to one day release and sell this game, the code is open source*! As such, contributions are welcome.
+If this game appeals to you (or you just want to learn more about making real games in Bevy), feel free to chip in and learn!
+While the Serious Work happens here on Github, the dev team (and curious fans) hang out on the [Emergence Discord](https://discord.gg/GyTG5KT352).
 
 Creativity and initiative is welcome:
 
