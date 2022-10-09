@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+pub mod diffusion;
+
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SignalId {
     Unspecified,

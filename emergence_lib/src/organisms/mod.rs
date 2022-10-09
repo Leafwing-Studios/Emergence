@@ -4,6 +4,10 @@ use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileTexture;
 
+pub mod pathfinding;
+pub mod structures;
+pub mod units;
+
 /// The type of [`Organism`]
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OrganismType {

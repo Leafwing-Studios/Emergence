@@ -3,9 +3,12 @@ use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
+
+pub mod generation;
 
 /// The marker component for plain terrain.
 #[derive(Component, Clone, Copy)]

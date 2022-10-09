@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use emergence_lib::*;
 
 fn main() {
     App::new()
@@ -7,9 +8,9 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(emergence_lib::generation::GenerationPlugin)
-        .add_plugin(emergence_lib::structures::StructuresPlugin)
-        .add_plugin(emergence_lib::units::UnitsPlugin)
-        //.add_plugin(emergence_lib::diffusion::DiffusionPlugin)
+        .add_plugin(terrain::generation::GenerationPlugin)
+        .add_plugin(organisms::structures::StructuresPlugin)
+        .add_plugin(organisms::units::UnitsPlugin)
+        //.add_plugin(signals::diffusion::DiffusionPlugin)
         .run();
 }

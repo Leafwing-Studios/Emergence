@@ -5,9 +5,9 @@ use crate::config::{
     ORGANISM_TILEMAP_Z, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE, TERRAIN_TILEMAP_Z,
     TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
 };
-use crate::structures::{FungiBundle, PlantBundle};
+use crate::organisms::structures::{FungiBundle, PlantBundle};
+use crate::organisms::units::AntBundle;
 use crate::terrain::{ImpassableTerrain, TerrainType};
-use crate::units::AntBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;

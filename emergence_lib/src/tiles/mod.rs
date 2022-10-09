@@ -1,3 +1,5 @@
+pub mod position;
+
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTexture};
 
