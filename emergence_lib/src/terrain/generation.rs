@@ -1,17 +1,30 @@
 //! Tools and strategies for procedural world generation.
 
-use crate::config::{
-    GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, N_ANT, N_FUNGI, N_PLANT,
-    ORGANISM_TILEMAP_Z, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE, TERRAIN_TILEMAP_Z,
-    TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE,
-};
-use crate::structures::{FungiBundle, PlantBundle};
+use crate::organisms::structures::{FungiBundle, PlantBundle};
+use crate::organisms::units::AntBundle;
+use crate::organisms::{ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE};
 use crate::terrain::{ImpassableTerrain, TerrainType};
-use crate::units::AntBundle;
+use crate::terrain::{TERRAIN_TILEMAP_Z, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE};
+use crate::tiles::{GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
+
+use config::*;
+mod config {
+    /// The z-coordinate at which organisms are drawn.
+    ///
+    /// We want the organism tilemap to be layered on top of the terrain tile map.
+    pub const ORGANISM_TILEMAP_Z: f32 = 1.0;
+
+    /// The number of ants initially spawned
+    pub const N_ANT: usize = 5;
+    /// The number of plants initially spawned
+    pub const N_PLANT: usize = 10;
+    /// The number of fungi initially spawned
+    pub const N_FUNGI: usize = 10;
+}
 
 /// Generate the world.
 pub struct GenerationPlugin;

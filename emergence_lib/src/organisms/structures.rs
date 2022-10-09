@@ -3,7 +3,6 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, researh, reproduction, storage and more exotic effects.
 
-use crate::config::{STRUCTURE_DESPAWN_MASS, STRUCTURE_STARTING_MASS, STRUCTURE_UPKEEP_RATE};
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
@@ -11,6 +10,17 @@ use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
+
+use config::*;
+/// Common structure constants
+mod config {
+    /// The initial mass of spawned structures
+    pub const STRUCTURE_STARTING_MASS: f32 = 0.5;
+    /// The mass at which sturctures will despawn
+    pub const STRUCTURE_DESPAWN_MASS: f32 = 0.01;
+    /// The upkeeep cost of each structure
+    pub const STRUCTURE_UPKEEP_RATE: f32 = 0.1;
+}
 
 /// The data needed to build a structure
 #[derive(Bundle, Default)]

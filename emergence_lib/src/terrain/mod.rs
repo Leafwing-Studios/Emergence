@@ -1,11 +1,28 @@
-use crate::config::TERRAIN_TILE_IMAP;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
+use bevy_ecs_tilemap::map::{TilemapId, TilemapTileSize};
 use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+use indexmap::{indexmap, IndexMap};
+use once_cell::sync::Lazy;
+
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
+
+pub mod generation;
+
+pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
+    indexmap! {
+        TerrainType::High => "tile-high.png",
+        TerrainType::Impassable => "tile-impassable.png",
+        TerrainType::Plain => "tile-plain.png",
+    }
+});
+
+/// The tile size (hex tile width by hex tile height) in pixels of tile image assets.
+pub const TERRAIN_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+/// The z-coordinate at which tiles are drawn.
+pub const TERRAIN_TILEMAP_Z: f32 = 0.0;
 
 /// The marker component for plain terrain.
 #[derive(Component, Clone, Copy)]

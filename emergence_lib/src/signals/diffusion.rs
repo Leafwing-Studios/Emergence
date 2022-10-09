@@ -1,8 +1,8 @@
-use crate::config::MAP_CENTER;
+use crate::tiles::MAP_CENTER;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
-use crate::utils::{ergonomic_sigmoid, linear_combination};
+use crate::curves::{ergonomic_sigmoid, linear_combination};
 
 pub struct DiffusionPlugin;
 

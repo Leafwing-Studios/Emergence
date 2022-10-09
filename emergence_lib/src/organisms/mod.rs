@@ -1,8 +1,27 @@
-use crate::config::ORGANISM_TILE_IMAP;
 use crate::signals::SignalId;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
+use bevy_ecs_tilemap::map::TilemapTileSize;
 use bevy_ecs_tilemap::tiles::TileTexture;
+use indexmap::{indexmap, IndexMap};
+use once_cell::sync::Lazy;
+
+pub mod pathfinding;
+pub mod structures;
+pub mod units;
+
+/// An [`IndexMap`] of organism images.
+pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
+    use OrganismType::*;
+    indexmap! {
+        Ant => "tile-ant.png",
+        Fungus => "tile-fungus.png",
+        Plant => "tile-plant.png",
+    }
+});
+
+/// The tile size (hex tile width by hex tile height) in pixels of organism image assets.
+pub const ORGANISM_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
 
 /// The type of [`Organism`]
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
