@@ -5,8 +5,8 @@
 #![warn(clippy::doc_markdown)]
 
 pub mod camera;
+pub mod curves;
 pub mod organisms;
 pub mod signals;
 pub mod terrain;
 pub mod tiles;
-pub mod utils;
