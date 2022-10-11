@@ -5,6 +5,7 @@
 #![warn(clippy::doc_markdown)]
 
 pub mod camera;
+pub mod cursor;
 pub mod curves;
 pub mod organisms;
 pub mod signals;
