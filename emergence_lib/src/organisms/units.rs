@@ -2,7 +2,6 @@
 
 use crate::organisms::pathfinding::get_random_passable_neighbor;
 use crate::organisms::{OrganismBundle, OrganismType};
-use crate::signals::SignalId;
 use crate::terrain::generation::{GenerationConfig, OrganismTilemap, TerrainTilemap};
 use crate::terrain::ImpassableTerrain;
 use crate::tiles::IntoTile;
@@ -43,7 +42,6 @@ impl AntBundle {
         Self {
             unit_bundle: UnitBundle {
                 organism_bundle: OrganismBundle {
-                    signal_id: SignalId::Ant,
                     ..Default::default()
                 },
                 ..Default::default()

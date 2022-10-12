@@ -1,4 +1,3 @@
-use bevy::ecs::entity::Entities;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::{

@@ -1,4 +1,3 @@
-use crate::signals::EmitterId;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapTileSize;
@@ -55,5 +54,4 @@ pub struct Composition {
 pub struct OrganismBundle {
     pub organism: Organism,
     pub composition: Composition,
-    pub signal_id: EmitterId,
 }

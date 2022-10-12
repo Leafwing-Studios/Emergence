@@ -4,7 +4,6 @@
 //! but they can also be used for defense, researh, reproduction, storage and more exotic effects.
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
-use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
 use crate::tiles::IntoTile;
 use bevy::prelude::*;
@@ -70,7 +69,6 @@ impl PlantBundle {
             structure_bundle: StructureBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
-                    signal_id: SignalId::Plant,
                     composition: Composition {
                         mass: STRUCTURE_STARTING_MASS,
                     },
@@ -102,7 +100,6 @@ impl FungiBundle {
         Self {
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
-                    signal_id: SignalId::Fungus,
                     ..Default::default()
                 },
                 ..Default::default()
@@ -138,7 +135,7 @@ fn upkeep(time: Res<Time>, mut query: Query<(&Structure, &mut Composition)>) {
     }
 }
 
-/// If structures grow too weak, they die and are despawned
+/// If structures grow too weak, they die and are despawned.
 fn cleanup(mut commands: Commands, query: Query<(&Structure, Entity, &Composition)>) {
     for (structure, ent, comp) in query.iter() {
         if comp.mass <= structure.despawn_mass {
