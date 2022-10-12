@@ -7,6 +7,7 @@
 pub mod camera;
 pub mod cursor;
 pub mod curves;
+pub mod hive_mind;
 pub mod organisms;
 pub mod signals;
 pub mod terrain;

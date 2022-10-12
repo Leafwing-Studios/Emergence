@@ -33,7 +33,7 @@ pub struct SignalConfig {
     /// The probability with which a signal naturally decays per tick.
     pub decay_probability: f32,
     /// Color settings.
-    pub color: SignalColorConfig,
+    pub color_config: SignalColorConfig,
 }
 
 /// Color configuration for a [`Signal`].
@@ -55,5 +55,5 @@ pub struct SignalColorConfig {
     /// The signal value above (inclusive) which an alpha of 1.0 will be returned.
     pub one_value: f32,
     /// Should this signal be visible on the map?
-    pub is_visible: f32,
+    pub is_visible: bool,
 }

@@ -1,14 +1,12 @@
 pub mod configs;
 pub mod emitters;
 pub mod map_overlay;
-pub mod pheromones;
 pub mod tile_signals;
 
 use crate::curves::ergonomic_sigmoid;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
-use crate::signals::pheromones::PheromonesPlugin;
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::generation::TerrainTilemap;
 use crate::tiles::position::HexNeighbors;
@@ -28,7 +26,6 @@ impl Plugin for SignalsPlugin {
         app.init_resource::<SignalConfigs>()
             .add_event::<SignalCreateEvent>()
             .add_plugin(MapOverlayPlugin)
-            .add_plugin(PheromonesPlugin)
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_tile_signals)
             .add_system(create)
             .add_system(decay.after(create))
@@ -57,10 +54,10 @@ fn initialize_tile_signals(
 
 /// An event that requests initialization of a new signal at a given tile position.
 pub struct SignalCreateEvent {
-    emitter: Emitter,
-    pos: TilePos,
-    initial: Signal,
-    config: SignalConfig,
+    pub emitter: Emitter,
+    pub pos: TilePos,
+    pub initial: Signal,
+    pub config: SignalConfig,
 }
 
 /// Reads [`SignalCreateEvent`]s to create new signals on the map.

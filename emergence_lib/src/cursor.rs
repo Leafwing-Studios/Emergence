@@ -39,7 +39,7 @@ pub fn cursor_pos_in_world(
 }
 
 /// The world position of the mouse cursor.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deref, DerefMut)]
 pub struct CursorWorldPos(Vec3);
 
 impl Default for CursorWorldPos {
@@ -49,7 +49,7 @@ impl Default for CursorWorldPos {
 }
 
 /// The tile position of the mouse cursor, if it lies over the map.
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Deref, DerefMut)]
 pub struct CursorTilePos(Option<TilePos>);
 
 pub fn tile_pos_from_world_pos(
@@ -77,12 +77,7 @@ pub fn update_cursor_pos(
     let (map_size, grid_size, map_transform) = terrain_tilemap_query.single();
 
     if let Some(cursor_moved) = cursor_moved_events.iter().last() {
-        *cursor_world_pos_res = CursorWorldPos(cursor_pos_in_world(
-            &windows,
-            cursor_moved.position,
-            cam_t,
-            cam,
-        ));
+        **cursor_world_pos_res = cursor_pos_in_world(&windows, cursor_moved.position, cam_t, cam);
     }
 
     // Grab the cursor position from the `Res<CursorPos>`
@@ -96,9 +91,5 @@ pub fn update_cursor_pos(
         cursor_map_pos.xy()
     };
 
-    *cursor_tile_pos_res = CursorTilePos(tile_pos_from_world_pos(
-        &cursor_map_pos,
-        map_size,
-        grid_size,
-    ));
+    **cursor_tile_pos_res = tile_pos_from_world_pos(&cursor_map_pos, map_size, grid_size);
 }
