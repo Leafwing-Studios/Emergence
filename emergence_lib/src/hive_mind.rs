@@ -27,12 +27,12 @@ pub enum HiveMindAction {
 }
 
 pub const PHEROMONE_ATTRACT_CONFIG: SignalConfig = SignalConfig {
-    diffusion_factor: 1e-2,
+    diffusion_factor: 1e-4,
     decay_probability: 1e-4,
     color_config: SignalColorConfig {
-        rgb_color: [0.7, 0.85, 0.9],
-        zero_value: 0.2,
-        one_value: 0.8,
+        rgb_color: [0.3, 0.3, 0.9],
+        zero_value: 0.0,
+        one_value: 0.1,
         is_visible: true,
     },
 };
@@ -61,7 +61,7 @@ fn place_pheromone(
         signal_create_evw.send(SignalCreateEvent {
             emitter: Emitter::Stock(PheromoneAttract),
             pos: (*cursor_tile_pos).unwrap(),
-            initial: Signal::new(0.0),
+            initial: Signal::new(1.0),
             config: PHEROMONE_ATTRACT_CONFIG,
         })
     }

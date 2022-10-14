@@ -1,10 +1,14 @@
 use crate::signals::emitters::Emitter;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 /// A dictionary of available [`SignalConfig`]s.
+///
+/// Internally, this uses an [`IndexMap`], so that there is also a notion of order: the order
+/// in which elements are inserted into the dictionary. Some notion of order is necessary in order
+/// to color tiles consistently.
 #[derive(Default, Clone, Debug)]
 pub struct SignalConfigs {
-    configs: HashMap<Emitter, SignalConfig>,
+    configs: IndexMap<Emitter, SignalConfig>,
 }
 
 impl SignalConfigs {
@@ -20,6 +24,11 @@ impl SignalConfigs {
     /// specified configuration, and then returning the pre-existing configuration.
     pub fn insert(&mut self, emitter: Emitter, config: SignalConfig) -> Option<SignalConfig> {
         self.configs.insert(emitter, config)
+    }
+
+    /// Iterate over the signals at this tile, in the order they were inserted.
+    pub fn iter(&self) -> impl Iterator<Item = (&Emitter, &SignalConfig)> {
+        self.configs.iter()
     }
 }
 

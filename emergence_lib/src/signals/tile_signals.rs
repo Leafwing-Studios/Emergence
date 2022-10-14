@@ -37,8 +37,8 @@ impl TileSignals {
     /// If there is no signal with the specified `Emitter`, a new one will be initialized.
     ///
     /// This change will be applied before the next tick, but after all diffusion has been done.
-    pub fn increment_incoming(&mut self, emitter: &Emitter, delta: f32) {
-        if let Some(signal) = self.map.get_mut(emitter) {
+    pub fn increment_incoming(&self, emitter: &Emitter, delta: f32) {
+        if let Some(mut signal) = self.map.get_mut(emitter) {
             signal.incoming += delta;
         } else {
             let mut new_signal = Signal::new(0.0);
@@ -52,8 +52,8 @@ impl TileSignals {
     /// Panics if there is no signal from the specified `Emitter`.
     ///
     /// This change will be applied before the next tick, but after all diffusion has been done.
-    pub fn increment_outgoing(&mut self, emitter: &Emitter, delta: f32) {
-        let signal = self.map.get_mut(emitter).unwrap();
+    pub fn increment_outgoing(&self, emitter: &Emitter, delta: f32) {
+        let mut signal = self.map.get_mut(emitter).unwrap();
         signal.outgoing += delta;
     }
 
@@ -64,7 +64,7 @@ impl TileSignals {
         for mut emitter_signal in self.map.iter_mut() {
             let (emitter, signal) = emitter_signal.pair_mut();
             let config = signal_configs.get(emitter).unwrap();
-            signal.current_value = signal.current_value * config.decay_probability;
+            signal.current_value *= 1.0 - config.decay_probability;
         }
     }
 
@@ -74,5 +74,17 @@ impl TileSignals {
             let signal = emitter_signal.value_mut();
             signal.apply_deltas();
         }
+    }
+
+    /// Compute colors due to each emitter.
+    pub fn compute_colors(&self, signal_configs: &SignalConfigs) -> Vec<Color> {
+        signal_configs
+            .iter()
+            .filter_map(|(emitter, config)| {
+                self.map
+                    .get(emitter)
+                    .and_then(|signal| signal.compute_color(&config.color_config))
+            })
+            .collect()
     }
 }

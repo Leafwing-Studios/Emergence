@@ -33,7 +33,6 @@ impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(TilemapPlugin)
             .init_resource::<GenerationConfig>()
-            .add_plugin(crate::camera::CameraPlugin)
             .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_starting_organisms)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);

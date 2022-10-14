@@ -15,7 +15,7 @@ impl Plugin for CursorTilePosPlugin {
             // FIXME: Ideally, this should be executed after the bevy_pancam plugin's
             // `camera_movement` and `camera_zoom` systems; but for now we don't have the tools to
             // specify this.
-            .add_system_to_stage(CoreStage::First, update_cursor_pos);
+            .add_system_to_stage(CoreStage::Last, update_cursor_pos);
     }
 }
 

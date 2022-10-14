@@ -1,5 +1,6 @@
 use crate::curves::linear_combination;
 use crate::signals::configs::SignalConfigs;
+use crate::signals::tile_signals::TileSignals;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileColor;
 
@@ -7,7 +8,7 @@ pub struct MapOverlayPlugin;
 
 impl Plugin for MapOverlayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(color_tiles);
+        app.add_system_to_stage(CoreStage::Last, color_tiles);
     }
 }
 
@@ -25,7 +26,24 @@ fn compute_tile_color(colors: &[Color]) -> TileColor {
 }
 
 /// Color tiles based on the signals present.
-fn color_tiles(signal_configs: Res<SignalConfigs>) {}
+fn color_tiles(
+    mut commands: Commands,
+    tile_signals_query: Query<(Entity, &TileSignals)>,
+    signal_configs: Res<SignalConfigs>,
+) {
+    let tile_colors: Vec<(Entity, (TileColor,))> = tile_signals_query
+        .iter()
+        .map(|(entity, tile_signals)| {
+            (
+                entity,
+                (compute_tile_color(
+                    &tile_signals.compute_colors(&signal_configs),
+                ),),
+            )
+        })
+        .collect();
+    commands.insert_or_spawn_batch(tile_colors);
+}
 
 pub trait AlphaCompose {
     fn over(&self, other: &Self) -> Self;

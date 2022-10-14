@@ -43,6 +43,18 @@ impl<T> HexNeighbors<T> {
         }
     }
 
+    pub fn get_mut(&mut self, direction: HexRowDirection) -> Option<&mut T> {
+        use HexRowDirection::*;
+        match direction {
+            East => self.east.as_mut(),
+            NorthEast => self.north_east.as_mut(),
+            NorthWest => self.north_west.as_mut(),
+            West => self.west.as_mut(),
+            SouthWest => self.south_west.as_mut(),
+            SouthEast => self.south_east.as_mut(),
+        }
+    }
+
     pub fn set(&mut self, direction: HexRowDirection, data: T) {
         use HexRowDirection::*;
         match direction {
@@ -75,7 +87,7 @@ impl<T> HexNeighbors<T> {
 
     /// Applies the supplied closure `f` with an [`and_then`](std::option::Option::and_then) to each
     /// element, where `f` takes `T` by value.
-    pub fn and_then<U: Copy, F>(&self, f: F) -> HexNeighbors<U>
+    pub fn and_then<U, F>(self, f: F) -> HexNeighbors<U>
     where
         F: Fn(T) -> Option<U>,
     {
@@ -86,6 +98,22 @@ impl<T> HexNeighbors<T> {
             south_east: self.south_east.and_then(&f),
             east: self.east.and_then(&f),
             north_east: self.north_east.and_then(&f),
+        }
+    }
+
+    /// Applies the supplied closure `f` with an [`and_then`](std::option::Option::and_then) to each
+    /// element, where `f` takes `T` by reference.
+    pub fn and_then_ref<'a, U, F>(&'a self, f: F) -> HexNeighbors<U>
+    where
+        F: Fn(&'a T) -> Option<U>,
+    {
+        HexNeighbors {
+            north_west: self.north_west.as_ref().and_then(&f),
+            west: self.west.as_ref().and_then(&f),
+            south_west: self.south_west.as_ref().and_then(&f),
+            south_east: self.south_east.as_ref().and_then(&f),
+            east: self.east.as_ref().and_then(&f),
+            north_east: self.north_east.as_ref().and_then(&f),
         }
     }
 
@@ -120,8 +148,8 @@ impl HexNeighbors<TilePos> {
     }
 
     pub fn entities(&self, tile_storage: &TileStorage) -> HexNeighbors<Entity> {
-        let f = |tile_pos| tile_storage.get(&tile_pos);
-        self.and_then(f)
+        let f = |tile_pos| tile_storage.get(tile_pos);
+        self.and_then_ref(f)
     }
 
     /// Choose a random neighbor
