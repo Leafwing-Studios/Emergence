@@ -1,4 +1,6 @@
-use crate::signals::emitters::Emitter;
+use crate::curves::Sigmoid;
+use crate::signals::emitters::{Emitter, StockEmitter};
+use crate::IterableEnum;
 use indexmap::IndexMap;
 
 /// A dictionary of available [`SignalConfig`]s.
@@ -6,9 +8,77 @@ use indexmap::IndexMap;
 /// Internally, this uses an [`IndexMap`], so that there is also a notion of order: the order
 /// in which elements are inserted into the dictionary. Some notion of order is necessary in order
 /// to color tiles consistently.
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct SignalConfigs {
     configs: IndexMap<Emitter, SignalConfig>,
+}
+
+impl Default for SignalConfigs {
+    fn default() -> Self {
+        let variants = StockEmitter::variants();
+        let mut configs = IndexMap::with_capacity(variants.len());
+        for variant in variants {
+            let config = match variant {
+                StockEmitter::Ant => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+                StockEmitter::Plant => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+                StockEmitter::Fungus => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+                StockEmitter::Unspecified => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+                StockEmitter::PheromoneAttract => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+                StockEmitter::PheromoneRepulse => SignalConfig {
+                    diffusion_factor: 1e-4,
+                    decay_probability: 1e-4,
+                    color_config: SignalColorConfig {
+                        rgb_color: [0.3, 0.3, 0.9],
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        is_visible: true,
+                    },
+                },
+            };
+            configs.insert(Emitter::Stock(variant), config);
+        }
+
+        SignalConfigs { configs }
+    }
 }
 
 impl SignalConfigs {
@@ -33,7 +103,7 @@ impl SignalConfigs {
 }
 
 /// Configuration settings for a particular [`Signal`].
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SignalConfig {
     /// The factor with which a unit of signal diffuses to a neighboring tile per tick.
     ///
@@ -55,14 +125,12 @@ pub struct SignalConfig {
 /// the value is above `one_value`, then the computed color will have alpha `1.0`. If `value` is
 /// between `zero_value` and `one_value`, then `alpha` will be mapped to some point between these
 /// two.
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SignalColorConfig {
     /// The three primary colour values (rgb) defining the colour used.
     pub rgb_color: [f32; 3],
-    /// The signal value below (inclusive) which an alpha of 0.0 will be returned.
-    pub zero_value: f32,
-    /// The signal value above (inclusive) which an alpha of 1.0 will be returned.
-    pub one_value: f32,
+    /// The sigmoid that maps a signal value to an alpha value.
+    pub sigmoid: Sigmoid,
     /// Should this signal be visible on the map?
     pub is_visible: bool,
 }

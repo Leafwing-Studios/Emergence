@@ -15,4 +15,5 @@ rand = "0.8"
 once_cell = "1.15"
 indexmap = "1.9"
 dashmap = "5.4"
-leafwing-input-manager = "0.5"
+leafwing-input-manager = "0.6.1"
+emergence_macros = { path = "../emergence_macros" }

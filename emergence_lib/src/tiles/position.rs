@@ -86,7 +86,7 @@ impl<T> HexNeighbors<T> {
     }
 
     /// Applies the supplied closure `f` with an [`and_then`](std::option::Option::and_then) to each
-    /// element, where `f` takes `T` by value.
+    /// neighbor element, where `f` takes `T` by value.
     pub fn and_then<U, F>(self, f: F) -> HexNeighbors<U>
     where
         F: Fn(T) -> Option<U>,
@@ -102,7 +102,7 @@ impl<T> HexNeighbors<T> {
     }
 
     /// Applies the supplied closure `f` with an [`and_then`](std::option::Option::and_then) to each
-    /// element, where `f` takes `T` by reference.
+    /// neighbor element, where `f` takes `T` by reference.
     pub fn and_then_ref<'a, U, F>(&'a self, f: F) -> HexNeighbors<U>
     where
         F: Fn(&'a T) -> Option<U>,
@@ -114,6 +114,22 @@ impl<T> HexNeighbors<T> {
             south_east: self.south_east.as_ref().and_then(&f),
             east: self.east.as_ref().and_then(&f),
             north_east: self.north_east.as_ref().and_then(&f),
+        }
+    }
+
+    /// Applies the supplied closure `f` with a [`map`](std::option::Option::map) to each
+    /// neighbor element, where `f` takes `T` by reference.
+    pub fn map_ref<'a, U, F>(&'a self, f: F) -> HexNeighbors<U>
+    where
+        F: Fn(&'a T) -> U,
+    {
+        HexNeighbors {
+            north_west: self.north_west.as_ref().map(&f),
+            west: self.west.as_ref().map(&f),
+            south_west: self.south_west.as_ref().map(&f),
+            south_east: self.south_east.as_ref().map(&f),
+            east: self.east.as_ref().map(&f),
+            north_east: self.north_east.as_ref().map(&f),
         }
     }
 

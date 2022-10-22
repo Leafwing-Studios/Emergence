@@ -2,8 +2,6 @@ pub mod configs;
 pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
-
-use crate::curves::ergonomic_sigmoid;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
@@ -24,11 +22,11 @@ pub struct SignalsPlugin;
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SignalConfigs>()
-            .add_event::<SignalCreateEvent>()
+            .add_event::<SignalModificationEvent>()
             .add_plugin(MapOverlayPlugin)
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_tile_signals)
-            .add_system(create)
-            .add_system(decay.after(create))
+            .add_system(handle_signal_modification_events)
+            .add_system(decay.after(handle_signal_modification_events))
             .add_system(compute_deltas.after(decay))
             .add_system(apply_deltas.after(compute_deltas));
     }
@@ -52,34 +50,59 @@ fn initialize_tile_signals(
     commands.insert_or_spawn_batch(tile_signals);
 }
 
-/// An event that requests initialization of a new signal at a given tile position.
-pub struct SignalCreateEvent {
-    pub emitter: Emitter,
-    pub pos: TilePos,
-    pub initial: Signal,
-    pub config: SignalConfig,
+pub enum SignalModificationEvent {
+    SignalIncrement {
+        emitter: Emitter,
+        pos: TilePos,
+        increment: f32,
+        /// The maximum value a signal can be incremented to.
+        max_value: f32,
+    },
+    SignalCreate {
+        emitter: Emitter,
+        pos: TilePos,
+        initial: Signal,
+        config: SignalConfig,
+    },
 }
 
-/// Reads [`SignalCreateEvent`]s to create new signals on the map.
-fn create(
-    mut creation_events: EventReader<SignalCreateEvent>,
+/// An event that requests incrementing of a signal at a given tile position.
+pub struct SignalIncrementEvent {}
+
+/// Reads [`SignalIncrementEvent`]s to create new signals on the map.
+fn handle_signal_modification_events(
+    mut modification_events: EventReader<SignalModificationEvent>,
     mut signals_query: Query<&mut TileSignals>,
     terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
     mut signal_configs: ResMut<SignalConfigs>,
 ) {
     let terrain_tile_storage = terrain_tile_storage_query.single();
-    for creation_event in creation_events.iter() {
-        let SignalCreateEvent {
-            emitter,
-            pos,
-            initial,
-            config,
-        } = creation_event;
-        if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
-            let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
+    for creation_event in modification_events.iter() {
+        match creation_event {
+            SignalModificationEvent::SignalIncrement {
+                emitter,
+                pos,
+                increment,
+                max_value,
+            } => {
+                if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
+                    let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
 
-            signal_configs.insert(*emitter, *config);
-            tile_signals.insert(*emitter, *initial);
+                    tile_signals.increment_at_most(emitter, *increment, *max_value);
+                }
+            }
+            SignalModificationEvent::SignalCreate {
+                emitter,
+                pos,
+                initial,
+                config,
+            } => {
+                if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
+                    let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
+                    signal_configs.insert(*emitter, *config);
+                    tile_signals.insert(*emitter, *initial);
+                }
+            }
         }
     }
 }
@@ -175,13 +198,7 @@ impl Signal {
             // What are the possible values for a signal? [0, \infty)
             // What are we mapping to? [0, 1), the alpha component of our color
             // Use a shifted sigmoid to represent this
-            color.set_a(ergonomic_sigmoid(
-                self.current_value,
-                0.0,
-                1.0,
-                color_config.zero_value,
-                color_config.one_value,
-            ));
+            color.set_a(color_config.sigmoid.map(self.current_value));
 
             color
         })

@@ -28,8 +28,27 @@ impl TileSignals {
             .collect()
     }
 
+    /// Insert a signal.
+    ///
+    /// This follows [`DashMap`](DashMap::insert) semantics, as it calls
+    /// [`DashMap::insert`](DashMap::insert) internally.
+    ///
+    /// In particular, it replaces an old value, if an old value existed.
     pub fn insert(&mut self, emitter: Emitter, signal: Signal) {
         self.map.insert(emitter, signal);
+    }
+
+    /// Increments a signal's `current_value` by the given value; but will not exceed the
+    /// specified `max_value`.
+    ///
+    /// If the signal does not exist, it inserts a new signal, with `incoming`/`outgoing` values
+    /// set to `0.0`.
+    pub fn increment_at_most(&mut self, emitter: &Emitter, increment: f32, max_value: f32) {
+        if let Some(mut signal) = self.map.get_mut(&emitter) {
+            signal.current_value = (signal.current_value + increment).min(max_value)
+        } else {
+            self.map.insert(*emitter, Signal::new(increment));
+        }
     }
 
     /// Increment the change in signal due to signal entering this tile.
@@ -86,5 +105,12 @@ impl TileSignals {
                     .and_then(|signal| signal.compute_color(&config.color_config))
             })
             .collect()
+    }
+
+    /// Retrieve value of signal from specified `Emitter`.
+    pub fn get(&self, emitter: &Emitter) -> f32 {
+        self.map
+            .get(emitter)
+            .map_or(0.0, |signal| signal.current_value)
     }
 }

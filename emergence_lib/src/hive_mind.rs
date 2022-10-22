@@ -1,8 +1,7 @@
 use crate::cursor::CursorTilePos;
-use crate::signals::configs::{SignalColorConfig, SignalConfig};
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::PheromoneAttract;
-use crate::signals::{Signal, SignalCreateEvent};
+use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
@@ -26,17 +25,6 @@ pub enum HiveMindAction {
     CyclePheromone,
 }
 
-pub const PHEROMONE_ATTRACT_CONFIG: SignalConfig = SignalConfig {
-    diffusion_factor: 1e-4,
-    decay_probability: 1e-4,
-    color_config: SignalColorConfig {
-        rgb_color: [0.3, 0.3, 0.9],
-        zero_value: 0.0,
-        one_value: 0.1,
-        is_visible: true,
-    },
-};
-
 fn initialize_hive_mind(mut commands: Commands) {
     commands
         .spawn()
@@ -51,18 +39,18 @@ fn initialize_hive_mind(mut commands: Commands) {
 }
 
 fn place_pheromone(
-    mut signal_create_evw: EventWriter<SignalCreateEvent>,
+    mut signal_create_evw: EventWriter<SignalModificationEvent>,
     cursor_tile_pos: Res<CursorTilePos>,
     hive_mind_query: Query<&ActionState<HiveMindAction>, With<HiveMind>>,
 ) {
     let hive_mind_state = hive_mind_query.single();
 
     if hive_mind_state.pressed(HiveMindAction::PlacePheromone) && (*cursor_tile_pos).is_some() {
-        signal_create_evw.send(SignalCreateEvent {
+        signal_create_evw.send(SignalModificationEvent::SignalIncrement {
             emitter: Emitter::Stock(PheromoneAttract),
             pos: (*cursor_tile_pos).unwrap(),
-            initial: Signal::new(1.0),
-            config: PHEROMONE_ATTRACT_CONFIG,
+            increment: 0.1,
+            max_value: 1.0,
         })
     }
 }
