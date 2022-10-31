@@ -57,10 +57,10 @@ impl Default for SignalConfigs {
                 },
                 StockEmitter::PheromoneAttract => SignalConfig {
                     diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
+                    decay_probability: 1e-2,
                     color_config: SignalColorConfig {
                         rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
+                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.2),
                         is_visible: true,
                     },
                 },

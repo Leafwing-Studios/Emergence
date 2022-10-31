@@ -38,14 +38,13 @@ impl TileSignals {
         self.map.insert(emitter, signal);
     }
 
-    /// Increments a signal's `current_value` by the given value; but will not exceed the
-    /// specified `max_value`.
+    /// Increments a signal's `current_value` by the given value.
     ///
     /// If the signal does not exist, it inserts a new signal, with `incoming`/`outgoing` values
     /// set to `0.0`.
-    pub fn increment_at_most(&mut self, emitter: &Emitter, increment: f32, max_value: f32) {
-        if let Some(mut signal) = self.map.get_mut(&emitter) {
-            signal.current_value = (signal.current_value + increment).min(max_value)
+    pub fn increment(&mut self, emitter: &Emitter, increment: f32) {
+        if let Some(mut signal) = self.map.get_mut(emitter) {
+            signal.current_value += increment
         } else {
             self.map.insert(*emitter, Signal::new(increment));
         }

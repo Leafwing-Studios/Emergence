@@ -50,7 +50,6 @@ fn place_pheromone(
             emitter: Emitter::Stock(PheromoneAttract),
             pos: (*cursor_tile_pos).unwrap(),
             increment: 0.1,
-            max_value: 1.0,
         })
     }
 }

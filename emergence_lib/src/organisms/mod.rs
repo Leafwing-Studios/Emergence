@@ -1,6 +1,8 @@
-use crate::tiles::IntoTile;
+use crate::tiles::IntoTileBundle;
+use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapTileSize;
+use bevy_ecs_tilemap::prelude::TileStorage;
 use bevy_ecs_tilemap::tiles::TileTexture;
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
@@ -30,7 +32,7 @@ pub enum OrganismType {
     Plant,
 }
 
-impl IntoTile for OrganismType {
+impl IntoTileBundle for OrganismType {
     fn tile_texture(&self) -> TileTexture {
         TileTexture(ORGANISM_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
@@ -55,3 +57,26 @@ pub struct OrganismBundle {
     pub organism: Organism,
     pub composition: Composition,
 }
+
+/// Marker component for entities that are part of the organisms tilemap
+#[derive(Component)]
+pub struct OrganismTilemap;
+
+/// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
+/// `Tilemap` that has the `OrganismTilemap` component type.
+#[derive(WorldQuery)]
+pub struct OrganismStorage<'a> {
+    pub storage: &'a TileStorage,
+    _organism_tile_map: With<OrganismTilemap>,
+}
+
+// #[derive(Deref)]
+// pub struct OrganismTileStorage<'t>(&'t TileStorage);
+//
+// impl<'t, 'w: 't, 's: 't> From<&'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>>
+//     for OrganismTileStorage<'t>
+// {
+//     fn from(value: &'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>) -> Self {
+//         OrganismTileStorage(value.single())
+//     }
+// }

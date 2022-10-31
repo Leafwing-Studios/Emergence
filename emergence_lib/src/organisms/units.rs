@@ -1,17 +1,18 @@
 //! Units are organisms that can move freely.
 
-use crate::curves::Sigmoid;
+use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::organisms::pathfinding::get_weighted_random_passable_neighbor;
-use crate::organisms::{OrganismBundle, OrganismType};
+use crate::organisms::{OrganismBundle, OrganismStorage, OrganismStorageItem, OrganismType};
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::generation::{GenerationConfig, OrganismTilemap, TerrainTilemap};
-use crate::terrain::ImpassableTerrain;
-use crate::tiles::IntoTile;
+use crate::terrain::generation::GenerationConfig;
+use crate::terrain::TerrainStorage;
+use crate::terrain::{ImpassableTerrain, TerrainStorageItem};
+use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
 use bevy_ecs_tilemap::prelude::TileBundle;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy_ecs_tilemap::tiles::TilePos;
 
 /// Marker component for [`UnitBundle`]
 #[derive(Component, Clone, Default)]
@@ -60,7 +61,7 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, true)))
-            .insert_resource(PheromoneSensor::new())
+            .insert_resource(PheromoneSensor::<BottomClampedLine>::default())
             .add_system(act);
     }
 }
@@ -74,20 +75,20 @@ fn act(
     generation_config: Res<GenerationConfig>,
     mut query: Query<(&Unit, &mut TilePos)>,
     impassable_query: Query<&ImpassableTerrain>,
-    terrain_tilemap_query: Query<&TileStorage, With<TerrainTilemap>>,
-    organism_tilemap_query: Query<&TileStorage, With<OrganismTilemap>>,
+    terrain_storage_query: Query<TerrainStorage>,
+    organism_storage_query: Query<OrganismStorage>,
     tile_signals_query: Query<&TileSignals>,
-    pheromone_sensor: Res<PheromoneSensor>,
+    pheromone_sensor: Res<PheromoneSensor<BottomClampedLine>>,
 ) {
-    let terrain_tile_storage = terrain_tilemap_query.single();
-    let organism_tile_storage = organism_tilemap_query.single();
+    let terrain_tile_storage = terrain_storage_query.single();
+    let organism_tile_storage = organism_storage_query.single();
     timer.0.tick(time.delta());
     if timer.0.finished() {
         for (_, mut position) in query.iter_mut() {
             *position = wander(
                 &position,
-                terrain_tile_storage,
-                organism_tile_storage,
+                &terrain_tile_storage,
+                &organism_tile_storage,
                 &impassable_query,
                 &tile_signals_query,
                 &pheromone_sensor,
@@ -97,49 +98,77 @@ fn act(
     }
 }
 
-pub struct PheromoneSensor {
-    sigmoid: Sigmoid,
+pub struct PheromoneSensor<C: Mapping> {
+    curve: C,
 }
 
-impl PheromoneSensor {
-    pub fn new() -> PheromoneSensor {
+impl PheromoneSensor<Sigmoid> {
+    pub fn new(
+        min: f32,
+        max: f32,
+        first_percentile: f32,
+        last_percentile: f32,
+    ) -> PheromoneSensor<Sigmoid> {
         PheromoneSensor {
-            sigmoid: Sigmoid::new(0.0, 1.0, 0.2, 0.99),
+            curve: Sigmoid::new(min, max, first_percentile, last_percentile),
         }
     }
 
     pub fn signal_to_weight(&self, attraction: f32, repulsion: f32) -> f32 {
-        self.sigmoid.map(attraction) - self.sigmoid.map(repulsion)
+        1.0 + self.curve.map(attraction) - self.curve.map(repulsion)
+    }
+}
+
+impl Default for PheromoneSensor<Sigmoid> {
+    fn default() -> Self {
+        PheromoneSensor {
+            curve: Sigmoid::new(0.0, 0.1, 0.01, 0.09),
+        }
+    }
+}
+
+impl PheromoneSensor<BottomClampedLine> {
+    pub fn new(p0: Vec2, p1: Vec2) -> PheromoneSensor<BottomClampedLine> {
+        PheromoneSensor {
+            curve: BottomClampedLine::new_from_points(p0, p1),
+        }
+    }
+
+    pub fn signal_to_weight(&self, attraction: f32, repulsion: f32) -> f32 {
+        info!("attraction: {attraction:?}");
+        1.0 + self.curve.map(attraction) - self.curve.map(repulsion)
+    }
+}
+
+impl Default for PheromoneSensor<BottomClampedLine> {
+    fn default() -> Self {
+        PheromoneSensor {
+            curve: BottomClampedLine::new_from_points(Vec2::new(0.0, 0.0), Vec2::new(0.01, 1.0)),
+        }
     }
 }
 
 fn wander(
     position: &TilePos,
-    terrain_tile_storage: &TileStorage,
-    organism_tile_storage: &TileStorage,
+    terrain_tile_storage: &TerrainStorageItem,
+    organism_tile_storage: &OrganismStorageItem,
     impassable_query: &Query<&ImpassableTerrain>,
     tile_signals_query: &Query<&TileSignals>,
-    pheromone_sensor: &PheromoneSensor,
+    pheromone_sensor: &PheromoneSensor<BottomClampedLine>,
     map_size: &TilemapSize,
 ) -> TilePos {
-    // let target = get_random_passable_neighbor(
-    //     position,
-    //     organism_tile_storage,
-    //     terrain_tile_storage,
-    //     impassable_query,
-    //     map_size,
-    // );
-
     let signals_to_weight = |tile_signals: &TileSignals| {
-        1.0 + pheromone_sensor.signal_to_weight(
+        let weight = pheromone_sensor.signal_to_weight(
             tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneAttract)),
             0.0,
-        )
+        );
+        info!("calculated weight: {weight:?}");
+        weight
     };
     let target = get_weighted_random_passable_neighbor(
         position,
-        organism_tile_storage,
         terrain_tile_storage,
+        organism_tile_storage,
         impassable_query,
         tile_signals_query,
         signals_to_weight,

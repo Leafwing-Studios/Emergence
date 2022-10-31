@@ -1,4 +1,4 @@
-use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize};
+use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTexture};
 
 pub mod position;
@@ -12,8 +12,7 @@ pub const MAP_SIZE: TilemapSize = TilemapSize {
     x: MAP_DIAMETER,
     y: MAP_DIAMETER,
 };
-/// The coordinate system used in this game
-pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
+
 /// The [`TilePos`] that defines the center of this map
 pub const MAP_CENTER: TilePos = TilePos {
     x: MAP_RADIUS + 1,
@@ -25,8 +24,13 @@ pub const MAP_CENTER: TilePos = TilePos {
 /// Grid size should be the same for all tilemaps, as we want them to be congruent.
 pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
+/// We use a hexagonal map with "point-topped" (row oriented) tiles, and prefer an axial coordinate
+/// system instead of an offset-coordinate system.
+pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
+pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
+
 /// A type that can be transformed into a tile that is compatible with [`bevy_ecs_tilemap`].
-pub trait IntoTile {
+pub trait IntoTileBundle {
     /// The corresponding [`TileTexture`].
     fn tile_texture(&self) -> TileTexture;
 

@@ -1,5 +1,6 @@
+use crate::organisms::OrganismStorageItem;
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::ImpassableTerrain;
+use crate::terrain::{ImpassableTerrain, TerrainStorageItem};
 use crate::tiles::position::HexNeighbors;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
@@ -13,8 +14,8 @@ use rand::{thread_rng, Rng};
 /// Returns [`None`] if and only if no such tile exists.
 pub fn get_random_passable_neighbor(
     current_pos: &TilePos,
-    terrain_tile_storage: &TileStorage,
-    organism_tile_storage: &TileStorage,
+    terrain_tile_storage: &TerrainStorageItem,
+    organism_tile_storage: &OrganismStorageItem,
     impassable_query: &Query<&ImpassableTerrain>,
     map_size: &TilemapSize,
 ) -> Option<TilePos> {
@@ -34,18 +35,18 @@ impl HexNeighbors<TilePos> {
     /// Returns the set of neighboring cells that units can walk through
     pub fn passable_neighbors(
         tile_pos: &TilePos,
-        terrain_tile_storage: &TileStorage,
-        organism_tile_storage: &TileStorage,
+        terrain_tile_storage: &TerrainStorageItem,
+        organism_tile_storage: &OrganismStorageItem,
         impassable_query: &Query<&ImpassableTerrain>,
         map_size: &TilemapSize,
     ) -> HexNeighbors<TilePos> {
         let passable_filter_closure = |pos| {
             // there should be a terrain entity, otherwise the position is not accessible
-            let terrain_entity = terrain_tile_storage.get(&pos)?;
+            let terrain_entity = terrain_tile_storage.storage.get(&pos)?;
             // if the terrain entity we found is impassable, then return None
             let _ = impassable_query.get(terrain_entity).err()?;
 
-            if let Some(organism_entity) = organism_tile_storage.get(&pos) {
+            if let Some(organism_entity) = organism_tile_storage.storage.get(&pos) {
                 // if organism entity at given tile position is impassable, then return None
                 let _ = impassable_query.get(organism_entity).err()?;
             }
@@ -68,8 +69,8 @@ pub struct WeightedTilePos {
 /// Returns [`None`] if and only if no such tile exists.
 pub fn get_weighted_random_passable_neighbor<SignalsToWeightClosure>(
     current_pos: &TilePos,
-    terrain_tile_storage: &TileStorage,
-    organism_tile_storage: &TileStorage,
+    terrain_tile_storage: &TerrainStorageItem,
+    organism_tile_storage: &OrganismStorageItem,
     impassable_query: &Query<&ImpassableTerrain>,
     tile_signals_query: &Query<&TileSignals>,
     signals_to_weight: SignalsToWeightClosure,
@@ -97,8 +98,8 @@ impl HexNeighbors<WeightedTilePos> {
     /// Returns the set of neighboring cells that are passable, weighted according to signal values.
     pub fn weighted_passable_neighbors<SignalsToWeightFn>(
         tile_pos: &TilePos,
-        terrain_tile_storage: &TileStorage,
-        organism_tile_storage: &TileStorage,
+        terrain_tile_storage: &TerrainStorageItem,
+        organism_tile_storage: &OrganismStorageItem,
         impassable_query: &Query<&ImpassableTerrain>,
         tile_signals_query: &Query<&TileSignals>,
         signals_to_weight: SignalsToWeightFn,
@@ -115,18 +116,22 @@ impl HexNeighbors<WeightedTilePos> {
             map_size,
         );
 
+        info!("pos: {tile_pos:?}, passable_neighbors: {passable_neighbors:?}");
+
         let f = |pos| {
-            let tile_entity = terrain_tile_storage.get(pos).unwrap();
-            // let weight = if let Ok(tile_signals) = tile_signals_query.get(tile_entity) {
-            //     signals_to_weight(tile_signals)
-            // } else {
-            //     1.0
-            // };
-            let weight = 1.0;
+            let tile_entity = terrain_tile_storage.storage.get(pos).unwrap();
+            let weight = if let Ok(tile_signals) = tile_signals_query.get(tile_entity) {
+                signals_to_weight(tile_signals)
+            } else {
+                info!("No signal found...");
+                1.0
+            };
 
             WeightedTilePos { weight, pos: *pos }
         };
-        passable_neighbors.map_ref(f)
+        let weighted_neighbors = passable_neighbors.map_ref(f);
+        info!("pos: {tile_pos:?}, weighted_neighbors: {weighted_neighbors:?}");
+        weighted_neighbors
     }
 
     pub fn entities(&self, tile_storage: &TileStorage) -> HexNeighbors<Entity> {

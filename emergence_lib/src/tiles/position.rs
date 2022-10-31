@@ -19,7 +19,7 @@ fn random_direction<R: Rng + ?Sized, D: Distribution<usize>>(
     HexDirection::from(choice)
 }
 
-/// Stores some copy-able data `T` associated with each neighboring hex cell, if present.
+/// Stores some data `T` associated with each neighboring hex cell, if present.
 #[derive(Debug, Default)]
 pub struct HexNeighbors<T> {
     north_west: Option<T>,
@@ -152,7 +152,10 @@ impl<T> HexNeighbors<T> {
 }
 
 impl HexNeighbors<TilePos> {
-    /// Returns the set of neighboring cells
+    /// Returns neighboring tile positions.
+    ///
+    /// A tile position will be `None` for a particular direction, if that neighbor would not lie
+    /// on the map.
     pub fn get_neighbors(tile_pos: &TilePos, map_size: &TilemapSize) -> HexNeighbors<TilePos> {
         let axial_pos = AxialPos::from(tile_pos);
         let f = |direction| {
@@ -163,6 +166,7 @@ impl HexNeighbors<TilePos> {
         HexNeighbors::from_directional_closure(f)
     }
 
+    /// Returns the entities associated with each tile position.
     pub fn entities(&self, tile_storage: &TileStorage) -> HexNeighbors<Entity> {
         let f = |tile_pos| tile_storage.get(tile_pos);
         self.and_then_ref(f)

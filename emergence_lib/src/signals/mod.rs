@@ -2,11 +2,12 @@ pub mod configs;
 pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
+use crate::curves::Mapping;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::generation::TerrainTilemap;
+use crate::terrain::TerrainTilemap;
 use crate::tiles::position::HexNeighbors;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
@@ -55,8 +56,6 @@ pub enum SignalModificationEvent {
         emitter: Emitter,
         pos: TilePos,
         increment: f32,
-        /// The maximum value a signal can be incremented to.
-        max_value: f32,
     },
     SignalCreate {
         emitter: Emitter,
@@ -83,12 +82,11 @@ fn handle_signal_modification_events(
                 emitter,
                 pos,
                 increment,
-                max_value,
             } => {
                 if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
                     let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
 
-                    tile_signals.increment_at_most(emitter, *increment, *max_value);
+                    tile_signals.increment(emitter, *increment);
                 }
             }
             SignalModificationEvent::SignalCreate {
@@ -179,7 +177,7 @@ impl Signal {
     }
 
     /// Apply accumulated `incoming`/`outgoing` to the `current_value`, while ensuring that the
-    /// minimum accumulated value is `0.0`.
+    /// signal's value does not go below `0.0`.
     ///
     /// `incoming` and `outgoing` are reset to `0.0` once applied.
     fn apply_deltas(&mut self) {

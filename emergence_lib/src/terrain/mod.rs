@@ -1,10 +1,11 @@
-use crate::tiles::IntoTile;
+use crate::tiles::IntoTileBundle;
+use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapTileSize};
+use bevy_ecs_tilemap::prelude::TileStorage;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
-
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
@@ -44,7 +45,7 @@ pub enum TerrainType {
     High,
 }
 
-impl IntoTile for TerrainType {
+impl IntoTileBundle for TerrainType {
     /// The associated tile texture
     fn tile_texture(&self) -> TileTexture {
         TileTexture(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
@@ -94,4 +95,16 @@ impl Distribution<TerrainType> for Standard {
             TerrainType::Plain
         }
     }
+}
+
+/// Marker component for entities that are part of the terrain's tilemap
+#[derive(Component)]
+pub struct TerrainTilemap;
+
+/// A [`WorldQuery`] specifying a search for `TileStorage` associated with a
+/// `Tilemap` that has the `TerrainTilemap` component type.
+#[derive(WorldQuery)]
+pub struct TerrainStorage<'a> {
+    pub storage: &'a TileStorage,
+    _terrain_tile_map: With<TerrainTilemap>,
 }

@@ -5,7 +5,7 @@
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::terrain::ImpassableTerrain;
-use crate::tiles::IntoTile;
+use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
