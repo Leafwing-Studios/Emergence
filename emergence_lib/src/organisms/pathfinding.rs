@@ -1,3 +1,4 @@
+//! Utilities to support organism pathfinding.
 use crate::organisms::OrganismStorageItem;
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::{ImpassableTerrain, TerrainStorageItem};
@@ -58,9 +59,15 @@ impl HexNeighbors<TilePos> {
     }
 }
 
+/// A tile position with an associated weight. Useful for making weighted selections from a
+/// set of tile positions.
 #[derive(Clone, Copy, Debug)]
 pub struct WeightedTilePos {
+    /// Weight associated with the tile position.
+    ///
+    /// **Important:** This must be non-negative.
     weight: f32,
+    /// Tile position that is being assigned a weight.
     pos: TilePos,
 }
 
@@ -134,6 +141,7 @@ impl HexNeighbors<WeightedTilePos> {
         weighted_neighbors
     }
 
+    /// Get the entities associated with neighbouring tile positions.
     pub fn entities(&self, tile_storage: &TileStorage) -> HexNeighbors<Entity> {
         let f = |weighted_tile_pos: &WeightedTilePos| tile_storage.get(&weighted_tile_pos.pos);
         self.and_then_ref(f)

@@ -2,14 +2,18 @@
 
 use bevy::math::Vec2;
 
+/// A type which maps from an input value to an output value that lies on a curve.
 pub trait Mapping {
+    /// Given some input value, map to an output so that `(input, output)` lie on the curve.
     fn map(&self, x: f32) -> f32;
 }
 
 /// Represents a line with slope `m` and y-intercept `b`.
 #[derive(Clone, Copy, Debug)]
 pub struct Line {
+    /// The slope of the line.
     slope: f32,
+    /// The y-intercept of the line. In other words, the output value when the input value is `0.0`.
     y_intercept: f32,
 }
 
@@ -49,8 +53,11 @@ impl Mapping for Line {
 /// Represents a line that is clamped to specified `min` and `max` values.
 #[derive(Clone, Copy, Debug)]
 pub struct ClampedLine {
+    /// Minimum output value.
     min: f32,
+    /// Maximum output value.
     max: f32,
+    /// Underlying [`Line`] whose output values are clamped.
     line: Line,
 }
 
@@ -92,7 +99,9 @@ impl Mapping for ClampedLine {
 /// respect to a maximum at the "top".
 #[derive(Clone, Copy, Debug)]
 pub struct BottomClampedLine {
+    /// Minimum output value.
     min: f32,
+    /// Underlying [`Line`] whose output values are clamped.
     line: Line,
 }
 
@@ -157,12 +166,27 @@ pub fn inverse_normal_sigmoid(y: f32) -> f32 {
 
 /// Represents a scaled and translated version of [`normal_sigmoid`].
 ///
-/// Formally: `sigmoid.map(x) == sigmoid.vertical_scale * normal_sigmoid((x - sigmoid.horizontal_offset)/sigmoid.horizontal_scale) + sigmoid.vertical_offset`
+/// Formally: `sigmoid.map(x) == sigmoid.vertical_scale * normal_sigmoid((x - sigmoid.horizontal_offset)/sigmoid.horizontal_scale) + sigmoid.vertical_offset`.
+///
+/// Use [`new`](Sigmoid::new), an ergonomic interface to smooth the process of defining the
+/// necessary numbers governing the curve.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Sigmoid {
+    /// The distance between asymptotic maximum (output value produced at `+infinity`) and asymptotic
+    /// minimum value (output value produced at `-infinity`).
+    ///
+    /// Given some [`horizontal_scale`](Sigmoid::horizontal_scale), this effectively defines the
+    /// asymptotic maximum produced by this sigmoid.
     vertical_scale: f32,
+    /// Distance between input values which produce `0.99 * asymptotic_max` and `0.01 * asymptotic_min`,
+    /// where `asymptotic_max` is the output value produced at `+infinity` and `asymptotic_min`
+    /// is the output value produced at `-infinity`.
     horizontal_scale: f32,
+    /// Defines the asymptotic minimum (output value attained at `-infinity`) produced by this sigmoid.
     vertical_offset: f32,
+    /// Defines which input value produces an output of `0.5 * (`asymptotic_max` + `asymptotic_min`)
+    /// where `asymptotic_max` is the output value produced at `+infinity` and `asymptotic_min`
+    /// is the output value produced at `-infinity`.
     horizontal_offset: f32,
 }
 

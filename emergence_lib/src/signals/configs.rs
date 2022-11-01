@@ -1,3 +1,5 @@
+//! Utilities to manage configuration of signals (colour, decay rate, etc.).
+
 use crate::curves::Sigmoid;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::IterableEnum;
@@ -10,6 +12,7 @@ use indexmap::IndexMap;
 /// to color tiles consistently.
 #[derive(Clone, Debug)]
 pub struct SignalConfigs {
+    /// Stores the configuration associated with each emitter.
     configs: IndexMap<Emitter, SignalConfig>,
 }
 

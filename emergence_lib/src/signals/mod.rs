@@ -1,3 +1,6 @@
+//! Models signals emitted by the hive mind, or units of the hive.
+//!
+//! Signals diffuse, can be convected, and so on.
 pub mod configs;
 pub mod emitters;
 pub mod map_overlay;
@@ -51,16 +54,26 @@ fn initialize_tile_signals(
     commands.insert_or_spawn_batch(tile_signals);
 }
 
+/// Event modifying a signal at a tile.
 pub enum SignalModificationEvent {
+    /// Increment/decrement a signal by requested amount.
     SignalIncrement {
+        /// Emitter id of the signal.
         emitter: Emitter,
+        /// Tile position of the signal.
         pos: TilePos,
+        /// Amount to be incremented/decremented by.
         increment: f32,
     },
+    /// Create a signal at a tile, initialized with the given settings.
     SignalCreate {
+        /// Emitter id of the signal.
         emitter: Emitter,
+        /// Tile position of the signal.
         pos: TilePos,
+        /// Initial signal value.
         initial: Signal,
+        /// Configuration of the signal.
         config: SignalConfig,
     },
 }
@@ -206,9 +219,13 @@ impl Signal {
 /// Information carried by the signal, which is typically translated into an activity instruction.
 #[derive(Debug, Clone, Copy)]
 pub enum SignalInfo {
+    /// Signal that does not carry an instruction.
     Passive(Emitter),
+    /// Signal with a push (drop-off) instruction.
     Push(Emitter),
+    /// Signal with a pull (fetch) instruction.
     Pull(Emitter),
+    /// Signal that requests work be carried out.
     Work,
 }
 

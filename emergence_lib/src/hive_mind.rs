@@ -1,3 +1,5 @@
+//! Represents the player.
+
 use crate::cursor::CursorTilePos;
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::PheromoneAttract;
@@ -5,7 +7,7 @@ use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-/// Represents the interface between the player and the hive.
+/// Provides the interface between the player and the hive.
 pub struct HiveMindPlugin;
 
 impl Plugin for HiveMindPlugin {
@@ -16,15 +18,20 @@ impl Plugin for HiveMindPlugin {
     }
 }
 
+/// Represents the interface between the player and the hive.
 #[derive(Component, Clone, Copy)]
 pub struct HiveMind;
 
+/// Enumerates the actions a hive mind (the player) can take.
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum HiveMindAction {
-    PlacePheromone,
-    CyclePheromone,
+    /// Place an attractive pheromone.
+    PlaceAttractivePheromone,
+    /// Place a repulsive pheromone.
+    PlaceRepulsivePheromone,
 }
 
+/// Startup system initializing the [`HiveMind`].
 fn initialize_hive_mind(mut commands: Commands) {
     commands
         .spawn()
@@ -32,12 +39,19 @@ fn initialize_hive_mind(mut commands: Commands) {
         .insert_bundle(InputManagerBundle::<HiveMindAction> {
             action_state: ActionState::default(),
             input_map: InputMap::new([
-                (KeyCode::Space, HiveMindAction::PlacePheromone),
-                (KeyCode::P, HiveMindAction::CyclePheromone),
+                (
+                    KeyCode::Space.into(),
+                    HiveMindAction::PlaceAttractivePheromone,
+                ),
+                (
+                    UserInput::chord([KeyCode::LShift, KeyCode::Space]),
+                    HiveMindAction::PlaceRepulsivePheromone,
+                ),
             ]),
         });
 }
 
+/// Place pheromone, if the mouse is hovered over a hex tile.
 fn place_pheromone(
     mut signal_create_evw: EventWriter<SignalModificationEvent>,
     cursor_tile_pos: Res<CursorTilePos>,
@@ -45,7 +59,9 @@ fn place_pheromone(
 ) {
     let hive_mind_state = hive_mind_query.single();
 
-    if hive_mind_state.pressed(HiveMindAction::PlacePheromone) && (*cursor_tile_pos).is_some() {
+    if hive_mind_state.pressed(HiveMindAction::PlaceAttractivePheromone)
+        && (*cursor_tile_pos).is_some()
+    {
         signal_create_evw.send(SignalModificationEvent::SignalIncrement {
             emitter: Emitter::Stock(PheromoneAttract),
             pos: (*cursor_tile_pos).unwrap(),

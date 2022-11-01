@@ -1,3 +1,5 @@
+//! Tile position related utilities.
+
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::{
@@ -22,15 +24,22 @@ fn random_direction<R: Rng + ?Sized, D: Distribution<usize>>(
 /// Stores some data `T` associated with each neighboring hex cell, if present.
 #[derive(Debug, Default)]
 pub struct HexNeighbors<T> {
+    /// The north-western neighbor.
     north_west: Option<T>,
+    /// The western neighbor.
     west: Option<T>,
+    /// The south-western neighbor.
     south_west: Option<T>,
+    /// The south-eastern neighbor.
     south_east: Option<T>,
+    /// The eastern neighbor.
     east: Option<T>,
+    /// The north-eastern neighbor.
     north_east: Option<T>,
 }
 
 impl<T> HexNeighbors<T> {
+    /// Get the neighbor in the specified direction.
     pub fn get(&self, direction: HexRowDirection) -> Option<&T> {
         use HexRowDirection::*;
         match direction {
@@ -43,6 +52,7 @@ impl<T> HexNeighbors<T> {
         }
     }
 
+    /// Get a mutable reference to the neighbor in the specified direction.
     pub fn get_mut(&mut self, direction: HexRowDirection) -> Option<&mut T> {
         use HexRowDirection::*;
         match direction {
@@ -55,6 +65,7 @@ impl<T> HexNeighbors<T> {
         }
     }
 
+    /// Set the data associated with the neighbor in the specified direction.
     pub fn set(&mut self, direction: HexRowDirection, data: T) {
         use HexRowDirection::*;
         match direction {
@@ -79,6 +90,7 @@ impl<T> HexNeighbors<T> {
         }
     }
 
+    /// Iterate through existing neighbors.
     pub fn iter(&self) -> impl Iterator<Item = &'_ T> + '_ {
         HEX_DIRECTIONS
             .into_iter()

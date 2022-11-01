@@ -64,6 +64,7 @@ pub struct PlantBundle {
 }
 
 impl PlantBundle {
+    /// Creates new plant at specified tile position, in the specified tilemap. 
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {
@@ -88,14 +89,18 @@ pub struct Fungi;
 /// The data needed to spawn [`Fungi`].
 #[derive(Bundle, Default)]
 pub struct FungiBundle {
+    /// Marker component.
     fungi: Fungi,
+    /// Fungi are structures.
     #[bundle]
     structure_bundle: StructureBundle,
+    /// Data needed to visually represent this fungus.
     #[bundle]
     tile_bundle: TileBundle,
 }
 
 impl FungiBundle {
+    /// Creates new fungi at specified tile position, in the specified tilemap.
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {

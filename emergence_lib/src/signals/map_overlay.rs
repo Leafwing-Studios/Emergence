@@ -1,9 +1,13 @@
+//! Plugin for displaying signals as coloured overlays on the game map.
+
 use crate::curves::linear_combination;
 use crate::signals::configs::SignalConfigs;
 use crate::signals::tile_signals::TileSignals;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileColor;
 
+/// Colours tiles based on the signals present. Signal colours are defined in their
+/// [`SignalConfig`](crate::signals::configs::SignalConfig).
 pub struct MapOverlayPlugin;
 
 impl Plugin for MapOverlayPlugin {
@@ -12,7 +16,8 @@ impl Plugin for MapOverlayPlugin {
     }
 }
 
-// Color::WHITE cannot be used, as it has the RGB variant, not the RGBA variant
+/// We cannot directly use [`Color::WHITE`] cannot be used, as it has the RGB variant, not the
+/// RGBA variant
 const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 
 /// Computes a [`TileColor`] from the given colors, by applying each color in order
@@ -45,15 +50,18 @@ fn color_tiles(
     commands.insert_or_spawn_batch(tile_colors);
 }
 
+/// A colour that can be [alpha composed](https://en.wikipedia.org/wiki/Alpha_compositing).
+///
+/// Currently we only implement the `over` operation.
 pub trait AlphaCompose {
-    fn over(&self, other: &Self) -> Self;
-}
-
-impl AlphaCompose for Color {
     /// Porter and Duff ["over" operation](https://en.wikipedia.org/wiki/Alpha_compositing) for
     /// blending two colours.
     ///
     /// `self` is blended over `other`.
+    fn over(&self, other: &Self) -> Self;
+}
+
+impl AlphaCompose for Color {
     fn over(&self, other: &Color) -> Color {
         match (*self, *other) {
             (

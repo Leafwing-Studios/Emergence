@@ -1,3 +1,5 @@
+//! Tools for keeping track of multiple signals at a given tile.
+
 use crate::signals::configs::SignalConfigs;
 use crate::signals::emitters::Emitter;
 use crate::signals::Signal;
@@ -11,6 +13,7 @@ use dashmap::DashMap;
 /// It provides various public interfaces to interact with signals.
 #[derive(Component, Default, Debug)]
 pub struct TileSignals {
+    /// Stores signals at tiles associated with each emitter.
     map: DashMap<Emitter, Signal>,
 }
 

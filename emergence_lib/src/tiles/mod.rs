@@ -1,3 +1,5 @@
+//! Utilities for defining and visualizing game tiles.
+
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTexture};
 
@@ -24,9 +26,10 @@ pub const MAP_CENTER: TilePos = TilePos {
 /// Grid size should be the same for all tilemaps, as we want them to be congruent.
 pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
-/// We use a hexagonal map with "point-topped" (row oriented) tiles, and prefer an axial coordinate
+/// We use a hexagonal map with "pointy-topped" (row oriented) tiles, and prefer an axial coordinate
 /// system instead of an offset-coordinate system.
 pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
+/// We are using a map with hexagonal tiles.
 pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
 
 /// A type that can be transformed into a tile that is compatible with [`bevy_ecs_tilemap`].

@@ -1,3 +1,6 @@
+//! Keep track of the mouse cursor in world space, and convert it into a tile position, if
+//! available.
+
 use crate::terrain::TerrainTilemap;
 use bevy::math::Vec4Swizzles;
 use bevy::math::{Vec2, Vec3};
@@ -6,6 +9,8 @@ use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize};
 use bevy_ecs_tilemap::tiles::TilePos;
 
+/// Initializes the [`CursorWorldPos`] and [`CursorTilePos`] resources, which are kept updated  
+/// updated using [`update_cursor_pos`].
 pub struct CursorTilePosPlugin;
 
 impl Plugin for CursorTilePosPlugin {
@@ -52,6 +57,7 @@ impl Default for CursorWorldPos {
 #[derive(Default, Clone, Copy, Deref, DerefMut)]
 pub struct CursorTilePos(Option<TilePos>);
 
+/// Convert a world position into a tile position, if applicable.
 pub fn tile_pos_from_world_pos(
     world_pos: &Vec2,
     map_size: &TilemapSize,
@@ -60,7 +66,7 @@ pub fn tile_pos_from_world_pos(
     AxialPos::from_world_pos_row(world_pos, grid_size).as_tile_pos_given_map_size(map_size)
 }
 
-// We need to keep the cursor position updated based on any `CursorMoved` events.
+/// Keeps the cursor position updated based on [`CursorMoved`] events.
 pub fn update_cursor_pos(
     windows: Res<Windows>,
     camera_query: Query<(&Transform, &Camera)>,

@@ -42,11 +42,17 @@ impl Plugin for GenerationPlugin {
 /// Controls world generation strategy
 #[derive(Copy, Clone)]
 pub struct GenerationConfig {
+    /// Radius of the map.
     pub map_radius: u32,
+    /// Size of the map.
     pub map_size: TilemapSize,
+    /// Location of the center tile.
     pub map_center: TilePos,
+    /// Initial number of ants.
     n_ant: usize,
+    /// Initial number of plants.
     n_plant: usize,
+    /// Initial number of fungi.
     n_fungi: usize,
 }
 

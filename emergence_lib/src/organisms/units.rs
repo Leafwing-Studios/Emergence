@@ -21,7 +21,9 @@ pub struct Unit;
 /// An organism that can move around freely.
 #[derive(Bundle, Default)]
 pub struct UnitBundle {
+    /// Marker component.
     unit: Unit,
+    /// A unit is an organism.
     #[bundle]
     organism_bundle: OrganismBundle,
 }
@@ -33,9 +35,12 @@ pub struct Ant;
 /// A worker ant
 #[derive(Bundle, Default)]
 pub struct AntBundle {
+    /// Marker struct.
     ant: Ant,
+    /// Ants are units.
     #[bundle]
     unit_bundle: UnitBundle,
+    /// Data needed to visualize the ant.
     #[bundle]
     tile_bundle: TileBundle,
 }
@@ -61,13 +66,14 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, true)))
-            .insert_resource(PheromoneSensor::<BottomClampedLine>::default())
+            .insert_resource(PheromoneTransducer::<BottomClampedLine>::default())
             .add_system(act);
     }
 }
 /// Global timer that controls when units should act
 struct UnitTimer(Timer);
 
+/// System modelling ant behaviour.
 #[allow(clippy::too_many_arguments)]
 fn act(
     time: Res<Time>,
@@ -78,7 +84,7 @@ fn act(
     terrain_storage_query: Query<TerrainStorage>,
     organism_storage_query: Query<OrganismStorage>,
     tile_signals_query: Query<&TileSignals>,
-    pheromone_sensor: Res<PheromoneSensor<BottomClampedLine>>,
+    pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
 ) {
     let terrain_tile_storage = terrain_storage_query.single();
     let organism_tile_storage = organism_storage_query.single();
@@ -98,63 +104,72 @@ fn act(
     }
 }
 
-pub struct PheromoneSensor<C: Mapping> {
+/// Transduces a pheromone signal into a weight used to make decisions.
+///
+/// The transduction is modelled by mapping the signal to a weight using a curve.
+pub struct PheromoneTransducer<C: Mapping> {
+    /// Curve used to model transduction.
     curve: C,
 }
 
-impl PheromoneSensor<Sigmoid> {
+impl PheromoneTransducer<Sigmoid> {
+    /// Creates a [`Sigmoid`]-based transducer.
     pub fn new(
         min: f32,
         max: f32,
         first_percentile: f32,
         last_percentile: f32,
-    ) -> PheromoneSensor<Sigmoid> {
-        PheromoneSensor {
+    ) -> PheromoneTransducer<Sigmoid> {
+        PheromoneTransducer {
             curve: Sigmoid::new(min, max, first_percentile, last_percentile),
         }
     }
 
+    /// Transduce a signal into a weight used for decision making.
     pub fn signal_to_weight(&self, attraction: f32, repulsion: f32) -> f32 {
         1.0 + self.curve.map(attraction) - self.curve.map(repulsion)
     }
 }
 
-impl Default for PheromoneSensor<Sigmoid> {
+impl Default for PheromoneTransducer<Sigmoid> {
     fn default() -> Self {
-        PheromoneSensor {
+        PheromoneTransducer {
             curve: Sigmoid::new(0.0, 0.1, 0.01, 0.09),
         }
     }
 }
 
-impl PheromoneSensor<BottomClampedLine> {
-    pub fn new(p0: Vec2, p1: Vec2) -> PheromoneSensor<BottomClampedLine> {
-        PheromoneSensor {
+impl PheromoneTransducer<BottomClampedLine> {
+    /// Creates a [`BottomClampedLine`]-based transducer.
+    pub fn new(p0: Vec2, p1: Vec2) -> PheromoneTransducer<BottomClampedLine> {
+        PheromoneTransducer {
             curve: BottomClampedLine::new_from_points(p0, p1),
         }
     }
 
+    /// Transduce a signal into a weight used for decision making.
     pub fn signal_to_weight(&self, attraction: f32, repulsion: f32) -> f32 {
         info!("attraction: {attraction:?}");
         1.0 + self.curve.map(attraction) - self.curve.map(repulsion)
     }
 }
 
-impl Default for PheromoneSensor<BottomClampedLine> {
+impl Default for PheromoneTransducer<BottomClampedLine> {
     fn default() -> Self {
-        PheromoneSensor {
+        PheromoneTransducer {
             curve: BottomClampedLine::new_from_points(Vec2::new(0.0, 0.0), Vec2::new(0.01, 1.0)),
         }
     }
 }
 
+/// Pathfinding for ants.
 fn wander(
     position: &TilePos,
     terrain_tile_storage: &TerrainStorageItem,
     organism_tile_storage: &OrganismStorageItem,
     impassable_query: &Query<&ImpassableTerrain>,
     tile_signals_query: &Query<&TileSignals>,
-    pheromone_sensor: &PheromoneSensor<BottomClampedLine>,
+    pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
     map_size: &TilemapSize,
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {

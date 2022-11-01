@@ -1,8 +1,9 @@
+//! Models organisms, which have two primary types: units (organisms that can move around freely)
+//! and structures (organisms that are fixed in place).
 use crate::tiles::IntoTileBundle;
-use bevy::ecs::query::WorldQuery;
+
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapTileSize;
-use bevy_ecs_tilemap::prelude::TileStorage;
 use bevy_ecs_tilemap::tiles::TileTexture;
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
@@ -27,8 +28,11 @@ pub const ORGANISM_TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54
 /// The type of [`Organism`]
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OrganismType {
+    /// A wandering unit.
     Ant,
+    /// A fixed structure that does not photosynthesize.
     Fungus,
+    /// A fixed structure that photosynthesizes.
     Plant,
 }
 
@@ -49,12 +53,16 @@ pub struct Organism;
 /// The mass of each element that makes up the entity
 #[derive(Component, Clone, Default)]
 pub struct Composition {
+    /// Mass is represented with an `f32`.
     pub mass: f32,
 }
 
+/// An organism is a living component of the game ecosystem.
 #[derive(Bundle, Default)]
 pub struct OrganismBundle {
+    /// Marker component.
     pub organism: Organism,
+    /// Defines the elements making up this organism.
     pub composition: Composition,
 }
 
@@ -62,21 +70,24 @@ pub struct OrganismBundle {
 #[derive(Component)]
 pub struct OrganismTilemap;
 
-/// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
-/// `Tilemap` that has the `OrganismTilemap` component type.
-#[derive(WorldQuery)]
-pub struct OrganismStorage<'a> {
-    pub storage: &'a TileStorage,
-    _organism_tile_map: With<OrganismTilemap>,
+//FIXME: Fixed in bevy 0.9, but for now `WorldQuery` generates structs that triggers #[deny(missing_docs)]
+// This can be improved once this crate and bevy_ecs_tilemap support 0.9.
+#[allow(missing_docs)]
+mod world_query {
+    use crate::organisms::OrganismTilemap;
+    use bevy::ecs::query::WorldQuery;
+    use bevy::prelude::With;
+    use bevy_ecs_tilemap::prelude::TileStorage;
+
+    /// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
+    /// `Tilemap` that has the `OrganismTilemap` component type.
+    #[derive(WorldQuery)]
+    pub struct OrganismStorage<'a> {
+        /// Query for tile storage.
+        pub storage: &'a TileStorage,
+        /// Only query for those entities that contain the relevant tilemap type.
+        _organism_tile_map: With<OrganismTilemap>,
+    }
 }
 
-// #[derive(Deref)]
-// pub struct OrganismTileStorage<'t>(&'t TileStorage);
-//
-// impl<'t, 'w: 't, 's: 't> From<&'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>>
-//     for OrganismTileStorage<'t>
-// {
-//     fn from(value: &'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>) -> Self {
-//         OrganismTileStorage(value.single())
-//     }
-// }
+pub use world_query::*;
