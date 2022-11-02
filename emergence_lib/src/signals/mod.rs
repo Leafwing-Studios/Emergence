@@ -178,11 +178,11 @@ pub struct Signal {
     current_value: f32,
     /// The amount of signal that will be coming into this tile this tick.
     ///
-    /// Generally, this will be based on [`current_value`] of neighboring tiles.
+    /// Generally, this will be based on [`current_value`](Signal::current_value) of neighboring tiles.
     incoming: f32,
     /// The amount of signal that will be leaving this tile this tick.
     ///
-    /// Generally, this will be based on [`current_value`].
+    /// Generally, this will be based on [`current_value`](Signal::current_value).
     outgoing: f32,
 }
 

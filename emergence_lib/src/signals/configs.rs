@@ -93,7 +93,7 @@ impl SignalConfigs {
     /// Insert a [`SignalConfig`] into the dictionary.
     ///
     /// If one is already associated with the specified [`Emitter`], this function follows
-    /// [`HashMap`](HashMap::insert) semantics by replacing the pre-existing configuration with the
+    /// [`HashMap`](std::collections::HashMap::insert) semantics by replacing the pre-existing configuration with the
     /// specified configuration, and then returning the pre-existing configuration.
     pub fn insert(&mut self, emitter: Emitter, config: SignalConfig) -> Option<SignalConfig> {
         self.configs.insert(emitter, config)
@@ -105,7 +105,7 @@ impl SignalConfigs {
     }
 }
 
-/// Configuration settings for a particular [`Signal`].
+/// Configuration settings for a particular [`Signal`](crate::signals::Signal).
 #[derive(Clone, Copy, Debug)]
 pub struct SignalConfig {
     /// The factor with which a unit of signal diffuses to a neighboring tile per tick.
@@ -118,10 +118,10 @@ pub struct SignalConfig {
     pub color_config: SignalColorConfig,
 }
 
-/// Color configuration for a [`Signal`].
+/// Color configuration for a [`Signal`](crate::signals::Signal).
 ///
-/// The final coloration for a [`Signal`] at a particular tile position will depend upon the
-/// `rgb_color` specified in the color configuration, and the `value` of the [`Signal`], which will
+/// The final coloration for a [`Signal`](crate::signals::Signal) at a particular tile position will depend upon the
+/// `rgb_color` specified in the color configuration, and the `value` of the [`Signal`](crate::signals::Signal), which will
 /// affect the computed color's `alpha`.
 ///
 /// If `value` is below `zero_value`, then the computed color will have alpha `0.0`, otherwise if

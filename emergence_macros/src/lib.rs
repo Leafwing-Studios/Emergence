@@ -1,4 +1,4 @@
-//! Derives the [`Actionlike`] trait
+//! Derives the [`IterableEnum`] trait
 //
 //! This derive macro was inspired by the `strum` crate's `EnumIter` macro.
 //! Original source: <https://github.com/Peternator7/strum>,
