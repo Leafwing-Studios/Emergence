@@ -2,23 +2,20 @@
 
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
-use crate::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE};
-use crate::terrain::{ImpassableTerrain, TerrainTilemap, TerrainType};
-use crate::terrain::{TERRAIN_TILEMAP_Z, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE};
+use crate::terrain::TERRAIN_TILE_IMAP;
+use crate::terrain::{ImpassableTerrain, TerrainType};
 use crate::tiles::{GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, MAP_TYPE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
+use crate::tiles::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP};
+use crate::tiles::terrain::TerrainTilemap;
 use config::*;
+
 /// Various constants used for configuring initialization of the organism tilemap.
 mod config {
-    /// The z-coordinate at which organisms are drawn.
-    ///
-    /// We want the organism tilemap to be layered on top of the terrain tile map.
-    pub const ORGANISM_TILEMAP_Z: f32 = 1.0;
-
     /// The number of ants initially spawned
     pub const N_ANT: usize = 5;
     /// The number of plants initially spawned
@@ -110,12 +107,12 @@ fn generate_terrain(
             size: config.map_size,
             storage: tile_storage,
             texture,
-            tile_size: TERRAIN_TILE_SIZE,
+            tile_size: TerrainTilemap::TILE_SIZE,
             transform: get_tilemap_center_transform(
                 &config.map_size,
                 &GRID_SIZE,
                 &MAP_TYPE,
-                TERRAIN_TILEMAP_Z,
+                TerrainTilemap::MAP_Z,
             ),
             ..Default::default()
         })
@@ -210,12 +207,12 @@ fn generate_starting_organisms(
             size: config.map_size,
             storage: tile_storage,
             texture,
-            tile_size: ORGANISM_TILE_SIZE,
+            tile_size: OrganismTilemap::TILE_SIZE,
             transform: get_tilemap_center_transform(
                 &config.map_size,
                 &GRID_SIZE,
                 &MAP_TYPE,
-                ORGANISM_TILEMAP_Z,
+                OrganismTilemap::MAP_Z,
             ),
             ..Default::default()
         })

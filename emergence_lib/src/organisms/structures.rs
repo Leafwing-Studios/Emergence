@@ -1,7 +1,7 @@
 //! Structures (or buildings) are plants and fungi that serve a role in the bustling organic factory.
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
-//! but they can also be used for defense, researh, reproduction, storage and more exotic effects.
+//! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
 use crate::terrain::ImpassableTerrain;
@@ -15,7 +15,7 @@ use config::*;
 mod config {
     /// The initial mass of spawned structures
     pub const STRUCTURE_STARTING_MASS: f32 = 0.5;
-    /// The mass at which sturctures will despawn
+    /// The mass at which structures will despawn
     pub const STRUCTURE_DESPAWN_MASS: f32 = 0.01;
     /// The upkeeep cost of each structure
     pub const STRUCTURE_UPKEEP_RATE: f32 = 0.1;

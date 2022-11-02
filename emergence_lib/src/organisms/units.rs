@@ -2,12 +2,13 @@
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::organisms::pathfinding::get_weighted_random_passable_neighbor;
-use crate::organisms::{OrganismBundle, OrganismStorage, OrganismStorageItem, OrganismType};
+use crate::organisms::{OrganismBundle, OrganismType};
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::generation::GenerationConfig;
-use crate::terrain::TerrainStorage;
-use crate::terrain::{ImpassableTerrain, TerrainStorageItem};
+use crate::terrain::ImpassableTerrain;
+use crate::tiles::organisms::{OrganismStorage, OrganismStorageItem};
+use crate::tiles::terrain::{TerrainStorage, TerrainStorageItem};
 use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
