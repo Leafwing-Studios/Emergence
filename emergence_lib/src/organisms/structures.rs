@@ -24,7 +24,9 @@ mod config {
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
+    /// Marker component.
     structure: Structure,
+    /// Structures are organisms (for now).
     #[bundle]
     organism_bundle: OrganismBundle,
 }
@@ -33,7 +35,9 @@ pub struct StructureBundle {
 // TODO: replace with better defaults
 #[derive(Component, Clone)]
 pub struct Structure {
+    /// Mass cost per tick to stay alive.
     upkeep_rate: f32,
+    /// Mass at which the structure will be despawned.
     despawn_mass: f32,
 }
 
@@ -49,22 +53,27 @@ impl Default for Structure {
 /// Plants can photosynthesize
 #[derive(Component, Clone, Default)]
 pub struct Plant {
+    /// Rate at which plants re-generate mass through photosynthesis.
     photosynthesis_rate: f32,
 }
 
 /// The data needed to make a plant
 #[derive(Bundle, Default)]
 pub struct PlantBundle {
+    /// Marker component.
     plant: Plant,
+    /// A plant is a structure.
     #[bundle]
     structure_bundle: StructureBundle,
+    /// Data needed to visualize the plant.
     #[bundle]
     tile_bundle: TileBundle,
+    /// A plant is impassable.
     impassable: ImpassableTerrain,
 }
 
 impl PlantBundle {
-    /// Creates new plant at specified tile position, in the specified tilemap. 
+    /// Creates new plant at specified tile position, in the specified tilemap.
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {

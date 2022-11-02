@@ -171,11 +171,18 @@ fn apply_deltas(mut signals_query: Query<&mut TileSignals>) {
     }
 }
 
-/// A diffusible signal.
+/// A diffusible signal at a given tile.
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Signal {
+    /// The value of the signal at this tick.
     current_value: f32,
+    /// The amount of signal that will be coming into this tile this tick.
+    ///
+    /// Generally, this will be based on [`current_value`] of neighboring tiles.
     incoming: f32,
+    /// The amount of signal that will be leaving this tile this tick.
+    ///
+    /// Generally, this will be based on [`current_value`].
     outgoing: f32,
 }
 

@@ -12,6 +12,7 @@ use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
 use config::*;
+/// Various constants used for configuring initialization of the organism tilemap.
 mod config {
     /// The z-coordinate at which organisms are drawn.
     ///

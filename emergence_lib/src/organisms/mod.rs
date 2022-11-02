@@ -70,8 +70,9 @@ pub struct OrganismBundle {
 #[derive(Component)]
 pub struct OrganismTilemap;
 
-//FIXME: Fixed in bevy 0.9, but for now `WorldQuery` generates structs that triggers #[deny(missing_docs)]
-// This can be improved once this crate and bevy_ecs_tilemap support 0.9.
+/// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
+/// `WorldQuery` generates structs that triggers `#[deny(missing_docs)]`. As this issue is fixed in
+/// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
 #[allow(missing_docs)]
 mod world_query {
     use crate::organisms::OrganismTilemap;
