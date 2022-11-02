@@ -4,7 +4,7 @@ use crate::tiles::IntoTileBundle;
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapTileSize;
-use bevy_ecs_tilemap::tiles::TileTexture;
+use bevy_ecs_tilemap::tiles::TileTextureIndex;
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
 
@@ -37,8 +37,8 @@ pub enum OrganismType {
 }
 
 impl IntoTileBundle for OrganismType {
-    fn tile_texture(&self) -> TileTexture {
-        TileTexture(ORGANISM_TILE_IMAP.get_index_of(self).unwrap() as u32)
+    fn tile_texture(&self) -> TileTextureIndex {
+        TileTextureIndex(ORGANISM_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
     fn tile_texture_path(&self) -> &'static str {

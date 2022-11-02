@@ -1,7 +1,7 @@
 //! Utilities for defining and visualizing game tiles.
 
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize, TilemapType};
-use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTexture};
+use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 
 pub mod position;
 
@@ -34,10 +34,10 @@ pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
 
 /// A type that can be transformed into a tile that is compatible with [`bevy_ecs_tilemap`].
 pub trait IntoTileBundle {
-    /// The corresponding [`TileTexture`].
-    fn tile_texture(&self) -> TileTexture;
+    /// The corresponding [`TileTextureIndex`].
+    fn tile_texture(&self) -> TileTextureIndex;
 
-    /// The asset path to the [`TileTexture`].
+    /// The asset path to the [`TileTextureIndex`].
     fn tile_texture_path(&self) -> &'static str;
 
     /// Uses the data stored in `self` to create a new, matching [`TileBundle`].
@@ -45,7 +45,7 @@ pub trait IntoTileBundle {
         TileBundle {
             position,
             tilemap_id,
-            texture: self.tile_texture(),
+            texture_index: self.tile_texture(),
             ..Default::default()
         }
     }

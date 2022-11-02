@@ -3,7 +3,7 @@ use crate::tiles::IntoTileBundle;
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapTileSize};
-use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
 use rand::distributions::Standard;
@@ -51,8 +51,8 @@ pub enum TerrainType {
 
 impl IntoTileBundle for TerrainType {
     /// The associated tile texture
-    fn tile_texture(&self) -> TileTexture {
-        TileTexture(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
+    fn tile_texture(&self) -> TileTextureIndex {
+        TileTextureIndex(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
     /// The path to the associated tile texture
