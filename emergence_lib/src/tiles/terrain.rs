@@ -17,7 +17,7 @@ pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::
 
 /// Marker component for entity that manages visualization of terrain.
 ///
-/// See also, the [`OrganismTilemap`](crate::organism::OrganismTilemap), which lies on top of the
+/// See also, the [`OrganismTilemap`](crate::tiles::organisms::OrganismTilemap), which lies on top of the
 /// terrain tilemap, and manages visualization of organisms.
 #[derive(Component)]
 pub struct TerrainTilemap;

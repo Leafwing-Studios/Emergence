@@ -17,11 +17,11 @@ pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy
 
 /// Marker component for entity that manages visualization of organisms.
 ///
-/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::terrain::TerrainTilemap), and
+/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap), and
 /// keeps track of visualizations of organisms at terrain locations. It is congruent to
-/// [`TerrainTilemap`](crate::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
+/// [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
 /// we might find it useful to use a different tile size, but the grid size will always remain the
-/// same as that of [`TerrainTilemap`].
+/// same as that of [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap).
 #[derive(Component)]
 pub struct OrganismTilemap;
 
