@@ -2,16 +2,17 @@
 
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
-use crate::organisms::{ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE};
-use crate::terrain::{ImpassableTerrain, TerrainType};
+use crate::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP, ORGANISM_TILE_SIZE};
+use crate::terrain::{ImpassableTerrain, TerrainTilemap, TerrainType};
 use crate::terrain::{TERRAIN_TILEMAP_Z, TERRAIN_TILE_IMAP, TERRAIN_TILE_SIZE};
-use crate::tiles::{GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE};
+use crate::tiles::{GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, MAP_TYPE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
 use config::*;
+/// Various constants used for configuring initialization of the organism tilemap.
 mod config {
     /// The z-coordinate at which organisms are drawn.
     ///
@@ -33,7 +34,6 @@ impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(TilemapPlugin)
             .init_resource::<GenerationConfig>()
-            .add_plugin(crate::camera::CameraPlugin)
             .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_starting_organisms)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
@@ -43,11 +43,17 @@ impl Plugin for GenerationPlugin {
 /// Controls world generation strategy
 #[derive(Copy, Clone)]
 pub struct GenerationConfig {
+    /// Radius of the map.
     pub map_radius: u32,
+    /// Size of the map.
     pub map_size: TilemapSize,
+    /// Location of the center tile.
     pub map_center: TilePos,
+    /// Initial number of ants.
     n_ant: usize,
+    /// Initial number of plants.
     n_plant: usize,
+    /// Initial number of fungi.
     n_fungi: usize,
 }
 
@@ -63,14 +69,6 @@ impl Default for GenerationConfig {
         }
     }
 }
-
-/// Marker component for entities that are part of the terrain's tilemap
-#[derive(Component)]
-pub struct TerrainTilemap;
-
-/// Marker component for entities that are part of the organisms tilemap
-#[derive(Component)]
-pub struct OrganismTilemap;
 
 /// Creates the world according to the provided [`GenerationConfig`].
 fn generate_terrain(
@@ -108,6 +106,7 @@ fn generate_terrain(
         .entity(tilemap_entity)
         .insert_bundle(TilemapBundle {
             grid_size: GRID_SIZE,
+            map_type: MAP_TYPE,
             size: config.map_size,
             storage: tile_storage,
             texture,
@@ -115,9 +114,9 @@ fn generate_terrain(
             transform: get_tilemap_center_transform(
                 &config.map_size,
                 &GRID_SIZE,
+                &MAP_TYPE,
                 TERRAIN_TILEMAP_Z,
             ),
-            map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })
         .insert(TerrainTilemap);
@@ -207,6 +206,7 @@ fn generate_starting_organisms(
         .entity(tilemap_entity)
         .insert_bundle(TilemapBundle {
             grid_size: GRID_SIZE,
+            map_type: MAP_TYPE,
             size: config.map_size,
             storage: tile_storage,
             texture,
@@ -214,9 +214,9 @@ fn generate_starting_organisms(
             transform: get_tilemap_center_transform(
                 &config.map_size,
                 &GRID_SIZE,
+                &MAP_TYPE,
                 ORGANISM_TILEMAP_Z,
             ),
-            map_type: TilemapType::Hexagon(MAP_COORD_SYSTEM),
             ..Default::default()
         })
         .insert(OrganismTilemap);

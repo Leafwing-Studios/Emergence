@@ -1,16 +1,18 @@
-use crate::tiles::IntoTile;
+//! Generating and displaying terrain.
+use crate::tiles::IntoTileBundle;
+
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapTileSize};
-use bevy_ecs_tilemap::tiles::{TilePos, TileTexture};
+use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
 use indexmap::{indexmap, IndexMap};
 use once_cell::sync::Lazy;
-
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
 
 pub mod generation;
 
+/// Stores the texture associated with each terrain variant.
 pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
     indexmap! {
         TerrainType::High => "tile-high.png",
@@ -39,15 +41,18 @@ pub struct HighTerrain;
 /// Available terrain types.
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub enum TerrainType {
+    /// Terrain with no distinguishing characteristics.
     Plain,
+    /// Terrain that is impassable.
     Impassable,
+    /// Terrain that has higher altitude compared to others.
     High,
 }
 
-impl IntoTile for TerrainType {
+impl IntoTileBundle for TerrainType {
     /// The associated tile texture
-    fn tile_texture(&self) -> TileTexture {
-        TileTexture(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
+    fn tile_texture(&self) -> TileTextureIndex {
+        TileTextureIndex(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
     }
 
     /// The path to the associated tile texture
@@ -95,3 +100,43 @@ impl Distribution<TerrainType> for Standard {
         }
     }
 }
+
+/// Marker component for entities that are part of the terrain's tilemap
+#[derive(Component)]
+pub struct TerrainTilemap;
+
+/// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
+/// `WorldQuery` generates structs that triggers `#[deny(missing_docs)]`. As this issue is fixed in
+/// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
+#[allow(missing_docs)]
+pub mod world_query {
+    use crate::terrain::TerrainTilemap;
+    use bevy::ecs::query::WorldQuery;
+    use bevy::prelude::With;
+    use bevy_ecs_tilemap::prelude::TileStorage;
+
+    /// A [`WorldQuery`] specifying a search for `TileStorage` associated with a
+    /// `Tilemap` that has the `TerrainTilemap` component type.
+    #[derive(WorldQuery)]
+    pub struct TerrainStorage<'a> {
+        /// Queries for tile storage.
+        pub storage: &'a TileStorage,
+        /// Only query for those entities that contain the relevant tilemap type.
+        _terrain_tile_map: With<TerrainTilemap>,
+    }
+}
+
+pub use world_query::*;
+
+// /// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
+// /// `Tilemap` that has the `OrganismTilemap` component type.
+// #[derive(Deref)]
+// pub struct OrganismTileStorage<'t>(&'t TileStorage);
+//
+// impl<'t, 'w: 't, 's: 't> From<&'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>>
+//     for OrganismTileStorage<'t>
+// {
+//     fn from(value: &'_ Query<'w, 's, &'_ TileStorage, With<OrganismTilemap>>) -> Self {
+//         OrganismTileStorage(value.single())
+//     }
+// }

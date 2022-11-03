@@ -4,6 +4,7 @@ resolver="2"
 members = [
     "emergence_game",
     "emergence_lib",
+    "emergence_macros",
     "tools/ci"
 ]
 default-members = ["emergence_game"]

@@ -4,9 +4,8 @@
 //! but they can also be used for defense, researh, reproduction, storage and more exotic effects.
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
-use crate::signals::SignalId;
 use crate::terrain::ImpassableTerrain;
-use crate::tiles::IntoTile;
+use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
@@ -25,7 +24,9 @@ mod config {
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
+    /// Marker component.
     structure: Structure,
+    /// Structures are organisms (for now).
     #[bundle]
     organism_bundle: OrganismBundle,
 }
@@ -34,7 +35,9 @@ pub struct StructureBundle {
 // TODO: replace with better defaults
 #[derive(Component, Clone)]
 pub struct Structure {
+    /// Mass cost per tick to stay alive.
     upkeep_rate: f32,
+    /// Mass at which the structure will be despawned.
     despawn_mass: f32,
 }
 
@@ -50,27 +53,32 @@ impl Default for Structure {
 /// Plants can photosynthesize
 #[derive(Component, Clone, Default)]
 pub struct Plant {
+    /// Rate at which plants re-generate mass through photosynthesis.
     photosynthesis_rate: f32,
 }
 
 /// The data needed to make a plant
 #[derive(Bundle, Default)]
 pub struct PlantBundle {
+    /// Marker component.
     plant: Plant,
+    /// A plant is a structure.
     #[bundle]
     structure_bundle: StructureBundle,
+    /// Data needed to visualize the plant.
     #[bundle]
     tile_bundle: TileBundle,
+    /// A plant is impassable.
     impassable: ImpassableTerrain,
 }
 
 impl PlantBundle {
+    /// Creates new plant at specified tile position, in the specified tilemap.
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
-                    signal_id: SignalId::Plant,
                     composition: Composition {
                         mass: STRUCTURE_STARTING_MASS,
                     },
@@ -90,19 +98,22 @@ pub struct Fungi;
 /// The data needed to spawn [`Fungi`].
 #[derive(Bundle, Default)]
 pub struct FungiBundle {
+    /// Marker component.
     fungi: Fungi,
+    /// Fungi are structures.
     #[bundle]
     structure_bundle: StructureBundle,
+    /// Data needed to visually represent this fungus.
     #[bundle]
     tile_bundle: TileBundle,
 }
 
 impl FungiBundle {
+    /// Creates new fungi at specified tile position, in the specified tilemap.
     pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
-                    signal_id: SignalId::Fungus,
                     ..Default::default()
                 },
                 ..Default::default()
@@ -138,7 +149,7 @@ fn upkeep(time: Res<Time>, mut query: Query<(&Structure, &mut Composition)>) {
     }
 }
 
-/// If structures grow too weak, they die and are despawned
+/// If structures grow too weak, they die and are despawned.
 fn cleanup(mut commands: Commands, query: Query<(&Structure, Entity, &Composition)>) {
     for (structure, ent, comp) in query.iter() {
         if comp.mass <= structure.despawn_mass {
