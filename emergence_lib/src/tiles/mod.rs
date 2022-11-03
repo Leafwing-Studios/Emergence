@@ -3,7 +3,9 @@
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 
+pub mod organisms;
 pub mod position;
+pub mod terrain;
 
 /// The number of tiles from the center of the map to the edge
 pub const MAP_RADIUS: u32 = 10;

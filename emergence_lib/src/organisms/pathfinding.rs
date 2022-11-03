@@ -1,8 +1,9 @@
 //! Utilities to support organism pathfinding.
-use crate::organisms::OrganismStorageItem;
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::{ImpassableTerrain, TerrainStorageItem};
+use crate::terrain::ImpassableTerrain;
+use crate::tiles::organisms::OrganismStorageItem;
 use crate::tiles::position::HexNeighbors;
+use crate::tiles::terrain::TerrainStorageItem;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
@@ -133,6 +134,7 @@ impl HexNeighbors<WeightedTilePos> {
 
             WeightedTilePos { weight, pos: *pos }
         };
+
         passable_neighbors.map_ref(f)
     }
 
