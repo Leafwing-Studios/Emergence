@@ -1,6 +1,4 @@
 //! Tools and strategies for procedural world generation.
-
-use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::terrain::TERRAIN_TILE_IMAP;
 use crate::terrain::{ImpassableTerrain, TerrainType};
@@ -10,6 +8,7 @@ use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
+use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::tiles::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP};
 use crate::tiles::terrain::TerrainTilemap;
 use config::*;

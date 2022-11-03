@@ -35,7 +35,7 @@ pub trait IterableEnum: Sized {
 
 /// An iterator of enum variants.
 ///
-/// Created by calling [`IterEnum::iter`].
+/// Created by calling [`IterableEnum::variants`].
 #[derive(Debug, Clone)]
 pub struct EnumIter<A: IterableEnum> {
     /// Keeps track of which variant should be provided next.
@@ -45,7 +45,7 @@ pub struct EnumIter<A: IterableEnum> {
     index: usize,
     /// Marker used to keep track of which `IterableEnum` this `EnumIter` iterates through.
     ///
-    /// For more information, see [`Phantom`].
+    /// For more information, see [`PhantomData`](std::marker::PhantomData).
     _phantom: PhantomData<A>,
 }
 

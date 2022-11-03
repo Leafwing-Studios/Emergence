@@ -1,5 +1,4 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
-
 use crate::organisms::OrganismType;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
