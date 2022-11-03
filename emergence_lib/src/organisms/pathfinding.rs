@@ -133,9 +133,7 @@ impl HexNeighbors<WeightedTilePos> {
 
             WeightedTilePos { weight, pos: *pos }
         };
-        let weighted_neighbors = passable_neighbors.map_ref(f);
-
-        weighted_neighbors
+        passable_neighbors.map_ref(f)
     }
 
     /// Get the entities associated with neighbouring tile positions.
