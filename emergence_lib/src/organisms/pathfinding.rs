@@ -123,21 +123,18 @@ impl HexNeighbors<WeightedTilePos> {
             map_size,
         );
 
-        info!("pos: {tile_pos:?}, passable_neighbors: {passable_neighbors:?}");
-
         let f = |pos| {
             let tile_entity = terrain_tile_storage.storage.get(pos).unwrap();
             let weight = if let Ok(tile_signals) = tile_signals_query.get(tile_entity) {
                 signals_to_weight(tile_signals)
             } else {
-                info!("No signal found...");
                 1.0
             };
 
             WeightedTilePos { weight, pos: *pos }
         };
         let weighted_neighbors = passable_neighbors.map_ref(f);
-        info!("pos: {tile_pos:?}, weighted_neighbors: {weighted_neighbors:?}");
+
         weighted_neighbors
     }
 

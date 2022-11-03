@@ -149,7 +149,6 @@ impl PheromoneTransducer<BottomClampedLine> {
 
     /// Transduce a signal into a weight used for decision making.
     pub fn signal_to_weight(&self, attraction: f32, repulsion: f32) -> f32 {
-        info!("attraction: {attraction:?}");
         1.0 + self.curve.map(attraction) - self.curve.map(repulsion)
     }
 }
@@ -177,7 +176,6 @@ fn wander(
             tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneAttract)),
             0.0,
         );
-        info!("calculated weight: {weight:?}");
         weight
     };
     let target = get_weighted_random_passable_neighbor(
