@@ -4,7 +4,7 @@
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
-use crate::terrain::ImpassableTerrain;
+use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;

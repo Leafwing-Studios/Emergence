@@ -6,7 +6,7 @@ use crate::organisms::{OrganismBundle, OrganismType};
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::generation::GenerationConfig;
-use crate::terrain::ImpassableTerrain;
+use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::tiles::organisms::{OrganismStorage, OrganismStorageItem};
 use crate::tiles::terrain::{TerrainStorage, TerrainStorageItem};
 use crate::tiles::IntoTileBundle;

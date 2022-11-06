@@ -1,87 +1,40 @@
-//! Generating and displaying terrain.
-use crate::tiles::IntoTileBundle;
+//! Generating and representing terrain as game objects.
 
 use crate::tiles::terrain::TERRAIN_TILE_IMAP;
-use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
-use rand::distributions::Standard;
-use rand::prelude::Distribution;
-use rand::Rng;
+use bevy_ecs_tilemap::map::TilemapSize;
+use bevy_ecs_tilemap::tiles::TilePos;
 
 pub mod generation;
+pub mod terrain_types;
 
-/// The marker component for plain terrain.
-#[derive(Component, Clone, Copy)]
-pub struct PlainTerrain;
+/// The number of tiles from the center of the map to the edge
+pub const MAP_RADIUS: u32 = 10;
 
-/// The marker component for impassable terrain.
-#[derive(Component, Clone, Copy, Default)]
-pub struct ImpassableTerrain;
-
-/// The marker component for high terrain.
-#[derive(Component, Clone, Copy, Default)]
-pub struct HighTerrain;
-
-/// Available terrain types.
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
-pub enum TerrainType {
-    /// Terrain with no distinguishing characteristics.
-    Plain,
-    /// Terrain that is impassable.
-    Impassable,
-    /// Terrain that has higher altitude compared to others.
-    High,
+/// Resource that stores information regarding the size of the game map.
+pub struct MapGeometry {
+    radius: u32,
+    center: TilePos,
+    size: TilemapSize,
 }
 
-impl IntoTileBundle for TerrainType {
-    /// The associated tile texture
-    fn tile_texture(&self) -> TileTextureIndex {
-        TileTextureIndex(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
+impl MapGeometry {
+    /// Computes the total diameter from end-to-end of the game world
+    #[inline]
+    pub const fn diameter(&self) -> u32 {
+        2 * self.radius + 1
     }
 
-    /// The path to the associated tile texture
-    fn tile_texture_path(&self) -> &'static str {
-        TERRAIN_TILE_IMAP.get(self).unwrap()
+    /// Computes the [`TilemapSize`] of the game world
+    #[inline]
+    pub const fn size(&self) -> TilemapSize {
+        self.size
     }
-}
 
-impl TerrainType {
-    /// Creates a tile enttiy corresponding to `self`'s [`TerrainType`] variant
-    pub fn create_entity(
-        &self,
-        commands: &mut Commands,
-        tilemap_id: TilemapId,
-        position: TilePos,
-    ) -> Entity {
-        let mut builder = commands.spawn();
-
-        builder.insert_bundle(self.as_tile_bundle(tilemap_id, position));
-        match self {
-            TerrainType::Plain => {
-                builder.insert(PlainTerrain);
-            }
-            TerrainType::Impassable => {
-                builder.insert(ImpassableTerrain);
-            }
-            TerrainType::High => {
-                builder.insert(HighTerrain);
-            }
-        }
-        builder.id()
-    }
-}
-
-impl Distribution<TerrainType> for Standard {
-    /// Choose a [`TerrainType`] at weighted-random
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TerrainType {
-        let c: f32 = rng.gen();
-        if c < 0.1 {
-            TerrainType::High
-        } else if c < 0.2 {
-            TerrainType::Impassable
-        } else {
-            TerrainType::Plain
-        }
+    /// Computes the [`TilePos`] of the tile at the center of this map.
+    ///
+    /// This is not (0,0) as `bevy_ecs_tilemap` works with `u32` coordinates.
+    #[inline]
+    pub const fn center(&self) -> TilePos {
+        self.center
     }
 }

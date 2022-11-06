@@ -1,6 +1,6 @@
 //! Utilities to support organism pathfinding.
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::ImpassableTerrain;
+use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::tiles::organisms::OrganismStorageItem;
 use crate::tiles::position::HexNeighbors;
 use crate::tiles::terrain::TerrainStorageItem;

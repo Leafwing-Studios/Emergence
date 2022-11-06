@@ -1,7 +1,7 @@
 //! Tools and strategies for procedural world generation.
 use crate::organisms::units::AntBundle;
+use crate::terrain::terrain_types::{ImpassableTerrain, TerrainType};
 use crate::terrain::TERRAIN_TILE_IMAP;
-use crate::terrain::{ImpassableTerrain, TerrainType};
 use crate::tiles::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_TYPE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
@@ -56,7 +56,7 @@ impl GenerationConfig {
         2 * self.map_radius + 1
     }
 
-    /// Computes the [`TileMapSize`] of the game world
+    /// Computes the [`TilemapSize`] of the game world
     #[inline]
     pub const fn map_size(&self) -> TilemapSize {
         TilemapSize {
