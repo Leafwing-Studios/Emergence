@@ -6,7 +6,6 @@ use crate::tiles::organisms::ORGANISM_TILE_IMAP;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileTextureIndex;
 
-pub mod pathfinding;
 pub mod structures;
 pub mod units;
 

@@ -1,7 +1,7 @@
 //! Units are organisms that can move freely.
+use pathfinding::get_weighted_random_passable_neighbor;
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
-use crate::organisms::pathfinding::get_weighted_random_passable_neighbor;
 use crate::organisms::{OrganismBundle, OrganismType};
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
@@ -14,6 +14,9 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
+
+pub mod behavior;
+mod pathfinding;
 
 /// Marker component for [`UnitBundle`]
 #[derive(Component, Clone, Default)]

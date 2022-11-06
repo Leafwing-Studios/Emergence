@@ -11,28 +11,6 @@ use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
-/// Select a passable, adjacent neighboring tile at random.
-///
-/// Returns [`None`] if and only if no such tile exists.
-pub fn get_random_passable_neighbor(
-    current_pos: &TilePos,
-    terrain_tile_storage: &TerrainStorageItem,
-    organism_tile_storage: &OrganismStorageItem,
-    impassable_query: &Query<&ImpassableTerrain>,
-    map_size: &TilemapSize,
-) -> Option<TilePos> {
-    let mut rng = thread_rng();
-
-    HexNeighbors::passable_neighbors(
-        current_pos,
-        terrain_tile_storage,
-        organism_tile_storage,
-        impassable_query,
-        map_size,
-    )
-    .choose_random(&mut rng)
-}
-
 impl HexNeighbors<TilePos> {
     /// Returns the set of neighboring cells that units can walk through
     pub fn passable_neighbors(
