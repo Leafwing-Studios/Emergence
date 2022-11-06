@@ -99,7 +99,7 @@ fn act(
                 &impassable_query,
                 &tile_signals_query,
                 &pheromone_sensor,
-                &generation_config.map_size,
+                &generation_config.map_size(),
             );
         }
     }
