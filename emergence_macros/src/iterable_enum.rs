@@ -97,7 +97,7 @@ pub(crate) fn iterable_enum_inner(ast: &DeriveInput) -> TokenStream {
     let n_variants = variants.iter().len();
 
     quote! {
-        impl #impl_generics #crate_path::IterableEnum for #enum_name #type_generics #where_clause {
+        impl #impl_generics #crate_path::enum_iter::IterableEnum for #enum_name #type_generics #where_clause {
             const N_VARIANTS: usize = #n_variants;
 
             fn get_at(index: usize) -> Option<Self> {

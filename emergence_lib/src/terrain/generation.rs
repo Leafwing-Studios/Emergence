@@ -30,8 +30,7 @@ pub struct GenerationPlugin;
 
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(TilemapPlugin)
-            .init_resource::<GenerationConfig>()
+        app.init_resource::<GenerationConfig>()
             // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
             .add_startup_system_to_stage(StartupStage::PreStartup, configure_map_geometry)
             .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
@@ -46,11 +45,11 @@ pub struct GenerationConfig {
     /// Radius of the map.
     pub map_radius: u32,
     /// Initial number of ants.
-    n_ant: usize,
+    pub n_ant: usize,
     /// Initial number of plants.
-    n_plant: usize,
+    pub n_plant: usize,
     /// Initial number of fungi.
-    n_fungi: usize,
+    pub n_fungi: usize,
 }
 
 impl Default for GenerationConfig {

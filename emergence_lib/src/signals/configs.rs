@@ -1,8 +1,8 @@
 //! Utilities to manage configuration of signals (colour, decay rate, etc.).
 
 use crate::curves::Sigmoid;
+use crate::enum_iter::IterableEnum;
 use crate::signals::emitters::{Emitter, StockEmitter};
-use crate::IterableEnum;
 use indexmap::IndexMap;
 
 /// A dictionary of available [`SignalConfig`]s.
