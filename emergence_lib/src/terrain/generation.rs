@@ -4,8 +4,10 @@ use crate::terrain::terrain_types::{ImpassableTerrain, TerrainType};
 use crate::terrain::{MAP_RADIUS, TERRAIN_TILE_IMAP};
 use crate::tiles::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_TYPE};
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
+
 use rand::prelude::*;
 
 use crate::organisms::structures::{FungiBundle, PlantBundle};
@@ -40,7 +42,7 @@ impl Plugin for GenerationPlugin {
 }
 
 /// Controls world generation strategy
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub map_radius: u32,
@@ -50,15 +52,23 @@ pub struct GenerationConfig {
     pub n_plant: usize,
     /// Initial number of fungi.
     pub n_fungi: usize,
+    /// Relative probability of generating tiles of each terrain type.
+    pub terrain_weights: HashMap<TerrainType, f32>,
 }
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
+        let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
+        terrain_weights.insert(TerrainType::Plain, 1.);
+        terrain_weights.insert(TerrainType::High, 0.3);
+        terrain_weights.insert(TerrainType::Impassable, 0.2);
+
         GenerationConfig {
             map_radius: MAP_RADIUS,
             n_ant: N_ANT,
             n_plant: N_PLANT,
             n_fungi: N_FUNGI,
+            terrain_weights,
         }
     }
 }
@@ -114,7 +124,8 @@ fn generate_terrain(
 
     let mut rng = thread_rng();
     for position in tile_positions {
-        let terrain: TerrainType = rng.gen();
+        let terrain: TerrainType =
+            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
         let entity = terrain.create_entity(&mut commands, TilemapId(tilemap_entity), position);
         tile_storage.set(&position, entity);
     }

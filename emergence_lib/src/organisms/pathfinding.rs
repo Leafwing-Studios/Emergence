@@ -8,7 +8,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::distributions::WeightedError;
-use rand::prelude::SliceRandom;
+use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
 /// Select a passable, adjacent neighboring tile at random.

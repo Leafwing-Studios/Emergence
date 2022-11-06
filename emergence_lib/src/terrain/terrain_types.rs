@@ -4,10 +4,11 @@ use crate::tiles::IntoTileBundle;
 
 use crate::tiles::terrain::TERRAIN_TILE_IMAP;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TilePos, TileTextureIndex};
-use rand::distributions::Standard;
-use rand::prelude::Distribution;
+use rand::distributions::WeightedError;
+use rand::seq::SliceRandom;
 use rand::Rng;
 
 /// The marker component for plain terrain.
@@ -31,6 +32,15 @@ pub enum TerrainType {
     Impassable,
     /// Terrain that has higher altitude compared to others.
     High,
+}
+
+impl TerrainType {
+    /// The set of all possible [`TerrainType`] variants
+    const ALL_CHOICES: [TerrainType; 3] = [
+        TerrainType::Plain,
+        TerrainType::Impassable,
+        TerrainType::High,
+    ];
 }
 
 impl IntoTileBundle for TerrainType {
@@ -69,18 +79,16 @@ impl TerrainType {
         }
         builder.id()
     }
-}
 
-impl Distribution<TerrainType> for Standard {
-    /// Choose a [`TerrainType`] at weighted-random
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TerrainType {
-        let c: f32 = rng.gen();
-        if c < 0.1 {
-            TerrainType::High
-        } else if c < 0.2 {
-            TerrainType::Impassable
-        } else {
-            TerrainType::Plain
-        }
+    /// Choose a random terrain tile based on the given weights
+    pub fn choose_random<R: Rng + ?Sized>(
+        rng: &mut R,
+        weights: &HashMap<TerrainType, f32>,
+    ) -> Result<TerrainType, WeightedError> {
+        TerrainType::ALL_CHOICES
+            .choose_weighted(rng, |terrain_type| {
+                weights.get(terrain_type).copied().unwrap_or_default()
+            })
+            .copied()
     }
 }
