@@ -130,8 +130,8 @@ pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(photosynthesize)
-            .add_system(upkeep)
-            .add_system(cleanup);
+            .add_system(upkeep.after(photosynthesize))
+            .add_system(cleanup.after(upkeep));
     }
 }
 
