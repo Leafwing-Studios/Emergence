@@ -5,8 +5,8 @@ use crate::organisms::pathfinding::get_weighted_random_passable_neighbor;
 use crate::organisms::{OrganismBundle, OrganismType};
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::generation::GenerationConfig;
 use crate::terrain::terrain_types::ImpassableTerrain;
+use crate::terrain::MapGeometry;
 use crate::tiles::organisms::{OrganismStorage, OrganismStorageItem};
 use crate::tiles::terrain::{TerrainStorage, TerrainStorageItem};
 use crate::tiles::IntoTileBundle;
@@ -79,13 +79,13 @@ struct UnitTimer(Timer);
 fn act(
     time: Res<Time>,
     mut timer: ResMut<UnitTimer>,
-    generation_config: Res<GenerationConfig>,
     mut query: Query<(&Unit, &mut TilePos)>,
     impassable_query: Query<&ImpassableTerrain>,
     terrain_storage_query: Query<TerrainStorage>,
     organism_storage_query: Query<OrganismStorage>,
     tile_signals_query: Query<&TileSignals>,
     pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let terrain_tile_storage = terrain_storage_query.single();
     let organism_tile_storage = organism_storage_query.single();
@@ -99,7 +99,7 @@ fn act(
                 &impassable_query,
                 &tile_signals_query,
                 &pheromone_sensor,
-                &generation_config.map_size(),
+                &map_geometry.size(),
             );
         }
     }

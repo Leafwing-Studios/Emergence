@@ -7,9 +7,6 @@ pub mod organisms;
 pub mod position;
 pub mod terrain;
 
-/// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 10;
-
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///
 /// Grid size should be the same for all tilemaps, as we want them to be congruent.
