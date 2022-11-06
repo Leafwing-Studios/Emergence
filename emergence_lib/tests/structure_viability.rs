@@ -6,6 +6,8 @@ fn single_structure_app(generation_config: GenerationConfig) -> App {
     let mut app = emergence_lib::testing::simulation_app();
     app.insert_resource(generation_config);
 
+    // Run startup systems
+    app.update();
     app
 }
 
