@@ -55,6 +55,7 @@ pub struct Plant {
 }
 
 impl Plant {
+    /// The base rate of photosynthesis
     const PHOTOSYNTHESIS_RATE: f32 = 100.;
 }
 

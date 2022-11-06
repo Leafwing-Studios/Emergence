@@ -12,8 +12,11 @@ pub const MAP_RADIUS: u32 = 10;
 
 /// Resource that stores information regarding the size of the game map.
 pub struct MapGeometry {
+    /// The radius, in tiles, of the map
     radius: u32,
+    /// The location of the central tile
     center: TilePos,
+    /// The [`TilemapSize`] of the map
     size: TilemapSize,
 }
 

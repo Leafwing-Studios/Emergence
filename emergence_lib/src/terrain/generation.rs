@@ -91,6 +91,7 @@ impl From<&GenerationConfig> for MapGeometry {
     }
 }
 
+/// Initialize [`MapGeometry`] according to [`GenerationConfig`].
 fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
     let map_geometry: MapGeometry = (&*config).into();
 

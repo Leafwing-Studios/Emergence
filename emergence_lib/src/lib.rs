@@ -51,11 +51,11 @@ impl Plugin for GraphicsPlugin {
 /// Various app configurations, used for testing.
 ///
 /// Importing between files shared in the `tests` directory appears to be broken with this workspace config?
-/// Followed directions from https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html
-#[allow(missing_docs)]
+/// Followed directions from <https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html>
 pub mod testing {
     use bevy::prelude::*;
 
+    /// Just [`MinimalPlugins`].
     pub fn minimal_app() -> App {
         let mut app = App::new();
 
@@ -64,6 +64,7 @@ pub mod testing {
         app
     }
 
+    /// The [`bevy`] plugins needed to make simulation work
     pub fn bevy_app() -> App {
         let mut app = minimal_app();
         app.insert_resource(bevy::render::settings::WgpuSettings {
@@ -77,12 +78,14 @@ pub mod testing {
         app
     }
 
+    /// Just the game logic and simulation
     pub fn simulation_app() -> App {
         let mut app = bevy_app();
         app.add_plugin(super::SimulationPlugin);
         app
     }
 
+    /// Test users interacting with the app
     pub fn interaction_app() -> App {
         let mut app = simulation_app();
         app.add_plugin(bevy::input::InputPlugin)
