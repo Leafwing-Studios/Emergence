@@ -1,27 +1,11 @@
 //! Utilities for defining and visualizing game tiles.
 
-use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapSize, TilemapType};
+use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapGridSize, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 
 pub mod organisms;
 pub mod position;
 pub mod terrain;
-
-/// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 10;
-/// The number of tiles from edge to opposite edge of the map
-pub const MAP_DIAMETER: u32 = 2 * MAP_RADIUS + 1;
-/// The [`TilemapSize`] of the complete world map
-pub const MAP_SIZE: TilemapSize = TilemapSize {
-    x: MAP_DIAMETER,
-    y: MAP_DIAMETER,
-};
-
-/// The [`TilePos`] that defines the center of this map
-pub const MAP_CENTER: TilePos = TilePos {
-    x: MAP_RADIUS + 1,
-    y: MAP_RADIUS + 1,
-};
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///

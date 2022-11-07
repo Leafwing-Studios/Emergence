@@ -3,77 +3,93 @@
 #![deny(clippy::missing_docs_in_private_items)]
 #![forbid(unsafe_code)]
 #![warn(clippy::doc_markdown)]
-use std::marker::PhantomData;
+
+use bevy::app::{App, Plugin};
 
 pub mod camera;
 pub mod cursor;
 pub mod curves;
+pub mod enum_iter;
 pub mod hive_mind;
 pub mod organisms;
 pub mod signals;
 pub mod terrain;
 pub mod tiles;
 
-/// Marks an enum whose variants can be iterated over in the order they are defined.
-pub trait IterableEnum: Sized {
-    /// The number of variants of this action type
-    const N_VARIANTS: usize;
+/// All of the code needed to make the simulation run
+pub struct SimulationPlugin;
 
-    /// Iterates over the possible variants in the order they were defined.
-    fn variants() -> EnumIter<Self> {
-        EnumIter::default()
+impl Plugin for SimulationPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(terrain::generation::GenerationPlugin)
+            .add_plugin(organisms::structures::StructuresPlugin)
+            .add_plugin(organisms::units::UnitsPlugin)
+            .add_plugin(signals::SignalsPlugin);
     }
-
-    /// Returns the default value for the variant stored at the provided index if it exists.
-    ///
-    /// This is mostly used internally, to enable space-efficient iteration.
-    fn get_at(index: usize) -> Option<Self>;
-
-    /// Returns the position in the defining enum of the given action
-    fn index(&self) -> usize;
 }
 
-/// An iterator of enum variants.
+/// All of the code needed for users to interact with the simulation.
+pub struct InteractionPlugin;
+
+impl Plugin for InteractionPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(camera::CameraPlugin)
+            .add_plugin(cursor::CursorTilePosPlugin)
+            .add_plugin(hive_mind::HiveMindPlugin);
+    }
+}
+
+/// All of the code needed to draw things on screen.
+pub struct GraphicsPlugin;
+
+impl Plugin for GraphicsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(bevy_ecs_tilemap::TilemapPlugin);
+    }
+}
+
+/// Various app configurations, used for testing.
 ///
-/// Created by calling [`IterableEnum::variants`].
-#[derive(Debug, Clone)]
-pub struct EnumIter<A: IterableEnum> {
-    /// Keeps track of which variant should be provided next.
-    ///
-    /// Alternatively, `min(index - 1, 0)` counts how many variants have already been iterated
-    /// through.
-    index: usize,
-    /// Marker used to keep track of which `IterableEnum` this `EnumIter` iterates through.
-    ///
-    /// For more information, see [`PhantomData`](std::marker::PhantomData).
-    _phantom: PhantomData<A>,
-}
+/// Importing between files shared in the `tests` directory appears to be broken with this workspace config?
+/// Followed directions from <https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html>
+pub mod testing {
+    use bevy::prelude::*;
 
-impl<A: IterableEnum> Iterator for EnumIter<A> {
-    type Item = A;
+    /// Just [`MinimalPlugins`].
+    pub fn minimal_app() -> App {
+        let mut app = App::new();
 
-    fn next(&mut self) -> Option<A> {
-        let item = A::get_at(self.index);
-        if item.is_some() {
-            self.index += 1;
-        }
+        app.add_plugins(MinimalPlugins);
 
-        item
+        app
     }
-}
 
-impl<A: IterableEnum> ExactSizeIterator for EnumIter<A> {
-    fn len(&self) -> usize {
-        A::N_VARIANTS
+    /// The [`bevy`] plugins needed to make simulation work
+    pub fn bevy_app() -> App {
+        let mut app = minimal_app();
+        app.insert_resource(bevy::render::settings::WgpuSettings {
+            backends: None,
+            ..default()
+        });
+
+        app.add_plugin(bevy::asset::AssetPlugin)
+            .add_plugin(bevy::window::WindowPlugin)
+            .add_plugin(bevy::render::RenderPlugin);
+        app
     }
-}
 
-// We can't derive this, because otherwise it won't work when A is not default
-impl<A: IterableEnum> Default for EnumIter<A> {
-    fn default() -> Self {
-        EnumIter {
-            index: 0,
-            _phantom: PhantomData::default(),
-        }
+    /// Just the game logic and simulation
+    pub fn simulation_app() -> App {
+        let mut app = bevy_app();
+        app.add_plugin(super::SimulationPlugin);
+        app
+    }
+
+    /// Test users interacting with the app
+    pub fn interaction_app() -> App {
+        let mut app = simulation_app();
+        app.add_plugin(bevy::input::InputPlugin)
+            .add_plugin(super::InteractionPlugin);
+        app
     }
 }

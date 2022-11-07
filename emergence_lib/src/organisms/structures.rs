@@ -4,22 +4,11 @@
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use crate::organisms::{Composition, OrganismBundle, OrganismType};
-use crate::terrain::ImpassableTerrain;
+use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::tiles::IntoTileBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
-
-use config::*;
-/// Common structure constants
-mod config {
-    /// The initial mass of spawned structures
-    pub const STRUCTURE_STARTING_MASS: f32 = 0.5;
-    /// The mass at which structures will despawn
-    pub const STRUCTURE_DESPAWN_MASS: f32 = 0.01;
-    /// The upkeeep cost of each structure
-    pub const STRUCTURE_UPKEEP_RATE: f32 = 0.1;
-}
 
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
@@ -32,7 +21,6 @@ pub struct StructureBundle {
 }
 
 /// All structures must pay a cost to keep themselves alive
-// TODO: replace with better defaults
 #[derive(Component, Clone)]
 pub struct Structure {
     /// Mass cost per tick to stay alive.
@@ -41,20 +29,42 @@ pub struct Structure {
     despawn_mass: f32,
 }
 
+impl Structure {
+    /// The initial mass of spawned structures
+    pub const STARTING_MASS: f32 = 0.5;
+    /// The mass at which structures will despawn
+    pub const DESPAWN_MASS: f32 = 0.01;
+    /// The upkeep cost of each structure, relative to its total mass
+    pub const UPKEEP_RATE: f32 = 0.1;
+}
+
 impl Default for Structure {
     fn default() -> Self {
         Structure {
-            upkeep_rate: STRUCTURE_UPKEEP_RATE,
-            despawn_mass: STRUCTURE_DESPAWN_MASS,
+            upkeep_rate: Structure::UPKEEP_RATE,
+            despawn_mass: Structure::DESPAWN_MASS,
         }
     }
 }
 
 /// Plants can photosynthesize
-#[derive(Component, Clone, Default)]
+#[derive(Component, Clone)]
 pub struct Plant {
     /// Rate at which plants re-generate mass through photosynthesis.
     photosynthesis_rate: f32,
+}
+
+impl Plant {
+    /// The base rate of photosynthesis
+    const PHOTOSYNTHESIS_RATE: f32 = 100.;
+}
+
+impl Default for Plant {
+    fn default() -> Self {
+        Plant {
+            photosynthesis_rate: Plant::PHOTOSYNTHESIS_RATE,
+        }
+    }
 }
 
 /// The data needed to make a plant
@@ -80,7 +90,7 @@ impl PlantBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
                     composition: Composition {
-                        mass: STRUCTURE_STARTING_MASS,
+                        mass: Structure::STARTING_MASS,
                     },
                     ..Default::default()
                 },
@@ -136,13 +146,20 @@ impl Plugin for StructuresPlugin {
 }
 
 /// Plants capture energy from the sun
+///
+/// Photosynthesis scales in proportion to the surface area of plants,
+/// and as a result has an allometric scaling ratio of 2.
+///
+/// A plant's size (in one dimension) is considered to be proportional to the cube root of its mass.
 fn photosynthesize(time: Res<Time>, mut query: Query<(&Plant, &mut Composition)>) {
     for (plant, mut comp) in query.iter_mut() {
         comp.mass += plant.photosynthesis_rate * time.delta_seconds() * comp.mass.powf(2.0 / 3.0);
     }
 }
 
-/// All structures must pay an upkeep cost to sustain the vital functions of life
+/// All structures must pay an upkeep cost to sustain the vital functions of life.
+///
+/// Maintenance of biological functions is proportional to the mass that must be maintained.
 fn upkeep(time: Res<Time>, mut query: Query<(&Structure, &mut Composition)>) {
     for (structure, mut comp) in query.iter_mut() {
         comp.mass -= structure.upkeep_rate * time.delta_seconds() * comp.mass;

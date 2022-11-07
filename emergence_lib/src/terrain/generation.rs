@@ -1,17 +1,21 @@
 //! Tools and strategies for procedural world generation.
 use crate::organisms::units::AntBundle;
-use crate::terrain::TERRAIN_TILE_IMAP;
-use crate::terrain::{ImpassableTerrain, TerrainType};
-use crate::tiles::{GRID_SIZE, MAP_CENTER, MAP_COORD_SYSTEM, MAP_RADIUS, MAP_SIZE, MAP_TYPE};
+use crate::terrain::terrain_types::{ImpassableTerrain, TerrainType};
+use crate::terrain::{MAP_RADIUS, TERRAIN_TILE_IMAP};
+use crate::tiles::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_TYPE};
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::prelude::*;
+
 use rand::prelude::*;
 
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::tiles::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP};
 use crate::tiles::terrain::TerrainTilemap;
 use config::*;
+
+use super::MapGeometry;
 
 /// Various constants used for configuring initialization of the organism tilemap.
 mod config {
@@ -28,8 +32,9 @@ pub struct GenerationPlugin;
 
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(TilemapPlugin)
-            .init_resource::<GenerationConfig>()
+        app.init_resource::<GenerationConfig>()
+            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
+            .add_startup_system_to_stage(StartupStage::PreStartup, configure_map_geometry)
             .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_starting_organisms)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
@@ -37,33 +42,60 @@ impl Plugin for GenerationPlugin {
 }
 
 /// Controls world generation strategy
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub map_radius: u32,
-    /// Size of the map.
-    pub map_size: TilemapSize,
-    /// Location of the center tile.
-    pub map_center: TilePos,
     /// Initial number of ants.
-    n_ant: usize,
+    pub n_ant: usize,
     /// Initial number of plants.
-    n_plant: usize,
+    pub n_plant: usize,
     /// Initial number of fungi.
-    n_fungi: usize,
+    pub n_fungi: usize,
+    /// Relative probability of generating tiles of each terrain type.
+    pub terrain_weights: HashMap<TerrainType, f32>,
 }
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
+        let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
+        terrain_weights.insert(TerrainType::Plain, 1.);
+        terrain_weights.insert(TerrainType::High, 0.3);
+        terrain_weights.insert(TerrainType::Impassable, 0.2);
+
         GenerationConfig {
             map_radius: MAP_RADIUS,
-            map_size: MAP_SIZE,
-            map_center: MAP_CENTER,
             n_ant: N_ANT,
             n_plant: N_PLANT,
             n_fungi: N_FUNGI,
+            terrain_weights,
         }
     }
+}
+
+impl From<&GenerationConfig> for MapGeometry {
+    fn from(config: &GenerationConfig) -> MapGeometry {
+        let diameter = 2 * config.map_radius + 1;
+        let center = config.map_radius + 1;
+        MapGeometry {
+            radius: config.map_radius,
+            center: TilePos {
+                x: center,
+                y: center,
+            },
+            size: TilemapSize {
+                x: diameter,
+                y: diameter,
+            },
+        }
+    }
+}
+
+/// Initialize [`MapGeometry`] according to [`GenerationConfig`].
+fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
+    let map_geometry: MapGeometry = (&*config).into();
+
+    commands.insert_resource(map_geometry);
 }
 
 /// Creates the world according to the provided [`GenerationConfig`].
@@ -71,6 +103,7 @@ fn generate_terrain(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     config: Res<GenerationConfig>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain tilemap...");
     let texture = TilemapTexture::Vector(
@@ -81,10 +114,10 @@ fn generate_terrain(
     );
 
     let tilemap_entity = commands.spawn().id();
-    let mut tile_storage = TileStorage::empty(config.map_size);
+    let mut tile_storage = TileStorage::empty(map_geometry.size());
 
     let tile_positions = generate_hexagon(
-        AxialPos::from_tile_pos_given_coord_system(&config.map_center, MAP_COORD_SYSTEM),
+        AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
         config.map_radius,
     )
     .into_iter()
@@ -92,7 +125,8 @@ fn generate_terrain(
 
     let mut rng = thread_rng();
     for position in tile_positions {
-        let terrain: TerrainType = rng.gen();
+        let terrain: TerrainType =
+            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
         let entity = terrain.create_entity(&mut commands, TilemapId(tilemap_entity), position);
         tile_storage.set(&position, entity);
     }
@@ -103,12 +137,12 @@ fn generate_terrain(
         .insert_bundle(TilemapBundle {
             grid_size: GRID_SIZE,
             map_type: MAP_TYPE,
-            size: config.map_size,
+            size: map_geometry.size(),
             storage: tile_storage,
             texture,
             tile_size: TerrainTilemap::TILE_SIZE,
             transform: get_tilemap_center_transform(
-                &config.map_size,
+                &map_geometry.size(),
                 &GRID_SIZE,
                 &MAP_TYPE,
                 TerrainTilemap::MAP_Z,
@@ -125,6 +159,7 @@ fn generate_starting_organisms(
     config: Res<GenerationConfig>,
     terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
     impassable_query: Query<&ImpassableTerrain>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let texture = TilemapTexture::Vector(
         ORGANISM_TILE_IMAP
@@ -134,7 +169,7 @@ fn generate_starting_organisms(
     );
 
     let tilemap_entity = commands.spawn().id();
-    let mut tile_storage = TileStorage::empty(config.map_size);
+    let mut tile_storage = TileStorage::empty(map_geometry.size());
     let tilemap_id = TilemapId(tilemap_entity);
 
     let n_ant = config.n_ant;
@@ -146,7 +181,7 @@ fn generate_starting_organisms(
 
     let mut entity_positions: Vec<TilePos> = {
         let possible_positions = generate_hexagon(
-            AxialPos::from_tile_pos_given_coord_system(&config.map_center, MAP_COORD_SYSTEM),
+            AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
             config.map_radius,
         )
         .into_iter()
@@ -203,12 +238,12 @@ fn generate_starting_organisms(
         .insert_bundle(TilemapBundle {
             grid_size: GRID_SIZE,
             map_type: MAP_TYPE,
-            size: config.map_size,
+            size: map_geometry.size(),
             storage: tile_storage,
             texture,
             tile_size: OrganismTilemap::TILE_SIZE,
             transform: get_tilemap_center_transform(
-                &config.map_size,
+                &map_geometry.size(),
                 &GRID_SIZE,
                 &MAP_TYPE,
                 OrganismTilemap::MAP_Z,
