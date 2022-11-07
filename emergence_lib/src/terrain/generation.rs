@@ -1,7 +1,7 @@
 //! Tools and strategies for procedural world generation.
 use crate::organisms::units::AntBundle;
 use crate::terrain::terrain_types::{ImpassableTerrain, TerrainType};
-use crate::terrain::{MAP_RADIUS, TERRAIN_TILE_IMAP};
+use crate::terrain::MAP_RADIUS;
 use crate::tiles::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_TYPE};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -11,7 +11,7 @@ use bevy_ecs_tilemap::prelude::*;
 use rand::prelude::*;
 
 use crate::organisms::structures::{FungiBundle, PlantBundle};
-use crate::tiles::organisms::{OrganismTilemap, ORGANISM_TILE_IMAP};
+use crate::tiles::organisms::OrganismTilemap;
 use crate::tiles::terrain::TerrainTilemap;
 use config::*;
 
@@ -106,12 +106,7 @@ fn generate_terrain(
     map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain tilemap...");
-    let texture = TilemapTexture::Vector(
-        TERRAIN_TILE_IMAP
-            .values()
-            .map(|&p| asset_server.load(p))
-            .collect(),
-    );
+    let texture = TilemapTexture::Vector(todo!());
 
     let tilemap_entity = commands.spawn().id();
     let mut tile_storage = TileStorage::empty(map_geometry.size());
@@ -161,12 +156,7 @@ fn generate_starting_organisms(
     impassable_query: Query<&ImpassableTerrain>,
     map_geometry: Res<MapGeometry>,
 ) {
-    let texture = TilemapTexture::Vector(
-        ORGANISM_TILE_IMAP
-            .values()
-            .map(|&p| asset_server.load(p))
-            .collect(),
-    );
+    let texture = TilemapTexture::Vector(todo!());
 
     let tilemap_entity = commands.spawn().id();
     let mut tile_storage = TileStorage::empty(map_geometry.size());

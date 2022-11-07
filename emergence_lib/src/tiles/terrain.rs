@@ -4,16 +4,6 @@ use crate::terrain::terrain_types::TerrainType;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
 use indexmap::{indexmap, IndexMap};
-use once_cell::sync::Lazy;
-
-/// Stores the texture associated with each terrain variant.
-pub static TERRAIN_TILE_IMAP: Lazy<IndexMap<TerrainType, &'static str>> = Lazy::new(|| {
-    indexmap! {
-        TerrainType::High => "tile-high.png",
-        TerrainType::Impassable => "tile-impassable.png",
-        TerrainType::Plain => "tile-plain.png",
-    }
-});
 
 /// Marker component for entity that manages visualization of terrain.
 ///

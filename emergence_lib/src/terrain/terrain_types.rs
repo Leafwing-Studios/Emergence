@@ -1,8 +1,7 @@
 //! The different types of physical terrain.
 
 use crate::tiles::IntoTileBundle;
-
-use crate::tiles::terrain::TERRAIN_TILE_IMAP;
+use crate::tiles::LayerType;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapId;
@@ -45,13 +44,16 @@ impl TerrainType {
 
 impl IntoTileBundle for TerrainType {
     /// The associated tile texture
-    fn tile_texture(&self) -> TileTextureIndex {
-        TileTextureIndex(TERRAIN_TILE_IMAP.get_index_of(self).unwrap() as u32)
+    fn tile_texture(
+        &self,
+        tilemap_ids: &HashMap<LayerType, TilemapId>,
+    ) -> (TilemapId, TileTextureIndex) {
+        todo!()
     }
 
     /// The path to the associated tile texture
     fn tile_texture_path(&self) -> &'static str {
-        TERRAIN_TILE_IMAP.get(self).unwrap()
+        todo!()
     }
 }
 
@@ -65,7 +67,8 @@ impl TerrainType {
     ) -> Entity {
         let mut builder = commands.spawn();
 
-        builder.insert_bundle(self.as_tile_bundle(tilemap_id, position));
+        todo!();
+        //builder.insert_bundle(self.as_tile_bundle(tilemap_id, position));
         match self {
             TerrainType::Plain => {
                 builder.insert(PlainTerrain);

@@ -3,9 +3,11 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use crate::organisms::{Composition, OrganismBundle, OrganismType};
+use crate::interactable::Interactable;
+use crate::organisms::{Composition, OrganismBundle};
 use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::tiles::IntoTileBundle;
+
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
@@ -95,7 +97,7 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: OrganismType::Plant.as_tile_bundle(tilemap_id, position),
+            tile_bundle: todo!(),
             ..Default::default()
         }
     }
@@ -128,7 +130,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismType::Fungus.as_tile_bundle(tilemap_id, position),
+            tile_bundle: todo!(),
             ..Default::default()
         }
     }

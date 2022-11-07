@@ -1,21 +1,16 @@
 //! Units are organisms that can move freely.
-use pathfinding::get_weighted_random_passable_neighbor;
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
-use crate::organisms::{OrganismBundle, OrganismType};
-use crate::signals::emitters::{Emitter, StockEmitter};
-use crate::signals::tile_signals::TileSignals;
-use crate::terrain::terrain_types::ImpassableTerrain;
-use crate::terrain::MapGeometry;
-use crate::tiles::organisms::{OrganismStorage, OrganismStorageItem};
-use crate::tiles::terrain::{TerrainStorage, TerrainStorageItem};
-use crate::tiles::IntoTileBundle;
+use crate::organisms::OrganismBundle;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
+use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
-pub mod behavior;
+use self::behavior::CurrentGoal;
+
+mod act;
+mod behavior;
 mod pathfinding;
 
 /// Marker component for [`UnitBundle`]
@@ -27,6 +22,8 @@ pub struct Unit;
 pub struct UnitBundle {
     /// Marker component.
     unit: Unit,
+    /// What is the unit trying to do
+    current_task: CurrentGoal,
     /// A unit is an organism.
     #[bundle]
     organism_bundle: OrganismBundle,
@@ -59,10 +56,18 @@ impl AntBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismType::Ant.as_tile_bundle(tilemap_id, position),
+            tile_bundle: todo!(),
             ..Default::default()
         }
     }
+}
+
+/// System labels for unit behavior
+#[derive(SystemLabel)]
+pub enum UnitSystem {
+    ChooseGoal,
+    ChooseAction,
+    Act,
 }
 
 /// Contains unit behavior
@@ -71,42 +76,21 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, true)))
             .insert_resource(PheromoneTransducer::<BottomClampedLine>::default())
-            .add_system(act);
+            .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
+            .add_system(
+                behavior::choose_action
+                    .label(UnitSystem::ChooseAction)
+                    .after(UnitSystem::ChooseGoal),
+            )
+            .add_system(
+                act::act
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::ChooseAction),
+            );
     }
 }
 /// Global timer that controls when units should act
 struct UnitTimer(Timer);
-
-/// System modelling ant behaviour.
-#[allow(clippy::too_many_arguments)]
-fn act(
-    time: Res<Time>,
-    mut timer: ResMut<UnitTimer>,
-    mut query: Query<(&Unit, &mut TilePos)>,
-    impassable_query: Query<&ImpassableTerrain>,
-    terrain_storage_query: Query<TerrainStorage>,
-    organism_storage_query: Query<OrganismStorage>,
-    tile_signals_query: Query<&TileSignals>,
-    pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
-    map_geometry: Res<MapGeometry>,
-) {
-    let terrain_tile_storage = terrain_storage_query.single();
-    let organism_tile_storage = organism_storage_query.single();
-    timer.0.tick(time.delta());
-    if timer.0.finished() {
-        for (_, mut position) in query.iter_mut() {
-            *position = wander(
-                &position,
-                &terrain_tile_storage,
-                &organism_tile_storage,
-                &impassable_query,
-                &tile_signals_query,
-                &pheromone_sensor,
-                &map_geometry.size(),
-            );
-        }
-    }
-}
 
 /// Transduces a pheromone signal into a weight used to make decisions.
 ///
@@ -163,33 +147,4 @@ impl Default for PheromoneTransducer<BottomClampedLine> {
             curve: BottomClampedLine::new_from_points(Vec2::new(0.0, 0.0), Vec2::new(0.01, 1.0)),
         }
     }
-}
-
-/// Pathfinding for ants.
-fn wander(
-    position: &TilePos,
-    terrain_tile_storage: &TerrainStorageItem,
-    organism_tile_storage: &OrganismStorageItem,
-    impassable_query: &Query<&ImpassableTerrain>,
-    tile_signals_query: &Query<&TileSignals>,
-    pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
-    map_size: &TilemapSize,
-) -> TilePos {
-    let signals_to_weight = |tile_signals: &TileSignals| {
-        pheromone_sensor.signal_to_weight(
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneAttract)),
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneRepulse)),
-        )
-    };
-    let target = get_weighted_random_passable_neighbor(
-        position,
-        terrain_tile_storage,
-        organism_tile_storage,
-        impassable_query,
-        tile_signals_query,
-        signals_to_weight,
-        map_size,
-    );
-
-    target.unwrap_or(*position)
 }

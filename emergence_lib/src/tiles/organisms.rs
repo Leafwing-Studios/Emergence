@@ -1,19 +1,6 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
-use crate::organisms::OrganismType;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
-use indexmap::{indexmap, IndexMap};
-use once_cell::sync::Lazy;
-
-/// An [`IndexMap`] of organism images.
-pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
-    use OrganismType::*;
-    indexmap! {
-        Ant => "tile-ant.png",
-        Fungus => "tile-fungus.png",
-        Plant => "tile-plant.png",
-    }
-});
 
 /// Marker component for entity that manages visualization of organisms.
 ///

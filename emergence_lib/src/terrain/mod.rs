@@ -1,6 +1,4 @@
 //! Generating and representing terrain as game objects.
-
-use crate::tiles::terrain::TERRAIN_TILE_IMAP;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 

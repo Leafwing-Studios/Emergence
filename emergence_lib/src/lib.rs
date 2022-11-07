@@ -11,6 +11,7 @@ pub mod cursor;
 pub mod curves;
 pub mod enum_iter;
 pub mod hive_mind;
+pub mod interactable;
 pub mod organisms;
 pub mod signals;
 pub mod terrain;
