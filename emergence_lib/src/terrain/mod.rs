@@ -2,8 +2,7 @@
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 
-pub mod generation;
-pub mod terrain_types;
+pub mod terrain_type;
 
 /// The number of graphics from the center of the map to the edge
 pub const MAP_RADIUS: u32 = 10;

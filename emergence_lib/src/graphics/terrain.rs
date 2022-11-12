@@ -1,9 +1,7 @@
 //! The [`TerrainTilemap`] manages visualization of terrain.
 
-use crate::terrain::terrain_types::TerrainType;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
-use indexmap::{indexmap, IndexMap};
 
 /// Marker component for entity that manages visualization of terrain.
 ///

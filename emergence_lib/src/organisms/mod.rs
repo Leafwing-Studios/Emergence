@@ -9,6 +9,17 @@ pub mod units;
 #[derive(Component, Clone, Default)]
 pub struct Organism;
 
+/// Enumerates organisms
+#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+pub struct OrganismType {
+    /// An ant
+    Ant,
+    /// A fungi
+    Fungi,
+    /// A plant
+    Plant,
+}
+
 /// The mass of each element that makes up the entity
 #[derive(Component, Clone, Default)]
 pub struct Composition {

@@ -1,19 +1,23 @@
 //! Utilities for defining and visualizing game graphics.
 
+use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::TerrainTilemap;
-use crate::terrain::MapGeometry;
+use crate::simulation::generation::GRID_SIZE;
+use crate::terrain::{terrain_type::TerrainType, MapGeometry};
+
 use bevy::app::{App, Plugin, StartupStage};
+use bevy::asset::AssetPath;
 use bevy::asset::AssetServer;
 use bevy::ecs::system::Commands;
 use bevy::log::info;
 use bevy::prelude::Res;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::map::{
-    HexCoordSystem, TilemapGridSize, TilemapId, TilemapTexture, TilemapType,
-};
+use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapTexture, TilemapType};
 use bevy_ecs_tilemap::prelude::get_tilemap_center_transform;
-use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::tiles::{TileStorage, TileTextureIndex};
 use bevy_ecs_tilemap::TilemapBundle;
+
+use std::path::PathBuf;
 
 pub mod organisms;
 pub mod position;
@@ -38,7 +42,7 @@ fn initialize_terrain_layer(
     asset_server: Res<AssetServer>,
 ) {
     let texture = TilemapTexture::Vector(
-        Tiles::terrain_tile_paths()
+        TerrainType::all_paths()
             .into_iter()
             .map(|p| asset_server.load(p))
             .collect(),
@@ -68,11 +72,6 @@ fn initialize_terrain_layer(
         .insert(TerrainTilemap);
 }
 
-/// The grid size (hex tile width by hex tile height) in pixels.
-///
-/// Grid size should be the same for all tilemaps, as we want them to be congruent.
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
-
 /// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate
 /// system instead of an offset-coordinate system.
 pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
@@ -96,78 +95,35 @@ pub struct LayerRegister {
     /// A map from Layer to TilemapId
     map: HashMap<Layer, TilemapId>,
 }
+pub trait IntoSprite: IterableEnum + Into<u32> {
+    /// Path to the folder containing texture assets for this particular group of entities.
+    const ROOT_PATH: &'static str;
 
-/// Enumerates the various tiles that exist in the game
-///
-/// These should be organized in alphabetical order.
-pub enum Tiles {
-    // Organism tiles
-    /// Tile for ants
-    OrganismAnt,
-    /// Tile for plants
-    OrganismPlant,
-    /// Tile for fungi
-    OrganismFungus,
-    // Terrain tiles
-    /// Tile for high terrain
-    TerrainHigh,
-    /// Tile for plains
-    TerrainPlain,
-    /// Tile for impassable terrain
-    TerrainImpassable,
-}
+    /// Path of a particular entity variant.
+    fn leaf_path(&self) -> &'static str;
 
-impl Tiles {
-    /// Returns the path of the texture associated with each tile.
-    ///
-    /// These are assumed to live in the `emergence_game` assets folder. Therefore, they should be
-    /// provided relative to that folder.
-    pub fn tile_texture_path(&self) -> &'static str {
-        use Tiles::*;
-        match self {
-            OrganismAnt => "tile-ant.png",
-            OrganismFungus => "tile-fungus.png",
-            OrganismPlant => "tile-plant.png",
-            TerrainHigh => "tile-high.png",
-            TerrainPlain => "tile-plain.png",
-            TerrainImpassable => "tile-impassable.png",
-        }
+    /// Returns ROOT_PATH + leaf_path().
+    fn full_path(&self) -> AssetPath {
+        let path = PathBuf::from(Self::ROOT_PATH);
+        path.join(self.leaf_path());
+
+        AssetPath::new(path, None)
     }
 
-    pub fn organism_tile_paths() -> Vec<&'static str> {
-        use Tiles::*;
-        [OrganismAnt, OrganismFungus, OrganismPlant]
-            .into_iter()
-            .map(|t| t.tile_texture_path())
+    fn all_paths() -> Vec<AssetPath<'static>> {
+        Self::variants()
+            .map(|variant| variant.full_path())
             .collect()
     }
 
-    pub fn terrain_tile_paths() -> Vec<&'static str> {
-        use Tiles::*;
-        [TerrainHigh, TerrainPlain, TerrainImpassable]
-            .into_iter()
-            .map(|t| t.tile_texture_path())
-            .collect()
-    }
-
-    pub fn tile_texture_index(&self) -> TileTextureIndex {
-        use Tiles::*;
-        match self {
-            // Organism tiles
-            OrganismAnt => TileTextureIndex(0),
-            OrganismPlant => TileTextureIndex(1),
-            OrganismFungus => TileTextureIndex(2),
-            // Terrain tiles
-            TerrainPlain => TileTextureIndex(0),
-            TerrainHigh => TileTextureIndex(1),
-            TerrainImpassable => TileTextureIndex(2),
-        }
+    fn tile_texture_index(&self) -> TileTextureIndex {
+        TileTextureIndex(self.index() as u32)
     }
 }
 
 /// Manages the mapping between a tile and the layer it exists in, and its index within that layer.
 pub struct TileRegistrar {
-    map: HashMap<Tiles, (Layer, TileTextureIndex)>,
+    map: HashMap<TileSprite, (Layer, TileTextureIndex)>,
     index_allocator: TextureIndexAllocator,
 }
 

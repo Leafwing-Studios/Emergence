@@ -2,12 +2,9 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
-use bevy_ecs_tilemap::helpers::hex_grid::neighbors::{
-    HexDirection, HexRowDirection, HEX_DIRECTIONS,
-};
+use bevy_ecs_tilemap::helpers::hex_grid::neighbors::{HexRowDirection, HEX_DIRECTIONS};
 use bevy_ecs_tilemap::prelude::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
-use rand::distributions::Distribution;
 use rand::seq::SliceRandom;
 use rand::Rng;
 

@@ -3,8 +3,6 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use crate::graphics::IntoTileBundle;
-use crate::interactable::Interactable;
 use crate::organisms::{Composition, OrganismBundle};
 use crate::terrain::terrain_types::ImpassableTerrain;
 

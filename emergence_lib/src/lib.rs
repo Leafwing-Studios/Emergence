@@ -15,15 +15,15 @@ pub mod hive_mind;
 pub mod interactable;
 pub mod organisms;
 pub mod signals;
-pub mod terrain;
 pub mod simulation;
+pub mod terrain;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin;
 
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(terrain::generation::GenerationPlugin)
+        app.add_plugin(simulation::generation::GenerationPlugin)
             .add_plugin(organisms::structures::StructuresPlugin)
             .add_plugin(organisms::units::UnitsPlugin)
             .add_plugin(signals::SignalsPlugin);

@@ -5,7 +5,7 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
-use crate::interactable::{self, Interactable};
+use crate::interactable::Interactable;
 use crate::organisms::units::Unit;
 
 /// A unit's current goals.
