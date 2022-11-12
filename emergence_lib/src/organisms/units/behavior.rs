@@ -101,7 +101,7 @@ pub(super) fn choose_goal(mut units_query: Query<(&Unit, &mut CurrentGoal)>) {
     for (_unit, current_goal) in units_query.iter_mut() {
         // Check to see if any of the possible goals are high enough priority to swap to
         if *current_goal == CurrentGoal::Wander {
-            todo!()
+            //todo!()
         }
     }
 }

@@ -114,7 +114,10 @@ fn generate_starting_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
-    mut organism_tile_storage_query: Query<&mut TileStorage, With<OrganismTilemap>>,
+    mut organism_tile_storage_query: Query<
+        &mut TileStorage,
+        (With<OrganismTilemap>, Without<TerrainTilemap>),
+    >,
     impassable_query: Query<&ImpassableTerrain>,
     map_geometry: Res<MapGeometry>,
     layer_register: Res<LayerRegister>,

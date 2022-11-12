@@ -8,6 +8,9 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
+use self::behavior::events::{
+    DropOffThisTurn, IdleThisTurn, MoveThisTurn, PickUpThisTurn, WorkThisTurn,
+};
 use self::behavior::CurrentGoal;
 
 mod act;
@@ -80,6 +83,11 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, true)))
             .insert_resource(PheromoneTransducer::<BottomClampedLine>::default())
+            .add_event::<IdleThisTurn>()
+            .add_event::<MoveThisTurn>()
+            .add_event::<PickUpThisTurn>()
+            .add_event::<DropOffThisTurn>()
+            .add_event::<WorkThisTurn>()
             .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
             .add_system(
                 behavior::choose_action

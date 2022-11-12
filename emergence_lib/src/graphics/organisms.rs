@@ -22,7 +22,7 @@ impl IntoSprite for OrganismSprite {
     fn leaf_path(&self) -> &'static str {
         match self {
             OrganismSprite::Ant => "tile-ant.png",
-            OrganismSprite::Fungi => "tile-fungi.png",
+            OrganismSprite::Fungi => "tile-fungus.png",
             OrganismSprite::Plant => "tile-plant.png",
         }
     }
