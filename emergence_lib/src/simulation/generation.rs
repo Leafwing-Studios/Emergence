@@ -1,6 +1,6 @@
 use crate::graphics::organisms::OrganismTilemap;
-use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
-use crate::graphics::{IntoSprite, LayerRegister, MAP_COORD_SYSTEM};
+use crate::graphics::terrain::TerrainTilemap;
+use crate::graphics::{LayerRegister, MAP_COORD_SYSTEM};
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::terrain::{ImpassableTerrain, MapGeometry, TerrainType, MAP_RADIUS};
@@ -61,9 +61,9 @@ impl Default for GenerationConfig {
 
         GenerationConfig {
             map_radius: MAP_RADIUS,
-            n_ant: todo!(),
-            n_plant: todo!(),
-            n_fungi: todo!(),
+            n_ant: 5,
+            n_plant: 7,
+            n_fungi: 4,
             terrain_weights,
         }
     }
@@ -111,15 +111,11 @@ fn generate_terrain(
 
     let mut terrain_tile_storage = terrain_tile_storage_query.single_mut();
 
-    let tilemap_id = *layer_register
-        .map
-        .get(&TerrainSprite::LAYER)
-        .expect("Terrain layer is not registered");
     let mut rng = thread_rng();
     for position in tile_positions {
         let terrain: TerrainType =
             TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        let entity = terrain.create_entity(&mut commands, tilemap_id, position);
+        let entity = terrain.create_entity(&mut commands, position, &layer_register);
         terrain_tile_storage.set(&position, entity);
     }
 }

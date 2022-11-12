@@ -1,4 +1,5 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
+use crate as emergence_lib;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
 use emergence_macros::IterableEnum;

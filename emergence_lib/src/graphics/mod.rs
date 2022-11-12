@@ -43,7 +43,7 @@ fn initialize_terrain_layer(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
     asset_server: Res<AssetServer>,
-    layer_register: ResMut<LayerRegister>,
+    mut layer_register: ResMut<LayerRegister>,
 ) {
     let texture = TilemapTexture::Vector(
         TerrainSprite::all_paths()
@@ -56,7 +56,7 @@ fn initialize_terrain_layer(
     layer_register
         .map
         .insert(Layer::Terrain, TilemapId(tilemap_entity));
-    let mut tile_storage = TileStorage::empty(map_geometry.size());
+    let tile_storage = TileStorage::empty(map_geometry.size());
 
     info!("Inserting TilemapBundle...");
     commands
@@ -83,7 +83,7 @@ fn initialize_organisms_layer(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
     asset_server: Res<AssetServer>,
-    layer_register: ResMut<LayerRegister>,
+    mut layer_register: ResMut<LayerRegister>,
 ) {
     let texture = TilemapTexture::Vector(
         OrganismSprite::all_paths()
@@ -96,7 +96,7 @@ fn initialize_organisms_layer(
     layer_register
         .map
         .insert(Layer::Organisms, TilemapId(tilemap_entity));
-    let mut tile_storage = TileStorage::empty(map_geometry.size());
+    let tile_storage = TileStorage::empty(map_geometry.size());
 
     info!("Inserting TilemapBundle...");
     commands
@@ -152,7 +152,7 @@ pub trait IntoSprite: IterableEnum {
     fn leaf_path(&self) -> &'static str;
 
     /// Returns ROOT_PATH + leaf_path().
-    fn full_path(&self) -> AssetPath {
+    fn full_path(&self) -> AssetPath<'static> {
         let path = PathBuf::from(Self::ROOT_PATH).join(self.leaf_path());
 
         AssetPath::new(path, None)

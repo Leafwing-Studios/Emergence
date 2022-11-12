@@ -98,7 +98,7 @@ pub mod events {
 
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(mut units_query: Query<(&Unit, &mut CurrentGoal)>) {
-    for (unit, current_goal) in units_query.iter_mut() {
+    for (_unit, current_goal) in units_query.iter_mut() {
         // Check to see if any of the possible goals are high enough priority to swap to
         if *current_goal == CurrentGoal::Wander {
             todo!()
@@ -109,11 +109,11 @@ pub(super) fn choose_goal(mut units_query: Query<(&Unit, &mut CurrentGoal)>) {
 /// Choose the unit's action for this turn
 pub(super) fn choose_action(
     units_query: Query<(Entity, &TilePos, &CurrentGoal), With<Unit>>,
-    interactables_query: Query<(Entity, &TilePos, &Interactable)>,
-    behavior_event_writer: events::BehaviorEventWriters,
+    _interactables_query: Query<(Entity, &TilePos, &Interactable)>,
+    _behavior_event_writer: events::BehaviorEventWriters,
 ) {
-    for (unit_entity, unit_tile_pos, current_goal) in units_query.iter() {
-        if let Some(required_interactable) = current_goal.required_interactable() {
+    for (_unit_entity, _unit_tile_pos, current_goal) in units_query.iter() {
+        if let Some(_required_interactable) = current_goal.required_interactable() {
             // TODO: use HexNeighbors methods to find appropriate neighboring entities
         }
     }

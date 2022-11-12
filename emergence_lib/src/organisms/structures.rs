@@ -7,6 +7,7 @@ use crate::graphics::organisms::OrganismSprite;
 use crate::graphics::{IntoSprite, LayerRegister};
 use crate::organisms::{Composition, OrganismBundle};
 use crate::terrain::ImpassableTerrain;
+
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
 
@@ -95,7 +96,7 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: OrganismSprite::tile_bundle(position, layer_register),
+            tile_bundle: OrganismSprite::Plant.tile_bundle(position, layer_register),
             ..Default::default()
         }
     }
@@ -128,7 +129,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismSprite::tile_bundle(position, &layer_register),
+            tile_bundle: OrganismSprite::Fungi.tile_bundle(position, layer_register),
             ..Default::default()
         }
     }
