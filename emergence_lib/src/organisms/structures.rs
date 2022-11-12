@@ -8,7 +8,6 @@ use crate::graphics::{IntoSprite, LayerRegister};
 use crate::organisms::{Composition, OrganismBundle};
 use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
 
 /// The data needed to build a structure

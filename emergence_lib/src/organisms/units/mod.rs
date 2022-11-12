@@ -5,7 +5,6 @@ use crate::graphics::organisms::OrganismSprite;
 use crate::graphics::{IntoSprite, LayerRegister};
 use crate::organisms::OrganismBundle;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
