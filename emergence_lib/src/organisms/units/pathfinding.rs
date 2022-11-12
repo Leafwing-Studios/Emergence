@@ -5,21 +5,11 @@ use crate::graphics::terrain::TerrainStorageItem;
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexDirection;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
-use rand::distributions::{Distribution, WeightedError};
+use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
-
-/// Generates a random hexagonal direction using the `rng` and `distribution` provided.
-fn random_direction<R: Rng + ?Sized, D: Distribution<usize>>(
-    mut rng: &mut R,
-    distribution: D,
-) -> HexDirection {
-    let choice = distribution.sample(&mut rng);
-    HexDirection::from(choice)
-}
 
 impl HexNeighbors<TilePos> {
     /// Returns the set of neighboring cells that units can walk through

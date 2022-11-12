@@ -10,7 +10,6 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
-use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::{generate_hexagon, TilemapGridSize};
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::seq::SliceRandom;
@@ -73,19 +72,7 @@ impl Default for GenerationConfig {
 
 impl From<&GenerationConfig> for MapGeometry {
     fn from(config: &GenerationConfig) -> MapGeometry {
-        let diameter = 2 * config.map_radius + 1;
-        let center = config.map_radius + 1;
-        MapGeometry {
-            radius: config.map_radius,
-            center: TilePos {
-                x: center,
-                y: center,
-            },
-            size: TilemapSize {
-                x: diameter,
-                y: diameter,
-            },
-        }
+        MapGeometry::new(config.map_radius)
     }
 }
 

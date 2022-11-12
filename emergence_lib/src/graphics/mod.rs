@@ -33,6 +33,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
             .init_resource::<LayerRegister>()
+            .init_resource::<MapGeometry>()
             .add_startup_system_to_stage(StartupStage::PreStartup, initialize_terrain_layer)
             .add_startup_system_to_stage(StartupStage::PreStartup, initialize_organisms_layer)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);

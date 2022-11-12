@@ -17,14 +17,35 @@ pub const MAP_RADIUS: u32 = 10;
 /// Resource that stores information regarding the size of the game map.
 pub struct MapGeometry {
     /// The radius, in graphics, of the map
-    pub radius: u32,
+    radius: u32,
     /// The location of the central tile
-    pub center: TilePos,
+    center: TilePos,
     /// The [`TilemapSize`] of the map
-    pub size: TilemapSize,
+    size: TilemapSize,
+}
+
+impl Default for MapGeometry {
+    fn default() -> Self {
+        MapGeometry::new(MAP_RADIUS)
+    }
 }
 
 impl MapGeometry {
+    /// Constructs a new [`MapGeometry`] for a `radius`.
+    pub const fn new(radius: u32) -> Self {
+        MapGeometry {
+            radius,
+            center: TilePos {
+                x: radius + 1,
+                y: radius + 1,
+            },
+            size: TilemapSize {
+                x: 2 * radius + 1,
+                y: 2 * radius + 1,
+            },
+        }
+    }
+
     /// Computes the total diameter from end-to-end of the game world
     #[inline]
     pub const fn diameter(&self) -> u32 {
