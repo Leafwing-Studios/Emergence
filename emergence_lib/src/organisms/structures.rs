@@ -3,9 +3,10 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
+use crate::graphics::organisms::OrganismSprite;
+use crate::graphics::{IntoSprite, LayerRegister};
 use crate::organisms::{Composition, OrganismBundle};
-use crate::terrain::terrain_types::ImpassableTerrain;
-
+use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
@@ -84,7 +85,7 @@ pub struct PlantBundle {
 
 impl PlantBundle {
     /// Creates new plant at specified tile position, in the specified tilemap.
-    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
+    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 structure: Default::default(),
@@ -95,7 +96,7 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: todo!(),
+            tile_bundle: OrganismSprite::tile_bundle(position, layer_register),
             ..Default::default()
         }
     }
@@ -120,7 +121,7 @@ pub struct FungiBundle {
 
 impl FungiBundle {
     /// Creates new fungi at specified tile position, in the specified tilemap.
-    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
+    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
@@ -128,7 +129,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: todo!(),
+            tile_bundle: OrganismSprite::tile_bundle(position, &layer_register),
             ..Default::default()
         }
     }

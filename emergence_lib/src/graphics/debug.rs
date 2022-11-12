@@ -1,5 +1,12 @@
+use crate::graphics::terrain::TerrainTilemap;
+use bevy::asset::AssetServer;
+use bevy::prelude::{Color, Commands, Query, Res, Transform, With};
+use bevy::text::{Text, Text2dBundle, TextAlignment, TextStyle};
+use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapType};
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+
 /// Generate debug labels for tile positions
-fn generate_debug_labels(
+pub fn generate_debug_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     tilemap_q: Query<
@@ -29,7 +36,7 @@ fn generate_debug_labels(
                     )
                     .with_alignment(text_alignment),
                     transform,
-                    ..default()
+                    ..Default::default()
                 });
             }
         }

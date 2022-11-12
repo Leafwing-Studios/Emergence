@@ -1,6 +1,8 @@
 //! Units are organisms that can move freely.
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
+use crate::graphics::organisms::OrganismSprite;
+use crate::graphics::{IntoSprite, LayerRegister};
 use crate::organisms::OrganismBundle;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
@@ -48,7 +50,7 @@ pub struct AntBundle {
 
 impl AntBundle {
     /// Creates a new [`AntBundle`]
-    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
+    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
         Self {
             unit_bundle: UnitBundle {
                 organism_bundle: OrganismBundle {
@@ -56,7 +58,7 @@ impl AntBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: todo!(),
+            tile_bundle: OrganismSprite::Ant.tile_bundle(position, layer_register),
             ..Default::default()
         }
     }

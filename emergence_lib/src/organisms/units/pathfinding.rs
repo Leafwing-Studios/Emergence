@@ -3,7 +3,7 @@ use crate::graphics::organisms::OrganismStorageItem;
 use crate::graphics::position::HexNeighbors;
 use crate::graphics::terrain::TerrainStorageItem;
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::terrain_types::ImpassableTerrain;
+use crate::terrain::ImpassableTerrain;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexDirection;
 use bevy_ecs_tilemap::map::TilemapSize;

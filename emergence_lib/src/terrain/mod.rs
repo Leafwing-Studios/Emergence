@@ -1,8 +1,11 @@
 //! Generating and representing terrain as game objects.
-use bevy_ecs_tilemap::map::TilemapSize;
+use bevy::prelude::{Commands, Component, Entity};
+use bevy_ecs_tilemap::map::{TilemapId, TilemapSize};
 use bevy_ecs_tilemap::tiles::TilePos;
-
-pub mod terrain_type;
+use emergence_macros::IterableEnum;
+use rand::distributions::WeightedError;
+use rand::Rng;
+use std::collections::HashMap;
 
 /// The number of graphics from the center of the map to the edge
 pub const MAP_RADIUS: u32 = 10;
@@ -10,11 +13,11 @@ pub const MAP_RADIUS: u32 = 10;
 /// Resource that stores information regarding the size of the game map.
 pub struct MapGeometry {
     /// The radius, in graphics, of the map
-    radius: u32,
+    pub radius: u32,
     /// The location of the central tile
-    center: TilePos,
+    pub center: TilePos,
     /// The [`TilemapSize`] of the map
-    size: TilemapSize,
+    pub size: TilemapSize,
 }
 
 impl MapGeometry {
@@ -36,5 +39,66 @@ impl MapGeometry {
     #[inline]
     pub const fn center(&self) -> TilePos {
         self.center
+    }
+}
+
+/// The marker component for plain terrain.
+#[derive(Component, Clone, Copy)]
+pub struct PlainTerrain;
+
+/// The marker component for impassable terrain.
+#[derive(Component, Clone, Copy, Default)]
+pub struct ImpassableTerrain;
+
+/// The marker component for high terrain.
+#[derive(Component, Clone, Copy, Default)]
+pub struct HighTerrain;
+
+/// Available terrain types.
+#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+pub enum TerrainType {
+    /// Terrain with no distinguishing characteristics.
+    Plain,
+    /// Terrain that is impassable.
+    Impassable,
+    /// Terrain that has higher altitude compared to others.
+    High,
+}
+
+impl TerrainType {
+    /// Creates a tile enttiy corresponding to `self`'s [`TerrainType`] variant
+    pub fn create_entity(
+        &self,
+        commands: &mut Commands,
+        tilemap_id: TilemapId,
+        position: TilePos,
+    ) -> Entity {
+        let mut builder = commands.spawn();
+
+        builder.insert_bundle(self.as_tile_bundle(tilemap_id, position));
+        match self {
+            TerrainType::Plain => {
+                builder.insert(PlainTerrain);
+            }
+            TerrainType::Impassable => {
+                builder.insert(ImpassableTerrain);
+            }
+            TerrainType::High => {
+                builder.insert(HighTerrain);
+            }
+        }
+        builder.id()
+    }
+
+    /// Choose a random terrain tile based on the given weights
+    pub fn choose_random<R: Rng + ?Sized>(
+        rng: &mut R,
+        weights: &HashMap<TerrainType, f32>,
+    ) -> Result<TerrainType, WeightedError> {
+        TerrainType::ALL_CHOICES
+            .choose_weighted(rng, |terrain_type| {
+                weights.get(terrain_type).copied().unwrap_or_default()
+            })
+            .copied()
     }
 }

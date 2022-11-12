@@ -3,7 +3,7 @@
 use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::TerrainTilemap;
 use crate::simulation::generation::GRID_SIZE;
-use crate::terrain::{terrain_type::TerrainType, MapGeometry};
+use crate::terrain::{MapGeometry, TerrainType};
 
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::asset::AssetPath;
@@ -13,26 +13,27 @@ use bevy::log::info;
 use bevy::prelude::Res;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapTexture, TilemapType};
-use bevy_ecs_tilemap::prelude::get_tilemap_center_transform;
-use bevy_ecs_tilemap::tiles::{TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileStorage, TileTextureIndex};
 use bevy_ecs_tilemap::TilemapBundle;
 
+use crate::graphics::debug::generate_debug_labels;
+use bevy_ecs_tilemap::helpers::geometry::get_tilemap_center_transform;
 use std::path::PathBuf;
 
+pub mod debug;
 pub mod organisms;
 pub mod position;
 pub mod terrain;
 
 /// All of the code needed to draw things on screen.
-///
-/// All the startup systems of this stage run in in [`StartupStage::PreStartup`].
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
             .init_resource::<LayerRegister>()
-            .add_startup_system_to_stage(StartupStage::PreStartup, initialize_terrain_layer);
+            .add_startup_system_to_stage(StartupStage::PreStartup, initialize_terrain_layer)
+            .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
     }
 }
 
@@ -93,19 +94,20 @@ pub enum Layer {
 #[derive(Default)]
 pub struct LayerRegister {
     /// A map from Layer to TilemapId
-    map: HashMap<Layer, TilemapId>,
+    pub map: HashMap<Layer, TilemapId>,
 }
-pub trait IntoSprite: IterableEnum + Into<u32> {
+pub trait IntoSprite: IterableEnum {
     /// Path to the folder containing texture assets for this particular group of entities.
     const ROOT_PATH: &'static str;
+    /// Layer (tilemap) that this group of entities belongs to.
+    const LAYER: Layer;
 
     /// Path of a particular entity variant.
     fn leaf_path(&self) -> &'static str;
 
     /// Returns ROOT_PATH + leaf_path().
     fn full_path(&self) -> AssetPath {
-        let path = PathBuf::from(Self::ROOT_PATH);
-        path.join(self.leaf_path());
+        let path = PathBuf::from(Self::ROOT_PATH).join(self.leaf_path());
 
         AssetPath::new(path, None)
     }
@@ -119,42 +121,15 @@ pub trait IntoSprite: IterableEnum + Into<u32> {
     fn tile_texture_index(&self) -> TileTextureIndex {
         TileTextureIndex(self.index() as u32)
     }
-}
 
-/// Manages the mapping between a tile and the layer it exists in, and its index within that layer.
-pub struct TileRegistrar {
-    map: HashMap<TileSprite, (Layer, TileTextureIndex)>,
-    index_allocator: TextureIndexAllocator,
-}
-
-/// Helper for producing tile texture indices for each layer.
-pub struct TextureIndexAllocator {
-    /// Keeps track of the next unused index for each layer.
-    map: HashMap<Layer, u32>,
-}
-
-/// A type that can be transformed into a tile that is compatible with [`bevy_ecs_tilemap`].
-pub trait IntoTileBundle {
-    /// The corresponding [`TileTextureIndex`] and the [`TilemapId`] layer that it belongs to.
-    fn tile_texture(
-        &self,
-        tilemap_ids: &HashMap<LayerType, TilemapId>,
-    ) -> (TilemapId, TileTextureIndex);
-
-    /// The asset path to the [`TileTextureIndex`].
-    fn tile_texture_path(&self) -> &'static str;
-
-    /// Uses the data stored in `self` to create a new, matching [`TileBundle`].
-    fn as_tile_bundle(
-        &self,
-        tilemap_id: TilemapId,
-        tilemap_ids: &HashMap<LayerType, TilemapId>,
-        position: TilePos,
-    ) -> TileBundle {
+    fn tile_bundle(&self, position: TilePos, layer_register: &Res<LayerRegister>) -> TileBundle {
         TileBundle {
             position,
-            tilemap_id,
-            texture_index: self.tile_texture(tilemap_ids).1,
+            texture_index: self.tile_texture_index(),
+            tilemap_id: *layer_register
+                .map
+                .get(&Self::LAYER)
+                .expect("Layer not registered"),
             ..Default::default()
         }
     }

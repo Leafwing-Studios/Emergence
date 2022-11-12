@@ -2,6 +2,31 @@
 
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
+use emergence_macros::IterableEnum;
+
+/// Enumerates terrain types
+#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+pub enum TerrainSprite {
+    /// High
+    High,
+    /// Impassable
+    Impassable,
+    /// Plains
+    Plain,
+}
+
+impl IntoSprite for TerrainSprite {
+    const ROOT_PATH: &'static str = "terrain";
+    const LAYER: Layer = Layer::Terrain;
+
+    fn leaf_path(&self) -> &'static str {
+        match self {
+            TerrainSprite::High => "tile-high.png",
+            TerrainSprite::Impassable => "tile-impassable.png",
+            TerrainSprite::Plain => "tile-plain.png",
+        }
+    }
+}
 
 /// Marker component for entity that manages visualization of terrain.
 ///
@@ -38,4 +63,5 @@ pub mod world_query {
     }
 }
 
+use crate::graphics::{IntoSprite, Layer};
 pub use world_query::*;

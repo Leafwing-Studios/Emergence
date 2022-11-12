@@ -1,6 +1,31 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
+use emergence_macros::IterableEnum;
+
+/// Enumerates organisms
+#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+pub enum OrganismSprite {
+    /// An ant
+    Ant,
+    /// A fungi
+    Fungi,
+    /// A plant
+    Plant,
+}
+
+impl IntoSprite for OrganismSprite {
+    const ROOT_PATH: &'static str = "organisms";
+    const LAYER: Layer = Layer::Organisms;
+
+    fn leaf_path(&self) -> &'static str {
+        match self {
+            OrganismSprite::Ant => "tile-ant.png",
+            OrganismSprite::Fungi => "tile-fungi.png",
+            OrganismSprite::Plant => "tile-plant.png",
+        }
+    }
+}
 
 /// Marker component for entity that manages visualization of organisms.
 ///
@@ -43,4 +68,5 @@ mod world_query {
     }
 }
 
+use crate::graphics::{IntoSprite, Layer};
 pub use world_query::*;
