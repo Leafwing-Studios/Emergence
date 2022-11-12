@@ -66,8 +66,11 @@ impl AntBundle {
 /// System labels for unit behavior
 #[derive(SystemLabel)]
 pub enum UnitSystem {
+    /// Pick a higher level goal to pursue
     ChooseGoal,
+    /// Pick an action that will get the agent closer to the goal being pursued
     ChooseAction,
+    /// Carry out the chosen action
     Act,
 }
 

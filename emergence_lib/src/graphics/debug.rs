@@ -1,3 +1,4 @@
+//! Debug graphics for use during development.
 use crate::graphics::terrain::TerrainTilemap;
 use bevy::asset::AssetServer;
 use bevy::prelude::{Color, Commands, Query, Res, Transform, With};

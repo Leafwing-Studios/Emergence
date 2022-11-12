@@ -4,6 +4,7 @@ use crate::enum_iter::IterableEnum;
 use crate::graphics::Layer;
 use crate::graphics::{IntoSprite, LayerRegister};
 use bevy::prelude::{Commands, Component, Entity, Res};
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::map::TilemapTileSize;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -11,7 +12,6 @@ use emergence_macros::IterableEnum;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::collections::HashMap;
 pub use world_query::*;
 
 /// The number of graphics from the center of the map to the edge

@@ -1,3 +1,5 @@
+//! Generating starting terrain and organisms
+
 use crate::graphics::organisms::OrganismTilemap;
 use crate::graphics::terrain::TerrainTilemap;
 use crate::graphics::{LayerRegister, MAP_COORD_SYSTEM};
@@ -6,13 +8,13 @@ use crate::organisms::units::AntBundle;
 use crate::terrain::{ImpassableTerrain, MapGeometry, TerrainType, MAP_RADIUS};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::{generate_hexagon, TilemapGridSize};
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use std::collections::HashMap;
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///

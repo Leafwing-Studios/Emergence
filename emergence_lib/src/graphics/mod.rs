@@ -126,7 +126,7 @@ pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
 pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
 
 /// Enumerates the different layers we are organizing our graphics into
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Layer {
     /// Organisms layer
     Organisms,
@@ -142,6 +142,8 @@ pub struct LayerRegister {
     /// A map from Layer to TilemapId
     pub map: HashMap<Layer, TilemapId>,
 }
+
+/// Defines how to map from variants of this type into a sprite asset that can be loaded into the game.
 pub trait IntoSprite: IterableEnum {
     /// Path to the folder containing texture assets for this particular group of entities.
     const ROOT_PATH: &'static str;
@@ -158,16 +160,19 @@ pub trait IntoSprite: IterableEnum {
         AssetPath::new(path, None)
     }
 
+    /// Returns all the sprite paths in ROOT_PATH
     fn all_paths() -> Vec<AssetPath<'static>> {
         Self::variants()
             .map(|variant| variant.full_path())
             .collect()
     }
 
+    /// Returns this item's index as a [`TileTextureIndex`].
     fn tile_texture_index(&self) -> TileTextureIndex {
         TileTextureIndex(self.index() as u32)
     }
 
+    /// Creates a [`TileBundle`] for an entity of this type, which can be used to intialize it in [`bevy_ecs_tilemap`].
     fn tile_bundle(&self, position: TilePos, layer_register: &Res<LayerRegister>) -> TileBundle {
         TileBundle {
             position,
@@ -175,7 +180,7 @@ pub trait IntoSprite: IterableEnum {
             tilemap_id: *layer_register
                 .map
                 .get(&Self::LAYER)
-                .expect("Layer not registered"),
+                .expect(&format!("Layer {:?} not registered", Self::LAYER)),
             ..Default::default()
         }
     }

@@ -7,7 +7,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(emergence_lib::GraphicsPlugin)
+        .add_plugin(emergence_lib::graphics::GraphicsPlugin)
         .add_plugin(emergence_lib::SimulationPlugin)
         .add_plugin(emergence_lib::InteractionPlugin)
         .run();
