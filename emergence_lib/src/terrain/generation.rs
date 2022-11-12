@@ -1,8 +1,8 @@
 //! Tools and strategies for procedural world generation.
+use crate::graphics::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_TYPE};
 use crate::organisms::units::AntBundle;
 use crate::terrain::terrain_types::{ImpassableTerrain, TerrainType};
 use crate::terrain::MAP_RADIUS;
-use crate::tiles::{GRID_SIZE, MAP_COORD_SYSTEM, MAP_TYPE};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
@@ -10,51 +10,12 @@ use bevy_ecs_tilemap::prelude::*;
 
 use rand::prelude::*;
 
+use crate::graphics::organisms::OrganismTilemap;
+use crate::graphics::terrain::TerrainTilemap;
 use crate::organisms::structures::{FungiBundle, PlantBundle};
-use crate::tiles::organisms::OrganismTilemap;
-use crate::tiles::terrain::TerrainTilemap;
 use config::*;
 
 use super::MapGeometry;
-
-/// Various constants used for configuring initialization of the organism tilemap.
-mod config {
-    /// The number of ants initially spawned
-    pub const N_ANT: usize = 5;
-    /// The number of plants initially spawned
-    pub const N_PLANT: usize = 10;
-    /// The number of fungi initially spawned
-    pub const N_FUNGI: usize = 10;
-}
-
-/// Generate the world.
-pub struct GenerationPlugin;
-
-impl Plugin for GenerationPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<GenerationConfig>()
-            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
-            .add_startup_system_to_stage(StartupStage::PreStartup, configure_map_geometry)
-            .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
-            .add_startup_system_to_stage(StartupStage::PostStartup, generate_starting_organisms)
-            .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
-    }
-}
-
-/// Controls world generation strategy
-#[derive(Clone)]
-pub struct GenerationConfig {
-    /// Radius of the map.
-    pub map_radius: u32,
-    /// Initial number of ants.
-    pub n_ant: usize,
-    /// Initial number of plants.
-    pub n_plant: usize,
-    /// Initial number of fungi.
-    pub n_fungi: usize,
-    /// Relative probability of generating tiles of each terrain type.
-    pub terrain_weights: HashMap<TerrainType, f32>,
-}
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {

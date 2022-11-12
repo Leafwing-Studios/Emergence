@@ -11,16 +11,6 @@ use rand::distributions::Distribution;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-/// Generates a random hexagonal direction using the `rng` and `distribution` provided.
-#[allow(unused)]
-fn random_direction<R: Rng + ?Sized, D: Distribution<usize>>(
-    mut rng: &mut R,
-    distribution: D,
-) -> HexDirection {
-    let choice = distribution.sample(&mut rng);
-    HexDirection::from(choice)
-}
-
 /// Stores some data `T` associated with each neighboring hex cell, if present.
 #[derive(Debug, Default)]
 pub struct HexNeighbors<T> {

@@ -7,7 +7,7 @@ use indexmap::{indexmap, IndexMap};
 
 /// Marker component for entity that manages visualization of terrain.
 ///
-/// See also, the [`OrganismTilemap`](crate::tiles::organisms::OrganismTilemap), which lies on top of the
+/// See also, the [`OrganismTilemap`](crate::graphics::organisms::OrganismTilemap), which lies on top of the
 /// terrain tilemap, and manages visualization of organisms.
 #[derive(Component)]
 pub struct TerrainTilemap;
@@ -15,7 +15,7 @@ pub struct TerrainTilemap;
 impl TerrainTilemap {
     /// The tile size (hex tile width by hex tile height) in pixels of tile image assets.
     pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
-    /// The z-coordinate at which tiles are drawn.
+    /// The z-coordinate at which graphics are drawn.
     pub const MAP_Z: f32 = 0.0;
 }
 
@@ -24,7 +24,7 @@ impl TerrainTilemap {
 /// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
 #[allow(missing_docs)]
 pub mod world_query {
-    use crate::tiles::terrain::TerrainTilemap;
+    use crate::graphics::terrain::TerrainTilemap;
     use bevy::ecs::query::WorldQuery;
     use bevy::prelude::With;
     use bevy_ecs_tilemap::prelude::TileStorage;

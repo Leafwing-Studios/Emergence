@@ -5,12 +5,12 @@ use bevy_ecs_tilemap::tiles::TilePos;
 pub mod generation;
 pub mod terrain_types;
 
-/// The number of tiles from the center of the map to the edge
+/// The number of graphics from the center of the map to the edge
 pub const MAP_RADIUS: u32 = 10;
 
 /// Resource that stores information regarding the size of the game map.
 pub struct MapGeometry {
-    /// The radius, in tiles, of the map
+    /// The radius, in graphics, of the map
     radius: u32,
     /// The location of the central tile
     center: TilePos,

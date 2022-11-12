@@ -6,12 +6,12 @@ pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
 use crate::curves::Mapping;
+use crate::graphics::position::HexNeighbors;
+use crate::graphics::terrain::TerrainTilemap;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
 use crate::signals::tile_signals::TileSignals;
-use crate::tiles::position::HexNeighbors;
-use crate::tiles::terrain::TerrainTilemap;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::TilePos;
@@ -118,15 +118,15 @@ fn handle_signal_modification_events(
     }
 }
 
-/// System that decays signals at all tiles, at their configured per-tick decay probability
+/// System that decays signals at all graphics, at their configured per-tick decay probability
 fn decay(mut signals_query: Query<&mut TileSignals>, signal_configs: Res<SignalConfigs>) {
     for mut tile_signals in signals_query.iter_mut() {
         tile_signals.decay(&signal_configs)
     }
 }
 
-/// Compute changes (deltas) in signal values at tiles, due to movement of signal between
-/// tiles.
+/// Compute changes (deltas) in signal values at graphics, due to movement of signal between
+/// graphics.
 ///
 /// Currently movement only occurs due to diffusion.
 fn compute_deltas(
@@ -162,7 +162,7 @@ fn compute_deltas(
     }
 }
 
-/// Applies deltas due to movement of signals between tiles.
+/// Applies deltas due to movement of signals between graphics.
 ///
 /// Should run after [`compute_deltas`].
 fn apply_deltas(mut signals_query: Query<&mut TileSignals>) {
@@ -178,7 +178,7 @@ pub struct Signal {
     current_value: f32,
     /// The amount of signal that will be coming into this tile this tick.
     ///
-    /// Generally, this will be based on [`current_value`](Signal::current_value) of neighboring tiles.
+    /// Generally, this will be based on [`current_value`](Signal::current_value) of neighboring graphics.
     incoming: f32,
     /// The amount of signal that will be leaving this tile this tick.
     ///

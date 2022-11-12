@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 ///
 /// Internally, this uses an [`IndexMap`], so that there is also a notion of order: the order
 /// in which elements are inserted into the dictionary. Some notion of order is necessary in order
-/// to color tiles consistently.
+/// to color graphics consistently.
 #[derive(Clone, Debug)]
 pub struct SignalConfigs {
     /// Stores the configuration associated with each emitter.

@@ -4,11 +4,11 @@ use bevy_ecs_tilemap::map::TilemapTileSize;
 
 /// Marker component for entity that manages visualization of organisms.
 ///
-/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap), and
+/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap), and
 /// keeps track of visualizations of organisms at terrain locations. It is congruent to
-/// [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
+/// [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
 /// we might find it useful to use a different tile size, but the grid size will always remain the
-/// same as that of [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap).
+/// same as that of [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap).
 #[derive(Component)]
 pub struct OrganismTilemap;
 
@@ -27,7 +27,7 @@ impl OrganismTilemap {
 /// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
 #[allow(missing_docs)]
 mod world_query {
-    use crate::tiles::organisms::OrganismTilemap;
+    use crate::graphics::organisms::OrganismTilemap;
     use bevy::ecs::query::WorldQuery;
     use bevy::prelude::With;
     use bevy_ecs_tilemap::prelude::TileStorage;

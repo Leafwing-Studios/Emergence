@@ -2,7 +2,7 @@
 //!
 //! Used for signalling, unit behaviors and more.
 
-use crate::tiles::{IntoTileBundle, LayerType};
+use crate::graphics::{IntoTileBundle, LayerType};
 
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::TileTextureIndex;

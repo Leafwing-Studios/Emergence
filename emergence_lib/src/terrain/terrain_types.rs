@@ -1,7 +1,7 @@
 //! The different types of physical terrain.
 
-use crate::tiles::IntoTileBundle;
-use crate::tiles::LayerType;
+use crate::graphics::IntoTileBundle;
+use crate::graphics::LayerType;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapId;

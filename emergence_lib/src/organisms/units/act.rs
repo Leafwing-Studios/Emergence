@@ -1,14 +1,14 @@
 use crate::organisms::units::pathfinding::get_weighted_random_passable_neighbor;
 
 use crate::curves::BottomClampedLine;
+use crate::graphics::organisms::OrganismStorage;
+use crate::graphics::organisms::OrganismStorageItem;
+use crate::graphics::terrain::TerrainStorage;
+use crate::graphics::terrain::TerrainStorageItem;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
 use crate::terrain::terrain_types::ImpassableTerrain;
 use crate::terrain::MapGeometry;
-use crate::tiles::organisms::OrganismStorage;
-use crate::tiles::organisms::OrganismStorageItem;
-use crate::tiles::terrain::TerrainStorage;
-use crate::tiles::terrain::TerrainStorageItem;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;

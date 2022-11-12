@@ -10,12 +10,13 @@ pub mod camera;
 pub mod cursor;
 pub mod curves;
 pub mod enum_iter;
+pub mod graphics;
 pub mod hive_mind;
 pub mod interactable;
 pub mod organisms;
 pub mod signals;
 pub mod terrain;
-pub mod tiles;
+pub mod simulation;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin;
@@ -37,15 +38,6 @@ impl Plugin for InteractionPlugin {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(cursor::CursorTilePosPlugin)
             .add_plugin(hive_mind::HiveMindPlugin);
-    }
-}
-
-/// All of the code needed to draw things on screen.
-pub struct GraphicsPlugin;
-
-impl Plugin for GraphicsPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(bevy_ecs_tilemap::TilemapPlugin);
     }
 }
 
