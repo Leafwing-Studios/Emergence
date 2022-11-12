@@ -1,22 +1,23 @@
 //! Utilities for defining and visualizing game graphics.
 
 use crate::enum_iter::IterableEnum;
-use crate::graphics::terrain::TerrainTilemap;
+use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
 use crate::simulation::generation::GRID_SIZE;
-use crate::terrain::{MapGeometry, TerrainType};
+use crate::terrain::MapGeometry;
 
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::asset::AssetPath;
 use bevy::asset::AssetServer;
 use bevy::ecs::system::Commands;
 use bevy::log::info;
-use bevy::prelude::Res;
+use bevy::prelude::{Res, ResMut};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapTexture, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileStorage, TileTextureIndex};
 use bevy_ecs_tilemap::TilemapBundle;
 
 use crate::graphics::debug::generate_debug_labels;
+use crate::graphics::organisms::{OrganismSprite, OrganismTilemap};
 use bevy_ecs_tilemap::helpers::geometry::get_tilemap_center_transform;
 use std::path::PathBuf;
 
@@ -33,6 +34,7 @@ impl Plugin for GraphicsPlugin {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
             .init_resource::<LayerRegister>()
             .add_startup_system_to_stage(StartupStage::PreStartup, initialize_terrain_layer)
+            .add_startup_system_to_stage(StartupStage::PreStartup, initialize_organisms_layer)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels);
     }
 }
@@ -41,15 +43,19 @@ fn initialize_terrain_layer(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
     asset_server: Res<AssetServer>,
+    layer_register: ResMut<LayerRegister>,
 ) {
     let texture = TilemapTexture::Vector(
-        TerrainType::all_paths()
+        TerrainSprite::all_paths()
             .into_iter()
             .map(|p| asset_server.load(p))
             .collect(),
     );
 
     let tilemap_entity = commands.spawn().id();
+    layer_register
+        .map
+        .insert(Layer::Terrain, TilemapId(tilemap_entity));
     let mut tile_storage = TileStorage::empty(map_geometry.size());
 
     info!("Inserting TilemapBundle...");
@@ -71,6 +77,46 @@ fn initialize_terrain_layer(
             ..Default::default()
         })
         .insert(TerrainTilemap);
+}
+
+fn initialize_organisms_layer(
+    mut commands: Commands,
+    map_geometry: Res<MapGeometry>,
+    asset_server: Res<AssetServer>,
+    layer_register: ResMut<LayerRegister>,
+) {
+    let texture = TilemapTexture::Vector(
+        OrganismSprite::all_paths()
+            .into_iter()
+            .map(|p| asset_server.load(p))
+            .collect(),
+    );
+
+    let tilemap_entity = commands.spawn().id();
+    layer_register
+        .map
+        .insert(Layer::Organisms, TilemapId(tilemap_entity));
+    let mut tile_storage = TileStorage::empty(map_geometry.size());
+
+    info!("Inserting TilemapBundle...");
+    commands
+        .entity(tilemap_entity)
+        .insert_bundle(TilemapBundle {
+            grid_size: GRID_SIZE,
+            map_type: MAP_TYPE,
+            size: map_geometry.size(),
+            storage: tile_storage,
+            texture,
+            tile_size: OrganismTilemap::TILE_SIZE,
+            transform: get_tilemap_center_transform(
+                &map_geometry.size(),
+                &GRID_SIZE,
+                &MAP_TYPE,
+                OrganismTilemap::MAP_Z,
+            ),
+            ..Default::default()
+        })
+        .insert(OrganismTilemap);
 }
 
 /// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate
