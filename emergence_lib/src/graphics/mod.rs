@@ -1,9 +1,9 @@
 //! Utilities for defining and visualizing game graphics.
 
 use crate::enum_iter::IterableEnum;
-use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
+use crate::graphics::terrain::TerrainTilemap;
 use crate::simulation::generation::GRID_SIZE;
-use crate::terrain::MapGeometry;
+use crate::terrain::{MapGeometry, TerrainType};
 
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::asset::AssetPath;
@@ -46,7 +46,7 @@ fn initialize_terrain_layer(
     mut layer_register: ResMut<LayerRegister>,
 ) {
     let texture = TilemapTexture::Vector(
-        TerrainSprite::all_paths()
+        TerrainType::all_paths()
             .into_iter()
             .map(|p| asset_server.load(p))
             .collect(),

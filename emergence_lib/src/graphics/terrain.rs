@@ -1,30 +1,20 @@
 //! The [`TerrainTilemap`] manages visualization of terrain.
 
-use crate as emergence_lib;
+use crate::terrain::TerrainType;
 use bevy::prelude::Component;
-use bevy_ecs_tilemap::map::TilemapTileSize;
-use emergence_macros::IterableEnum;
+use bevy_ecs_tilemap::prelude::TilemapTileSize;
 
-/// Enumerates terrain types
-#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
-pub enum TerrainSprite {
-    /// High
-    High,
-    /// Impassable
-    Impassable,
-    /// Plains
-    Plain,
-}
+use super::{IntoSprite, Layer};
 
-impl IntoSprite for TerrainSprite {
+impl IntoSprite for TerrainType {
     const ROOT_PATH: &'static str = "terrain";
     const LAYER: Layer = Layer::Terrain;
 
     fn leaf_path(&self) -> &'static str {
         match self {
-            TerrainSprite::High => "tile-high.png",
-            TerrainSprite::Impassable => "tile-impassable.png",
-            TerrainSprite::Plain => "tile-plain.png",
+            TerrainType::High => "tile-high.png",
+            TerrainType::Impassable => "tile-impassable.png",
+            TerrainType::Plain => "tile-plain.png",
         }
     }
 }
@@ -43,6 +33,7 @@ impl TerrainTilemap {
     pub const MAP_Z: f32 = 0.0;
 }
 
+pub use world_query::*;
 /// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
 /// `WorldQuery` generates structs that triggers `#[deny(missing_docs)]`. As this issue is fixed in
 /// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
@@ -63,6 +54,3 @@ pub mod world_query {
         _terrain_tile_map: With<TerrainTilemap>,
     }
 }
-
-use crate::graphics::{IntoSprite, Layer};
-pub use world_query::*;
