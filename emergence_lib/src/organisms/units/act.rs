@@ -1,3 +1,5 @@
+//! Unit behaviour simulation
+
 use crate::organisms::units::pathfinding::get_weighted_random_passable_neighbor;
 
 use crate::curves::BottomClampedLine;

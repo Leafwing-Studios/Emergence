@@ -13,6 +13,7 @@ use crate::organisms::units::Unit;
 /// Units will be fully concentrated on any task other than [`CurrentGoal::Wander`] until it is complete (or overridden).
 ///
 /// This component serves as a state machine.
+#[allow(dead_code)]
 #[derive(Component, PartialEq, Eq, Clone, Default)]
 pub enum CurrentGoal {
     /// Attempting to find something useful to do
@@ -29,12 +30,13 @@ pub enum CurrentGoal {
 }
 
 impl CurrentGoal {
+    /// Get the interactable required for the unit to achieve its goal
     fn required_interactable(&self) -> Option<Interactable> {
         match self {
             CurrentGoal::Wander => None,
-            CurrentGoal::Pickup(interactable) => Some(interactable.clone()),
-            CurrentGoal::DropOff(interactable) => Some(interactable.clone()),
-            CurrentGoal::Work(interactable) => Some(interactable.clone()),
+            CurrentGoal::Pickup(interactable) => Some(*interactable),
+            CurrentGoal::DropOff(interactable) => Some(*interactable),
+            CurrentGoal::Work(interactable) => Some(*interactable),
         }
     }
 }
@@ -50,10 +52,15 @@ pub mod events {
     /// A struct that wraps all of the events defined in this module
     #[derive(SystemParam)]
     pub struct BehaviorEventWriters<'w, 's> {
+        /// Writes [`IdleThisTurn`] events
         pub idle_this_turn: EventWriter<'w, 's, IdleThisTurn>,
+        /// Writes [`MoveThisTurn`] events
         pub move_this_turn: EventWriter<'w, 's, MoveThisTurn>,
+        /// Writes [`PickUpThisTurn`] events
         pub pick_up_this_turn: EventWriter<'w, 's, PickUpThisTurn>,
+        /// Writes [`DropOffThisTurn`] events
         pub drop_off_this_turn: EventWriter<'w, 's, DropOffThisTurn>,
+        /// Writes [`WorkThisTurn`] events
         pub work_this_turn: EventWriter<'w, 's, WorkThisTurn>,
     }
 
