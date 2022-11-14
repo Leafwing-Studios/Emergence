@@ -40,6 +40,7 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
+/// Initializes the terrain graphical layer (tilemap).
 fn initialize_terrain_layer(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
@@ -80,6 +81,7 @@ fn initialize_terrain_layer(
         .insert(TerrainTilemap);
 }
 
+/// Initializes the organisms graphical layer (tilemap).
 fn initialize_organisms_layer(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
@@ -154,14 +156,14 @@ pub trait IntoSprite: IterableEnum {
     /// Path of a particular entity variant.
     fn leaf_path(&self) -> &'static str;
 
-    /// Returns ROOT_PATH + leaf_path().
+    /// Returns `ROOT_PATH + leaf_path()`.
     fn full_path(&self) -> AssetPath<'static> {
         let path = PathBuf::from(Self::ROOT_PATH).join(self.leaf_path());
 
         AssetPath::new(path, None)
     }
 
-    /// Returns all the sprite paths in ROOT_PATH
+    /// Returns all the sprite paths in `ROOT_PATH`
     fn all_paths() -> Vec<AssetPath<'static>> {
         Self::variants()
             .map(|variant| variant.full_path())
@@ -173,7 +175,7 @@ pub trait IntoSprite: IterableEnum {
         TileTextureIndex(self.index() as u32)
     }
 
-    /// Creates a [`TileBundle`] for an entity of this type, which can be used to intialize it in [`bevy_ecs_tilemap`].
+    /// Creates a [`TileBundle`] for an entity of this type, which can be used to initialize it in [`bevy_ecs_tilemap`].
     fn tile_bundle(&self, position: TilePos, layer_register: &Res<LayerRegister>) -> TileBundle {
         TileBundle {
             position,
@@ -181,7 +183,7 @@ pub trait IntoSprite: IterableEnum {
             tilemap_id: *layer_register
                 .map
                 .get(&Self::LAYER)
-                .expect(&format!("Layer {:?} not registered", Self::LAYER)),
+                .unwrap_or_else(|| panic!("Layer {:?} not registered", Self::LAYER)),
             ..Default::default()
         }
     }
