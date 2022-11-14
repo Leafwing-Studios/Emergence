@@ -1,27 +1,40 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
-use crate::organisms::OrganismType;
+use crate as emergence_lib;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
-use indexmap::{indexmap, IndexMap};
-use once_cell::sync::Lazy;
+use emergence_macros::IterableEnum;
 
-/// An [`IndexMap`] of organism images.
-pub static ORGANISM_TILE_IMAP: Lazy<IndexMap<OrganismType, &'static str>> = Lazy::new(|| {
-    use OrganismType::*;
-    indexmap! {
-        Ant => "tile-ant.png",
-        Fungus => "tile-fungus.png",
-        Plant => "tile-plant.png",
+/// Enumerates organisms
+#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+pub enum OrganismSprite {
+    /// An ant
+    Ant,
+    /// A fungi
+    Fungi,
+    /// A plant
+    Plant,
+}
+
+impl IntoSprite for OrganismSprite {
+    const ROOT_PATH: &'static str = "organisms";
+    const LAYER: Layer = Layer::Organisms;
+
+    fn leaf_path(&self) -> &'static str {
+        match self {
+            OrganismSprite::Ant => "tile-ant.png",
+            OrganismSprite::Fungi => "tile-fungus.png",
+            OrganismSprite::Plant => "tile-plant.png",
+        }
     }
-});
+}
 
 /// Marker component for entity that manages visualization of organisms.
 ///
-/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap), and
+/// The organism tilemap lies on top of the [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap), and
 /// keeps track of visualizations of organisms at terrain locations. It is congruent to
-/// [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
+/// [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
 /// we might find it useful to use a different tile size, but the grid size will always remain the
-/// same as that of [`TerrainTilemap`](crate::tiles::terrain::TerrainTilemap).
+/// same as that of [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap).
 #[derive(Component)]
 pub struct OrganismTilemap;
 
@@ -40,7 +53,7 @@ impl OrganismTilemap {
 /// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
 #[allow(missing_docs)]
 mod world_query {
-    use crate::tiles::organisms::OrganismTilemap;
+    use crate::graphics::organisms::OrganismTilemap;
     use bevy::ecs::query::WorldQuery;
     use bevy::prelude::With;
     use bevy_ecs_tilemap::prelude::TileStorage;
@@ -56,4 +69,5 @@ mod world_query {
     }
 }
 
+use crate::graphics::{IntoSprite, Layer};
 pub use world_query::*;

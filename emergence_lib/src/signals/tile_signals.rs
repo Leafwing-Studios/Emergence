@@ -13,7 +13,7 @@ use dashmap::DashMap;
 /// It provides various public interfaces to interact with signals.
 #[derive(Component, Default, Debug)]
 pub struct TileSignals {
-    /// Stores signals at tiles associated with each emitter.
+    /// Stores signals at graphics associated with each emitter.
     map: DashMap<Emitter, Signal>,
 }
 

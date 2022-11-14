@@ -3,11 +3,12 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use crate::organisms::{Composition, OrganismBundle, OrganismType};
-use crate::terrain::terrain_types::ImpassableTerrain;
-use crate::tiles::IntoTileBundle;
+use crate::graphics::organisms::OrganismSprite;
+use crate::graphics::{IntoSprite, LayerRegister};
+use crate::organisms::{Composition, OrganismBundle};
+use crate::terrain::ImpassableTerrain;
+
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
 
 /// The data needed to build a structure
@@ -84,7 +85,7 @@ pub struct PlantBundle {
 
 impl PlantBundle {
     /// Creates new plant at specified tile position, in the specified tilemap.
-    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
+    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 structure: Default::default(),
@@ -95,7 +96,7 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: OrganismType::Plant.as_tile_bundle(tilemap_id, position),
+            tile_bundle: OrganismSprite::Plant.tile_bundle(position, layer_register),
             ..Default::default()
         }
     }
@@ -120,7 +121,7 @@ pub struct FungiBundle {
 
 impl FungiBundle {
     /// Creates new fungi at specified tile position, in the specified tilemap.
-    pub fn new(tilemap_id: TilemapId, position: TilePos) -> Self {
+    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
         Self {
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
@@ -128,7 +129,7 @@ impl FungiBundle {
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismType::Fungus.as_tile_bundle(tilemap_id, position),
+            tile_bundle: OrganismSprite::Fungi.tile_bundle(position, layer_register),
             ..Default::default()
         }
     }
@@ -140,8 +141,8 @@ pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(photosynthesize)
-            .add_system(upkeep.after(photosynthesize))
-            .add_system(cleanup.after(upkeep));
+            .add_system(upkeep)
+            .add_system(cleanup);
     }
 }
 

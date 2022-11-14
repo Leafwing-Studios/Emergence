@@ -6,7 +6,7 @@ use crate::signals::tile_signals::TileSignals;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TileColor;
 
-/// Colours tiles based on the signals present. Signal colours are defined in their
+/// Colours graphics based on the signals present. Signal colours are defined in their
 /// [`SignalConfig`](crate::signals::configs::SignalConfig).
 pub struct MapOverlayPlugin;
 
@@ -30,7 +30,7 @@ fn compute_tile_color(colors: &[Color]) -> TileColor {
     TileColor(total_color)
 }
 
-/// Color tiles based on the signals present.
+/// Color graphics based on the signals present.
 fn color_tiles(
     mut commands: Commands,
     tile_signals_query: Query<(Entity, &TileSignals)>,
