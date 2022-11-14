@@ -8,15 +8,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.8"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "234506231ba97a229dac8c30426b92c057d34bfa"}
-bevy_pancam = "0.6"
+bevy = "0.9"
+bevy_ecs_tilemap = "0.9"
+bevy_pancam = "0.7"
 rand = "0.8"
 indexmap = "1.9"
 dashmap = "5.4"
-leafwing-input-manager = "0.6.1"
+leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros" }
 
 [dev-dependencies]
 # We need headless operation in tests
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "234506231ba97a229dac8c30426b92c057d34bfa", default-features = false}
+bevy_ecs_tilemap = "0.9"

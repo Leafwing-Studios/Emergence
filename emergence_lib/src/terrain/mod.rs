@@ -2,7 +2,9 @@
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
 use crate::graphics::{IntoSprite, LayerRegister};
-use bevy::prelude::{Commands, Component, Entity, Res};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::system::{Commands, Res, Resource};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -15,6 +17,7 @@ use rand::Rng;
 pub const MAP_RADIUS: u32 = 10;
 
 /// Resource that stores information regarding the size of the game map.
+#[derive(Resource, Debug)]
 pub struct MapGeometry {
     /// The radius, in graphics, of the map
     radius: u32,
@@ -98,9 +101,9 @@ impl TerrainType {
         position: TilePos,
         layer_register: &Res<LayerRegister>,
     ) -> Entity {
-        let mut builder = commands.spawn();
+        let mut builder = commands.spawn_empty();
 
-        builder.insert_bundle(self.tile_bundle(position, layer_register));
+        builder.insert(self.tile_bundle(position, layer_register));
         match self {
             TerrainType::Plain => {
                 builder.insert(PlainTerrain);

@@ -34,9 +34,9 @@ pub enum HiveMindAction {
 /// Startup system initializing the [`HiveMind`].
 fn initialize_hive_mind(mut commands: Commands) {
     commands
-        .spawn()
+        .spawn_empty()
         .insert(HiveMind)
-        .insert_bundle(InputManagerBundle::<HiveMindAction> {
+        .insert(InputManagerBundle::<HiveMindAction> {
             action_state: ActionState::default(),
             input_map: InputMap::new([
                 (

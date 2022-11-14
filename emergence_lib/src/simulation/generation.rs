@@ -21,7 +21,7 @@ use rand::thread_rng;
 pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 /// Controls world generation strategy
-#[derive(Clone)]
+#[derive(Resource, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub map_radius: u32,
@@ -161,7 +161,7 @@ fn generate_starting_organisms(
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
     for position in ant_positions {
         let entity = commands
-            .spawn_bundle(AntBundle::new(position, &layer_register))
+            .spawn(AntBundle::new(position, &layer_register))
             .id();
         organism_tile_storage.set(&position, entity);
     }
@@ -170,7 +170,7 @@ fn generate_starting_organisms(
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
         let entity = commands
-            .spawn_bundle(PlantBundle::new(position, &layer_register))
+            .spawn(PlantBundle::new(position, &layer_register))
             .id();
         organism_tile_storage.set(&position, entity);
     }
@@ -179,7 +179,7 @@ fn generate_starting_organisms(
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
         let entity = commands
-            .spawn_bundle(FungiBundle::new(position, &layer_register))
+            .spawn(FungiBundle::new(position, &layer_register))
             .id();
         organism_tile_storage.set(&position, entity);
     }

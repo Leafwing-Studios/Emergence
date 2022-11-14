@@ -30,7 +30,7 @@ pub fn generate_debug_labels(
                     tile_pos.center_in_world(grid_size, map_type).extend(1.0),
                 );
                 let transform = *tilemap_transform * tile_pos_transform;
-                commands.spawn_bundle(Text2dBundle {
+                commands.spawn(Text2dBundle {
                     text: Text::from_section(
                         format!("{}, {}", tile_pos.x, tile_pos.y),
                         text_style.clone(),
