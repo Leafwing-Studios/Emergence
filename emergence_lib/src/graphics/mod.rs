@@ -9,8 +9,8 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::asset::AssetPath;
 use bevy::asset::AssetServer;
 use bevy::ecs::system::Commands;
+use bevy::ecs::system::{Res, ResMut, Resource};
 use bevy::log::info;
-use bevy::prelude::{Res, ResMut};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapTexture, TilemapType};
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileStorage, TileTextureIndex};
@@ -53,7 +53,7 @@ fn initialize_terrain_layer(
             .collect(),
     );
 
-    let tilemap_entity = commands.spawn().id();
+    let tilemap_entity = commands.spawn_empty().id();
     layer_register
         .map
         .insert(Layer::Terrain, TilemapId(tilemap_entity));
@@ -62,7 +62,7 @@ fn initialize_terrain_layer(
     info!("Inserting TilemapBundle...");
     commands
         .entity(tilemap_entity)
-        .insert_bundle(TilemapBundle {
+        .insert(TilemapBundle {
             grid_size: GRID_SIZE,
             map_type: MAP_TYPE,
             size: map_geometry.size(),
@@ -93,7 +93,7 @@ fn initialize_organisms_layer(
             .collect(),
     );
 
-    let tilemap_entity = commands.spawn().id();
+    let tilemap_entity = commands.spawn_empty().id();
     layer_register
         .map
         .insert(Layer::Organisms, TilemapId(tilemap_entity));
@@ -102,7 +102,7 @@ fn initialize_organisms_layer(
     info!("Inserting TilemapBundle...");
     commands
         .entity(tilemap_entity)
-        .insert_bundle(TilemapBundle {
+        .insert(TilemapBundle {
             grid_size: GRID_SIZE,
             map_type: MAP_TYPE,
             size: map_geometry.size(),
@@ -138,7 +138,7 @@ pub enum Layer {
 }
 
 /// Manages the mapping between layers and `bevy_ecs_tilemap` tilemaps
-#[derive(Default)]
+#[derive(Resource, Default, Debug)]
 pub struct LayerRegister {
     /// A map from Layer to TilemapId
     pub map: HashMap<Layer, TilemapId>,

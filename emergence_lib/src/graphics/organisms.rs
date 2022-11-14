@@ -57,6 +57,8 @@ mod world_query {
     use bevy::ecs::query::WorldQuery;
     use bevy::prelude::With;
     use bevy_ecs_tilemap::prelude::TileStorage;
+    //Fixed in bevy 0.9.1: https://github.com/bevyengine/bevy/issues/6593
+    use bevy::ecs::entity::Entity;
 
     /// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
     /// `Tilemap` that has the `OrganismTilemap` component type.

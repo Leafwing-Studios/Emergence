@@ -44,7 +44,7 @@ pub fn cursor_pos_in_world(
 }
 
 /// The world position of the mouse cursor.
-#[derive(Clone, Copy, Deref, DerefMut)]
+#[derive(Resource, Clone, Copy, Deref, DerefMut)]
 pub struct CursorWorldPos(Vec3);
 
 impl Default for CursorWorldPos {
@@ -54,7 +54,7 @@ impl Default for CursorWorldPos {
 }
 
 /// The tile position of the mouse cursor, if it lies over the map.
-#[derive(Default, Clone, Copy, Deref, DerefMut)]
+#[derive(Resource, Default, Clone, Copy, Deref, DerefMut)]
 pub struct CursorTilePos(Option<TilePos>);
 
 /// Convert a world position into a tile position, if applicable.

@@ -65,8 +65,8 @@ pub mod testing {
             ..default()
         });
 
-        app.add_plugin(bevy::asset::AssetPlugin)
-            .add_plugin(bevy::window::WindowPlugin)
+        app.add_plugin(bevy::asset::AssetPlugin::default())
+            .add_plugin(bevy::window::WindowPlugin::default())
             .add_plugin(bevy::render::RenderPlugin);
         app
     }

@@ -19,6 +19,6 @@ impl Plugin for CameraPlugin {
 fn spawn_camera(mut commands: Commands) {
     info!("Spawning camera...");
     commands
-        .spawn_bundle(Camera2dBundle::default())
+        .spawn(Camera2dBundle::default())
         .insert(PanCam::default());
 }

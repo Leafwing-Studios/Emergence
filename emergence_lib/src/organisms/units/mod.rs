@@ -81,7 +81,7 @@ pub enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UnitTimer(Timer::from_seconds(0.5, true)))
+        app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
             .insert_resource(PheromoneTransducer::<BottomClampedLine>::default())
             .add_event::<IdleThisTurn>()
             .add_event::<MoveThisTurn>()
@@ -101,12 +101,15 @@ impl Plugin for UnitsPlugin {
             );
     }
 }
+
 /// Global timer that controls when units should act
+#[derive(Resource, Debug)]
 struct UnitTimer(Timer);
 
 /// Transduces a pheromone signal into a weight used to make decisions.
 ///
 /// The transduction is modelled by mapping the signal to a weight using a curve.
+#[derive(Resource)]
 pub struct PheromoneTransducer<C: Mapping> {
     /// Curve used to model transduction.
     curve: C,
