@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.8"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main"}
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "234506231ba97a229dac8c30426b92c057d34bfa"}
 bevy_pancam = "0.6"
 rand = "0.8"
 indexmap = "1.9"
@@ -19,4 +19,4 @@ emergence_macros = { path = "../emergence_macros" }
 
 [dev-dependencies]
 # We need headless operation in tests
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main", default-features = false}
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "234506231ba97a229dac8c30426b92c057d34bfa", default-features = false}
