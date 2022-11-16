@@ -2,8 +2,8 @@
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::{IntoSprite, LayerRegister};
-use crate::organisms::OrganismBundle;
+use crate::graphics::{IntoSprite, Layer, TilemapRegister};
+use crate::organisms::{OrganismBundle, OrganismType};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -17,6 +17,12 @@ mod act;
 mod behavior;
 mod pathfinding;
 
+/// Available types of units
+pub enum UnitType {
+    /// A worker ant
+    Ant,
+}
+
 /// Marker component for [`UnitBundle`]
 #[derive(Component, Clone, Default)]
 pub struct Unit;
@@ -28,9 +34,6 @@ pub struct UnitBundle {
     unit: Unit,
     /// What is the unit trying to do
     current_task: CurrentGoal,
-    /// A unit is an organism.
-    #[bundle]
-    organism_bundle: OrganismBundle,
 }
 
 /// Marker component for worker ants
@@ -40,27 +43,23 @@ pub struct Ant;
 /// A worker ant
 #[derive(Bundle, Default)]
 pub struct AntBundle {
-    /// Marker struct.
-    ant: Ant,
+    /// Data characterizing ants
+    ant: OrganismType,
     /// Ants are units.
-    #[bundle]
     unit_bundle: UnitBundle,
-    /// Data needed to visualize the ant.
-    #[bundle]
-    tile_bundle: TileBundle,
+    /// Position in the world
+    position: TilePos,
 }
 
 impl AntBundle {
     /// Creates a new [`AntBundle`]
-    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
+    pub fn new(position: TilePos) -> Self {
         Self {
             unit_bundle: UnitBundle {
-                organism_bundle: OrganismBundle {
-                    ..Default::default()
-                },
                 ..Default::default()
             },
-            tile_bundle: OrganismSprite::Ant.tile_bundle(position, layer_register),
+            position,
+            ant: OrganismType::Ant,
             ..Default::default()
         }
     }

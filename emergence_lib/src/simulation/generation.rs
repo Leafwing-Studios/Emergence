@@ -2,10 +2,12 @@
 
 use crate::graphics::organisms::OrganismTilemap;
 use crate::graphics::terrain::TerrainTilemap;
-use crate::graphics::{LayerRegister, MAP_COORD_SYSTEM};
+use crate::graphics::{TilemapRegister, MAP_COORD_SYSTEM};
+use crate::map::{MapGeometry, MAP_RADIUS};
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
-use crate::terrain::{ImpassableTerrain, MapGeometry, TerrainType, MAP_RADIUS};
+use crate::terrain::marker::ImpassableTerrain;
+use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::utils::HashMap;
@@ -89,7 +91,7 @@ fn generate_terrain(
     mut terrain_tile_storage_query: Query<&mut TileStorage, With<TerrainTilemap>>,
     config: Res<GenerationConfig>,
     map_geometry: Res<MapGeometry>,
-    layer_register: Res<LayerRegister>,
+    layer_register: Res<TilemapRegister>,
 ) {
     let tile_positions = generate_hexagon(
         AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
@@ -102,9 +104,8 @@ fn generate_terrain(
 
     let mut rng = thread_rng();
     for position in tile_positions {
-        let terrain: TerrainType =
-            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        let entity = terrain.create_entity(&mut commands, position, &layer_register);
+        let terrain: TerrainType = TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
+        let entity = terrain.instantiate(&mut commands, position);
         terrain_tile_storage.set(&position, entity);
     }
 }
@@ -120,7 +121,7 @@ fn generate_starting_organisms(
     >,
     impassable_query: Query<&ImpassableTerrain>,
     map_geometry: Res<MapGeometry>,
-    layer_register: Res<LayerRegister>,
+    layer_register: Res<TilemapRegister>,
 ) {
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;
@@ -160,27 +161,21 @@ fn generate_starting_organisms(
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
     for position in ant_positions {
-        let entity = commands
-            .spawn(AntBundle::new(position, &layer_register))
-            .id();
+        let entity = commands.spawn(AntBundle::new(position)).id();
         organism_tile_storage.set(&position, entity);
     }
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let entity = commands
-            .spawn(PlantBundle::new(position, &layer_register))
-            .id();
+        let entity = commands.spawn(PlantBundle::new(position)).id();
         organism_tile_storage.set(&position, entity);
     }
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let entity = commands
-            .spawn(FungiBundle::new(position, &layer_register))
-            .id();
+        let entity = commands.spawn(FungiBundle::new(position)).id();
         organism_tile_storage.set(&position, entity);
     }
 }

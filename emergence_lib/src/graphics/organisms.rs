@@ -5,7 +5,7 @@ use bevy_ecs_tilemap::map::TilemapTileSize;
 use emergence_macros::IterableEnum;
 
 /// Enumerates organisms
-#[derive(Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+#[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
 pub enum OrganismSprite {
     /// An ant
     Ant,

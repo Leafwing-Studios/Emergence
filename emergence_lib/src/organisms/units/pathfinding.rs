@@ -82,17 +82,17 @@ where
 
 impl HexNeighbors<WeightedTilePos> {
     /// Returns the set of neighboring cells that are passable, weighted according to signal values.
-    pub fn weighted_passable_neighbors<SignalsToWeightFn>(
+    pub fn weighted_passable_neighbors<Transducer>(
         tile_pos: &TilePos,
         terrain_tile_storage: &TerrainStorageItem,
         organism_tile_storage: &OrganismStorageItem,
         impassable_query: &Query<&ImpassableTerrain>,
         tile_signals_query: &Query<&TileSignals>,
-        signals_to_weight: SignalsToWeightFn,
+        signal_transducer: Transducer,
         map_size: &TilemapSize,
     ) -> HexNeighbors<WeightedTilePos>
     where
-        SignalsToWeightFn: Fn(&TileSignals) -> f32,
+        Transducer: Fn(&TileSignals) -> f32,
     {
         let passable_neighbors = HexNeighbors::passable_neighbors(
             tile_pos,
@@ -105,7 +105,7 @@ impl HexNeighbors<WeightedTilePos> {
         let f = |pos| {
             let tile_entity = terrain_tile_storage.storage.get(pos).unwrap();
             let weight = if let Ok(tile_signals) = tile_signals_query.get(tile_entity) {
-                signals_to_weight(tile_signals)
+                signal_transducer(tile_signals)
             } else {
                 1.0
             };

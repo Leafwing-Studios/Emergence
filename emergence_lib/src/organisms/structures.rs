@@ -4,29 +4,37 @@
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::{IntoSprite, LayerRegister};
-use crate::organisms::{Composition, OrganismBundle};
-use crate::terrain::ImpassableTerrain;
+use crate::graphics::{IntoSprite, Layer};
+use crate::organisms::{Composition, OrganismBundle, OrganismType};
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
 
+/// Available types of structures
+///
+/// Structures are fixed in place
+pub enum StructureType {
+    /// A plant captures energy through photosynthesis, to produce outputs.
+    Plant,
+    /// A fungus captures energy through decomposition, to produce outputs.
+    Fungus,
+}
+
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
-    /// Marker component.
+    /// Data characterizing structures
     structure: Structure,
-    /// Structures are organisms (for now).
-    #[bundle]
+    /// Structures are organisms (for now)
     organism_bundle: OrganismBundle,
 }
 
 /// All structures must pay a cost to keep themselves alive
 #[derive(Component, Clone)]
 pub struct Structure {
-    /// Mass cost per tick to stay alive.
+    /// Mass cost per tick to stay alive
     upkeep_rate: f32,
-    /// Mass at which the structure will be despawned.
+    /// Mass at which the structure will be despawned
     despawn_mass: f32,
 }
 
@@ -69,24 +77,24 @@ impl Default for Plant {
 }
 
 /// The data needed to make a plant
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct PlantBundle {
-    /// Marker component.
+    /// Data characterizing this plant.
     plant: Plant,
     /// A plant is a structure.
     #[bundle]
     structure_bundle: StructureBundle,
-    /// Data needed to visualize the plant.
-    #[bundle]
-    tile_bundle: TileBundle,
-    /// A plant is impassable.
-    impassable: ImpassableTerrain,
+    /// Position in the world
+    position: TilePos,
+    /// Graphical layer plants belong to
+    layer: Layer,
 }
 
 impl PlantBundle {
     /// Creates new plant at specified tile position, in the specified tilemap.
-    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
+    pub fn new(position: TilePos) -> Self {
         Self {
+            plant: Plant::default(),
             structure_bundle: StructureBundle {
                 structure: Default::default(),
                 organism_bundle: OrganismBundle {
@@ -96,8 +104,9 @@ impl PlantBundle {
                     ..Default::default()
                 },
             },
-            tile_bundle: OrganismSprite::Plant.tile_bundle(position, layer_register),
-            ..Default::default()
+            position,
+            /// Graphical layer ants belong to
+            layer: Layer::Organisms,
         }
     }
 }
@@ -107,30 +116,31 @@ impl PlantBundle {
 pub struct Fungi;
 
 /// The data needed to spawn [`Fungi`].
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct FungiBundle {
-    /// Marker component.
+    /// Data about the type of entity a fungus is
+    organism_type: OrganismType,
+    /// Data characterizing fungi
     fungi: Fungi,
     /// Fungi are structures.
-    #[bundle]
     structure_bundle: StructureBundle,
     /// Data needed to visually represent this fungus.
-    #[bundle]
-    tile_bundle: TileBundle,
+    /// Position in the world
+    position: TilePos,
 }
 
 impl FungiBundle {
     /// Creates new fungi at specified tile position, in the specified tilemap.
-    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
+    pub fn new(position: TilePos) -> Self {
         Self {
+            fungi: Fungi,
             structure_bundle: StructureBundle {
                 organism_bundle: OrganismBundle {
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            tile_bundle: OrganismSprite::Fungi.tile_bundle(position, layer_register),
-            ..Default::default()
+            position,
         }
     }
 }
