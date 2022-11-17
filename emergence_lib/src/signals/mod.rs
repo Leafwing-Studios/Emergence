@@ -6,7 +6,6 @@ pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
 use crate::curves::Mapping;
-use crate::graphics::position::HexNeighbors;
 use crate::graphics::terrain::TerrainTilemap;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
@@ -16,6 +15,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::TilePos;
 use bevy_ecs_tilemap::tiles::TileStorage;
+use crate::simulation::pathfinding::HexNeighbors;
 
 /// This plugin manages all aspects of signals:
 /// * creation,

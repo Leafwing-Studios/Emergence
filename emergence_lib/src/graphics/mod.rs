@@ -21,15 +21,14 @@ use bevy::prelude::{Added, Changed, Or};
 use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::ProduceTilemap;
-use crate::graphics::sprite_like::SpriteEnum;
+use crate::graphics::sprites::{IntoSprite};
 use crate::graphics::tilemap_marker::TilemapMarker;
 use bevy_trait_query::One;
 
 pub mod debug;
 pub mod organisms;
-pub mod position;
 pub mod produce;
-pub mod sprite_like;
+pub mod sprites;
 pub mod terrain;
 pub mod tilemap_marker;
 
@@ -67,8 +66,8 @@ fn initialize_tilemaps(
 fn update_sprites(
     mut commands: Commands,
     into_sprite_query: Query<
-        (Entity, &TilePos, One<&dyn SpriteEnum>),
-        Or<(Added<&dyn SpriteEnum>, Changed<&dyn SpriteEnum>)>,
+        (Entity, &TilePos, One<&dyn IntoSprite>),
+        Or<(Added<&dyn IntoSprite>, Changed<&dyn IntoSprite>)>,
     >,
     tilemap_register: Res<TilemapRegister>,
 ) {

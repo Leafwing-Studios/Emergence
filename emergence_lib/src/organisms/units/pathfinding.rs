@@ -1,9 +1,8 @@
 //! Utilities to support organism pathfinding.
 use crate::graphics::organisms::OrganismStorageItem;
-use crate::graphics::position::HexNeighbors;
 use crate::graphics::terrain::TerrainStorageItem;
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::ImpassableTerrain;
+use crate::simulation::pathfinding::{HexNeighbors, PathfindingImpassable};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
@@ -17,7 +16,7 @@ impl HexNeighbors<TilePos> {
         tile_pos: &TilePos,
         terrain_tile_storage: &TerrainStorageItem,
         organism_tile_storage: &OrganismStorageItem,
-        impassable_query: &Query<&ImpassableTerrain>,
+        impassable_query: &Query<&PathfindingImpassable>,
         map_size: &TilemapSize,
     ) -> HexNeighbors<TilePos> {
         let passable_filter_closure = |pos| {
@@ -57,7 +56,7 @@ pub fn get_weighted_random_passable_neighbor<SignalsToWeightClosure>(
     current_pos: &TilePos,
     terrain_tile_storage: &TerrainStorageItem,
     organism_tile_storage: &OrganismStorageItem,
-    impassable_query: &Query<&ImpassableTerrain>,
+    impassable_query: &Query<&PathfindingImpassable>,
     tile_signals_query: &Query<&TileSignals>,
     signals_to_weight: SignalsToWeightClosure,
     map_size: &TilemapSize,
@@ -86,7 +85,7 @@ impl HexNeighbors<WeightedTilePos> {
         tile_pos: &TilePos,
         terrain_tile_storage: &TerrainStorageItem,
         organism_tile_storage: &OrganismStorageItem,
-        impassable_query: &Query<&ImpassableTerrain>,
+        impassable_query: &Query<&PathfindingImpassable>,
         tile_signals_query: &Query<&TileSignals>,
         signal_transducer: Transducer,
         map_size: &TilemapSize,

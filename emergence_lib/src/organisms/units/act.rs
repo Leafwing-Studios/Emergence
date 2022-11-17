@@ -7,9 +7,10 @@ use crate::graphics::organisms::OrganismStorage;
 use crate::graphics::organisms::OrganismStorageItem;
 use crate::graphics::terrain::TerrainStorage;
 use crate::graphics::terrain::TerrainStorageItem;
+use crate::map::MapGeometry;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::{ImpassableTerrain, MapGeometry};
+use crate::simulation::pathfinding::PathfindingImpassable;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -21,7 +22,7 @@ fn wander(
     position: &TilePos,
     terrain_tile_storage: &TerrainStorageItem,
     organism_tile_storage: &OrganismStorageItem,
-    impassable_query: &Query<&ImpassableTerrain>,
+    impassable_query: &Query<&PathfindingImpassable>,
     tile_signals_query: &Query<&TileSignals>,
     pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
     map_size: &TilemapSize,
@@ -51,7 +52,7 @@ pub(super) fn act(
     time: Res<Time>,
     mut timer: ResMut<UnitTimer>,
     mut query: Query<(&Unit, &mut TilePos)>,
-    impassable_query: Query<&ImpassableTerrain>,
+    impassable_query: Query<&PathfindingImpassable>,
     terrain_storage_query: Query<TerrainStorage>,
     organism_storage_query: Query<OrganismStorage>,
     tile_signals_query: Query<&TileSignals>,

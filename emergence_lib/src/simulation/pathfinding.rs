@@ -1,4 +1,4 @@
-//! Tile position related utilities.
+//! Various odds and ends useful for pathfinding
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
@@ -7,6 +7,10 @@ use bevy_ecs_tilemap::prelude::TilemapSize;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use rand::seq::SliceRandom;
 use rand::Rng;
+
+/// Marker struct specifying that an entity is impassable for pathfinding
+#[derive(Component, Clone, Copy, Default)]
+pub struct PathfindingImpassable;
 
 /// Stores some data `T` associated with each neighboring hex cell, if present.
 #[derive(Debug, Default)]

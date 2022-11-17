@@ -3,7 +3,6 @@ pub mod marker;
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
-use crate::graphics::terrain::TerrainSprite;
 use crate::terrain::marker::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
@@ -14,6 +13,7 @@ use emergence_macros::IterableEnum;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::Rng;
+use crate::simulation::pathfinding::PathfindingImpassable;
 
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -26,12 +26,6 @@ pub enum TerrainType {
     High,
 }
 
-pub struct TerrainBundle {
-    /// Type of terrain
-    variant: TerrainType,
-    sprite: TerrainSprite,
-}
-
 impl TerrainType {
     /// Instantiates an entity bundled with components necessary to characterize terrain
     pub fn instantiate(&self, commands: &mut Commands, position: TilePos) -> Entity {
@@ -40,7 +34,9 @@ impl TerrainType {
         builder.insert(position);
         match self {
             TerrainType::Plain => builder.insert(PlainTerrain),
-            TerrainType::Impassable => builder.insert(ImpassableTerrain),
+            TerrainType::Impassable => builder.insert(ImpassableTerrain {
+                impassable: PathfindingImpassable
+            }),
             TerrainType::High => builder.insert(HighTerrain),
         };
         builder.insert(*self);

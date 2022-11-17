@@ -1,6 +1,6 @@
 //! Trait describing components that mark an entity as something that behaves like a tilemap.
 
-use crate::graphics::sprite_like::SpriteEnum;
+use crate::graphics::sprites::SpriteIndex;
 use crate::graphics::MAP_TYPE;
 use crate::map::MapGeometry;
 use crate::simulation::generation::GRID_SIZE;
@@ -18,7 +18,8 @@ pub trait TilemapMarker: Copy + Component + Debug {
     const TILE_SIZE: TilemapTileSize;
     /// The z-coordinate at which graphics for this tilemap-like are drawn.
     const MAP_Z: f32;
-    type Sprites: SpriteEnum;
+
+    type Index: SpriteIndex;
 
     /// Spawn a corresponding `bevy_ecs_tilemap` [`TilemapBundle`]
     fn spawn(
@@ -29,7 +30,7 @@ pub trait TilemapMarker: Copy + Component + Debug {
     ) -> Entity {
         let tilemap_entity = commands.spawn_empty().id();
 
-        let texture = Self::Sprites::load(&asset_server);
+        let texture = Self::Index::load(&asset_server);
 
         info!("Inserting TilemapBundle for {:?}...", self);
         commands

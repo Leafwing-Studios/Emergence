@@ -13,13 +13,9 @@ use bevy_ecs_tilemap::map::TilemapTexture;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 use std::path::PathBuf;
 
-/// Enumerates the sprite assets needed for a particular [`Tilemap`] variant.
-#[bevy_trait_query::queryable]
-pub trait SpriteEnum: IterableEnum {
-    /// Path to the folder containing texture assets for this particular group of entities.
+pub trait SpriteIndex: IterableEnum {
+    /// Path to the folder containing sprite assets indexed by this implementor.
     const ROOT_PATH: &'static str;
-    /// Layer (tilemap) that this group of entities belongs to.
-    const TILEMAP: Tilemap;
 
     /// Path of a particular entity variant.
     fn leaf_path(&self) -> &'static str;
@@ -47,10 +43,24 @@ pub trait SpriteEnum: IterableEnum {
                 .collect(),
         )
     }
+}
 
-    /// Returns this item's index as a [`TileTextureIndex`].
-    fn tile_texture_index(&self) -> TileTextureIndex {
-        TileTextureIndex(self.index() as u32)
+/// Enumerates the sprite assets needed for a particular [`Tilemap`] variant.
+#[bevy_trait_query::queryable]
+pub trait IntoSprite {
+    /// Return the tilemap this sprite belongs to
+    fn tilemap(&self) -> Tilemap;
+
+    /// Return the sprite's index, which is the index marking it against the other sprites in the
+    /// same tilemap.
+    ///
+    /// See the [`SpriteIndex`] trait and the structs that implement it for easy ways to refer to
+    /// a particular sprite's index.
+    fn index(&self) -> u32;
+
+    /// Returns the sprite's index as a [`TileTextureIndex`].
+    fn texture_index(&self) -> TileTextureIndex {
+        TileTextureIndex(self.index())
     }
 
     /// Creates a [`TileBundle`] for an entity of this type, which can be used to initialize it in [`bevy_ecs_tilemap`].
@@ -59,13 +69,14 @@ pub trait SpriteEnum: IterableEnum {
         position: TilePos,
         tilemap_register: &Res<TilemapRegister>,
     ) -> TileBundle {
+        let tilemap = self.tilemap();
         TileBundle {
             position,
-            texture_index: self.tile_texture_index(),
+            texture_index: self.texture_index(),
             tilemap_id: *tilemap_register
                 .register
-                .get(Self::TILEMAP.index())
-                .unwrap_or_else(|| panic!("Layer {:?} not registered", Self::TILEMAP)),
+                .get(tilemap.index())
+                .unwrap_or_else(|| panic!("Layer {:?} not registered", tilemap)),
             ..Default::default()
         }
     }

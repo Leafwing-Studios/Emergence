@@ -5,7 +5,10 @@
 use crate::graphics::Tilemap;
 use crate::organisms::{Composition, OrganismBundle};
 
-use crate::graphics::organisms::OrganismSprite;
+use crate::enum_iter::IterableEnum;
+use crate::graphics::organisms::OrganismSpriteIndex;
+use crate::graphics::sprites::IntoSprite;
+use crate::simulation::pathfinding::PathfindingImpassable;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -74,8 +77,18 @@ pub struct PlantBundle {
     structure_bundle: StructureBundle,
     /// Position in the world
     position: TilePos,
-    /// A plant uses an [`OrganismSprite`] to be visualized
-    sprite: OrganismSprite,
+    /// Plants are impassable
+    impassable: PathfindingImpassable,
+}
+
+impl IntoSprite for Plant {
+    fn tilemap(&self) -> Tilemap {
+        Tilemap::Organisms
+    }
+
+    fn index(&self) -> u32 {
+        OrganismSpriteIndex::Plant.index() as u32
+    }
 }
 
 impl PlantBundle {
@@ -93,7 +106,7 @@ impl PlantBundle {
                 },
             },
             position,
-            sprite: OrganismSprite::Plant,
+            impassable: PathfindingImpassable,
         }
     }
 }
@@ -112,8 +125,6 @@ pub struct FungiBundle {
     /// Data needed to visually represent this fungus.
     /// Position in the world
     position: TilePos,
-    /// Fungi use an [`OrganismSprite`] to be visualized
-    sprite: OrganismSprite,
 }
 
 impl FungiBundle {
@@ -128,8 +139,17 @@ impl FungiBundle {
                 ..Default::default()
             },
             position,
-            sprite: OrganismSprite::Fungi,
         }
+    }
+}
+
+impl IntoSprite for Fungi {
+    fn tilemap(&self) -> Tilemap {
+        Tilemap::Organisms
+    }
+
+    fn index(&self) -> u32 {
+        OrganismSpriteIndex::Fungi.index() as u32
     }
 }
 

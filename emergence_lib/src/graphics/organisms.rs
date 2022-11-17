@@ -1,12 +1,16 @@
 //! The [`OrganismTilemap`] manages visualization of organisms.
 use crate as emergence_lib;
+use crate::graphics::sprites::SpriteIndex;
+use crate::graphics::tilemap_marker::TilemapMarker;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
 use emergence_macros::IterableEnum;
 
+pub use world_query::*;
+
 /// Enumerates organism sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
-pub enum OrganismSprite {
+pub enum OrganismSpriteIndex {
     /// Sprite for an Ant
     Ant,
     /// Sprite for a Plant
@@ -15,15 +19,14 @@ pub enum OrganismSprite {
     Fungi,
 }
 
-impl SpriteEnum for OrganismSprite {
+impl SpriteIndex for OrganismSpriteIndex {
     const ROOT_PATH: &'static str = "organisms";
-    const TILEMAP: Tilemap = Tilemap::Organisms;
 
     fn leaf_path(&self) -> &'static str {
         match self {
-            OrganismSprite::Ant => "tile-ant.png",
-            OrganismSprite::Fungi => "tile-fungus.png",
-            OrganismSprite::Plant => "tile-plant.png",
+            OrganismSpriteIndex::Ant => "tile-ant.png",
+            OrganismSpriteIndex::Fungi => "tile-fungus.png",
+            OrganismSpriteIndex::Plant => "tile-plant.png",
         }
     }
 }
@@ -35,13 +38,13 @@ impl SpriteEnum for OrganismSprite {
 /// [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
 /// we might find it useful to use a different tile size, but the grid size will always remain the
 /// same as that of [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap).
-#[derive(Component, Copy, Debug)]
+#[derive(Component, Clone, Copy, Debug)]
 pub struct OrganismsTilemap;
 
 impl TilemapMarker for OrganismsTilemap {
     const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
     const MAP_Z: f32 = 1.0;
-    type Sprites = OrganismSprite;
+    type Index = OrganismSpriteIndex;
 }
 
 /// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
@@ -66,7 +69,3 @@ mod world_query {
         _organism_tile_map: With<OrganismsTilemap>,
     }
 }
-
-use crate::graphics::tilemap_marker::TilemapMarker;
-use crate::graphics::{SpriteEnum, Tilemap};
-pub use world_query::*;
