@@ -1,6 +1,6 @@
 //! Generating starting terrain and organisms
 
-use crate::graphics::organisms::OrganismTilemap;
+use crate::graphics::organisms::OrganismsTilemap;
 use crate::graphics::terrain::TerrainTilemap;
 use crate::graphics::{TilemapRegister, MAP_COORD_SYSTEM};
 use crate::map::{MapGeometry, MAP_RADIUS};
@@ -104,7 +104,8 @@ fn generate_terrain(
 
     let mut rng = thread_rng();
     for position in tile_positions {
-        let terrain: TerrainType = TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
+        let terrain: TerrainType =
+            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
         let entity = terrain.instantiate(&mut commands, position);
         terrain_tile_storage.set(&position, entity);
     }
@@ -117,7 +118,7 @@ fn generate_starting_organisms(
     terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
     mut organism_tile_storage_query: Query<
         &mut TileStorage,
-        (With<OrganismTilemap>, Without<TerrainTilemap>),
+        (With<OrganismsTilemap>, Without<TerrainTilemap>),
     >,
     impassable_query: Query<&ImpassableTerrain>,
     map_geometry: Res<MapGeometry>,

@@ -4,20 +4,20 @@ use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::TilemapTileSize;
 use emergence_macros::IterableEnum;
 
-/// Enumerates organisms
+/// Enumerates organism sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
 pub enum OrganismSprite {
-    /// An ant
+    /// Sprite for an Ant
     Ant,
-    /// A fungi
-    Fungi,
-    /// A plant
+    /// Sprite for a Plant
     Plant,
+    /// Sprite for fungi
+    Fungi,
 }
 
-impl IntoSprite for OrganismSprite {
+impl SpriteEnum for OrganismSprite {
     const ROOT_PATH: &'static str = "organisms";
-    const LAYER: Layer = Layer::Organisms;
+    const TILEMAP: Tilemap = Tilemap::Organisms;
 
     fn leaf_path(&self) -> &'static str {
         match self {
@@ -35,17 +35,13 @@ impl IntoSprite for OrganismSprite {
 /// [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap) in grid size and tile size (for now). Later,
 /// we might find it useful to use a different tile size, but the grid size will always remain the
 /// same as that of [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap).
-#[derive(Component)]
-pub struct OrganismTilemap;
+#[derive(Component, Copy, Debug)]
+pub struct OrganismsTilemap;
 
-impl OrganismTilemap {
-    /// The z-coordinate at which organisms are drawn.
-    ///
-    /// We want the organism tilemap to be layered on top of the terrain tile map.
-    pub const MAP_Z: f32 = 1.0;
-
-    /// The tile size (hex tile width by hex tile height) in pixels of organism image assets.
-    pub const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+impl TilemapMarker for OrganismsTilemap {
+    const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+    const MAP_Z: f32 = 1.0;
+    type Sprites = OrganismSprite;
 }
 
 /// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
@@ -53,7 +49,7 @@ impl OrganismTilemap {
 /// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
 #[allow(missing_docs)]
 mod world_query {
-    use crate::graphics::organisms::OrganismTilemap;
+    use crate::graphics::organisms::OrganismsTilemap;
     use bevy::ecs::query::WorldQuery;
     use bevy::prelude::With;
     use bevy_ecs_tilemap::prelude::TileStorage;
@@ -67,9 +63,10 @@ mod world_query {
         /// Query for tile storage.
         pub storage: &'a TileStorage,
         /// Only query for those entities that contain the relevant tilemap type.
-        _organism_tile_map: With<OrganismTilemap>,
+        _organism_tile_map: With<OrganismsTilemap>,
     }
 }
 
-use crate::graphics::{IntoSprite, Layer};
+use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::{SpriteEnum, Tilemap};
 pub use world_query::*;

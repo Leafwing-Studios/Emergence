@@ -7,8 +7,6 @@ pub struct PlainTerrain;
 #[derive(Component, Clone, Copy, Default)]
 pub struct ImpassableTerrain;
 
-impl TerrainMarker for ImpassableTerrain;
-
 /// The marker component for high terrain.
 #[derive(Component, Clone, Copy, Default)]
 pub struct HighTerrain;

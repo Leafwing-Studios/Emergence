@@ -2,10 +2,7 @@
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::{IntoSprite, Layer, TilemapRegister};
-use crate::organisms::{OrganismBundle, OrganismType};
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use self::behavior::events::{
@@ -36,31 +33,33 @@ pub struct UnitBundle {
     current_task: CurrentGoal,
 }
 
-/// Marker component for worker ants
+/// Data characterizing ants
 #[derive(Component, Clone, Default)]
 pub struct Ant;
 
 /// A worker ant
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct AntBundle {
     /// Data characterizing ants
-    ant: OrganismType,
+    ant: Ant,
     /// Ants are units.
     unit_bundle: UnitBundle,
     /// Position in the world
     position: TilePos,
+    /// Ants use an [`OrganismSprite`] for visualization
+    sprite: OrganismSprite,
 }
 
 impl AntBundle {
     /// Creates a new [`AntBundle`]
     pub fn new(position: TilePos) -> Self {
         Self {
+            ant: Ant,
             unit_bundle: UnitBundle {
                 ..Default::default()
             },
             position,
-            ant: OrganismType::Ant,
-            ..Default::default()
+            sprite: OrganismSprite::Ant,
         }
     }
 }

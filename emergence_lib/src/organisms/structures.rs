@@ -2,23 +2,12 @@
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
+use crate::graphics::Tilemap;
+use crate::organisms::{Composition, OrganismBundle};
 
 use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::{IntoSprite, Layer};
-use crate::organisms::{Composition, OrganismBundle, OrganismType};
-
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TileBundle, TilePos};
-
-/// Available types of structures
-///
-/// Structures are fixed in place
-pub enum StructureType {
-    /// A plant captures energy through photosynthesis, to produce outputs.
-    Plant,
-    /// A fungus captures energy through decomposition, to produce outputs.
-    Fungus,
-}
+use bevy_ecs_tilemap::tiles::TilePos;
 
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
@@ -81,13 +70,12 @@ impl Default for Plant {
 pub struct PlantBundle {
     /// Data characterizing this plant.
     plant: Plant,
-    /// A plant is a structure.
-    #[bundle]
+    /// A plant is a structure
     structure_bundle: StructureBundle,
     /// Position in the world
     position: TilePos,
-    /// Graphical layer plants belong to
-    layer: Layer,
+    /// A plant uses an [`OrganismSprite`] to be visualized
+    sprite: OrganismSprite,
 }
 
 impl PlantBundle {
@@ -105,8 +93,7 @@ impl PlantBundle {
                 },
             },
             position,
-            /// Graphical layer ants belong to
-            layer: Layer::Organisms,
+            sprite: OrganismSprite::Plant,
         }
     }
 }
@@ -118,8 +105,6 @@ pub struct Fungi;
 /// The data needed to spawn [`Fungi`].
 #[derive(Bundle)]
 pub struct FungiBundle {
-    /// Data about the type of entity a fungus is
-    organism_type: OrganismType,
     /// Data characterizing fungi
     fungi: Fungi,
     /// Fungi are structures.
@@ -127,6 +112,8 @@ pub struct FungiBundle {
     /// Data needed to visually represent this fungus.
     /// Position in the world
     position: TilePos,
+    /// Fungi use an [`OrganismSprite`] to be visualized
+    sprite: OrganismSprite,
 }
 
 impl FungiBundle {
@@ -141,6 +128,7 @@ impl FungiBundle {
                 ..Default::default()
             },
             position,
+            sprite: OrganismSprite::Fungi,
         }
     }
 }

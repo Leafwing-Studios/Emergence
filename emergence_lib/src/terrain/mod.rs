@@ -3,6 +3,7 @@ pub mod marker;
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
+use crate::graphics::terrain::TerrainSprite;
 use crate::terrain::marker::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
@@ -23,6 +24,12 @@ pub enum TerrainType {
     Impassable,
     /// Terrain that has higher altitude compared to others.
     High,
+}
+
+pub struct TerrainBundle {
+    /// Type of terrain
+    variant: TerrainType,
+    sprite: TerrainSprite,
 }
 
 impl TerrainType {

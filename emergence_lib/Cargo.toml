@@ -16,6 +16,7 @@ indexmap = "1.9"
 dashmap = "5.4"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros" }
+bevy-trait-query = "0.1"
 
 [dev-dependencies]
 # We need headless operation in tests
