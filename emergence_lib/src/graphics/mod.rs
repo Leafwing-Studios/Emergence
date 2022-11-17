@@ -2,7 +2,6 @@
 
 use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::TerrainTilemap;
-
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::asset::AssetServer;
 use bevy::ecs::component::Component;
@@ -21,9 +20,12 @@ use bevy::prelude::{Added, Changed, Or};
 use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::ProduceTilemap;
-use crate::graphics::sprites::{IntoSprite};
+use crate::graphics::sprites::IntoSprite;
 use crate::graphics::tilemap_marker::TilemapMarker;
-use bevy_trait_query::One;
+use crate::organisms::structures::{Fungi, Plant};
+use crate::organisms::units::Ant;
+use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
+use bevy_trait_query::{One, RegisterExt};
 
 pub mod debug;
 pub mod organisms;
@@ -38,11 +40,17 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
+            .register_component_as::<dyn IntoSprite, Ant>()
+            .register_component_as::<dyn IntoSprite, Fungi>()
+            .register_component_as::<dyn IntoSprite, Plant>()
+            .register_component_as::<dyn IntoSprite, HighTerrain>()
+            .register_component_as::<dyn IntoSprite, ImpassableTerrain>()
+            .register_component_as::<dyn IntoSprite, PlainTerrain>()
             .init_resource::<TilemapRegister>()
             .init_resource::<MapGeometry>()
             .add_startup_system_to_stage(StartupStage::PreStartup, initialize_tilemaps)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels)
-            .add_startup_system_to_stage(CoreStage::First, update_sprites);
+            .add_system_to_stage(CoreStage::First, update_sprites);
     }
 }
 
@@ -57,7 +65,7 @@ fn initialize_tilemaps(
         let entity = tilemap.spawn(&mut commands, &map_geometry, &asset_server);
         layer_register
             .register
-            .insert(Tilemap::Terrain.index(), TilemapId(entity));
+            .insert(tilemap.index(), TilemapId(entity));
     });
 }
 
@@ -65,10 +73,7 @@ fn initialize_tilemaps(
 /// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.
 fn update_sprites(
     mut commands: Commands,
-    into_sprite_query: Query<
-        (Entity, &TilePos, One<&dyn IntoSprite>),
-        Or<(Added<&dyn IntoSprite>, Changed<&dyn IntoSprite>)>,
-    >,
+    into_sprite_query: Query<(Entity, &TilePos, One<&dyn IntoSprite>)>,
     tilemap_register: Res<TilemapRegister>,
 ) {
     for (entity, position, sprite) in into_sprite_query.iter() {
@@ -96,6 +101,7 @@ pub enum Tilemap {
 }
 
 impl Tilemap {
+    /// Spawns tilemap component associated with each variant
     pub fn spawn(
         &self,
         commands: &mut Commands,

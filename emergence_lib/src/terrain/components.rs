@@ -1,9 +1,10 @@
+//! Data for characterizing entities as terrain
 use crate::enum_iter::IterableEnum;
 use crate::graphics::sprites::IntoSprite;
 use crate::graphics::terrain::TerrainSpriteIndex;
 use crate::graphics::Tilemap;
-use bevy::ecs::component::Component;
 use crate::simulation::pathfinding::PathfindingImpassable;
+use bevy::ecs::component::Component;
 
 /// Component representing plain terrain
 #[derive(Component, Clone, Copy)]
@@ -23,7 +24,7 @@ impl IntoSprite for PlainTerrain {
 #[derive(Component, Clone, Copy, Default)]
 pub struct ImpassableTerrain {
     /// Impassable terrain is pathfinding impassable
-    impassable: PathfindingImpassable,
+    pub impassable: PathfindingImpassable,
 }
 
 impl IntoSprite for ImpassableTerrain {

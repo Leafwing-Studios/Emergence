@@ -3,4 +3,5 @@
 //! All plugins in this module should work without rendering.
 
 pub mod generation;
+pub mod map;
 pub mod pathfinding;

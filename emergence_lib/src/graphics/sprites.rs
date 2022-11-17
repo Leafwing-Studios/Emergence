@@ -13,6 +13,7 @@ use bevy_ecs_tilemap::map::TilemapTexture;
 use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 use std::path::PathBuf;
 
+/// Trait marking enums that index sprites available for a tilemap.
 pub trait SpriteIndex: IterableEnum {
     /// Path to the folder containing sprite assets indexed by this implementor.
     const ROOT_PATH: &'static str;

@@ -1,9 +1,9 @@
 //! Generating and representing terrain as game objects.
-pub mod marker;
+pub mod components;
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
-use crate::terrain::marker::{HighTerrain, ImpassableTerrain, PlainTerrain};
+use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;

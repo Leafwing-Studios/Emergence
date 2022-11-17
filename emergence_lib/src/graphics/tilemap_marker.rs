@@ -18,7 +18,7 @@ pub trait TilemapMarker: Copy + Component + Debug {
     const TILE_SIZE: TilemapTileSize;
     /// The z-coordinate at which graphics for this tilemap-like are drawn.
     const MAP_Z: f32;
-
+    /// The sprite index associated with this tilemap
     type Index: SpriteIndex;
 
     /// Spawn a corresponding `bevy_ecs_tilemap` [`TilemapBundle`]
@@ -28,14 +28,11 @@ pub trait TilemapMarker: Copy + Component + Debug {
         map_geometry: &Res<MapGeometry>,
         asset_server: &Res<AssetServer>,
     ) -> Entity {
-        let tilemap_entity = commands.spawn_empty().id();
-
-        let texture = Self::Index::load(&asset_server);
+        let texture = Self::Index::load(asset_server);
 
         info!("Inserting TilemapBundle for {:?}...", self);
         commands
-            .entity(tilemap_entity)
-            .insert(TilemapBundle {
+            .spawn(TilemapBundle {
                 grid_size: GRID_SIZE,
                 map_type: MAP_TYPE,
                 size: map_geometry.size(),
@@ -49,8 +46,7 @@ pub trait TilemapMarker: Copy + Component + Debug {
                 ),
                 ..Default::default()
             })
-            .insert(*self);
-
-        tilemap_entity
+            .insert(*self)
+            .id()
     }
 }

@@ -1,21 +1,19 @@
 //! Generating starting terrain and organisms
-
-use crate::graphics::organisms::OrganismsTilemap;
-use crate::graphics::terrain::TerrainTilemap;
-use crate::graphics::{TilemapRegister, MAP_COORD_SYSTEM};
-use crate::map::{MapGeometry, MAP_RADIUS};
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
-use crate::terrain::marker::ImpassableTerrain;
+use crate::simulation::map::{configure_map_geometry, populate_position_cache, MapPositionsCache};
+use crate::simulation::pathfinding::PathfindingImpassable;
 use crate::terrain::TerrainType;
-use bevy::app::{App, Plugin, StartupStage};
+use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
-use bevy_ecs_tilemap::prelude::{generate_hexagon, TilemapGridSize};
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy_ecs_tilemap::prelude::TilemapGridSize;
+use bevy_ecs_tilemap::tiles::TilePos;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+
+/// The number of tiles from the center of the map to the edge
+pub const MAP_RADIUS: u32 = 10;
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///
@@ -37,24 +35,6 @@ pub struct GenerationConfig {
     pub terrain_weights: HashMap<TerrainType, f32>,
 }
 
-/// Generate the world.
-pub struct GenerationPlugin;
-
-impl Plugin for GenerationPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<GenerationConfig>()
-            // .init_resource::<PositionCache>()
-            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
-            .add_startup_system_to_stage(StartupStage::PreStartup, configure_map_geometry)
-            .add_startup_system_to_stage(StartupStage::Startup, generate_terrain)
-            .add_startup_system_to_stage(StartupStage::PostStartup, generate_starting_organisms);
-    }
-}
-
-// pub struct PositionCache {
-//     grid_positions: HashMap<TilePos, HexNeighbors<TilePos>>,
-// }
-
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
@@ -72,83 +52,77 @@ impl Default for GenerationConfig {
     }
 }
 
-impl From<&GenerationConfig> for MapGeometry {
-    fn from(config: &GenerationConfig) -> MapGeometry {
-        MapGeometry::new(config.map_radius)
+/// Generate the world.
+pub struct GenerationPlugin;
+
+/// Stage labels required to organize our startup systems.
+///
+/// We must use stage labels, as we need commands to be flushed between each stage.
+#[derive(Debug, Clone, StageLabel, Eq, PartialEq, Hash)]
+pub enum GenerationStage {
+    /// Creates and inserts the [`MapGeometry`] resource based on the [`GenerationConfig`] resource
+    ///
+    /// Systems:
+    /// * [`configure_map_geometry`]
+    Configuration,
+    /// Creates and inserts the [`MapPositionCache`] resource.
+    ///
+    /// Systems:
+    /// * [`populate_position_cache`]
+    PositionCaching,
+    /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
+    ///
+    /// Systems:
+    /// * [`generate_terrain`]
+    TerrainGeneration,
+    /// Generates starting organisms, based on [`GenerationConfig`] resource, with random positions
+    ///
+    /// Systems:
+    /// * [`generate_organisms`]
+    OrganismGeneration,
+}
+
+impl Plugin for GenerationPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<GenerationConfig>()
+            // .init_resource::<PositionCache>()
+            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
+            .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
+            .add_startup_system_to_stage(GenerationStage::PositionCaching, populate_position_cache)
+            .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
+            .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
     }
 }
 
-/// Initialize [`MapGeometry`] according to [`GenerationConfig`].
-fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
-    let map_geometry: MapGeometry = (&*config).into();
-
-    commands.insert_resource(map_geometry);
-}
-
-/// Creates the world according to the provided [`GenerationConfig`].
+/// Creates the world according to [`GenerationConfig`].
 fn generate_terrain(
     mut commands: Commands,
-    mut terrain_tile_storage_query: Query<&mut TileStorage, With<TerrainTilemap>>,
     config: Res<GenerationConfig>,
-    map_geometry: Res<MapGeometry>,
-    layer_register: Res<TilemapRegister>,
+    positions: Res<MapPositionsCache>,
 ) {
-    let tile_positions = generate_hexagon(
-        AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
-        config.map_radius,
-    )
-    .into_iter()
-    .map(|axial_pos| axial_pos.as_tile_pos_given_coord_system(MAP_COORD_SYSTEM));
-
-    let mut terrain_tile_storage = terrain_tile_storage_query.single_mut();
-
     let mut rng = thread_rng();
-    for position in tile_positions {
+    for position in positions.positions() {
         let terrain: TerrainType =
             TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        let entity = terrain.instantiate(&mut commands, position);
-        terrain_tile_storage.set(&position, entity);
+        terrain.instantiate(&mut commands, position);
     }
 }
 
-/// Randomize and place starting organisms
-fn generate_starting_organisms(
+/// Create starting organisms according to [`GenerationConfig`], and randomly place them on
+/// passable tiles.
+fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
-    mut organism_tile_storage_query: Query<
-        &mut TileStorage,
-        (With<OrganismsTilemap>, Without<TerrainTilemap>),
-    >,
-    impassable_query: Query<&ImpassableTerrain>,
-    map_geometry: Res<MapGeometry>,
-    layer_register: Res<TilemapRegister>,
+    passable_tiles: Query<&TilePos, Without<PathfindingImpassable>>,
 ) {
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;
     let n_fungi = config.n_fungi;
 
     let n_entities = n_ant + n_plant + n_fungi;
-    let terrain_tile_storage = terrain_tile_storage_query.single();
-    let mut organism_tile_storage = organism_tile_storage_query.single_mut();
 
     let mut entity_positions: Vec<TilePos> = {
-        let possible_positions = generate_hexagon(
-            AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
-            config.map_radius,
-        )
-        .into_iter()
-        .filter_map(|axial_pos| {
-            let tile_pos = axial_pos.as_tile_pos_given_coord_system(MAP_COORD_SYSTEM);
-            terrain_tile_storage.get(&tile_pos).and_then(|entity| {
-                if impassable_query.get(entity).is_err() {
-                    Some(tile_pos)
-                } else {
-                    None
-                }
-            })
-        })
-        .collect::<Vec<TilePos>>();
+        let possible_positions: Vec<TilePos> = passable_tiles.iter().copied().collect();
 
         let mut rng = &mut thread_rng();
         possible_positions
@@ -157,26 +131,19 @@ fn generate_starting_organisms(
             .collect()
     };
 
-    // PERF: Swap this to spawn_batch
-
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    for position in ant_positions {
-        let entity = commands.spawn(AntBundle::new(position)).id();
-        organism_tile_storage.set(&position, entity);
-    }
+    commands.spawn_batch(ant_positions.into_iter().map(|pos| AntBundle::new(pos)));
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    for position in plant_positions {
-        let entity = commands.spawn(PlantBundle::new(position)).id();
-        organism_tile_storage.set(&position, entity);
-    }
+    commands.spawn_batch(plant_positions.into_iter().map(|pos| PlantBundle::new(pos)));
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    for position in fungus_positions {
-        let entity = commands.spawn(FungiBundle::new(position)).id();
-        organism_tile_storage.set(&position, entity);
-    }
+    commands.spawn_batch(
+        fungus_positions
+            .into_iter()
+            .map(|pos| FungiBundle::new(pos)),
+    );
 }

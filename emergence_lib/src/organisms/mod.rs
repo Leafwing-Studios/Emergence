@@ -13,7 +13,7 @@ pub struct Composition {
 }
 
 /// An organism is a living component of the game ecosystem.
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 pub struct OrganismBundle {
     /// Defines the elements making up this organism.
     pub composition: Composition,
