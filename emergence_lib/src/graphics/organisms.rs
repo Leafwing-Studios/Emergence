@@ -46,26 +46,3 @@ impl TilemapMarker for OrganismsTilemap {
     const MAP_Z: f32 = 1.0;
     type Index = OrganismSpriteIndex;
 }
-
-/// We are forced to make this a module for now, in order to apply `#[allow(missing_docs)]`, as
-/// `WorldQuery` generates structs that triggers `#[deny(missing_docs)]`. As this issue is fixed in
-/// Bevy 0.9,  this module can be flattened once this crate and [`bevy_ecs_tilemap`] support 0.9.
-#[allow(missing_docs)]
-mod world_query {
-    use crate::graphics::organisms::OrganismsTilemap;
-    use bevy::ecs::query::WorldQuery;
-    use bevy::prelude::With;
-    use bevy_ecs_tilemap::prelude::TileStorage;
-    //Fixed in bevy 0.9.1: https://github.com/bevyengine/bevy/issues/6593
-    use bevy::ecs::entity::Entity;
-
-    /// A query item (implements [`WorldQuery`]) specifying a search for `TileStorage` associated with a
-    /// `Tilemap` that has the `OrganismTilemap` component type.
-    #[derive(WorldQuery)]
-    pub struct OrganismStorage<'a> {
-        /// Query for tile storage.
-        pub storage: &'a TileStorage,
-        /// Only query for those entities that contain the relevant tilemap type.
-        _organism_tile_map: With<OrganismsTilemap>,
-    }
-}

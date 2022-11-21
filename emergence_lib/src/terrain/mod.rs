@@ -1,8 +1,11 @@
 //! Generating and representing terrain as game objects.
+
 pub mod components;
+pub mod entity_map;
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
+use crate::simulation::pathfinding::PathfindingImpassable;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
@@ -13,7 +16,6 @@ use emergence_macros::IterableEnum;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use crate::simulation::pathfinding::PathfindingImpassable;
 
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -28,14 +30,14 @@ pub enum TerrainType {
 
 impl TerrainType {
     /// Instantiates an entity bundled with components necessary to characterize terrain
-    pub fn instantiate(&self, commands: &mut Commands, position: TilePos) -> Entity {
+    pub fn instantiate(&self, commands: &mut Commands, position: &TilePos) -> Entity {
         let mut builder = commands.spawn_empty();
 
         builder.insert(position);
         match self {
             TerrainType::Plain => builder.insert(PlainTerrain),
             TerrainType::Impassable => builder.insert(ImpassableTerrain {
-                impassable: PathfindingImpassable
+                impassable: PathfindingImpassable,
             }),
             TerrainType::High => builder.insert(HighTerrain),
         };

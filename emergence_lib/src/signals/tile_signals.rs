@@ -4,17 +4,17 @@ use crate::signals::configs::SignalConfigs;
 use crate::signals::emitters::Emitter;
 use crate::signals::Signal;
 use bevy::prelude::*;
-use dashmap::DashMap;
+use bevy::utils::HashMap;
 
 /// Keeps track of the different signals present at a tile.
 ///
-/// Internally it is a [`DashMap`] with keys of type [`Emitter`] and values of type [`Signal`].
+/// Internally it is a [`HashMap`] with keys of type [`Emitter`] and values of type [`Signal`].
 ///
 /// It provides various public interfaces to interact with signals.
-#[derive(Component, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct TileSignals {
-    /// Stores signals at graphics associated with each emitter.
-    map: DashMap<Emitter, Signal>,
+    /// Internal [`HashMap`] mapping emitters to signals
+    map: HashMap<Emitter, Signal>,
 }
 
 impl TileSignals {
@@ -58,7 +58,7 @@ impl TileSignals {
     /// If there is no signal with the specified `Emitter`, a new one will be initialized.
     ///
     /// This change will be applied before the next tick, but after all diffusion has been done.
-    pub fn increment_incoming(&self, emitter: &Emitter, delta: f32) {
+    pub fn increment_incoming(&mut self, emitter: &Emitter, delta: f32) {
         if let Some(mut signal) = self.map.get_mut(emitter) {
             signal.incoming += delta;
         } else {
@@ -73,7 +73,7 @@ impl TileSignals {
     /// Panics if there is no signal from the specified `Emitter`.
     ///
     /// This change will be applied before the next tick, but after all diffusion has been done.
-    pub fn increment_outgoing(&self, emitter: &Emitter, delta: f32) {
+    pub fn increment_outgoing(&mut self, emitter: &Emitter, delta: f32) {
         let mut signal = self.map.get_mut(emitter).unwrap();
         signal.outgoing += delta;
     }

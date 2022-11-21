@@ -4,4 +4,5 @@
 
 pub mod generation;
 pub mod map;
+pub mod map_data;
 pub mod pathfinding;

@@ -1,10 +1,10 @@
 //! Manages the game world's grid
 
-use crate::graphics::MAP_COORD_SYSTEM;
-use crate::simulation::generation::GenerationConfig;
-use crate::simulation::pathfinding::HexNeighbors;
+use crate::simulation::generation::{GenerationConfig, MAP_RADIUS};
+use crate::simulation::map_data::HexNeighbors;
+use crate::simulation::space::HexNeighbors;
 use bevy::ecs::system::Resource;
-use bevy::prelude::{Commands, Res, ResMut};
+use bevy::prelude::{Commands, Res};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::axial::AxialPos;
@@ -44,8 +44,8 @@ impl MapGeometry {
         }
     }
 
-    /// Computes the number of tiles that exist in this map
-    pub const fn n_tiles(&self) -> usize {
+    /// Computes the number of positions that exist in this map
+    pub const fn n_positions(&self) -> usize {
         1 + 6 * ((self.radius * (self.radius + 1)) / 2) as usize
     }
 
@@ -68,6 +68,28 @@ impl MapGeometry {
     pub const fn center(&self) -> TilePos {
         self.center
     }
+
+    /// Gets the radius of the map
+    #[inline]
+    pub const fn radius(&self) -> u32 {
+        self.radius
+    }
+
+    /// Checks to see if the given tile position lies within the map
+    #[inline]
+    pub const fn check_inclusion(&self, tile_pos: &TilePos) -> bool {
+        let delta_x = (tile_pos.x as isize - self.center.x as isize).abs() as u32;
+        if delta_x < self.radius + 1 {
+            let delta_y = (tile_pos.y as isize - self.center.y as isize).abs() as u32;
+            if delta_y < self.radius + 1 {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
 }
 
 impl From<&GenerationConfig> for MapGeometry {
@@ -83,43 +105,61 @@ pub fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConf
     commands.insert_resource(map_geometry);
 }
 
+/// Resource caching tile positions, neighbors for a fixed map size
 #[derive(Resource, Default)]
-/// Resource caching available map postions
-pub struct MapPositionsCache {
+pub struct MapPositions {
+    /// Number of positions that are expected
+    n_positions: usize,
+    /// Positions that exist in the map
+    positions: Vec<TilePos>,
     /// Map caching hex neighbors with each tile position
-    map: HashMap<TilePos, HexNeighbors<TilePos>>,
+    neighbors: HashMap<TilePos, HexNeighbors<TilePos>>,
 }
 
-impl MapPositionsCache {
+impl MapPositions {
+    /// Creates with capacity `n_positions`
+    pub fn new(&self, n_positions: usize) -> MapPositions {
+        MapPositions {
+            n_positions,
+            positions: Vec::with_capacity(n_positions),
+            neighbors: HashMap::with_capacity(n_positions),
+        }
+    }
+
     /// Get all cached tile positions
-    pub fn positions(&self) -> impl Iterator<Item = TilePos> + '_ {
-        self.map.keys().copied()
+    pub fn iter_positions(&self) -> impl Iterator<Item = &TilePos> + '_ {
+        self.positions.iter()
     }
 
     /// Get neighbors associated with a given tile position, if it exists in the cache
-    pub fn get_neighbors(&self, tile_pos: TilePos) -> Option<&HexNeighbors<TilePos>> {
-        self.map.get(&tile_pos)
+    pub fn get_neighbors(&self, tile_pos: &TilePos) -> Option<&HexNeighbors<TilePos>> {
+        self.neighbors.get(tile_pos)
+    }
+
+    /// Get the number of positions that are managed by this structure
+    pub fn n_positions(&self) -> usize {
+        self.n_positions
     }
 }
 
 /// Populate the [`MapPositionCache`] resource with positions and neighbors.
 pub fn populate_position_cache(mut commands: Commands, map_geometry: Res<MapGeometry>) {
-    let mut map_positions = MapPositionsCache {
-        map: HashMap::with_capacity(map_geometry.n_tiles()),
-    };
+    let mut map_cache = MapPositions::new(map_geometry.n_positions());
 
-    for tile_pos in generate_hexagon(
-        AxialPos::from_tile_pos_given_coord_system(&map_geometry.center(), MAP_COORD_SYSTEM),
-        map_geometry.radius,
-    )
-    .into_iter()
-    .map(|axial_pos| axial_pos.as_tile_pos_given_coord_system(MAP_COORD_SYSTEM))
+    let center = map_geometry.center();
+    let radius = map_geometry.radius();
+    // When using HexCoordSystem::Row, TilePos is the same as AxialPos, so we can get away with
+    // unchecked/fast conversions between AxialPos and TilePos
+    for tile_pos in generate_hexagon(AxialPos::from(&center), radius)
+        .into_iter()
+        .map(|axial_pos| axial_pos.as_tile_pos_unchecked())
     {
-        map_positions.map.insert(
+        map_cache.positions.push(tile_pos);
+        map_cache.neighbors.insert(
             tile_pos,
-            HexNeighbors::get_neighbors(&tile_pos, &map_geometry.size),
+            HexNeighbors::get_neighbors(&tile_pos, &map_geometry),
         );
     }
 
-    commands.insert_resource(map_positions);
+    commands.insert_resource(map_cache);
 }

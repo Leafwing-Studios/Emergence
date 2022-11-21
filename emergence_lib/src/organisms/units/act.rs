@@ -1,17 +1,18 @@
 //! Unit behaviour simulation
 
-use crate::organisms::units::pathfinding::get_weighted_random_passable_neighbor;
+use crate::organisms::units::pathfinding::get_weighted_neighbors;
 
 use crate::curves::BottomClampedLine;
 use crate::graphics::organisms::OrganismStorage;
 use crate::graphics::organisms::OrganismStorageItem;
 use crate::graphics::terrain::TerrainStorage;
 use crate::graphics::terrain::TerrainStorageItem;
-use crate::map::MapGeometry;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::simulation::map::{MapGeometry, MapPositions};
+use crate::simulation::pathfinding::{HexNeighbors, PathfindingImpassable};
 use bevy::prelude::*;
+use bevy::utils::HashSet;
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -20,12 +21,10 @@ use super::{PheromoneTransducer, Unit, UnitTimer};
 /// Pathfinding for ants.
 fn wander(
     position: &TilePos,
-    terrain_tile_storage: &TerrainStorageItem,
-    organism_tile_storage: &OrganismStorageItem,
     impassable_query: &Query<&PathfindingImpassable>,
     tile_signals_query: &Query<&TileSignals>,
     pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
-    map_size: &TilemapSize,
+    neighbors: HexNeighbors<TilePos>,
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
         pheromone_sensor.signal_to_weight(
@@ -33,14 +32,12 @@ fn wander(
             tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneRepulse)),
         )
     };
-    let target = get_weighted_random_passable_neighbor(
+    let target = get_weighted_neighbors(
         position,
-        terrain_tile_storage,
-        organism_tile_storage,
         impassable_query,
         tile_signals_query,
         signals_to_weight,
-        map_size,
+        neighbors,
     );
 
     target.unwrap_or(*position)
@@ -51,27 +48,23 @@ fn wander(
 pub(super) fn act(
     time: Res<Time>,
     mut timer: ResMut<UnitTimer>,
-    mut query: Query<(&Unit, &mut TilePos)>,
-    impassable_query: Query<&PathfindingImpassable>,
-    terrain_storage_query: Query<TerrainStorage>,
-    organism_storage_query: Query<OrganismStorage>,
+    mut unit_query: Query<(&Unit, &mut TilePos)>,
+    impassable_query: Query<&TilePos, With<PathfindingImpassable>>,
     tile_signals_query: Query<&TileSignals>,
     pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
-    map_geometry: Res<MapGeometry>,
+    map_position_cache: Res<MapPositions>,
 ) {
-    let terrain_tile_storage = terrain_storage_query.single();
-    let organism_tile_storage = organism_storage_query.single();
+    let impassable_tiles = HashSet::from_iter(impassable_query.iter().copied());
+
     timer.0.tick(time.delta());
     if timer.0.finished() {
-        for (_, mut position) in query.iter_mut() {
+        for (_, mut position) in unit_query.iter_mut() {
             *position = wander(
                 &position,
-                &terrain_tile_storage,
-                &organism_tile_storage,
                 &impassable_query,
                 &tile_signals_query,
                 &pheromone_sensor,
-                &map_geometry.size(),
+                map_position_cache.get_neighbors(&position).unwrap(),
             );
         }
     }

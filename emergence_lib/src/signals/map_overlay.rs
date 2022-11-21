@@ -3,8 +3,10 @@
 use crate::curves::linear_combination;
 use crate::signals::configs::SignalConfigs;
 use crate::signals::tile_signals::TileSignals;
+use crate::simulation::map_data::MapResource;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TileColor;
+use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
+use std::borrow::Borrow;
 
 /// Colours graphics based on the signals present. Signal colours are defined in their
 /// [`SignalConfig`](crate::signals::configs::SignalConfig).
@@ -33,12 +35,15 @@ fn compute_tile_color(colors: &[Color]) -> TileColor {
 /// Color graphics based on the signals present.
 fn color_tiles(
     mut commands: Commands,
-    tile_signals_query: Query<(Entity, &TileSignals)>,
+    terrain_tile_query: Query<(Entity, &TilePos)>,
+    map_signals: Res<MapResource<TileSignals>>,
     signal_configs: Res<SignalConfigs>,
 ) {
-    let tile_colors: Vec<(Entity, (TileColor,))> = tile_signals_query
+    let tile_colors: Vec<(Entity, (TileColor,))> = terrain_tile_query
         .iter()
-        .map(|(entity, tile_signals)| {
+        .map(|(entity, position)| {
+            let tile_signals = map_signals.get(position).unwrap().borrow();
+
             (
                 entity,
                 (compute_tile_color(

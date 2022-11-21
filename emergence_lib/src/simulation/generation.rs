@@ -1,10 +1,12 @@
 //! Generating starting terrain and organisms
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
-use crate::simulation::map::{configure_map_geometry, populate_position_cache, MapPositionsCache};
+use crate::simulation::map::{configure_map_geometry, populate_position_cache, MapPositions};
+use crate::simulation::map_data::MapResource;
 use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
-use bevy::app::{App, Plugin};
+use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilemapGridSize;
@@ -58,7 +60,7 @@ pub struct GenerationPlugin;
 /// Stage labels required to organize our startup systems.
 ///
 /// We must use stage labels, as we need commands to be flushed between each stage.
-#[derive(Debug, Clone, StageLabel, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
 pub enum GenerationStage {
     /// Creates and inserts the [`MapGeometry`] resource based on the [`GenerationConfig`] resource
     ///
@@ -82,9 +84,41 @@ pub enum GenerationStage {
     OrganismGeneration,
 }
 
+/// Label for the "grand stage" in which all the [`GenerationStage`]s are executed
+#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
+pub struct GenerationScheduleLabel;
+
+impl GenerationScheduleLabel {
+    /// Creates a schedule out of stages enumerated in [`GenerationStage`]
+    pub fn schedule() -> Schedule {
+        Schedule::default()
+            .with_stage(GenerationStage::Configuration, SystemStage::parallel())
+            .with_stage_after(
+                GenerationStage::Configuration,
+                GenerationStage::PositionCaching,
+                SystemStage::parallel(),
+            )
+            .with_stage_after(
+                GenerationStage::PositionCaching,
+                GenerationStage::TerrainGeneration,
+                SystemStage::parallel(),
+            )
+            .with_stage_after(
+                GenerationStage::TerrainGeneration,
+                GenerationStage::OrganismGeneration,
+                SystemStage::parallel(),
+            )
+    }
+}
+
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GenerationConfig>()
+            .add_stage_before(
+                StartupStage::Startup,
+                GenerationScheduleLabel,
+                GenerationScheduleLabel::schedule(),
+            )
             // .init_resource::<PositionCache>()
             // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
@@ -98,14 +132,21 @@ impl Plugin for GenerationPlugin {
 fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    positions: Res<MapPositionsCache>,
+    map_positions: Res<MapPositions>,
 ) {
     let mut rng = thread_rng();
-    for position in positions.positions() {
+
+    let mut entity_data = Vec::with_capacity(map_positions.n_positions());
+    for position in map_positions.iter_positions() {
         let terrain: TerrainType =
             TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        terrain.instantiate(&mut commands, position);
+        entity_data.push((*position, terrain.instantiate(&mut commands, position)));
     }
+
+    let mut terrain_entities = TerrainEntityMap {
+        inner: MapResource::new(&map_positions, entity_data),
+    };
+    commands.insert_resource(terrain_entities)
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
@@ -133,17 +174,13 @@ fn generate_organisms(
 
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    commands.spawn_batch(ant_positions.into_iter().map(|pos| AntBundle::new(pos)));
+    commands.spawn_batch(ant_positions.into_iter().map(AntBundle::new));
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    commands.spawn_batch(plant_positions.into_iter().map(|pos| PlantBundle::new(pos)));
+    commands.spawn_batch(plant_positions.into_iter().map(PlantBundle::new));
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    commands.spawn_batch(
-        fungus_positions
-            .into_iter()
-            .map(|pos| FungiBundle::new(pos)),
-    );
+    commands.spawn_batch(fungus_positions.into_iter().map(FungiBundle::new));
 }

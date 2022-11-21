@@ -15,8 +15,6 @@ use bevy_ecs_tilemap::tiles::TilePos;
 use crate as emergence_lib;
 use crate::graphics::debug::generate_debug_labels;
 use crate::graphics::organisms::OrganismsTilemap;
-use crate::map::MapGeometry;
-use bevy::prelude::{Added, Changed, Or};
 use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::ProduceTilemap;
@@ -26,6 +24,7 @@ use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy_trait_query::{One, RegisterExt};
+use crate::simulation::map::MapGeometry;
 
 pub mod debug;
 pub mod organisms;
@@ -47,8 +46,8 @@ impl Plugin for GraphicsPlugin {
             .register_component_as::<dyn IntoSprite, ImpassableTerrain>()
             .register_component_as::<dyn IntoSprite, PlainTerrain>()
             .init_resource::<TilemapRegister>()
-            .init_resource::<MapGeometry>()
-            .add_startup_system_to_stage(StartupStage::PreStartup, initialize_tilemaps)
+            // we put these systems in PostStartup, because we need the MapGeometry resource ready
+            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_tilemaps)
             .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels)
             .add_system_to_stage(CoreStage::First, update_sprites);
     }

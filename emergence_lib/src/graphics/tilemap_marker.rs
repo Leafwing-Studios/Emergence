@@ -2,8 +2,8 @@
 
 use crate::graphics::sprites::SpriteIndex;
 use crate::graphics::MAP_TYPE;
-use crate::map::MapGeometry;
 use crate::simulation::generation::GRID_SIZE;
+use crate::simulation::map::MapGeometry;
 use bevy::asset::AssetServer;
 use bevy::log::info;
 use bevy::prelude::{Commands, Component, Entity, Res};
