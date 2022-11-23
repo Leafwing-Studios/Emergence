@@ -12,8 +12,6 @@ bevy = "0.9"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 bevy_pancam = "0.7"
 rand = "0.8"
-indexmap = "1.9"
-dashmap = "5.4"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros" }
 bevy-trait-query = "0.1"
