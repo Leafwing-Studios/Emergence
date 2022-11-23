@@ -112,10 +112,10 @@ jobs:
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0"
-      - name: Installs cargo-deadlinks
-        run: cargo install --force cargo-deadlinks
-      - name: Checks dead links
-        run: cargo deadlinks
+#      - name: Installs cargo-deadlinks
+#        run: cargo install --force cargo-deadlinks
+#      - name: Checks dead links
+#        run: cargo deadlinks
 
   check-unused-dependencies:
     runs-on: ubuntu-latest
