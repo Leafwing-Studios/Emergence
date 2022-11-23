@@ -18,18 +18,6 @@ pub mod signals;
 pub mod simulation;
 pub mod terrain;
 
-/// All of the code needed to make the simulation run
-pub struct SimulationPlugin;
-
-impl Plugin for SimulationPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(simulation::generation::GenerationPlugin)
-            .add_plugin(organisms::structures::StructuresPlugin)
-            .add_plugin(organisms::units::UnitsPlugin)
-            .add_plugin(signals::SignalsPlugin);
-    }
-}
-
 /// All of the code needed for users to interact with the simulation.
 pub struct InteractionPlugin;
 
@@ -46,6 +34,7 @@ impl Plugin for InteractionPlugin {
 /// Importing between files shared in the `tests` directory appears to be broken with this workspace config?
 /// Followed directions from <https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html>
 pub mod testing {
+    use crate::simulation::SimulationPlugin;
     use bevy::prelude::*;
 
     /// Just [`MinimalPlugins`].
@@ -74,7 +63,7 @@ pub mod testing {
     /// Just the game logic and simulation
     pub fn simulation_app() -> App {
         let mut app = bevy_app();
-        app.add_plugin(super::SimulationPlugin);
+        app.add_plugin(SimulationPlugin);
         app
     }
 

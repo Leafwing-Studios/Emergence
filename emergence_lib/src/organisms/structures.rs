@@ -8,7 +8,7 @@ use crate::organisms::{Composition, OrganismBundle};
 use crate::enum_iter::IterableEnum;
 use crate::graphics::organisms::OrganismSpriteIndex;
 use crate::graphics::sprites::IntoSprite;
-use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::simulation::pathfinding::Impassable;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -78,7 +78,7 @@ pub struct PlantBundle {
     /// Position in the world
     position: TilePos,
     /// Plants are impassable
-    impassable: PathfindingImpassable,
+    impassable: Impassable,
 }
 
 impl IntoSprite for Plant {
@@ -106,7 +106,7 @@ impl PlantBundle {
                 },
             },
             position,
-            impassable: PathfindingImpassable,
+            impassable: Impassable,
         }
     }
 }

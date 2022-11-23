@@ -3,7 +3,7 @@ use crate::enum_iter::IterableEnum;
 use crate::graphics::sprites::IntoSprite;
 use crate::graphics::terrain::TerrainSpriteIndex;
 use crate::graphics::Tilemap;
-use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::simulation::pathfinding::Impassable;
 use bevy::ecs::component::Component;
 
 /// Component representing plain terrain
@@ -24,7 +24,7 @@ impl IntoSprite for PlainTerrain {
 #[derive(Component, Clone, Copy, Default)]
 pub struct ImpassableTerrain {
     /// Impassable terrain is pathfinding impassable
-    pub impassable: PathfindingImpassable,
+    pub impassable: Impassable,
 }
 
 impl IntoSprite for ImpassableTerrain {

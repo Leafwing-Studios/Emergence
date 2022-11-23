@@ -1,9 +1,9 @@
 //! Generating starting terrain and organisms
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
+use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::{configure_map_geometry, populate_position_cache, MapPositions};
-use crate::simulation::map_data::MapResource;
-use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::simulation::pathfinding::Impassable;
 use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
@@ -143,8 +143,8 @@ fn generate_terrain(
         entity_data.push((*position, terrain.instantiate(&mut commands, position)));
     }
 
-    let mut terrain_entities = TerrainEntityMap {
-        inner: MapResource::new(&map_positions, entity_data),
+    let terrain_entities = TerrainEntityMap {
+        inner: MapResource::new(&map_positions, entity_data.into_iter()),
     };
     commands.insert_resource(terrain_entities)
 }
@@ -154,7 +154,7 @@ fn generate_terrain(
 fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    passable_tiles: Query<&TilePos, Without<PathfindingImpassable>>,
+    passable_tiles: Query<&TilePos, Without<Impassable>>,
 ) {
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;

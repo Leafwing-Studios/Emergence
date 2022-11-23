@@ -1,8 +1,11 @@
-//! Manages the game world's grid
+//! Manages the game world's grid and data tied to that grid
+
+pub mod filters;
+pub mod neighbors;
+pub mod resources;
 
 use crate::simulation::generation::{GenerationConfig, MAP_RADIUS};
-use crate::simulation::map_data::HexNeighbors;
-use crate::simulation::space::HexNeighbors;
+use crate::simulation::map::neighbors::HexNeighbors;
 use bevy::ecs::system::Resource;
 use bevy::prelude::{Commands, Res};
 use bevy::utils::HashMap;
@@ -105,30 +108,38 @@ pub fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConf
     commands.insert_resource(map_geometry);
 }
 
-/// Resource caching tile positions, neighbors for a fixed map size
+/// Resource caching tile positions for a fixed map size
 #[derive(Resource, Default)]
 pub struct MapPositions {
-    /// Number of positions that are expected
+    /// Number of positions that are expected given the size of teh hexagonal map
     n_positions: usize,
-    /// Positions that exist in the map
+    /// Vector of positions that exist in the map
     positions: Vec<TilePos>,
-    /// Map caching hex neighbors with each tile position
+    /// [`HashMap`] caching hex neighbors of each position
     neighbors: HashMap<TilePos, HexNeighbors<TilePos>>,
+    /// [`HashMap`] caching the number of hex neighbors at each position
+    n_neighbors: HashMap<TilePos, usize>,
 }
 
 impl MapPositions {
     /// Creates with capacity `n_positions`
-    pub fn new(&self, n_positions: usize) -> MapPositions {
+    pub fn new(n_positions: usize) -> MapPositions {
         MapPositions {
             n_positions,
             positions: Vec::with_capacity(n_positions),
             neighbors: HashMap::with_capacity(n_positions),
+            n_neighbors: HashMap::with_capacity(n_positions),
         }
     }
 
-    /// Get all cached tile positions
+    /// Get an iterator over tile positions
     pub fn iter_positions(&self) -> impl Iterator<Item = &TilePos> + '_ {
         self.positions.iter()
+    }
+
+    /// Get an iterator over neighbors
+    pub fn iter_neighbors(&self) -> impl Iterator<Item = &HexNeighbors<TilePos>> + '_ {
+        self.neighbors.values()
     }
 
     /// Get neighbors associated with a given tile position, if it exists in the cache
@@ -136,8 +147,13 @@ impl MapPositions {
         self.neighbors.get(tile_pos)
     }
 
+    /// Get number of neighbors associated with a given tile position, if it exists in the cache
+    pub fn get_neighbor_count(&self, tile_pos: &TilePos) -> Option<usize> {
+        self.n_neighbors.get(tile_pos).copied()
+    }
+
     /// Get the number of positions that are managed by this structure
-    pub fn n_positions(&self) -> usize {
+    pub const fn n_positions(&self) -> usize {
         self.n_positions
     }
 }
@@ -154,11 +170,11 @@ pub fn populate_position_cache(mut commands: Commands, map_geometry: Res<MapGeom
         .into_iter()
         .map(|axial_pos| axial_pos.as_tile_pos_unchecked())
     {
+        let neighbors = HexNeighbors::get_neighbors(&tile_pos, &map_geometry);
+        let count = neighbors.count();
         map_cache.positions.push(tile_pos);
-        map_cache.neighbors.insert(
-            tile_pos,
-            HexNeighbors::get_neighbors(&tile_pos, &map_geometry),
-        );
+        map_cache.neighbors.insert(tile_pos, neighbors);
+        map_cache.n_neighbors.insert(tile_pos, count);
     }
 
     commands.insert_resource(map_cache);

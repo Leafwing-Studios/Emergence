@@ -17,7 +17,7 @@ fn main() {
             ..Default::default()
         }))
         .add_plugin(emergence_lib::graphics::GraphicsPlugin)
-        .add_plugin(emergence_lib::SimulationPlugin)
+        .add_plugin(emergence_lib::simulation::SimulationPlugin)
         .add_plugin(emergence_lib::InteractionPlugin)
         .run();
 }

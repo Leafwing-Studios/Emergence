@@ -3,10 +3,9 @@
 use crate::curves::linear_combination;
 use crate::signals::configs::SignalConfigs;
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::map_data::MapResource;
+use crate::simulation::map::resources::MapResource;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
-use std::borrow::Borrow;
 
 /// Colours graphics based on the signals present. Signal colours are defined in their
 /// [`SignalConfig`](crate::signals::configs::SignalConfig).
@@ -20,17 +19,7 @@ impl Plugin for MapOverlayPlugin {
 
 /// We cannot directly use [`Color::WHITE`] cannot be used, as it has the RGB variant, not the
 /// RGBA variant
-const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
-
-/// Computes a [`TileColor`] from the given colors, by applying each color in order
-/// [`over`](AlphaCompose::over) the baseline tile color [`RGBA_WHITE`].
-fn compute_tile_color(colors: &[Color]) -> TileColor {
-    let mut total_color = RGBA_WHITE;
-    for color in colors {
-        total_color = color.over(&total_color)
-    }
-    TileColor(total_color)
-}
+pub const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 
 /// Color graphics based on the signals present.
 fn color_tiles(
@@ -39,17 +28,12 @@ fn color_tiles(
     map_signals: Res<MapResource<TileSignals>>,
     signal_configs: Res<SignalConfigs>,
 ) {
-    let tile_colors: Vec<(Entity, (TileColor,))> = terrain_tile_query
+    let tile_colors: Vec<(Entity, TileColor)> = terrain_tile_query
         .iter()
         .map(|(entity, position)| {
-            let tile_signals = map_signals.get(position).unwrap().borrow();
-
-            (
-                entity,
-                (compute_tile_color(
-                    &tile_signals.compute_colors(&signal_configs),
-                ),),
-            )
+            let tile_signals = map_signals.get(position).unwrap();
+            let tile_color = TileColor(tile_signals.read().compute_combined_color(&signal_configs));
+            (entity, tile_color)
         })
         .collect();
     commands.insert_or_spawn_batch(tile_colors);

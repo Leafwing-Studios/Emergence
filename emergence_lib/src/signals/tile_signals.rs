@@ -2,6 +2,7 @@
 
 use crate::signals::configs::SignalConfigs;
 use crate::signals::emitters::Emitter;
+use crate::signals::map_overlay::{AlphaCompose, RGBA_WHITE};
 use crate::signals::Signal;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -18,16 +19,16 @@ pub struct TileSignals {
 }
 
 impl TileSignals {
-    /// Increment the change in signal due to signal leaving this tile.
+    /// Get the emitters at this tile
     pub fn emitters(&self) -> Vec<Emitter> {
-        self.map.iter().map(|kv| *kv.key()).collect()
+        self.map.keys().cloned().collect()
     }
 
     /// Get the current values of the signals at this tile.
     pub fn current_values(&self) -> Vec<(Emitter, f32)> {
         self.map
             .iter()
-            .map(|kv| (*kv.key(), kv.value().current_value))
+            .map(|(emitter, signal)| (*emitter, signal.current_value))
             .collect()
     }
 
@@ -82,8 +83,7 @@ impl TileSignals {
     ///
     /// Panics if there is no signal from the specified `Emitter`.
     pub fn decay(&mut self, signal_configs: &SignalConfigs) {
-        for mut emitter_signal in self.map.iter_mut() {
-            let (emitter, signal) = emitter_signal.pair_mut();
+        for (emitter, signal) in self.map.iter_mut() {
             let config = signal_configs.get(emitter).unwrap();
             signal.current_value *= 1.0 - config.decay_probability;
         }
@@ -91,8 +91,7 @@ impl TileSignals {
 
     /// Apply accumulated `incoming`/`outgoing` to the `current_value` for each signal at this tile.
     pub fn apply_deltas(&mut self) {
-        for mut emitter_signal in self.map.iter_mut() {
-            let signal = emitter_signal.value_mut();
+        for signal in self.map.values_mut() {
             signal.apply_deltas();
         }
     }
@@ -107,6 +106,22 @@ impl TileSignals {
                     .and_then(|signal| signal.compute_color(&config.color_config))
             })
             .collect()
+    }
+
+    /// Compute color by combining (using the over operator) color for each emitter, in order, using
+    /// the [`over`](AlphaCompose::over) to the baseline [`RGBA_WHITE`].
+    ///
+    /// The order of the emitters is governed by the order they were registered into the given
+    /// [`SignalConfigs`].
+    pub fn compute_combined_color(&self, signal_configs: &SignalConfigs) -> Color {
+        let colors = self.compute_colors(signal_configs);
+
+        let mut total_color = RGBA_WHITE;
+        for color in colors {
+            total_color = color.over(&total_color)
+        }
+
+        total_color
     }
 
     /// Retrieve value of signal from specified `Emitter`.

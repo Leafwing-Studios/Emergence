@@ -5,7 +5,7 @@ pub mod entity_map;
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
-use crate::simulation::pathfinding::PathfindingImpassable;
+use crate::simulation::pathfinding::Impassable;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
@@ -33,11 +33,11 @@ impl TerrainType {
     pub fn instantiate(&self, commands: &mut Commands, position: &TilePos) -> Entity {
         let mut builder = commands.spawn_empty();
 
-        builder.insert(position);
+        builder.insert(*position);
         match self {
             TerrainType::Plain => builder.insert(PlainTerrain),
             TerrainType::Impassable => builder.insert(ImpassableTerrain {
-                impassable: PathfindingImpassable,
+                impassable: Impassable,
             }),
             TerrainType::High => builder.insert(HighTerrain),
         };

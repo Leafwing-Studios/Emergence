@@ -6,8 +6,6 @@ use bevy::prelude::Component;
 use bevy_ecs_tilemap::prelude::TilemapTileSize;
 use emergence_macros::IterableEnum;
 
-pub use world_query::*;
-
 /// Enumerates terrain sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
 pub enum TerrainSpriteIndex {

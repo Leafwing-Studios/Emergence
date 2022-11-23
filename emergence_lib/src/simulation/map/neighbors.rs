@@ -1,140 +1,14 @@
-//! Code for managing data that is deeply tied to the map
+//! Code for managing data tied to (spatial) neighbors of a given position
 
-use crate::simulation::map::{MapGeometry, MapPositions};
-use bevy::prelude::{Res, Resource};
-use bevy::utils::HashMap;
+use crate::simulation::map::resources::MapData;
+use crate::simulation::map::MapGeometry;
+use bevy::prelude::Res;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::{HexRowDirection, HEX_DIRECTIONS};
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::borrow::{Borrow, BorrowMut};
 use std::fmt::Debug;
-use std::sync::{Arc, Mutex};
-
-/// Spatial data for use with the [`MapResource`] struct.
-#[derive(Default, Clone)]
-pub struct MapData<T> {
-    inner: Arc<Mutex<T>>,
-}
-
-impl<T> MapData<T>
-where
-    T: Default,
-{
-    /// Create from data
-    pub fn new(data: T) -> Self {
-        Self {
-            inner: Arc::new(Mutex::new(data)),
-        }
-    }
-
-    /// Immutably the inner data
-    pub fn borrow(&self) -> &T {
-        self.inner.borrow()
-    }
-
-    /// Mutably borrow the inner data
-    pub fn borrow_mut(&mut self) -> &mut T {
-        self.inner.get_mut().unwrap()
-    }
-}
-
-/// A helper for managing game resources that are naturally tied to a fixed specific position on
-/// the map
-///
-/// It can give you [`MapData<T>`](MapData) at a given tile position, or it can give you
-/// [`HexNeighbors<MapData<T>>`](HexNeighbors) for the given position.
-///
-/// Internally, [`MapData`] is stored in a [`HashMap`] for each position, in the `storage` field,
-/// and this same data is then referenced to by the `neighbors` field.
-#[derive(Resource)]
-pub struct MapResource<T> {
-    storage: HashMap<TilePos, MapData<T>>,
-    neighbors: HashMap<TilePos, HexNeighbors<MapData<T>>>,
-}
-
-impl<T> MapResource<T>
-where
-    T: Default,
-{
-    /// Create new from an underlying `MapPostions` template
-    ///
-    /// This allocates capacity and initializes neighbors based on the template provided.
-    ///
-    /// This requires that that there is a `Default` impl for the underlying data type
-    pub fn default_from_template(template: &MapPositions) -> MapResource<T> {
-        let n_positions = template.n_positions();
-
-        let mut storage = HashMap::with_capacity(n_positions);
-        storage.extend(
-            template
-                .iter_positions()
-                .map(|position| (*position, MapData::new(T::default()))),
-        );
-
-        let mut neighbors = HashMap::with_capacity(n_positions);
-        neighbors.extend(template.iter_neighbors().filter_map(|position| {
-            let tile_neighbors = template.get_neighbors(position)?;
-            let neighbors = tile_neighbors.and_then(|position| storage.get(position).cloned());
-            Some((*position, neighbors))
-        }));
-
-        MapResource { storage, neighbors }
-    }
-}
-
-impl<T> MapResource<T> {
-    /// Create new from an underlying `MapPostions` template.
-    ///
-    /// This allocates capacity and initializes neighbors based on the template provided.
-    ///
-    /// If your underlying data implements [`Default`], you could use
-    /// [`default_from_template`](MapData::default_from_template) to also initialize data.
-    pub fn new(
-        template: &MapPositions,
-        data: impl Iterator<Item = (TilePos, T)>,
-    ) -> MapResource<T> {
-        let n_positions = template.n_positions();
-
-        let mut storage = HashMap::with_capacity(n_positions);
-        storage.extend(data);
-
-        let mut neighbors = HashMap::with_capacity(n_positions);
-        neighbors.extend(template.iter_neighbors().filter_map(|position| {
-            let tile_neighbors = template.get_neighbors(position)?;
-            let neighbors = tile_neighbors.and_then(|position| storage.get(position).cloned());
-            Some((*position, neighbors))
-        }));
-
-        MapResource { storage, neighbors }
-    }
-
-    /// Replace data at the specified position
-    pub fn replace(&mut self, position: &TilePos, replace_with: T) {
-        self.storage.get(position).unwrap().borrow_mut() = replace_with;
-    }
-
-    /// Get data stored at given position
-    pub fn get(&self, pos: &TilePos) -> Option<MapData<T>> {
-        self.storage.get(pos).cloned()
-    }
-
-    /// Get neighbor data for given position
-    pub fn get_neighbors(&self, pos: &TilePos) -> Option<&HexNeighbors<MapData<T>>> {
-        self.neighbors.get(pos)
-    }
-
-    /// Iterate over the positions managed by this resource
-    pub fn positions(&self) -> impl Iterator<Item = &TilePos> {
-        self.storage.keys()
-    }
-
-    /// Iterate over the data at all positions
-    pub fn values(&self) -> impl Iterator<Item = MapData<T>> {
-        self.storage.values()
-    }
-}
 
 /// Stores some data `T` associated with each neighboring hex cell, if present.
 #[derive(Debug, Default)]
@@ -169,12 +43,12 @@ impl<T> HexNeighbors<T> {
     /// Get a mutable reference to the neighbor in the specified direction.
     pub fn get_mut(&mut self, direction: HexRowDirection) -> Option<&mut T> {
         match direction {
-            HexRowDirection::North => self.north.as_ref_mut(),
-            HexRowDirection::NorthWest => self.north_west.as_ref_mut(),
-            HexRowDirection::SouthWest => self.south_west.as_ref_mut(),
-            HexRowDirection::South => self.south.as_ref_mut(),
-            HexRowDirection::SouthEast => self.south_east.as_ref_mut(),
-            HexRowDirection::NorthEast => self.north_east.as_ref_mut(),
+            HexRowDirection::North => self.north.as_mut(),
+            HexRowDirection::NorthWest => self.north_west.as_mut(),
+            HexRowDirection::SouthWest => self.south_west.as_mut(),
+            HexRowDirection::South => self.south.as_mut(),
+            HexRowDirection::SouthEast => self.south_east.as_mut(),
+            HexRowDirection::NorthEast => self.north_east.as_mut(),
         }
     }
 
@@ -195,6 +69,14 @@ impl<T> HexNeighbors<T> {
         HEX_DIRECTIONS
             .into_iter()
             .filter_map(|direction| self.get(direction.into()))
+    }
+
+    /// Count the number of neighbors with [`Some`] data
+    pub fn count(&self) -> usize {
+        HEX_DIRECTIONS
+            .into_iter()
+            .filter_map(|direction| self.get(direction.into()))
+            .count()
     }
 
     /// Applies the supplied closure `f` with an [`and_then`](std::option::Option::and_then) to each
@@ -287,5 +169,48 @@ impl HexNeighbors<TilePos> {
         let possible_choices = self.iter().copied().collect::<Vec<TilePos>>();
 
         possible_choices.choose(rng).cloned()
+    }
+}
+
+impl<T> HexNeighbors<T> {
+    /// Filter using a [`HexNeighbors<bool>`](HexNeighbors). If the filter is `true` for a particular
+    /// direction, then return whatever data `self` contains in that direction, otherwise return
+    /// `None`.
+    ///
+    /// `default_none` specifies what boolean value should be associated with the filter if it has
+    /// `None` in a given direction. If `default_none` is `true`, then whatever value `self` contains
+    /// in that direction will be returned, else `None` will be returned.
+    pub fn apply_filter(
+        &self,
+        hex_filter: &HexNeighbors<MapData<bool>>,
+        default_none: bool,
+    ) -> HexNeighbors<&T> {
+        HexNeighbors::from_directional_closure(|direction| {
+            if hex_filter
+                .get(direction)
+                .map_or(default_none, |filter_data| *filter_data.read())
+            {
+                self.get(direction)
+            } else {
+                None
+            }
+        })
+    }
+}
+
+impl<T> HexNeighbors<&T>
+where
+    T: Clone,
+{
+    /// Clone neighbor data
+    pub fn cloned(&self) -> HexNeighbors<T> {
+        HexNeighbors {
+            north: self.north.cloned(),
+            north_west: self.north_west.cloned(),
+            south_west: self.south_west.cloned(),
+            south: self.south.cloned(),
+            south_east: self.south_east.cloned(),
+            north_east: self.north_east.cloned(),
+        }
     }
 }

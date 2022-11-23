@@ -1,20 +1,11 @@
 //! Utilities to support organism pathfinding.
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::pathfinding::HexNeighbors;
-use bevy::utils::HashSet;
+use crate::simulation::map::neighbors::HexNeighbors;
+use crate::simulation::map::resources::MapData;
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
-
-
-impl HexNeighbors<TilePos> {
-    /// Returns the set of neighboring cells that units can walk through
-    pub fn passable_neighbors(&self, impassable_tiles: &HashSet<TilePos>) -> HexNeighbors<TilePos> {
-        let passable_filter_closure = |pos| (!impassable_tiles.contains(&pos)).then_some(pos);
-        self.and_then(passable_filter_closure)
-    }
-}
 
 /// A tile position with an associated weight. Useful for making weighted selections from a
 /// set of tile positions.
@@ -25,55 +16,45 @@ pub struct WeightedTilePos {
     /// **Important:** This must be non-negative.
     weight: f32,
     /// Tile position that is being assigned a weight.
-    pos: TilePos,
+    position: TilePos,
 }
 
 /// Select an adjacent neighboring tile at random, based on the provided weight function.
 ///
 /// Returns [`None`] if and only if no such tile exists.
-pub fn get_weighted_neighbors<W>(
-    neighbor_signals: &HexNeighbors<&TileSignals>,
-    signal_to_weight: W,
+pub fn get_weighted_neighbor<SignalsToWeight>(
+    passable_neighbors: &HexNeighbors<TilePos>,
+    neighbor_signals: &HexNeighbors<MapData<TileSignals>>,
+    signals_to_weight: SignalsToWeight,
 ) -> Option<TilePos>
 where
-    W: Fn(&TileSignals) -> f32,
+    SignalsToWeight: Fn(&TileSignals) -> f32,
 {
     let mut rng = thread_rng();
 
-    HexNeighbors::weighted_passable_neighbors(
-        current_pos,
-        neighbors,
-        impassable_tiles,
-        tile_signals_query,
-        signals_to_weight,
-    )
-    .choose_random(&mut rng)
-    .map(|weighted_pos| weighted_pos.pos)
+    HexNeighbors::weighted_neighbors(passable_neighbors, neighbor_signals, signals_to_weight)
+        .choose_random(&mut rng)
+        .map(|weighted_position| weighted_position.position)
 }
 
 impl HexNeighbors<WeightedTilePos> {
     /// Returns the set of neighboring cells, weighted according to signal values.
-    pub fn weighted_neighbors<Transducer>(
-        &self,
-        neighbor_signals: &HexNeighbors<&TileSignals>,
-        signal_transducer: Transducer,
+    pub fn weighted_neighbors<SignalsToWeight>(
+        passable_neighbors: &HexNeighbors<TilePos>,
+        neighbor_signals: &HexNeighbors<MapData<TileSignals>>,
+        signals_to_weight: SignalsToWeight,
     ) -> HexNeighbors<WeightedTilePos>
     where
-        Transducer: Fn(&TileSignals) -> f32,
+        SignalsToWeight: Fn(&TileSignals) -> f32,
     {
-        self.and_then(|_| )
-        let f = |pos| {
-            let tile_entity = terrain_tile_storage.storage.get(pos).unwrap();
-            let weight = if let Ok(tile_signals) = neighbor_signals.get(tile_entity) {
-                signal_transducer(tile_signals)
-            } else {
-                1.0
-            };
-
-            WeightedTilePos { weight, pos: *pos }
+        let f = |direction| {
+            let position = *passable_neighbors.get(direction)?;
+            let signals = neighbor_signals.get(direction)?;
+            let weight = signals_to_weight(&signals.read());
+            Some(WeightedTilePos { position, weight })
         };
 
-        passable_neighbors.map_ref(f)
+        HexNeighbors::<WeightedTilePos>::from_directional_closure(f)
     }
 
     /// Choose a random neighbor
