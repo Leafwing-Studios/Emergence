@@ -27,7 +27,7 @@ impl Plugin for SimulationPlugin {
             .add_plugin(StructuresPlugin)
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin)
-            .add_system_to_stage(CoreStage::First, create_passable_filter);
+            .add_system_to_stage(CoreStage::PreUpdate, create_passable_filter);
     }
 }
 
