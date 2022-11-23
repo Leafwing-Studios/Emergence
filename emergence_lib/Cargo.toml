@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "helpers-fixes" }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 bevy_pancam = "0.7"
 rand = "0.8"
 indexmap = "1.9"
@@ -20,4 +20,4 @@ bevy-trait-query = "0.1"
 
 [dev-dependencies]
 # We need headless operation in tests
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "helpers-fixes", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main", default-features = false }
