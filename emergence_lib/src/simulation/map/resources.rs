@@ -12,6 +12,8 @@ use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 // We cannot derive Clone on this, because:https://stackoverflow.com/questions/39415052/deriving-a-trait-results-in-unexpected-compiler-error-but-the-manual-implementa
 #[derive(Debug)]
 pub struct MapData<T> {
+    /// The `Arc` allows for multiple references to the data, the `RwLock` allows for
+    /// multiple readers/single-writer manipulation of the data.
     pub(crate) inner: Arc<RwLock<T>>,
 }
 
@@ -116,12 +118,12 @@ impl<T> MapResource<T> {
         patches
     }
 
-    /// Create new from an underlying [`MapPostions`] template.
+    /// Create new from an underlying [`MapPositions`] template.
     ///
     /// This allocates capacity and initializes patches based on the template provided.
     ///
     /// If your underlying data implements [`Default`], you could use
-    /// [`default_from_template`](MapData::default_from_template) to also initialize data.
+    /// [`default_from_template`](MapResource::default_from_template) to also initialize data.
     pub fn new(
         template: &MapPositions,
         data: impl Iterator<Item = (TilePos, T)>,

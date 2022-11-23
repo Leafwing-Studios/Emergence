@@ -26,9 +26,10 @@ impl SpriteIndex for ProduceSprite {
 /// Marker component for entity that manages visualization of produce.
 ///
 /// See also:
-/// *
-/// * [`OrganismTilemap`](crate::graphics::organisms::OrganismTilemap), which lies on top of the
-/// terrain tilemap, and manages visualization of organisms
+/// * [`OrganismsTilemap`](crate::graphics::organisms::OrganismsTilemap), which lies below the
+/// [`ProduceTilemap`], and manages visualization of organisms
+/// * [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap), which lies on below the
+/// [`OrganismsTilemap`](crate::graphics::organisms::OrganismsTilemap), and manages visualization of terrain entities
 #[derive(Component, Debug, Clone, Copy)]
 pub struct ProduceTilemap;
 

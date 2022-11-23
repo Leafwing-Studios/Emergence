@@ -2,7 +2,7 @@
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
-use crate::simulation::map::{configure_map_geometry, create_position_cache, MapPositions};
+use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
 use crate::simulation::pathfinding::Impassable;
 use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
@@ -63,15 +63,15 @@ pub struct GenerationPlugin;
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
 pub enum GenerationStage {
-    /// Creates and inserts the [`MapGeometry`] resource based on the [`GenerationConfig`] resource
+    /// Creates and inserts the [`MapGeometry`](crate::simulation::map::MapGeometry) resource based on the [`GenerationConfig`] resource
     ///
     /// Systems:
     /// * [`configure_map_geometry`]
     Configuration,
-    /// Creates and inserts the [`MapPositionCache`] resource.
+    /// Creates and inserts the [`MapPositions`] resource.
     ///
     /// Systems:
-    /// * [`populate_position_cache`]
+    /// * [`create_map_positions`]
     PositionCaching,
     /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
     ///
@@ -110,14 +110,14 @@ impl Plugin for GenerationPlugin {
                 SystemStage::parallel(),
             )
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
-            .add_startup_system_to_stage(GenerationStage::PositionCaching, create_position_cache)
+            .add_startup_system_to_stage(GenerationStage::PositionCaching, create_map_positions)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
             .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
     }
 }
 
 /// Creates the world according to [`GenerationConfig`].
-fn generate_terrain(
+pub fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     map_positions: Res<MapPositions>,
@@ -140,7 +140,7 @@ fn generate_terrain(
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
 /// passable tiles.
-fn generate_organisms(
+pub fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     passable_tiles: Query<&TilePos, Without<Impassable>>,

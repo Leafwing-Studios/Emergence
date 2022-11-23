@@ -8,7 +8,7 @@ use emergence_macros::IterableEnum;
 
 /// Enumerates terrain sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
-pub enum TerrainSpriteIndex {
+pub enum TerrainSprite {
     /// Sprite for high terrain,
     High,
     /// Sprite for impassable terrain
@@ -17,27 +17,30 @@ pub enum TerrainSpriteIndex {
     Plain,
 }
 
-impl SpriteIndex for TerrainSpriteIndex {
+impl SpriteIndex for TerrainSprite {
     const ROOT_PATH: &'static str = "terrain";
 
     fn leaf_path(&self) -> &'static str {
         match self {
-            TerrainSpriteIndex::High => "tile-high.png",
-            TerrainSpriteIndex::Impassable => "tile-impassable.png",
-            TerrainSpriteIndex::Plain => "tile-plain.png",
+            TerrainSprite::High => "tile-high.png",
+            TerrainSprite::Impassable => "tile-impassable.png",
+            TerrainSprite::Plain => "tile-plain.png",
         }
     }
 }
 
 /// Marker component for entity that manages visualization of terrain.
 ///
-/// See also, the [`OrganismTilemap`](crate::graphics::organisms::OrganismTilemap), which lies on top of the
-/// terrain tilemap, and manages visualization of organisms.
+/// See also:
+/// * [`ProduceTilemap`](crate::graphics::produce::ProduceTilemap), which lies on top of the
+/// [`TerrainTilemap`], and manages visualization of organisms
+/// * [`OrganismsTilemap`](crate::graphics::organisms::OrganismsTilemap), which lies on below the
+/// [`TerrainTilemap`], and manages visualization of terrain entities
 #[derive(Component, Debug, Clone, Copy)]
 pub struct TerrainTilemap;
 
 impl TilemapMarker for TerrainTilemap {
     const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
     const MAP_Z: f32 = 0.0;
-    type Index = TerrainSpriteIndex;
+    type Index = TerrainSprite;
 }

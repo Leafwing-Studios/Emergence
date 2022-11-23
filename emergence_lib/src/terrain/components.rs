@@ -1,7 +1,7 @@
 //! Data for characterizing entities as terrain
 use crate::enum_iter::IterableEnum;
 use crate::graphics::sprites::IntoSprite;
-use crate::graphics::terrain::TerrainSpriteIndex;
+use crate::graphics::terrain::TerrainSprite;
 use crate::graphics::Tilemap;
 use crate::simulation::pathfinding::Impassable;
 use bevy::ecs::component::Component;
@@ -16,7 +16,7 @@ impl IntoSprite for PlainTerrain {
     }
 
     fn index(&self) -> u32 {
-        TerrainSpriteIndex::Plain.index() as u32
+        TerrainSprite::Plain.index() as u32
     }
 }
 
@@ -33,7 +33,7 @@ impl IntoSprite for ImpassableTerrain {
     }
 
     fn index(&self) -> u32 {
-        TerrainSpriteIndex::Impassable.index() as u32
+        TerrainSprite::Impassable.index() as u32
     }
 }
 
@@ -47,6 +47,6 @@ impl IntoSprite for HighTerrain {
     }
 
     fn index(&self) -> u32 {
-        TerrainSpriteIndex::High.index() as u32
+        TerrainSprite::High.index() as u32
     }
 }

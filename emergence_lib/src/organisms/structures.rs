@@ -6,7 +6,7 @@ use crate::graphics::Tilemap;
 use crate::organisms::{Composition, OrganismBundle};
 
 use crate::enum_iter::IterableEnum;
-use crate::graphics::organisms::OrganismSpriteIndex;
+use crate::graphics::organisms::OrganismSprite;
 use crate::graphics::sprites::IntoSprite;
 use crate::simulation::pathfinding::Impassable;
 use bevy::prelude::*;
@@ -87,7 +87,7 @@ impl IntoSprite for Plant {
     }
 
     fn index(&self) -> u32 {
-        OrganismSpriteIndex::Plant.index() as u32
+        OrganismSprite::Plant.index() as u32
     }
 }
 
@@ -102,7 +102,6 @@ impl PlantBundle {
                     composition: Composition {
                         mass: Structure::STARTING_MASS,
                     },
-                    ..Default::default()
                 },
             },
             position,
@@ -149,7 +148,7 @@ impl IntoSprite for Fungi {
     }
 
     fn index(&self) -> u32 {
-        OrganismSpriteIndex::Fungi.index() as u32
+        OrganismSprite::Fungi.index() as u32
     }
 }
 

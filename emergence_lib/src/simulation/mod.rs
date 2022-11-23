@@ -31,7 +31,7 @@ impl Plugin for SimulationPlugin {
     }
 }
 
-/// Create the [`PassableFilter`] resource
+/// Create the [`PassableFilters`] resource
 pub fn create_passable_filter(
     mut commands: Commands,
     impassable_query: Query<&TilePos, With<Impassable>>,

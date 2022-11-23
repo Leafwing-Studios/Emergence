@@ -34,8 +34,8 @@ impl TileSignals {
 
     /// Insert a signal.
     ///
-    /// This follows [`DashMap`](DashMap::insert) semantics, as it calls
-    /// [`DashMap::insert`](DashMap::insert) internally.
+    /// This follows [`HashMap::insert`](HashMap::insert) semantics, as that method is called 
+    /// internally.
     ///
     /// In particular, it replaces an old value, if an old value existed.
     pub fn insert(&mut self, emitter: Emitter, signal: Signal) {

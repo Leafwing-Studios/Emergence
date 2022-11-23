@@ -1,9 +1,11 @@
-//! The `IntoSprite` trait allows an entity to specify how it should be visualized using
-//! `bevy_ecs_tilemap`.
+//! The [`SpriteIndex`] and [`IntoSprite`] trait allows an entity to specify how it should be
+//! visualized using `bevy_ecs_tilemap`.
 //!
-//! This specification requires three pieces of information from the user:
-//! * the [`Tilemap`] that the entity's sprite belongs to ([`ROOT_PATH`](IntoSprite::ROOT_PATH))
-//! * the path of the assets used as sprites (given in the implementation of [`leaf_path`](IntoSprite::leaf_path))
+//! This specification requires two pieces of information from the user:
+//! * the [`Tilemap`] that the entity's sprite belongs to, given by the implementation of
+//! [`tilemap`](IntoSprite::tilemap))
+//! * the index of the sprite within the [`Tilemap`] given by the implementation of
+//! [`index`](IntoSprite::index))
 
 use crate::enum_iter::IterableEnum;
 use crate::graphics::{Tilemap, TilemapRegister};
@@ -14,6 +16,11 @@ use bevy_ecs_tilemap::tiles::{TileBundle, TilePos, TileTextureIndex};
 use std::path::PathBuf;
 
 /// Trait marking enums that index sprites available for a tilemap.
+///
+/// Current enums that implement it:
+/// * [`OrganismSprite`](crate::graphics::organisms::OrganismSprite)
+/// * [`ProduceSprite`](crate::graphics::produce::ProduceSprite)
+/// * [`TerrainSprite`](crate::graphics::terrain::TerrainSprite)
 pub trait SpriteIndex: IterableEnum {
     /// Path to the folder containing sprite assets indexed by this implementor.
     const ROOT_PATH: &'static str;
@@ -55,7 +62,7 @@ pub trait IntoSprite {
     /// Return the sprite's index, which is the index marking it against the other sprites in the
     /// same tilemap.
     ///
-    /// See the [`SpriteIndex`] trait and the structs that implement it for easy ways to refer to
+    /// See the [`SpriteIndex`] trait and the enums that implement it for easy ways to refer to
     /// a particular sprite's index.
     fn index(&self) -> u32;
 

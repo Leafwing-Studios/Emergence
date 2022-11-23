@@ -2,7 +2,7 @@
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::enum_iter::IterableEnum;
-use crate::graphics::organisms::OrganismSpriteIndex;
+use crate::graphics::organisms::OrganismSprite;
 use crate::graphics::sprites::IntoSprite;
 use crate::graphics::Tilemap;
 use bevy::prelude::*;
@@ -46,7 +46,7 @@ impl IntoSprite for Ant {
     }
 
     fn index(&self) -> u32 {
-        OrganismSpriteIndex::Ant.index() as u32
+        OrganismSprite::Ant.index() as u32
     }
 }
 

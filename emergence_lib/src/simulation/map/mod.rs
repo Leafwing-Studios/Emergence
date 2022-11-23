@@ -177,8 +177,8 @@ impl MapPositions {
     }
 }
 
-/// Populate the [`MapPositionCache`] resource with positions and neighbors.
-pub fn create_position_cache(mut commands: Commands, map_geometry: Res<MapGeometry>) {
+/// Create the [`MapPositions`] resource
+pub fn create_map_positions(mut commands: Commands, map_geometry: Res<MapGeometry>) {
     info!("Creating map positions cache...");
     let map_positions = MapPositions::new(&map_geometry);
 
