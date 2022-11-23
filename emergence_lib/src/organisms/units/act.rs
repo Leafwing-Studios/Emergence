@@ -1,17 +1,14 @@
 //! Unit behaviour simulation
 
-use crate::organisms::units::pathfinding::get_weighted_random_passable_neighbor;
+use crate::organisms::units::pathfinding::get_weighted_position;
 
 use crate::curves::BottomClampedLine;
-use crate::graphics::organisms::OrganismStorage;
-use crate::graphics::organisms::OrganismStorageItem;
-use crate::graphics::terrain::TerrainStorage;
-use crate::graphics::terrain::TerrainStorageItem;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::terrain::{ImpassableTerrain, MapGeometry};
+use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::MapPositions;
+use crate::simulation::pathfinding::PassableFilters;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use super::{PheromoneTransducer, Unit, UnitTimer};
@@ -19,12 +16,10 @@ use super::{PheromoneTransducer, Unit, UnitTimer};
 /// Pathfinding for ants.
 fn wander(
     position: &TilePos,
-    terrain_tile_storage: &TerrainStorageItem,
-    organism_tile_storage: &OrganismStorageItem,
-    impassable_query: &Query<&ImpassableTerrain>,
-    tile_signals_query: &Query<&TileSignals>,
+    map_positions: &MapPositions,
+    passable_filters: &PassableFilters,
+    map_signals: &MapResource<TileSignals>,
     pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
-    map_size: &TilemapSize,
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
         pheromone_sensor.signal_to_weight(
@@ -32,15 +27,13 @@ fn wander(
             tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneRepulse)),
         )
     };
-    let target = get_weighted_random_passable_neighbor(
-        position,
-        terrain_tile_storage,
-        organism_tile_storage,
-        impassable_query,
-        tile_signals_query,
-        signals_to_weight,
-        map_size,
-    );
+
+    let position_patch = map_positions.get_patch(position).unwrap();
+    let filter_patch = passable_filters.get_patch(position).unwrap();
+    let valid_possibilities = position_patch.apply_filter(filter_patch, false).cloned();
+    let signals_patch = map_signals.get_patch(position).unwrap();
+
+    let target = get_weighted_position(&valid_possibilities, signals_patch, signals_to_weight);
 
     target.unwrap_or(*position)
 }
@@ -50,27 +43,21 @@ fn wander(
 pub(super) fn act(
     time: Res<Time>,
     mut timer: ResMut<UnitTimer>,
-    mut query: Query<(&Unit, &mut TilePos)>,
-    impassable_query: Query<&ImpassableTerrain>,
-    terrain_storage_query: Query<TerrainStorage>,
-    organism_storage_query: Query<OrganismStorage>,
-    tile_signals_query: Query<&TileSignals>,
+    mut unit_query: Query<(&Unit, &mut TilePos)>,
+    map_positions: Res<MapPositions>,
+    passable_filters: Res<PassableFilters>,
+    map_signals: Res<MapResource<TileSignals>>,
     pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
-    map_geometry: Res<MapGeometry>,
 ) {
-    let terrain_tile_storage = terrain_storage_query.single();
-    let organism_tile_storage = organism_storage_query.single();
     timer.0.tick(time.delta());
     if timer.0.finished() {
-        for (_, mut position) in query.iter_mut() {
+        for (_, mut position) in unit_query.iter_mut() {
             *position = wander(
                 &position,
-                &terrain_tile_storage,
-                &organism_tile_storage,
-                &impassable_query,
-                &tile_signals_query,
+                &map_positions,
+                &passable_filters,
+                &map_signals,
                 &pheromone_sensor,
-                &map_geometry.size(),
             );
         }
     }

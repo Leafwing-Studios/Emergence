@@ -1,11 +1,11 @@
 //! Units are organisms that can move freely.
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
+use crate::enum_iter::IterableEnum;
 use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::{IntoSprite, LayerRegister};
-use crate::organisms::OrganismBundle;
+use crate::graphics::sprites::IntoSprite;
+use crate::graphics::Tilemap;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use self::behavior::events::{
@@ -16,6 +16,12 @@ use self::behavior::CurrentGoal;
 mod act;
 mod behavior;
 mod pathfinding;
+
+/// Available types of units
+pub enum UnitType {
+    /// A worker ant
+    Ant,
+}
 
 /// Marker component for [`UnitBundle`]
 #[derive(Component, Clone, Default)]
@@ -28,40 +34,42 @@ pub struct UnitBundle {
     unit: Unit,
     /// What is the unit trying to do
     current_task: CurrentGoal,
-    /// A unit is an organism.
-    #[bundle]
-    organism_bundle: OrganismBundle,
 }
 
-/// Marker component for worker ants
+/// Data characterizing ants
 #[derive(Component, Clone, Default)]
 pub struct Ant;
 
+impl IntoSprite for Ant {
+    fn tilemap(&self) -> Tilemap {
+        Tilemap::Organisms
+    }
+
+    fn index(&self) -> u32 {
+        OrganismSprite::Ant.index() as u32
+    }
+}
+
 /// A worker ant
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct AntBundle {
-    /// Marker struct.
+    /// Data characterizing ants
     ant: Ant,
     /// Ants are units.
-    #[bundle]
     unit_bundle: UnitBundle,
-    /// Data needed to visualize the ant.
-    #[bundle]
-    tile_bundle: TileBundle,
+    /// Position in the world
+    position: TilePos,
 }
 
 impl AntBundle {
     /// Creates a new [`AntBundle`]
-    pub fn new(position: TilePos, layer_register: &Res<LayerRegister>) -> Self {
+    pub fn new(position: TilePos) -> Self {
         Self {
+            ant: Ant,
             unit_bundle: UnitBundle {
-                organism_bundle: OrganismBundle {
-                    ..Default::default()
-                },
                 ..Default::default()
             },
-            tile_bundle: OrganismSprite::Ant.tile_bundle(position, layer_register),
-            ..Default::default()
+            position,
         }
     }
 }

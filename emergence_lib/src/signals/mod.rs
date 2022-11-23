@@ -6,16 +6,16 @@ pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
 use crate::curves::Mapping;
-use crate::graphics::position::HexNeighbors;
-use crate::graphics::terrain::TerrainTilemap;
+use crate::enum_iter::IterableEnum;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
 use crate::signals::tile_signals::TileSignals;
+use crate::simulation::map::hex_patch::HexPatchLocation;
+use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::MapPositions;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::TilePos;
-use bevy_ecs_tilemap::tiles::TileStorage;
 
 /// This plugin manages all aspects of signals:
 /// * creation,
@@ -28,7 +28,7 @@ impl Plugin for SignalsPlugin {
         app.init_resource::<SignalConfigs>()
             .add_event::<SignalModificationEvent>()
             .add_plugin(MapOverlayPlugin)
-            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_tile_signals)
+            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_map_signals)
             .add_system(handle_signal_modification_events)
             .add_system(decay.after(handle_signal_modification_events))
             .add_system(compute_deltas.after(decay))
@@ -36,22 +36,14 @@ impl Plugin for SignalsPlugin {
     }
 }
 
-/// Initialize [`TileSignals`] for each terrain tile.
+/// Initialize [`TileSignals`] for each position.
 ///
 /// This is a startup system that should run after terrain generation, i.e. in
-/// [`StartupStage::PostStartup`]. It will panic if it cannot find the tile storage for the terrain
-/// tile map.
-fn initialize_tile_signals(
-    mut commands: Commands,
-    terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
-) {
-    let terrain_tile_storage = terrain_tile_storage_query.single();
-    let tile_signals = terrain_tile_storage
-        .iter()
-        .flatten()
-        .map(|e| (*e, (TileSignals::default(),)))
-        .collect::<Vec<(Entity, (TileSignals,))>>();
-    commands.insert_or_spawn_batch(tile_signals);
+/// [`StartupStage::PostStartup`]. It will panic if it cannot find the [`MapPositions`] resource.
+fn initialize_map_signals(mut commands: Commands, map_positions: Res<MapPositions>) {
+    commands.insert_resource(MapResource::<TileSignals>::default_from_template(
+        &map_positions,
+    ))
 }
 
 /// Event modifying a signal at a tile.
@@ -84,11 +76,9 @@ pub struct SignalIncrementEvent {}
 /// Reads [`SignalIncrementEvent`]s to create new signals on the map.
 fn handle_signal_modification_events(
     mut modification_events: EventReader<SignalModificationEvent>,
-    mut signals_query: Query<&mut TileSignals>,
-    terrain_tile_storage_query: Query<&TileStorage, With<TerrainTilemap>>,
+    map_signals: Res<MapResource<TileSignals>>,
     mut signal_configs: ResMut<SignalConfigs>,
 ) {
-    let terrain_tile_storage = terrain_tile_storage_query.single();
     for creation_event in modification_events.iter() {
         match creation_event {
             SignalModificationEvent::SignalIncrement {
@@ -96,11 +86,11 @@ fn handle_signal_modification_events(
                 pos,
                 increment,
             } => {
-                if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
-                    let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
-
-                    tile_signals.increment(emitter, *increment);
-                }
+                map_signals
+                    .get(pos)
+                    .unwrap()
+                    .get_mut()
+                    .increment(emitter, *increment);
             }
             SignalModificationEvent::SignalCreate {
                 emitter,
@@ -108,20 +98,21 @@ fn handle_signal_modification_events(
                 initial,
                 config,
             } => {
-                if let Some(tile_entity) = terrain_tile_storage.checked_get(pos) {
-                    let mut tile_signals = signals_query.get_mut(tile_entity).unwrap();
-                    signal_configs.insert(*emitter, *config);
-                    tile_signals.insert(*emitter, *initial);
-                }
+                signal_configs.insert(*emitter, *config);
+                map_signals
+                    .get(pos)
+                    .unwrap()
+                    .get_mut()
+                    .insert(*emitter, *initial);
             }
         }
     }
 }
 
-/// System that decays signals at all graphics, at their configured per-tick decay probability
-fn decay(mut signals_query: Query<&mut TileSignals>, signal_configs: Res<SignalConfigs>) {
-    for mut tile_signals in signals_query.iter_mut() {
-        tile_signals.decay(&signal_configs)
+/// System that decays signals at all positions, at their configured per-tick decay probability
+fn decay(mut map_signals: ResMut<MapResource<TileSignals>>, signal_configs: Res<SignalConfigs>) {
+    for tile_signals in map_signals.values_mut() {
+        tile_signals.get_mut().decay(&signal_configs);
     }
 }
 
@@ -130,34 +121,39 @@ fn decay(mut signals_query: Query<&mut TileSignals>, signal_configs: Res<SignalC
 ///
 /// Currently movement only occurs due to diffusion.
 fn compute_deltas(
-    terrain_tilemap_query: Query<(&TilemapSize, &TileStorage), With<TerrainTilemap>>,
-    signals_query: Query<(&TilePos, &mut TileSignals)>,
+    map_positions: Res<MapPositions>,
+    mut map_signals: ResMut<MapResource<TileSignals>>,
     signal_configs: Res<SignalConfigs>,
 ) {
-    let (map_size, tile_storage) = terrain_tilemap_query.single();
-    for (tile_pos, signals) in signals_query.iter() {
-        for (emitter_id, current_value) in signals.current_values() {
+    for tile_pos in map_positions.iter_positions() {
+        let current_values = map_signals.get(tile_pos).unwrap().read().current_values();
+        let signals_patch = map_signals.get_patch_mut(tile_pos).unwrap();
+
+        for (emitter_id, current_value) in current_values {
             let signal_config = signal_configs.get(&emitter_id).unwrap();
-            // FIXME: these neighbor positions/entities should be cached (in a resource?)
-            let neighbor_entities =
-                HexNeighbors::get_neighbors(tile_pos, map_size).entities(tile_storage);
-            let mutable_neighbor_signals =
-                neighbor_entities.and_then(|entity| signals_query.get(entity).map(|(_, s)| s).ok());
+
+            // TODO: this should also be cached in a MapResource?
             // normalize the diffusion factors into a probability
             let neighbor_diffusion_probability = if signal_config.diffusion_factor > 0.0 {
-                signal_config.diffusion_factor
-                    / (signal_config.diffusion_factor
-                        * ((mutable_neighbor_signals.iter().count() + 1) as f32))
+                let count = map_positions.get_patch_count(tile_pos).unwrap();
+                signal_config.diffusion_factor / (signal_config.diffusion_factor * count as f32)
             } else {
                 0.0
             };
+
             let mut total_outgoing = 0.0;
-            for s in mutable_neighbor_signals.iter() {
-                let delta = neighbor_diffusion_probability * current_value;
-                s.increment_incoming(&emitter_id, delta);
-                total_outgoing += delta;
+            for location in HexPatchLocation::variants() {
+                if let Some(s) = signals_patch.get_inner_mut(location) {
+                    let delta = neighbor_diffusion_probability * current_value;
+                    s.get_mut().increment_incoming(&emitter_id, delta);
+                    total_outgoing += delta;
+                }
             }
-            signals.increment_outgoing(&emitter_id, total_outgoing);
+            signals_patch
+                .get_inner_mut(HexPatchLocation::Center)
+                .unwrap()
+                .get_mut()
+                .increment_outgoing(&emitter_id, total_outgoing);
         }
     }
 }
@@ -165,9 +161,9 @@ fn compute_deltas(
 /// Applies deltas due to movement of signals between graphics.
 ///
 /// Should run after [`compute_deltas`].
-fn apply_deltas(mut signals_query: Query<&mut TileSignals>) {
-    for mut tile_signals in signals_query.iter_mut() {
-        tile_signals.apply_deltas()
+fn apply_deltas(mut map_signals: ResMut<MapResource<TileSignals>>) {
+    for tile_signals in map_signals.values_mut() {
+        tile_signals.get_mut().apply_deltas();
     }
 }
 

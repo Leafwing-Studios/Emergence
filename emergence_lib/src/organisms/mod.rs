@@ -5,10 +5,6 @@ use bevy::prelude::*;
 pub mod structures;
 pub mod units;
 
-/// The marker component for all organisms.
-#[derive(Component, Clone, Default)]
-pub struct Organism;
-
 /// The mass of each element that makes up the entity
 #[derive(Component, Clone, Default)]
 pub struct Composition {
@@ -19,8 +15,6 @@ pub struct Composition {
 /// An organism is a living component of the game ecosystem.
 #[derive(Bundle, Default)]
 pub struct OrganismBundle {
-    /// Marker component.
-    pub organism: Organism,
     /// Defines the elements making up this organism.
     pub composition: Composition,
 }
