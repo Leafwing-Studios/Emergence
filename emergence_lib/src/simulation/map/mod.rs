@@ -7,6 +7,7 @@ pub mod resources;
 use crate::simulation::generation::{GenerationConfig, MAP_RADIUS};
 use crate::simulation::map::hex_patch::HexPatch;
 use bevy::ecs::system::Resource;
+use bevy::log::info;
 use bevy::prelude::{Commands, Res};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::map::TilemapSize;
@@ -81,14 +82,10 @@ impl MapGeometry {
     /// Checks to see if the given tile position lies within the map
     #[inline]
     pub const fn check_inclusion(&self, tile_pos: &TilePos) -> bool {
-        let delta_x = (tile_pos.x as isize - self.center.x as isize).abs() as u32;
+        let delta_x = (tile_pos.x as isize - self.center.x as isize).unsigned_abs() as u32;
         if delta_x < self.radius + 1 {
-            let delta_y = (tile_pos.y as isize - self.center.y as isize).abs() as u32;
-            if delta_y < self.radius + 1 {
-                true
-            } else {
-                false
-            }
+            let delta_y = (tile_pos.y as isize - self.center.y as isize).unsigned_abs() as u32;
+            delta_y < self.radius + 1
         } else {
             false
         }
@@ -103,6 +100,7 @@ impl From<&GenerationConfig> for MapGeometry {
 
 /// Initialize the [`MapGeometry`] resource according to [`GenerationConfig`].
 pub fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
+    info!("Configuring map geometry...");
     let map_geometry: MapGeometry = (&*config).into();
 
     commands.insert_resource(map_geometry);
@@ -118,7 +116,7 @@ pub struct MapPositions {
     /// [`HashMap`] caching the [`HexPatch`] centered at each position
     patches: HashMap<TilePos, HexPatch<TilePos>>,
     /// [`HashMap`] caching the number of hex neighbors at each position
-    patch_count: HashMap<TilePos, usize>,
+    patch_sizes: HashMap<TilePos, usize>,
 }
 
 impl MapPositions {
@@ -130,7 +128,7 @@ impl MapPositions {
             n_positions,
             positions: Vec::with_capacity(n_positions),
             patches: HashMap::with_capacity(n_positions),
-            patch_count: HashMap::with_capacity(n_positions),
+            patch_sizes: HashMap::with_capacity(n_positions),
         };
 
         let center = map_geometry.center();
@@ -141,11 +139,11 @@ impl MapPositions {
             .into_iter()
             .map(|axial_pos| axial_pos.as_tile_pos_unchecked())
         {
-            let neighbors = HexPatch::generate(&position, map_geometry);
-            let count = neighbors.count();
+            let patch = HexPatch::generate(&position, map_geometry);
+            let patch_size = patch.count();
             map_positions.positions.push(position);
-            map_positions.patches.insert(position, neighbors);
-            map_positions.patch_count.insert(position, count);
+            map_positions.patches.insert(position, patch);
+            map_positions.patch_sizes.insert(position, patch_size);
         }
 
         map_positions
@@ -170,7 +168,7 @@ impl MapPositions {
     ///
     /// Usually, missing positions indicate map edges
     pub fn get_patch_count(&self, tile_pos: &TilePos) -> Option<usize> {
-        self.patch_count.get(tile_pos).copied()
+        self.patch_sizes.get(tile_pos).copied()
     }
 
     /// Get the number of positions that are managed by this structure
@@ -181,6 +179,7 @@ impl MapPositions {
 
 /// Populate the [`MapPositionCache`] resource with positions and neighbors.
 pub fn create_position_cache(mut commands: Commands, map_geometry: Res<MapGeometry>) {
+    info!("Creating map positions cache...");
     let map_positions = MapPositions::new(&map_geometry);
 
     commands.insert_resource(map_positions);

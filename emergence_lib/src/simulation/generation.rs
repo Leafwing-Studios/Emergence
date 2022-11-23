@@ -8,6 +8,7 @@ use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
+use bevy::log::info;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilemapGridSize;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -120,6 +121,7 @@ fn generate_terrain(
     config: Res<GenerationConfig>,
     map_positions: Res<MapPositions>,
 ) {
+    info!("Generating terrain...");
     let mut rng = thread_rng();
 
     let mut entity_data = Vec::with_capacity(map_positions.n_positions());
@@ -142,6 +144,7 @@ fn generate_organisms(
     config: Res<GenerationConfig>,
     passable_tiles: Query<&TilePos, Without<Impassable>>,
 ) {
+    info!("Generating organisms...");
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;
     let n_fungi = config.n_fungi;
