@@ -46,23 +46,9 @@ pub mod testing {
         app
     }
 
-    /// The [`bevy`] plugins needed to make simulation work
-    pub fn bevy_app() -> App {
-        let mut app = minimal_app();
-        app.insert_resource(bevy::render::settings::WgpuSettings {
-            backends: None,
-            ..default()
-        });
-
-        app.add_plugin(bevy::asset::AssetPlugin::default())
-            .add_plugin(bevy::window::WindowPlugin::default())
-            .add_plugin(bevy::render::RenderPlugin);
-        app
-    }
-
     /// Just the game logic and simulation
     pub fn simulation_app() -> App {
-        let mut app = bevy_app();
+        let mut app = minimal_app();
         app.add_plugin(SimulationPlugin);
         app
     }

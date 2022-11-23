@@ -9,6 +9,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::{Res, ResMut, Resource};
+use bevy::prelude::{StageLabel, SystemStage};
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -22,9 +23,9 @@ use crate::graphics::sprites::IntoSprite;
 use crate::graphics::tilemap_marker::TilemapMarker;
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
+use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy_trait_query::{One, RegisterExt};
-use crate::simulation::map::MapGeometry;
 
 pub mod debug;
 pub mod organisms;
@@ -36,6 +37,15 @@ pub mod tilemap_marker;
 /// All of the code needed to draw things on screen.
 pub struct GraphicsPlugin;
 
+/// The stages in which graphics systems run
+#[derive(StageLabel)]
+pub enum GraphicsStage {
+    /// Stage in which tilemap initialization happens, should run after [`StartupStage::Startup`]
+    TilemapInitialization,
+    /// Stage in which debug label generation happens, should run after [`TilemapInitialization`](GraphicsStage::TilemapInitialization)
+    DebugLabelGeneration,
+}
+
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
@@ -46,10 +56,20 @@ impl Plugin for GraphicsPlugin {
             .register_component_as::<dyn IntoSprite, ImpassableTerrain>()
             .register_component_as::<dyn IntoSprite, PlainTerrain>()
             .init_resource::<TilemapRegister>()
+            .add_startup_stage_after(
+                StartupStage::Startup,
+                GraphicsStage::TilemapInitialization,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_after(
+                GraphicsStage::TilemapInitialization,
+                GraphicsStage::DebugLabelGeneration,
+                SystemStage::parallel(),
+            )
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
-            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_tilemaps)
-            .add_startup_system_to_stage(StartupStage::PostStartup, generate_debug_labels)
-            .add_system_to_stage(CoreStage::First, update_sprites);
+            .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
+            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
+            .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
     }
 }
 

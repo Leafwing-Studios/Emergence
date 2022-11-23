@@ -8,6 +8,7 @@ use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
+use bevy::log::info;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilemapGridSize;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -84,43 +85,30 @@ pub enum GenerationStage {
     OrganismGeneration,
 }
 
-/// Label for the "grand stage" in which all the [`GenerationStage`]s are executed
-#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub struct GenerationScheduleLabel;
-
-impl GenerationScheduleLabel {
-    /// Creates a schedule out of stages enumerated in [`GenerationStage`]
-    pub fn schedule() -> Schedule {
-        Schedule::default()
-            .with_stage(GenerationStage::Configuration, SystemStage::parallel())
-            .with_stage_after(
-                GenerationStage::Configuration,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .with_stage_after(
-                GenerationStage::PositionCaching,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .with_stage_after(
-                GenerationStage::TerrainGeneration,
-                GenerationStage::OrganismGeneration,
-                SystemStage::parallel(),
-            )
-    }
-}
-
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
+        info!("Building Generation plugin...");
         app.init_resource::<GenerationConfig>()
             .add_startup_stage_before(
                 StartupStage::Startup,
-                GenerationScheduleLabel,
-                GenerationScheduleLabel::schedule(),
+                GenerationStage::OrganismGeneration,
+                SystemStage::parallel(),
             )
-            // .init_resource::<PositionCache>()
-            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
+            .add_startup_stage_before(
+                GenerationStage::OrganismGeneration,
+                GenerationStage::TerrainGeneration,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                GenerationStage::TerrainGeneration,
+                GenerationStage::PositionCaching,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                GenerationStage::PositionCaching,
+                GenerationStage::Configuration,
+                SystemStage::parallel(),
+            )
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
             .add_startup_system_to_stage(GenerationStage::PositionCaching, create_position_cache)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
@@ -134,6 +122,7 @@ fn generate_terrain(
     config: Res<GenerationConfig>,
     map_positions: Res<MapPositions>,
 ) {
+    info!("Generating terrain...");
     let mut rng = thread_rng();
 
     let mut entity_data = Vec::with_capacity(map_positions.n_positions());
@@ -156,6 +145,7 @@ fn generate_organisms(
     config: Res<GenerationConfig>,
     passable_tiles: Query<&TilePos, Without<Impassable>>,
 ) {
+    info!("Generating organisms...");
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;
     let n_fungi = config.n_fungi;

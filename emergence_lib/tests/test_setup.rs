@@ -1,17 +1,10 @@
 // use common::{bevy_app, interaction_app, minimal_app, simulation_app};
 
-use emergence_lib::testing::{bevy_app, interaction_app, minimal_app, simulation_app};
+use emergence_lib::testing::{interaction_app, minimal_app, simulation_app};
 
 #[test]
 fn minimal_app_can_update() {
     let mut app = minimal_app();
-
-    app.update()
-}
-
-#[test]
-fn bevy_app_can_update() {
-    let mut app = bevy_app();
 
     app.update()
 }
