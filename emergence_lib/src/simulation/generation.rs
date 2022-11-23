@@ -89,37 +89,22 @@ impl Plugin for GenerationPlugin {
         app.init_resource::<GenerationConfig>()
             .add_startup_stage_before(
                 StartupStage::Startup,
-                GenerationStage::Configuration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_after(
-                GenerationStage::Configuration,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                StartupStage::Startup,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_after(
-                GenerationStage::PositionCaching,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                StartupStage::Startup,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_after(
-                GenerationStage::TerrainGeneration,
                 GenerationStage::OrganismGeneration,
                 SystemStage::parallel(),
             )
             .add_startup_stage_before(
-                StartupStage::Startup,
                 GenerationStage::OrganismGeneration,
+                GenerationStage::TerrainGeneration,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                GenerationStage::TerrainGeneration,
+                GenerationStage::PositionCaching,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                GenerationStage::PositionCaching,
+                GenerationStage::Configuration,
                 SystemStage::parallel(),
             )
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)

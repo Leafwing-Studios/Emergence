@@ -3,12 +3,6 @@ use bevy::window::WindowPlugin;
 
 fn main() {
     App::new()
-        // .add_plugins(DefaultPlugins.set(WindowPlugin {
-        //     window: WindowDescriptor {
-        //         title: "Emergence".to_string(),
-        //         ..Default::default()
-        //     }..Default::default(),
-        // }))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Emergence".to_string(),
