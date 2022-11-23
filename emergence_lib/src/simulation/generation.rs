@@ -2,7 +2,7 @@
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
-use crate::simulation::map::{configure_map_geometry, populate_position_cache, MapPositions};
+use crate::simulation::map::{configure_map_geometry, create_position_cache, MapPositions};
 use crate::simulation::pathfinding::Impassable;
 use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
@@ -114,7 +114,7 @@ impl GenerationScheduleLabel {
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GenerationConfig>()
-            .add_stage_before(
+            .add_startup_stage_before(
                 StartupStage::Startup,
                 GenerationScheduleLabel,
                 GenerationScheduleLabel::schedule(),
@@ -122,7 +122,7 @@ impl Plugin for GenerationPlugin {
             // .init_resource::<PositionCache>()
             // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
-            .add_startup_system_to_stage(GenerationStage::PositionCaching, populate_position_cache)
+            .add_startup_system_to_stage(GenerationStage::PositionCaching, create_position_cache)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
             .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
     }

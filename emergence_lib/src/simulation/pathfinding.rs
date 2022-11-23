@@ -11,7 +11,7 @@ pub struct Impassable;
 
 /// Caches:
 /// * data for whether a given position is passable
-/// * filters (of type [`HexNeighbors<bool>`](crate::simulation::map::neighbors::HexNeighbors)) for each position
+/// * filters (of type [`HexNeighbors<bool>`](crate::simulation::map::hex_patch::HexPatch)) for each position
 #[derive(Resource, Deref, DerefMut)]
 pub struct PassableFilters {
     /// The [`MapFilter`] inner type

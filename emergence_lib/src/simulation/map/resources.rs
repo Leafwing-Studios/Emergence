@@ -1,6 +1,6 @@
 //! Code for managing data that is deeply tied to the map
 
-use crate::simulation::map::neighbors::HexNeighbors;
+use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::MapPositions;
 use bevy::prelude::Resource;
 use bevy::utils::HashMap;
@@ -49,23 +49,27 @@ impl<T> MapData<T> {
 /// the map
 ///
 /// It can give you [`MapData<T>`](MapData) at a given tile position, or it can give you
-/// [`HexNeighbors<MapData<T>>`](HexNeighbors) for the given position.
+/// [`Hexpatches<MapData<T>>`](HexPatch) for the given position.
 ///
 /// Internally, [`MapData`] is stored in a [`HashMap`] for each position, in the `storage` field,
-/// and this same data is then referenced to by the `neighbors` field.
+/// and this same data is then referenced to by the `patches` field.
 #[derive(Resource)]
 pub struct MapResource<T> {
+    /// Primary internal storage of data associated with each position
     pub(crate) storage: HashMap<TilePos, MapData<T>>,
-    pub(crate) neighbors: HashMap<TilePos, HexNeighbors<MapData<T>>>,
+    /// [`HexPatch`] of data centered at each position
+    ///
+    /// It is based off of references to data in `storage`.
+    pub(crate) patches: HashMap<TilePos, HexPatch<MapData<T>>>,
 }
 
 impl<T> MapResource<T>
 where
     T: Default,
 {
-    /// Create new from an underlying `MapPostions` template
+    /// Create new from an underlying [`MapPositions`] template
     ///
-    /// This allocates capacity and initializes neighbors based on the template provided.
+    /// This allocates capacity and initializes patches based on the template provided.
     ///
     /// This requires that that there is a `Default` impl for the underlying data type
     pub fn default_from_template(template: &MapPositions) -> MapResource<T> {
@@ -76,9 +80,9 @@ where
                 .map(|position| (*position, T::default())),
         );
 
-        let neighbors = MapResource::generate_neighbors(&storage, template);
+        let patches = MapResource::generate_patches(&storage, template);
 
-        MapResource { storage, neighbors }
+        MapResource { storage, patches }
     }
 }
 
@@ -93,28 +97,28 @@ impl<T> MapResource<T> {
         storage
     }
 
-    /// Generate neighbors for the given storage
+    /// Generate patches for the given storage
     /// TODO: improve doc string
-    pub fn generate_neighbors(
+    pub fn generate_patches(
         storage: &HashMap<TilePos, MapData<T>>,
         template: &MapPositions,
-    ) -> HashMap<TilePos, HexNeighbors<MapData<T>>> {
-        let mut neighbors = HashMap::with_capacity(template.n_positions());
-        neighbors.extend(template.iter_positions().filter_map(|position| {
-            let tile_neighbors = template.get_neighbors(position)?;
-            let neighbors = tile_neighbors.and_then_ref(|position| {
+    ) -> HashMap<TilePos, HexPatch<MapData<T>>> {
+        let mut patches = HashMap::with_capacity(template.n_positions());
+        patches.extend(template.iter_positions().filter_map(|position| {
+            let tile_patch = template.get_patch(position)?;
+            let data_patch = tile_patch.and_then_ref(|position| {
                 let map_data = storage.get(position)?;
                 let map_data_clone: MapData<T> = map_data.clone();
                 Some(map_data_clone)
             });
-            Some((*position, neighbors))
+            Some((*position, data_patch))
         }));
-        neighbors
+        patches
     }
 
     /// Create new from an underlying [`MapPostions`] template.
     ///
-    /// This allocates capacity and initializes neighbors based on the template provided.
+    /// This allocates capacity and initializes patches based on the template provided.
     ///
     /// If your underlying data implements [`Default`], you could use
     /// [`default_from_template`](MapData::default_from_template) to also initialize data.
@@ -123,9 +127,9 @@ impl<T> MapResource<T> {
         data: impl Iterator<Item = (TilePos, T)>,
     ) -> MapResource<T> {
         let storage = MapResource::generate_storage(template, data);
-        let neighbors = MapResource::generate_neighbors(&storage, template);
+        let patches = MapResource::generate_patches(&storage, template);
 
-        MapResource { storage, neighbors }
+        MapResource { storage, patches }
     }
 
     /// Replace data at the specified position
@@ -143,17 +147,14 @@ impl<T> MapResource<T> {
         self.storage.get_mut(position)
     }
 
-    /// Get neighbor data for given position
-    pub fn get_neighbors(&self, position: &TilePos) -> Option<&HexNeighbors<MapData<T>>> {
-        self.neighbors.get(position)
+    /// Get immutable access to [`HexPatch`] of data for given position
+    pub fn get_patch(&self, position: &TilePos) -> Option<&HexPatch<MapData<T>>> {
+        self.patches.get(position)
     }
 
-    /// Get mutable access to neighbor data for given position
-    pub fn get_neighbors_mut(
-        &mut self,
-        position: &TilePos,
-    ) -> Option<&mut HexNeighbors<MapData<T>>> {
-        self.neighbors.get_mut(position)
+    /// Get mutable access to [`HexPatch`] of data for given position
+    pub fn get_patch_mut(&mut self, position: &TilePos) -> Option<&mut HexPatch<MapData<T>>> {
+        self.patches.get_mut(position)
     }
 
     /// Iterate over the positions managed by this resource

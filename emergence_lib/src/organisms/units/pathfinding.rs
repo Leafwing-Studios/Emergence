@@ -1,6 +1,6 @@
 //! Utilities to support organism pathfinding.
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::map::neighbors::HexNeighbors;
+use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::resources::MapData;
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::distributions::WeightedError;
@@ -22,9 +22,9 @@ pub struct WeightedTilePos {
 /// Select an adjacent neighboring tile at random, based on the provided weight function.
 ///
 /// Returns [`None`] if and only if no such tile exists.
-pub fn get_weighted_neighbor<SignalsToWeight>(
-    passable_neighbors: &HexNeighbors<TilePos>,
-    neighbor_signals: &HexNeighbors<MapData<TileSignals>>,
+pub fn get_weighted_position<SignalsToWeight>(
+    valid_possibilities: &HexPatch<TilePos>,
+    signals_patch: &HexPatch<MapData<TileSignals>>,
     signals_to_weight: SignalsToWeight,
 ) -> Option<TilePos>
 where
@@ -32,29 +32,29 @@ where
 {
     let mut rng = thread_rng();
 
-    HexNeighbors::weighted_neighbors(passable_neighbors, neighbor_signals, signals_to_weight)
+    HexPatch::weighted_neighbors(valid_possibilities, signals_patch, signals_to_weight)
         .choose_random(&mut rng)
         .map(|weighted_position| weighted_position.position)
 }
 
-impl HexNeighbors<WeightedTilePos> {
+impl HexPatch<WeightedTilePos> {
     /// Returns the set of neighboring cells, weighted according to signal values.
     pub fn weighted_neighbors<SignalsToWeight>(
-        passable_neighbors: &HexNeighbors<TilePos>,
-        neighbor_signals: &HexNeighbors<MapData<TileSignals>>,
+        valid_possibilities: &HexPatch<TilePos>,
+        signals_patch: &HexPatch<MapData<TileSignals>>,
         signals_to_weight: SignalsToWeight,
-    ) -> HexNeighbors<WeightedTilePos>
+    ) -> HexPatch<WeightedTilePos>
     where
         SignalsToWeight: Fn(&TileSignals) -> f32,
     {
-        let f = |direction| {
-            let position = *passable_neighbors.get(direction)?;
-            let signals = neighbor_signals.get(direction)?;
+        let f = |location| {
+            let position = *valid_possibilities.get(location)?;
+            let signals = signals_patch.get(location)?;
             let weight = signals_to_weight(&signals.read());
             Some(WeightedTilePos { position, weight })
         };
 
-        HexNeighbors::<WeightedTilePos>::from_directional_closure(f)
+        HexPatch::<WeightedTilePos>::from_locational_closure(f)
     }
 
     /// Choose a random neighbor

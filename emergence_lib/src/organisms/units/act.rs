@@ -1,11 +1,10 @@
 //! Unit behaviour simulation
 
-use crate::organisms::units::pathfinding::get_weighted_neighbor;
+use crate::organisms::units::pathfinding::get_weighted_position;
 
 use crate::curves::BottomClampedLine;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::map::neighbors::HexNeighbors;
 use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::PassableFilters;
@@ -29,13 +28,12 @@ fn wander(
         )
     };
 
-    let neighbors = map_positions.get_neighbors(position).unwrap();
-    let passable_filter = passable_filters.get_neighbors(position).unwrap();
-    let passable_neighbors: HexNeighbors<TilePos> =
-        neighbors.apply_filter(passable_filter, false).cloned();
-    let neighbor_signals = map_signals.get_neighbors(position).unwrap();
+    let position_patch = map_positions.get_patch(position).unwrap();
+    let filter_patch = passable_filters.get_patch(position).unwrap();
+    let valid_possibilities = position_patch.apply_filter(filter_patch, false).cloned();
+    let signals_patch = map_signals.get_patch(position).unwrap();
 
-    let target = get_weighted_neighbor(&passable_neighbors, neighbor_signals, signals_to_weight);
+    let target = get_weighted_position(&valid_possibilities, signals_patch, signals_to_weight);
 
     target.unwrap_or(*position)
 }

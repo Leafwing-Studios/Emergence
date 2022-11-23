@@ -10,7 +10,7 @@ pub type MapFilter = MapResource<bool>;
 impl MapFilter {
     /// Create new from an underlying [`MapPositions`] template.
     ///
-    /// This allocates capacity and initializes neighbors based on the [`MapPositions`] template
+    /// This allocates capacity and initializes patches based on the [`MapPositions`] template
     /// provided, and the specified default value for data.
     pub fn new_with_default(
         default: bool,
@@ -24,7 +24,7 @@ impl MapFilter {
                 .map(|position| (*position, default)),
         );
 
-        let neighbors = MapResource::generate_neighbors(&storage, template);
+        let patches = MapResource::generate_patches(&storage, template);
 
         for (position, value) in data {
             if let Some(tile_value) = storage.get_mut(&position) {
@@ -32,6 +32,6 @@ impl MapFilter {
             }
         }
 
-        MapResource { storage, neighbors }
+        MapResource { storage, patches }
     }
 }

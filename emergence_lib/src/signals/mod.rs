@@ -6,14 +6,15 @@ pub mod emitters;
 pub mod map_overlay;
 pub mod tile_signals;
 use crate::curves::Mapping;
+use crate::enum_iter::IterableEnum;
 use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::map_overlay::MapOverlayPlugin;
 use crate::signals::tile_signals::TileSignals;
+use crate::simulation::map::hex_patch::HexPatchLocation;
 use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::MapPositions;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HEX_DIRECTIONS;
 use bevy_ecs_tilemap::prelude::TilePos;
 
 /// This plugin manages all aspects of signals:
@@ -126,7 +127,7 @@ fn compute_deltas(
 ) {
     for tile_pos in map_positions.iter_positions() {
         let current_values = map_signals.get(tile_pos).unwrap().read().current_values();
-        let neighbors = map_signals.get_neighbors_mut(tile_pos).unwrap();
+        let signals_patch = map_signals.get_patch_mut(tile_pos).unwrap();
 
         for (emitter_id, current_value) in current_values {
             let signal_config = signal_configs.get(&emitter_id).unwrap();
@@ -134,23 +135,22 @@ fn compute_deltas(
             // TODO: this should also be cached in a MapResource?
             // normalize the diffusion factors into a probability
             let neighbor_diffusion_probability = if signal_config.diffusion_factor > 0.0 {
-                let count = map_positions.get_neighbor_count(tile_pos).unwrap();
-                signal_config.diffusion_factor
-                    / (signal_config.diffusion_factor * (count + 1) as f32)
+                let count = map_positions.get_patch_count(tile_pos).unwrap();
+                signal_config.diffusion_factor / (signal_config.diffusion_factor * count as f32)
             } else {
                 0.0
             };
 
             let mut total_outgoing = 0.0;
-            for direction in HEX_DIRECTIONS.into_iter() {
-                if let Some(s) = neighbors.get_mut(direction.into()) {
+            for location in HexPatchLocation::variants() {
+                if let Some(s) = signals_patch.get_inner_mut(location) {
                     let delta = neighbor_diffusion_probability * current_value;
                     s.get_mut().increment_incoming(&emitter_id, delta);
                     total_outgoing += delta;
                 }
             }
-            map_signals
-                .get_mut(tile_pos)
+            signals_patch
+                .get_inner_mut(HexPatchLocation::Center)
                 .unwrap()
                 .get_mut()
                 .increment_outgoing(&emitter_id, total_outgoing);
