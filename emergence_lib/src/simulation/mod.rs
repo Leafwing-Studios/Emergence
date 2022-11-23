@@ -9,6 +9,7 @@ use crate::simulation::generation::GenerationPlugin;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassableFilters};
 use bevy::app::{App, CoreStage, Plugin};
+use bevy::log::info;
 use bevy::prelude::{Commands, Query, Res, With};
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -21,6 +22,7 @@ pub struct SimulationPlugin;
 
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
+        info!("Building simulation plugin...");
         app.add_plugin(GenerationPlugin)
             .add_plugin(StructuresPlugin)
             .add_plugin(UnitsPlugin)

@@ -87,6 +87,7 @@ pub enum GenerationStage {
 
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
+        info!("Building Generation plugin...");
         app.init_resource::<GenerationConfig>()
             .add_startup_stage_before(
                 StartupStage::Startup,
