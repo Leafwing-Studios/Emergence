@@ -34,7 +34,7 @@ impl TileSignals {
 
     /// Insert a signal.
     ///
-    /// This follows [`HashMap::insert`](HashMap::insert) semantics, as that method is called 
+    /// This follows [`HashMap::insert`](HashMap::insert) semantics, as that method is called
     /// internally.
     ///
     /// In particular, it replaces an old value, if an old value existed.
