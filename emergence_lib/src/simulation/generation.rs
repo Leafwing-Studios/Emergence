@@ -84,43 +84,44 @@ pub enum GenerationStage {
     OrganismGeneration,
 }
 
-/// Label for the "grand stage" in which all the [`GenerationStage`]s are executed
-#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub struct GenerationScheduleLabel;
-
-impl GenerationScheduleLabel {
-    /// Creates a schedule out of stages enumerated in [`GenerationStage`]
-    pub fn schedule() -> Schedule {
-        Schedule::default()
-            .with_stage(GenerationStage::Configuration, SystemStage::parallel())
-            .with_stage_after(
-                GenerationStage::Configuration,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .with_stage_after(
-                GenerationStage::PositionCaching,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .with_stage_after(
-                GenerationStage::TerrainGeneration,
-                GenerationStage::OrganismGeneration,
-                SystemStage::parallel(),
-            )
-    }
-}
-
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GenerationConfig>()
             .add_startup_stage_before(
                 StartupStage::Startup,
-                GenerationScheduleLabel,
-                GenerationScheduleLabel::schedule(),
+                GenerationStage::Configuration,
+                SystemStage::parallel(),
             )
-            // .init_resource::<PositionCache>()
-            // This inserts the `MapGeometry` resource, and so needs to run in an earlier stage
+            .add_startup_stage_after(
+                GenerationStage::Configuration,
+                GenerationStage::PositionCaching,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                StartupStage::Startup,
+                GenerationStage::PositionCaching,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_after(
+                GenerationStage::PositionCaching,
+                GenerationStage::TerrainGeneration,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                StartupStage::Startup,
+                GenerationStage::TerrainGeneration,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_after(
+                GenerationStage::TerrainGeneration,
+                GenerationStage::OrganismGeneration,
+                SystemStage::parallel(),
+            )
+            .add_startup_stage_before(
+                StartupStage::Startup,
+                GenerationStage::OrganismGeneration,
+                SystemStage::parallel(),
+            )
             .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
             .add_startup_system_to_stage(GenerationStage::PositionCaching, create_position_cache)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
