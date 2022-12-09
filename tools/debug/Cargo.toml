@@ -12,4 +12,3 @@ name = "debug_tools"
 [dependencies]
 bevy = "0.9.0"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
-# emergence_lib = { path = "../../emergence_lib" }
