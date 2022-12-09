@@ -71,8 +71,8 @@ impl Plugin for GraphicsPlugin {
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
             .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
             .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
-            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, infotext_system)
-            .add_system_to_stage(CoreStage::Update, change_text_system)
+            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
+            .add_system_to_stage(CoreStage::Update, change_infotext)
             .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
     }
 }

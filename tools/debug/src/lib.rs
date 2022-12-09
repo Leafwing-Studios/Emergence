@@ -12,6 +12,5 @@ use bevy::{
 
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
-// use emergence_lib::graphics::terrain::TerrainTilemap;
 
 pub mod debug_ui;

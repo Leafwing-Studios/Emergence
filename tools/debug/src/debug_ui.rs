@@ -5,7 +5,7 @@ use crate::*;
 pub fn generate_debug_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize)>, // , With<TerrainTilemap>
+    tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize)>,
     tile_q: Query<&TilePos>,
 ) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -42,19 +42,22 @@ pub fn generate_debug_labels(
 }
 
 // Modified text_debug example from the Bevy UI examples (https://github.com/bevyengine/bevy/blob/main/examples/ui/text_debug.rs)
-/// Tag for changing text ui elements
+/// Tag for the changing fps text component.
 #[derive(Component)]
-pub struct TextChanges;
+pub struct FpsText;
+/// Geneal tag for prototyping changing text ui elements
+#[derive(Component)]
+pub struct ChangingText;
 
 /// Generate text elements on the screen
-pub fn infotext_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     // Create a text section in the top left corner to draw the fps readout
     commands.spawn((
         TextBundle::from_sections([TextSection::new(
             "",
             TextStyle {
-                font: font.clone(),
+                font,
                 font_size: 30.0,
                 color: Color::LIME_GREEN,
             },
@@ -68,18 +71,18 @@ pub fn infotext_system(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             ..default()
         }),
-        TextChanges,
+        ChangingText,
     ));
 }
 
 /// Change text being displayed on the screen.
-pub fn change_text_system(
+pub fn change_infotext(
     time: Res<Time>,
     diagnostics: Res<Diagnostics>,
     // key: Res<Input<KeyCode>>, // add this later to toggle the fps display
-    mut query: Query<&mut Text, With<TextChanges>>,
+    mut fpstext_query: Query<&mut Text, With<FpsText>>,
 ) {
-    for mut text in &mut query {
+    for mut text in &mut fpstext_query {
         let mut fps = 0.0;
         if let Some(fps_diagnostic) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(fps_smoothed) = fps_diagnostic.smoothed() {
