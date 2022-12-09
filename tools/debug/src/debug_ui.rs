@@ -71,7 +71,7 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
             },
             ..default()
         }),
-        ChangingText,
+        FpsText,
     ));
 }
 
