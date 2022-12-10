@@ -1,5 +1,0 @@
-# Art
-
-## Visuals
-
-## Audio
