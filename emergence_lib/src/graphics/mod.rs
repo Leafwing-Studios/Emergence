@@ -4,6 +4,7 @@ use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::TerrainTilemap;
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::asset::AssetServer;
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
@@ -14,8 +15,8 @@ use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate as emergence_lib;
-use crate::graphics::debug::generate_debug_labels;
 use crate::graphics::organisms::OrganismsTilemap;
+use debug_tools::debug_ui::*;
 use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::ProduceTilemap;
@@ -27,12 +28,12 @@ use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
 use bevy_trait_query::{One, RegisterExt};
 
-pub mod debug;
 pub mod organisms;
 pub mod produce;
 pub mod sprites;
 pub mod terrain;
 pub mod tilemap_marker;
+pub mod ui;
 
 /// All of the code needed to draw things on screen.
 pub struct GraphicsPlugin;
@@ -49,6 +50,7 @@ pub enum GraphicsStage {
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
+            .add_plugin(FrameTimeDiagnosticsPlugin)
             .register_component_as::<dyn IntoSprite, Ant>()
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
@@ -69,6 +71,8 @@ impl Plugin for GraphicsPlugin {
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
             .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
             .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
+            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
+            .add_system_to_stage(CoreStage::Update, change_infotext)
             .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
     }
 }

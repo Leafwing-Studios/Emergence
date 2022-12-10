@@ -1,10 +1,11 @@
 [workspace]
-resolver="2"
+resolver = "2"
 
 members = [
     "emergence_game",
     "emergence_lib",
     "emergence_macros",
-    "tools/ci"
+    "tools/ci",
+    "tools/debug",
 ]
 default-members = ["emergence_game", "emergence_lib"]
