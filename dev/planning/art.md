@@ -1,4 +1,4 @@
-# Art 
+# Art
 
 ## Visuals
 

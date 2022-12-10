@@ -15,6 +15,8 @@ Below are the current planned goals for the project.
 * [ ] Explore a procedurally generated 2.5D world that changes dramatically over both time and space
   * [ ] Finalize art style/basic assets
   * [ ] Add more creatures/forms of life to the game
+  * [ ] Add time based mechanics
+  * [ ] Update procedural generation
 
 * [ ] Create a self-sustaining, robust ecosystem that can adapt to even the most severe disruptions
   * [ ] Add ways to track environmental factors
