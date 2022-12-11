@@ -1,4 +1,4 @@
-# *Emergence*
+# _Emergence_
 
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/leafwing-studios/emergence#license)
 [![CI](https://github.com/bevyengine/bevy/workflows/CI/badge.svg)](https://github.com/leafwing-studios/emergence/actions)
@@ -19,7 +19,7 @@ As the hive mind behind a growing, swarming, multi-species colony, you must lear
 
 ## Contributing
 
-While we're looking to one day release and sell this game, the code is open source*! As such, contributions are welcome.
+While we're looking to one day release and sell this game, the code is open source\*! As such, contributions are welcome.
 If this game appeals to you (or you just want to learn more about making real games in Bevy), feel free to chip in and learn!
 While the Serious Work happens here on Github, the dev team (and curious fans) hang out on the [Emergence Discord](https://discord.gg/GyTG5KT352).
 
@@ -29,14 +29,34 @@ Creativity and initiative is welcome:
 - if you see some code that could be faster, cleaner or better, just open a PR
 
 We follow an "optimistic merging" policy here: if the code is an improvement, and aligned with our goals for the game, we'll merge it in.
-We're happy to help teach you, but for questions that don't relate specifically to *Emergence* you should probably ask in the [Bevy Discord](https://discord.com/invite/bevy) (feel free to ping `@bzm3r`).
+We're happy to help teach you, but for questions that don't relate specifically to _Emergence_ you should probably ask in the [Bevy Discord](https://discord.com/invite/bevy) (feel free to ping `@bzm3r`).
 
 Ultimately, as maintainers, Leafwing Studios will maintain veto power over creative and technical decisions to help create a cohesive and compelling whole.
 Monetization strategy is TBD still, but payouts will be split between donations to upstream projects and contributors (both on and off the Leafwing Studios team) who have invested significant time, money and expertise into the project.
 
 Standard best practices from within the [Bevy ecosystem](https://github.com/bevyengine/bevy/blob/main/CONTRIBUTING.md) apply. Follow the code of conduct, write good issues, feel free to adopt PRs, and leave the code better than you found it!
 
-*see [Mindustry](https://mindustrygame.github.io/) for a great example of this working out!
+\*see [Mindustry](https://mindustrygame.github.io/) for a great example of this working out!
+
+### Getting started
+
+1. Make sure you have [Git](https://git-scm.com/), [Git LFS](https://git-lfs.github.com/) and [Rust with Cargo](https://www.rust-lang.org/tools/install) installed.
+
+2. Create a fork of this repository and clone it.
+
+3. Pull the assets from the large file storage (LFS):
+
+   ```cli
+   git lfs pull
+   ```
+
+4. Run the project:
+
+   ```cli
+   cargo run
+   ```
+
+5. You can now make your changes on a new branch and open a pull request once you are ready!
 
 ## License
 
