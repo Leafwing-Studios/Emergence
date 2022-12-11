@@ -27,9 +27,13 @@ snowballing from a simple ant-plant-fungi system as more and more species are do
 Guide this civilization as it grows, adapts and evolves in a challenging dynamic environment.
 Fight to build a robust, sustainable system, and fall in love with a factory builder unlike anything you've ever seen before.
 
+### Build a new world
+
 The world is your playground: shape the earth, build elaborate terrace or canal systems, and float goods downriver.
 A light touch is key: direct your units by controlling their preferences for the **signals** that waft from all things, and create elaborate factories by carefully zoning areas for the plants and fungi that serve as your production and refinement facilities.
 Tend to their needs, prune back their uncontrolled spread, and reap the rewards of your careful stewardship.
+
+### Face giant threats
 
 But when you're only a few centimeters in length, the world is a terribly unstable place!
 A rain storm becomes a great flood, predators are terrifying monsters, a fallen tree can level an entire district, and a dead animal presents an unprecedented windfall of nutrients.
@@ -38,15 +42,21 @@ Unchecked, disease can ravage your populace, while your very resource stores are
 **Robustness** is key.
 If you want to gather the raw materials needed to progress, much less combine them into the end products needed to take your colony to the next level via complex supply chains, you must learn to take advantage of your good fortune, while ensuring you can survive and adapt to the misfortune.
 
+### Deal with pollution
+
 Of course, not all problems are mere bad luck.
 As your predecessors learned, the most insidious problems are often those of your own making.
 Simply dumping your waste works fine to begin with, but eventually these unmanaged **externalities** will begin to catch up to you:
 degrading the soil, polluting water bodies and piling up in ever-growing mounds.
 Close the loop, reprocess and repurpose your waste, and turn the problem on its head.
 
+### Evolve to adapt to your environment
+
 To grow, adance and overcome these problems, your colony-civilization requires new options.
 New technology comes in two forms: the **evolution** of existing species in your civilization and the **assimilation** of new ones.
 Speciate existing species as many times as you'd like, and create specialized strains uniquely suited to specific tasks by selecting powerful evolutionary traits that come with tangible downsides.
+
+## Assimilate new species
 
 But when you need something truly different, you must master new techniques, and expand into the untamed wilds.
 There, you will encounter completely new species (like mycorrhizae, carnivorous plants, flying bees and predatory spiders) and, through hard work and clever thinking, domesticate them.
