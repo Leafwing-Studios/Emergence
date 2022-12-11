@@ -7,7 +7,12 @@
 An organic factory-builder set in a micro-scale, post-apocalyptic future.
 As the hive mind behind a growing, swarming, multi-species colony, you must learn to cultivate the world around you, adapting and literally evolving to face the hardships of a changing, alien world.
 
-## Planned features
+## About the game
+
+The design documents are stored in the [`design`](./design) directory, and are created using [`mdbook`](https://rust-lang.github.io/mdBook/index.html).
+Once you have `mdbook` installed, use `mdbook build --open` from the project root to read it in your browser!
+
+For now, here are our high-level plans:
 
 - build up a sprawling, complex factory-like colony that gathers resources from the environment, transports them through a complex supply network, and transforms them into outputs in a flexible fashion
 - explore a procedurally generated 2.5D world that changes dramatically over both time and space
