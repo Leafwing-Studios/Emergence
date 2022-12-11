@@ -39,7 +39,7 @@ Unchecked, disease can ravage your populace, while your very resource stores are
 If you want to gather the raw materials needed to progress, much less combine them into the end products needed to take your colony to the next level via complex supply chains, you must learn to take advantage of your good fortune, while ensuring you can survive and adapt to the misfortune.
 
 Of course, not all problems are mere bad luck.
-As your predecssors learned, the most insidious probles are often those of your own making.
+As your predecessors learned, the most insidious problems are often those of your own making.
 Simply dumping your waste works fine to begin with, but eventually these unmanaged **externalities** will begin to catch up to you:
 degrading the soil, polluting water bodies and piling up in ever-growing mounds.
 Close the loop, reprocess and repurpose your waste, and turn the problem on its head.
