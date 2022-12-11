@@ -1,0 +1,6 @@
+[book]
+authors = ["Alice"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Game Design for Emergence"
