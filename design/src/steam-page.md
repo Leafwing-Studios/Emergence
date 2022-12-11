@@ -29,6 +29,8 @@ Fight to build a robust, sustainable system, and fall in love with a factory bui
 
 ### Build a new world
 
+**GIF:** A thriving, bustling factory is digging a canal system. The last connection is formed, and water floods in, irrigating crops.
+
 The world is your playground: shape the earth, build elaborate terrace or canal systems, and float goods downriver.
 A light touch is key:
 
@@ -39,6 +41,8 @@ A light touch is key:
 Tend to their needs, prune back their uncontrolled spread, and reap the rewards of your careful stewardship.
 
 ### Face giant threats
+
+**GIF:** an anteater is gobbling up ants with a giant tongue, while it tramples all over carefully constructed factories.
 
 But when you're only a few centimeters in length, the world is a terribly unstable place:
 
@@ -54,6 +58,8 @@ You must learn to take advantage of your good fortune, while ensuring you can su
 
 ### Deal with pollution
 
+**GIF:** Waste is piling up. And up. And up! Then, the player is shown repurposing it as compost, and then fertilizer.
+
 Of course, not all problems are mere bad luck.
 As your predecessors learned, the most insidious problems are often those of your own making.
 Simply dumping your waste works fine to begin with, but eventually these unmanaged **externalities** will begin to catch up to you:
@@ -66,6 +72,8 @@ Close the loop, reprocess and repurpose your waste, and turn the problem on its 
 
 ### Evolve to adapt to your environment
 
+**GIF:** Exploring the evolution UI, being sure to linger on interesting options.
+
 To grow, adance and overcome these problems, your colony-civilization requires new options.
 Split your species and create specialized strains uniquely suited to specific tasks.
 Select powerful **evolutionary traits** that come with both unique advantages and tangible downsides.
@@ -74,6 +82,8 @@ Metal extracting plants? Poisonous fungi? Spiders made for milking?
 With enough generations, anything is possible.
 
 ## Assimilate new species
+
+**GIF:** Capturing a spider. Containing it in a cage (oops it ate an ant). Raising baby spiders. Using spiders to produce silk.
 
 But when you need something truly different, you must master new techniques, and expand into the untamed wilds.
 There, you will encounter completely new species (like mycorrhizae, carnivorous plants, flying bees and predatory spiders) and, through hard work and clever thinking, domesticate them.
