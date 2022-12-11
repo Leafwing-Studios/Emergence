@@ -153,4 +153,4 @@ jobs:
         with:
           mdbook-version: 'latest'
 
-      - run: mdbook build
+      - run: mdbook build design
