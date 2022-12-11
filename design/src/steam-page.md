@@ -5,8 +5,7 @@
 ## Short Description
 
 Manage a bustling colony in this miniature organic factory builder.
-Robust design is key:
-survive changing seasons, floods and predators without cascading failures.
+Survive changing seasons, floods and predators without cascading failures.
 Explore a diverse environment in search of new species to assimilate,
 and evolve to take advantage of nature's bounty.
 
