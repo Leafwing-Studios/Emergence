@@ -1,12 +1,21 @@
 //! Debugging user interface for development
+
+// use bevy::utils::label;
+
 use crate::*;
 
+/// Tag to find tile labels with a query.
+/// Currently for prototyping
+#[derive(Component)]
+pub struct TileLabel;
+
 /// Generate debug labels for tile positions
-pub fn generate_debug_labels(
+pub fn generate_tile_labels(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize)>,
     tile_q: Query<&TilePos>,
+    // bools: Query<&DebugInfo, &TilePos>,
 ) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -26,6 +35,7 @@ pub fn generate_debug_labels(
                     tile_pos.center_in_world(grid_size, map_type).extend(1.0),
                 );
                 let transform = *tilemap_transform * tile_pos_transform;
+
                 Text2dBundle {
                     text: Text::from_section(
                         format!("{}, {}", tile_pos.x, tile_pos.y),
@@ -38,6 +48,11 @@ pub fn generate_debug_labels(
             })
             .collect();
         commands.spawn_batch(label_bundles);
+
+        // let bools = bools.single();
+        // if bools.show_tile_label {
+        //     info!("Spawning Tile Labels");
+        // }
     }
 }
 
@@ -72,6 +87,8 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
             ..default()
         }),
         FpsText,
+        DebugInfo::default(),
+        info!("showing fps info"),
     ));
 }
 
@@ -81,6 +98,7 @@ pub fn change_infotext(
     diagnostics: Res<Diagnostics>,
     // key: Res<Input<KeyCode>>, // add this later to toggle the fps display
     mut fpstext_query: Query<&mut Text, With<FpsText>>,
+    bools: Query<&DebugInfo, With<FpsText>>,
 ) {
     for mut text in &mut fpstext_query {
         let mut fps = 0.0;

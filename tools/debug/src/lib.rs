@@ -8,8 +8,10 @@ use bevy::{
         default, info, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
         TextBundle, With,
     }, // Input, KeyCode, // add back to allow for toggling the fps display
+    prelude::{default, info, Color, Commands, Component, Query, Res, TextBundle, Transform, With}, // Input, KeyCode, // add back to allow for toggling the fps display
     // Transform, // add back for tile labels
     reflect::Reflect,
+    text::{Text, Text2dBundle, TextAlignment, TextSection, TextStyle},
     text::{Text, TextSection, TextStyle}, // Text2dBundle, TextAlignment, //add back for tile labels
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
@@ -68,5 +70,22 @@ impl Plugin for DebugToolsPlugin {
             .register_type::<ReflectedType>()
             .add_plugin(ConsolePlugin)
             .add_console_command::<LogCommand, _>(log_command);
+    }
+}
+
+#[derive(Clone, Component, Copy, Debug, PartialEq, Eq)]
+pub struct DebugInfo {
+    /// Show the debug tile labels
+    pub show_tile_label: bool,
+    /// Show render info
+    pub show_fps_info: bool,
+}
+
+impl Default for DebugInfo {
+    fn default() -> Self {
+        Self {
+            show_tile_label: true,
+            show_fps_info: true,
+        }
     }
 }

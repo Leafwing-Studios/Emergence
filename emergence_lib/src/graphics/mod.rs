@@ -13,6 +13,7 @@ use bevy::ecs::system::{Res, ResMut, Resource};
 use bevy::prelude::{StageLabel, SystemStage};
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
+use bevy_egui::*;
 
 use crate as emergence_lib;
 use crate::graphics::organisms::OrganismsTilemap;
@@ -51,6 +52,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
             .add_plugin(FrameTimeDiagnosticsPlugin)
+            .add_plugin(EguiPlugin)
             .register_component_as::<dyn IntoSprite, Ant>()
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
