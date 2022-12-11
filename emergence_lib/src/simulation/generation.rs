@@ -16,7 +16,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 /// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 10;
+pub const MAP_RADIUS: u32 = 60;
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///

@@ -10,7 +10,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::{Res, ResMut, Resource};
-use bevy::prelude::{StageLabel, SystemStage};
+use bevy::prelude::{Added, Changed, StageLabel, SystemStage};
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -26,7 +26,7 @@ use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
-use bevy_trait_query::{One, RegisterExt};
+use bevy_trait_query::{ChangedOne, One, RegisterExt};
 
 pub mod organisms;
 pub mod produce;
@@ -93,13 +93,53 @@ fn initialize_tilemaps(
 }
 
 /// Update entities that have a newly added/changed component which implements [`IntoSprite`] with
-/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.
+/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.\
+#[allow(clippy::too_many_arguments)]
 fn update_sprites(
     mut commands: Commands,
-    into_sprite_query: Query<(Entity, &TilePos, One<&dyn IntoSprite>)>,
+    ant_query: Query<(Entity, &TilePos, &Ant), Added<Ant>>,
+    plant_query: Query<(Entity, &TilePos, &Plant), Added<Plant>>,
+    fungi_query: Query<(Entity, &TilePos, &Fungi), Added<Fungi>>,
+    high_terrain: Query<(Entity, &TilePos, &HighTerrain), Added<HighTerrain>>,
+    impassable_terrain: Query<(Entity, &TilePos, &ImpassableTerrain), Added<ImpassableTerrain>>,
+    plain_terrain: Query<(Entity, &TilePos, &PlainTerrain), Added<PlainTerrain>>,
+    // into_sprite_query: Query<
+    //     (Entity, &TilePos, One<&dyn IntoSprite>),
+    //     OneTraitAdded<dyn IntoSprite>,
+    // >,
     tilemap_register: Res<TilemapRegister>,
 ) {
-    for (entity, position, sprite) in into_sprite_query.iter() {
+    for (entity, position, sprite) in ant_query.iter() {
+        commands
+            .entity(entity)
+            .insert(sprite.tile_bundle(*position, &tilemap_register));
+    }
+
+    for (entity, position, sprite) in plant_query.iter() {
+        commands
+            .entity(entity)
+            .insert(sprite.tile_bundle(*position, &tilemap_register));
+    }
+
+    for (entity, position, sprite) in fungi_query.iter() {
+        commands
+            .entity(entity)
+            .insert(sprite.tile_bundle(*position, &tilemap_register));
+    }
+
+    for (entity, position, sprite) in high_terrain.iter() {
+        commands
+            .entity(entity)
+            .insert(sprite.tile_bundle(*position, &tilemap_register));
+    }
+
+    for (entity, position, sprite) in impassable_terrain.iter() {
+        commands
+            .entity(entity)
+            .insert(sprite.tile_bundle(*position, &tilemap_register));
+    }
+
+    for (entity, position, sprite) in plain_terrain.iter() {
         commands
             .entity(entity)
             .insert(sprite.tile_bundle(*position, &tilemap_register));
