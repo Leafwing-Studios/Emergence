@@ -38,6 +38,26 @@ Standard best practices from within the [Bevy ecosystem](https://github.com/bevy
 
 \*see [Mindustry](https://mindustrygame.github.io/) for a great example of this working out!
 
+### Getting started
+
+1. Make sure you have [Git](https://git-scm.com/), [Git LFS](https://git-lfs.github.com/) and [Rust with Cargo](https://www.rust-lang.org/tools/install) installed.
+
+2. Create a fork of this repository and clone it.
+
+3. Pull the assets from the large file storage (LFS):
+
+   ```cli
+   git lfs pull
+   ```
+
+4. Run the project:
+
+   ```cli
+   cargo run
+   ```
+
+5. You can now make your changes on a new branch and open a pull request once you are ready!
+
 ## License
 
 Emergence is free, open source and permissively licensed with the Rust ecosystem's standard dual MIT/Apache license.
