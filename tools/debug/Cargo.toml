@@ -1,6 +1,7 @@
 [package]
 name = "debug_tools"
-version = "0.0.1"
+version = "0.0.2"
+authors = ["Lyla <wallamide@gmail.com>"]
 edition = "2021"
 description = "Debugging tools for Emergence"
 publish = false
@@ -10,5 +11,8 @@ license = "MIT OR Apache-2.0"
 name = "debug_tools"
 
 [dependencies]
-bevy = "0.9.0"
+bevy = "0.9.1"
+bevy_console = { git = "https://github.com/RichoDemus/bevy-console", branch = "main" }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
+bevy_egui = "0.18.0"
+bevy-inspector-egui = "0.14.0"

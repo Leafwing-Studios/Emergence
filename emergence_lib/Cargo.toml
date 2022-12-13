@@ -8,13 +8,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.9"
+bevy = "0.9.1"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
-bevy_egui = "0.17.0"
+bevy_egui = "0.18.0"
+bevy-inspector-egui = "0.14.0"
 bevy_pancam = "0.7"
 debug_tools = { path = "../tools/debug" }
 rand = "0.8"
-leafwing-input-manager = "0.7"
+leafwing-input-manager = "0.7.1"
 emergence_macros = { path = "../emergence_macros" }
 bevy-trait-query = { git = "https://github.com/Leafwing-Studios/bevy-trait-query", rev = "65533bf8680753a3f998056e1719b826652f3b69" }
 indexmap = "1.9"
