@@ -11,3 +11,6 @@ Cargo.lock
 
 # IDE settings
 .vscode/
+
+# Ignore trace files produced by bevy's trace_chrome feature
+trace-*.json

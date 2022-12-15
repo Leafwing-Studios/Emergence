@@ -8,9 +8,9 @@ use crate::signals::SignalsPlugin;
 use crate::simulation::generation::GenerationPlugin;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassableFilters};
-use bevy::app::{App, CoreStage, Plugin};
+use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
-use bevy::prelude::{Commands, Query, Res, With};
+use bevy::prelude::{Changed, Commands, Query, Res, ResMut, With, Without};
 use bevy_ecs_tilemap::tiles::TilePos;
 
 pub mod generation;
@@ -27,18 +27,29 @@ impl Plugin for SimulationPlugin {
             .add_plugin(StructuresPlugin)
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin)
-            .add_system_to_stage(CoreStage::PreUpdate, create_passable_filter);
+            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_passable_filter)
+            .add_system_to_stage(CoreStage::PreUpdate, update_passable_filter);
     }
 }
 
 /// Create the [`PassableFilters`] resource
-pub fn create_passable_filter(
-    mut commands: Commands,
-    impassable_query: Query<&TilePos, With<Impassable>>,
-    map_positions: Res<MapPositions>,
+pub fn initialize_passable_filter(mut commands: Commands, map_positions: Res<MapPositions>) {
+    commands.insert_resource(PassableFilters::new(&map_positions));
+}
+
+// /// Create the [`PassableFilters`] resource
+// pub fn update_passable_filter(
+//     newly_impassable: Query<&TilePos, (With<Impassable>, Changed<Impassable>)>,
+//     newly_passable: Query<&TilePos, (Without<Impassable>, Changed<Impassable>)>,
+//     mut passable_filters: ResMut<PassableFilters>,
+// ) {
+//     passable_filters.update_from_changed_passable_queries(&newly_impassable, &newly_passable);
+// }
+
+/// Create the [`PassableFilters`] resource
+pub fn update_passable_filter(
+    impassable: Query<&TilePos, With<Impassable>>,
+    mut passable_filters: ResMut<PassableFilters>,
 ) {
-    commands.insert_resource(PassableFilters::from_impassable_query(
-        &impassable_query,
-        &map_positions,
-    ));
+    passable_filters.update_from_impassable_query(&impassable)
 }

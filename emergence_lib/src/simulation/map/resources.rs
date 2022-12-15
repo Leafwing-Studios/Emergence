@@ -45,6 +45,11 @@ impl<T> MapData<T> {
     pub fn get_mut(&mut self) -> RwLockWriteGuard<'_, T> {
         self.inner.write().unwrap()
     }
+
+    /// Replace internal data
+    pub fn replace(&mut self, new_data: T) {
+        *self.get_mut() = new_data;
+    }
 }
 
 /// A helper for managing game resources that are naturally tied to a fixed specific position on
@@ -132,6 +137,15 @@ impl<T> MapResource<T> {
         let patches = MapResource::generate_patches(&storage, template);
 
         MapResource { storage, patches }
+    }
+
+    /// Update data for given tile positions
+    pub fn update(&mut self, new_data: impl Iterator<Item = (TilePos, T)>) {
+        new_data.for_each(|(position, data)| {
+            if let Some(map_data) = self.storage.get_mut(&position) {
+                map_data.replace(data);
+            }
+        });
     }
 
     /// Replace data at the specified position
