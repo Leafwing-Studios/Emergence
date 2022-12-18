@@ -37,15 +37,6 @@ pub fn initialize_passable_filter(mut commands: Commands, map_positions: Res<Map
     commands.insert_resource(PassabilityCache::new(&map_positions));
 }
 
-// /// Create the [`PassableFilters`] resource
-// pub fn update_passable_filter(
-//     newly_impassable: Query<&TilePos, (With<Impassable>, Changed<Impassable>)>,
-//     newly_passable: Query<&TilePos, (Without<Impassable>, Changed<Impassable>)>,
-//     mut passable_filters: ResMut<PassableFilters>,
-// ) {
-//     passable_filters.update_from_changed_passable_queries(&newly_impassable, &newly_passable);
-// }
-
 /// Update the [`PassabilityCache`] resource
 pub fn update_passable_filter(
     impassable: Query<&TilePos, With<Impassable>>,
