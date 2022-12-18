@@ -21,15 +21,15 @@ impl IntoSprite for PlainTerrain {
 
 /// Component representing impassable terrain.
 #[derive(Component, Clone, Copy)]
-pub struct ImpassableTerrain;
+pub struct RockyTerrain;
 
-impl IntoSprite for ImpassableTerrain {
+impl IntoSprite for RockyTerrain {
     fn tilemap(&self) -> Tilemap {
         Tilemap::Terrain
     }
 
     fn index(&self) -> u32 {
-        TerrainSprite::Impassable.index() as u32
+        TerrainSprite::Rocky.index() as u32
     }
 }
 

@@ -25,7 +25,7 @@ use crate::graphics::tilemap_marker::TilemapMarker;
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
-use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
+use crate::terrain::components::{HighTerrain, RockyTerrain, PlainTerrain};
 use bevy_trait_query::{ChangedOne, RegisterExt};
 
 pub mod organisms;
@@ -55,7 +55,7 @@ impl Plugin for GraphicsPlugin {
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
             .register_component_as::<dyn IntoSprite, HighTerrain>()
-            .register_component_as::<dyn IntoSprite, ImpassableTerrain>()
+            .register_component_as::<dyn IntoSprite, RockyTerrain>()
             .register_component_as::<dyn IntoSprite, PlainTerrain>()
             .init_resource::<TilemapRegister>()
             .add_startup_stage_after(

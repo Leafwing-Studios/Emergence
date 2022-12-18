@@ -12,7 +12,7 @@ pub enum TerrainSprite {
     /// Sprite for high terrain,
     High,
     /// Sprite for impassable terrain
-    Impassable,
+    Rocky,
     /// Sprite for plain terrain
     Plain,
 }
@@ -23,7 +23,7 @@ impl SpriteIndex for TerrainSprite {
     fn leaf_path(&self) -> &'static str {
         match self {
             TerrainSprite::High => "tile-high.png",
-            TerrainSprite::Impassable => "tile-impassable.png",
+            TerrainSprite::Rocky => "tile-rocky.png",
             TerrainSprite::Plain => "tile-plain.png",
         }
     }
