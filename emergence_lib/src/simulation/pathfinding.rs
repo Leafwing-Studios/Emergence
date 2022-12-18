@@ -21,7 +21,7 @@ pub struct PassabilityCache {
     /// corresponding hex patch
     inner: MapFilter,
     /// Tile positions that were marked as impassable in the last
-    /// [`update_from_impassable_query`] operation
+    /// [`update_from_impassable_query`](PassabilityCache::update_from_impassable_query) operation
     previously_impassable: HashSet<TilePos>,
 }
 
