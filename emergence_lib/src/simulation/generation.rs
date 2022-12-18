@@ -30,7 +30,7 @@ pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
 /// The choice weight for high terrain in default generation config
 pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
 /// The choice weight for impassable terrain in default generation config
-pub const TERRAIN_WEIGHT_IMPASSABLE: f32 = 0.2;
+pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///
@@ -57,7 +57,7 @@ impl Default for GenerationConfig {
         let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
         terrain_weights.insert(TerrainType::Plain, TERRAIN_WEIGHT_PLAIN);
         terrain_weights.insert(TerrainType::High, TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(TerrainType::Impassable, TERRAIN_WEIGHT_IMPASSABLE);
+        terrain_weights.insert(TerrainType::Rocky, TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
             map_radius: MAP_RADIUS,

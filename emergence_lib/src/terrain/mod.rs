@@ -22,8 +22,8 @@ use rand::Rng;
 pub enum TerrainType {
     /// Terrain with no distinguishing characteristics.
     Plain,
-    /// Terrain that is impassable.
-    Impassable,
+    /// Terrain that is rocky, and thus difficult to traverse.
+    Rocky,
     /// Terrain that has higher altitude compared to others.
     High,
 }
@@ -38,7 +38,7 @@ impl TerrainType {
             TerrainType::Plain => {
                 builder.insert(PlainTerrain);
             }
-            TerrainType::Impassable => {
+            TerrainType::Rocky => {
                 builder.insert(RockyTerrain);
                 builder.insert(Impassable);
             }
