@@ -10,7 +10,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::{Res, ResMut, Resource};
-use bevy::prelude::{Added, Changed, StageLabel, SystemStage};
+use bevy::prelude::{StageLabel, SystemStage};
 use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -26,7 +26,7 @@ use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
-use bevy_trait_query::{ChangedOne, One, RegisterExt};
+use bevy_trait_query::{ChangedOne, RegisterExt};
 
 pub mod organisms;
 pub mod produce;
@@ -73,7 +73,7 @@ impl Plugin for GraphicsPlugin {
             //.add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
             .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
             .add_system_to_stage(CoreStage::Update, change_infotext)
-            .add_system_to_stage(CoreStage::PreUpdate, update_sprites_trait_query);
+            .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
     }
 }
 
@@ -94,72 +94,18 @@ fn initialize_tilemaps(
 
 /// Update entities that have a newly added/changed component which implements [`IntoSprite`] with
 /// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.\
-#[allow(clippy::too_many_arguments)]
-fn update_sprites_manual_query(
-    mut commands: Commands,
-    ant_query: Query<(Entity, &TilePos, &Ant), Added<Ant>>,
-    plant_query: Query<(Entity, &TilePos, &Plant), Added<Plant>>,
-    fungi_query: Query<(Entity, &TilePos, &Fungi), Added<Fungi>>,
-    high_terrain: Query<(Entity, &TilePos, &HighTerrain), Added<HighTerrain>>,
-    impassable_terrain: Query<(Entity, &TilePos, &ImpassableTerrain), Added<ImpassableTerrain>>,
-    plain_terrain: Query<(Entity, &TilePos, &PlainTerrain), Added<PlainTerrain>>,
-    tilemap_register: Res<TilemapRegister>,
-) {
-    for (entity, position, sprite) in ant_query.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-
-    for (entity, position, sprite) in plant_query.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-
-    for (entity, position, sprite) in fungi_query.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-
-    for (entity, position, sprite) in high_terrain.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-
-    for (entity, position, sprite) in impassable_terrain.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-
-    for (entity, position, sprite) in plain_terrain.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
-}
-
-/// Update entities that have a newly added/changed component which implements [`IntoSprite`] with
-/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.\
-#[allow(clippy::too_many_arguments)]
-fn update_sprites_trait_query(
+fn update_sprites(
     mut commands: Commands,
     into_sprites_query: Query<(Entity, &TilePos, ChangedOne<&dyn IntoSprite>)>,
     tilemap_register: Res<TilemapRegister>,
 ) {
-    into_sprites_query
-        .iter()
-        .filter_map(|(entity, position, maybe_sprite)| {
-            maybe_sprite.map(|sprite| (entity, position, sprite))
-        })
-        .for_each(|(entity, position, sprite)| {
+    into_sprites_query.for_each(|(entity, position, maybe_sprite)| {
+        if let Some(sprite) = maybe_sprite {
             commands
                 .entity(entity)
                 .insert(sprite.tile_bundle(*position, &tilemap_register));
-        })
+        }
+    });
 }
 
 /// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate

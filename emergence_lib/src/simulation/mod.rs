@@ -7,7 +7,7 @@ use crate::organisms::units::UnitsPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::GenerationPlugin;
 use crate::simulation::map::MapPositions;
-use crate::simulation::pathfinding::{Impassable, PassableFilters};
+use crate::simulation::pathfinding::{Impassable, PassabilityCache};
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
 use bevy::prelude::{Changed, Commands, Query, Res, ResMut, With, Without};
@@ -32,9 +32,9 @@ impl Plugin for SimulationPlugin {
     }
 }
 
-/// Create the [`PassableFilters`] resource
+/// Create the [`PassabilityCache`] resource
 pub fn initialize_passable_filter(mut commands: Commands, map_positions: Res<MapPositions>) {
-    commands.insert_resource(PassableFilters::new(&map_positions));
+    commands.insert_resource(PassabilityCache::new(&map_positions));
 }
 
 // /// Create the [`PassableFilters`] resource
@@ -46,10 +46,10 @@ pub fn initialize_passable_filter(mut commands: Commands, map_positions: Res<Map
 //     passable_filters.update_from_changed_passable_queries(&newly_impassable, &newly_passable);
 // }
 
-/// Create the [`PassableFilters`] resource
+/// Update the [`PassabilityCache`] resource
 pub fn update_passable_filter(
     impassable: Query<&TilePos, With<Impassable>>,
-    mut passable_filters: ResMut<PassableFilters>,
+    mut passable_filters: ResMut<PassabilityCache>,
 ) {
     passable_filters.update_from_impassable_query(&impassable)
 }

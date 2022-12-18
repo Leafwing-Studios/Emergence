@@ -232,11 +232,11 @@ impl<T> HexPatch<T> {
     /// in that direction will be returned, else `None` will be returned.
     pub fn apply_filter(
         &self,
-        hex_filter: &HexPatch<MapData<bool>>,
+        filter_patch: &HexPatch<MapData<bool>>,
         default_none: bool,
     ) -> HexPatch<&T> {
         HexPatch::from_locational_closure(|location| {
-            if hex_filter
+            if filter_patch
                 .get(location)
                 .map_or(default_none, |filter_data| *filter_data.read())
             {

@@ -3,6 +3,7 @@ use crate::simulation::map::filters::MapFilter;
 use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::resources::MapData;
 use crate::simulation::map::MapPositions;
+use bevy::log::info;
 use bevy::prelude::{Changed, Component, Query, Resource, With, Without};
 use bevy::utils::HashSet;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -13,10 +14,10 @@ pub struct Impassable;
 
 /// Caches:
 /// * `bool` indicating whether a given position is passable
-/// * [`HexPatch<bool>`](crate::simulation::map::hex_patch::HexPatch) indicating whether positions
+/// * [`HexPatch<bool>`](HexPatch) indicating whether positions
 /// in hex patch are passable for each position
 #[derive(Resource)]
-pub struct PassableFilters {
+pub struct PassabilityCache {
     /// The [`MapFilter`] inner type which caches whether a given position is passable, and its
     /// corresponding hex patch
     inner: MapFilter,
@@ -25,10 +26,10 @@ pub struct PassableFilters {
     previously_impassable: HashSet<TilePos>,
 }
 
-impl PassableFilters {
-    /// Creates new [`PassableFilters`]
-    pub fn new(template: &MapPositions) -> PassableFilters {
-        PassableFilters {
+impl PassabilityCache {
+    /// Creates new [`PassabilityCache`]
+    pub fn new(template: &MapPositions) -> PassabilityCache {
+        PassabilityCache {
             inner: MapFilter::new_with_default(true, template, [].into_iter()),
             previously_impassable: HashSet::new(),
         }
@@ -42,9 +43,12 @@ impl PassableFilters {
     /// Update from an [`Impassable`] query
     pub fn update_from_impassable_query(&mut self, impassable: &Query<&TilePos, With<Impassable>>) {
         let currently_impassable = HashSet::from_iter(impassable.iter().copied());
+        info!("Currently impassable: {:?}", currently_impassable);
 
         let update_to_passable = self.previously_impassable.difference(&currently_impassable);
+        info!("newly passable: {:?}", update_to_passable);
         let update_to_impassable = currently_impassable.difference(&self.previously_impassable);
+        info!("newly impassable: {:?}", update_to_impassable);
 
         self.inner
             .update(update_to_passable.map(|position| (*position, true)));

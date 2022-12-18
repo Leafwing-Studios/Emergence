@@ -35,12 +35,17 @@ impl TerrainType {
 
         builder.insert(*position);
         match self {
-            TerrainType::Plain => builder.insert(PlainTerrain),
-            TerrainType::Impassable => builder.insert(ImpassableTerrain {
-                impassable: Impassable,
-            }),
-            TerrainType::High => builder.insert(HighTerrain),
-        };
+            TerrainType::Plain => {
+                builder.insert(PlainTerrain);
+            }
+            TerrainType::Impassable => {
+                builder.insert(ImpassableTerrain);
+                builder.insert(Impassable);
+            }
+            TerrainType::High => {
+                builder.insert(HighTerrain);
+            }
+        }
         builder.insert(*self);
         builder.id()
     }
