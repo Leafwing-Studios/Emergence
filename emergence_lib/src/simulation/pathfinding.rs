@@ -3,7 +3,6 @@ use crate::simulation::map::filters::MapFilter;
 use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::resources::MapData;
 use crate::simulation::map::MapPositions;
-use bevy::log::info;
 use bevy::prelude::{Changed, Component, Query, Resource, With, Without};
 use bevy::utils::HashSet;
 use bevy_ecs_tilemap::tiles::TilePos;
@@ -43,12 +42,9 @@ impl PassabilityCache {
     /// Update from an [`Impassable`] query
     pub fn update_from_impassable_query(&mut self, impassable: &Query<&TilePos, With<Impassable>>) {
         let currently_impassable = HashSet::from_iter(impassable.iter().copied());
-        info!("Currently impassable: {:?}", currently_impassable);
 
         let update_to_passable = self.previously_impassable.difference(&currently_impassable);
-        info!("newly passable: {:?}", update_to_passable);
         let update_to_impassable = currently_impassable.difference(&self.previously_impassable);
-        info!("newly impassable: {:?}", update_to_impassable);
 
         self.inner
             .update(update_to_passable.map(|position| (*position, true)));
