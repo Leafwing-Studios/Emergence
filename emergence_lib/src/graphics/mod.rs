@@ -92,7 +92,7 @@ fn initialize_tilemaps(
 }
 
 /// Update entities that have a newly added/changed component which implements [`IntoSprite`] with
-/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.\
+/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.
 fn update_sprites(
     mut commands: Commands,
     into_sprites_query: Query<(Entity, &TilePos, ChangedOne<&dyn IntoSprite>)>,
