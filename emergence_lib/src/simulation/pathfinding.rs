@@ -54,8 +54,7 @@ impl PassabilityCache {
         self.previously_impassable = currently_impassable;
     }
 
-    /// Update from newly impassable (`&Query<&TilePos, (With<Impassable>, Changed<Impassable>)>`)
-    /// and newly passable queries (`&Query<&TilePos, (Without<Impassable>, Changed<Impassable>)>`)
+    /// Update from newly impassable and newly passable queries
     pub fn update_from_changed_passable_queries(
         &mut self,
         newly_impassable: &Query<&TilePos, (With<Impassable>, Changed<Impassable>)>,
