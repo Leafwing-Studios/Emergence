@@ -6,7 +6,7 @@ pub mod entity_map;
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
 use crate::simulation::pathfinding::Impassable;
-use crate::terrain::components::{HighTerrain, RockyTerrain, PlainTerrain};
+use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;

@@ -25,7 +25,7 @@ use crate::graphics::tilemap_marker::TilemapMarker;
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
-use crate::terrain::components::{HighTerrain, RockyTerrain, PlainTerrain};
+use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy_trait_query::{ChangedOne, RegisterExt};
 
 pub mod organisms;
@@ -70,7 +70,6 @@ impl Plugin for GraphicsPlugin {
             )
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
             .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
-            //.add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
             .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
             .add_system_to_stage(CoreStage::Update, change_infotext)
             .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
