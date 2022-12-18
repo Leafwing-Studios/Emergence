@@ -10,7 +10,7 @@ use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassabilityCache};
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
-use bevy::prelude::{Changed, Commands, Query, Res, ResMut, With, Without};
+use bevy::prelude::{Commands, Query, Res, ResMut, With};
 use bevy_ecs_tilemap::tiles::TilePos;
 
 pub mod generation;

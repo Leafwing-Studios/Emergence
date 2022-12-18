@@ -98,6 +98,6 @@ pub fn change_infotext(
             }
         }
 
-        text.sections[0].value = format!(" {:.1} fps, {:.3} ms/frame", fps, frame_time,);
+        text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame",);
     }
 }
