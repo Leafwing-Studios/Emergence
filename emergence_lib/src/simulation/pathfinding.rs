@@ -62,12 +62,12 @@ impl PassabilityCache {
     ) {
         let newly_impassable = HashSet::from_iter(newly_impassable.iter().copied());
         let newly_passable = HashSet::from_iter(newly_passable.iter().copied());
+
         self.previously_impassable = self
             .previously_impassable
-            .union(&newly_impassable)
-            .copied()
-            .collect::<HashSet<TilePos>>()
-            .difference(&newly_passable)
+            .iter()
+            .filter(|position| !newly_passable.contains(position))
+            .chain(newly_impassable.iter())
             .copied()
             .collect::<HashSet<TilePos>>();
     }
