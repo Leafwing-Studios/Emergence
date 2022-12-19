@@ -114,14 +114,14 @@ fn place_pheromone(
 /// Toggle showing debug info   
 fn show_debug_info(
     hive_mind: Query<&ActionState<HiveMindAction>, With<HiveMind>>,
-    mut bools: ResMut<DebugInfo>,
+    mut debug_info: ResMut<DebugInfo>,
 ) {
     let hive_mind = hive_mind.single();
     let fps_info = hive_mind.pressed(HiveMindAction::ShowInfoText);
 
-    if fps_info && bools.show_fps_info {
-        bools.show_fps_info = false;
-    } else if fps_info && !bools.show_fps_info {
-        bools.show_fps_info = true;
+    if fps_info && debug_info.show_fps_info {
+        debug_info.show_fps_info = false;
+    } else if fps_info && !debug_info.show_fps_info {
+        debug_info.show_fps_info = true;
     }
 }
