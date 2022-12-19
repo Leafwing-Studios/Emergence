@@ -59,12 +59,12 @@ pub fn change_infotext(
             }
         }
 
-        if debug_info.dev_mode {
-            if debug_info.show_fps_info {
-                text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame");
-            } else if !debug_info.show_fps_info {
-                text.sections[0].value = String::new();
-            }
+        if bools.dev_mode {
+            text.sections[0].value = if bools.show_fps_info {
+                format!(" {fps:.1} fps, {frame_time:.3} ms/frame")
+            } else {
+                String::new()
+            };
         }
     }
 }

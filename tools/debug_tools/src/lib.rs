@@ -1,5 +1,4 @@
 //! Debugging dev tools for Emergence.
-//!
 
 use bevy::{
     asset::AssetServer,
