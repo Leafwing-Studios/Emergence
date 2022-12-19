@@ -12,7 +12,7 @@ name = "debug_tools"
 
 [dependencies]
 bevy = "0.9.1"
-bevy_console = { git = "https://github.com/RichoDemus/bevy-console", branch = "main" }
+bevy_console = { git = "https://github.com/RichoDemus/bevy-console", rev = "a45292a106158fb6189a5d06369460a743a20178" }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 bevy_egui = "0.18.0"
 bevy-inspector-egui = "0.15.0"
