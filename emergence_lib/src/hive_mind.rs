@@ -78,7 +78,7 @@ fn initialize_hive_mind(mut commands: Commands) {
                     controls.repulsive_pheromone,
                     HiveMindAction::PlaceRepulsivePheromone,
                 ),
-                (controls.toggle_fps.into(), HiveMindAction::ShowDebugLabels),
+                (controls.toggle_fps.into(), HiveMindAction::ShowInfoText),
             ]),
         });
 }
@@ -112,6 +112,7 @@ fn place_pheromone(
     }
 }
 
+/// Toggle showing debug info   
 fn show_debug_info(
     hive_mind: Query<&ActionState<HiveMindAction>, With<HiveMind>>,
     mut bools: ResMut<DebugInfo>,
@@ -120,9 +121,7 @@ fn show_debug_info(
     let fps_info = hive_mind.pressed(HiveMindAction::ShowInfoText);
 
     if fps_info && bools.show_fps_info {
-        info!("previous show fps {:?} ", bools.show_fps_info);
         bools.show_fps_info = false;
-        info!("show fps is {:?}", bools.show_fps_info)
     } else if fps_info && !bools.show_fps_info {
         bools.show_fps_info = true;
     }
