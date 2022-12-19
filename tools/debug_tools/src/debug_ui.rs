@@ -41,7 +41,7 @@ pub fn change_infotext(
     time: Res<Time>,
     diagnostics: Res<Diagnostics>,
     mut fpstext_query: Query<&mut Text, With<FpsText>>,
-    bools: Res<DebugInfo>,
+    debug_info: Res<DebugInfo>,
 ) {
     for mut text in &mut fpstext_query {
         let mut fps = 0.0;
@@ -59,10 +59,10 @@ pub fn change_infotext(
             }
         }
 
-        if bools.dev_mode {
-            if bools.show_fps_info {
+        if debug_info.dev_mode {
+            if debug_info.show_fps_info {
                 text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame");
-            } else if !bools.show_fps_info {
+            } else if !debug_info.show_fps_info {
                 text.sections[0].value = String::new();
             }
         }

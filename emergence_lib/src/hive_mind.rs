@@ -41,7 +41,6 @@ pub enum HiveMindAction {
 
 // This needs to be converted to LWIM from just inputs
 /// Interface for player controls
-#[derive(Resource)]
 pub struct HiveMindControls {
     /// Place an attractive pheromone
     pub attractive_pheromone: KeyCode,

@@ -7,16 +7,14 @@ use bevy::{
     prelude::{
         default, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
         TextBundle, With,
-    }, // Input, KeyCode, // add back to allow for toggling the fps display
-    // Transform, // add back for tile labels
+    },
     reflect::Reflect,
-    text::{Text, TextSection, TextStyle}, // Text2dBundle, TextAlignment, //add back for tile labels
+    text::{Text, TextSection, TextStyle},
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
-    // DefaultPlugins,
 };
 
-use bevy_console::*; // add when console is implemented
+use bevy_console::*;
 
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
 use console::{print_to_log, PrintToLog};
@@ -49,14 +47,14 @@ impl Default for DebugInfo {
         }
     }
 }
-// Generate Debug Tools plugin
+/// Generate Debug Tools plugin
 pub struct DebugToolsPlugin;
 
-// tells bevy-inspector-egui how to display the struct in the world inspector
+/// Tells `bevy-inspector-egui` how to display the struct in the world inspector
 #[derive(Inspectable, Component)]
 struct InspectableType;
 
-// registers the type in the `bevy_reflect` machinery, so that even without implementing `Inspectable` we can display the struct fields
+/// Registers the type in the `bevy_reflect` machinery, so that even without implementing `Inspectable` we can display the struct fields
 #[derive(Reflect, Component, Default)]
 #[reflect(Component)]
 struct ReflectedType;
