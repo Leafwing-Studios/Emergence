@@ -61,9 +61,9 @@ pub fn change_infotext(
 
         if bools.dev_mode {
             text.sections[0].value = if bools.show_fps_info {
-                 format!(" {fps:.1} fps, {frame_time:.3} ms/frame");
+                 format!(" {fps:.1} fps, {frame_time:.3} ms/frame")
             } else {
-                String::new();
+                String::new()
             };
         }
     }
