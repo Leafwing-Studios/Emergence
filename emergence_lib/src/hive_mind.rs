@@ -39,7 +39,7 @@ pub enum HiveMindAction {
     ShowInfoText,
 }
 
-// This needs to be converted to LWIM from just inputs
+// TODO: use LWIM conventions for mapping controls
 /// Interface for player controls
 pub struct HiveMindControls {
     /// Place an attractive pheromone
