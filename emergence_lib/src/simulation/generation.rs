@@ -16,7 +16,21 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 /// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 10;
+pub const MAP_RADIUS: u32 = 20;
+
+/// The number of ants in the default generation config
+pub const N_ANT: usize = 5;
+/// The number of plants in the default generation config
+pub const N_PLANT: usize = 7;
+/// The number of fungi in the default generation config
+pub const N_FUNGI: usize = 4;
+
+/// The choice weight for plain terrain in default generation config
+pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
+/// The choice weight for high terrain in default generation config
+pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
+/// The choice weight for impassable terrain in default generation config
+pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
 
 /// The grid size (hex tile width by hex tile height) in pixels.
 ///
@@ -41,15 +55,15 @@ pub struct GenerationConfig {
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
-        terrain_weights.insert(TerrainType::Plain, 1.);
-        terrain_weights.insert(TerrainType::High, 0.3);
-        terrain_weights.insert(TerrainType::Impassable, 0.2);
+        terrain_weights.insert(TerrainType::Plain, TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(TerrainType::High, TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(TerrainType::Rocky, TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
             map_radius: MAP_RADIUS,
-            n_ant: 5,
-            n_plant: 7,
-            n_fungi: 4,
+            n_ant: N_ANT,
+            n_plant: N_PLANT,
+            n_fungi: N_FUNGI,
             terrain_weights,
         }
     }

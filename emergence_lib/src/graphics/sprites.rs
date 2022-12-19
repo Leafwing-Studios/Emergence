@@ -84,7 +84,7 @@ pub trait IntoSprite {
             tilemap_id: *tilemap_register
                 .register
                 .get(tilemap.index())
-                .unwrap_or_else(|| panic!("Layer {:?} not registered", tilemap)),
+                .unwrap_or_else(|| panic!("Layer {tilemap:?} not registered")),
             ..Default::default()
         }
     }

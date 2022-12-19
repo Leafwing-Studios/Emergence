@@ -25,8 +25,8 @@ use crate::graphics::tilemap_marker::TilemapMarker;
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
-use crate::terrain::components::{HighTerrain, ImpassableTerrain, PlainTerrain};
-use bevy_trait_query::{One, RegisterExt};
+use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
+use bevy_trait_query::{ChangedOne, RegisterExt};
 
 pub mod organisms;
 pub mod produce;
@@ -55,7 +55,7 @@ impl Plugin for GraphicsPlugin {
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
             .register_component_as::<dyn IntoSprite, HighTerrain>()
-            .register_component_as::<dyn IntoSprite, ImpassableTerrain>()
+            .register_component_as::<dyn IntoSprite, RockyTerrain>()
             .register_component_as::<dyn IntoSprite, PlainTerrain>()
             .init_resource::<TilemapRegister>()
             .add_startup_stage_after(
@@ -70,7 +70,6 @@ impl Plugin for GraphicsPlugin {
             )
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
             .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
-            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, generate_debug_labels)
             .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
             .add_system_to_stage(CoreStage::Update, change_infotext)
             .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
@@ -96,14 +95,16 @@ fn initialize_tilemaps(
 /// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.
 fn update_sprites(
     mut commands: Commands,
-    into_sprite_query: Query<(Entity, &TilePos, One<&dyn IntoSprite>)>,
+    into_sprites_query: Query<(Entity, &TilePos, ChangedOne<&dyn IntoSprite>)>,
     tilemap_register: Res<TilemapRegister>,
 ) {
-    for (entity, position, sprite) in into_sprite_query.iter() {
-        commands
-            .entity(entity)
-            .insert(sprite.tile_bundle(*position, &tilemap_register));
-    }
+    into_sprites_query.for_each(|(entity, position, maybe_sprite)| {
+        if let Some(sprite) = maybe_sprite {
+            commands
+                .entity(entity)
+                .insert(sprite.tile_bundle(*position, &tilemap_register));
+        }
+    });
 }
 
 /// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate

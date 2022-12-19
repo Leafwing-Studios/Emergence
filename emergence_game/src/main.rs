@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use bevy::window::WindowPlugin;
+use bevy::window::{PresentMode, WindowPlugin};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Emergence".to_string(),
+                present_mode: PresentMode::Immediate,
                 ..Default::default()
             },
             ..Default::default()

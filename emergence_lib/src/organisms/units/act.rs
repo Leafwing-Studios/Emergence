@@ -7,7 +7,7 @@ use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::MapPositions;
-use crate::simulation::pathfinding::PassableFilters;
+use crate::simulation::pathfinding::PassabilityCache;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
@@ -17,7 +17,7 @@ use super::{PheromoneTransducer, Unit, UnitTimer};
 fn wander(
     position: &TilePos,
     map_positions: &MapPositions,
-    passable_filters: &PassableFilters,
+    passable_filters: &PassabilityCache,
     map_signals: &MapResource<TileSignals>,
     pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
 ) -> TilePos {
@@ -45,7 +45,7 @@ pub(super) fn act(
     mut timer: ResMut<UnitTimer>,
     mut unit_query: Query<(&Unit, &mut TilePos)>,
     map_positions: Res<MapPositions>,
-    passable_filters: Res<PassableFilters>,
+    passable_filters: Res<PassabilityCache>,
     map_signals: Res<MapResource<TileSignals>>,
     pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
 ) {

@@ -15,7 +15,7 @@ debug_tools = { path = "../tools/debug" }
 rand = "0.8"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros" }
-bevy-trait-query = "0.1"
+bevy-trait-query = { git = "https://github.com/Leafwing-Studios/bevy-trait-query", rev = "65533bf8680753a3f998056e1719b826652f3b69" }
 indexmap = "1.9"
 
 [dev-dependencies]
