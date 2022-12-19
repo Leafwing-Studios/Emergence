@@ -13,7 +13,7 @@ pub struct PrintToLog {
     num: Option<i64>,
 }
 
-pub fn log_command(mut log: ConsoleCommand<PrintToLog>) {
+pub fn print_to_log(mut log: ConsoleCommand<PrintToLog>) {
     if let Some(Ok(PrintToLog { msg, num })) = log.take() {
         let repeat_count = num.unwrap_or(1);
 

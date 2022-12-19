@@ -1,7 +1,5 @@
 //! Debugging user interface for development
 
-// use bevy::utils::label;
-
 use crate::*;
 
 // Modified text_debug example from the Bevy UI examples (https://github.com/bevyengine/bevy/blob/main/examples/ui/text_debug.rs)
@@ -22,20 +20,19 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
             TextStyle {
                 font,
                 font_size: 30.0,
-                color: Color::LIME_GREEN,
+                color: Color::YELLOW_GREEN,
             },
         )])
         .with_style(Style {
             position_type: PositionType::Absolute,
             position: UiRect {
-                top: Val::Px(5.0),
-                left: Val::Px(15.0),
+                top: Val::Px(15.0),
+                left: Val::Px(160.0),
                 ..default()
             },
             ..default()
         }),
         FpsText,
-        info!("showing fps info"),
     ));
 }
 
@@ -65,7 +62,7 @@ pub fn change_infotext(
         if bools.dev_mode {
             if bools.show_fps_info {
                 // info!("displaying fps info");
-                text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame", , ,);
+                text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame");
             } else if !bools.show_fps_info {
                 text.sections[0].value = format!("");
             }

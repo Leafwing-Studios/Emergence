@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 use bevy_pancam::{PanCam, PanCamPlugin};
+// use leafwing_input_manager::prelude::*; // TODO: Use this instead of pancam
 
 /// Camera logic
 pub struct CameraPlugin;

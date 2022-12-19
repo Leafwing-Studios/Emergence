@@ -5,8 +5,7 @@ use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::{PheromoneAttract, PheromoneRepulse};
 use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
-use debug_tools::debug_ui::FpsText;
-use debug_tools::*;
+use debug_tools::{DebugInfo, DebugToolsPlugin};
 use leafwing_input_manager::prelude::*;
 
 /// Provides the interface between the player and the hive.
@@ -15,6 +14,8 @@ pub struct HiveMindPlugin;
 impl Plugin for HiveMindPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<HiveMindAction>::default())
+            .init_resource::<DebugInfo>()
+            .add_plugin(DebugToolsPlugin)
             .add_startup_system(initialize_hive_mind)
             .add_system(place_pheromone)
             .add_system(show_debug_info);
@@ -38,8 +39,31 @@ pub enum HiveMindAction {
     ShowInfoText,
 }
 
+// This needs to be converted to LWIM from just inputs
+/// Interface for player controls
+#[derive(Resource)]
+pub struct HiveMindControls {
+    /// Place an attractive pheromone
+    pub attractive_pheromone: KeyCode,
+    /// Place a repulsive pheromone
+    pub repulsive_pheromone: UserInput,
+    /// Toggle the fps window
+    pub toggle_fps: KeyCode,
+}
+
+impl Default for HiveMindControls {
+    fn default() -> Self {
+        Self {
+            attractive_pheromone: KeyCode::Space,
+            repulsive_pheromone: UserInput::chord([KeyCode::LShift, KeyCode::Space]),
+            toggle_fps: KeyCode::V,
+        }
+    }
+}
+
 /// Startup system initializing the [`HiveMind`].
 fn initialize_hive_mind(mut commands: Commands) {
+    let controls = HiveMindControls::default();
     commands
         .spawn_empty()
         .insert(HiveMind)
@@ -47,19 +71,19 @@ fn initialize_hive_mind(mut commands: Commands) {
             action_state: ActionState::default(),
             input_map: InputMap::new([
                 (
-                    KeyCode::Space.into(),
+                    controls.attractive_pheromone.into(),
                     HiveMindAction::PlaceAttractivePheromone,
                 ),
                 (
-                    UserInput::chord([KeyCode::LShift, KeyCode::Space]),
+                    controls.repulsive_pheromone,
                     HiveMindAction::PlaceRepulsivePheromone,
                 ),
-                (KeyCode::D.into(), HiveMindAction::ShowDebugLabels),
-                (KeyCode::V.into(), HiveMindAction::ShowInfoText),
+                (controls.toggle_fps.into(), HiveMindAction::ShowDebugLabels),
             ]),
         });
 }
 
+// TODO: figure out a different control scheme
 /// Place pheromone, if the mouse is hovered over a hex tile.
 fn place_pheromone(
     mut signal_create_evw: EventWriter<SignalModificationEvent>,
@@ -85,26 +109,16 @@ fn place_pheromone(
             pos: (*cursor_tile_pos).unwrap(),
             increment: 0.01,
         });
-        info!("replusing");
     }
 }
 
 fn show_debug_info(
     hive_mind: Query<&ActionState<HiveMindAction>, With<HiveMind>>,
-    bools: Query<&DebugInfo, With<FpsText>>,
+    mut bools: ResMut<DebugInfo>,
 ) {
     let hive_mind = hive_mind.single();
-    let mut bools = *bools.single();
-    let tile_labels = hive_mind.pressed(HiveMindAction::ShowDebugLabels);
     let fps_info = hive_mind.pressed(HiveMindAction::ShowInfoText);
 
-    if tile_labels && bools.show_tile_label {
-        info!("previous show label is {:?}", bools.show_tile_label);
-        bools.show_tile_label = false;
-        info!("show label is {:?}", bools.show_tile_label)
-    } else if tile_labels && !bools.show_tile_label {
-        bools.show_tile_label = true;
-    }
     if fps_info && bools.show_fps_info {
         info!("previous show fps {:?} ", bools.show_fps_info);
         bools.show_fps_info = false;

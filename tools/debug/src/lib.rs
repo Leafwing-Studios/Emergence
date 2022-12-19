@@ -5,26 +5,26 @@ use bevy::{
     asset::AssetServer,
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{
-        default, info, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
+        default, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
         TextBundle, With,
-    },
-    prelude::{default, info, Color, Commands, Component, Query, Res, TextBundle, Transform, With},
+    }, // Input, KeyCode, // add back to allow for toggling the fps display
+    // Transform, // add back for tile labels
     reflect::Reflect,
-    text::{Text, Text2dBundle, TextAlignment, TextSection, TextStyle},
-    text::{Text, TextSection, TextStyle},
+    text::{Text, TextSection, TextStyle}, // Text2dBundle, TextAlignment, //add back for tile labels
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
+    // DefaultPlugins,
 };
 
-use bevy_console::*;
+use bevy_console::*; // add when console is implemented
 
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
-use console::{log_command, LogCommand};
+use console::{print_to_log, PrintToLog};
 
 pub mod console;
 pub mod debug_ui;
 
-#[derive(Clone, Resource, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Resource, Component, Copy, Debug, PartialEq, Eq)]
 pub struct DebugInfo {
     /// Toggle global access to developer tools
     pub dev_mode: bool,
@@ -64,9 +64,10 @@ struct ReflectedType;
 impl Plugin for DebugToolsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(WorldInspectorPlugin::new())
+            .add_plugin(FrameTimeDiagnosticsPlugin)
             .register_inspectable::<InspectableType>()
             .register_type::<ReflectedType>()
             .add_plugin(ConsolePlugin)
-            .add_console_command::<LogCommand, _>(log_command);
+            .add_console_command::<PrintToLog, _>(print_to_log);
     }
 }
