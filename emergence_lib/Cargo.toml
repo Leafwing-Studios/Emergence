@@ -11,7 +11,7 @@ edition = "2021"
 bevy = "0.9.1"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 bevy_egui = "0.18.0"
-bevy-inspector-egui = "0.14.0"
+bevy-inspector-egui = "0.15.0"
 bevy_pancam = "0.7"
 debug_tools = { path = "../tools/debug" }
 rand = "0.8"

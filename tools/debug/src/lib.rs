@@ -72,20 +72,3 @@ impl Plugin for DebugToolsPlugin {
             .add_console_command::<LogCommand, _>(log_command);
     }
 }
-
-#[derive(Clone, Component, Copy, Debug, PartialEq, Eq)]
-pub struct DebugInfo {
-    /// Show the debug tile labels
-    pub show_tile_label: bool,
-    /// Show render info
-    pub show_fps_info: bool,
-}
-
-impl Default for DebugInfo {
-    fn default() -> Self {
-        Self {
-            show_tile_label: true,
-            show_fps_info: true,
-        }
-    }
-}

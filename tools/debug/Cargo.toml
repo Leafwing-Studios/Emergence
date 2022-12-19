@@ -15,4 +15,4 @@ bevy = "0.9.1"
 bevy_console = { git = "https://github.com/RichoDemus/bevy-console", branch = "main" }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 bevy_egui = "0.18.0"
-bevy-inspector-egui = "0.14.0"
+bevy-inspector-egui = "0.15.0"
