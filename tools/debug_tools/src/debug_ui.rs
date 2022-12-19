@@ -41,7 +41,7 @@ pub fn change_infotext(
     time: Res<Time>,
     diagnostics: Res<Diagnostics>,
     mut fpstext_query: Query<&mut Text, With<FpsText>>,
-    bools: Res<DebugInfo>,
+    debug_info: Res<DebugInfo>,
 ) {
     for mut text in &mut fpstext_query {
         let mut fps = 0.0;
