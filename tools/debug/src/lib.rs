@@ -7,18 +7,16 @@ use bevy::{
     prelude::{
         default, info, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
         TextBundle, With,
-    }, // Input, KeyCode, // add back to allow for toggling the fps display
-    prelude::{default, info, Color, Commands, Component, Query, Res, TextBundle, Transform, With}, // Input, KeyCode, // add back to allow for toggling the fps display
-    // Transform, // add back for tile labels
+    },
+    prelude::{default, info, Color, Commands, Component, Query, Res, TextBundle, Transform, With},
     reflect::Reflect,
     text::{Text, Text2dBundle, TextAlignment, TextSection, TextStyle},
-    text::{Text, TextSection, TextStyle}, // Text2dBundle, TextAlignment, //add back for tile labels
+    text::{Text, TextSection, TextStyle},
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
-    // DefaultPlugins,
 };
 
-use bevy_console::*; // add when console is implemented
+use bevy_console::*;
 
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
 use console::{log_command, LogCommand};

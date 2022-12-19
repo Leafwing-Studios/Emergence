@@ -4,58 +4,6 @@
 
 use crate::*;
 
-/// Tag to find tile labels with a query.
-/// Currently for prototyping
-#[derive(Component)]
-pub struct TileLabel;
-
-/// Generate debug labels for tile positions
-pub fn generate_tile_labels(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    tilemap_q: Query<(&Transform, &TilemapType, &TilemapGridSize)>,
-    tile_q: Query<&TilePos>,
-    // bools: Query<&DebugInfo, &TilePos>,
-) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font,
-        font_size: 15.0,
-        color: Color::BLACK,
-    };
-    let text_alignment = TextAlignment::CENTER;
-
-    for q in &tilemap_q {
-        let (tilemap_transform, map_type, grid_size) = q;
-
-        let label_bundles: Vec<Text2dBundle> = tile_q
-            .iter()
-            .map(|tile_pos| {
-                let tile_pos_transform = Transform::from_translation(
-                    tile_pos.center_in_world(grid_size, map_type).extend(1.0),
-                );
-                let transform = *tilemap_transform * tile_pos_transform;
-
-                Text2dBundle {
-                    text: Text::from_section(
-                        format!("{}, {}", tile_pos.x, tile_pos.y),
-                        text_style.clone(),
-                    )
-                    .with_alignment(text_alignment),
-                    transform,
-                    ..Default::default()
-                }
-            })
-            .collect();
-        commands.spawn_batch(label_bundles);
-
-        // let bools = bools.single();
-        // if bools.show_tile_label {
-        //     info!("Spawning Tile Labels");
-        // }
-    }
-}
-
 // Modified text_debug example from the Bevy UI examples (https://github.com/bevyengine/bevy/blob/main/examples/ui/text_debug.rs)
 /// Tag for the changing fps text component.
 #[derive(Component)]
@@ -87,7 +35,6 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
             ..default()
         }),
         FpsText,
-        DebugInfo::default(),
         info!("showing fps info"),
     ));
 }
@@ -96,9 +43,8 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
 pub fn change_infotext(
     time: Res<Time>,
     diagnostics: Res<Diagnostics>,
-    // key: Res<Input<KeyCode>>, // add this later to toggle the fps display
     mut fpstext_query: Query<&mut Text, With<FpsText>>,
-    bools: Query<&DebugInfo, With<FpsText>>,
+    bools: Res<DebugInfo>,
 ) {
     for mut text in &mut fpstext_query {
         let mut fps = 0.0;
@@ -116,6 +62,13 @@ pub fn change_infotext(
             }
         }
 
-        text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame",);
+        if bools.dev_mode {
+            if bools.show_fps_info {
+                // info!("displaying fps info");
+                text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame", , ,);
+            } else if !bools.show_fps_info {
+                text.sections[0].value = format!("");
+            }
+        }
     }
 }
