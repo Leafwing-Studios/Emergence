@@ -17,3 +17,6 @@ trace-*.json
 
 # Local toolchain config
 rust-toolchain.toml
+
+# Ignore local .cargo
+.cargo/
