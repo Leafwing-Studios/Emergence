@@ -146,10 +146,12 @@ fn show_debug_info(
     let dev = dev.single();
     let fps_info = dev.pressed(DevAction::ShowInfoText);
 
-    if fps_info && debug_info.show_fps_info {
-        debug_info.show_fps_info = false;
-        info!("fps info toggle")
-    } else if fps_info && !debug_info.show_fps_info {
-        debug_info.show_fps_info = true;
+    if debug_info.dev_mode {
+        if fps_info && debug_info.show_fps_info {
+            debug_info.show_fps_info = false;
+            info!("fps info toggle")
+        } else if fps_info && !debug_info.show_fps_info {
+            debug_info.show_fps_info = true;
+        }
     }
 }
