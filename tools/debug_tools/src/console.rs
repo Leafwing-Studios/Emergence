@@ -1,4 +1,4 @@
-//! Create and manage bevy_console commands.
+//! Create and manage `bevy_console` commands.
 
 use crate::*;
 
@@ -13,6 +13,8 @@ pub struct PrintToLog {
     num: Option<i64>,
 }
 
+// TODO add more useful commands
+/// allow command line statements to print to console N number of times
 pub fn print_to_log(mut log: ConsoleCommand<PrintToLog>) {
     if let Some(Ok(PrintToLog { msg, num })) = log.take() {
         let repeat_count = num.unwrap_or(1);
