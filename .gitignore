@@ -14,3 +14,9 @@ Cargo.lock
 
 # Ignore trace files produced by bevy's trace_chrome feature
 trace-*.json
+
+# Local toolchain config
+rust-toolchain.toml
+
+# Ignore local .cargo
+.cargo/

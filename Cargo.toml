@@ -6,6 +6,6 @@ members = [
     "emergence_lib",
     "emergence_macros",
     "tools/ci",
-    "tools/debug",
+    "tools/debug_tools",
 ]
 default-members = ["emergence_game", "emergence_lib"]
