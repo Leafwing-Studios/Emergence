@@ -45,7 +45,6 @@ impl Default for DebugInfo {
         }
     }
 }
-/// Generate Debug Tools plugin to enable developer tools for debugging.
 ///
 /// Adds an instance of `bevy_console`, basic console commands, `bevy-inspector-egui`,
 /// and basic performance information like fps and frame counting.
