@@ -15,6 +15,7 @@
 
 - automated resource extraction
 - automation resource refinement
+- logistical challenges
 - micro-optimizations
 - gated technology progression
 
@@ -22,7 +23,7 @@
 
 - Base and city builders
   - Build out a complex and delightful area, but with no / little automation
-- Zachlike puzzles
+- Zachlike puzzles (automation heavy puzzle games)
   - Micro-optimization as an entire game
 - Colony sims
   - Balance complex systems, but with a focus on the needs of your workers, not scaling production
@@ -30,14 +31,21 @@
   - Automate everything, but without the complex chains
 - Train simulators
   - Focusing almost entirely on logistic networks powered by trains
+- Real Time Strategy
+  - Command units and build bases and extract resources
+  - Very little automation: resource production is almost entirely abstracted
+  - Much more time pressure!
 
 ## Blended Genre Games
 
-- Mindustry (tower defense)
+These games are all factory builders combined with the genre(s) in brackets.
+
+- Mindustry (tower defense / RTS)
 - Hydroneer | Astroneeer | Atrio (exploration)
 - Automachef (Zachlike + cooking game)
 - Infinifactory (Zachlike)
 - Timberborn (city builder)
+- The Incredible Machine (puzzle game)
 
 ## Progression Loop
 
