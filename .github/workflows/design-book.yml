@@ -28,3 +28,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./design/book
+          # Don't store history of gh-pages branch
+          # This ensures that the repository size doesn't grow too much
+          force_orphan: true
