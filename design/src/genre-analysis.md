@@ -109,6 +109,14 @@
 - treadmill-style tech progression
 - terrain modification that makes the world less interesting
 
+## Drivers of Player Churn
+
+- overwhelming UI and bad control at start of game
+- no clear goal at any point
+- tedious tasks
+- poor pacing
+- performance issues
+
 ## Expected Business Model
 
 - early access
