@@ -12,7 +12,7 @@ name = "debug_tools"
 
 [dependencies]
 bevy = "0.9"
-bevy_console = { git = "https://github.com/RichoDemus/bevy-console", branch = "main" }
-#bevy_ecs_tilemap may need to be added back but is unused and unplanned for use atm so it has been removed  
+bevy_console = { git = "https://github.com/RichoDemus/bevy-console", rev = "fa09da33ee752facc8eb3b2ba93682005d179624" } # add bevy 0.9 revision
+#bevy_ecs_tilemap # may need to be added back but is unused and unplanned for use atm so it has been removed  
 # bevy_egui = "0.18.0" # TODO add when we use bevy_egui for debug ui
 bevy-inspector-egui = "0.14" # TODO: keep at 0.14 until finding a way to ensure 0.15 lets you use bevy console also

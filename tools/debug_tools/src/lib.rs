@@ -4,10 +4,8 @@ use bevy::{
     asset::AssetServer,
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{
-        default, Color, Commands, Component, Plugin, Query, ReflectComponent, Res, Resource,
-        TextBundle, With,
+        default, Color, Commands, Component, Plugin, Query, Res, Resource, TextBundle, With,
     },
-    reflect::Reflect,
     text::{Text, TextSection, TextStyle},
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
@@ -15,12 +13,13 @@ use bevy::{
 
 use bevy_console::*;
 
-use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
+use bevy_inspector_egui::WorldInspectorPlugin;
 use console::{print_to_log, PrintToLog};
 
 pub mod console;
 pub mod debug_ui;
 
+/// Creates a global resource that can be used to toggle actively displayed debug tools.
 #[derive(Clone, Resource, Component, Copy, Debug, PartialEq, Eq)]
 pub struct DebugInfo {
     /// Toggle global access to developer tools
@@ -46,24 +45,16 @@ impl Default for DebugInfo {
         }
     }
 }
-/// Generate Debug Tools plugin
+/// Generate Debug Tools plugin to enable developer tools for debugging.
+///
+/// Adds an instance of `bevy_console`, basic console commands, `bevy-inspector-egui`,
+/// and basic performance information like fps and frame counting.
 pub struct DebugToolsPlugin;
-
-/// Tells `bevy-inspector-egui` how to display the struct in the world inspector
-#[derive(Inspectable, Component)]
-struct InspectableType;
-
-/// Registers the type in the `bevy_reflect` machinery, so that even without implementing `Inspectable` we can display the struct fields
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-struct ReflectedType;
 
 impl Plugin for DebugToolsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(WorldInspectorPlugin::new())
             .add_plugin(FrameTimeDiagnosticsPlugin)
-            .register_inspectable::<InspectableType>()
-            .register_type::<ReflectedType>()
             .add_plugin(ConsolePlugin)
             .add_console_command::<PrintToLog, _>(print_to_log);
     }
