@@ -1,3 +1,5 @@
+name: Design book
+
 on:
   push:
     branches:
