@@ -10,7 +10,7 @@ As the hive mind behind a growing, swarming, multi-species colony, you must lear
 ## About the game
 
 The design documents are stored in the [`design`](./design) directory, and are created using [`mdbook`](https://rust-lang.github.io/mdBook/index.html).
-Once you have `mdbook` installed, use `mdbook build --open` from the project root to read it in your browser!
+Once you have `mdbook` installed, use `mdbook build --open` in the [`design`](./design) directory to read it in your browser!
 
 For now, here are our high-level plans:
 
