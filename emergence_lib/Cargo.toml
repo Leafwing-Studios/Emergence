@@ -10,8 +10,8 @@ edition = "2021"
 [dependencies]
 bevy = "0.9"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
-bevy_pancam = "0.7"
-debug_tools = { path = "../tools/debug" }
+bevy_pancam = { version = "0.7", features = ["bevy_egui"] }
+debug_tools = { path = "../tools/debug_tools" }
 rand = "0.8"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros" }

@@ -6,7 +6,8 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Emergence".to_string(),
-                present_mode: PresentMode::Immediate,
+                // choose `AutoNoVsync` as it is more widely supported than `Immediate`
+                present_mode: PresentMode::AutoNoVsync,
                 ..Default::default()
             },
             ..Default::default()

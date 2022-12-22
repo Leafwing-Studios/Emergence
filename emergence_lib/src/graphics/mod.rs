@@ -4,7 +4,6 @@ use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::TerrainTilemap;
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::asset::AssetServer;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
@@ -50,7 +49,6 @@ pub enum GraphicsStage {
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
-            .add_plugin(FrameTimeDiagnosticsPlugin)
             .register_component_as::<dyn IntoSprite, Ant>()
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
