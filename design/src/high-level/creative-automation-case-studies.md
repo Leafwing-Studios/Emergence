@@ -1,5 +1,38 @@
 # Creative Automation: Case Studies
 
+## Emergence
+
+**Conclusion:** Creativity will be low until more systems are in place, but potential is excellent. Clear and satisfying aesthetics will be key to creating a compelling contraption. Disruptions should be tunable to ensure every player can reach an optional presure level.  
+
+### Interesting Goals
+
+Standard factory building goals are present,
+but an emphasis on sustainability and resilience add even more goals to consider.
+
+Stronger spatial and temporal variability increase the importance of considering tradeoffs and tailoring solutions to conditions.
+
+### Distinct Paths
+
+Initial prototypes will be quite weak, simply due to scale.
+
+Adding more systems and organisms will enhance this substantially.
+
+### Low Pressure
+
+Aesthetics are well-suited to chill alien cottage-core vibes.
+Disruptions are planned as an important gameplay mechanic: need excellent tuning levers to ensure that space for creativity isn't removed.
+Cascading failures shouldn't be too severe by default.
+
+### Compelling Aesthetics
+
+Smashing success.
+Unique fantasy that lends itself well to a bustling, automated hub.
+
+Aesthetic differentation will require more content than MVP.
+
+Potential for very compelling contraptions.
+Audio and timing and visual clarity will be tricky but essential to creating good contraptions.
+
 ## [Factorio](https://store.steampowered.com/app/427520/Factorio/)
 
 **Conclusion:** top-tier creative automation, especially in modded games.
