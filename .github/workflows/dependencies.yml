@@ -1,0 +1,33 @@
+# Adopted from Bevy
+# See <https://github.com/bevyengine/bevy/blob/main/.github/workflows/dependencies.yml>
+
+name: Dependencies
+
+on:
+  pull_request:
+    paths:
+      - "**/Cargo.toml"
+      - "deny.toml"
+  push:
+    paths:
+      - "**/Cargo.toml"
+      - "deny.toml"
+    branches-ignore:
+      - "dependabot/**"
+      - staging-squash-merge.tmp
+  schedule:
+    - cron: "0 0 * * 0"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+      - name: Check for unauthorized licenses
+        run: cargo deny check licenses
