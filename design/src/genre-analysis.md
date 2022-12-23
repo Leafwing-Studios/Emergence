@@ -184,6 +184,10 @@ These things make the game loop more pleasant:
   - View how much of each resource you are producing and consuming over time
 - **Alerts**
   - Warn the player when something that requires urgent action has occurred
+- **Labs**
+  - Prototype and measure designs in a sandbox environment
+- **Production planner**
+  - Analyze theoretical performance and ratios of resource pathways
 
 ### Meta Features
 
