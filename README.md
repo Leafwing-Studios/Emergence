@@ -9,8 +9,11 @@ As the hive mind behind a growing, swarming, multi-species colony, you must lear
 
 ## About the game
 
-The design documents are stored in the [`design`](./design) directory, and are created using [`mdbook`](https://rust-lang.github.io/mdBook/index.html).
-Once you have `mdbook` installed, use `mdbook build --open` from the project root to read it in your browser!
+The design documents are stored in the [`design`](./design) directory.
+You can read it online [here](https://leafwing-studios.github.io/Emergence/)!
+
+These are created using [`mdbook`](https://rust-lang.github.io/mdBook/index.html).
+Once you have `mdbook` installed, use `mdbook build --open` in the [`design`](./design) directory to preview your changes in your browser.
 
 For now, here are our high-level plans:
 
@@ -71,3 +74,7 @@ Please don't rip off our game (unless it's dead, then fork it), but feel free to
 Non-font assets under `emergence_game` are currently licensed under CC-0. Commissioned work will be licensed under CC-BY-SA-NC (asset flippers suck).
 
 Like usual, any contributions made are accepted under the same license terms. If you would like to modify or use these assets in your game, please reach out and we'll be happy to chat.
+
+**By contributing to this project, you are representing that you have the ability to contribute any intellectual property under the provided licenses and acknowledge that Leafwing Studios intends to sell (and pay studio members with!) the profits made via this project.**
+
+If you are contributing IP from other permissively licensed code, you must provide **proper attribution** in the source code or metadata. Everyone deserves credit!
