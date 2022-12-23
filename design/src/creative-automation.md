@@ -251,4 +251,4 @@ Limited aesthetic choices.
 
 #### Low Pressure
 
-#### Compelling Aesthetics
+#### Compelling Aesthetic
