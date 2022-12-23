@@ -11,12 +11,10 @@ use bevy::{
     ui::{PositionType, Style, UiRect, Val},
 };
 
-use bevy_console::*;
-
 use bevy_inspector_egui::WorldInspectorPlugin;
-use console::{print_to_log, PrintToLog};
-
-pub mod console;
+// TODO: Add an MIT/Apache 2.0 compatible console implementation
+// use console::;
+// pub mod console;
 pub mod debug_ui;
 
 /// Creates a global resource that can be used to toggle actively displayed debug tools.
@@ -52,8 +50,9 @@ pub struct DebugToolsPlugin;
 impl Plugin for DebugToolsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(WorldInspectorPlugin::new())
-            .add_plugin(FrameTimeDiagnosticsPlugin)
-            .add_plugin(ConsolePlugin)
-            .add_console_command::<PrintToLog, _>(print_to_log);
+            .add_plugin(FrameTimeDiagnosticsPlugin);
+        // TODO figure out console implementation
+        // .add_plugin(ConsolePlugin)
+        // .add_console_command::<PrintToLog, _>(print_to_log);
     }
 }
