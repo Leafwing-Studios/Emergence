@@ -199,6 +199,7 @@ These things make the game loop more pleasant:
   - Often paired with a small, always-on-screen **minmap**
   - Augmented with **map markers**, which are player-made indicators of specific locations (ideally text + an icon)
 - **Notes**
+  - commonly used for TODO lists
   - An in-game way to record what to do next, add flavor, or explain why something was done this way
   - Ideally tied to a location
   - Sometimes map makers are repurposed, sometimes this relies on in-game signs, or is spelled out manually using building mechanics
