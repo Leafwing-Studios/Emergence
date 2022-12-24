@@ -2,7 +2,7 @@
 
 ## Emergence
 
-**Conclusion:** Creativity will be low until more systems are in place, but potential is excellent. Clear and satisfying aesthetics will be key to creating a compelling contraption. Disruptions should be tunable to ensure every player can reach an optional presure level.  
+**Conclusion:** Creativity will be low until more systems are in place, but potential is excellent. Clear and satisfying aesthetics will be key to creating a compelling contraption. Disruptions should be tunable to ensure every player can reach an optional pressure level.  
 
 ### Interesting Goals
 
@@ -104,7 +104,7 @@ You can see creativity disappear in the speedruns, where pressure is artificiall
 ### Compelling Aesthetics
 
 Lots of good aesthetic variation, and a compelling theme!
-Distinct playthroughs often get creative variation due almost entirely to strength of aesthetics.
+Distinct playthroughs often get creative variation almost entirely due to the strength of aesthetics.
 
 ## [Forager](https://store.steampowered.com/app/751780/Forager/)
 
