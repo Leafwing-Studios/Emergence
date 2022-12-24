@@ -166,10 +166,16 @@ These features supplement the core gameplay loop by providing additional things 
 
 These things make the game loop more pleasant:
 
-- **Copy-paste**
+- **Cut-copy-paste**
   - Select groups of buildings (and their settings), and add them to your **clipboard**
-  - Paste these buildings to create **ghosts** (phantom buildings)
+  - Buildings that are cut are **marked for deletion**
+  - Selections can be flipped and rotated
+  - Paste these buildings to create **ghosts** (phantom buildings that are **marked for construction**)
   - Ghosts can then be built later by hand or via bots
+- **Undo**
+  - Reverse previous actions or directions
+  - Best paired with **redo**
+  - Redone actions will leave ghosts, rather than actually placing the tiles
 - **Pipette**
   - Add a copy of buildings (and their settings) to your cursor
 - **Blueprints**
@@ -188,6 +194,14 @@ These things make the game loop more pleasant:
   - Prototype and measure designs in a sandbox environment
 - **Production planner**
   - Analyze theoretical performance and ratios of resource pathways
+- **Map**
+  - Summarizes the area visually
+  - Often paired with a small, always-on-screen **minmap**
+  - Augmented with **map markers**, which are player-made indicators of specific locations (ideally text + an icon)
+- **Notes**
+  - An in-game way to record what to do next, add flavor, or explain why something was done this way
+  - Ideally tied to a location
+  - Sometimes map makers are repurposed, sometimes this relies on in-game signs, or is spelled out manually using building mechanics
 
 ### Meta Features
 
