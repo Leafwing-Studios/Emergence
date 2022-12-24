@@ -202,6 +202,9 @@ These things make the game loop more pleasant:
   - An in-game way to record what to do next, add flavor, or explain why something was done this way
   - Ideally tied to a location
   - Sometimes map makers are repurposed, sometimes this relies on in-game signs, or is spelled out manually using building mechanics
+- **Overlays**
+  - Display information about various important factors on the map or in-world display
+  - Extremely useful to visually communicate the operation of various systems without cluttering aesthetics
 
 ### Meta Features
 
