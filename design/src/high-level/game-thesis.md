@@ -34,7 +34,9 @@ and adding a unique mechanical focus on resilience,
 ### Core Mechanics
 
 - **Resource patches**
-  - Resources are continuous, rather than discrete.
+  - Environmental resources are typically continuous, rather than discrete
+    - Still clumped, but no clear boundaries
+  - All resources are always renewable in some form
   - Soil contains various concentrations of nutrients (Nitrogen, Phosphorus, Potassium)
   - Soil is physically made up of sand/silt/clay/stone/organic matter
   - Water is vital for virtually everything, and can be found in streams, lakes, organic items and soil
