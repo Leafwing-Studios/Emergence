@@ -92,16 +92,10 @@ impl MapGeometry {
     }
 }
 
-impl From<&GenerationConfig> for MapGeometry {
-    fn from(config: &GenerationConfig) -> MapGeometry {
-        MapGeometry::new(config.map_radius)
-    }
-}
-
 /// Initialize the [`MapGeometry`] resource according to [`GenerationConfig`].
 pub fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
     info!("Configuring map geometry...");
-    let map_geometry: MapGeometry = (&*config).into();
+    let map_geometry: MapGeometry = MapGeometry::new(config.map_radius);
 
     commands.insert_resource(map_geometry);
 }
