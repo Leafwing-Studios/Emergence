@@ -5,6 +5,7 @@ use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::prelude::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
+use std::path::PathBuf;
 
 /// Enumerates terrain sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -18,13 +19,13 @@ pub enum TerrainSprite {
 }
 
 impl SpriteIndex for TerrainSprite {
-    const ROOT_PATH: &'static str = "terrain";
+    const ROOT_FOLDER: &'static str = "terrain";
 
-    fn leaf_path(&self) -> &'static str {
+    fn leaf_path(&self) -> PathBuf {
         match self {
-            TerrainSprite::High => "tile-high.png",
-            TerrainSprite::Rocky => "tile-rocky.png",
-            TerrainSprite::Plain => "tile-plain.png",
+            TerrainSprite::High => "tile-high.png".into(),
+            TerrainSprite::Rocky => "tile-rocky.png".into(),
+            TerrainSprite::Plain => "tile-plain.png".into(),
         }
     }
 }

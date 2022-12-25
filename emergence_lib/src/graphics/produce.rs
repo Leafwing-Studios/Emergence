@@ -5,6 +5,7 @@ use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::ecs::component::Component;
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
+use std::path::PathBuf;
 
 /// Enumerates produce sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -14,11 +15,11 @@ pub enum ProduceSprite {
 }
 
 impl SpriteIndex for ProduceSprite {
-    const ROOT_PATH: &'static str = "produce";
+    const ROOT_FOLDER: &'static str = "produce";
 
-    fn leaf_path(&self) -> &'static str {
+    fn leaf_path(&self) -> PathBuf {
         match self {
-            ProduceSprite::Food => "tile-food-balls.png",
+            ProduceSprite::Food => "tile-food-balls.png".into(),
         }
     }
 }

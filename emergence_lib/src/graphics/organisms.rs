@@ -6,6 +6,7 @@ use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
+use std::path::PathBuf;
 
 /// Enumerates organism sprites.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -19,13 +20,13 @@ pub enum OrganismSprite {
 }
 
 impl SpriteIndex for OrganismSprite {
-    const ROOT_PATH: &'static str = "organisms";
+    const ROOT_FOLDER: &'static str = "organisms";
 
-    fn leaf_path(&self) -> &'static str {
+    fn leaf_path(&self) -> PathBuf {
         match self {
-            OrganismSprite::Ant => "tile-ant.png",
-            OrganismSprite::Fungi => "tile-fungus.png",
-            OrganismSprite::Plant => "tile-plant.png",
+            OrganismSprite::Ant => "tile-ant.png".into(),
+            OrganismSprite::Fungi => "tile-fungus.png".into(),
+            OrganismSprite::Plant => "tile-plant.png".into(),
         }
     }
 }
