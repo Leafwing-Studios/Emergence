@@ -18,7 +18,7 @@ const N_CYCLES: usize = 500;
 
 #[test]
 fn plants_are_self_sufficient() {
-    // Only spawn flat graphics, to ensure that the structure can actually be spawned
+    // Only spawn flat tiles, to ensure that the structure can actually be spawned
     let mut terrain_type_weights: HashMap<TerrainType, f32> = HashMap::new();
     terrain_type_weights.insert(TerrainType::Plain, 1.0);
 

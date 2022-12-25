@@ -26,7 +26,7 @@ pub struct GenerationConfig {
     pub n_plant: usize,
     /// Initial number of fungi.
     pub n_fungi: usize,
-    /// Relative probability of generating graphics of each terrain type.
+    /// Relative probability of generating tiles of each terrain type.
     pub terrain_weights: HashMap<TerrainType, f32>,
 }
 

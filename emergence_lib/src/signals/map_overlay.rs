@@ -7,7 +7,7 @@ use crate::simulation::map::resources::MapResource;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
 
-/// Colours graphics based on the signals present. Signal colours are defined in their
+/// Colours tiles based on the signals present. Signal colours are defined in their
 /// [`SignalConfig`](crate::signals::configs::SignalConfig).
 pub struct MapOverlayPlugin;
 
@@ -21,7 +21,7 @@ impl Plugin for MapOverlayPlugin {
 /// RGBA variant
 pub const RGBA_WHITE: Color = Color::rgba(1.0, 1.0, 1.0, 1.0);
 
-/// Color graphics based on the signals present.
+/// Color tiles based on the signals present.
 fn color_tiles(
     mut commands: Commands,
     terrain_tile_query: Query<(Entity, &TilePos)>,

@@ -105,10 +105,10 @@ fn update_sprites(
     });
 }
 
-/// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate
+/// We use a hexagonal map with "pointy-topped" (row oriented) tiles, and prefer an axial coordinate
 /// system instead of an offset-coordinate system.
 pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
-/// We are using a map with hexagonal graphics.
+/// We are using a map with hexagonal tiles.
 pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
 
 /// Enumerates the different tilemaps we are organizing our graphics into

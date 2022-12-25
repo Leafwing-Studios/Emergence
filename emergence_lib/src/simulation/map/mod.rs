@@ -18,7 +18,7 @@ use bevy_ecs_tilemap::tiles::TilePos;
 /// Resource that stores information regarding the size of the game map.
 #[derive(Resource, Debug)]
 pub struct MapGeometry {
-    /// The radius, in graphics, of the map
+    /// The radius, in tiles, of the map
     radius: u32,
     /// The location of the central tile
     center: TilePos,
