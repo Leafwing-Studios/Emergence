@@ -1,5 +1,8 @@
 # Summary
 
 - [Draft Steam Page](./steam-page.md)
-- [Genre Analysis](./genre-analysis.md)
-- [Creative Automation](./creative-automation.md)
+- [High Level Analysis](./high-level/index.md)
+  - [Genre Analysis](./high-level/genre-analysis.md)
+  - [Emergence within the Factory Builder Genre](./high-level/game-thesis.md)
+  - [Creative Automation](./high-level/creative-automation.md)
+  - [Creative Automation: Case Studies](./high-level/creative-automation-case-studies.md)
