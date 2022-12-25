@@ -71,7 +71,10 @@ impl Default for GenerationConfig {
 }
 
 /// Generate the world.
-pub struct GenerationPlugin;
+pub struct GenerationPlugin {
+    /// Configuration settings for world generation
+    pub config: GenerationConfig,
+}
 
 /// Stage labels required to organize our startup systems.
 ///
@@ -103,7 +106,7 @@ pub enum GenerationStage {
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
-        app.init_resource::<GenerationConfig>()
+        app.insert_resource(self.config.clone())
             .add_startup_stage_before(
                 StartupStage::Startup,
                 GenerationStage::OrganismGeneration,
