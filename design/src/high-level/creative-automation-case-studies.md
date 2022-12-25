@@ -1,5 +1,7 @@
 # Creative Automation: Case Studies
 
+The terms and categories here are taken from the [creative automation](creative-automation.md) page: read that first!
+
 ## Emergence
 
 **Conclusion:** Creativity will be low until more systems are in place, but potential is excellent. Clear and satisfying aesthetics will be key to creating a compelling contraption. Disruptions should be tunable to ensure every player can reach an optional pressure level.  
@@ -25,7 +27,7 @@ Cascading failures shouldn't be too severe by default.
 
 ### Compelling Aesthetics
 
-Smashing success.
+This is one of *Emergence's* key strengths.
 Unique fantasy that lends itself well to a bustling, automated hub.
 
 Aesthetic differentation will require more content than MVP.
@@ -259,7 +261,8 @@ Generous pause functionality (you can pan and investigate) is essential to makin
 
 ## [Shapez.io](https://store.steampowered.com/bundle/21489/shapez_Full_Edition/)
 
-**Conclusion:** Limited options for performing each step. Really uninspiring aesthetics.
+**Conclusion:** Limited options for performing each step.
+Pretty but uninspiring aesthetics: highly abstract and so there's little to express yourself with.
 
 ### Interesting Goals
 
