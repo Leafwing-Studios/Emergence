@@ -29,6 +29,17 @@ adapting them to a unique and compelling theme,
 and adding a unique mechanical focus on resilience,
 *Emergence* looks to appeal to a loyal audience ravenous for something meaningfully new.
 
+## Key Design Constraints
+
+These are self-imposed, and chosen to create a more compelling and cohesive game:
+
+- Players should be able to look at a screenshot or video of an inspiring contraption, and replicate that in their game.
+- Colonies should always feel like bustling organic hives and farms, not mechanized factories.
+- Optimal play should involve:
+  - adapting to the local environment
+  - automatically responding to predictable cycles
+  - dealing with all waste products
+
 ## Mechanical Translation
 
 ### Core Mechanics
