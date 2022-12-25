@@ -34,6 +34,7 @@ impl Plugin for InteractionPlugin {
 /// Importing between files shared in the `tests` directory appears to be broken with this workspace config?
 /// Followed directions from <https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html>
 pub mod testing {
+    use crate::simulation::generation::GenerationConfig;
     use crate::simulation::SimulationPlugin;
     use bevy::prelude::*;
 
@@ -47,15 +48,15 @@ pub mod testing {
     }
 
     /// Just the game logic and simulation
-    pub fn simulation_app() -> App {
+    pub fn simulation_app(gen_config: GenerationConfig) -> App {
         let mut app = minimal_app();
-        app.add_plugin(SimulationPlugin);
+        app.add_plugin(SimulationPlugin { gen_config });
         app
     }
 
     /// Test users interacting with the app
-    pub fn interaction_app() -> App {
-        let mut app = simulation_app();
+    pub fn interaction_app(gen_config: GenerationConfig) -> App {
+        let mut app = simulation_app(gen_config);
         app.add_plugin(bevy::input::InputPlugin)
             .add_plugin(super::InteractionPlugin);
         app

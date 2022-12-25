@@ -5,7 +5,7 @@
 use crate::organisms::structures::StructuresPlugin;
 use crate::organisms::units::UnitsPlugin;
 use crate::signals::SignalsPlugin;
-use crate::simulation::generation::GenerationPlugin;
+use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassabilityCache};
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
@@ -18,17 +18,22 @@ pub mod map;
 pub mod pathfinding;
 
 /// All of the code needed to make the simulation run
-pub struct SimulationPlugin;
+pub struct SimulationPlugin {
+    /// Configuration settings for world generation, these will be passed to [`GenerationPlugin`]
+    pub gen_config: GenerationConfig,
+}
 
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
-        app.add_plugin(GenerationPlugin)
-            .add_plugin(StructuresPlugin)
-            .add_plugin(UnitsPlugin)
-            .add_plugin(SignalsPlugin)
-            .add_startup_system_to_stage(StartupStage::PostStartup, initialize_passable_filter)
-            .add_system_to_stage(CoreStage::PreUpdate, update_passable_filter);
+        app.add_plugin(GenerationPlugin {
+            config: self.gen_config.clone(),
+        })
+        .add_plugin(StructuresPlugin)
+        .add_plugin(UnitsPlugin)
+        .add_plugin(SignalsPlugin)
+        .add_startup_system_to_stage(StartupStage::PostStartup, initialize_passable_filter)
+        .add_system_to_stage(CoreStage::PreUpdate, update_passable_filter);
     }
 }
 
