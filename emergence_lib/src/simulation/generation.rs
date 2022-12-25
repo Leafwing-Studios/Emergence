@@ -11,32 +11,9 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::prelude::TilemapGridSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-
-/// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 20;
-
-/// The number of ants in the default generation config
-pub const N_ANT: usize = 5;
-/// The number of plants in the default generation config
-pub const N_PLANT: usize = 7;
-/// The number of fungi in the default generation config
-pub const N_FUNGI: usize = 4;
-
-/// The choice weight for plain terrain in default generation config
-pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
-/// The choice weight for high terrain in default generation config
-pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
-/// The choice weight for impassable terrain in default generation config
-pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
-
-/// The grid size (hex tile width by hex tile height) in pixels.
-///
-/// Grid size should be the same for all tilemaps, as we want them to be congruent.
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -53,18 +30,37 @@ pub struct GenerationConfig {
     pub terrain_weights: HashMap<TerrainType, f32>,
 }
 
+impl GenerationConfig {
+    /// The number of tiles from the center of the map to the edge
+    pub const MAP_RADIUS: u32 = 20;
+
+    /// The number of ants in the default generation config
+    pub const N_ANT: usize = 5;
+    /// The number of plants in the default generation config
+    pub const N_PLANT: usize = 7;
+    /// The number of fungi in the default generation config
+    pub const N_FUNGI: usize = 4;
+
+    /// The choice weight for plain terrain in default generation config
+    pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
+    /// The choice weight for high terrain in default generation config
+    pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
+    /// The choice weight for impassable terrain in default generation config
+    pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
+}
+
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
-        terrain_weights.insert(TerrainType::Plain, TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(TerrainType::High, TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(TerrainType::Rocky, TERRAIN_WEIGHT_ROCKY);
+        terrain_weights.insert(TerrainType::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(TerrainType::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(TerrainType::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
-            map_radius: MAP_RADIUS,
-            n_ant: N_ANT,
-            n_plant: N_PLANT,
-            n_fungi: N_FUNGI,
+            map_radius: GenerationConfig::MAP_RADIUS,
+            n_ant: GenerationConfig::N_ANT,
+            n_plant: GenerationConfig::N_PLANT,
+            n_fungi: GenerationConfig::N_FUNGI,
             terrain_weights,
         }
     }

@@ -1,9 +1,9 @@
 //! The [`TerrainTilemap`] manages visualization of terrain.
 use crate as emergence_lib;
 use crate::graphics::sprites::SpriteIndex;
-use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::prelude::Component;
-use bevy_ecs_tilemap::prelude::TilemapTileSize;
+use bevy_ecs_tilemap::prelude::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
 
 /// Enumerates terrain sprites.
@@ -39,8 +39,9 @@ impl SpriteIndex for TerrainSprite {
 #[derive(Component, Debug, Clone, Copy)]
 pub struct TerrainTilemap;
 
-impl TilemapMarker for TerrainTilemap {
+impl TilemapLike for TerrainTilemap {
     const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+    const GRID_SIZE: Option<TilemapGridSize> = None;
     const MAP_Z: f32 = 0.0;
     type Index = TerrainSprite;
 }

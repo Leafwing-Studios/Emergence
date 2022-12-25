@@ -4,7 +4,7 @@ pub mod filters;
 pub mod hex_patch;
 pub mod resources;
 
-use crate::simulation::generation::{GenerationConfig, MAP_RADIUS};
+use crate::simulation::generation::GenerationConfig;
 use crate::simulation::map::hex_patch::HexPatch;
 use bevy::ecs::system::Resource;
 use bevy::log::info;
@@ -28,7 +28,7 @@ pub struct MapGeometry {
 
 impl Default for MapGeometry {
     fn default() -> Self {
-        MapGeometry::new(MAP_RADIUS)
+        MapGeometry::new(GenerationConfig::MAP_RADIUS)
     }
 }
 

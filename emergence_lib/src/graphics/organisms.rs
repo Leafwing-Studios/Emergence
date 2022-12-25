@@ -2,9 +2,9 @@
 
 use crate as emergence_lib;
 use crate::graphics::sprites::SpriteIndex;
-use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::prelude::Component;
-use bevy_ecs_tilemap::map::TilemapTileSize;
+use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
 
 /// Enumerates organism sprites.
@@ -40,8 +40,9 @@ impl SpriteIndex for OrganismSprite {
 #[derive(Component, Clone, Copy, Debug)]
 pub struct OrganismsTilemap;
 
-impl TilemapMarker for OrganismsTilemap {
+impl TilemapLike for OrganismsTilemap {
     const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+    const GRID_SIZE: Option<TilemapGridSize> = None;
     const MAP_Z: f32 = 1.0;
     type Index = OrganismSprite;
 }

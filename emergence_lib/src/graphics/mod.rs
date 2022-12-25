@@ -20,7 +20,7 @@ use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::ProduceTilemap;
 use crate::graphics::sprites::IntoSprite;
-use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::tilemap_marker::TilemapLike;
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;

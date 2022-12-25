@@ -1,9 +1,9 @@
 //! The [`ProduceTilemap`] manages visualization of produce.
 use crate as emergence_lib;
 use crate::graphics::sprites::SpriteIndex;
-use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::tilemap_marker::TilemapLike;
 use bevy::ecs::component::Component;
-use bevy_ecs_tilemap::map::TilemapTileSize;
+use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
 use emergence_macros::IterableEnum;
 
 /// Enumerates produce sprites.
@@ -33,8 +33,9 @@ impl SpriteIndex for ProduceSprite {
 #[derive(Component, Debug, Clone, Copy)]
 pub struct ProduceTilemap;
 
-impl TilemapMarker for ProduceTilemap {
+impl TilemapLike for ProduceTilemap {
     const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
+    const GRID_SIZE: Option<TilemapGridSize> = None;
     const MAP_Z: f32 = 2.0;
     type Index = ProduceSprite;
 }
