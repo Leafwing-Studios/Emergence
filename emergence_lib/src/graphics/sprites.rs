@@ -24,8 +24,7 @@ use std::path::PathBuf;
 pub trait SpriteIndex: IterableEnum {
     /// Path to the folder within `assets` containing sprite assets indexed by this implementor.
     ///
-    /// This must be a `&'static `str` rather than a `PathBuf`, because there is no way to create
-    /// a const [`PathBuf`].
+    /// This must be a `&'static str` because there is no way to create a const [`PathBuf`].
     const ROOT_FOLDER: &'static str;
 
     /// Path of a particular entity variant within the `ROOT_PATH` folder.
@@ -46,7 +45,7 @@ pub trait SpriteIndex: IterableEnum {
     }
 
     /// Loads associated sprites into a [`TilemapTexture::Vector`](TilemapTexture::Vector).
-    fn load(asset_server: &Res<AssetServer>) -> TilemapTexture {
+    fn load(asset_server: &AssetServer) -> TilemapTexture {
         TilemapTexture::Vector(
             Self::all_paths()
                 .into_iter()

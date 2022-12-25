@@ -1,9 +1,9 @@
 //! The [`ProduceTilemap`] manages visualization of produce.
 use crate as emergence_lib;
 use crate::graphics::sprites::SpriteIndex;
-use crate::graphics::tilemap_marker::TilemapLike;
+
 use bevy::ecs::component::Component;
-use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapTileSize};
+
 use emergence_macros::IterableEnum;
 use std::path::PathBuf;
 
@@ -24,19 +24,6 @@ impl SpriteIndex for ProduceSprite {
     }
 }
 
-/// Marker component for entity that manages visualization of produce.
-///
-/// See also:
-/// * [`OrganismsTilemap`](crate::graphics::organisms::OrganismsTilemap), which lies below the
-/// [`ProduceTilemap`], and manages visualization of organisms
-/// * [`TerrainTilemap`](crate::graphics::terrain::TerrainTilemap), which lies on below the
-/// [`OrganismsTilemap`](crate::graphics::organisms::OrganismsTilemap), and manages visualization of terrain entities
-#[derive(Component, Debug, Clone, Copy)]
+/// Marker component for the produce tilemap
+#[derive(Component, Clone, Copy, Debug)]
 pub struct ProduceTilemap;
-
-impl TilemapLike for ProduceTilemap {
-    const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 48.0, y: 54.0 };
-    const GRID_SIZE: Option<TilemapGridSize> = None;
-    const MAP_Z: f32 = 2.0;
-    type Index = ProduceSprite;
-}
