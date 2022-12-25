@@ -1,4 +1,5 @@
 //! Generating starting terrain and organisms
+use crate::enum_iter::IterableEnum;
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
@@ -139,9 +140,19 @@ pub fn generate_terrain(
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
+    let terrain_variants = TerrainType::variants().collect::<Vec<TerrainType>>();
+    let terrain_weights = &config.terrain_weights;
+
     let entity_data = map_positions.iter_positions().map(|position| {
-        let terrain: TerrainType =
-            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
+        let terrain: TerrainType = terrain_variants
+            .choose_weighted(&mut rng, |terrain_type| {
+                terrain_weights
+                    .get(terrain_type)
+                    .copied()
+                    .unwrap_or_default()
+            })
+            .copied()
+            .unwrap();
         (*position, terrain.instantiate(&mut commands, position))
     });
 
