@@ -139,15 +139,14 @@ pub fn generate_terrain(
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let mut entity_data = Vec::with_capacity(map_positions.n_positions());
-    for position in map_positions.iter_positions() {
+    let entity_data = map_positions.iter_positions().map(|position| {
         let terrain: TerrainType =
             TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        entity_data.push((*position, terrain.instantiate(&mut commands, position)));
-    }
+        (*position, terrain.instantiate(&mut commands, position))
+    });
 
     let terrain_entities = TerrainEntityMap {
-        inner: MapResource::new(&map_positions, entity_data.into_iter()),
+        inner: MapResource::new(&map_positions, entity_data),
     };
     commands.insert_resource(terrain_entities)
 }
