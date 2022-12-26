@@ -347,7 +347,7 @@ They do not live in the game itself.
   - everyone uses inserters and belts
 - boring and low-impact environmental variability
 - copy-paste of optimized designs
-- treadmill-style tech progression
+- treadmill-style tech progression: same mechanics, but with a different coat of paint and "numbers go up"
   - driven by lack of end products
 - terrain modification that makes the world less interesting
 - no meaningful penalties for overproduction of resources and mindless expansion
