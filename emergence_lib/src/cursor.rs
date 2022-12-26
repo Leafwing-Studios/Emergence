@@ -1,6 +1,5 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
-
 use crate::graphics::terrain::TerrainTilemap;
 use bevy::math::Vec4Swizzles;
 use bevy::math::{Vec2, Vec3};

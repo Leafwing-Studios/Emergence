@@ -1,4 +1,5 @@
 //! Generating starting terrain and organisms
+use crate::enum_iter::IterableEnum;
 use crate::organisms::structures::{FungiBundle, PlantBundle};
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
@@ -10,32 +11,9 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::prelude::TilemapGridSize;
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-
-/// The number of tiles from the center of the map to the edge
-pub const MAP_RADIUS: u32 = 20;
-
-/// The number of ants in the default generation config
-pub const N_ANT: usize = 5;
-/// The number of plants in the default generation config
-pub const N_PLANT: usize = 7;
-/// The number of fungi in the default generation config
-pub const N_FUNGI: usize = 4;
-
-/// The choice weight for plain terrain in default generation config
-pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
-/// The choice weight for high terrain in default generation config
-pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
-/// The choice weight for impassable terrain in default generation config
-pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
-
-/// The grid size (hex tile width by hex tile height) in pixels.
-///
-/// Grid size should be the same for all tilemaps, as we want them to be congruent.
-pub const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 48.0, y: 54.0 };
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -48,29 +26,51 @@ pub struct GenerationConfig {
     pub n_plant: usize,
     /// Initial number of fungi.
     pub n_fungi: usize,
-    /// Relative probability of generating graphics of each terrain type.
+    /// Relative probability of generating tiles of each terrain type.
     pub terrain_weights: HashMap<TerrainType, f32>,
+}
+
+impl GenerationConfig {
+    /// The number of tiles from the center of the map to the edge
+    pub const MAP_RADIUS: u32 = 20;
+
+    /// The number of ants in the default generation config
+    pub const N_ANT: usize = 5;
+    /// The number of plants in the default generation config
+    pub const N_PLANT: usize = 7;
+    /// The number of fungi in the default generation config
+    pub const N_FUNGI: usize = 4;
+
+    /// The choice weight for plain terrain in default generation config
+    pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
+    /// The choice weight for high terrain in default generation config
+    pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
+    /// The choice weight for impassable terrain in default generation config
+    pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
 }
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
-        terrain_weights.insert(TerrainType::Plain, TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(TerrainType::High, TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(TerrainType::Rocky, TERRAIN_WEIGHT_ROCKY);
+        terrain_weights.insert(TerrainType::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(TerrainType::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(TerrainType::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
-            map_radius: MAP_RADIUS,
-            n_ant: N_ANT,
-            n_plant: N_PLANT,
-            n_fungi: N_FUNGI,
+            map_radius: GenerationConfig::MAP_RADIUS,
+            n_ant: GenerationConfig::N_ANT,
+            n_plant: GenerationConfig::N_PLANT,
+            n_fungi: GenerationConfig::N_FUNGI,
             terrain_weights,
         }
     }
 }
 
 /// Generate the world.
-pub struct GenerationPlugin;
+pub struct GenerationPlugin {
+    /// Configuration settings for world generation
+    pub config: GenerationConfig,
+}
 
 /// Stage labels required to organize our startup systems.
 ///
@@ -102,7 +102,7 @@ pub enum GenerationStage {
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
-        app.init_resource::<GenerationConfig>()
+        app.insert_resource(self.config.clone())
             .add_startup_stage_before(
                 StartupStage::Startup,
                 GenerationStage::OrganismGeneration,
@@ -139,15 +139,24 @@ pub fn generate_terrain(
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let mut entity_data = Vec::with_capacity(map_positions.n_positions());
-    for position in map_positions.iter_positions() {
-        let terrain: TerrainType =
-            TerrainType::choose_random(&mut rng, &config.terrain_weights).unwrap();
-        entity_data.push((*position, terrain.instantiate(&mut commands, position)));
-    }
+    let terrain_variants = TerrainType::variants().collect::<Vec<TerrainType>>();
+    let terrain_weights = &config.terrain_weights;
+
+    let entity_data = map_positions.iter_positions().map(|position| {
+        let terrain: TerrainType = terrain_variants
+            .choose_weighted(&mut rng, |terrain_type| {
+                terrain_weights
+                    .get(terrain_type)
+                    .copied()
+                    .unwrap_or_default()
+            })
+            .copied()
+            .unwrap();
+        (*position, terrain.instantiate(&mut commands, position))
+    });
 
     let terrain_entities = TerrainEntityMap {
-        inner: MapResource::new(&map_positions, entity_data.into_iter()),
+        inner: MapResource::new(&map_positions, entity_data),
     };
     commands.insert_resource(terrain_entities)
 }

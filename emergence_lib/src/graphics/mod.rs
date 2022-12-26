@@ -1,7 +1,7 @@
 //! Utilities for defining and visualizing game graphics.
 
 use crate::enum_iter::IterableEnum;
-use crate::graphics::terrain::TerrainTilemap;
+use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::asset::AssetServer;
 use bevy::ecs::component::Component;
@@ -9,18 +9,22 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::{Res, ResMut, Resource};
+use bevy::log::info;
 use bevy::prelude::{StageLabel, SystemStage};
-use bevy_ecs_tilemap::map::{HexCoordSystem, TilemapId, TilemapType};
+use bevy_ecs_tilemap::map::{
+    HexCoordSystem, TilemapGridSize, TilemapId, TilemapTexture, TilemapTileSize, TilemapType,
+};
+use bevy_ecs_tilemap::prelude::get_tilemap_center_transform;
 use bevy_ecs_tilemap::tiles::TilePos;
+use bevy_ecs_tilemap::TilemapBundle;
 
 use crate as emergence_lib;
-use crate::graphics::organisms::OrganismsTilemap;
+use crate::graphics::organisms::{OrganismSprite, OrganismsTilemap};
 use debug_tools::debug_ui::*;
 use emergence_macros::IterableEnum;
 
-use crate::graphics::produce::ProduceTilemap;
-use crate::graphics::sprites::IntoSprite;
-use crate::graphics::tilemap_marker::TilemapMarker;
+use crate::graphics::produce::{ProduceSprite, ProduceTilemap};
+use crate::graphics::sprites::{IntoSprite, SpriteIndex};
 use crate::organisms::structures::{Fungi, Plant};
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
@@ -31,7 +35,6 @@ pub mod organisms;
 pub mod produce;
 pub mod sprites;
 pub mod terrain;
-pub mod tilemap_marker;
 pub mod ui;
 
 /// All of the code needed to draw things on screen.
@@ -105,45 +108,96 @@ fn update_sprites(
     });
 }
 
-/// We use a hexagonal map with "pointy-topped" (row oriented) graphics, and prefer an axial coordinate
+/// We use a hexagonal map with "pointy-topped" (row oriented) tiles, and prefer an axial coordinate
 /// system instead of an offset-coordinate system.
 pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
-/// We are using a map with hexagonal graphics.
+/// We are using a map with hexagonal tiles.
 pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
 
 /// Enumerates the different tilemaps we are organizing our graphics into
+///
+/// These should be ordered by their z-height. So, the terrain tilemap is the lowest (z-height `0`),
+/// the organism tilemap is above it, etc.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, IterableEnum)]
 pub enum Tilemap {
-    /// Organisms tilemap
-    Organisms,
     /// Terrain tilemap
     Terrain,
+    /// Organisms tilemap
+    Organisms,
     /// Produce tilemap
     Produce,
 }
 
 impl Tilemap {
+    /// The tile size (hex tile width by hex tile height) in pixels of the tilemap's tile image assets.
+    ///
+    /// Note that in general, a regular hexagon "pointy top" (row oriented) hexagon has a
+    /// `width:height` ratio of [`sqrt(3.0)/2.0`](https://www.redblobgames.com/grids/hexagons/#basics),
+    /// but because pixels are integer values, there will usually be some rounding, so tiles will
+    /// only approximately match this ratio.
+    pub const fn tile_size(&self) -> TilemapTileSize {
+        // Currently all tilemaps have the same tile size
+        TilemapTileSize { x: 48.0, y: 54.0 }
+    }
+
+    /// The grid size of this tilemap, in pixels.
+    ///
+    /// This can differ from [`tile_size`](Self::tile_size), in order to overlap tiles, or pad tiles.
+    pub fn grid_size(&self) -> TilemapGridSize {
+        // Currently all tilemaps have the same grid size as their tile size
+        self.tile_size().into()
+    }
+
+    /// The z-height of this tile map, it is the same as the index of the tilemap's variant
+    /// in the [`Tilemap`] enum
+    pub const fn z_height(&self) -> f32 {
+        *self as usize as f32
+    }
+
+    /// Loads the texture for this tilemap, using its corresponding [`SpriteIndex`] implementor
+    pub fn load_texture(&self, asset_server: &AssetServer) -> TilemapTexture {
+        match self {
+            Tilemap::Terrain => TerrainSprite::load(asset_server),
+            Tilemap::Organisms => OrganismSprite::load(asset_server),
+            Tilemap::Produce => ProduceSprite::load(asset_server),
+        }
+    }
+
     /// Spawns tilemap component associated with each variant
     pub fn spawn(
         &self,
         commands: &mut Commands,
-        map_geometry: &Res<MapGeometry>,
-        asset_server: &Res<AssetServer>,
+        map_geometry: &MapGeometry,
+        asset_server: &AssetServer,
     ) -> Entity {
+        info!("Inserting TilemapBundle for {:?}...", self);
+
+        let texture = self.load_texture(asset_server);
+        let tile_size = self.tile_size();
+        let grid_size = self.grid_size();
+
+        let mut entity_commands = commands.spawn(TilemapBundle {
+            grid_size,
+            map_type: MAP_TYPE,
+            size: map_geometry.size(),
+            texture,
+            tile_size,
+            transform: get_tilemap_center_transform(
+                &map_geometry.size(),
+                &grid_size,
+                &MAP_TYPE,
+                self.z_height(),
+            ),
+            ..Default::default()
+        });
+
         match self {
-            Tilemap::Organisms => {
-                let tilemap = OrganismsTilemap;
-                tilemap.spawn(commands, map_geometry, asset_server)
-            }
-            Tilemap::Terrain => {
-                let tilemap = TerrainTilemap;
-                tilemap.spawn(commands, map_geometry, asset_server)
-            }
-            Tilemap::Produce => {
-                let tilemap = ProduceTilemap;
-                tilemap.spawn(commands, map_geometry, asset_server)
-            }
-        }
+            Tilemap::Terrain => entity_commands.insert(TerrainTilemap),
+            Tilemap::Organisms => entity_commands.insert(OrganismsTilemap),
+            Tilemap::Produce => entity_commands.insert(ProduceTilemap),
+        };
+
+        entity_commands.id()
     }
 }
 

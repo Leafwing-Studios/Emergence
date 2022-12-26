@@ -22,15 +22,17 @@ use std::path::PathBuf;
 /// * [`ProduceSprite`](crate::graphics::produce::ProduceSprite)
 /// * [`TerrainSprite`](crate::graphics::terrain::TerrainSprite)
 pub trait SpriteIndex: IterableEnum {
-    /// Path to the folder containing sprite assets indexed by this implementor.
-    const ROOT_PATH: &'static str;
+    /// Path to the folder within `assets` containing sprite assets indexed by this implementor.
+    ///
+    /// This must be a `&'static str` because there is no way to create a const [`PathBuf`].
+    const ROOT_FOLDER: &'static str;
 
-    /// Path of a particular entity variant.
-    fn leaf_path(&self) -> &'static str;
+    /// Path of a particular entity variant within the `ROOT_PATH` folder.
+    fn leaf_path(&self) -> PathBuf;
 
     /// Returns `ROOT_PATH + leaf_path()`.
     fn full_path(&self) -> AssetPath<'static> {
-        let path = PathBuf::from(Self::ROOT_PATH).join(self.leaf_path());
+        let path = PathBuf::from(Self::ROOT_FOLDER).join(self.leaf_path());
 
         AssetPath::new(path, None)
     }
@@ -43,7 +45,7 @@ pub trait SpriteIndex: IterableEnum {
     }
 
     /// Loads associated sprites into a [`TilemapTexture::Vector`](TilemapTexture::Vector).
-    fn load(asset_server: &Res<AssetServer>) -> TilemapTexture {
+    fn load(asset_server: &AssetServer) -> TilemapTexture {
         TilemapTexture::Vector(
             Self::all_paths()
                 .into_iter()

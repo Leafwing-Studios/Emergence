@@ -116,8 +116,8 @@ fn decay(mut map_signals: ResMut<MapResource<TileSignals>>, signal_configs: Res<
     }
 }
 
-/// Compute changes (deltas) in signal values at graphics, due to movement of signal between
-/// graphics.
+/// Compute changes (deltas) in signal values at tiles, due to movement of signal between
+/// tiles.
 ///
 /// Currently movement only occurs due to diffusion.
 fn compute_deltas(
@@ -158,7 +158,7 @@ fn compute_deltas(
     }
 }
 
-/// Applies deltas due to movement of signals between graphics.
+/// Applies deltas due to movement of signals between tiles.
 ///
 /// Should run after [`compute_deltas`].
 fn apply_deltas(mut map_signals: ResMut<MapResource<TileSignals>>) {
@@ -174,7 +174,7 @@ pub struct Signal {
     current_value: f32,
     /// The amount of signal that will be coming into this tile this tick.
     ///
-    /// Generally, this will be based on [`current_value`](Signal::current_value) of neighboring graphics.
+    /// Generally, this will be based on [`current_value`](Signal::current_value) of neighboring tiles.
     incoming: f32,
     /// The amount of signal that will be leaving this tile this tick.
     ///
