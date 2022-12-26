@@ -181,6 +181,14 @@ These are optional, but commonly included in some form.
 - **Filters**
   - Splits mixed streams of goods
   - Belt splitters, liquid filters and inserters (via selective pickup) can serve this purpose
+- **Splitters**
+  - Divides a stream of goods into two or more parts, generally evenly
+  - Ex: belt splitters, pipes
+- **Prioritizers**
+  - One use of a resource, either locally or globally, is deemed "more important" than others
+  - May be able to prioritize both input and output!
+  - Goods will be diverted to the more important path until that path is backed up
+  - Ex: belt sideloading, splitter priority
 - **Bypasses**
   - Underground belts and pipes, train intersections
   - Allows more complex logistical configurations

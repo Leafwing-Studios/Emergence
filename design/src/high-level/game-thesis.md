@@ -119,12 +119,18 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
   - transported via canals
   - can be pumped
 - **Filters**
-  - units are capable of differentiation
+  - units are capable of differentiating between items
+  - some units won't care about some items via signal preference tuning
   - simple mechanical filters sort items into classes
     - item size
     - floats
     - blows away
   - plants are capable of sophisticated filtration of solutions
+- **Splitters**
+  - streams that split
+- **Prioritizers**
+  - nonlinear signal feedback loops?
+  - stream geometry?
 - **Bypasses**
   - underground tunnels
   - overpasses
