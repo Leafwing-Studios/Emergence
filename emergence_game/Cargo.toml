@@ -12,4 +12,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9"
-emergence_lib = { path = "../emergence_lib" }
+emergence_lib = { path = "../emergence_lib", version = "0.1.0" }
