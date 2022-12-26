@@ -72,9 +72,6 @@ This list is roughly ordered by the closeness to the genre.
 - Level builders
   - Y'know, like Mario Maker
   - Focused on creating interesting experiences and, in some cases, creating fun and interesting contraptions
-- 5X games
-  - Civ 5, Stellaris
-  - A little city builder, a little RTS
 - Tower defenses
   - Dungeon Warfare 2, Bloons TD, Gemcraft
   - In high quality games, there are strong optimization and contraption elements
