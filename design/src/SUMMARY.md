@@ -1,6 +1,7 @@
 # Summary
 
 - [Draft Steam Page](./steam-page.md)
+- [Glossary](./glossary.md)
 - [High Level Analysis](./high-level/index.md)
   - [Game Thesis](./high-level/game-thesis.md)
   - [Genre Analysis](./high-level/genre-analysis.md)
