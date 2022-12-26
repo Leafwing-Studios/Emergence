@@ -21,7 +21,7 @@
 - partially self-directed goals
 - challenge can be overcome by spending time waiting
 - highly moddable
-- procedurally generatd world
+- procedurally generated world
 
 ## Why is this genre fun?
 
