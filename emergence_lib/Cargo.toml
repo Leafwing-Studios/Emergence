@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "2967a394dc59c29fac14cb8cb187d601ea604a1e" }
 bevy_pancam = { version = "0.7", features = ["bevy_egui"] }
 debug_tools = { path = "../tools/debug_tools" }
 rand = "0.8"
@@ -20,4 +20,4 @@ indexmap = "1.9"
 
 [dev-dependencies]
 # We need headless operation in tests
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "2967a394dc59c29fac14cb8cb187d601ea604a1e", default-features = false }
