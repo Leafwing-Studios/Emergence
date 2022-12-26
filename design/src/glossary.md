@@ -1,7 +1,7 @@
 # Glossary
 
 These definitions are intended to be relatively brief and opinionated.
-They are not
+They are not authoritative!
 
 ## Game Design
 
