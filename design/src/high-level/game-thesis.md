@@ -13,16 +13,23 @@ With a biologically inspired setting and game mechanics,
 - satisfying, simple audio
 - clear graphics
 - rich and interesting contraption mechanics
-- well-paced progression
+- interesting engineering puzzles through well-designed production chains
+- rich opportunities for optional optimization
+- clear, well-paced progression
 - thriving modding community
 - impressive performance
 - intriguing fantasy: build a factory on an alien world and advance in technology
 
 However, competitors in the space have often failed to catch audience's attention in the same way.
-Getting the details right (particularly around UX, contraption mechanics, progression and performance) is remarkably hard.
+Few have failed to capture the core gamplay loop to the same level of proficiency: they may have production chains,
+but working them out is much more straightforward, and the tools provided for optional optimization are limited.
+Additionally, getting the details right (particularly around UX, contraption mechanics, progression and performance) is remarkably hard.
+
 Just as importantly, these competitors are by-and-large unimaginative, both in theme and mechanics.
 Belts, inserters and machines in a generic sci-fi environment are all well-and-good,
 but fail to capture the imagination of new audiences, or stand out from the crowd.
+Even when working within the established genre, many still fail to provide exciting goals to work toward.
+Power armor and cars and nuclear reactors are *cool*, and they keep players pushing forward.
 
 By taking the rich and fun core mechanics of factory builders,
 adapting them to a unique and compelling theme,
@@ -34,48 +41,64 @@ and adding a unique mechanical focus on resilience,
 These are self-imposed, and chosen to create a more compelling and cohesive game:
 
 - Players should be able to look at a screenshot or video of an inspiring contraption, and replicate that in their game.
+  - For a given factory design or contraption, all the moving parts should be visible and identifiable
+  - It should be apparent, then, how each contraption works and how the resources "flow" through it
+- Relatively light tone, playful art style
+  - Solarpunk, not Zerg
 - Colonies should always feel like bustling organic hives and farms, not mechanized factories.
-- Optimal play should involve:
-  - adapting to the local environment
-  - automatically responding to predictable cycles
-  - dealing with all waste products
+  - The thematic focus z`should be on "nature reclaiming" instead of "industry civilizing"
+  - An emphasis is put on the survival of the colony as a whole, not any individual member
+- When designing your colony, robustness is valued over finely tuned optimization
+  - Robustness to refactoring
+  - Robustness to predictable environmental changes
+  - Robustness to infrequent threats
+  - Robustness to changes in supply and demand
+- Optimal play should involve (but not require):
+  - Adapting to the local environment
+  - Dealing with all waste products
+- Game mechanics are inspired by real world ecology, but making a clear and fun game with interesting choices comes first, even if that means bending reality somewhat
 
 ## Mechanical Translation
 
 ### Core Mechanics
 
 - **Resource patches**
-  - Environmental resources are typically continuous, rather than discrete
-    - Still clumped, but no clear boundaries
-  - All resources are always renewable in some form
-  - Soil contains various concentrations of nutrients (Nitrogen, Phosphorus, Potassium)
-  - Soil is physically made up of sand/silt/clay/stone/organic matter
-  - Water is vital for virtually everything, and can be found in streams, lakes, organic items and soil
-  - Energy is similarly vital, but can be found in different forms that are edible to different organisms
-    - Ultimately gathered via photosynthesis
+  - environmental resources are typically (but not always) continuous, rather than discrete
+    - still clumped, but no clear boundaries
+    - ex: nitrogen can be extracted from soil, but will be richer in some locations
+  - all resources can be obtained renewably, with the right strategy
+  - soil contains various concentrations of nutrients (nitrogen, phosphorus, potassium)
+  - soil is physically made up of sand/silt/clay/stone/organic matter
+  - water is vital for virtually everything, and can be found in rain, streams, lakes, organic items and soil
+  - energy is similarly vital, but can be found in different forms that are edible to different organisms
+    - ultimately gathered via photosynthesis
 - **Recipes**
-  - Quite standard overall
-  - Emphasis on byproducts and consequences of unmanaged waste
-  - Circular processing
-  - Items can decompose over time without action
+  - quite standard overall
+  - emphasis on byproducts and consequences of unmanaged waste
+  - circular processing
+  - some items can decompose over time without action
 - **Assemblers**
   - simple items can just be assembled by units at a crude shelf made of dirt (cheap) or stone (durable)
   - more complex items involve the use of dedicated plant or fungal buildings with selected recipes
 - **Transporters**
   - ground units carry items and do work flexibly, but are physically grounded
-  - flying units can travel more freely, but have lower carrying loads and much higher upkeep
   - water flows can be used to carry goods downriver
+  - water flows can be expanded with player-dug canals
   - large quantities of goods can be transported via large, high-momentum ground units
 - **Storage**
   - simple one-resource piles that are exposed to the elements
-  - sheltered storage buildings made of plants and fungi
-  - units and storage work together in a fashion directly analogous to Factorio's logistic network
+  - sheltered storage buildings made of stone, plants and fungi
+  - shelted storage will reduce rate of decay, and mess due to rain and other effects
+  - units, assemblers and storage work together in a fashion directly analogous to Factorio's logistic network
 - **Resource sinks**
   - lossy conversions: energy and water will commonly be lost during resource transformations
-  - resource upkeep: energy and water will commonly be lost
+  - resource upkeep: energy and water will commonly be lost to keep things alive
   - pheromones: used to exert control over the colony and interactively boost effectiveness
+    - refine and then spend base resources to improve production rate
   - guided evolution: research analogue used to modify and enhance existing species
   - assimilation: research analogue used to add new species to the colony
+  - hive mind: research analogue, used to unlock new features in the lab
+  - ???: some kind of final goal to work towards building
   
 ### Advanced Mechanics
 
@@ -120,6 +143,32 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
   - pheromones: spent manually by the player to temporarily and locally enhance
   - upgrades: done via guided evolution, affecting all organisms of that strain
   - enhancements: pheromones can be produced and applied automatically via workers
+- **Multiple transportation options**
+  - Many species, and species variants
+- **Cyclic production pathways**
+  - Core mechanic
+- **Byproducts**
+  - Core mechanic
+- **Pollution**
+  - thematically essential
+  - needs much richer (and more plausible) model of pollution
+  - effects should be varied and depend on intensity of pollution
+  - polluting should be easier than dealing with waste products properly
+  - pollution can serve as yet-another important driver of temporal variation, as it builds up and must be dealt with
+  - several kinds:
+    - solid waste
+    - water pollution
+    - soil pollution
+- **Stochastic outputs**
+  - Inherent in advanced tech
+- **Degrading products**
+  - Organic materials only
+  - Most food
+- **Hazardous goods**
+  - Combat-focused items
+  - Advanced tech
+- **Environmental process bounds**
+  - inherent to using living organisms as assemblers (and workers)
 
 ### Supplementary Mechanics
 
@@ -134,12 +183,6 @@ These features supplement the core gameplay loop by providing additional things 
   - natural but not essential
   - must be careful to avoid snowballing effects
     - design with negative feedback loops like hunger satiation
-- **Pollution**
-  - thematically essential
-  - needs much richer (and more plausible) model of pollution
-  - effects should be varied and depend on intensity of pollution
-  - polluting should be easier than dealing with waste products properly
-  - pollution can serve as yet-another important driver of temporal variation, as it builds up and must be dealt with
 
 ## Design Strengths
 
