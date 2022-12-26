@@ -29,7 +29,7 @@
 - optional optimizations on top of said solutions
 - satisfaction of watching your contraptions run
 - satisfaction of taming the wild
-- interesting, unexpected failures due to unexpected interactions or subtle bugs
+- interesting, unexpected failures due to unexpected interactions or subtle bugs in the player's design
 - gameplay can be extended, enhanced, or changed through mods or built in options
 - hits on "engineering creativity" in a way that other games don't
   - engineering creatvitiy is more about coming up with solutions within constraints. It's not a blank canvas. It's based on analytically evaluable metrics
