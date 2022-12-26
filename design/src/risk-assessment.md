@@ -23,7 +23,7 @@ To mitigate this risk, the following will be important:
 - Focus on the core game loop first and then iteratively plan the next set of features we want to add.
   Keeping the scopes small for each iteration will ensure that we don't end up starting too many projects at once.
 
-### Financial Stability
+### Financial Instability
 
 As an open source project it will be harder to generate funding for the work we cannot do ourselves.
 As an indie studio, there is also the uncertainty how popular the game will be in the end.
