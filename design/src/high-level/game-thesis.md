@@ -47,6 +47,7 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
   - Solarpunk, not Zerg
 - Colonies should always feel like bustling organic hives and farms, not mechanized factories.
   - The thematic focus z`should be on "nature reclaiming" instead of "industry civilizing"
+  - Reflavored machinery (belts, gears, electronics) and human construction styles (houses, right angled construction, planks) don't cut it!
   - An emphasis is put on the survival of the colony as a whole, not any individual member
 - When designing your colony, robustness is valued over finely tuned optimization
   - Robustness to refactoring
