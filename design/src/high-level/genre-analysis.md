@@ -58,7 +58,7 @@ This list is roughly ordered by the closeness to the genre.
   - Balance complex systems, but with a focus on the needs of your workers, not scaling production
   - More about the emergent push and pull of life in the colony. Less about steadily pushing towards some goal.
 - Idle games
-  - Forager, Cookie Clicker, Candy box
+  - Cookie Clicker, Candy Box
   - Automate everything, but without the complex chains
   - Additional mechanics and optimization opportunities unfold over time
 - Train simulators
