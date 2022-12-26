@@ -2,7 +2,9 @@
 
 - [Draft Steam Page](./steam-page.md)
 - [High Level Analysis](./high-level/index.md)
+  - [Game Thesis](./high-level/game-thesis.md)
   - [Genre Analysis](./high-level/genre-analysis.md)
-  - [Emergence within the Factory Builder Genre](./high-level/game-thesis.md)
+  - [Genre Mechanics](./high-level/genre-mechanics.md)
+  - [Mapping genre mechanics to *Emergence*](high-level/mechanical-translation.md)
   - [Creative Automation](./high-level/creative-automation.md)
   - [Creative Automation: Case Studies](./high-level/creative-automation-case-studies.md)
