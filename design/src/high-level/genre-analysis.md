@@ -122,7 +122,7 @@ Note that many of these design tensions are not unique to factory builders.
 - mechanical complexity vs meaningful richness
 - helpful innovations vs trivializing the game
   - unlocking new tech can sometimes remove interesting challenges intead of creating interesting opporutnity for improvement
-  - (insert roast of factorio's logisitcs robots here)
+  - (insert roast of Factorio's logisitcs robots here)
 - disruption forces interesting changes vs frustration and sadness to see your stuff get wrecked
 - long play time vs tedious waiting around
 - giant automated bases vs computational limits
@@ -220,7 +220,7 @@ These are optional, but commonly included in some form.
 - **Degrading products**
   - Goods that have a "shelf-life", and become less useful or turn into waste over time
   - Most commonly used for food
-  - Often adds storage constriants
+  - Often adds storage constraints
   - Often requires carefully managing throughput of production
 - **Hazardous goods**
   - Goods that are dangerous to store, especially in excess
@@ -297,7 +297,7 @@ These things make the game loop more pleasant:
 - **State indicators**
   - See how machines are configured
   - See if machines are working
-  - See what's instead stoage
+  - See what's inside storage
   - Usually toggled to reduce clutter
 
 ### Meta Features
