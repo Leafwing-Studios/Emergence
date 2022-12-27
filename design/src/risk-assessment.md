@@ -20,8 +20,14 @@ To mitigate this risk, the following will be important:
 - Clearly document the vision of the game in the design book.
   This will help to align all contributors on what we want to build.
 
+- Organize the bigger development plans in GitHub projects and/or milestones.
+  Closely align this plan with the vision laid out in the design book.
+
 - Focus on the core game loop first and then iteratively plan the next set of features we want to add.
   Keeping the scopes small for each iteration will ensure that we don't end up starting too many projects at once.
+
+- Focus on the player experience.
+  Get a playable version ASAP and then improve based on the player feedback, while being mindful of the larger vision.
 
 ### Financial Instability
 
