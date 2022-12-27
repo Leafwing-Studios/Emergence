@@ -123,7 +123,26 @@ Usually uses _science packs_ as input.
 
 ### Logistic network
 
+A network of connected logistic elements that can interact with each other.
+It's composed of _producers_, who provide resources to the network, _consumers_, who take resources out of the network and use them, and the connection between them.
+A single entity might be both a producer and a consumer.
+In the same game there may be different separated sets of logistic networks.
+The consumers in the network (e.g. logistic bots) can access the producers in the network (e.g. logistic chests), but not outside of it.
+
+**Examples**:
+
+- [Factorio: Logistic network](https://wiki.factorio.com/Logistic_network)
+
 ### Overlay
+
+Overlays are UI elements which allow the player to view additional information about entities or processes.
+They help convey information that is not easily visible by the in-game graphics alone.
+The player can switch between different overlays to access different types of information or disable them entirely.
+
+**Examples**:
+
+- Factorio: "Alt mode"
+- [Oxygen Not Included: Overlays](https://oxygennotincluded.fandom.com/wiki/Overlays)
 
 ### Pipette
 
@@ -157,7 +176,7 @@ Research is usually very expensive to pace the game.
 
 ### Resource
 
-TODO: Add definition
+An item that can be processed further to produce different items.
 
 There are different types of resources:
 
