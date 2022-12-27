@@ -1,6 +1,8 @@
 # Raw Resources
 
 These are the simple, fundamental materials that intermediate and end products are made of.
+Raw resources cannot be derived from another raw resources: they are "elemental" in that way.
+The total amount of each raw resource (other than water and energy) is conserved at each resource processing step.
 
 Different areas of the map will have different quantities of each resource to begin with.
 
