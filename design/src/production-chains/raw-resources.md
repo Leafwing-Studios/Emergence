@@ -50,7 +50,7 @@ Planned to split into sand/silt/clay/organic matter after the MVP.
 
 **Storage properties:** Solid object.
 
-**Path to renewability:** Filter incoming streams.
+**Path to renewability:** Filter particles out of streams from outside of map.
 
 **Downsides of excess:** Piles up cluttering movement.
 
@@ -126,7 +126,7 @@ Planned to split into at least nitrogen and phosphorus after the MVP.
 
 **Storage properties:** Solid object.
 
-**Path to renewability:** Filter incoming streams.
+**Path to renewability:** Filter particles out of streams from outside of map.
 
 **Downsides of excess:** Piles up cluttering movement.
 
@@ -140,7 +140,7 @@ Planned to split into at least nitrogen and phosphorus after the MVP.
 
 **Storage properties:** Solid object.
 
-**Path to renewability:** Filter incoming streams.
+**Path to renewability:** Filter particles out of streams from outside of map.
 
 **Downsides of excess:** Piles up cluttering movement.
 
@@ -154,7 +154,7 @@ Planned to split into at least nitrogen and phosphorus after the MVP.
 
 **Storage properties:** Solid object.
 
-**Path to renewability:** Filter incoming streams.
+**Path to renewability:** Filter particles out of streams from outside of map.
 
 **Downsides of excess:** Piles up cluttering movement.
 
