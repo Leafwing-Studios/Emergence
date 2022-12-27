@@ -62,7 +62,7 @@ Fortunately, we have some contributors who are very experienced with Bevy.
 For our game we are also less reliant on features like a visual editor,
 because we can procedurally generate the world.
 
-### Performance Sensitive Game
+### Performance-Sensitive Game
 
 Factory builders and automation games are usually computationally expensive.
 There are often large maps, tons of machines/structures and potentially many units with an AI.
