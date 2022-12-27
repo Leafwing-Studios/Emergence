@@ -33,9 +33,29 @@ To mitigate this risk, the following will be important:
 
 As an open source project it will be harder to generate funding for the work we cannot do ourselves.
 As an indie studio, there is also the uncertainty how popular the game will be in the end.
-Players could also end up compiling the game from source for free without buying the game.
+If we have full time contributors, it's important that we can sustain their work in the long term.
 
-A Patreon model or something similar could help with this.
+A Patreon model or GitHub sponsors could help with this.
+
+### Rip Offs
+
+Since the game is open source, other individuals or companies could sell the game without any major contributors.
+They might also re-bundle the game with different assets.
+This could hamper our own ability to sell the game.
+
+One possible mitigation would be the use of different licenses for some aspects of the game.
+For example, we could use CC non-commercial or share alike licenses for assets and copyleft licenses for non-reusable code.
+However, this could constrain code reuse for good faith individuals and would also require the consent of all contributors.
+
+### "Piracy"
+
+Because the game is open source, players could simply compile it from source for free instead of buying it.
+While this is completely legal and technically piracy, it could decrease our sales.
+
+If this is going to be an actual problem remains to be seen.
+Non-technical players probably won't want to go through the hassle to compile from source
+(even though it's quite easy in the current state).
+Some players may also want to buy it on Steam simply to have all games in one place and for achievement tracking.
 
 ### Contributor Fluctuation
 
