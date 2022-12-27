@@ -183,7 +183,7 @@ There are different types of resources:
 - **Raw resource**: A foundational resource that can be extracted directly from the environment.
 - **Intermediate resource**: A resource that cannot be extracted nor used directly.
   It's an intermediate set towards the production of end products.
-- **End product**: The final stage of a resource, can be used directly.
+- **End product**: A resource that can be used directly for some in-game benefit.
 
 ### Science pack
 
@@ -201,6 +201,7 @@ different technologies require different science pack types to be unlocked.
 
 An entity to efficiently move big amounts of resources over large distances.
 Usually require a much higher upfront investment than _belts_, but are better suited for long distances.
+They are high latency, and move goods in clumped bursts.
 In some games there are also many other entities to guide the behavior of large train networks.
 
 **Examples**:
