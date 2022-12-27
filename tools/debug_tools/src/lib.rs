@@ -11,10 +11,13 @@ use bevy::{
     ui::{PositionType, Style, UiRect, Val},
 };
 
+// TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
+// use bevy_console::*;
+
 use bevy_inspector_egui::WorldInspectorPlugin;
-// TODO: Add an MIT/Apache 2.0 compatible console implementation
-// use console::;
-// pub mod console;
+use console::{print_to_log, PrintToLog};
+
+pub mod console;
 pub mod debug_ui;
 
 /// Creates a global resource that can be used to toggle actively displayed debug tools.
@@ -22,8 +25,9 @@ pub mod debug_ui;
 pub struct DebugInfo {
     /// Toggle global access to developer tools
     pub dev_mode: bool,
-    /// Toggle developer console
-    pub enable_console: bool,
+    // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
+    // /// Toggle developer console
+    // pub enable_console: bool,
     /// Toggle the debug tile labels
     pub show_tile_label: bool,
     /// Toggle render info
@@ -36,7 +40,8 @@ impl Default for DebugInfo {
     fn default() -> Self {
         Self {
             dev_mode: true,
-            enable_console: true,
+            // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
+            // enable_console: true,
             show_tile_label: true,
             show_fps_info: true,
             show_inspector: true,
@@ -50,9 +55,8 @@ pub struct DebugToolsPlugin;
 impl Plugin for DebugToolsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(WorldInspectorPlugin::new())
-            .add_plugin(FrameTimeDiagnosticsPlugin);
-        // TODO figure out console implementation
-        // .add_plugin(ConsolePlugin)
-        // .add_console_command::<PrintToLog, _>(print_to_log);
+            .add_plugin(FrameTimeDiagnosticsPlugin)
+            .add_plugin(ConsolePlugin)
+            .add_console_command::<PrintToLog, _>(print_to_log);
     }
 }

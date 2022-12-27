@@ -4,7 +4,7 @@ pub mod filters;
 pub mod hex_patch;
 pub mod resources;
 
-use crate::simulation::generation::{GenerationConfig, MAP_RADIUS};
+use crate::simulation::generation::GenerationConfig;
 use crate::simulation::map::hex_patch::HexPatch;
 use bevy::ecs::system::Resource;
 use bevy::log::info;
@@ -18,7 +18,7 @@ use bevy_ecs_tilemap::tiles::TilePos;
 /// Resource that stores information regarding the size of the game map.
 #[derive(Resource, Debug)]
 pub struct MapGeometry {
-    /// The radius, in graphics, of the map
+    /// The radius, in tiles, of the map
     radius: u32,
     /// The location of the central tile
     center: TilePos,
@@ -28,7 +28,7 @@ pub struct MapGeometry {
 
 impl Default for MapGeometry {
     fn default() -> Self {
-        MapGeometry::new(MAP_RADIUS)
+        MapGeometry::new(GenerationConfig::MAP_RADIUS)
     }
 }
 
@@ -92,16 +92,10 @@ impl MapGeometry {
     }
 }
 
-impl From<&GenerationConfig> for MapGeometry {
-    fn from(config: &GenerationConfig) -> MapGeometry {
-        MapGeometry::new(config.map_radius)
-    }
-}
-
 /// Initialize the [`MapGeometry`] resource according to [`GenerationConfig`].
 pub fn configure_map_geometry(mut commands: Commands, config: Res<GenerationConfig>) {
     info!("Configuring map geometry...");
-    let map_geometry: MapGeometry = (&*config).into();
+    let map_geometry: MapGeometry = MapGeometry::new(config.map_radius);
 
     commands.insert_resource(map_geometry);
 }
