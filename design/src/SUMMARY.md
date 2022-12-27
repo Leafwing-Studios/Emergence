@@ -1,4 +1,4 @@
-# Summary
+# Table of Contents
 
 - [Draft Steam Page](./steam-page.md)
 - [Glossary](./glossary.md)
@@ -9,3 +9,5 @@
   - [Mapping genre mechanics to *Emergence*](./high-level/mechanical-translation.md)
   - [Creative Automation](./high-level/creative-automation.md)
   - [Creative Automation: Case Studies](./high-level/creative-automation-case-studies.md)
+- [Production Chains](./production-chains/index.md)
+  - [Raw Resources](./production-chains/raw-resources.md)
