@@ -46,6 +46,9 @@ Multiple belts need to be chained together to provide effective transportation.
 Belts usually have a maximum amount of goods they can transport per unit of time.
 They can transport any type of solid goods and different goods can be mixed.
 
+Notably, in Factorio, belts have two "sides", where each side can contain different types of items.
+The direction from which items are loaded onto the belts influence which side of the belt the items are put on.
+
 **Examples**:
 
 - [Factorio: Transport belt](https://wiki.factorio.com/Transport_belt)
@@ -67,6 +70,7 @@ Some actions can only be automated through bots, e.g. constructing new entities.
 ### Blueprint
 
 Blueprints are placeholders for multiple entities to be constructed.
+Entity settings (e.g. recipes or other configurations) are preserved in the blueprint.
 They can serve as a planning tool for the player, but also be used as instructions for bots.
 Often, blueprints can be shared between players and/or be reused during the game.
 
