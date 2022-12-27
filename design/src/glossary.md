@@ -3,6 +3,8 @@
 These definitions are intended to be relatively brief and opinionated.
 They are not authoritative!
 
+<!-- Please try to keep the terms sorted alphabetically. -->
+
 ## Game Design
 
 Key concepts and terms from game design.
@@ -90,9 +92,34 @@ Previously copied layouts are simply overwritten.
 
 ### Filter
 
+Filters allow only one set of goods to pass through.
+Can be combined with _Inserters_ to only transfer one set of goods
+or with _Splitters_ to split one set of goods to one side and all other goods to the other side.
+
+**Examples**:
+
+- [Factorio: Filter inserter](https://wiki.factorio.com/Filter_inserter)
+- [Factorio: Splitter](https://wiki.factorio.com/Splitter) (provides filter functionality)
+- [Satisfactory: Smart splitter](https://satisfactory.fandom.com/wiki/Smart_Splitter) (provides filter functionality)
+- [Dyson Sphere Program: Sorter](https://dyson-sphere-program.fandom.com/wiki/Sorter) (provides filter functionality)
+
 ### Inserter
 
+Inserters transfer goods from one entity to another.
+Often, inserters are required to insert goods into machines.
+Inserters are usually available with different ranges, either as separate entities or as configuration option.
+
+- [Factorio: Inserters](https://wiki.factorio.com/Inserters)
+- [Dyson Sphere Program: Sorter](https://dyson-sphere-program.fandom.com/wiki/Sorter) (provides inserter functionality)
+
 ### Lab
+
+A machine to research new technologies, unlocking new machines and other gameplay features.
+Usually uses _science packs_ as input.
+
+- [Factorio: Lab](https://wiki.factorio.com/Lab)
+- [Satisfactory: HUB terminal](https://satisfactory.fandom.com/wiki/The_HUB#HUB_Terminal)
+- [Dyson Sphere Program: Matrix Lab](https://dyson-sphere-program.fandom.com/wiki/Matrix_Lab)
 
 ### Logistic network
 
@@ -100,17 +127,67 @@ Previously copied layouts are simply overwritten.
 
 ### Pipette
 
+The pipette is a tool to select an entity and/or its configuration directly from the screen.
+It works similarly to copy/paste functionality with the _clipboard_, but for a singular entity.
+This is usually a UI tool instead of a physical tool to build in the game.
+
 ### Power
 
+Power is a special type of resource that is required for machines to run.
+Power needs to be produced and then distributed to the machines.
+Often, there are different means of production (e.g. steam power, solar power, nuclear power) with different upfront costs and production rates.
+The distribution of power is usually separated from the distribution of other resources
+(e.g. through an electric network).
+
+- [Factorio: Electric system](https://wiki.factorio.com/Electric_system)
+- [Satisfactory: Power](https://satisfactory.fandom.com/wiki/Power)
+- [Dyson Sphere Program: Power](https://dyson-sphere-program.fandom.com/wiki/Category:Power)
+
 ### Research
+
+Research is the main means of progression.
+Researching new technologies unlocks more machines, enables more advanced processes or improves existing features.
+Research is usually very expensive to pace the game.
+
+**Examples**:
+
+- [Factorio: Research](https://wiki.factorio.com/Research)
+- [Satisfactory: Milestones](https://satisfactory.fandom.com/wiki/Milestones)
+- [Dyson Sphere Program: Research](https://dyson-sphere-program.fandom.com/wiki/Research)
 
 ### Resource
 
-### Train
+TODO: Add definition
 
-### Research
+There are different types of resources:
+
+- **Raw resource**: A foundational resource that can be extracted directly from the environment.
+- **Intermediate resource**: A resource that cannot be extracted nor used directly.
+  It's an intermediate set towards the production of end products.
+- **End product**: The final stage of a resource, can be used directly.
 
 ### Science pack
+
+An intermediate resource that can be used to research technologies in the _lab_.
+Often, many science packs are required to unlock one technology.
+Sometimes, science packs are available in different types with different recipes,
+different technologies require different science pack types to be unlocked.
+
+**Examples**:
+
+- [Factorio: Science pack](https://wiki.factorio.com/Science_pack)
+- [Dyson Sphere Program: Science matrices](https://dyson-sphere-program.fandom.com/wiki/Category:Science_Matrices)
+
+### Train
+
+An entity to efficiently move big amounts of resources over large distances.
+Usually require a much higher upfront investment than _belts_, but are better suited for long distances.
+In some games there are also many other entities to guide the behavior of large train networks.
+
+**Examples**:
+
+- [Factorio: Railway](https://wiki.factorio.com/Railway)
+- [Satisfactory: Electric Locomotive](https://satisfactory.fandom.com/wiki/Electric_Locomotive)
 
 ## Ecology
 
