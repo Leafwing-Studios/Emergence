@@ -66,6 +66,7 @@ We will also get new contributors that might need some mentoring to get producti
 
 If we have one or more full time contributors, this could help mitigate this risk.
 Useful documentation can help to get new contributors up-to-speed more quickly.
+Code reviews and reliable CI workflows can help to maintain quality and consistency in our code base.
 
 ### Skill Bias
 
