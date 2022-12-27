@@ -76,7 +76,7 @@ Often, blueprints can be shared between players and/or be reused during the game
 
 ### Clipboard
 
-Similar to blueprints, the clipboards allows the quick reuse of factory layouts.
+Similar to blueprints, the clipboard allows the quick reuse of factory layouts.
 A set of entities can be marked to be copied and then pasted at a different position at a later time.
 Usually, the entities are not built directly, but only pasted as placeholders.
 
