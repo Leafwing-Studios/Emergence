@@ -39,11 +39,15 @@ pub enum HiveMindAction {
 /// Enumerates the actions a developer can take.
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DevAction {
+    /// Toggle the overall developer mode setting
+    ToggleDevMode,
     // TODO: make debug labels
     /// Toggle tilemap labels tools
-    ShowDebugLabels,
+    ToggleTileLabels,
     /// Toggle rendering info
-    ShowInfoText,
+    ToggleInfoText,
+    /// Toggle the inspector
+    ToggleInspector,
 }
 
 // TODO: rework this to use LWIM conventions for mapping controls
@@ -68,16 +72,24 @@ impl Default for HiveMindControls {
 // TODO: rework this to use LWIM conventions for mapping controls
 /// Interface for developer controls
 pub struct DevControls {
+    /// Toggle the dev mode
+    pub toggle_dev_mode: UserInput,
+    /// Toggle the tile label
+    pub toggle_tile_labels: UserInput,
     /// Toggle the fps ui
-    pub toggle_fps: KeyCode,
-    // TODO: add more dev controls
+    pub toggle_fps: UserInput,
+    /// Toggle the inspector
+    pub toggle_inspector: UserInput,
 }
 
 /// Add default developer controls
 impl Default for DevControls {
     fn default() -> Self {
         Self {
-            toggle_fps: KeyCode::V,
+            toggle_dev_mode: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::D]),
+            toggle_tile_labels: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::T]),
+            toggle_fps: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::V]),
+            toggle_inspector: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::I]),
         }
     }
 }
@@ -104,7 +116,12 @@ fn initialize_hive_mind(mut commands: Commands) {
         })
         .insert(InputManagerBundle::<DevAction> {
             action_state: ActionState::default(),
-            input_map: InputMap::new([(dev_controls.toggle_fps, DevAction::ShowInfoText)]),
+            input_map: InputMap::new([
+                (dev_controls.toggle_dev_mode, DevAction::ToggleDevMode),
+                (dev_controls.toggle_tile_labels, DevAction::ToggleTileLabels),
+                (dev_controls.toggle_fps, DevAction::ToggleInfoText),
+                (dev_controls.toggle_inspector, DevAction::ToggleInspector),
+            ]),
         });
 }
 
@@ -138,20 +155,58 @@ fn place_pheromone(
     }
 }
 
-/// Toggle showing debug info   
+/// Toggle showing debug info
 fn show_debug_info(
     dev: Query<&ActionState<DevAction>, With<HiveMind>>,
     mut debug_info: ResMut<DebugInfo>,
 ) {
     let dev = dev.single();
-    let fps_info = dev.pressed(DevAction::ShowInfoText);
+    let dev_mode = dev.just_pressed(DevAction::ToggleDevMode);
+    let tile_labels = dev.just_pressed(DevAction::ToggleTileLabels);
+    let fps_info = dev.just_pressed(DevAction::ToggleInfoText);
+    let inspector = dev.just_pressed(DevAction::ToggleInspector);
 
-    if debug_info.dev_mode {
-        if fps_info && debug_info.show_fps_info {
+    // Toggle the dev mode so that what happens is intuitive to the user
+    if dev_mode {
+        if debug_info.dev_mode {
+            debug_info.disable();
+            info!("Debug Info disabled");
+        } else {
+            debug_info.enable();
+            info!("Debug Info enabled");
+        }
+    }
+
+    // Toggle the tile labels, but also make sure that is makes sense to do so
+    if tile_labels && debug_info.dev_mode {
+        if debug_info.show_tile_labels {
+            debug_info.show_tile_labels = false;
+            info!("Tile Labels off");
+        } else {
+            debug_info.show_tile_labels = true;
+            info!("Tile Labels on");
+        }
+    }
+
+    // Toggle the FPS info
+    if fps_info && debug_info.dev_mode {
+        if debug_info.show_fps_info {
             debug_info.show_fps_info = false;
-            info!("fps info toggle")
-        } else if fps_info && !debug_info.show_fps_info {
+            info!("FPS info off");
+        } else {
             debug_info.show_fps_info = true;
+            info!("FPS info on");
+        }
+    }
+
+    // Toggle the inspector
+    if inspector && debug_info.dev_mode {
+        if debug_info.show_inspector {
+            debug_info.show_inspector = false;
+            info!("Egui inspector off");
+        } else {
+            debug_info.show_inspector = true;
+            info!("Egui inspector on");
         }
     }
 }

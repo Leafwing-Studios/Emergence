@@ -31,11 +31,29 @@ pub struct DebugInfo {
     // /// Toggle developer console
     // pub enable_console: bool,
     /// Toggle the debug tile labels
-    pub show_tile_label: bool,
+    pub show_tile_labels: bool,
     /// Toggle render info
     pub show_fps_info: bool,
     /// Toggle displaying the egui inspector
     pub show_inspector: bool,
+}
+
+impl DebugInfo {
+    /// Change all the values in this [DebugInfo] to be enabled
+    pub fn enable(&mut self) {
+        self.dev_mode = true;
+        self.show_tile_labels = true;
+        self.show_fps_info = true;
+        self.show_inspector = true;
+    }
+
+    /// Change all the values in this [DebugInfo] to be disabled
+    pub fn disable(&mut self) {
+        self.dev_mode = false;
+        self.show_tile_labels = false;
+        self.show_fps_info = false;
+        self.show_inspector = false;
+    }
 }
 
 impl Default for DebugInfo {
@@ -44,7 +62,7 @@ impl Default for DebugInfo {
             dev_mode: true,
             // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
             // enable_console: true,
-            show_tile_label: true,
+            show_tile_labels: true,
             show_fps_info: true,
             show_inspector: true,
         }

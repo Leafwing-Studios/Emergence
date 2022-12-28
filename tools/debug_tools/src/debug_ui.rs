@@ -40,10 +40,20 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
 pub fn change_infotext(
     time: Res<Time>,
     diagnostics: Res<Diagnostics>,
-    mut fpstext_query: Query<&mut Text, With<FpsText>>,
+    mut fps_text_query: Query<&mut Text, With<FpsText>>,
     debug_info: Res<DebugInfo>,
 ) {
-    for mut text in &mut fpstext_query {
+    let mut fps_text = fps_text_query.single_mut();
+
+    // Clear out any fps text if it shouldn't be showing
+    if !debug_info.dev_mode || !debug_info.show_fps_info {
+        if !fps_text.sections[0].value.is_empty() {
+            fps_text.sections[0].value = String::new();
+        }
+        return;
+    }
+
+    if debug_info.show_fps_info {
         let mut fps = 0.0;
         if let Some(fps_diagnostic) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(fps_smoothed) = fps_diagnostic.smoothed() {
@@ -59,12 +69,6 @@ pub fn change_infotext(
             }
         }
 
-        if debug_info.dev_mode {
-            text.sections[0].value = if debug_info.show_fps_info {
-                format!(" {fps:.1} fps, {frame_time:.3} ms/frame")
-            } else {
-                String::new()
-            };
-        }
+        fps_text.sections[0].value = format!(" {fps:.1} fps, {frame_time:.3} ms/frame");
     }
 }
