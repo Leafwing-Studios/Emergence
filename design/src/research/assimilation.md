@@ -20,20 +20,20 @@ Once you have assimilated a new species, you unlock control over [genetics](gene
 
 ## Implied Constraints
 
-1. Players should be able to tame almost anything they meet.
-2. Players must be able to clearly differentiate between tamed and wild organisms of the same type.
-3. Species must be mechanically and visually distinct.
-   1. You cannot have 3 species of dragonflies!
-   2. This is because players must be able to clearly tell when an encountered species is new to them.
-4. There must be a moderate number of species in the game.
-   1. With too few species, players will get bored.
-   2. With too many species, finding and understanding each species will explode complexity and development costs.
-5. Exploration becomes an important game mechanic.
-   1. Map cannot start fully visible.
-   2. Different species must live in different regions.
-6. Each species must have an interesting life cycle that players must learn about and master.
-   1. Survival, feeding and reproduction are the obvious choices.
-   2. Unique / interesting / challenging behavior is also a good option.
-7. Progression must be robust: there must be many paths to the same resources and comparable tools.
-   1. Each pathway should feel meaningfully distinct: this plays well with unique life cycles.
-   2. [_Against the Storm_](https://store.steampowered.com/app/1336490/Against_the_Storm/) and [_Oxygen Not Included_](https://store.steampowered.com/app/457140/Oxygen_Not_Included/) do a fantastic job of this.
+- players should be able to tame almost anything they meet
+- players must be able to clearly differentiate between tamed and wild organisms of the same type
+- species must be mechanically and visually distinct
+  - you cannot have 3 species of dragonflies!
+  - this is because players must be able to clearly tell when an encountered species is new to them
+- there must be a moderate number of species in the game
+  - with too few species, players will get bored
+  - with too many species, finding and understanding each species will explode complexity and development costs
+- exploration becomes an important game mechanic
+  - map cannot start fully visible
+  - different species must live in different regions
+- each species must have an interesting life cycle that players must learn about and master
+  - survival, feeding and reproduction are the obvious choices
+  - unique / interesting / challenging behavior is also a good option
+- progression must be robust: there must be many paths to the same resources and comparable tools
+  - each pathway should feel meaningfully distinct: this plays well with unique life cycles
+  - [_Against the Storm_](https://store.steampowered.com/app/1336490/Against_the_Storm/) and [_Oxygen Not Included_](https://store.steampowered.com/app/457140/Oxygen_Not_Included/) do a fantastic job of this

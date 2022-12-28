@@ -55,13 +55,13 @@ Again, this game is [*inspired* by biology, not a model of it](../high-level/gam
 
 ## Implied Constraints
 
-1. Each upgrade must be visually distinguishable.
-   1. This follows from the [key design constraints](../high-level/game-thesis.md#key-design-constraints).
-2. Strains must be visually distinguishable.
-   1. This should be done via player-driven color selection.
-3. All combinations of mutations across different slots should be compatible.
-4. Incompatible mutations must belong to the same slot.
-5. Mutations should typically represent an increase in power over their base version.
-   1. Unlocking new mutations should be exciting and worth the resource investment.
-6. Every upgrade slot should have at least one "generally good" upgrade
-7. Mutations within the same slot should have clear tradeoffs between them.
+- each upgrade must be visually distinguishable
+  - this follows from the [key design constraints](../high-level/game-thesis.md#key-design-constraints)
+- strains must be visually distinguishable
+- this should be done via player-driven color selection
+- all combinations of mutations across different slots should be compatible
+- incompatible mutations must belong to the same slot
+- mutations should typically represent an increase in power over their base version
+- unlocking new mutations should be exciting and worth the resource investment
+- every upgrade slot should have at least one "generally good" upgrade
+- mutations within the same slot should have clear tradeoffs between them
