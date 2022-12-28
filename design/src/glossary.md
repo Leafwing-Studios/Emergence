@@ -29,7 +29,13 @@ Key concepts and terms from game design.
 
 ### Mechanic
 
+### Plausibility and realism
+
 ### Progression
+
+### Randomness
+
+There are two kinds of randomness: input randomness and output randomness.
 
 ### Tuning levers
 
