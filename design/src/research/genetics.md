@@ -65,3 +65,4 @@ Again, this game is [*inspired* by biology, not a model of it](../high-level/gam
 - unlocking new mutations should be exciting and worth the resource investment
 - every upgrade slot should have at least one "generally good" upgrade
 - mutations within the same slot should have clear tradeoffs between them
+  - [double-edged](../glossary.md#double-edged) upgrades are particularly good for this
