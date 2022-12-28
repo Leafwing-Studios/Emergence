@@ -20,44 +20,44 @@ When unlocked, these begin in the off state, but an alert notifies the player th
 
 ## Upgrade options
 
-Several categories of upgrade belong here:
+Several categories of [upgrade](../glossary.md#upgrade) belong here:
 
 - basic upgrades
   - these are too important to [early game](../glossary.md#early-game-mid-game-and-late-game) [quality of life](../glossary.md#quality-of-life) and [tutorialization](../glossary.md#tutorialization) to be gated behind all but the most basic achievements
-  - alerts
-  - undo/redo
-  - pipette
-  - clipboard
-  - basic encyclopedia
+  - [alerts](../glossary.md#alert)
+  - [undo/redo](../glossary.md#undo)
+  - [pipette](../glossary.md#pipette)
+  - [clipboard](../glossary.md#clipboard)
+  - basic [encyclopedia](../glossary.md#encyclopedia)
   - zoning strength
   - pheromones
   - terraforming
-  - map
+  - [map](../glossary.md#map)
 - informational upgrades
-  - local, regional and global production statistics
-  - recipe lookups
+  - local, regional and global [production statistics](../glossary.md#production-statistics)
+  - [recipe](../glossary.md#recipe) lookups
   - organism statistics
   - soil and water statistics
-  - signal overlays
-  - status overlays
+  - signal [overlays](../glossary.md#overlay)
+  - geographical status [overlays](../glossary.md#overlay)
   - organism intent and actions
-  - expanded encyclopedia entries
-- simulation upgrades
+  - expanded [encyclopedia](../glossary.md#encyclopedia) entries
+- simulation [sandbox](../glossary.md#sandbox) upgrades
   - this is a special creative mode, used to test designs quickly and at no cost
   - time is paused while in this mode
   - further upgrades unlock the ability to further modify environmental conditions, speed up time, get more space and so on
   - production planner capabilties belong in this tree
-- quality-of-life upgrades
-  - blueprints
-  - customizable alerts
-  - map notes
-- complexity upgrades
-  - assimilation
-  - genetics research
+- [quality-of-life](../glossary.md#quality-of-life) upgrades
+  - [blueprints](../glossary.md#blueprint)
+  - customizable [alerts](../glossary.md#alert)
+  - map [notes](../glossary.md#notes)
+- [complexity](../glossary.md#depth-and-complexity) upgrades
+  - [assimilation](assimilation.md)
+  - [genetics](genetics.md) research
   - maximum number of strains of each species
   - tame and perform genetics research on multiple species at once
   - complex game mechanics unlocked via genetics research
-  - research queues
+  - [research](../glossary.md#research) queues
 
 Players can choose to opt out of this system during [world generation](../glossary.md#world-generation), allowing them to access all of the complexity at the very beginning.
 This is mostly useful for genre veterans and experienced players.
