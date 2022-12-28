@@ -18,7 +18,7 @@ The mechanics for assigning mutations are fairly simple:
 1. There are some number of slots for each species, typically corresponding to some visible part of their body.
 2. Each strain may select up to 1 mutation for each slot.
 
-To unlock mutations, you must accquire resources, and performance research at a dedicated species-specific facility.
+To unlock mutations, you must accquire resources, and perform research at a dedicated species-specific facility.
 
 Creating strains and changing strain-level settings (other than to select the first mutation for each slot) comes with some cost to avoid thoughtless twiddling.
 
@@ -61,7 +61,7 @@ Again, this game is [*inspired* by biology, not a model of it](../high-level/gam
    1. This should be done via player-driven color selection.
 3. All combinations of mutations across different slots should be compatible.
 4. Incompatible mutations must belong to the same slot.
-5. mutations should typically represent an increase in power over their base version.
+5. Mutations should typically represent an increase in power over their base version.
    1. Unlocking new mutations should be exciting and worth the resource investment.
 6. Every upgrade slot should have at least one "generally good" upgrade
-7. mutations within the same slot should have clear tradeoffs between them.
+7. Mutations within the same slot should have clear tradeoffs between them.

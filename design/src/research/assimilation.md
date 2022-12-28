@@ -16,7 +16,7 @@ In order to assimilate a species you must:
 2. Capture a number of specimens of a species.
 3. Keep that population alive for several life cycles.
 
-Once you have assimilated a new species, you unlock [genetics](genetics.md) control for that species, and can build reproductive structures for that species.
+Once you have assimilated a new species, you unlock control over [genetics](genetics.md) for that species, and can build reproductive structures for that species.
 
 ## Implied Constraints
 
@@ -36,4 +36,4 @@ Once you have assimilated a new species, you unlock [genetics](genetics.md) cont
    2. Unique / interesting / challenging behavior is also a good option.
 7. Progression must be robust: there must be many paths to the same resources and comparable tools.
    1. Each pathway should feel meaningfully distinct: this plays well with unique life cycles.
-   2. **Against the Storm* and *Oxygen Not Included* do a fantastic job of this.
+   2. [_Against the Storm_](https://store.steampowered.com/app/1336490/Against_the_Storm/) and [_Oxygen Not Included_](https://store.steampowered.com/app/457140/Oxygen_Not_Included/) do a fantastic job of this.

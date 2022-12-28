@@ -1,6 +1,6 @@
 # Hive Mind Upgrades
 
-High-level play of factory builders involves understanding a *tremendous* amount of information and using an enormous number of quality of life tools.
+High-level play of factory builders involves understanding a *tremendous* amount of information and using an enormous number of [quality of life](../glossary.md#quality-of-life) tools.
 This can be overwhelming, and detracts from the new player experience.
 However, simply excluding these tools makes managing late-game factories effectively very hard, and will frustrate genre veterans.
 
@@ -57,7 +57,7 @@ Several categories of upgrade belong here:
   - complex game mechanics unlocked via genetics research
   - research queues
 
-Players can choose to opt out of this system during [world generation](../glossary.md#world-generation), allowing them to access all of the complexity all at the very beginnning.
+Players can choose to opt out of this system during [world generation](../glossary.md#world-generation), allowing them to access all of the complexity at the very beginning.
 This is mostly useful for genre veterans and experienced players.
 
 ## Implied constraints
