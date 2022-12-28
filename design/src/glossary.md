@@ -11,6 +11,8 @@ Key concepts and terms from game design.
 
 ### Accessibility
 
+### Achievements
+
 ### Automation
 
 ### Challenge
@@ -18,6 +20,12 @@ Key concepts and terms from game design.
 ### Design-by-stumble
 
 ### Depth and complexity
+
+### Diagetic
+
+### Early game, mid game and late game
+
+### Flavor text
 
 ### Fun
 
@@ -27,11 +35,15 @@ Key concepts and terms from game design.
 
 ### Loop
 
+### Ludotography
+
 ### Mechanic
 
 ### Plausibility and realism
 
 ### Progression
+
+### Quality of life
 
 ### Randomness
 
@@ -40,6 +52,8 @@ There are two kinds of randomness: input randomness and output randomness.
 ### Tuning levers
 
 ### Tutorialization
+
+### World generation
 
 ## Factory Builders
 
@@ -99,6 +113,8 @@ Previously copied layouts are simply overwritten.
 
 - [Factorio: Controls/Tools](https://wiki.factorio.com/Controls#Tools) (copy/paste/cut)
 - [Dyson Sphere Program: Mass Construction (Lv1)](<https://dyson-sphere-program.fandom.com/wiki/Mass_Construction_(Lv1)>) (enables copy/paste functionality)
+
+### Encyclopedia
 
 ### Filter
 
