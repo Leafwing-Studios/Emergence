@@ -72,3 +72,4 @@ This is mostly useful for genre veterans and experienced players.
 - this system of upgrades is one of the main forms of [tutorialization](../glossary.md#tutorialization)
 - achievements must be shared between players in a multiplayer game
 - each achievement should have a run-specific in-game reward
+- intelligence, and the development of intelligence, becomes a theme of the game
