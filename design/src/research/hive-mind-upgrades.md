@@ -11,7 +11,9 @@ In *Emergence*, the player controls the hive as a whole.
 We can play into this theme by framing quality of life and information upgrades as the hive mind getting smarter.
 
 To differentiate these further from [genetics](genetics.md) research, these upgrades don't cost resources.
-Instead, they unlock as various [achievements](../glossary.md#achievements) are completed for each playthrough.
+Instead, they unlock as various milestones are completed for each playthrough.
+
+These upgrades are arranged in a tree structure: both for complexity management and because many of these upgrades are logically locked behind earlier ones.
 
 Each upgrade can be toggled on-and-off freely in the same menu, so players can control the information they're viewing.
 When unlocked, these begin in the off state, but an alert notifies the player that they've unlocked a new hive mind upgrade.
@@ -63,6 +65,7 @@ This is mostly useful for genre veterans and experienced players.
 ## Implied constraints
 
 - *Emergence* must have an achievement system
+- unlocking milestones for the first time should grant an achievement
 - achievements must be tracked on a per-playthrough basis
 - achievements used in this system should be achievable in every playthrough by every player
 - achievements should show progress towards the goal
