@@ -1,4 +1,6 @@
-# UX Analysis
+# Analysis: UX
+
+User experience can make or break a game. Below we will look at some good examples of UX to guide our future design choices.
 
 ## Case Studies
 
