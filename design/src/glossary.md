@@ -11,47 +11,197 @@ Key concepts and terms from game design.
 
 ### Accessibility
 
+How easy and/or comfortable a game is to play for players with a wide range of ability levels or impairments.
+
+Vision, hearing and motor disabilties are the most common category here, but difficulty, time commitments and mental health concerns can also be reasonably considered under a broad banner of accessibility.
+
 ### Achievements
+
+Rewarded for accomplishing challenging or interesting in-game tasks.
+These are often associated with **achievement points**, awarded based on the difficulty of each achievement.
+
+Can serve as an important form of [tutorialization](glossary.md#tutorialization), as it lays out [goals] for players to chase after (and are a good spot for hints).
+
+Achievements typically tie into out-of-game systems on [Steam](https://partner.steamgames.com/doc/features/achievements) or consoles to track accumulated achievements.
+
+### Art style
+
+The techniques, colors, scale and elements that are used in the visual elements of a game.
 
 ### Automation
 
+Repetitive work that is done automatically by in-game entities and systems.
+
 ### Challenge
+
+Difficulty that is fun and rewarding for players to overcome.
+
+### Cohesion
+
+The degree to which game elements (usually [thematic](glossary.md#theme) or [art](glossary.md#art-style)) feel like they belong together as part of a greater whole.
 
 ### Constraint
 
+A limitation of the [design space](glossary.md#design-space), which must (or should) be respected when doign game design.
+
+Constraints can be:
+
+1. **External:** imposed by problems beyond the game designer's control. Budget, cultural sensitivity and market demands are common examples.
+2. **Arbitrary:** imposed by the designers themselves, in order to limit the design space in interesting ways.
+3. **Internal:** implied via existing elements of the game, or the combination of other constraints.
+
+While constraints are limiting, they're a powerful tool to create a more focused game and are great sparks for creativity.
+
+Constraints exist on a continuum between **soft** (flexible, can be ignored with a good enough reason) and **hard** (must be respected at all times).
+
+Constraints can be in [tension](glossary.md#tension) with each other.
+
+### Cycle (mechanics design)
+
+A set of elements of the same type that share strong mechanical (and often thematic) similarities.
+
 ### Design-by-stumble
+
+Making games is hard!
+Starting with an existing, successful game is a popular and effective strategy.
+
+However, you should critically examine the [genre](glossary.md#genre) of the game you are starting from,
+and identify clear areas to focus on and improve.
+
+Otherwise, your game development process will proceed as if by [random walk](https://en.wikipedia.org/wiki/Random_walk):
+changes made without a reason are as likely to be harmful as helpful, and your game will be unfocused.
+
+### Design space
+
+The set of all possible games or solutions that obey all of the [constraints](glossary.md#constraint).
 
 ### Depth and complexity
 
+**Depth** is a fuzzy term that gets at the notion of game **richness**: how many interesting choices are there, how much replay value exists?
+
+**Complexity** is a similarly fuzzy term that attempts to capture a measure of the number of "moving parts" of a game, and how challenging it is to understand.
+
+Depth is generally viewed as a positive attribute, while complexity is generally viewed as a negative attribute.
+Games which have high depth relative to their complexity are often considered **elegant.**
+
+Dependending on their player base, games have a varying **complexity budget.**
+This fuzzy term represents each player's ability to keep track of rules, learn new mechanics and reason effectively about their [choices](glossary.md#interesting-choices).
+If this budget is exceeded, players will be frustrated and confused by your game.
+
 ### Diagetic
+
+A [mechanic] that is presented as occuring in the literal [game world](glossary.md#game-world).
+For example, most user interfaces are presented as something that only exists for the player's convenience, but doesn't exist in the game.
+However, in *Halo*, the display is part of the soldier's visor, and thus literally exists in the game.
+
+Antonym: **non-diagetic**
 
 ### Double-edged
 
+An [upgrade](glossary.md#upgrade) or other [mechanic](glossary.md#mechanic) that has both benefits and drawbacks.
+These are typically stronger than their strictly positive equivalents in order to be [balanced](glossary.md#interesting-choices).
+
 ### Early game, mid game and late game
+
+These are broad stages of a game, which proceed one after another.
+
+[Total complexity](glossary.md#depth-and-complexity) typically increases as the game unfolds, as the complexity budget is often limited by the rate at which players can learn and master new mechanics.
+
+### Focus (game design)
+
+A game is said to be focused if it has a clear goal and its [systems](glossary.md#system-game-design) are  built to serve that goal.
 
 ### Flavor text
 
-### Fun
+Writing (or sometimes other elements by analogy) that has no [mechanical](glossary.md#mechanic) impact or explanation,
+and instead serves to enhance the theme and tone of the game.
+
+### Game feel
+
+How satisfying and natural a game feels to play.
 
 ### Genre
 
+A cluster of related games.
+These can be explained either by definition (where you list key properties of games in the genre) or by example (where you list games that fall into the genre and those that do not).
+
+### Hook (game marketing)
+
+The unique selling point of a game, that draws interest and encourages players to try out and keep playing your game instead of the competitors in your genre.
+
+### Hook (game systems)
+
+A reusable game [mechanic](glossary.md#mechanic) that can be used to connect [game systems](glossary.md#system-game-design), increasing [cohesion](glossary.md#cohesion) and [depth](glossary.md#depth-and-complexity).
+
 ### Interesting choices
+
+Games are sometimes said to be a "series of interesting choices".
+In order for choices to be interesting, players must be able to:
+
+1. Understand the choices they have
+2. Understand the implication of each choice
+3. Care about the impact that the choice has on the game
+4. Decide differently based on game conditions
+
+Choices are said to be **balanced** if they provide roughly equivalent benefits (or drawbacks) to the players.
+
+### Lens
+
+A perspective on the design of a game.
+See [the deck of lenses](https://schellgames.com/art-of-game-design) for an excellent set of questions to ask about your games.
 
 ### Loop
 
 ### Ludotography
 
+The telling of a story through gameplay.
+
 ### Mechanic
 
 ### Plausibility and realism
 
+### Player experience
+
+### Player goals
+
+In-game objectives that players set for themselves that give them a reason to keep playing.
+These are often complementary to player fun: fun will keep players engaged and enjoying themselves from moment to moment,
+but chasing after and reaching goals gives a deeper satisfaction and sense of mastery.
+
+### Polish
+
+Work done to improve how pretty, [cohesive](glossary.md#cohesion), and bug-free a game is.
+Games where these qualities are high are said to be **polished.**
+
 ### Progression
 
+The increase in player power and options over time.
+Progression exists on a continuum between **vertical**, which is focused on power growth, and **horizontal**, which is focused on expanded options.
+
+### Prototype
+
+A quick implmentation of a game design idea used to test a **hypothesis** about how a [mechanic](glossary.md#mechanic) will work or feel in practice.
+
 ### Quality of life
+
+Features which improve [game feel](glossary.md#game-feel) and reduce player frustration.
+This is often done by reducing the amount of manual repetitive work, alleviating limitations like storage space, or reducing the ongoing complexity budget required by game mechanics.
 
 ### Randomness
 
 There are two kinds of randomness: input randomness and output randomness.
+
+### Simulationism
+
+A style of game design that attempts to accurately simulate real-world systems in an [realistic](glossary.md#plausibility-and-realism) fashion.
+
+### System (game design)
+
+### Tension
+
+### Theme
+
+### Tone
 
 ### Tuning levers
 
@@ -127,8 +277,8 @@ Previously copied layouts are simply overwritten.
 ### Filter
 
 Filters allow only one set of goods to pass through.
-Can be combined with _Inserters_ to only transfer one set of goods
-or with _Splitters_ to split one set of goods to one side and all other goods to the other side.
+Can be combined with [inserters](glossary.md#inserter) to only transfer one set of goods
+or with [splitters](glossary.md#splitter) to split one set of goods to one side and all other goods to the other side.
 
 **Examples**:
 
@@ -149,7 +299,7 @@ Inserters are usually available with different ranges, either as separate entiti
 ### Lab
 
 A machine to research new technologies, unlocking new machines and other gameplay features.
-Usually uses _science packs_ as input.
+Usually uses **science packs** as input.
 
 - [Factorio: Lab](https://wiki.factorio.com/Lab)
 - [Satisfactory: HUB terminal](https://satisfactory.fandom.com/wiki/The_HUB#HUB_Terminal)
@@ -158,7 +308,12 @@ Usually uses _science packs_ as input.
 ### Logistic network
 
 A network of connected logistic elements that can interact with each other.
-It's composed of _producers_, who provide resources to the network, _consumers_, who take resources out of the network and use them, and the connection between them.
+It's composed of:
+
+- **producers**, who provide resources to the network
+- **consumers**, who take resources out of the network and use them
+- the connection between these nodes
+
 A single entity might be both a producer and a consumer.
 In the same game there may be different separated sets of logistic networks.
 The consumers in the network (e.g. logistic bots) can access the producers in the network (e.g. logistic chests), but not outside of it.
@@ -185,7 +340,7 @@ The player can switch between different overlays to access different types of in
 ### Pipette
 
 The pipette is a tool to select an entity and/or its configuration directly from the screen.
-It works similarly to copy/paste functionality with the _clipboard_, but for a singular entity.
+It works similarly to copy/paste functionality with the [clipboard](glossary.md#clipboard), but for a singular entity.
 This is usually a UI tool instead of a physical tool to build in the game.
 
 ### Power
@@ -231,7 +386,7 @@ There are different types of resources:
 
 ### Science pack
 
-An intermediate resource that can be used to research technologies in the _lab_.
+An intermediate resource that can be used to research technologies in a [lab](glossary.md#lab).
 Often, many science packs are required to unlock one technology.
 Sometimes, science packs are available in different types with different recipes,
 different technologies require different science pack types to be unlocked.
@@ -241,10 +396,12 @@ different technologies require different science pack types to be unlocked.
 - [Factorio: Science pack](https://wiki.factorio.com/Science_pack)
 - [Dyson Sphere Program: Science matrices](https://dyson-sphere-program.fandom.com/wiki/Category:Science_Matrices)
 
+### Splitter
+
 ### Train
 
 An entity to efficiently move big amounts of resources over large distances.
-Usually require a much higher upfront investment than _belts_, but are better suited for long distances.
+Usually require a much higher upfront investment than [belts](glossary.md#belt), but are better suited for long distances.
 They are high latency, and move goods in clumped bursts.
 In some games there are also many other entities to guide the behavior of large train networks.
 
@@ -273,5 +430,9 @@ These terms come from the science of ecology and its related fields.
 
 ## Emergence
 
-These terms are specific to the game design of _Emergence_.
+These terms are specific to the game design of *Emergence*.
 Even if they have an external meaning, when used in this book, they will reflect this meaning.
+
+### Assimiliation
+
+### Milestone
