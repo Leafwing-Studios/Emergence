@@ -15,4 +15,4 @@
 - [Research](./research/index.md)
   - [Assimilation](./research/assimilation.md)
   - [Genetics](./research/genetics.md)
-  - [Hive Mind Upgrades](./research/hive)
+  - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
