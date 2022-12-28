@@ -11,13 +11,25 @@ Key concepts and terms from game design.
 
 ### Accessibility
 
+### Achievements
+
 ### Automation
 
 ### Challenge
 
+### Constraint
+
 ### Design-by-stumble
 
 ### Depth and complexity
+
+### Diagetic
+
+### Double-edged
+
+### Early game, mid game and late game
+
+### Flavor text
 
 ### Fun
 
@@ -27,17 +39,33 @@ Key concepts and terms from game design.
 
 ### Loop
 
+### Ludotography
+
 ### Mechanic
 
+### Plausibility and realism
+
 ### Progression
+
+### Quality of life
+
+### Randomness
+
+There are two kinds of randomness: input randomness and output randomness.
 
 ### Tuning levers
 
 ### Tutorialization
 
+### Upgrade
+
+### World generation
+
 ## Factory Builders
 
 Terms defined here are standard elements of the factory builder genre.
+
+### Alert
 
 ### Belt
 
@@ -94,6 +122,8 @@ Previously copied layouts are simply overwritten.
 - [Factorio: Controls/Tools](https://wiki.factorio.com/Controls#Tools) (copy/paste/cut)
 - [Dyson Sphere Program: Mass Construction (Lv1)](<https://dyson-sphere-program.fandom.com/wiki/Mass_Construction_(Lv1)>) (enables copy/paste functionality)
 
+### Encyclopedia
+
 ### Filter
 
 Filters allow only one set of goods to pass through.
@@ -137,6 +167,10 @@ The consumers in the network (e.g. logistic bots) can access the producers in th
 
 - [Factorio: Logistic network](https://wiki.factorio.com/Logistic_network)
 
+### Map
+
+### Notes
+
 ### Overlay
 
 Overlays are UI elements which allow the player to view additional information about entities or processes.
@@ -166,6 +200,10 @@ The distribution of power is usually separated from the distribution of other re
 - [Satisfactory: Power](https://satisfactory.fandom.com/wiki/Power)
 - [Dyson Sphere Program: Power](https://dyson-sphere-program.fandom.com/wiki/Category:Power)
 
+### Production statistics
+
+### Recipe
+
 ### Research
 
 Research is the main means of progression.
@@ -188,6 +226,8 @@ There are different types of resources:
 - **Intermediate resource**: A resource that cannot be extracted nor used directly.
   It's an intermediate set towards the production of end products.
 - **End product**: A resource that can be used directly for some in-game benefit.
+
+### Sandbox
 
 ### Science pack
 
@@ -212,6 +252,8 @@ In some games there are also many other entities to guide the behavior of large 
 
 - [Factorio: Railway](https://wiki.factorio.com/Railway)
 - [Satisfactory: Electric Locomotive](https://satisfactory.fandom.com/wiki/Electric_Locomotive)
+
+### Undo
 
 ## Ecology
 

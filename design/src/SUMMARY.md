@@ -12,3 +12,7 @@
   - [Creative Automation: Case Studies](./high-level/creative-automation-case-studies.md)
 - [Production Chains](./production-chains/index.md)
   - [Raw Resources](./production-chains/raw-resources.md)
+- [Research](./research/index.md)
+  - [Assimilation](./research/assimilation.md)
+  - [Genetics](./research/genetics.md)
+  - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
