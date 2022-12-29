@@ -39,7 +39,7 @@ pub struct DebugInfo {
 }
 
 impl DebugInfo {
-    /// Change all the values in this [DebugInfo] to be enabled
+    /// Change all the values in this [`DebugInfo`] to be enabled
     pub fn enable(&mut self) {
         self.dev_mode = true;
         self.show_tile_labels = true;
@@ -47,7 +47,7 @@ impl DebugInfo {
         self.show_inspector = true;
     }
 
-    /// Change all the values in this [DebugInfo] to be disabled
+    /// Change all the values in this [`DebugInfo`] to be disabled
     pub fn disable(&mut self) {
         self.dev_mode = false;
         self.show_tile_labels = false;
