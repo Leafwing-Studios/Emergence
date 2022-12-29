@@ -69,7 +69,6 @@ impl Default for HiveMindControls {
     }
 }
 
-// TODO: rework this to use LWIM conventions for mapping controls
 /// Interface for developer controls
 pub struct DevControls {
     /// Toggle the dev mode
