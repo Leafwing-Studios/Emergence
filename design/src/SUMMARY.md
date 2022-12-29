@@ -8,7 +8,7 @@
   - [Genre Analysis](./high-level/genre-analysis.md)
   - [Genre Mechanics](./high-level/genre-mechanics.md)
   - [Mapping genre mechanics to _Emergence_](./high-level/mechanical-translation.md)
-  - [Graphics Design](./high-level/)
+  - [Graphics Design](./high-level/design-graphics.md)
   - [Graphics: Case Studies](./high-level/analysis-graphics.md)
   - [Sound Design](./high-level/design-sound-design.md)
   - [Sound Design: Case Studies](./high-level/analysis-sound-design.md)

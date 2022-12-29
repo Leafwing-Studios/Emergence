@@ -82,7 +82,11 @@ The game [_Everything_](https://store.steampowered.com/app/582270/Everything/) h
 
 - A _3D world_ with a _third-person perspective camera with full rotational freedom_ to allow the player to view every angle of the world.
 
-- The creator chose _low-poly models_ as assets, with the creative choice _not to use animations_ for movement but to instead move the full model in a uniform way.
+- The creator chose _low-poly models_ as assets, with the creative choice _not to use animations_ for movement but to instead move the full model in a uniform way. 
+
+    ![Cows in Everything rolling instead of walking](https://upload.wikimedia.org/wikipedia/commons/3/33/Everything_animation_20_-_AGxQjSD.gif)
+
+    ![Shows a player choosing to play immobile and inanimate objects](https://thumbs.gfycat.com/HonestUncomfortableDragon-size_restricted.gif)
 
 - _Simple shapes_ are used for the models which helps _reduce total polygon count_ for the models.
 
