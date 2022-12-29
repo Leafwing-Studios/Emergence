@@ -12,12 +12,13 @@ use bevy::{
     asset::AssetServer,
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{
-        default, Color, Commands, Component, Plugin, Query, Res, Resource, TextBundle, With,
+        default, Color, Commands, Component, Plugin, Query, Res, Resource, TextBundle, With, KeyCode,
     },
     text::{Text, TextSection, TextStyle},
     time::Time,
     ui::{PositionType, Style, UiRect, Val},
 };
+use leafwing_input_manager::prelude::*;
 
 // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
 // use bevy_console::*;
@@ -64,6 +65,7 @@ impl DebugInfo {
     }
 }
 
+// TODO: It might be good later in development or closer to release to make the default disabled
 impl Default for DebugInfo {
     fn default() -> Self {
         Self {
@@ -83,9 +85,50 @@ pub struct DebugToolsPlugin;
 impl Plugin for DebugToolsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(WorldInspectorPlugin::new())
-            .add_plugin(FrameTimeDiagnosticsPlugin);
+            .add_plugin(FrameTimeDiagnosticsPlugin)
+            .init_resource::<DebugInfo>()
+            .add_plugin(InputManagerPlugin::<DevAction>::default())
+            .add_system(debug_ui::show_debug_info);
         // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
         // .add_plugin(ConsolePlugin)
         // .add_console_command::<PrintToLog, _>(print_to_log);
+    }
+}
+
+/// Enumerates the actions a developer can take.
+#[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum DevAction {
+    /// Toggle the overall developer mode setting
+    ToggleDevMode,
+    // TODO: make debug labels
+    /// Toggle tilemap labels tools
+    ToggleTileLabels,
+    /// Toggle rendering info
+    ToggleInfoText,
+    /// Toggle the inspector
+    ToggleInspector,
+}
+
+/// Interface for developer controls
+pub struct DevControls {
+    /// Toggle the dev mode
+    pub toggle_dev_mode: UserInput,
+    /// Toggle the tile label
+    pub toggle_tile_labels: UserInput,
+    /// Toggle the fps ui
+    pub toggle_fps: UserInput,
+    /// Toggle the inspector
+    pub toggle_inspector: UserInput,
+}
+
+/// Add default developer controls
+impl Default for DevControls {
+    fn default() -> Self {
+        Self {
+            toggle_dev_mode: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::D]),
+            toggle_tile_labels: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::T]),
+            toggle_fps: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::V]),
+            toggle_inspector: UserInput::chord([KeyCode::LControl, KeyCode::LShift, KeyCode::I]),
+        }
     }
 }
