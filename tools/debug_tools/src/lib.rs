@@ -1,10 +1,10 @@
 //! Debugging dev tools for Emergence.
 //!
 //! Keybindings for the developer info toggles:
-//! - dev_mode is Ctrl+Shift+D.
-//! - show_tile_labels is Ctrl+Shift+T.
-//! - show_fps_info is Ctrl+Shift+V.
-//! - show_inspector is Ctrl+Shift+I.
+//! - `dev_mode` is Ctrl+Shift+D.
+//! - `show_tile`_labels is Ctrl+Shift+T.
+//! - `show_fps_info` is Ctrl+Shift+V.
+//! - `show_inspector` is Ctrl+Shift+I.
 //! These keybindings were chosen because the average person will not want to touch these very
 //! often. Primary, non-modifier keys should be for main gameplay keys.
 
