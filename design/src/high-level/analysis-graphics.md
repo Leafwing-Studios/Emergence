@@ -22,6 +22,22 @@
 
 ### Warcraft 3
 
+[A high-fantasy RTS game](https://en.wikipedia.org/wiki/Warcraft_III:_Reign_of_Chaos) where the player is tasked with defending the realm from an impending take-over by the Burning Legion.
+
+- _3D world_ with a _fixed angle, isometric camera_.
+
+- _Fog of war_ hides the map until the player explores it, a common feature of RTS games.
+
+- Heavy use of _baked, ambient light_ for the world and _soft shadows_ for units.
+
+- Use of _bright hues_ to represent everything in the game world.
+
+- Uses _shader outlines/auras_ to emphasize player characters/actions.
+
+- _Team colors_ are represented on both _character textures_ and _aura shaders_.
+
+- _World depth_ is done mostly through _use of textures_.
+
 ### Factorio
 
 ### Minecraft
@@ -49,6 +65,10 @@
 [N++](https://store.steampowered.com/app/230270/N_NPLUSPLUS/) is a fast-paced, momentum-based platformer about darting around obstacles, narrowly evading enemies and collecting gold in a beautiful minimalist landscape.
 
 - A _2D world_ with an _orthogonal, fixed camera_.
+
+- Assets are made of _simple shapes with textures_ to represent game objects/entities.
+
+- _Bright hues_ are used to give _emphasis to player oriented things_ (ie the gold, time meter color, headband on the ninja) while _enemies are muted hues_ and the _backgrounds are darker/duller hues_ to offer depth/separation to the game world.
 
 ### Heads Run
 
