@@ -1,4 +1,4 @@
-# Analysis: Graphics
+# High-Level Analysis: Graphics
 
 ## Case Studies
 
@@ -14,11 +14,11 @@
 
 - The color palette is _vivid colors for greenery_, _muted colors for wasteland_, and _soft hues of bold colors for buildings_ which helps fit the game's theme of _rejuvenating nature_.
 
-- _Textures_ give the assets _varying levels of depth_. 
+- _Textures_ give the assets _varying levels of depth_.
 
 - _Ambient lighting_ gives depth to the world, _casts shadows_, and helps _ambient clouds add texture/depth_.
 
-- Assets have a _pastoral, hand drawn aesthetic_ with mild _cell shading_ 
+- Assets have a _pastoral, hand drawn aesthetic_ with mild _cell shading_.
 
 ### Warcraft 3
 
