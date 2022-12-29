@@ -161,9 +161,6 @@ fn show_debug_info(
 ) {
     let dev = dev.single();
     let dev_mode = dev.just_pressed(DevAction::ToggleDevMode);
-    let tile_labels = dev.just_pressed(DevAction::ToggleTileLabels);
-    let fps_info = dev.just_pressed(DevAction::ToggleInfoText);
-    let inspector = dev.just_pressed(DevAction::ToggleInspector);
 
     // Toggle the dev mode so that what happens is intuitive to the user
     if dev_mode {
@@ -176,36 +173,31 @@ fn show_debug_info(
         }
     }
 
-    // Toggle the tile labels, but also make sure that is makes sense to do so
-    if tile_labels && debug_info.dev_mode {
-        if debug_info.show_tile_labels {
-            debug_info.show_tile_labels = false;
-            info!("Tile Labels off");
-        } else {
-            debug_info.show_tile_labels = true;
-            info!("Tile Labels on");
-        }
+    if !debug_info.dev_mode {
+        // There is no other work to be done on this callback
+        // The DebugInfo shouldn't be changed after it gets disabled, or is already disabled
+        return;
     }
 
-    // Toggle the FPS info
-    if fps_info && debug_info.dev_mode {
-        if debug_info.show_fps_info {
-            debug_info.show_fps_info = false;
-            info!("FPS info off");
-        } else {
-            debug_info.show_fps_info = true;
-            info!("FPS info on");
-        }
+    let tile_labels = dev.just_pressed(DevAction::ToggleTileLabels);
+    let fps_info = dev.just_pressed(DevAction::ToggleInfoText);
+    let inspector = dev.just_pressed(DevAction::ToggleInspector);
+
+    toggle_debug_var(tile_labels, &mut debug_info.show_tile_labels, "Tile labels");
+    toggle_debug_var(fps_info, &mut debug_info.show_fps_info, "FPS info");
+    toggle_debug_var(inspector, &mut debug_info.show_inspector, "Egui inspector");
+}
+
+fn toggle_debug_var(is_action_active: bool, var: &mut bool, log_str: &'static str) {
+    if !is_action_active {
+        return;
     }
 
-    // Toggle the inspector
-    if inspector && debug_info.dev_mode {
-        if debug_info.show_inspector {
-            debug_info.show_inspector = false;
-            info!("Egui inspector off");
-        } else {
-            debug_info.show_inspector = true;
-            info!("Egui inspector on");
-        }
+    if *var {
+        *var = false;
+        info!("{} off", log_str);
+    } else {
+        *var = true;
+        info!("{} on", log_str);
     }
 }
