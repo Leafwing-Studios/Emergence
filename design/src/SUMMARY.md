@@ -13,6 +13,7 @@
   - [Sound Design: Case Studies](./high-level/analysis-sound-design.md)
   - [Soundtrack](./high-level/design-soundtrack.md)
   - [Soundtrack: Case Studies](./high-level/analysis-soundtrack.md)
+  - [UX](./high-level/design-ux.md)
   - [UX: Case Studies](./high-level/analysis-ux.md)
   - [Creative Automation](./high-level/creative-automation.md)
   - [Creative Automation: Case Studies](./high-level/creative-automation-case-studies.md)
