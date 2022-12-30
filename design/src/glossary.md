@@ -24,6 +24,10 @@ Can serve as an important form of [tutorialization](glossary.md#tutorialization)
 
 Achievements typically tie into out-of-game systems on [Steam](https://partner.steamgames.com/doc/features/achievements) or consoles to track accumulated achievements.
 
+### Agency
+
+The extent to which players feel like they can shape the broader [narrative](glossary.md#narrative) or [mechanics](glossary.md#mechanic) of the game.
+
 ### Art style
 
 The techniques, colors, scale and elements that are used in the visual elements of a game.
@@ -38,11 +42,11 @@ Difficulty that is fun and rewarding for players to overcome.
 
 ### Cohesion
 
-The degree to which game elements (usually [thematic](glossary.md#theme) or [art](glossary.md#art-style)) feel like they belong together as part of a greater whole.
+The degree to which game elements (usually [thematic](glossary.md#theme) or [artistic](glossary.md#art-style)) feel like they belong together as part of a greater whole.
 
 ### Constraint
 
-A limitation of the [design space](glossary.md#design-space), which must (or should) be respected when doign game design.
+A limitation of the [design space](glossary.md#design-space), which must (or should) be respected when doing game design.
 
 Constraints can be:
 
@@ -90,7 +94,7 @@ If this budget is exceeded, players will be frustrated and confused by your game
 
 ### Diagetic
 
-A [mechanic] that is presented as occuring in the literal [game world](glossary.md#game-world).
+A [mechanic](glossary.md#mechanic) that is presented as occuring in the literal [game world](glossary.md#game-world).
 For example, most user interfaces are presented as something that only exists for the player's convenience, but doesn't exist in the game.
 However, in *Halo*, the display is part of the soldier's visor, and thus literally exists in the game.
 
@@ -152,15 +156,37 @@ See [the deck of lenses](https://schellgames.com/art-of-game-design) for an exce
 
 ### Loop
 
+A path through a [game system](glossary.md#system-game-design) that leads back to itself.
+
+Each step in a loop can be **reinforcing** (positive feedback) or **dampening** (negative feedback), resulting in an overall reinforcing or dampening cycle.
+
 ### Ludotography
 
 The telling of a story through gameplay.
 
 ### Mechanic
 
+A rule about how the game works.
+
+### Narrative
+
+The story of a game.
+Unlike most traditional works of art, narratives are often implicit or branching in games.
+
 ### Plausibility and realism
 
+Fictional worlds are plausible if they have a set of intuitive, internally consistent rules.
+They are realistic to the extent to which these rules match those of real life.
+
+Worlds that lack plausibility will not be **immersive**, and will not feel [coherent](glossary.md#cohesion).
+
+### Player avatar
+
+The in-game unit that represents the player.
+
 ### Player experience
+
+What the player is actually doing, and how they feel.
 
 ### Player goals
 
@@ -197,17 +223,50 @@ A style of game design that attempts to accurately simulate real-world systems i
 
 ### System (game design)
 
+A collection of [mechanics](glossary.md#mechanic) that work together to produce part of the [player experience](glossary.md#player-experience).
+Systems generally have [loops](glossary.md#loop) back to themself, or [hook](glossary.md#hook-game-systems) into other systems
+in order to keep the player engaged and create [depth](glossary.md#depth-and-complexity).
+
 ### Tension
+
+Elements of the game design that are, at least on their face, contrasting or opposed.
+Tension must be handled carefully: tackled poorly, it leads to poor [cohesion](glossary.md#cohesion) or [focus](glossary.md#focus-game-design).
+Tackled with thought and skill, tension can creating unique and interesting [themes](glossary.md#theme), [tone](glossary.md#tone) or systems.
 
 ### Theme
 
+The setting, aesthetics and "fictional genre" of a game.
+This is the core of [worldbuilding](glossary.md#worldbuilding), and sets the basic rules of the fictional universe.
+
+Can be described using:
+
+- very broad terms like "sci-fi"
+- more specific like "colonial fantasy focused on the war between burgeoning powers"
+- hearken to specific media like "Diablo" or "Bladerunner"
+
+This can be extended to discuss the **big questions** that a game is attempting to explore, like "what does it mean to be human".
+
 ### Tone
+
+The emotional weight and mood of a game.
+Often discussed in concert with a game's [theme]: "cheerful steampunk" is very different than "horrific steampunk" is very different than "gloomy steampunk".
 
 ### Tuning levers
 
+Parts of a [mechanic](glossary.md#mechanic) that can be easily tweaked to modify the [balance](glossary.md#interesting-choices) of a [system](glossary.md#system-game-design).
+
 ### Tutorialization
 
+The practice of teaching new players how to play your game.
+
 ### Upgrade
+
+An improvement to a [mechanic](glossary.md#mechanic).
+Upgrades are usually but not always selected by players to give them a sense of [agency](glossary.md#agency).
+
+### Worldbuilding
+
+The lore, places, people, [aesthetics](glossary.md#art-style) and internally consistent rules of your fictional universe.
 
 ### World generation
 
