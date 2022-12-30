@@ -12,7 +12,8 @@ use bevy::{
     asset::AssetServer,
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{
-        default, Color, Commands, Component, Plugin, Query, Res, Resource, TextBundle, With, KeyCode,
+        default, Color, Commands, Component, KeyCode, Plugin, Query, Res, Resource, TextBundle,
+        With,
     },
     text::{Text, TextSection, TextStyle},
     time::Time,

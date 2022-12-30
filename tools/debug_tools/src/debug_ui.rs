@@ -20,7 +20,8 @@ pub fn initialize_infotext(mut commands: Commands, asset_server: Res<AssetServer
 
 fn init_dev_action(commands: &mut Commands) {
     let dev_controls = DevControls::default();
-    commands.spawn(DevControlMarker)
+    commands
+        .spawn(DevControlMarker)
         .insert(InputManagerBundle::<DevAction> {
             action_state: ActionState::default(),
             input_map: InputMap::new([
