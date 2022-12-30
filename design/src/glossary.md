@@ -32,7 +32,6 @@ The extent to which players feel like they can shape the broader [narrative](glo
 
 The techniques, colors, scale and elements that are used in the visual elements of a game.
 
-
 ### Automation
 
 Repetitive work that is done automatically by in-game entities and systems.
@@ -64,8 +63,6 @@ Constraints can be in [tension](glossary.md#tension) with each other.
 ### Cycle (mechanics design)
 
 A set of elements of the same type that share strong mechanical (and often thematic) similarities.
-
-### Constraint
 
 ### Design-by-stumble
 
@@ -218,7 +215,12 @@ This is often done by reducing the amount of manual repetitive work, alleviating
 
 ### Randomness
 
-There are two kinds of randomness: input randomness and output randomness.
+There are two kinds of randomness: **input randomness** and **output randomness**.
+
+Input randomness controls which options a player is presented with, while output randomness varies the effect of a player's choice.
+Both add [challenge](glossary.md#challenge) and surprise, but input randomness is typically less frustrating.
+
+See this [GMTK video](https://www.youtube.com/watch?v=dwI5b-wRLic) for more.
 
 ### Simulationism
 
@@ -253,6 +255,7 @@ This can be extended to discuss the **big questions** that a game is attempting 
 
 The emotional weight and mood of a game.
 Often discussed in concert with a game's [theme]: "cheerful steampunk" is very different than "horrific steampunk" is very different than "gloomy steampunk".
+
 ### Tuning levers
 
 Parts of a [mechanic](glossary.md#mechanic) that can be easily tweaked to modify the [balance](glossary.md#interesting-choices) of a [system](glossary.md#system-game-design).
