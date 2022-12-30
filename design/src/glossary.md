@@ -276,6 +276,18 @@ Terms defined here are standard elements of the factory builder genre.
 
 ### Alert
 
+A notification that lets the player know when something has gone wrong.
+
+### Assembler
+
+A building or machine that can be used to process items via a [recipe](glossary.md#recipe).
+
+### Balancer
+
+Joins two or more item streams and evenly distributes items across them.
+
+Commonly combined with [balancers](glossary.md#balancer) or built out off [splitters](glossary.md#splitter).
+
 ### Belt
 
 A belt is a simple logistic entity which transports goods in a single direction.
@@ -333,6 +345,11 @@ Previously copied layouts are simply overwritten.
 
 ### Encyclopedia
 
+A list of in-game elements (items, locations, mechanics) that explains what they are and key properties.
+
+Intended as an in-game substitute for a wiki.
+Often contains [flavor text](glossary.md#flavor-text), and serves as a primary mechanism to explain [worldbuilding](glossary.md#worldbuilding) to players in this genre.
+
 ### Filter
 
 Filters allow only one set of goods to pass through.
@@ -383,7 +400,23 @@ The consumers in the network (e.g. logistic bots) can access the producers in th
 
 ### Map
 
+An abstract representation of the geography of the game world.
+Typically stylized, and intended to communicate large amounts of information comfortably.
+
+Unexplored areas are covered in **fog of war**, concealing them.
+
 ### Notes
+
+Player-written in-game notes.
+Often integrated with the [map](glossary.md#map).
+Typically used for:
+
+- marking important locations
+- recording what to do next
+- ideas for potential improvements
+- explanations of why weird decisions were made
+
+Serves as a combination of programming comments, map annotations and project management tools.
 
 ### Overlay
 
@@ -416,7 +449,29 @@ The distribution of power is usually separated from the distribution of other re
 
 ### Production statistics
 
+Records how much of each resource you're producing and consuming.
+Advanced versions have sophisticated filting
+
+Works well in a dashboard format.
+
+### Prioritizer
+
+Joins two or more streams of inputs, causing the input or output to take priority:
+
+- **input priority:** if output flow is greater than input flow, take from the stream with priority
+- **output priority:** if input flow is greater than output flow, send goods to the stream with priority
+
+Commonly combined with [balancers](glossary.md#balancer).
+
 ### Recipe
+
+How items can be combined to make new items.
+Contains:
+
+- input(s), including quantities
+- output(s), including quantities
+- processing time
+- what [assemblers](glossary.md#assemblers) can be used to make it
 
 ### Research
 
@@ -457,6 +512,8 @@ different technologies require different science pack types to be unlocked.
 
 ### Splitter
 
+Splits streams of goods into two.
+
 ### Train
 
 An entity to efficiently move big amounts of resources over large distances.
@@ -470,6 +527,11 @@ In some games there are also many other entities to guide the behavior of large 
 - [Satisfactory: Electric Locomotive](https://satisfactory.fandom.com/wiki/Electric_Locomotive)
 
 ### Undo
+
+Reverse previous directions or actions.
+Ideally combined with a **redo** functionality.
+
+If buildings exist / don't exist when they need to, **marks structures for deletion**, or creates [ghosts](glossary.md#blueprint) in their place.
 
 ## Ecology
 
