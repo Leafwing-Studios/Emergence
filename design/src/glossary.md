@@ -343,6 +343,12 @@ Previously copied layouts are simply overwritten.
 - [Factorio: Controls/Tools](https://wiki.factorio.com/Controls#Tools) (copy/paste/cut)
 - [Dyson Sphere Program: Mass Construction (Lv1)](<https://dyson-sphere-program.fandom.com/wiki/Mass_Construction_(Lv1)>) (enables copy/paste functionality)
 
+### Creative mode
+
+A game mode where the player can freely test out designs and modify the environment in unconstrained ways.
+
+Often incorporated into the game itself as a "sandbox" or "lab", not to be confused with the other genre-specific meaning of either of those terms.
+
 ### Encyclopedia
 
 A list of in-game elements (items, locations, mechanics) that explains what they are and key properties.
@@ -496,8 +502,6 @@ There are different types of resources:
   It's an intermediate set towards the production of end products.
 - **End product**: A resource that can be used directly for some in-game benefit.
 
-### Sandbox
-
 ### Science pack
 
 An intermediate resource that can be used to research technologies in a [lab](glossary.md#lab).
@@ -537,17 +541,35 @@ If buildings exist / don't exist when they need to, **marks structures for delet
 
 These terms come from the science of ecology and its related fields.
 
-### Clay
-
 ### Nutrient cycle
 
-### Sand
-
-### Silt
+The recycling flow of nutrients between organisms, decaying matter and inorganic stores.
 
 ### Soil
 
+Dirt, but viewed scientifically.
+Useful for growing stuff.
+
+Soil has four main components, which vary in [water storage capacity](glossary.md#water-storage-capacity) and [drainage](glossary.md#water-drainage).
+
+1. Sand: large particles. Drains well, but water storage capacity suffers.
+2. Silt: medium particles. Pretty balanced.
+3. Clay: small particles. Drains terrible, but with great water storage capacity.
+4. Organic matter: used to be living stuff, carefully prepared and mixed in the soil. Great drainage and water storage, but decomposes.
+
 ### Water cycle
+
+The recycling flow of water: from rain to lakes and rivers and soil to plants and animals to eventual evaporation.
+
+### Water storage capacity
+
+How much water remains in soil after being flooded and drained.
+Too low and your plants will be suspectible to drought.
+
+### Water drainage
+
+How quickly water can drain out of soil.
+Too low and your plants will be suspectible to flooding.
 
 ## Emergence
 
@@ -556,4 +578,9 @@ Even if they have an external meaning, when used in this book, they will reflect
 
 ### Assimiliation
 
+Capturing and domesticating a species, giving you access to it as part of your colony.
+
 ### Milestone
+
+Per-playthrough accomplishments.
+Contrast to [achievements](glossary.md#achievements), which are unlocked a single time for each player.
