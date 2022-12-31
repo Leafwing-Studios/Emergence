@@ -208,7 +208,7 @@ Progression exists on a continuum between **vertical**, which is focused on powe
 
 ### Prototype
 
-A quick implmentation of a game design idea used to test a **hypothesis** about how a [mechanic](glossary.md#mechanic) will work or feel in practice.
+A quick implementation of a game design idea used to test a **hypothesis** about how a [mechanic](glossary.md#mechanic) will work or [feel](glossary.md#player-experience) in practice.
 
 ### Quality of life
 
@@ -299,7 +299,7 @@ A building or machine that can be used to process items via a [recipe](glossary.
 
 Joins two or more item streams and evenly distributes items across them.
 
-Commonly combined with [balancers](glossary.md#balancer) or built out off [splitters](glossary.md#splitter).
+Commonly combined with [balancers](glossary.md#balancer) or built out of [splitters](glossary.md#splitter).
 
 ### Belt
 
