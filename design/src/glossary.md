@@ -122,7 +122,8 @@ and instead serves to enhance the theme and tone of the game.
 
 ### Game feel
 
-How satisfying and natural a game feels to play.
+How satisfying, intuitive and natural a game feels to play.
+Games with great game feel start to feel like extensions of the player's body as they master the game.
 
 ### Genre
 
