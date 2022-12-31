@@ -277,6 +277,12 @@ The lore, places, people, [aesthetics](glossary.md#art-style) and internally con
 
 ### World generation
 
+Usually refers to the [procedural generation](glossary.md#procedural-generation) of a game world, or parts of a game world, in opposition to the crafting of a world (or level) by hand.
+
+Closely related to concepts of:
+* [randomness](glossary.md#randomness): a pristine world provides a particular set of options for a player to begin engaging with, and these options should allow the player to meaningfully engage given the [mechanics](glossary.md#mechanic) available to them
+* [plausibility/realism](glossary.md#plausibility-and-realism): a procedurally generated world must make sense given the game's [world building](glossary.md#worldbuilding)
+
 ## Factory Builders
 
 Terms defined here are standard elements of the factory builder genre.
