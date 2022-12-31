@@ -150,7 +150,7 @@ In order for choices to be interesting, players must be able to:
 
 Choices are said to be **balanced** if they provide roughly equivalent benefits (or drawbacks) to the players.
 
-### Lens
+### Lens (game analysis)
 
 A perspective on the design of a game.
 See [the deck of lenses](https://schellgames.com/art-of-game-design) for an excellent set of questions to ask about your games.
