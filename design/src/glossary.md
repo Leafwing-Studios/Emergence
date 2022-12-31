@@ -177,7 +177,7 @@ Unlike most traditional works of art, narratives are often implicit or branching
 
 ### Plausibility and realism
 
-Fictional worlds are plausible if they have a set of intuitive, internally consistent rules.
+Fictional worlds are plausible if they have a set of learnable, internally consistent rules.
 They are realistic to the extent to which these rules match those of real life.
 
 Worlds that lack plausibility will not be **immersive**, and will not feel [coherent](glossary.md#cohesion).
