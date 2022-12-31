@@ -164,6 +164,7 @@ Each step in a loop can be **reinforcing** (positive feedback) or **dampening** 
 ### Ludotography
 
 The telling of a story through gameplay.
+From [this video](https://www.youtube.com/watch?v=5ebIizhEgxg&t=521s).
 
 ### Mechanic
 
