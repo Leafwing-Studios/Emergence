@@ -20,6 +20,7 @@ emergence_macros = { path = "../emergence_macros" }
 bevy-trait-query = { git = "https://github.com/Leafwing-Studios/bevy-trait-query", rev = "65533bf8680753a3f998056e1719b826652f3b69" }
 indexmap = "1.9"
 debug_tools = { path = "../tools/debug_tools", optional = true }
+petitset = "0.2"
 
 [dev-dependencies]
 # We need headless operation in tests

@@ -2,28 +2,37 @@
 //!
 //! This RTS-style camera can zoom and pan.
 //!
-//! Adapted from [`bevy_pancam` (thank you, Johann Helsing and co.)](https://github.com/johanhelsing/bevy_pancam/blob/f4da39912a8982baa63b4bc5502e5f83f4338cc5/src/lib.rs)
-//! We provide integration with [Leafwing Input Manager](https://crates.io/crates/leafwing-input-manager).
+//! Adapted from [`bevy_pancam`](https://github.com/johanhelsing/bevy_pancam/blob/f4da39912a8982baa63b4bc5502e5f83f4338cc5/src/lib.rs)
+//! (thank you, Johann Helsing and co.) We additionally provide integration with
+//! [Leafwing Input Manager](https://crates.io/crates/leafwing-input-manager).
 
 use bevy::{prelude::*, render::camera::OrthographicProjection};
 use leafwing_input_manager::action_state::ActionState;
-use leafwing_input_manager::axislike::SingleAxis;
+use leafwing_input_manager::axislike::{DualAxis, SingleAxis};
 use leafwing_input_manager::input_map::InputMap;
+use leafwing_input_manager::plugin::InputManagerPlugin;
+use leafwing_input_manager::user_input::{InputKind, UserInput};
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
+use petitset::PetitSet;
 
 /// Camera logic
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(PanCamPlugin::default())
-            .add_startup_system_to_stage(StartupStage::Startup, spawn_camera);
+        app.register_type::<PanCam>();
+
+        app.add_plugin(InputManagerPlugin::<CameraZoom>::default())
+            .add_plugin(InputManagerPlugin::<CameraPan>::default())
+            .add_startup_system_to_stage(StartupStage::Startup, setup)
+            .add_system(camera_movement.label(PanCamSystemLabel))
+            .add_system(camera_zoom.label(PanCamSystemLabel));
     }
 }
 
-/// Sets up the [`InputManager`]
-fn spawn_camera(mut commands: Commands) {
+/// Spawns a [`Camera2dBundle`] and sets up the [`InputManager`]s that handle camera motion
+fn setup(mut commands: Commands) {
     commands
         .spawn(Camera2dBundle::default())
         .insert(PanCam::default())
@@ -39,6 +48,16 @@ fn spawn_camera(mut commands: Commands) {
                 .insert(KeyCode::A, CameraPan::Left)
                 .insert(KeyCode::S, CameraPan::Down)
                 .insert(KeyCode::D, CameraPan::Right)
+                .insert(
+                    UserInput::Chord(PetitSet::from_iter(
+                        [
+                            InputKind::DualAxis(DualAxis::mouse_motion()),
+                            InputKind::Mouse(MouseButton::Left),
+                        ]
+                        .into_iter(),
+                    )),
+                    CameraPan::Drag,
+                )
                 .build(),
             ..default()
         });
@@ -48,6 +67,12 @@ fn spawn_camera(mut commands: Commands) {
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct PanCam {
+    /// How sensitive the camera is to zoom actions (mouse wheel scroll or touchpad pinch)
+    pub zoom_sensitivity: f32,
+    /// Camera button pan sensitivity
+    pub button_pan_sensitivity: f32,
+    /// Camera click and drag pan sensitivity
+    pub drag_pan_sensitivity: f32,
     /// Whether camera currently responds to user input
     pub enabled: bool,
     /// When true, zooming the camera will center on the mouse cursor
@@ -89,6 +114,9 @@ pub struct PanCam {
 impl Default for PanCam {
     fn default() -> Self {
         Self {
+            zoom_sensitivity: 100.,
+            button_pan_sensitivity: 10.,
+            drag_pan_sensitivity: 8.,
             enabled: true,
             zoom_to_cursor: true,
             min_scale: 0.00001,
@@ -108,7 +136,7 @@ enum CameraZoom {
     Zoom,
 }
 
-/// Enumerates actions that are managed by `leafwing_input_manager` for camera pan
+/// Enumerates actions that are managed by `leafwing_input_manager` for panning the camera
 #[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
 enum CameraPan {
     /// Camera pan up
@@ -119,17 +147,8 @@ enum CameraPan {
     Down,
     /// Camera pan right
     Right,
-}
-
-impl From<CameraPan> for Vec2 {
-    fn from(action: CameraPan) -> Self {
-        match action {
-            CameraPan::Up => Vec2::Y,
-            CameraPan::Left => Vec2::NEG_X,
-            CameraPan::Down => Vec2::NEG_Y,
-            CameraPan::Right => Vec2::X,
-        }
-    }
+    /// Clicking and dragging using the mouse can pan the camera
+    Drag,
 }
 
 /// Plugin that adds the necessary systems for `PanCam` components to work
@@ -169,7 +188,7 @@ fn camera_zoom(
 
     let (cam, mut proj, mut pos, action_state) = query.single_mut();
 
-    let scroll = action_state.value(CameraZoom::Zoom);
+    let scroll = cam.zoom_sensitivity * action_state.value(CameraZoom::Zoom);
 
     if scroll == 0. {
         return;
@@ -308,10 +327,20 @@ fn camera_movement(
     let mut camera_pan_vector = Vec2::default();
     for action in CameraPan::variants() {
         if action_state.pressed(action) {
-            camera_pan_vector += Into::<Vec2>::into(action);
+            camera_pan_vector += match action {
+                CameraPan::Up => cam.button_pan_sensitivity * Vec2::Y,
+                CameraPan::Left => cam.button_pan_sensitivity * Vec2::NEG_X,
+                CameraPan::Down => cam.button_pan_sensitivity * Vec2::NEG_Y,
+                CameraPan::Right => cam.button_pan_sensitivity * Vec2::X,
+                CameraPan::Drag => {
+                    cam.drag_pan_sensitivity
+                        * action_state
+                            .axis_pair(CameraPan::Drag)
+                            .map_or(Vec2::ZERO, |dual_axis| dual_axis.xy())
+                }
+            }
         }
     }
-
     if cam.enabled {
         let proj_size = Vec2::new(
             projection.right - projection.left,
@@ -322,7 +351,7 @@ fn camera_movement(
 
         // The proposed new camera position
         let delta_world = camera_pan_vector * world_units_per_device_pixel;
-        let mut proposed_cam_transform = transform.translation - delta_world.extend(0.);
+        let mut proposed_cam_transform = transform.translation + delta_world.extend(0.);
 
         // Check whether the proposed camera movement would be within the provided boundaries, override it if we
         // need to do so to stay within bounds.
