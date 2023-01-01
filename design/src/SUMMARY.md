@@ -13,6 +13,7 @@
 - [Player Actions](./player-actions/index.md)
   - [Selection Tools](player-actions/selection-tools.md)
   - [Zoning](./player-actions/zoning.md)
+  - [Terraforming](./player-actions/terraforming.md)
   - [Pheromones](./player-actions/pheromones.md)
   - [Informational Tools](./player-actions/informational-tools.md)
 - [Research](./research/index.md)
