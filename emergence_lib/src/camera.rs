@@ -1,9 +1,14 @@
 //! Camera controls and movement.
 //!
 //! This RTS-style camera can zoom and pan.
+//!
+//! Borrowed from [Bevy PanCam (thank you, Johann Helsing and co.)](https://github.com/johanhelsing/bevy_pancam/blob/f4da39912a8982baa63b4bc5502e5f83f4338cc5/src/lib.rs)
 
-use bevy::prelude::*;
-use bevy_pancam::{PanCam, PanCamPlugin};
+use bevy::{
+    input::mouse::{MouseScrollUnit, MouseWheel},
+    prelude::*,
+    render::camera::OrthographicProjection,
+};
 
 /// Camera logic
 pub struct CameraPlugin;
@@ -21,4 +26,345 @@ fn spawn_camera(mut commands: Commands) {
     commands
         .spawn(Camera2dBundle::default())
         .insert(PanCam::default());
+}
+
+/// Plugin that adds the necessary systems for `PanCam` components to work
+#[derive(Default)]
+pub struct PanCamPlugin;
+
+/// Label to allow ordering of `PanCamPlugin`
+#[derive(SystemLabel)]
+pub struct PanCamSystemLabel;
+
+impl Plugin for PanCamPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(camera_movement.label(PanCamSystemLabel))
+            .add_system(camera_zoom.label(PanCamSystemLabel));
+
+        app.register_type::<PanCam>();
+    }
+}
+
+fn camera_zoom(
+    mut query: Query<(&PanCam, &mut OrthographicProjection, &mut Transform)>,
+    mut scroll_events: EventReader<MouseWheel>,
+    windows: Res<Windows>,
+    #[cfg(feature = "debug_tools")] egui_ctx: Option<ResMut<bevy_egui::EguiContext>>,
+) {
+    #[cfg(feature = "debug_tools")]
+    if let Some(mut egui_ctx) = egui_ctx {
+        if egui_ctx.ctx_mut().wants_pointer_input() || egui_ctx.ctx_mut().wants_keyboard_input() {
+            return;
+        }
+    }
+
+    let pixels_per_line = 100.; // Maybe make configurable?
+    let scroll = scroll_events
+        .iter()
+        .map(|ev| match ev.unit {
+            MouseScrollUnit::Pixel => ev.y,
+            MouseScrollUnit::Line => ev.y * pixels_per_line,
+        })
+        .sum::<f32>();
+
+    if scroll == 0. {
+        return;
+    }
+
+    let window = windows.get_primary().unwrap();
+    let window_size = Vec2::new(window.width(), window.height());
+    let mouse_normalized_screen_pos = window
+        .cursor_position()
+        .map(|cursor_pos| (cursor_pos / window_size) * 2. - Vec2::ONE);
+
+    for (cam, mut proj, mut pos) in &mut query {
+        if cam.enabled {
+            let old_scale = proj.scale;
+            proj.scale = (proj.scale * (1. + -scroll * 0.001)).max(cam.min_scale);
+
+            // Apply max scale constraint
+            if let Some(max_scale) = cam.max_scale {
+                proj.scale = proj.scale.min(max_scale);
+            }
+
+            // If there is both a min and max x boundary, that limits how far we can zoom. Make sure we don't exceed that
+            if let (Some(min_x_bound), Some(max_x_bound)) = (cam.min_x, cam.max_x) {
+                let max_safe_scale = max_scale_within_x_bounds(min_x_bound, max_x_bound, &proj);
+                proj.scale = proj.scale.min(max_safe_scale);
+            }
+            // If there is both a min and max y boundary, that limits how far we can zoom. Make sure we don't exceed that
+            if let (Some(min_y_bound), Some(max_y_bound)) = (cam.min_y, cam.max_y) {
+                let max_safe_scale = max_scale_within_y_bounds(min_y_bound, max_y_bound, &proj);
+                proj.scale = proj.scale.min(max_safe_scale);
+            }
+
+            // Move the camera position to normalize the projection window
+            if let (Some(mouse_normalized_screen_pos), true) =
+                (mouse_normalized_screen_pos, cam.zoom_to_cursor)
+            {
+                let proj_size = Vec2::new(proj.right, proj.top);
+                let mouse_world_pos = pos.translation.truncate()
+                    + mouse_normalized_screen_pos * proj_size * old_scale;
+                pos.translation = (mouse_world_pos
+                    - mouse_normalized_screen_pos * proj_size * proj.scale)
+                    .extend(pos.translation.z);
+
+                // As we zoom out, we don't want the viewport to move beyond the provided boundary. If the most recent
+                // change to the camera zoom would move cause parts of the window beyond the boundary to be shown, we
+                // need to change the camera position to keep the viewport within bounds. The four if statements below
+                // provide this behavior for the min and max x and y boundaries.
+                let proj_size =
+                    Vec2::new(proj.right - proj.left, proj.top - proj.bottom) * proj.scale;
+
+                let half_of_viewport = proj_size / 2.;
+
+                if let Some(min_x_bound) = cam.min_x {
+                    let min_safe_cam_x = min_x_bound + half_of_viewport.x;
+                    pos.translation.x = pos.translation.x.max(min_safe_cam_x);
+                }
+                if let Some(max_x_bound) = cam.max_x {
+                    let max_safe_cam_x = max_x_bound - half_of_viewport.x;
+                    pos.translation.x = pos.translation.x.min(max_safe_cam_x);
+                }
+                if let Some(min_y_bound) = cam.min_y {
+                    let min_safe_cam_y = min_y_bound + half_of_viewport.y;
+                    pos.translation.y = pos.translation.y.max(min_safe_cam_y);
+                }
+                if let Some(max_y_bound) = cam.max_y {
+                    let max_safe_cam_y = max_y_bound - half_of_viewport.y;
+                    pos.translation.y = pos.translation.y.min(max_safe_cam_y);
+                }
+            }
+        }
+    }
+}
+
+/// max_scale_within_x_bounds is used to find the maximum safe zoom out/projection scale when we have been provided with
+/// minimum and maximum x boundaries for the camera.
+fn max_scale_within_x_bounds(
+    min_x_bound: f32,
+    max_x_bound: f32,
+    proj: &OrthographicProjection,
+) -> f32 {
+    let bounds_width = max_x_bound - min_x_bound;
+
+    // projection width in world space:
+    // let proj_width = (proj.right - proj.left) * proj.scale;
+
+    // we're at the boundary when proj_width == bounds_width
+    // that means (proj.right - proj.left) * scale == bounds_width
+
+    // if we solve for scale, we get:
+    bounds_width / (proj.right - proj.left)
+}
+
+/// max_scale_within_y_bounds is used to find the maximum safe zoom out/projection scale when we have been provided with
+/// minimum and maximum y boundaries for the camera. It behaves identically to max_scale_within_x_bounds but uses the
+/// height of the window and projection instead of their width.
+fn max_scale_within_y_bounds(
+    min_y_bound: f32,
+    max_y_bound: f32,
+    proj: &OrthographicProjection,
+) -> f32 {
+    let bounds_height = max_y_bound - min_y_bound;
+
+    // projection height in world space:
+    // let proj_height = (proj.top - proj.bottom) * proj.scale;
+
+    // we're at the boundary when proj_height == bounds_height
+    // that means (proj.top - proj.bottom) * scale == bounds_height
+
+    // if we solve for scale, we get:
+    bounds_height / (proj.top - proj.bottom)
+}
+
+fn camera_movement(
+    windows: Res<Windows>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    mut query: Query<(&PanCam, &mut Transform, &OrthographicProjection)>,
+    mut last_pos: Local<Option<Vec2>>,
+    #[cfg(feature = "bevy_egui")] egui_ctx: Option<ResMut<bevy_egui::EguiContext>>,
+) {
+    #[cfg(feature = "bevy_egui")]
+    if let Some(mut egui_ctx) = egui_ctx {
+        if egui_ctx.ctx_mut().wants_pointer_input() || egui_ctx.ctx_mut().wants_keyboard_input() {
+            *last_pos = None;
+            return;
+        }
+    }
+
+    let window = windows.get_primary().unwrap();
+    let window_size = Vec2::new(window.width(), window.height());
+
+    // Use position instead of MouseMotion, otherwise we don't get acceleration movement
+    let current_pos = match window.cursor_position() {
+        Some(current_pos) => current_pos,
+        None => return,
+    };
+    let delta_device_pixels = current_pos - last_pos.unwrap_or(current_pos);
+
+    for (cam, mut transform, projection) in &mut query {
+        if cam.enabled
+            && cam
+                .grab_buttons
+                .iter()
+                .any(|btn| mouse_buttons.pressed(*btn))
+        {
+            let proj_size = Vec2::new(
+                projection.right - projection.left,
+                projection.top - projection.bottom,
+            ) * projection.scale;
+
+            let world_units_per_device_pixel = proj_size / window_size;
+
+            // The proposed new camera position
+            let delta_world = delta_device_pixels * world_units_per_device_pixel;
+            let mut proposed_cam_transform = transform.translation - delta_world.extend(0.);
+
+            // Check whether the proposed camera movement would be within the provided boundaries, override it if we
+            // need to do so to stay within bounds.
+            if let Some(min_x_boundary) = cam.min_x {
+                let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
+                proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
+            }
+            if let Some(max_x_boundary) = cam.max_x {
+                let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
+                proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
+            }
+            if let Some(min_y_boundary) = cam.min_y {
+                let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
+                proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
+            }
+            if let Some(max_y_boundary) = cam.max_y {
+                let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
+                proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
+            }
+
+            transform.translation = proposed_cam_transform;
+        }
+    }
+    *last_pos = Some(current_pos);
+}
+
+/// A component that adds panning camera controls to an orthographic camera
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct PanCam {
+    /// The mouse buttons that will be used to drag and pan the camera
+    pub grab_buttons: Vec<MouseButton>,
+    /// Whether camera currently responds to user input
+    pub enabled: bool,
+    /// When true, zooming the camera will center on the mouse cursor
+    ///
+    /// When false, the camera will stay in place, zooming towards the
+    /// middle of the screen
+    pub zoom_to_cursor: bool,
+    /// The minimum scale for the camera
+    ///
+    /// The orthographic projection's scale will be clamped at this value when zooming in
+    pub min_scale: f32,
+    /// The maximum scale for the camera
+    ///
+    /// If present, the orthographic projection's scale will be clamped at
+    /// this value when zooming out.
+    pub max_scale: Option<f32>,
+    /// The minimum x position of the camera window
+    ///
+    /// If present, the orthographic projection will be clamped to this boundary both
+    /// when dragging the window, and zooming out.
+    pub min_x: Option<f32>,
+    /// The maximum x position of the camera window
+    ///
+    /// If present, the orthographic projection will be clamped to this boundary both
+    /// when dragging the window, and zooming out.
+    pub max_x: Option<f32>,
+    /// The minimum y position of the camera window
+    ///
+    /// If present, the orthographic projection will be clamped to this boundary both
+    /// when dragging the window, and zooming out.
+    pub min_y: Option<f32>,
+    /// The maximum y position of the camera window
+    ///
+    /// If present, the orthographic projection will be clamped to this boundary both
+    /// when dragging the window, and zooming out.
+    pub max_y: Option<f32>,
+}
+
+impl Default for PanCam {
+    fn default() -> Self {
+        Self {
+            grab_buttons: vec![MouseButton::Left, MouseButton::Right, MouseButton::Middle],
+            enabled: true,
+            zoom_to_cursor: true,
+            min_scale: 0.00001,
+            max_scale: None,
+            min_x: None,
+            max_x: None,
+            min_y: None,
+            max_y: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use bevy::prelude::OrthographicProjection;
+
+    use super::*;
+
+    // Simple mock function to construct a square projection window and run it, plus some square boundaries, through
+    // the provided scale func
+    fn mock_scale_func(
+        proj_size: f32,
+        bound_width: f32,
+        scale_func: &dyn Fn(f32, f32, &OrthographicProjection) -> f32,
+    ) -> f32 {
+        let proj = OrthographicProjection {
+            left: -(proj_size / 2.),
+            bottom: -(proj_size / 2.),
+            right: (proj_size / 2.),
+            top: (proj_size / 2.),
+            ..default()
+        };
+        let min_bound = -(bound_width / 2.);
+        let max_bound = bound_width / 2.;
+
+        scale_func(min_bound, max_bound, &proj)
+    }
+
+    // projection and bounds are equal-width, both have symmetric edges. Expect max scale of 1.0
+    #[test]
+    fn test_max_scale_x_01() {
+        assert_eq!(mock_scale_func(100., 100., &max_scale_within_x_bounds), 1.);
+    }
+
+    // boundaries are 1/2 the size of the projection window, expects max scale of 0.5
+    #[test]
+    fn test_max_scale_x_02() {
+        assert_eq!(mock_scale_func(100., 50., &max_scale_within_x_bounds), 0.5);
+    }
+
+    // boundaries are 2x the size of the projection window, expects max scale of 2.0
+    #[test]
+    fn test_max_scale_x_03() {
+        assert_eq!(mock_scale_func(100., 200., &max_scale_within_x_bounds), 2.);
+    }
+
+    // projection and bounds are equal-height, expects max scale of 1.0
+    #[test]
+    fn test_max_scale_y_01() {
+        assert_eq!(mock_scale_func(100., 100., &max_scale_within_y_bounds), 1.);
+    }
+
+    // boundaries are 1/2 the size of the projection window, expects max scale of 0.5
+    #[test]
+    fn test_max_scale_y_02() {
+        assert_eq!(mock_scale_func(100., 50., &max_scale_within_y_bounds), 0.5);
+    }
+
+    // boundaries are 2x the size of the projection window, expects max scale of 2.0
+    #[test]
+    fn test_max_scale_y_03() {
+        assert_eq!(mock_scale_func(100., 200., &max_scale_within_y_bounds), 2.);
+    }
 }
