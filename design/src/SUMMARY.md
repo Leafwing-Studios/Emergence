@@ -22,5 +22,6 @@
   - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
 - [Production Chains](./production-chains/index.md)
   - [Raw Resources](./production-chains/raw-resources.md)
-- [Signals](signals/index.md)
-  - [Configuring Signal Properties](signals/index.md)
+  - [Recipes](./production-chains/recipes.md)
+- [Signals](./signals/index.md)
+  - [Configuring Signal Properties](./signals/index.md)
