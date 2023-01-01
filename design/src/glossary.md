@@ -602,3 +602,24 @@ Capturing and domesticating a species, giving you access to it as part of your c
 
 Per-playthrough accomplishments.
 Contrast to [achievements](glossary.md#achievements), which are unlocked a single time for each player.
+
+### Signal
+
+Every physical object in the game emits signals that correspond to their identity.
+These spread over time, and are used for pathfinding and work prioritization.
+There are three flavors of signal:
+
+- presence
+- supplying
+- requesting
+
+Depending on their needs and preferences, units will proactively pick up items from buildings that are supplying items,
+and move them to buildings that are requesting items of that type (or simply storing those items).
+Alternatively, units will proactively carry items away from buildings that are supplying them.
+
+As a result, signals serve as both a pathfinding tool and a [logistic network](glossary.md#logistic-network) to transport goods through the factory.
+
+### Strain
+
+A genetically homogenous subset of a species.
+These have their own upgrades and [signal](glossary.md#signal) properties.
