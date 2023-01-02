@@ -10,13 +10,11 @@ use bevy::{prelude::*, render::camera::OrthographicProjection};
 #[cfg(feature = "debug_tools")]
 use debug_tools::bevy_egui;
 use leafwing_input_manager::action_state::ActionState;
-use leafwing_input_manager::axislike::{DualAxis, SingleAxis};
+use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
-use leafwing_input_manager::user_input::{InputKind, UserInput};
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
-use petitset::PetitSet;
 
 /// Camera logic
 pub struct CameraPlugin;
@@ -50,16 +48,6 @@ fn setup(mut commands: Commands) {
                 .insert(KeyCode::A, CameraPan::Left)
                 .insert(KeyCode::S, CameraPan::Down)
                 .insert(KeyCode::D, CameraPan::Right)
-                .insert(
-                    UserInput::Chord(PetitSet::from_iter(
-                        [
-                            InputKind::DualAxis(DualAxis::mouse_motion()),
-                            InputKind::Mouse(MouseButton::Left),
-                        ]
-                        .into_iter(),
-                    )),
-                    CameraPan::Drag,
-                )
                 .build(),
             ..default()
         });
@@ -73,8 +61,6 @@ pub struct PanCam {
     pub zoom_sensitivity: f32,
     /// Camera button pan sensitivity
     pub button_pan_sensitivity: f32,
-    /// Camera click and drag pan sensitivity
-    pub drag_pan_sensitivity: f32,
     /// Whether camera currently responds to user input
     pub enabled: bool,
     /// When true, zooming the camera will center on the mouse cursor
@@ -117,8 +103,7 @@ impl Default for PanCam {
     fn default() -> Self {
         Self {
             zoom_sensitivity: 100.,
-            button_pan_sensitivity: 10.,
-            drag_pan_sensitivity: 8.,
+            button_pan_sensitivity: 8.,
             enabled: true,
             zoom_to_cursor: true,
             min_scale: 0.00001,
@@ -149,8 +134,6 @@ enum CameraPan {
     Down,
     /// Camera pan right
     Right,
-    /// Clicking and dragging using the mouse can pan the camera
-    Drag,
 }
 
 /// Plugin that adds the necessary systems for `PanCam` components to work
@@ -333,12 +316,6 @@ fn camera_movement(
                 CameraPan::Left => cam.button_pan_sensitivity * Vec2::NEG_X,
                 CameraPan::Down => cam.button_pan_sensitivity * Vec2::NEG_Y,
                 CameraPan::Right => cam.button_pan_sensitivity * Vec2::X,
-                CameraPan::Drag => {
-                    cam.drag_pan_sensitivity
-                        * action_state
-                            .axis_pair(CameraPan::Drag)
-                            .map_or(Vec2::ZERO, |dual_axis| dual_axis.xy())
-                }
             }
         }
     }
