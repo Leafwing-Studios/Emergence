@@ -5,14 +5,14 @@ It regenerates over time, and can be spent at a significantly faster rate to inf
 
 ## Using intent
 
-Intent is primarily spent on spell-like:
+Intent is primarily spent on spell-like **abilities**:
 
-1. Select which **ability** you would like to use.
+1. Select which ability you would like to use.
 2. Use your cursor to target an area.
-3. Click and hold the left mouse button, spending intent at a fixed rate in that area.
+3. Click and hold, spending intent at a fixed rate in that area.
 4. The longer you hold down the mouse button, the more the effect strengthens, or the longer the effect lasts.
 
-As a resource, small amounts of intent are also spent on other actions that reflect "collective intelligence":
+Small amounts of intent are also spent on other actions that reflect "collective intelligence":
 
 - [zoning](zoning.md), with higher priority zoning costing more intent
 - [terraforming](terraforming.md)
@@ -27,6 +27,30 @@ These costs should be very low, and rapidly recovered: only planning or reconfig
 ## Abilities
 
 Intent can be used for several abilities, each of which is [unlocked](intent.md#unlocking-and-upgrading) as the player plays the game.
+They are listed here in the approximate unlock order.
+
+Abilties are always **dual**: their effect can always be thematically mirrored.
+The more straightforward positive effect is always on the left mouse button,
+while the negative effect is on the right mouse button.
+
+### *Lure* / *Warning*
+
+*Lure* gathers units to the area.
+
+*Warning* repels them from the area.
+This is more efficient to use than Lure.
+
+### *Flourish* / *Fallow*
+
+*Flourish* boosts growth and action rate of all units and buildings in the area.
+Costs fo growth and inputs to recipes are unchanged.
+Maintenance costs are increased proportionally.
+
+*Fallow* slows down growth and action rate of all unit and buildings in the area.
+Maintenance costs are decreased proportionally.
+Recover intent for each affected organism for the duration of the effect.
+When used in dense areas, Fallow is intent-positive (at the cost of productivity).
+It can also be used to slow down consumption in times of need and reduce the rate of pollution.
 
 ## Unlocking and upgrading
 
