@@ -108,3 +108,28 @@ This can be helpful to manage complexity, but can lead to predictable gameplay a
 Constrictions can be quantified by examining the [vertex connectivity](https://en.wikipedia.org/wiki/K-vertex-connected_graph) and [edge connectivity](https://en.wikipedia.org/wiki/K-edge-connected_graph) of [neighborhoods](https://en.wikipedia.org/wiki/Neighbourhood_(graph_theory)).
 
 ## Production chains in *Emergence*
+
+In *Emergence*, we're looking for production chains that are:
+
+- interesting
+- robust
+- moderately complex
+
+We have a lot of complexity elsewhere, as players must respond to changing conditions.
+As a result, simply adding more and more items, and increasing the depth of the production chains is unlikely to be the right choice.
+
+Instead, we want the following key properties:
+
+- many cycles: everything should be able to be broken back down, either physically or via decomposition
+- heavy substitutability: powered by graph constrictions to key intermediates
+  - e.g. fiber, mud, salt
+  - intermediates branch back out to produce end products and advanced intermediates
+- conservation laws conserve elemental composition: excess elements become waste products
+  - nutrient waste fertilizes soil under the building
+    - this can be automatically recaptured and distributed via mycorrhizae
+  - water waste drains into the soil under the building
+  - inorganic waste must be removed
+- add complexity through additional restrictions on items rather than long production chains
+  - storage challenges
+  - transport costs and restrictions
+  - spatially constrained production
