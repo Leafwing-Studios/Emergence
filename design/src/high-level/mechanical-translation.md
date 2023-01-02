@@ -33,7 +33,7 @@
 - **Resource sinks**
   - lossy conversions: energy and water will commonly be lost during resource transformations
   - resource upkeep: energy and water will commonly be lost to keep things alive
-  - pheromones: used to exert control over the colony and interactively boost effectiveness
+  - intent: used to exert control over the colony and interactively boost effectiveness
     - refine and then spend base resources to improve production rate
   - guided evolution: research analogue used to modify and enhance existing species
   - assimilation: research analogue used to add new species to the colony
@@ -86,9 +86,9 @@
   - guided evolution: research analogue used to modify and enhance existing species
   - assimilation: research analogue used to add new species to the colony
 - **Production enhancements**
-  - pheromones: spent manually by the player to temporarily and locally enhance
+  - intent: spent manually by the player to temporarily and locally enhance
   - upgrades: done via guided evolution, affecting all organisms of that strain
-  - enhancements: pheromones can be produced and applied automatically via workers
+  - enhancements: higher quality fertilizers can be produced and applied automatically via workers
 - **Multiple transportation options**
   - Many species, and species variants
 - **Cyclic production pathways**

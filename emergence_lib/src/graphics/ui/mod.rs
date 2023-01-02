@@ -2,7 +2,7 @@
 //!
 use bevy::prelude::Plugin;
 
-pub mod pheromone;
+pub mod intent;
 
 /// Struct to build the UI plugin
 pub struct UiPlugin;

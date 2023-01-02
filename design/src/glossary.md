@@ -598,12 +598,18 @@ Even if they have an external meaning, when used in this book, they will reflect
 
 Capturing and domesticating a species, giving you access to it as part of your colony.
 
+### [Intent](player-actions/intent.md)
+
+Represents your the hive mind's focus and special attention.
+
+Mechanically, this is a regenerating resource that can be spent to directly affect the world through the units of the hive.
+
 ### Milestone
 
 Per-playthrough accomplishments.
 Contrast to [achievements](glossary.md#achievements), which are unlocked a single time for each player.
 
-### Signal
+### [Signal](signals/index.md)
 
 Every physical object in the game emits signals that correspond to their identity.
 These spread over time, and are used for pathfinding and work prioritization.
