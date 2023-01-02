@@ -49,7 +49,7 @@ This is more efficient to use than Lure.
 ### *Flourish* / *Fallow*
 
 *Flourish* boosts growth and action rate of all units and buildings in the area.
-Costs fo growth and inputs to recipes are unchanged.
+Costs for growth and inputs to recipes are unchanged.
 Maintenance costs are increased proportionally.
 
 *Fallow* slows down growth and action rate of all unit and buildings in the area.
