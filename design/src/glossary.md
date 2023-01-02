@@ -408,6 +408,7 @@ Usually uses **science packs** as input.
 ### Loader
 
 An entity that can load or unload the contents of a container as fast as the input/output belt can handle.
+In many games (like Mindustry), this is built into assemblers directly and inserters simply don't exist.
 
 - [Factorio](https://www.factorio.com/blog/post/fff-128), where it was initially considered but ultimately not included
 
