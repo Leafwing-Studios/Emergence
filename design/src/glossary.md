@@ -616,8 +616,8 @@ These spread over time, and are used for pathfinding and work prioritization.
 There are three flavors of signal:
 
 - presence
-- supplying
-- requesting
+- supplying (a ["push"](https://en.wikipedia.org/wiki/Kanban#Operation) signal)
+- requesting (a ["pull"](https://en.wikipedia.org/wiki/Kanban#Operation) signal)
 
 Depending on their needs and preferences, units will proactively pick up items from buildings that are supplying items,
 and move them to buildings that are requesting items of that type (or simply storing those items).

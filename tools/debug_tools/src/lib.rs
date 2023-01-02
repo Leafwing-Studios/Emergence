@@ -32,6 +32,10 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 // pub mod console;
 pub mod debug_ui;
 
+// Whichever version of bevy_egui is used by the inspector, make that available to other users of
+// debug_tools
+pub use bevy_inspector_egui::bevy_egui;
+
 /// Creates a global resource that can be used to toggle actively displayed debug tools.
 #[derive(Clone, Resource, Component, Copy, Debug, PartialEq, Eq)]
 pub struct DebugInfo {
