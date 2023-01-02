@@ -122,7 +122,9 @@ Instead, we want the following key properties:
 
 - many cycles: everything should be able to be broken back down, either physically or via decomposition
 - heavy substitutability: powered by graph constrictions to key intermediates
-  - e.g. fiber, mud, salt
+  - raw resources can ultimately be traded off for each other, because you can make the critical intermediates in many different ways
+  - similarly, not all recipes must be unlocked
+  - example intermediates: fiber, mud, salt
   - intermediates branch back out to produce end products and advanced intermediates
 - conservation laws conserve elemental composition: excess elements become waste products
   - nutrient waste fertilizes soil under the building
