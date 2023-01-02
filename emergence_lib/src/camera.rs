@@ -7,6 +7,8 @@
 //! [Leafwing Input Manager](https://crates.io/crates/leafwing-input-manager).
 
 use bevy::{prelude::*, render::camera::OrthographicProjection};
+#[cfg(feature = "debug_tools")]
+use debug_tools::bevy_egui;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DualAxis, SingleAxis};
 use leafwing_input_manager::input_map::InputMap;
@@ -31,7 +33,7 @@ impl Plugin for CameraPlugin {
     }
 }
 
-/// Spawns a [`Camera2dBundle`] and sets up the [`InputManager`]s that handle camera motion
+/// Spawns a [`Camera2dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
     commands
         .spawn(Camera2dBundle::default())
@@ -314,7 +316,6 @@ fn camera_movement(
     #[cfg(feature = "debug_tools")]
     if let Some(mut egui_ctx) = egui_ctx {
         if egui_ctx.ctx_mut().wants_pointer_input() || egui_ctx.ctx_mut().wants_keyboard_input() {
-            *last_pos = None;
             return;
         }
     }
