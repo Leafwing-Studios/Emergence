@@ -50,7 +50,7 @@ Maintenance costs are increased proportionally.
 Maintenance costs are decreased proportionally.
 Recover intent for each affected organism for the duration of the effect.
 When used in dense areas, Fallow is intent-positive (at the cost of productivity).
-It can also be used to slow down consumption in times of need and reduce the rate of pollution.
+It can also be used to slow down consumption in times of need and reduce generation of unwanted products without destroying the organism.
 
 ## Unlocking and upgrading
 
