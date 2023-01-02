@@ -25,6 +25,6 @@
   - [Raw Resources](./production-chains/raw-resources.md)
   - [Intermediates](./production-chains/intermediates.md)
   - [End Products](./production-chains/end-products.md)
-  - [Example Production Chain: Leafcutter Ant Cultivation](production-chains/example-leafcutter.md)
+  - [Example Production Chain: Leafcutter Ant Cultivation](./production-chains/example-leafcutter.md)
 - [Signals](./signals/index.md)
   - [Configuring Signal Properties](./signals/configuring-properties.md)
