@@ -26,14 +26,14 @@ Instead, it's more useful to:
 
 Let's go through some of the relevant properties of production graphs!
 
-### Number of nodes (size)
+### Number of nodes (vertex count)
 
 This is a simple measure of the complexity of the game's crafting system.
 If there are more items to find and make, there's more game to both learn and play.
 
 Increasing this value increases playtime and diversity at the cost of complexity and development costs.
 
-### Number of connected components
+### Number of [connected components](https://en.wikipedia.org/wiki/Component_(graph_theory))
 
 Imagine the recipes as physically connecting various parts of your graph, and then try to pull it apart.
 How many parts can you split it into without breaking any of the edges?
@@ -78,7 +78,7 @@ The higher this is, the more options there are for your ingredient.
 
 Items that only have one outgoing edge should always be transformed into their output when possible: there's no alternative use for them.
 
-### Cycles
+### [Cycles](https://en.wikipedia.org/wiki/Cycle_(graph_theory))
 
 Does the recipe graph loop back onto itself?
 This might represent either a reversible transformation (like water into steam), or a more complex cycling production chain.
