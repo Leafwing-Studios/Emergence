@@ -175,6 +175,12 @@ A rule about how the game works.
 The story of a game.
 Unlike most traditional works of art, narratives are often implicit or branching in games.
 
+### Noob-trap
+
+Features that seem helpful or appealing to beginners, but actually aren't. 
+
+Using them is less effective in almost every circumstance than an alternative, or develops bad habits.
+
 ### Plausibility and realism
 
 Fictional worlds are plausible if they have a set of learnable, internally consistent rules.
@@ -400,6 +406,13 @@ Usually uses **science packs** as input.
 - [Factorio: Lab](https://wiki.factorio.com/Lab)
 - [Satisfactory: HUB terminal](https://satisfactory.fandom.com/wiki/The_HUB#HUB_Terminal)
 - [Dyson Sphere Program: Matrix Lab](https://dyson-sphere-program.fandom.com/wiki/Matrix_Lab)
+
+### Loader
+
+An entity that can load or unload the contents of a container as fast as the input/output belt can handle.
+In many games (like Mindustry), this is built into assemblers directly and inserters simply don't exist.
+
+- [Factorio](https://www.factorio.com/blog/post/fff-128), where it was initially considered but ultimately not included
 
 ### Logistic network
 
