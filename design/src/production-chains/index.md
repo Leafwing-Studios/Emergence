@@ -12,7 +12,7 @@ the most essential thing to consider is the **recipe graph.**
 
 You can construct the recipe graph by placing the items in the game as nodes of the graph, and then drawing an edge from each of the inputs in a recipe to its outputs.
 We can also **color** this recipe graph into three parts that roughly correspond to raw resources, intermediates and end products.
-Raw resources have no parents, end products have no children*, and intemediates have both.
+Raw resources have no parents, end products have no children*, and intermediates have both.
 
 As an aside, these are actually directed hypergraphs.
 Hypergraphs may sound scary, but they're pretty simple: they're simply graphs that connect **nodes** to each other via **edges**, but the edges map betweeen groups of nodes rather than individual nodes.
@@ -51,8 +51,8 @@ This is often very low in simple crafting games, capping out at one or two.
 Colony sims generally have chains of length one to three,
 and even most factory builders end up with a chain length of one to four.
 
-This has a massive complexity cost, but adds a lot of [depth](../glossary.md#depth-and-complexity).
-Extending this further can be done, but requires some combination of:
+Increasing this has a massive complexity cost, but adds a lot of [depth](../glossary.md#depth-and-complexity).
+Increasing this well (from a game-design perspective) requires some combination of:
 
 - simpler, less effective early recipes to slowly teach the player
   - this is the strategy taken by the AngelBob's mod pack for Factorio: iron plates can be produced in many different ways, and only slowly becomes more complex
