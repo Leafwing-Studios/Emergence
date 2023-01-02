@@ -28,5 +28,5 @@
   - [Example Production Chain: Leafcutter Ant Cultivation](./production-chains/example-leafcutter.md)
 - [Organisms](./organisms/index.md)
 - [Logistics](./logistics/index.md)
-  - [Signals](./signals/index.md)
-    - [Configuring Signal Properties](./signals/configuring-properties.md)
+  - [Signals](./logistics/signals/index.md)
+    - [Configuring Signal Properties](./logistics/signals/configuring-properties.md)
