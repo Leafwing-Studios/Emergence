@@ -31,7 +31,7 @@ Let's go through some of the relevant properties of production graphs!
 This is a simple measure of the complexity of the game's crafting system.
 If there are more items to find and make, there's more game to both learn and play.
 
-Increasing this value increases playtime and diversity at the cost of complexity and budget.
+Increasing this value increases playtime and diversity at the cost of complexity and development costs.
 
 ### Number of connected components
 
