@@ -36,7 +36,7 @@ A light touch is key:
 
 - sit back and watch as your units follow the **signals** that waft from all things
 - create elaborate factories by carefully **zoning** areas for the plants and fungi that serve as your production and refinement facilities
-- spend precious **pheromones** to boost production and respond to emerging crises
+- focus your hive mind's **intent** to boost production, direct units and respond to emerging crises
 
 Tend to their needs, prune back their uncontrolled spread, and reap the rewards of your careful stewardship.
 

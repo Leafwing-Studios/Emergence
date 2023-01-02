@@ -30,7 +30,7 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - [clipboard](../glossary.md#clipboard)
   - basic [encyclopedia](../glossary.md#encyclopedia)
   - zoning strength
-  - pheromones
+  - intent
   - terraforming
   - [map](../glossary.md#map)
 - informational upgrades
