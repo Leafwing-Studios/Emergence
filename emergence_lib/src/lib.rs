@@ -26,6 +26,9 @@ impl Plugin for InteractionPlugin {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(cursor::CursorTilePosPlugin)
             .add_plugin(hive_mind::HiveMindPlugin);
+
+        #[cfg(feature = "debug_tools")]
+        app.add_plugin(debug_tools::DebugToolsPlugin);
     }
 }
 
