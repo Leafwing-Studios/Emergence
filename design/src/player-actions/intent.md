@@ -12,6 +12,12 @@ Intent is primarily spent on spell-like **abilities**:
 3. Click and hold, spending intent at a fixed rate in that area.
 4. The longer you hold down the mouse button, the more the effect strengthens, or the longer the effect lasts.
 
+Abilities are intended to serve three design roles:
+
+1. Give the players interesting and fun micromanagement tasks to do as they watch their [contraption](../high-level/creative-automation.md) run.
+2. Give players tools to deal with crises.
+3. Provide an escape hatch for when players want or need more direct control.
+
 Small amounts of intent are also spent on other actions that reflect "collective intelligence":
 
 - [zoning](zoning.md), with higher priority zoning costing more intent
@@ -60,5 +66,14 @@ Additional abilities are unlocked via the [hive mind upgrade system](../research
 
 Additionally, many organisms have a class of [genetic upgrade](../research/genetics.md) that improves or modifies how abilities influence that strain of the organism.
 
-Similarly, some organisms will have genetic upgrades that will improve your intent generation, cost to use or capacity in a fashion that scales with the number of living organisms of that type.
-These organisms serve as part of the hive mind's extended nervous system, increasing its capacity to sense, focus and reason.
+Similarly, some organisms will have genetic upgrades that interact with various abilities.
+Critically, these are never global: for example, organisms that increase your rate of generation or cap or unlock new abilties are forbidden.
+Instead, these upgrades are local: they only affect themselves or the nearby area.
+For example, upgrades that:
+
+- cause abilities to affect nearby enemy organisms instead
+- cause organisms of this strain to go dormant until the next rainfall
+- double the duration of all abilties used in a 3 tile radius
+
+are all within the design space.
+These have a lower balance risk, require more careful planning and increase the potential for [creativity](../high-level/creative-automation.md) due to their reduced flexibility.
