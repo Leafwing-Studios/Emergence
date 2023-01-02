@@ -4,18 +4,15 @@ pub mod components;
 pub mod entity_map;
 
 use crate as emergence_lib;
-use crate::enum_iter::IterableEnum;
+
 use crate::simulation::pathfinding::Impassable;
 use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
-use bevy::utils::HashMap;
+
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
-use rand::distributions::WeightedError;
-use rand::seq::SliceRandom;
-use rand::Rng;
 
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
@@ -48,18 +45,5 @@ impl TerrainType {
         }
         builder.insert(*self);
         builder.id()
-    }
-
-    /// Choose a random terrain tile based on the given weights
-    pub fn choose_random<R: Rng + ?Sized>(
-        rng: &mut R,
-        weights: &HashMap<TerrainType, f32>,
-    ) -> Result<TerrainType, WeightedError> {
-        TerrainType::variants()
-            .collect::<Vec<TerrainType>>()
-            .choose_weighted(rng, |terrain_type| {
-                weights.get(terrain_type).copied().unwrap_or_default()
-            })
-            .copied()
     }
 }

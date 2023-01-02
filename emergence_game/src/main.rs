@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowPlugin};
+use emergence_lib::simulation::generation::GenerationConfig;
 
 fn main() {
     App::new()
@@ -12,7 +13,9 @@ fn main() {
             },
             ..Default::default()
         }))
-        .add_plugin(emergence_lib::simulation::SimulationPlugin)
+        .add_plugin(emergence_lib::simulation::SimulationPlugin {
+            gen_config: GenerationConfig::default(),
+        })
         .add_plugin(emergence_lib::InteractionPlugin)
         .add_plugin(emergence_lib::graphics::GraphicsPlugin)
         .run();
