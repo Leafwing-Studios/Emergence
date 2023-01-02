@@ -20,6 +20,7 @@ use bevy_ecs_tilemap::TilemapBundle;
 
 use crate as emergence_lib;
 use crate::graphics::organisms::{OrganismSprite, OrganismsTilemap};
+#[cfg(feature = "debug_tools")]
 use debug_tools::debug_ui::*;
 use emergence_macros::IterableEnum;
 
@@ -71,9 +72,11 @@ impl Plugin for GraphicsPlugin {
             )
             // we put these systems in PostStartup, because we need the MapGeometry resource ready
             .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
-            .add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
-            .add_system_to_stage(CoreStage::Update, change_infotext)
             .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
+
+        #[cfg(feature = "debug_tools")]
+        app.add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
+            .add_system_to_stage(CoreStage::Update, change_infotext);
     }
 }
 
