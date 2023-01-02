@@ -177,7 +177,9 @@ Unlike most traditional works of art, narratives are often implicit or branching
 
 ### Noob-trap
 
-Features that seem helpful or appealing to beginners, but actually aren't. Using them is less effective in almost every circumstance than an alternative, or develops bad habits.
+Features that seem helpful or appealing to beginners, but actually aren't. 
+
+Using them is less effective in almost every circumstance than an alternative, or develops bad habits.
 
 ### Plausibility and realism
 
