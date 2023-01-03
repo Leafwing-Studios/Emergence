@@ -177,7 +177,7 @@ Unlike most traditional works of art, narratives are often implicit or branching
 
 ### Noob-trap
 
-Features that seem helpful or appealing to beginners, but actually aren't. 
+Features that seem helpful or appealing to beginners, but actually aren't.
 
 Using them is less effective in almost every circumstance than an alternative, or develops bad habits.
 
@@ -611,16 +611,36 @@ Even if they have an external meaning, when used in this book, they will reflect
 
 Capturing and domesticating a species, giving you access to it as part of your colony.
 
+### Building
+
+An inorganic [structure](glossary.md#structure) that is not alive.
+
 ### [Intent](player-actions/intent.md)
 
 Represents your the hive mind's focus and special attention.
 
 Mechanically, this is a regenerating resource that can be spent to directly affect the world through the units of the hive.
 
+### Life cycle
+
+The collection of [life stages](glossary.md#life-stage) of an organism, and the pathways between them.
+
+### Life stage
+
+A form in an organism's life cycle.
+This controls its appearance, capacities, needs, and which life cycles it can transition to.
+
+These are modelled in discrete steps to improve clarity and reduce complexity for players.
+
 ### Milestone
 
 Per-playthrough accomplishments.
 Contrast to [achievements](glossary.md#achievements), which are unlocked a single time for each player.
+
+### Organism
+
+A living creature (plant, animal, fungal or otherwise) with [life cycle](glossary.md#life-cycle).
+Organisms can be split into [units](glossary.md#unit), which move, and [sessile organisms](glossary.md#sessile-organism) which do not.
 
 ### [Signal](signals/index.md)
 
@@ -642,3 +662,17 @@ As a result, signals serve as both a pathfinding tool and a [logistic network](g
 
 A genetically homogenous subset of a species.
 These have their own upgrades and [signal](glossary.md#signal) properties.
+
+### Sessile organism
+
+An [organism](glossary.md#organism) that cannot move.
+Complement to a [unit](glossary.md#unit), and a subset of a [structure](glossary.md#structure).
+
+### Structure
+
+Each structure occupies one or more tiles, excluding any other structures from its space.
+
+### Unit
+
+An [organism](glossary.md#organism) that can move, plan and act.
+Complement to a [sessile organism](glossary.md#sessile-organism).
