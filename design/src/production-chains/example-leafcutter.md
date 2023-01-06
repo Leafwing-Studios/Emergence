@@ -5,7 +5,7 @@ This document details a very simple production chain inspired by [leafcutter ant
 See the chapter on [organisms](../organisms/index.md) for general discussion of how organisms grow, reproduce and die.
 See the chaper on [logistics](../logistics/index.md) for general discussion about collecting and transporting items.
 
-## Step Zero: Acacacia Grows
+## Step Zero: Acacia Grows
 
 *Acacia* plants grow, producing *acacia leaves*.
 
