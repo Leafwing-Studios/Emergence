@@ -1,6 +1,7 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::structures::{FungiBundle, PlantBundle};
+use crate::organisms::structures::plants::PlantBundle;
+use crate::organisms::structures::FungiBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
