@@ -84,3 +84,12 @@ pub fn photosynthesize(time: Res<Time>, mut query: Query<(&Plant, &mut Compositi
         comp.mass += plant.photosynthesis_rate * time.delta_seconds() * comp.mass.powf(2.0 / 3.0);
     }
 }
+
+/// Plugin to handle plant-specific game logic and simulation.
+pub struct PlantsPlugin;
+
+impl Plugin for PlantsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(photosynthesize);
+    }
+}

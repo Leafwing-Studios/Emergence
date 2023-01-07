@@ -6,7 +6,7 @@ use crate::organisms::{Composition, OrganismBundle};
 
 use bevy::prelude::*;
 
-use self::plants::photosynthesize;
+use self::{fungi::FungiPlugin, plants::PlantsPlugin};
 
 pub mod fungi;
 pub mod plants;
@@ -52,7 +52,8 @@ pub struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(photosynthesize)
+        app.add_plugin(PlantsPlugin)
+            .add_plugin(FungiPlugin)
             .add_system(upkeep)
             .add_system(cleanup);
     }

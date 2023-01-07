@@ -51,3 +51,12 @@ impl IntoSprite for Fungi {
         OrganismSprite::Fungi.index() as u32
     }
 }
+
+/// Plugin to handle fungi-specific game logic and simulation.
+pub struct FungiPlugin;
+
+impl Plugin for FungiPlugin {
+    fn build(&self, _app: &mut App) {
+        // TODO; Placeholder for later
+    }
+}
