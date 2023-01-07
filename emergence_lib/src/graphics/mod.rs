@@ -27,7 +27,7 @@ use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::{ProduceSprite, ProduceTilemap};
 use crate::graphics::sprites::{IntoSprite, SpriteIndex};
-use crate::organisms::structures::Fungi;
+use crate::organisms::structures::fungi::Fungi;
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};

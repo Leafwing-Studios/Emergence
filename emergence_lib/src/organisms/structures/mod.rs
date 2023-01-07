@@ -2,17 +2,13 @@
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
-use crate::graphics::Tilemap;
 use crate::organisms::{Composition, OrganismBundle};
 
-use crate::enum_iter::IterableEnum;
-use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::sprites::IntoSprite;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use self::plants::photosynthesize;
 
+pub mod fungi;
 pub mod plants;
 
 /// The data needed to build a structure
@@ -48,48 +44,6 @@ impl Default for Structure {
             upkeep_rate: Structure::UPKEEP_RATE,
             despawn_mass: Structure::DESPAWN_MASS,
         }
-    }
-}
-
-/// Fungi cannot photosynthesize, and must instead decompose matter
-#[derive(Component, Clone, Default)]
-pub struct Fungi;
-
-/// The data needed to spawn [`Fungi`].
-#[derive(Bundle)]
-pub struct FungiBundle {
-    /// Data characterizing fungi
-    fungi: Fungi,
-    /// Fungi are structures.
-    structure_bundle: StructureBundle,
-    /// Data needed to visually represent this fungus.
-    /// Position in the world
-    position: TilePos,
-}
-
-impl FungiBundle {
-    /// Creates new fungi at specified tile position, in the specified tilemap.
-    pub fn new(position: TilePos) -> Self {
-        Self {
-            fungi: Fungi,
-            structure_bundle: StructureBundle {
-                organism_bundle: OrganismBundle {
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            position,
-        }
-    }
-}
-
-impl IntoSprite for Fungi {
-    fn tilemap(&self) -> Tilemap {
-        Tilemap::Organisms
-    }
-
-    fn index(&self) -> u32 {
-        OrganismSprite::Fungi.index() as u32
     }
 }
 
