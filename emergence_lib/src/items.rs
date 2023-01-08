@@ -73,6 +73,11 @@ impl ItemSlot {
         self.count == self.max_item_count
     }
 
+    /// Determine if this slot can hold items of the given type.
+    pub fn is_for_item(&self, item_id: &ItemId) -> bool {
+        self.item_id == *item_id
+    }
+
     /// Try to add as many items to the inventory as possible, up to the given count.
     ///
     /// - If all items can fit in the slot, they are all added and `Ok` is returned.
@@ -172,7 +177,7 @@ impl Inventory {
         self.slots
             .iter()
             .filter_map(|slot| {
-                if slot.item_id() == item_id {
+                if slot.is_for_item(item_id) {
                     Some(slot.count())
                 } else {
                     None
@@ -207,7 +212,7 @@ impl Inventory {
         self.slots
             .iter()
             .filter_map(|slot| {
-                if slot.item_id() == item_id {
+                if slot.is_for_item(item_id) {
                     Some(slot.remaining_space())
                 } else {
                     None
@@ -229,7 +234,7 @@ impl Inventory {
         for slot in self
             .slots
             .iter_mut()
-            .filter(|slot| slot.item_id() == item_id)
+            .filter(|slot| slot.is_for_item(item_id))
         {
             match slot.add_until_full(items_to_add) {
                 Ok(_) => {
@@ -305,7 +310,7 @@ impl Inventory {
         for slot in self
             .slots
             .iter_mut()
-            .filter(|slot| slot.item_id() == item_id)
+            .filter(|slot| slot.is_for_item(item_id))
             .rev()
         {
             match slot.remove_until_empty(items_to_remove) {
