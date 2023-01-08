@@ -8,6 +8,7 @@ use bevy::prelude::*;
 
 use self::{fungi::FungiPlugin, plants::PlantsPlugin};
 
+mod crafting;
 pub mod fungi;
 pub mod plants;
 
