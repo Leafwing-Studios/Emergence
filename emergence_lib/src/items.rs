@@ -2,8 +2,6 @@
 
 use std::time::Duration;
 
-use bevy::prelude::*;
-
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemId(&'static str);
@@ -347,7 +345,7 @@ impl Inventory {
             .filter_map(|item_count| {
                 let excess = item_count
                     .count
-                    .saturating_sub(self.item_count(&item_count.item_id));
+                    .saturating_sub(self.remaining_space_for_item(&item_count.item_id));
 
                 if excess > 0 {
                     Some(ItemCount {
@@ -359,8 +357,6 @@ impl Inventory {
                 }
             })
             .collect();
-
-        debug!("Excess counts: {excess_counts:?}");
 
         if excess_counts.is_empty() {
             item_counts
