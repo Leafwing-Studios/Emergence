@@ -6,7 +6,7 @@ use crate::organisms::{Composition, OrganismBundle};
 
 use bevy::prelude::*;
 
-use self::{fungi::FungiPlugin, plants::PlantsPlugin};
+use self::{crafting::CraftingPlugin, fungi::FungiPlugin, plants::PlantsPlugin};
 
 mod crafting;
 pub mod fungi;
@@ -55,6 +55,7 @@ impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(PlantsPlugin)
             .add_plugin(FungiPlugin)
+            .add_plugin(CraftingPlugin)
             .add_system(upkeep)
             .add_system(cleanup);
     }

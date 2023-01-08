@@ -91,3 +91,13 @@ fn start_and_finish_crafting(
         }
     }
 }
+
+/// Add crafting capabilities to structures.
+pub struct CraftingPlugin;
+
+impl Plugin for CraftingPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(progress_crafting)
+            .add_system(start_and_finish_crafting.after(progress_crafting));
+    }
+}
