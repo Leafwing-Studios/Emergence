@@ -192,7 +192,7 @@ pub fn generate_organisms(
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    commands.spawn_batch(plant_positions.into_iter().map(PlantBundle::new));
+    commands.spawn_batch(plant_positions.into_iter().map(PlantBundle::acacia));
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);

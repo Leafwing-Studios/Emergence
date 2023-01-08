@@ -19,11 +19,11 @@ enum CraftingState {
 
 /// The input inventory for a structure.
 #[derive(Debug, Component)]
-pub struct Input(Inventory);
+pub struct InputInventory(Inventory);
 
 /// The output inventory for a structure.
 #[derive(Debug, Component)]
-pub struct Output(Inventory);
+pub struct OutputInventory(Inventory);
 
 /// The recipe that is currently being crafted.
 #[derive(Debug, Component)]
@@ -36,6 +36,39 @@ pub struct CraftTimer(Timer);
 /// The current state in the crafting progress.
 #[derive(Debug, Component)]
 pub struct CurCraftState(CraftingState);
+
+/// All components needed to craft stuff.
+#[derive(Debug, Bundle)]
+pub struct CraftingBundle {
+    /// The input inventory for the items needed for crafting.
+    input_inventory: InputInventory,
+
+    /// The output inventory for the crafted items.
+    output_inventory: OutputInventory,
+
+    /// The recipe that is currently being crafted.
+    active_recipe: ActiveRecipe,
+
+    /// The "cooldown" for crafting.
+    craft_timer: CraftTimer,
+
+    /// The current state for the crafting process.
+    craft_state: CurCraftState,
+}
+
+impl CraftingBundle {
+    /// Create a new crafting bundle for the given recipe.
+    pub fn new(recipe: Recipe) -> Self {
+        Self {
+            // TODO: Don't hard-code these values
+            input_inventory: InputInventory(Inventory::new(0, 0)),
+            output_inventory: OutputInventory(Inventory::new(1, 10)),
+            craft_timer: CraftTimer(Timer::new(*recipe.craft_time(), TimerMode::Once)),
+            active_recipe: ActiveRecipe(recipe),
+            craft_state: CurCraftState(CraftingState::WaitingForInput),
+        }
+    }
+}
 
 /// Make progress of all recipes that are being crafted.
 fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut CurCraftState)>) {
@@ -55,8 +88,8 @@ fn start_and_finish_crafting(
     mut query: Query<(
         &ActiveRecipe,
         &mut CraftTimer,
-        &mut Input,
-        &mut Output,
+        &mut InputInventory,
+        &mut OutputInventory,
         &mut CurCraftState,
     )>,
 ) {
@@ -71,6 +104,7 @@ fn start_and_finish_crafting(
                 .add_all_or_nothing_many_items(recipe.outputs())
                 .is_ok()
         {
+            info!("Crafted items: {:?}", recipe.outputs());
             // The next item can be crafted
             craft_state.0 = CraftingState::WaitingForInput;
         }

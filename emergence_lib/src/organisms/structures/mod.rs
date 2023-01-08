@@ -8,7 +8,7 @@ use bevy::prelude::*;
 
 use self::{crafting::CraftingPlugin, fungi::FungiPlugin, plants::PlantsPlugin};
 
-mod crafting;
+pub mod crafting;
 pub mod fungi;
 pub mod plants;
 
@@ -17,6 +17,7 @@ pub mod plants;
 pub struct StructureBundle {
     /// Data characterizing structures
     structure: Structure,
+
     /// Structures are organisms (for now)
     organism_bundle: OrganismBundle,
 }

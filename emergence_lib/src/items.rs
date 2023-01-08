@@ -2,9 +2,18 @@
 
 use std::time::Duration;
 
+use bevy::prelude::*;
+
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemId(&'static str);
+
+impl ItemId {
+    /// The item ID of an Acacia leaf.
+    pub fn acacia_leaf() -> Self {
+        Self("acacia_leaf")
+    }
+}
 
 /// Failed to add items to an inventory.
 #[derive(Debug)]
@@ -351,6 +360,8 @@ impl Inventory {
             })
             .collect();
 
+        debug!("Excess counts: {excess_counts:?}");
+
         if excess_counts.is_empty() {
             item_counts
                 .iter()
@@ -480,6 +491,13 @@ pub struct ItemCount {
     count: usize,
 }
 
+impl ItemCount {
+    /// A single one of the given item.
+    pub fn one(item_id: ItemId) -> Self {
+        Self { item_id, count: 1 }
+    }
+}
+
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
 pub struct Recipe {
@@ -494,6 +512,15 @@ pub struct Recipe {
 }
 
 impl Recipe {
+    /// Create a new recipe with the given inputs, outputs and craft time.
+    pub fn new(inputs: Vec<ItemCount>, outputs: Vec<ItemCount>, craft_time: Duration) -> Self {
+        Self {
+            inputs,
+            outputs,
+            craft_time,
+        }
+    }
+
     /// The inputs needed to craft the recipe.
     pub fn inputs(&self) -> &Vec<ItemCount> {
         &self.inputs
