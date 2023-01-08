@@ -11,8 +11,15 @@ pub struct AddItemsError {
     pub excess_count: usize,
 }
 
-/// Multiple items of the same type.
+/// Failed to remove items from an item slot.
 #[derive(Debug)]
+pub struct RemoveItemsError {
+    /// The number of items that were missing from the slot.
+    pub excess_count: usize,
+}
+
+/// Multiple items of the same type.
+#[derive(Debug, Clone)]
 pub struct ItemSlot {
     /// The unique identifier of the item that occupies the slot.
     item_id: ItemId,
@@ -85,7 +92,7 @@ impl ItemSlot {
         }
     }
 
-    /// Try add the given count of items to the inventory, together.
+    /// Try to add the given count of items to the inventory, together.
     ///
     /// - If the items can fit in the slot, they are all added and `Ok` is returned.
     /// - If at least one of the items does not fit, _no_ items are added and `Err` is returned.
@@ -99,10 +106,41 @@ impl ItemSlot {
             Ok(())
         }
     }
+
+    /// Try to remove as many items from the slot as possible, up to the given count.
+    ///
+    /// - If the slot has enough items, they are all removed and `Ok` is returned.
+    /// - Otherwise, all items that are included are removed and `Err` is returned.
+    pub fn remove_until_empty(&mut self, count: usize) -> Result<(), RemoveItemsError> {
+        if count > self.count {
+            let excess_count = count - self.count;
+            self.count = 0;
+
+            Err(RemoveItemsError { excess_count })
+        } else {
+            self.count -= count;
+            Ok(())
+        }
+    }
+
+    /// Try to remove the given count of items from the inventory, together.
+    ///
+    /// - If there are enough items in the slot, they are all removed and `Ok` is returned.
+    /// - If there are not enough items, _no_ item is removed and `Err` is returned.
+    pub fn remove_all_or_nothing(&mut self, count: usize) -> Result<(), RemoveItemsError> {
+        if count > self.count {
+            Err(RemoveItemsError {
+                excess_count: count - self.count,
+            })
+        } else {
+            self.count -= count;
+            Ok(())
+        }
+    }
 }
 
 /// An inventory to store multiple types of items.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Inventory {
     /// The item slots that are currently active.
     ///
@@ -129,10 +167,9 @@ impl Inventory {
         }
     }
 
-    /// Determine if the inventory holds enough of the given item.
-    pub fn has_count_of_item(&self, item_id: &ItemId, count: usize) -> bool {
-        let total_count: usize = self
-            .slots
+    /// Determine how many items of the given type are in the inventory.
+    pub fn item_count(&self, item_id: &ItemId) -> usize {
+        self.slots
             .iter()
             .filter_map(|slot| {
                 if slot.item_id() == item_id {
@@ -141,9 +178,12 @@ impl Inventory {
                     None
                 }
             })
-            .sum();
+            .sum()
+    }
 
-        total_count >= count
+    /// Determine if the inventory holds enough of the given item.
+    pub fn has_count_of_item(&self, item_id: &ItemId, count: usize) -> bool {
+        self.item_count(item_id) >= count
     }
 
     /// Returns `true` if there are no items in the inventory.
@@ -246,6 +286,78 @@ impl Inventory {
             // If this unwrap panics the remaining space calculation must be wrong
             self.add_until_full(item_id, count).unwrap();
 
+            Ok(())
+        }
+    }
+
+    /// Try to remove as many items from the inventory as possible, up to the given count.
+    ///
+    /// - If the slot has enough items, they are all removed and `Ok` is returned.
+    /// - Otherwise, all items that are included are removed and `Err` is returned.
+    pub fn remove_until_empty(
+        &mut self,
+        item_id: &ItemId,
+        count: usize,
+    ) -> Result<(), RemoveItemsError> {
+        let mut items_to_remove = count;
+        let mut has_to_clear_slots = false;
+
+        for slot in self
+            .slots
+            .iter_mut()
+            .filter(|slot| slot.item_id() == item_id)
+            .rev()
+        {
+            match slot.remove_until_empty(items_to_remove) {
+                Ok(_) => {
+                    items_to_remove = 0;
+                    break;
+                }
+                Err(RemoveItemsError { excess_count }) => {
+                    items_to_remove = excess_count;
+                    has_to_clear_slots = true;
+                }
+            }
+        }
+
+        // If a slot now has 0 items remove it
+        // This makes space for other item types
+        if has_to_clear_slots {
+            self.slots = self
+                .slots
+                .iter()
+                .cloned()
+                .filter(|slot| !slot.is_empty())
+                .collect();
+        }
+
+        if items_to_remove > 0 {
+            Err(RemoveItemsError {
+                excess_count: items_to_remove,
+            })
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Try to remove the given count of items from the inventory, together.
+    ///
+    /// - If there are enough items in the slot, they are all removed and `Ok` is returned.
+    /// - If there are not enough items, _no_ item is removed and `Err` is returned.
+    pub fn remove_all_or_nothing(
+        &mut self,
+        item_id: &ItemId,
+        count: usize,
+    ) -> Result<(), RemoveItemsError> {
+        let item_count = self.item_count(item_id);
+
+        if item_count < count {
+            Err(RemoveItemsError {
+                excess_count: count - item_count,
+            })
+        } else {
+            // If this unwrap panics the removal or the item counting must be wrong
+            self.remove_until_empty(item_id, count).unwrap();
             Ok(())
         }
     }
