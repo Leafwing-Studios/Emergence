@@ -113,7 +113,7 @@ fn start_and_finish_crafting(
         if craft_state.0 == CraftingState::WaitingForInput
             && input
                 .0
-                .remove_all_or_nothing_all_items(recipe.inputs())
+                .remove_all_or_nothing_many_items(recipe.inputs())
                 .is_ok()
         {
             // Set the timer to the recipe time

@@ -444,7 +444,7 @@ impl Inventory {
     ///
     /// - If there are not enough items from any item type, `Err` is returned and _no_ items are removed.
     /// - If there are enough items, they are all removed and `Ok` is returned.
-    pub fn remove_all_or_nothing_all_items(
+    pub fn remove_all_or_nothing_many_items(
         &mut self,
         item_counts: &[ItemCount],
     ) -> Result<(), RemoveManyItemsError> {
