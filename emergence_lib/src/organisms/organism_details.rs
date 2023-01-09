@@ -12,7 +12,9 @@ use crate::{
 
 use super::{
     structures::{
-        crafting::{ActiveRecipe, InputInventory, OutputInventory},
+        crafting::{
+            ActiveRecipe, CraftTimer, CraftingState, CurCraftState, InputInventory, OutputInventory,
+        },
         fungi::Fungi,
         plants::Plant,
     },
@@ -57,6 +59,12 @@ pub struct CraftingDetails {
 
     /// The recipe that's currently being crafted.
     pub active_recipe: Recipe,
+
+    /// The state of the ongoing crafting process.
+    pub state: CraftingState,
+
+    /// The time remaining to finish crafting.
+    pub timer: Timer,
 }
 
 /// Detailed info about a given entity.
@@ -99,7 +107,13 @@ fn hover_details(
         Option<&Plant>,
         Option<&Fungi>,
         Option<&Ant>,
-        Option<(&InputInventory, &OutputInventory, &ActiveRecipe)>,
+        Option<(
+            &InputInventory,
+            &OutputInventory,
+            &ActiveRecipe,
+            &CurCraftState,
+            &CraftTimer,
+        )>,
     )>,
 ) {
     if let Some(cursor_pos) = cursor_pos.0 {
@@ -118,15 +132,18 @@ fn hover_details(
                     None
                 };
 
-                let crafting_details = if let Some((input, output, recipe)) = crafting_stuff {
-                    Some(CraftingDetails {
-                        input_inventory: input.0.clone(),
-                        output_inventory: output.0.clone(),
-                        active_recipe: recipe.0.clone(),
-                    })
-                } else {
-                    None
-                };
+                let crafting_details =
+                    if let Some((input, output, recipe, state, timer)) = crafting_stuff {
+                        Some(CraftingDetails {
+                            input_inventory: input.0.clone(),
+                            output_inventory: output.0.clone(),
+                            active_recipe: recipe.0.clone(),
+                            state: state.0.clone(),
+                            timer: timer.0.clone(),
+                        })
+                    } else {
+                        None
+                    };
 
                 if let Some(organism_type) = organism_type {
                     hover_details.0 = Some(OrganismDetails {

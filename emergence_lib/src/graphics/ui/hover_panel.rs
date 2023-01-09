@@ -1,7 +1,10 @@
 //! Create and update a panel to display info about the hovered tile.
 use bevy::prelude::*;
 
-use crate::{cursor::CursorTilePos, organisms::organism_details::HoverDetails};
+use crate::{
+    cursor::CursorTilePos,
+    organisms::{organism_details::HoverDetails, structures::crafting::CraftingState},
+};
 
 use super::RightPanel;
 
@@ -88,6 +91,8 @@ pub fn setup_hover_panel(
                         TextSection::from_style(value_text_style.clone()),
                         TextSection::new("\nActive recipe: ", key_text_style.clone()),
                         TextSection::from_style(value_text_style.clone()),
+                        TextSection::new("\nStatus: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
                     ]),
                     visibility: Visibility::INVISIBLE,
                     ..default()
@@ -144,11 +149,19 @@ pub fn update_hover_panel(
             // Update crafting text
             if let Some(crafting_details) = &organism_details.crafting_details {
                 let (mut text, mut visibility) = crafting_query.single_mut();
-
                 *visibility = Visibility::VISIBLE;
+
+                // Update all text entries for crafting
                 text.sections[1].value = format!("{}", crafting_details.input_inventory);
                 text.sections[3].value = format!("{}", crafting_details.output_inventory);
                 text.sections[5].value = format!("{}", crafting_details.active_recipe);
+                text.sections[7].value = match crafting_details.state {
+                    CraftingState::WaitingForInput => "Waiting for input".to_string(),
+                    CraftingState::InProgress => {
+                        format!("{:.2}s", crafting_details.timer.remaining_secs())
+                    }
+                    CraftingState::Finished => "Waiting for space in output".to_string(),
+                };
             } else {
                 let (_, mut visibility) = crafting_query.single_mut();
 
