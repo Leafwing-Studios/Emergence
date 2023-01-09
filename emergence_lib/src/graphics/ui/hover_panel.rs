@@ -14,18 +14,29 @@ pub struct HoverPanel;
 pub struct PositionText;
 
 /// Create the hover panel in the UI.
-pub fn setup_hover_panel(mut commands: Commands, query: Query<Entity, With<RightPanel>>) {
+pub fn setup_hover_panel(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    query: Query<Entity, With<RightPanel>>,
+) {
+    let text_style = TextStyle {
+        color: Color::WHITE,
+        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        font_size: 20.,
+    };
+
     let right_panel = query.single();
 
     let hover_panel = commands
         .spawn((
             NodeBundle {
                 style: Style {
+                    size: Size::new(Val::Percent(100.), Val::Px(200.)),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(10.)),
                     ..default()
                 },
-                background_color: Color::rgba(0., 0., 0., 0.7).into(),
+                background_color: Color::rgba(0., 0., 0., 0.8).into(),
                 visibility: Visibility::INVISIBLE,
                 ..default()
             },
@@ -34,8 +45,8 @@ pub fn setup_hover_panel(mut commands: Commands, query: Query<Entity, With<Right
         .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_sections([
-                    TextSection::new("Position: ", TextStyle::default()),
-                    TextSection::from_style(TextStyle::default()),
+                    TextSection::new("Position: ", text_style.clone()),
+                    TextSection::from_style(text_style.clone()),
                 ]),
                 PositionText,
             ));
