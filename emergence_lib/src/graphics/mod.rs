@@ -54,6 +54,7 @@ pub enum GraphicsStage {
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
+            .add_plugin(ui::UiPlugin)
             .register_component_as::<dyn IntoSprite, Ant>()
             .register_component_as::<dyn IntoSprite, Fungi>()
             .register_component_as::<dyn IntoSprite, Plant>()
