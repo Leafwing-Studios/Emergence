@@ -504,7 +504,7 @@ impl Display for Inventory {
             .chain((0..self.free_slot_count()).map(|_| "_".to_string()))
             .collect();
 
-        write!(f, "{}", slot_strings.join(", "))
+        write!(f, "[{}]", slot_strings.join(", "))
     }
 }
 
@@ -574,25 +574,17 @@ impl Display for Recipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let input_strings: Vec<String> =
             self.inputs.iter().map(|input| format!("{input}")).collect();
-        let input_str = if !input_strings.is_empty() {
-            input_strings.join(", ")
-        } else {
-            "_".to_string()
-        };
+        let input_str = input_strings.join(", ");
 
         let output_strings: Vec<String> = self
             .outputs
             .iter()
             .map(|output| format!("{output}"))
             .collect();
-        let output_str = if !output_strings.is_empty() {
-            output_strings.join(", ")
-        } else {
-            "_".to_string()
-        };
+        let output_str = output_strings.join(", ");
 
         let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
 
-        write!(f, "{input_str} -> {output_str} [{duration_str}]")
+        write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
     }
 }
