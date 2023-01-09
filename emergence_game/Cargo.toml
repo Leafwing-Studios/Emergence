@@ -1,6 +1,10 @@
 [package]
 name = "emergence_game"
 version = "0.1.0"
+# MIT OR Apache-2.0 for source code
+# CC0-1.0 for assets
+# OFL-1.1 for fonts
+license = "(MIT OR Apache-2.0) AND CC0-1.0 AND OFL-1.1"
 authors = ["Alice Cecile <alice.i.cecile@gmail.com>"]
 edition = "2021"
 
@@ -8,4 +12,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9"
-emergence_lib = { path = "../emergence_lib" }
+emergence_lib = { path = "../emergence_lib", version = "0.1.0" }
