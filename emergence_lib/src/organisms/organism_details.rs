@@ -5,10 +5,17 @@ use bevy_ecs_tilemap::tiles::TilePos;
 
 use std::fmt::Display;
 
-use crate::cursor::CursorTilePos;
+use crate::{
+    cursor::CursorTilePos,
+    items::{Inventory, Recipe},
+};
 
 use super::{
-    structures::{fungi::Fungi, plants::Plant},
+    structures::{
+        crafting::{ActiveRecipe, InputInventory, OutputInventory},
+        fungi::Fungi,
+        plants::Plant,
+    },
     units::Ant,
 };
 
@@ -39,14 +46,30 @@ impl Display for OrganismType {
     }
 }
 
+/// The details about crafting processes.
+#[derive(Debug, Clone)]
+pub struct CraftingDetails {
+    /// The inventory for the input items.
+    pub input_inventory: Inventory,
+
+    /// The inventory for the output items.
+    pub output_inventory: Inventory,
+
+    /// The recipe that's currently being crafted.
+    pub active_recipe: Recipe,
+}
+
 /// Detailed info about a given entity.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct OrganismDetails {
     /// The entity ID of the organism that this info is about.
     pub entity: Entity,
 
     /// The type of the organism, e.g. plant or fungus.
     pub organism_type: OrganismType,
+
+    /// If this organism is crafting something, the details about that.
+    pub crafting_details: Option<CraftingDetails>,
 }
 
 /// Detailed info about the organism that is being hovered.
@@ -76,12 +99,13 @@ fn hover_details(
         Option<&Plant>,
         Option<&Fungi>,
         Option<&Ant>,
+        Option<(&InputInventory, &OutputInventory, &ActiveRecipe)>,
     )>,
 ) {
     if let Some(cursor_pos) = cursor_pos.0 {
         hover_details.0 = None;
 
-        for (entity, tile_pos, plant, fungi, ant) in query.iter() {
+        for (entity, tile_pos, plant, fungi, ant, crafting_stuff) in query.iter() {
             if *tile_pos == cursor_pos {
                 // Determine the organism type via the marker components
                 let organism_type = if plant.is_some() {
@@ -94,10 +118,21 @@ fn hover_details(
                     None
                 };
 
+                let crafting_details = if let Some((input, output, recipe)) = crafting_stuff {
+                    Some(CraftingDetails {
+                        input_inventory: input.0.clone(),
+                        output_inventory: output.0.clone(),
+                        active_recipe: recipe.0.clone(),
+                    })
+                } else {
+                    None
+                };
+
                 if let Some(organism_type) = organism_type {
                     hover_details.0 = Some(OrganismDetails {
                         entity,
                         organism_type,
+                        crafting_details,
                     });
                 }
             }

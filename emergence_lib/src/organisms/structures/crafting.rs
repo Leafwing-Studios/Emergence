@@ -6,7 +6,7 @@ use crate::items::{Inventory, Recipe};
 
 /// The current state in the crafting progress.
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum CraftingState {
+pub enum CraftingState {
     /// There are resources missing for the recipe.
     WaitingForInput,
 
@@ -19,23 +19,23 @@ enum CraftingState {
 
 /// The input inventory for a structure.
 #[derive(Debug, Component)]
-pub struct InputInventory(Inventory);
+pub struct InputInventory(pub Inventory);
 
 /// The output inventory for a structure.
 #[derive(Debug, Component)]
-pub struct OutputInventory(Inventory);
+pub struct OutputInventory(pub Inventory);
 
 /// The recipe that is currently being crafted.
 #[derive(Debug, Component)]
-pub struct ActiveRecipe(Recipe);
+pub struct ActiveRecipe(pub Recipe);
 
 /// The time remaining until the recipe has been crafted.
 #[derive(Debug, Component)]
-pub struct CraftTimer(Timer);
+pub struct CraftTimer(pub Timer);
 
 /// The current state in the crafting progress.
 #[derive(Debug, Component)]
-pub struct CurCraftState(CraftingState);
+pub struct CurCraftState(pub CraftingState);
 
 /// All components needed to craft stuff.
 #[derive(Debug, Bundle)]

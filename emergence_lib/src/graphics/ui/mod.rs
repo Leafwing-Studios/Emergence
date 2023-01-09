@@ -81,7 +81,7 @@ fn setup_ui(mut commands: Commands) {
                 NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
-                        size: Size::new(Val::Px(200.), Val::Percent(100.)),
+                        size: Size::new(Val::Px(400.), Val::Percent(100.)),
                         ..default()
                     },
                     ..default()
