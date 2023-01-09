@@ -248,7 +248,7 @@ impl Inventory {
 
     /// The number of slots that don't have an item in them.
     pub fn free_slot_count(&self) -> usize {
-        self.max_items_per_slot - self.slots.len()
+        self.max_slot_count - self.slots.len()
     }
 
     /// The number of items of the given type that can still fit in the inventory.
@@ -300,7 +300,6 @@ impl Inventory {
             match new_slot.add_until_full(items_to_add) {
                 Ok(_) => {
                     items_to_add = 0;
-                    break;
                 }
                 Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count,
             }
