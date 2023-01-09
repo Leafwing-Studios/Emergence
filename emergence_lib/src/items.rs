@@ -1,6 +1,6 @@
 //! Everything related to items and crafting.
 
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,6 +10,12 @@ impl ItemId {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
         Self("acacia_leaf")
+    }
+}
+
+impl Display for ItemId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -170,6 +176,16 @@ impl ItemSlot {
             self.count -= count;
             Ok(())
         }
+    }
+}
+
+impl Display for ItemSlot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} ({}/{})",
+            self.item_id, self.count, self.max_item_count
+        )
     }
 }
 
@@ -477,6 +493,21 @@ impl Inventory {
     }
 }
 
+impl Display for Inventory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let slot_strings: Vec<String> = self
+            // Filled slots
+            .slots
+            .iter()
+            .map(|slot| format!("{slot}"))
+            // Empty slots
+            .chain((0..self.free_slot_count()).map(|_| "_".to_string()))
+            .collect();
+
+        write!(f, "{}", slot_strings.join(", "))
+    }
+}
+
 /// A specific amount of a given item.
 #[derive(Debug, Clone)]
 pub struct ItemCount {
@@ -491,6 +522,12 @@ impl ItemCount {
     /// A single one of the given item.
     pub fn one(item_id: ItemId) -> Self {
         Self { item_id, count: 1 }
+    }
+}
+
+impl Display for ItemCount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({})", self.item_id, self.count)
     }
 }
 
@@ -530,5 +567,32 @@ impl Recipe {
     /// The time needed to craft the recipe.
     pub fn craft_time(&self) -> &Duration {
         &self.craft_time
+    }
+}
+
+impl Display for Recipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let input_strings: Vec<String> =
+            self.inputs.iter().map(|input| format!("{input}")).collect();
+        let input_str = if !input_strings.is_empty() {
+            input_strings.join(", ")
+        } else {
+            "_".to_string()
+        };
+
+        let output_strings: Vec<String> = self
+            .outputs
+            .iter()
+            .map(|output| format!("{output}"))
+            .collect();
+        let output_str = if !output_strings.is_empty() {
+            output_strings.join(", ")
+        } else {
+            "_".to_string()
+        };
+
+        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
+
+        write!(f, "{input_str} -> {output_str} [{duration_str}]")
     }
 }
