@@ -54,7 +54,7 @@ impl Default for CursorWorldPos {
 
 /// The tile position of the mouse cursor, if it lies over the map.
 #[derive(Resource, Default, Clone, Copy, Deref, DerefMut)]
-pub struct CursorTilePos(Option<TilePos>);
+pub struct CursorTilePos(pub Option<TilePos>);
 
 /// Convert a world position into a tile position, if applicable.
 pub fn tile_pos_from_world_pos(

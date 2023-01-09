@@ -2,6 +2,7 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
+pub mod organism_details;
 pub mod structures;
 pub mod units;
 
