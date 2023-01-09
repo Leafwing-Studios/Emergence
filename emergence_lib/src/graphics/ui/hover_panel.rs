@@ -158,7 +158,7 @@ pub fn update_hover_panel(
                 text.sections[7].value = match crafting_details.state {
                     CraftingState::WaitingForInput => "Waiting for input".to_string(),
                     CraftingState::InProgress => {
-                        format!("{:.2}s", crafting_details.timer.remaining_secs())
+                        format!("Crafting ({:.2}s)", crafting_details.timer.remaining_secs())
                     }
                     CraftingState::Finished => "Waiting for space in output".to_string(),
                 };
