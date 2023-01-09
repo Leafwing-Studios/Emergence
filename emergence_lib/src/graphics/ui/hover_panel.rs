@@ -31,8 +31,8 @@ pub fn setup_hover_panel(
     query: Query<Entity, With<RightPanel>>,
 ) {
     let key_text_style = TextStyle {
-        color: Color::WHITE,
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        color: Color::rgb(0.9, 0.9, 0.9),
+        font: asset_server.load("fonts/FiraSans-Medium.ttf"),
         font_size: 20.,
     };
     let value_text_style = TextStyle {
@@ -52,7 +52,7 @@ pub fn setup_hover_panel(
                     padding: UiRect::all(Val::Px(10.)),
                     ..default()
                 },
-                background_color: Color::rgba(0., 0., 0., 0.8).into(),
+                background_color: Color::rgba(0., 0., 0., 0.9).into(),
                 visibility: Visibility::INVISIBLE,
                 ..default()
             },
