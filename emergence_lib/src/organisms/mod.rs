@@ -2,6 +2,8 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
+use self::{structures::StructuresPlugin, units::UnitsPlugin};
+
 pub mod organism_details;
 pub mod structures;
 pub mod units;
@@ -18,4 +20,14 @@ pub struct Composition {
 pub struct OrganismBundle {
     /// Defines the elements making up this organism.
     pub composition: Composition,
+}
+
+/// Functionality related to organisms.
+#[derive(Debug)]
+pub struct OrganismPlugin;
+
+impl Plugin for OrganismPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(StructuresPlugin).add_plugin(UnitsPlugin);
+    }
 }
