@@ -2,7 +2,7 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
-use self::{structures::StructuresPlugin, units::UnitsPlugin};
+use self::{organism_details::DetailsPlugin, structures::StructuresPlugin, units::UnitsPlugin};
 
 pub mod organism_details;
 pub mod structures;
@@ -28,6 +28,8 @@ pub struct OrganismPlugin;
 
 impl Plugin for OrganismPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(StructuresPlugin).add_plugin(UnitsPlugin);
+        app.add_plugin(StructuresPlugin)
+            .add_plugin(UnitsPlugin)
+            .add_plugin(DetailsPlugin);
     }
 }

@@ -58,30 +58,37 @@ pub struct DetailsPlugin;
 
 impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: This should be done after the cursor system
+        info!("Building DetailsPlugin...");
+
         app.init_resource::<HoverDetails>()
+            // TODO: This should be done after the cursor system
             .add_system(hover_details);
     }
 }
 
 /// Get details about the hovered entity.
 fn hover_details(
-    world: &World,
     cursor_pos: Res<CursorTilePos>,
     mut hover_details: ResMut<HoverDetails>,
-    query: Query<(Entity, &TilePos)>,
+    query: Query<(
+        Entity,
+        &TilePos,
+        Option<&Plant>,
+        Option<&Fungi>,
+        Option<&Ant>,
+    )>,
 ) {
     if let Some(cursor_pos) = cursor_pos.0 {
         hover_details.0 = None;
 
-        for (entity, tile_pos) in query.iter() {
+        for (entity, tile_pos, plant, fungi, ant) in query.iter() {
             if *tile_pos == cursor_pos {
                 // Determine the organism type via the marker components
-                let organism_type = if world.get::<Plant>(entity).is_some() {
+                let organism_type = if plant.is_some() {
                     Some(OrganismType::Plant)
-                } else if world.get::<Fungi>(entity).is_some() {
+                } else if fungi.is_some() {
                     Some(OrganismType::Fungus)
-                } else if world.get::<Ant>(entity).is_some() {
+                } else if ant.is_some() {
                     Some(OrganismType::Ant)
                 } else {
                     None
