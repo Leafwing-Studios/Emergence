@@ -1,7 +1,7 @@
 //! Create and update a panel to display info about the hovered tile.
 use bevy::prelude::*;
 
-use crate::cursor::CursorTilePos;
+use crate::{cursor::CursorTilePos, organisms::organism_details::HoverDetails};
 
 use super::RightPanel;
 
@@ -13,13 +13,22 @@ pub struct HoverPanel;
 #[derive(Debug, Component)]
 pub struct PositionText;
 
+/// The text to display the type of organism on the tile.
+#[derive(Debug, Component)]
+pub struct OrganismText;
+
 /// Create the hover panel in the UI.
 pub fn setup_hover_panel(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     query: Query<Entity, With<RightPanel>>,
 ) {
-    let text_style = TextStyle {
+    let key_text_style = TextStyle {
+        color: Color::WHITE,
+        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        font_size: 20.,
+    };
+    let value_text_style = TextStyle {
         color: Color::WHITE,
         font: asset_server.load("fonts/FiraSans-Bold.ttf"),
         font_size: 20.,
@@ -43,12 +52,26 @@ pub fn setup_hover_panel(
             HoverPanel,
         ))
         .with_children(|parent| {
+            // Tile position
             parent.spawn((
                 TextBundle::from_sections([
-                    TextSection::new("Position: ", text_style.clone()),
-                    TextSection::from_style(text_style.clone()),
+                    TextSection::new("Position: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
                 ]),
                 PositionText,
+            ));
+
+            // Organism type
+            parent.spawn((
+                TextBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Organism: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                    ]),
+                    visibility: Visibility::INVISIBLE,
+                    ..default()
+                },
+                OrganismText,
             ));
         })
         .id();
@@ -59,8 +82,18 @@ pub fn setup_hover_panel(
 /// Update the information displayed in the hover panel.
 pub fn update_hover_panel(
     cursor_tile_pos: Res<CursorTilePos>,
+    hover_details: Res<HoverDetails>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
+    mut organism_query: Query<
+        (&mut Text, &mut Visibility),
+        (
+            With<OrganismText>,
+            // Avoid conflicting queries
+            Without<PositionText>,
+            Without<HoverPanel>,
+        ),
+    >,
 ) {
     if let Some(cursor_tile_pos) = cursor_tile_pos.0 {
         // Update visibility of the whole panel
@@ -69,6 +102,18 @@ pub fn update_hover_panel(
         // Update position text
         position_query.single_mut().sections[1].value =
             format!("{}, {}", cursor_tile_pos.x, cursor_tile_pos.y);
+
+        // Update organism text
+        if let Some(organism_details) = &hover_details.0 {
+            let (mut text, mut visibility) = organism_query.single_mut();
+
+            *visibility = Visibility::VISIBLE;
+            text.sections[1].value = format!("{}", organism_details.organism_type);
+        } else {
+            let (_, mut visibility) = organism_query.single_mut();
+
+            *visibility = Visibility::INVISIBLE;
+        }
     } else {
         *panel_query.single_mut() = Visibility::INVISIBLE;
     }

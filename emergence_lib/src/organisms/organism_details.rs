@@ -50,8 +50,8 @@ pub struct OrganismDetails {
 }
 
 /// Detailed info about the organism that is being hovered.
-#[derive(Debug, Resource)]
-pub struct HoverDetails(Option<OrganismDetails>);
+#[derive(Debug, Resource, Default)]
+pub struct HoverDetails(pub Option<OrganismDetails>);
 
 /// Display detailed info on hover.
 pub struct DetailsPlugin;
@@ -59,7 +59,8 @@ pub struct DetailsPlugin;
 impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
         // TODO: This should be done after the cursor system
-        app.add_system(hover_details);
+        app.init_resource::<HoverDetails>()
+            .add_system(hover_details);
     }
 }
 
