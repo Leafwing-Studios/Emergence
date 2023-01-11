@@ -9,7 +9,7 @@ See the chaper on [logistics](../logistics/index.md) for general discussion abou
 
 *Acacia* plants grow, producing *acacia leaves*.
 
-**Recipe:** 1 sunlight + 1 water + 1 soil nitrogen -> 1 acacia leaf. 10 second craft time.
+**Recipe:** sunlight + water + soil nitrogen -> acacia leaf
 
 Plants automatically produce this recipe.
 Produced items are placed in their output.
@@ -30,12 +30,24 @@ Each ant can only carry a fixed number of items at a time.
 
 Ants take the *acacia leaves*, and transport them to the *leuco* (see [this note](https://en.wikipedia.org/wiki/Atta_sexdens#Fungus_cultivation)) mushrooms.
 
-## Step Three Fungal Growth
+## Step Three: Soil Amendment
 
-Like with plants, fungi automatically grow based on the provided inputs.
+*Acacia leaves* are added to the inventory of the soil tile under the leuco mushrooms.
 
-**Recipe:** 1 leaf (any) -> 1 leuco mushroom. 5 second craft time
+## Step Four: Decomposition
 
-## Step Three: Harvesting and Consuming Fungi
+Items stored in the soil will decompose over time, but leuco mushrooms will cause stored items nearby to decompose faster.
 
-Leuco mushrooms are harvested by ants, and then consumed.
+## Step Five: Fungal Growth
+
+Like all [sessile organisms](../organisms/sessile-organisms.md), leuco mushrooms will gather resources.
+
+**Recipe:** soil organic matter -> mushroom chunk
+
+## Step Six: Harvesting Fungi
+
+Excess *mushroom chunk* are harvested by ants, taking it out of their output inventory.
+
+## Step Seven: Consuming Fungi
+
+Stored or carried *mushroom chunks* are consumed by ants when they are hungry.
