@@ -676,3 +676,9 @@ Each structure occupies one or more tiles, excluding any other structures from i
 
 An [organism](glossary.md#organism) that can move, plan and act.
 Complement to a [sessile organism](glossary.md#sessile-organism).
+
+### Work
+
+A task that must be completed by a [unit](glossary.md#unit), measured in seconds to complete.
+Tasks can be left partially complete, and can be picked up by other workers later.
+Work always occurs at a fixed location, usually a [structure](glossary.md#structure).
