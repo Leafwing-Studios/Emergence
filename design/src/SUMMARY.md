@@ -27,6 +27,7 @@
   - [End Products](./production-chains/end-products.md)
   - [Example Production Chain: Leafcutter Ant Cultivation](./production-chains/example-leafcutter.md)
 - [Organisms](./organisms/index.md)
+  - [Life Cycles](./organisms/life-cycles.md)
   - [Sessile Organisms](./organisms/sessile-organisms.md)
   - [Units](./organisms/units.md)
 - [Logistics](./logistics/index.md)
