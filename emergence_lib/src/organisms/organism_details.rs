@@ -81,8 +81,8 @@ pub struct OrganismDetails {
 }
 
 /// Detailed info about the organism that is being hovered.
-#[derive(Debug, Resource, Default)]
-pub struct HoverDetails(pub Option<OrganismDetails>);
+#[derive(Debug, Resource, Default, Deref)]
+pub struct HoverDetails(Option<OrganismDetails>);
 
 /// Display detailed info on hover.
 pub struct DetailsPlugin;
@@ -116,7 +116,7 @@ fn hover_details(
         )>,
     )>,
 ) {
-    if let Some(cursor_pos) = cursor_pos.0 {
+    if let Some(cursor_pos) = **cursor_pos {
         hover_details.0 = None;
 
         for (entity, tile_pos, plant, fungi, ant, crafting_stuff) in query.iter() {

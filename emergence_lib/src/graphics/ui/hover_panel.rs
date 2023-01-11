@@ -131,7 +131,7 @@ pub fn update_hover_panel(
         ),
     >,
 ) {
-    if let Some(cursor_tile_pos) = cursor_tile_pos.0 {
+    if let Some(cursor_tile_pos) = **cursor_tile_pos {
         // Update visibility of the whole panel
         *panel_query.single_mut() = Visibility::VISIBLE;
 
@@ -140,7 +140,7 @@ pub fn update_hover_panel(
             format!("{}, {}", cursor_tile_pos.x, cursor_tile_pos.y);
 
         // Update organism text
-        if let Some(organism_details) = &hover_details.0 {
+        if let Some(organism_details) = &**hover_details {
             let (mut text, mut visibility) = organism_query.single_mut();
 
             *visibility = Visibility::VISIBLE;
