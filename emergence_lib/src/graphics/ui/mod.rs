@@ -2,7 +2,7 @@
 //!
 use bevy::prelude::*;
 
-use self::hover_panel::{setup_hover_panel, update_hover_panel};
+use self::hover_panel::HoverPanelPlugin;
 
 mod hover_panel;
 mod intent;
@@ -19,6 +19,18 @@ pub enum UiStage {
     LayoutPopulation,
 }
 
+/// The font handles for the `FiraSans` font family.
+///
+/// This is cached in a resource to improve performance.
+#[derive(Debug, Resource)]
+struct FiraSansFontFamily {
+    /// The font to use for regular text.
+    regular: Handle<Font>,
+
+    /// The font to use for bold text.
+    bold: Handle<Font>,
+}
+
 /// Struct to build the UI plugin
 pub struct UiPlugin;
 
@@ -26,7 +38,13 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         info!("Building UI plugin...");
 
-        app.add_startup_stage_before(
+        let asset_server = app.world.get_resource::<AssetServer>().unwrap();
+
+        app.insert_resource(FiraSansFontFamily {
+            regular: asset_server.load("fonts/FiraSans-Medium.ttf"),
+            bold: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        })
+        .add_startup_stage_before(
             StartupStage::Startup,
             UiStage::LayoutInitialization,
             SystemStage::parallel(),
@@ -37,8 +55,7 @@ impl Plugin for UiPlugin {
             SystemStage::parallel(),
         )
         .add_startup_system_to_stage(UiStage::LayoutInitialization, setup_ui)
-        .add_startup_system_to_stage(UiStage::LayoutPopulation, setup_hover_panel)
-        .add_system(update_hover_panel);
+        .add_plugin(HoverPanelPlugin);
     }
 }
 

@@ -6,38 +6,38 @@ use crate::{
     organisms::{organism_details::HoverDetails, structures::crafting::CraftingState},
 };
 
-use super::RightPanel;
+use super::{FiraSansFontFamily, RightPanel, UiStage};
 
 /// The panel to display information on hover.
 #[derive(Debug, Component)]
-pub struct HoverPanel;
+struct HoverPanel;
 
 /// The text to display the position of the tile.
 #[derive(Debug, Component)]
-pub struct PositionText;
+struct PositionText;
 
 /// The text to display the type of organism on the tile.
 #[derive(Debug, Component)]
-pub struct OrganismText;
+struct OrganismText;
 
 /// The text for all details regarding crafting.
 #[derive(Debug, Component)]
-pub struct CraftingText;
+struct CraftingText;
 
 /// Create the hover panel in the UI.
-pub fn setup_hover_panel(
+fn setup_hover_panel(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    font_family: Res<FiraSansFontFamily>,
     query: Query<Entity, With<RightPanel>>,
 ) {
     let key_text_style = TextStyle {
         color: Color::rgb(0.9, 0.9, 0.9),
-        font: asset_server.load("fonts/FiraSans-Medium.ttf"),
+        font: font_family.regular.clone_weak(),
         font_size: 20.,
     };
     let value_text_style = TextStyle {
         color: Color::WHITE,
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        font: font_family.bold.clone_weak(),
         font_size: 20.,
     };
 
@@ -106,7 +106,7 @@ pub fn setup_hover_panel(
 }
 
 /// Update the information displayed in the hover panel.
-pub fn update_hover_panel(
+fn update_hover_panel(
     cursor_tile_pos: Res<CursorTilePos>,
     hover_details: Res<HoverDetails>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
@@ -176,5 +176,16 @@ pub fn update_hover_panel(
         }
     } else {
         *panel_query.single_mut() = Visibility::INVISIBLE;
+    }
+}
+
+/// Functionality for the info panel on hover.
+#[derive(Debug)]
+pub struct HoverPanelPlugin;
+
+impl Plugin for HoverPanelPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system_to_stage(UiStage::LayoutPopulation, setup_hover_panel)
+            .add_system(update_hover_panel);
     }
 }
