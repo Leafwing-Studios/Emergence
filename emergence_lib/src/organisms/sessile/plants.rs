@@ -8,10 +8,10 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::{ItemCount, ItemId, Recipe},
-    organisms::{Composition, OrganismBundle},
+    organisms::OrganismBundle,
 };
 
-use crate::structures::{crafting::CraftingBundle, Structure, StructureBundle};
+use crate::structures::{crafting::CraftingBundle, StructureBundle};
 
 /// The unique identifier of a plant.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,21 +29,12 @@ impl PlantId {
 pub struct Plant {
     /// The unique identifier of this plant.
     id: PlantId,
-
-    /// Rate at which plants re-generate mass through photosynthesis.
-    photosynthesis_rate: f32,
 }
 
 impl Plant {
-    /// The base rate of photosynthesis
-    const PHOTOSYNTHESIS_RATE: f32 = 100.;
-
     /// Create a new plant with the given ID.
     pub fn new(id: PlantId) -> Self {
-        Self {
-            id,
-            photosynthesis_rate: Plant::PHOTOSYNTHESIS_RATE,
-        }
+        Self { id }
     }
 
     /// The unique identifier of this plant.
@@ -87,11 +78,7 @@ impl PlantBundle {
         Self {
             plant: Plant::new(id),
             structure_bundle: StructureBundle::default(),
-            organism_bundle: OrganismBundle {
-                composition: Composition {
-                    mass: Structure::STARTING_MASS,
-                },
-            },
+            organism_bundle: OrganismBundle::default(),
             crafting_bundle: CraftingBundle::new(crafting_recipe),
             position,
         }
@@ -111,23 +98,9 @@ impl PlantBundle {
     }
 }
 
-/// Plants capture energy from the sun
-///
-/// Photosynthesis scales in proportion to the surface area of plants,
-/// and as a result has an allometric scaling ratio of 2.
-///
-/// A plant's size (in one dimension) is considered to be proportional to the cube root of its mass.
-pub fn photosynthesize(time: Res<Time>, mut query: Query<(&Plant, &mut Composition)>) {
-    for (plant, mut comp) in query.iter_mut() {
-        comp.mass += plant.photosynthesis_rate * time.delta_seconds() * comp.mass.powf(2.0 / 3.0);
-    }
-}
-
 /// Plugin to handle plant-specific game logic and simulation.
 pub struct PlantsPlugin;
 
 impl Plugin for PlantsPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(photosynthesize);
-    }
+    fn build(&self, _app: &mut App) {}
 }
