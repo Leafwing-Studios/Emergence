@@ -8,10 +8,10 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::{ItemCount, ItemId, Recipe},
-    organisms::{Composition, OrganismBundle},
+    organisms::OrganismBundle,
 };
 
-use crate::structures::{crafting::CraftingBundle, Structure, StructureBundle};
+use crate::structures::{crafting::CraftingBundle, StructureBundle};
 
 /// The unique identifier of a plant.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -87,11 +87,7 @@ impl PlantBundle {
         Self {
             plant: Plant::new(id),
             structure_bundle: StructureBundle::default(),
-            organism_bundle: OrganismBundle {
-                composition: Composition {
-                    mass: Structure::STARTING_MASS,
-                },
-            },
+            organism_bundle: OrganismBundle::default(),
             crafting_bundle: CraftingBundle::new(crafting_recipe),
             position,
         }

@@ -10,19 +10,16 @@ use self::{
 pub mod sessile;
 pub mod units;
 
-/// The mass of each element that makes up the entity
-#[derive(Component, Clone, Default)]
-pub struct Composition {
-    /// Mass is represented with an `f32`.
-    pub mass: f32,
-}
-
-/// An organism is a living component of the game ecosystem.
+/// All of the compone
 #[derive(Bundle, Default)]
 pub struct OrganismBundle {
-    /// Defines the elements making up this organism.
-    pub composition: Composition,
+    /// The marker component for orgamisms
+    pub organism: Organism,
 }
+
+/// A living part of the game ecosystem.
+#[derive(Component, Default)]
+pub struct Organism;
 
 /// Controls the behavior of living organisms
 pub struct OrganismPlugin;
