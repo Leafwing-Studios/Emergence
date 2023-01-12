@@ -5,40 +5,63 @@ use bevy_ecs_tilemap::tiles::TilePos;
 use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
-    organisms::OrganismBundle,
-    structures::StructureBundle,
+    items::Recipe,
+    organisms::{OrganismBundle, OrganismKind},
 };
 
-/// Fungi cannot photosynthesize, and must instead decompose matter
-#[derive(Component, Clone, Default)]
+use super::SessileBundle;
+
+/// Fungi do not photosynthesize, and instead rely on other sources of energy
+#[derive(Component, Default)]
 pub struct Fungi;
 
-/// The data needed to spawn [`Fungi`].
+/// A type of mushroom farmed by leafcutter ants
+#[derive(Component, Clone, Default)]
+pub struct Leuco;
+
+/// The data needed to spawn a [`Leuco`] [`Fungi`].
 #[derive(Bundle)]
-pub struct FungiBundle {
-    /// Data characterizing fungi
-    fungi: Fungi,
-    /// Fungi are organisms
-    organism_bundle: OrganismBundle,
-    /// Fungi are structures.
-    structure_bundle: StructureBundle,
-    /// Position in the world
-    position: TilePos,
+pub struct LeucoBundle {
+    /// Acacias are organisms
+    organism_bundle: OrganismBundle<Leuco>,
+
+    /// Acacias are plants
+    plant: Fungi,
+
+    /// Fungi are sessile
+    sessile_bundle: SessileBundle,
 }
 
-impl FungiBundle {
-    /// Creates new fungi at specified tile position, in the specified tilemap.
-    pub fn new(position: TilePos) -> Self {
+impl LeucoBundle {
+    /// Creates new [`Leuco`] fungi at specified tile position.
+    pub fn new(tile_pos: TilePos) -> Self {
+        let recipe = Recipe::default();
+
         Self {
-            fungi: Fungi,
-            structure_bundle: StructureBundle::default(),
+            plant: Fungi,
             organism_bundle: OrganismBundle::default(),
-            position,
+            sessile_bundle: SessileBundle::new(tile_pos, recipe),
         }
     }
 }
 
-impl IntoSprite for Fungi {
+impl OrganismKind for Leuco {
+    type LifeStage = LeucoLifeStage;
+}
+
+#[derive(PartialEq, Eq, Default)]
+/// The different life stages of a leuco mushroom
+pub enum LeucoLifeStage {
+    #[default]
+    /// A juvenile leuco mushroom
+    Juvenile,
+    /// An adult leuco mushroom
+    Mature,
+    /// A leuco mushroom that ran out of nutrients
+    Dead,
+}
+
+impl IntoSprite for Leuco {
     fn tilemap(&self) -> Tilemap {
         Tilemap::Organisms
     }

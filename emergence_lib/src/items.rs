@@ -174,7 +174,7 @@ impl ItemSlot {
 }
 
 /// An inventory to store multiple types of items.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Inventory {
     /// The item slots that are currently active.
     ///
@@ -495,7 +495,7 @@ impl ItemCount {
 }
 
 /// A recipe to turn a set of items into different items.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Recipe {
     /// The inputs needed to craft the recipe.
     inputs: Vec<ItemCount>,
