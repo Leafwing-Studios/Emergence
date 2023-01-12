@@ -1,6 +1,8 @@
 //! Fungi are structures powered by decomposition.
+use crate as emergence_lib;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
+use emergence_macros::IterableEnum;
 
 use crate::{
     enum_iter::IterableEnum,
@@ -45,7 +47,7 @@ impl Species for Leuco {
     type LifeStage = LeucoLifeStage;
 }
 
-#[derive(Component, PartialEq, Eq, Default)]
+#[derive(Component, PartialEq, Eq, Default, IterableEnum)]
 /// The different life stages of a leuco mushroom
 pub enum LeucoLifeStage {
     #[default]

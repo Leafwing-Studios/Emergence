@@ -1,9 +1,6 @@
 //! Life stages are connected by life paths, creating a life cycle for each strain of organism.
 
-use bevy::{
-    prelude::Resource,
-    utils::{HashMap, HashSet},
-};
+use bevy::{prelude::Resource, utils::HashMap};
 
 use super::Species;
 
@@ -15,15 +12,23 @@ use super::Species;
 /// Paths may diverge, loop back onto themselves, terminate and so on.
 #[derive(Resource, Default)]
 pub struct LifeCycle<S: Species> {
-    /// The set of all possible life stages for an organism of type `O`.
-    pub life_stages: HashSet<S::LifeStage>,
-    /// A map from the current life stage to the potential ways it could transform.
-    pub life_paths: HashMap<S::LifeStage, LifePath>,
+    /// Describes how a life stage can transition to other life stages.
+    ///
+    /// This is a map of the outgoing paths.
+    pub life_paths: HashMap<S::LifeStage, LifePath<S>>,
 }
 
 /// Paths that connect different life stages.
 ///
 /// These are triggered when certain conditions are met for each organism,
 /// causing them to change form and function.
+pub struct LifePath<S: Species> {
+    /// The life stage that the organism is transitioning to.
+    pub target: S::LifeStage,
+    /// The conditions that must be met for the transition to occur.
+    pub requirements: Requirements,
+}
+
+/// The condition that must be met for an organism to transition along a life path.
 // FIXME: placeholder type
-pub struct LifePath;
+pub struct Requirements;

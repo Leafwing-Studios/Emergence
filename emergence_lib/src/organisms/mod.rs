@@ -2,6 +2,8 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
+use crate::enum_iter::IterableEnum;
+
 use self::{
     sessile::{fungi::FungiPlugin, plants::PlantsPlugin},
     units::UnitsPlugin,
@@ -34,7 +36,7 @@ pub trait Species: Default + Component {
     /// The enum of possible life stages for this organism
     ///
     /// The [`Default`] implementation should correspond to the life stage of the organism when it is spawned
-    type LifeStage: Default + Eq + Component;
+    type LifeStage: Default + Eq + Component + IterableEnum;
 }
 
 /// Controls the behavior of living organisms
