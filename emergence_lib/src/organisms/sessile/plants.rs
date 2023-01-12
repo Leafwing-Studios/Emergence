@@ -12,7 +12,7 @@ use crate::{
     simulation::pathfinding::Impassable,
 };
 
-use super::{crafting::CraftingBundle, Structure, StructureBundle};
+use crate::structures::{crafting::CraftingBundle, Structure, StructureBundle};
 
 /// The unique identifier of a plant.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -59,6 +59,9 @@ pub struct PlantBundle {
     /// Data characterizing this plant.
     plant: Plant,
 
+    /// A plant is an organism
+    organism_bundle: OrganismBundle,
+
     /// A plant is a structure
     structure_bundle: StructureBundle,
 
@@ -87,12 +90,10 @@ impl PlantBundle {
     pub fn new(id: PlantId, crafting_recipe: Recipe, position: TilePos) -> Self {
         Self {
             plant: Plant::new(id),
-            structure_bundle: StructureBundle {
-                structure: Default::default(),
-                organism_bundle: OrganismBundle {
-                    composition: Composition {
-                        mass: Structure::STARTING_MASS,
-                    },
+            structure_bundle: StructureBundle::default(),
+            organism_bundle: OrganismBundle {
+                composition: Composition {
+                    mass: Structure::STARTING_MASS,
                 },
             },
             crafting_bundle: CraftingBundle::new(crafting_recipe),

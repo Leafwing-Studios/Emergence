@@ -2,24 +2,19 @@
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
-use crate::organisms::{Composition, OrganismBundle};
+use crate::organisms::Composition;
 
 use bevy::prelude::*;
 
-use self::{crafting::CraftingPlugin, fungi::FungiPlugin, plants::PlantsPlugin};
+use self::crafting::CraftingPlugin;
 
 pub mod crafting;
-pub mod fungi;
-pub mod plants;
 
 /// The data needed to build a structure
 #[derive(Bundle, Default)]
 pub struct StructureBundle {
     /// Data characterizing structures
     structure: Structure,
-
-    /// Structures are organisms (for now)
-    organism_bundle: OrganismBundle,
 }
 
 /// All structures must pay a cost to keep themselves alive
@@ -54,9 +49,7 @@ pub struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(PlantsPlugin)
-            .add_plugin(FungiPlugin)
-            .add_plugin(CraftingPlugin)
+        app.add_plugin(CraftingPlugin)
             .add_system(upkeep)
             .add_system(cleanup);
     }

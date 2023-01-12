@@ -2,7 +2,12 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
-pub mod structures;
+use self::{
+    sessile::{fungi::FungiPlugin, plants::PlantsPlugin},
+    units::UnitsPlugin,
+};
+
+pub mod sessile;
 pub mod units;
 
 /// The mass of each element that makes up the entity
@@ -17,4 +22,15 @@ pub struct Composition {
 pub struct OrganismBundle {
     /// Defines the elements making up this organism.
     pub composition: Composition,
+}
+
+/// Controls the behavior of living organisms
+pub struct OrganismPlugin;
+
+impl Plugin for OrganismPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(PlantsPlugin)
+            .add_plugin(FungiPlugin)
+            .add_plugin(UnitsPlugin);
+    }
 }

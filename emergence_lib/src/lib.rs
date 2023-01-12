@@ -17,6 +17,7 @@ pub mod items;
 pub mod organisms;
 pub mod signals;
 pub mod simulation;
+pub mod structures;
 pub mod terrain;
 
 /// All of the code needed for users to interact with the simulation.
