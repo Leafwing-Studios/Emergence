@@ -7,7 +7,7 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::Recipe,
-    organisms::{OrganismBundle, Species},
+    organisms::Species,
 };
 
 use std::default::Default;
@@ -25,14 +25,10 @@ pub struct Acacia;
 /// The data needed to make an [`Acacia`] [`Plant`].
 #[derive(Bundle)]
 pub struct AcaciaBundle {
-    /// Acacias are organisms
-    organism_bundle: OrganismBundle<Acacia>,
-
     /// Acacias are plants
     plant: Plant,
-
     /// Plants are sessile
-    sessile_bundle: SessileBundle,
+    sessile_bundle: SessileBundle<Acacia>,
 }
 
 impl Species for Acacia {
@@ -70,7 +66,6 @@ impl AcaciaBundle {
 
         Self {
             plant: Plant,
-            organism_bundle: OrganismBundle::default(),
             sessile_bundle: SessileBundle::new(tile_pos, recipe),
         }
     }

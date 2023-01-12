@@ -10,12 +10,17 @@ use crate::{
     structures::{crafting::CraftingBundle, StructureBundle},
 };
 
+use super::{OrganismBundle, Species};
+
 pub mod fungi;
 pub mod plants;
 
 /// Sessile organisms cannot move, and automatically process nutrients from their environment
 #[derive(Bundle)]
-pub struct SessileBundle {
+pub struct SessileBundle<S: Species> {
+    /// Sessile organisms are organisms
+    pub organism_bundle: OrganismBundle<S>,
+
     /// Sessile organisms are structures
     pub structure_bundle: StructureBundle,
 
@@ -26,10 +31,11 @@ pub struct SessileBundle {
     pub tile_pos: TilePos,
 }
 
-impl SessileBundle {
+impl<S: Species> SessileBundle<S> {
     /// Create a new [`SessileBundle`] at the given `tile_pos`, which will attempt to produce the provided `recipe` automatically.
-    pub fn new(tile_pos: TilePos, recipe: Recipe) -> SessileBundle {
+    pub fn new(tile_pos: TilePos, recipe: Recipe) -> SessileBundle<S> {
         SessileBundle {
+            organism_bundle: OrganismBundle::default(),
             structure_bundle: StructureBundle::default(),
             crafting_bundle: CraftingBundle::new(recipe),
             tile_pos,

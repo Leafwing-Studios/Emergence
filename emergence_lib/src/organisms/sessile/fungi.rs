@@ -6,7 +6,7 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::Recipe,
-    organisms::{OrganismBundle, Species},
+    organisms::Species,
 };
 
 use super::SessileBundle;
@@ -22,14 +22,11 @@ pub struct Leuco;
 /// The data needed to spawn a [`Leuco`] [`Fungi`].
 #[derive(Bundle)]
 pub struct LeucoBundle {
-    /// Leugo are organisms
-    organism_bundle: OrganismBundle<Leuco>,
-
     /// Leuco are fungi
     plant: Fungi,
 
     /// Fungi are sessile
-    sessile_bundle: SessileBundle,
+    sessile_bundle: SessileBundle<Leuco>,
 }
 
 impl LeucoBundle {
@@ -39,7 +36,6 @@ impl LeucoBundle {
 
         Self {
             plant: Fungi,
-            organism_bundle: OrganismBundle::default(),
             sessile_bundle: SessileBundle::new(tile_pos, recipe),
         }
     }
