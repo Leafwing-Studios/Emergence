@@ -9,7 +9,6 @@ use crate::{
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::{ItemCount, ItemId, Recipe},
     organisms::{Composition, OrganismBundle},
-    simulation::pathfinding::Impassable,
 };
 
 use crate::structures::{crafting::CraftingBundle, Structure, StructureBundle};
@@ -70,9 +69,6 @@ pub struct PlantBundle {
 
     /// Position in the world
     position: TilePos,
-
-    /// Plants are impassable
-    impassable: Impassable,
 }
 
 impl IntoSprite for Plant {
@@ -98,7 +94,6 @@ impl PlantBundle {
             },
             crafting_bundle: CraftingBundle::new(crafting_recipe),
             position,
-            impassable: Impassable,
         }
     }
 

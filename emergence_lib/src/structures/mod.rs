@@ -2,7 +2,7 @@
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
-use crate::organisms::Composition;
+use crate::{organisms::Composition, simulation::pathfinding::Impassable};
 
 use bevy::prelude::*;
 
@@ -15,6 +15,8 @@ pub mod crafting;
 pub struct StructureBundle {
     /// Data characterizing structures
     structure: Structure,
+    /// Structures cannot be walked over
+    impassable: Impassable,
 }
 
 /// All structures must pay a cost to keep themselves alive
