@@ -1,14 +1,19 @@
 //! Life stages are connected by life paths, creating a life cycle for each strain of organism.
 
 use bevy::{
-    prelude::Component,
+    prelude::Resource,
     utils::{HashMap, HashSet},
 };
 
 use super::Species;
 
-/// A collection of [`LifeStages`](Species::LifeStage) for an organism of type `S`, connected by [`LifePath`]s
-#[derive(Component, Default)]
+/// A map of the [`LifeStages`](Species::LifeStage) for an organism of type `S`, connected by [`LifePath`]s.
+///
+/// This type is the high-level map for the entire [`Species`], and is stored as a resource.
+///
+/// This forms a finite state machine.
+/// Paths may diverge, loop back onto themselves, terminate and so on.
+#[derive(Resource, Default)]
 pub struct LifeCycle<S: Species> {
     /// The set of all possible life stages for an organism of type `O`.
     pub life_stages: HashSet<S::LifeStage>,

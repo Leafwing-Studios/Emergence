@@ -45,7 +45,7 @@ impl Species for Leuco {
     type LifeStage = LeucoLifeStage;
 }
 
-#[derive(PartialEq, Eq, Default)]
+#[derive(Component, PartialEq, Eq, Default)]
 /// The different life stages of a leuco mushroom
 pub enum LeucoLifeStage {
     #[default]

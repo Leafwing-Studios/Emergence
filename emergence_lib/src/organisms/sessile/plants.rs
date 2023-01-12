@@ -36,7 +36,7 @@ impl Species for Acacia {
 }
 
 /// The life stages of an [`Acacia`] plant
-#[derive(PartialEq, Eq, Default)]
+#[derive(Component, PartialEq, Eq, Default)]
 pub enum AcaciaLifeStage {
     /// A tiny helpless seedling
     #[default]

@@ -3,7 +3,6 @@
 use bevy::prelude::*;
 
 use self::{
-    life_cycles::LifeCycle,
     sessile::{fungi::FungiPlugin, plants::PlantsPlugin},
     units::UnitsPlugin,
 };
@@ -14,13 +13,13 @@ pub mod units;
 
 /// All of the standard components of an [`Organism`]
 #[derive(Bundle, Default)]
-pub struct OrganismBundle<O: Species> {
+pub struct OrganismBundle<S: Species> {
     /// The marker component for orgamisms
     pub organism: Organism,
     /// The marker component for this particular organism
-    pub variety: O,
-    /// The current life stage and life paths for this organism
-    pub life_cycle: LifeCycle<O>,
+    pub variety: S,
+    /// The current life stage for this organism
+    pub life_stage: S::LifeStage,
 }
 
 /// A living part of the game ecosystem.
@@ -35,7 +34,7 @@ pub trait Species: Default + Component {
     /// The enum of possible life stages for this organism
     ///
     /// The [`Default`] implementation should correspond to the life stage of the organism when it is spawned
-    type LifeStage: Default + Eq + Send + Sync + 'static;
+    type LifeStage: Default + Eq + Component;
 }
 
 /// Controls the behavior of living organisms
