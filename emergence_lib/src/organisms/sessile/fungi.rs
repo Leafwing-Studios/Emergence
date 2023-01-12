@@ -6,7 +6,7 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::Recipe,
-    organisms::{OrganismBundle, OrganismKind},
+    organisms::{OrganismBundle, Species},
 };
 
 use super::SessileBundle;
@@ -45,7 +45,7 @@ impl LeucoBundle {
     }
 }
 
-impl OrganismKind for Leuco {
+impl Species for Leuco {
     type LifeStage = LeucoLifeStage;
 }
 

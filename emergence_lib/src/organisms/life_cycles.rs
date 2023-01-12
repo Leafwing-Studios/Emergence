@@ -5,15 +5,15 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use super::OrganismKind;
+use super::Species;
 
-/// A collection of [`LifeStage`]s for an organism of type `O`, connected by [`LifePath`]s
+/// A collection of [`LifeStages`](Species::LifeStage) for an organism of type `S`, connected by [`LifePath`]s
 #[derive(Component, Default)]
-pub struct LifeCycle<O: OrganismKind> {
+pub struct LifeCycle<S: Species> {
     /// The set of all possible life cycles for an organism of type `O`.
-    pub life_stages: HashSet<O::LifeStage>,
+    pub life_stages: HashSet<S::LifeStage>,
     /// A map from the current life stage to the potential ways it could transform.
-    pub life_paths: HashMap<O::LifeStage, LifePath>,
+    pub life_paths: HashMap<S::LifeStage, LifePath>,
 }
 
 /// Paths that connect different life stages.

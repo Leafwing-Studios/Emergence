@@ -14,7 +14,7 @@ pub mod units;
 
 /// All of the compone
 #[derive(Bundle, Default)]
-pub struct OrganismBundle<O: OrganismKind> {
+pub struct OrganismBundle<O: Species> {
     /// The marker component for orgamisms
     pub organism: Organism,
     /// The marker component for this particular organism
@@ -29,9 +29,9 @@ pub struct Organism;
 
 /// The essential information about a specific variety of organism
 ///
-/// For example, `Acacia` or `Ant` would be a good example of an `OrganismKind`,
+/// For example, `Acacia` or `Ant` would be a good example of an `Species`,
 /// while `Plant` is too general.
-pub trait OrganismKind: Default + Component {
+pub trait Species: Default + Component {
     /// The enum of possible life stages for this organism
     ///
     /// The [`Default`] implementation should correspond to the life stage of the organism when it is spawned

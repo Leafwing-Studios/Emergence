@@ -7,7 +7,7 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     items::Recipe,
-    organisms::{OrganismBundle, OrganismKind},
+    organisms::{OrganismBundle, Species},
 };
 
 use std::default::Default;
@@ -35,7 +35,7 @@ pub struct AcaciaBundle {
     sessile_bundle: SessileBundle,
 }
 
-impl OrganismKind for Acacia {
+impl Species for Acacia {
     type LifeStage = AcaciaLifeStage;
 }
 
