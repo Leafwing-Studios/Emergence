@@ -16,10 +16,10 @@ pub mod plants;
 /// Sessile organisms cannot move, and automatically process nutrients from their environment
 #[derive(Bundle)]
 pub struct SessileBundle {
-    /// Acacias are structures
+    /// Sessile organisms are structures
     pub structure_bundle: StructureBundle,
 
-    /// Plants can craft things
+    /// Sessile organisms can craft things
     pub crafting_bundle: CraftingBundle,
 
     /// Which tile is this sessile organism on top of

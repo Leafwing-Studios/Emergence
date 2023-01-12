@@ -12,7 +12,7 @@ pub mod life_cycles;
 pub mod sessile;
 pub mod units;
 
-/// All of the compone
+/// All of the standard components of an [`Organism`]
 #[derive(Bundle, Default)]
 pub struct OrganismBundle<O: Species> {
     /// The marker component for orgamisms

@@ -22,10 +22,10 @@ pub struct Leuco;
 /// The data needed to spawn a [`Leuco`] [`Fungi`].
 #[derive(Bundle)]
 pub struct LeucoBundle {
-    /// Acacias are organisms
+    /// Leugo are organisms
     organism_bundle: OrganismBundle<Leuco>,
 
-    /// Acacias are plants
+    /// Leuco are fungi
     plant: Fungi,
 
     /// Fungi are sessile

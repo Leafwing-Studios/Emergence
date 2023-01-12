@@ -10,7 +10,7 @@ use super::Species;
 /// A collection of [`LifeStages`](Species::LifeStage) for an organism of type `S`, connected by [`LifePath`]s
 #[derive(Component, Default)]
 pub struct LifeCycle<S: Species> {
-    /// The set of all possible life cycles for an organism of type `O`.
+    /// The set of all possible life stages for an organism of type `O`.
     pub life_stages: HashSet<S::LifeStage>,
     /// A map from the current life stage to the potential ways it could transform.
     pub life_paths: HashMap<S::LifeStage, LifePath>,
@@ -20,4 +20,5 @@ pub struct LifeCycle<S: Species> {
 ///
 /// These are triggered when certain conditions are met for each organism,
 /// causing them to change form and function.
+// FIXME: placeholder type
 pub struct LifePath;
