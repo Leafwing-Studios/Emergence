@@ -2,12 +2,12 @@
 //!
 //! All plugins in this module should work without rendering.
 
-use crate::organisms::structures::StructuresPlugin;
-use crate::organisms::units::UnitsPlugin;
+use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassabilityCache};
+use crate::structures::StructuresPlugin;
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
 use bevy::prelude::{Commands, Query, Res, ResMut, With};
@@ -30,7 +30,7 @@ impl Plugin for SimulationPlugin {
             config: self.gen_config.clone(),
         })
         .add_plugin(StructuresPlugin)
-        .add_plugin(UnitsPlugin)
+        .add_plugin(OrganismPlugin)
         .add_plugin(SignalsPlugin)
         .add_startup_system_to_stage(StartupStage::PostStartup, initialize_passable_filter)
         .add_system_to_stage(CoreStage::PreUpdate, update_passable_filter);

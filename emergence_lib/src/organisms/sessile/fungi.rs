@@ -6,9 +6,8 @@ use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
     organisms::OrganismBundle,
+    structures::StructureBundle,
 };
-
-use super::StructureBundle;
 
 /// Fungi cannot photosynthesize, and must instead decompose matter
 #[derive(Component, Clone, Default)]
@@ -19,9 +18,10 @@ pub struct Fungi;
 pub struct FungiBundle {
     /// Data characterizing fungi
     fungi: Fungi,
+    /// Fungi are organisms
+    organism_bundle: OrganismBundle,
     /// Fungi are structures.
     structure_bundle: StructureBundle,
-    /// Data needed to visually represent this fungus.
     /// Position in the world
     position: TilePos,
 }
@@ -31,12 +31,8 @@ impl FungiBundle {
     pub fn new(position: TilePos) -> Self {
         Self {
             fungi: Fungi,
-            structure_bundle: StructureBundle {
-                organism_bundle: OrganismBundle {
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
+            structure_bundle: StructureBundle::default(),
+            organism_bundle: OrganismBundle::default(),
             position,
         }
     }
