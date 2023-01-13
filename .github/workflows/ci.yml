@@ -25,7 +25,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-lints-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -49,7 +54,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -75,7 +85,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-compiles-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -98,7 +113,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-doc-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -120,6 +140,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
+        env:
+          cache-name: cargo-check-unused-dependencies
         with:
           path: |
             ~/.cargo/bin/
@@ -127,7 +149,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-unused-dependencies-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
