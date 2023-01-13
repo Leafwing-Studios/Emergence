@@ -1,5 +1,5 @@
 //! Fungi are structures powered by decomposition.
-use crate as emergence_lib;
+use crate::{self as emergence_lib, organisms::life_cycles::LifeCycle};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
@@ -45,6 +45,13 @@ impl LeucoBundle {
 
 impl Species for Leuco {
     type LifeStage = LeucoLifeStage;
+
+    fn life_cycle() -> LifeCycle<Self> {
+        // FIXME: add actual life cycles
+        LifeCycle {
+            life_paths: Default::default(),
+        }
+    }
 }
 
 #[derive(Component, PartialEq, Eq, Default, IterableEnum)]

@@ -15,12 +15,18 @@ use super::Species;
 ///
 /// This forms a finite state machine.
 /// Paths may diverge, loop back onto themselves, terminate and so on.
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct LifeCycle<S: Species> {
     /// Describes how a life stage can transition to other life stages.
     ///
     /// This is a map of the outgoing paths.
     pub life_paths: HashMap<S::LifeStage, LifePath<S>>,
+}
+
+impl<S: Species> Default for LifeCycle<S> {
+    fn default() -> Self {
+        S::life_cycle()
+    }
 }
 
 /// Paths that connect different life stages.

@@ -1,6 +1,6 @@
 //! Plants are structures powered by photosynthesis.
 
-use crate as emergence_lib;
+use crate::{self as emergence_lib, organisms::life_cycles::LifeCycle};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
@@ -35,6 +35,13 @@ pub struct AcaciaBundle {
 
 impl Species for Acacia {
     type LifeStage = AcaciaLifeStage;
+
+    fn life_cycle() -> LifeCycle<Self> {
+        // FIXME: add actual life cycles
+        LifeCycle {
+            life_paths: Default::default(),
+        }
+    }
 }
 
 /// The life stages of an [`Acacia`] plant
