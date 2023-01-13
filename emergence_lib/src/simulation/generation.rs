@@ -1,7 +1,7 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::sessile::fungi::FungiBundle;
-use crate::organisms::sessile::plants::PlantBundle;
+use crate::organisms::sessile::fungi::LeucoBundle;
+use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::resources::MapResource;
 use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
@@ -192,9 +192,9 @@ pub fn generate_organisms(
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    commands.spawn_batch(plant_positions.into_iter().map(PlantBundle::acacia));
+    commands.spawn_batch(plant_positions.into_iter().map(AcaciaBundle::new));
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    commands.spawn_batch(fungus_positions.into_iter().map(FungiBundle::new));
+    commands.spawn_batch(fungus_positions.into_iter().map(LeucoBundle::new));
 }

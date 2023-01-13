@@ -1,68 +1,57 @@
 //! Plants are structures powered by photosynthesis.
-use std::time::Duration;
 
+use crate as emergence_lib;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
+use emergence_macros::IterableEnum;
 
 use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
-    items::{ItemCount, ItemId, Recipe},
-    organisms::OrganismBundle,
+    items::Recipe,
+    organisms::Species,
 };
 
-use crate::structures::{crafting::CraftingBundle, StructureBundle};
+use std::default::Default;
 
-/// The unique identifier of a plant.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PlantId(&'static str);
-
-impl PlantId {
-    /// The Acacia plant.
-    pub fn acacia() -> Self {
-        Self("acacia")
-    }
-}
+use super::SessileBundle;
 
 /// Plants can photosynthesize
-#[derive(Component, Clone)]
-pub struct Plant {
-    /// The unique identifier of this plant.
-    id: PlantId,
-}
+#[derive(Component, Default)]
+pub struct Plant;
 
-impl Plant {
-    /// Create a new plant with the given ID.
-    pub fn new(id: PlantId) -> Self {
-        Self { id }
-    }
+/// Acacia are thorny scrubby plants that rely on ants for protection in exchange for sweet nectar
+#[derive(Component, Default, Clone)]
+pub struct Acacia;
 
-    /// The unique identifier of this plant.
-    pub fn id(&self) -> &PlantId {
-        &self.id
-    }
-}
-
-/// The data needed to make a plant
+/// The data needed to make an [`Acacia`] [`Plant`].
 #[derive(Bundle)]
-pub struct PlantBundle {
-    /// Data characterizing this plant.
+pub struct AcaciaBundle {
+    /// Acacias are plants
     plant: Plant,
-
-    /// A plant is an organism
-    organism_bundle: OrganismBundle,
-
-    /// A plant is a structure
-    structure_bundle: StructureBundle,
-
-    /// A plant can craft things
-    crafting_bundle: CraftingBundle,
-
-    /// Position in the world
-    position: TilePos,
+    /// Plants are sessile
+    sessile_bundle: SessileBundle<Acacia>,
 }
 
-impl IntoSprite for Plant {
+impl Species for Acacia {
+    type LifeStage = AcaciaLifeStage;
+}
+
+/// The life stages of an [`Acacia`] plant
+#[derive(Component, PartialEq, Eq, Default, IterableEnum)]
+pub enum AcaciaLifeStage {
+    /// A tiny helpless seedling
+    #[default]
+    Seedling,
+    /// A juvenile plant
+    Sprout,
+    /// A fully grown plant
+    Adult,
+    /// A plant that ran out of sun, water or nutrients
+    Dead,
+}
+
+impl IntoSprite for Acacia {
     fn tilemap(&self) -> Tilemap {
         Tilemap::Organisms
     }
@@ -72,29 +61,15 @@ impl IntoSprite for Plant {
     }
 }
 
-impl PlantBundle {
-    /// Creates new plant at specified tile position, in the specified tilemap.
-    pub fn new(id: PlantId, crafting_recipe: Recipe, position: TilePos) -> Self {
-        Self {
-            plant: Plant::new(id),
-            structure_bundle: StructureBundle::default(),
-            organism_bundle: OrganismBundle::default(),
-            crafting_bundle: CraftingBundle::new(crafting_recipe),
-            position,
-        }
-    }
+impl AcaciaBundle {
+    /// Creates new Acacia plant.
+    pub fn new(tile_pos: TilePos) -> Self {
+        let recipe = Recipe::default();
 
-    /// Create a new Acacia plant.
-    pub fn acacia(position: TilePos) -> Self {
-        Self::new(
-            PlantId::acacia(),
-            Recipe::new(
-                Vec::new(),
-                vec![ItemCount::one(ItemId::acacia_leaf())],
-                Duration::from_secs(10),
-            ),
-            position,
-        )
+        Self {
+            plant: Plant,
+            sessile_bundle: SessileBundle::new(tile_pos, recipe),
+        }
     }
 }
 
