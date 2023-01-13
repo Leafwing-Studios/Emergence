@@ -7,6 +7,7 @@ use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::{Impassable, PassabilityCache};
+use crate::structures::StructuresPlugin;
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
 use bevy::prelude::{Commands, Query, Res, ResMut, With};
@@ -28,6 +29,7 @@ impl Plugin for SimulationPlugin {
         app.add_plugin(GenerationPlugin {
             config: self.gen_config.clone(),
         })
+        .add_plugin(StructuresPlugin)
         .add_plugin(OrganismPlugin)
         .add_plugin(SignalsPlugin)
         .add_startup_system_to_stage(StartupStage::PostStartup, initialize_passable_filter)

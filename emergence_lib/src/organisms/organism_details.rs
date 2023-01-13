@@ -8,16 +8,13 @@ use std::fmt::Display;
 use crate::{
     cursor::CursorTilePos,
     items::{Inventory, Recipe},
+    structures::crafting::{
+        ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
+    },
 };
 
 use super::{
-    structures::{
-        crafting::{
-            ActiveRecipe, CraftTimer, CraftingState, CurCraftState, InputInventory, OutputInventory,
-        },
-        fungi::Fungi,
-        plants::Plant,
-    },
+    sessile::{fungi::Fungi, plants::Plant},
     units::Ant,
 };
 
@@ -57,8 +54,8 @@ pub struct CraftingDetails {
     /// The inventory for the output items.
     pub output_inventory: Inventory,
 
-    /// The recipe that's currently being crafted.
-    pub active_recipe: Recipe,
+    /// The recipe that's currently being crafted, if any.
+    pub active_recipe: Option<Recipe>,
 
     /// The state of the ongoing crafting process.
     pub state: CraftingState,
@@ -111,7 +108,7 @@ fn hover_details(
             &InputInventory,
             &OutputInventory,
             &ActiveRecipe,
-            &CurCraftState,
+            &CraftingState,
             &CraftTimer,
         )>,
     )>,
@@ -135,11 +132,11 @@ fn hover_details(
                 let crafting_details =
                     if let Some((input, output, recipe, state, timer)) = crafting_stuff {
                         Some(CraftingDetails {
-                            input_inventory: input.0.clone(),
-                            output_inventory: output.0.clone(),
-                            active_recipe: recipe.0.clone(),
-                            state: state.0.clone(),
-                            timer: timer.0.clone(),
+                            input_inventory: input.inventory().clone(),
+                            output_inventory: output.inventory().clone(),
+                            active_recipe: recipe.maybe_recipe().clone(),
+                            state: state.clone(),
+                            timer: timer.timer().clone(),
                         })
                     } else {
                         None

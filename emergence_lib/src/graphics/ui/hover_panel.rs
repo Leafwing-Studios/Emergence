@@ -2,8 +2,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    cursor::CursorTilePos,
-    organisms::{organism_details::HoverDetails, structures::crafting::CraftingState},
+    cursor::CursorTilePos, organisms::organism_details::HoverDetails,
+    structures::crafting::CraftingState,
 };
 
 use super::{FiraSansFontFamily, RightPanel, UiStage};
@@ -154,7 +154,11 @@ fn update_hover_panel(
                 // Update all text entries for crafting
                 text.sections[1].value = format!("{}", crafting_details.input_inventory);
                 text.sections[3].value = format!("{}", crafting_details.output_inventory);
-                text.sections[5].value = format!("{}", crafting_details.active_recipe);
+                text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe {
+                    format!("{}", recipe)
+                } else {
+                    "None".to_string()
+                };
                 text.sections[7].value = match crafting_details.state {
                     CraftingState::WaitingForInput => "Waiting for input".to_string(),
                     CraftingState::InProgress => {
