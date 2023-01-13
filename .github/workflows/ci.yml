@@ -160,7 +160,7 @@ jobs:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           override: true
       - name: Installs cargo-udeps
-        run: cargo install --force cargo-udeps
+        run: cargo install cargo-udeps
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run cargo udeps
