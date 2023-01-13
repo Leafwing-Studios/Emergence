@@ -32,12 +32,22 @@ pub struct SessileBundle<S: Species> {
 }
 
 impl<S: Species> SessileBundle<S> {
-    /// Create a new [`SessileBundle`] at the given `tile_pos`, which will attempt to produce the provided `recipe` automatically.
-    pub fn new(tile_pos: TilePos, recipe: Recipe) -> SessileBundle<S> {
+    /// Create a new [`SessileBundle`] at the given `tile_pos`, without an active crafting recipe.
+    pub fn new(tile_pos: TilePos) -> SessileBundle<S> {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
             structure_bundle: StructureBundle::default(),
-            crafting_bundle: CraftingBundle::new(recipe),
+            crafting_bundle: CraftingBundle::new(),
+            tile_pos,
+        }
+    }
+
+    /// Create a new [`SessileBundle`] at the given `tile_pos`, which will attempt to produce the provided `recipe` automatically.
+    pub fn new_with_recipe(tile_pos: TilePos, recipe: Recipe) -> SessileBundle<S> {
+        SessileBundle {
+            organism_bundle: OrganismBundle::default(),
+            structure_bundle: StructureBundle::default(),
+            crafting_bundle: CraftingBundle::new_with_recipe(recipe),
             tile_pos,
         }
     }
