@@ -81,7 +81,7 @@ fn place_pheromone(
     let hive_mind_state = hive_mind_query.single();
 
     if hive_mind_state.pressed(HiveMindAction::PlaceAttractivePheromone) {
-        if let Some(pos) = *cursor_tile_pos.maybe_tile_pos() {
+        if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
             signal_create_evw.send(SignalModificationEvent::SignalIncrement {
                 emitter: Emitter::Stock(PheromoneAttract),
                 pos,
@@ -91,7 +91,7 @@ fn place_pheromone(
     }
     // TODO: Fix the failing clamp in curves
     if hive_mind_state.pressed(HiveMindAction::PlaceRepulsivePheromone) {
-        if let Some(pos) = *cursor_tile_pos.maybe_tile_pos() {
+        if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
             signal_create_evw.send(SignalModificationEvent::SignalIncrement {
                 emitter: Emitter::Stock(PheromoneRepulse),
                 pos,

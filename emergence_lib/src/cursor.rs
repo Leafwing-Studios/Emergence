@@ -60,8 +60,8 @@ impl CursorTilePos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
-    pub fn maybe_tile_pos(&self) -> &Option<TilePos> {
-        &self.0
+    pub fn maybe_tile_pos(&self) -> Option<TilePos> {
+        self.0
     }
 }
 

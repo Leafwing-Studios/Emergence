@@ -117,7 +117,7 @@ fn hover_details(
         hover_details.0 = None;
 
         for (entity, tile_pos, plant, fungi, ant, crafting_stuff) in query.iter() {
-            if tile_pos == cursor_pos {
+            if *tile_pos == cursor_pos {
                 // Determine the organism type via the marker components
                 let organism_type = if plant.is_some() {
                     Some(OrganismType::Plant)
