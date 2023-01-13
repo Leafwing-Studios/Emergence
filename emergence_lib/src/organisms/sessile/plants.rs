@@ -1,6 +1,9 @@
 //! Plants are structures powered by photosynthesis.
 
-use crate::{self as emergence_lib, organisms::life_cycles::LifeCycle};
+use crate::{
+    self as emergence_lib,
+    items::{ItemCount, ItemId},
+};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
@@ -12,7 +15,7 @@ use crate::{
     organisms::Species,
 };
 
-use std::default::Default;
+use std::{default::Default, time::Duration};
 
 use super::SessileBundle;
 
@@ -71,11 +74,16 @@ impl IntoSprite for Acacia {
 impl AcaciaBundle {
     /// Creates new Acacia plant.
     pub fn new(tile_pos: TilePos) -> Self {
-        let recipe = Recipe::default();
-
         Self {
             plant: Plant,
-            sessile_bundle: SessileBundle::new(tile_pos, recipe),
+            sessile_bundle: SessileBundle::new_with_recipe(
+                tile_pos,
+                Recipe::new(
+                    Vec::new(),
+                    vec![ItemCount::one(ItemId::acacia_leaf())],
+                    Duration::from_secs(10),
+                ),
+            ),
         }
     }
 }
