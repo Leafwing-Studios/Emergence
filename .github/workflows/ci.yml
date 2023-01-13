@@ -3,9 +3,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,7 +25,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-ci-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -49,7 +54,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -60,7 +70,6 @@ jobs:
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- test
         env:
-          CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
   check-compiles:
@@ -76,7 +85,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-compiles-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -91,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
@@ -99,7 +113,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-check-doc-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -110,18 +129,19 @@ jobs:
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- doc
         env:
-          CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0"
-#      - name: Installs cargo-deadlinks
-#        run: cargo install --force cargo-deadlinks
-#      - name: Checks dead links
-#        run: cargo deadlinks
+  #      - name: Installs cargo-deadlinks
+  #        run: cargo install --force cargo-deadlinks
+  #      - name: Checks dead links
+  #        run: cargo deadlinks
 
   check-unused-dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
+        env:
+          cache-name: cargo-check-unused-dependencies
         with:
           path: |
             ~/.cargo/bin/
@@ -129,28 +149,24 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-check-unused-dependencies-${{ hashFiles('**/Cargo.toml') }}
+          # Make sure the cache is updated after every run, in case some dependencies get updated
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.run_id }}
+          # Restore from previous runs of this job
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           override: true
+      # We don't --force install to reduce CI times (drastically)
+      # We fix the version so that it overwrites when we specify a new one
+      # We need to remember to update the version from time to time
       - name: Installs cargo-udeps
-        run: cargo install --force cargo-udeps
+        run: cargo install cargo-udeps@0.1.35
+        # Cargo gives an error if it's already installed
+        continue-on-error: true
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run cargo udeps
         run: cargo udeps
-
-  mdbook:
-    runs-on: ubuntu-20.04
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v1
-        with:
-          mdbook-version: 'latest'
-
-      - run: mdbook build design
