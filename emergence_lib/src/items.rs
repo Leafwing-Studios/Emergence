@@ -495,7 +495,7 @@ impl ItemCount {
 }
 
 /// A recipe to turn a set of items into different items.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct Recipe {
     /// The inputs needed to craft the recipe.
     inputs: Vec<ItemCount>,

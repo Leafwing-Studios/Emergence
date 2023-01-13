@@ -1,5 +1,7 @@
 //! Everything needed to make structures able to craft things.
 
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::items::{Inventory, Recipe};
@@ -54,8 +56,20 @@ pub struct CraftingBundle {
 }
 
 impl CraftingBundle {
+    /// Create a new crafting bundle without an active recipe set.
+    pub fn new() -> Self {
+        Self {
+            // TODO: Don't hard-code these values
+            input_inventory: InputInventory(Inventory::new(0, 0)),
+            output_inventory: OutputInventory(Inventory::new(1, 10)),
+            craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
+            active_recipe: ActiveRecipe(None),
+            craft_state: CraftingState::WaitingForInput,
+        }
+    }
+
     /// Create a new crafting bundle for the given recipe.
-    pub fn new(recipe: Recipe) -> Self {
+    pub fn new_with_recipe(recipe: Recipe) -> Self {
         Self {
             // TODO: Don't hard-code these values
             input_inventory: InputInventory(Inventory::new(0, 0)),
