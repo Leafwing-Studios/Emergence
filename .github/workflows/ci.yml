@@ -21,11 +21,21 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
           override: true
+      - name: Restore registry cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-registry
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - name: Create Cargo.lock file
         run: cargo generate-lockfile
-      - uses: actions/cache@v3
+      - name: Cache build files
+        uses: actions/cache@v3
         with:
-          # cache the build files! see: https://github.com/actions/cache
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
@@ -52,9 +62,20 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Restore registry cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-registry
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - name: Create Cargo.lock file
         run: cargo generate-lockfile
-      - uses: actions/cache@v3
+      - name: Cache build files
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
@@ -85,9 +106,20 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Restore registry cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-registry
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - name: Create Cargo.lock file
         run: cargo generate-lockfile
-      - uses: actions/cache@v3
+      - name: Cache build files
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
@@ -114,9 +146,20 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Restore registry cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-registry
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - name: Create Cargo.lock file
         run: cargo generate-lockfile
-      - uses: actions/cache@v3
+      - name: Cache build files
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
@@ -151,9 +194,20 @@ jobs:
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           override: true
+      - name: Restore registry cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-registry
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ runner.os }}-${{ github.job }}-
       - name: Create Cargo.lock file
         run: cargo generate-lockfile
-      - uses: actions/cache@v3
+      - name: Cache build files
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
