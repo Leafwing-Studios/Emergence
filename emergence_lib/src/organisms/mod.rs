@@ -5,7 +5,6 @@ use bevy::prelude::*;
 use crate::enum_iter::IterableEnum;
 
 use self::{
-    organism_details::DetailsPlugin,
     sessile::{fungi::FungiPlugin, plants::PlantsPlugin},
     units::UnitsPlugin,
 };
@@ -48,7 +47,6 @@ impl Plugin for OrganismPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(PlantsPlugin)
             .add_plugin(FungiPlugin)
-            .add_plugin(UnitsPlugin)
-            .add_plugin(DetailsPlugin);
+            .add_plugin(UnitsPlugin);
     }
 }
