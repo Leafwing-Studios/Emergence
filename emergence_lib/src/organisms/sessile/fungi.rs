@@ -7,7 +7,6 @@ use emergence_macros::IterableEnum;
 use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
-    items::Recipe,
     organisms::Species,
 };
 
@@ -34,11 +33,9 @@ pub struct LeucoBundle {
 impl LeucoBundle {
     /// Creates new [`Leuco`] fungi at specified tile position.
     pub fn new(tile_pos: TilePos) -> Self {
-        let recipe = Recipe::default();
-
         Self {
             plant: Fungi,
-            sessile_bundle: SessileBundle::new(tile_pos, recipe),
+            sessile_bundle: SessileBundle::new(tile_pos),
         }
     }
 }
