@@ -1,6 +1,6 @@
 //! Everything related to items and crafting.
 
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,6 +10,12 @@ impl ItemId {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
         Self("acacia_leaf")
+    }
+}
+
+impl Display for ItemId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -173,6 +179,16 @@ impl ItemSlot {
     }
 }
 
+impl Display for ItemSlot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} ({}/{})",
+            self.item_id, self.count, self.max_item_count
+        )
+    }
+}
+
 /// An inventory to store multiple types of items.
 #[derive(Debug, Default, Clone)]
 pub struct Inventory {
@@ -232,7 +248,7 @@ impl Inventory {
 
     /// The number of slots that don't have an item in them.
     pub fn free_slot_count(&self) -> usize {
-        self.max_items_per_slot - self.slots.len()
+        self.max_slot_count - self.slots.len()
     }
 
     /// The number of items of the given type that can still fit in the inventory.
@@ -284,7 +300,6 @@ impl Inventory {
             match new_slot.add_until_full(items_to_add) {
                 Ok(_) => {
                     items_to_add = 0;
-                    break;
                 }
                 Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count,
             }
@@ -477,6 +492,21 @@ impl Inventory {
     }
 }
 
+impl Display for Inventory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let slot_strings: Vec<String> = self
+            // Filled slots
+            .slots
+            .iter()
+            .map(|slot| format!("{slot}"))
+            // Empty slots
+            .chain((0..self.free_slot_count()).map(|_| "_".to_string()))
+            .collect();
+
+        write!(f, "[{}]", slot_strings.join(", "))
+    }
+}
+
 /// A specific amount of a given item.
 #[derive(Debug, Clone)]
 pub struct ItemCount {
@@ -491,6 +521,12 @@ impl ItemCount {
     /// A single one of the given item.
     pub fn one(item_id: ItemId) -> Self {
         Self { item_id, count: 1 }
+    }
+}
+
+impl Display for ItemCount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({})", self.item_id, self.count)
     }
 }
 
@@ -530,5 +566,24 @@ impl Recipe {
     /// The time needed to craft the recipe.
     pub fn craft_time(&self) -> &Duration {
         &self.craft_time
+    }
+}
+
+impl Display for Recipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let input_strings: Vec<String> =
+            self.inputs.iter().map(|input| format!("{input}")).collect();
+        let input_str = input_strings.join(", ");
+
+        let output_strings: Vec<String> = self
+            .outputs
+            .iter()
+            .map(|output| format!("{output}"))
+            .collect();
+        let output_str = output_strings.join(", ");
+
+        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
+
+        write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
     }
 }
