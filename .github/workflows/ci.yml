@@ -60,7 +60,6 @@ jobs:
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- test
         env:
-          CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
   check-compiles:
@@ -110,7 +109,6 @@ jobs:
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- doc
         env:
-          CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0"
   #      - name: Installs cargo-deadlinks
   #        run: cargo install --force cargo-deadlinks
