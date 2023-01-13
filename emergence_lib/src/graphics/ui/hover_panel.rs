@@ -131,7 +131,7 @@ fn update_hover_panel(
         ),
     >,
 ) {
-    if let Some(cursor_tile_pos) = **cursor_tile_pos {
+    if let Some(cursor_tile_pos) = cursor_tile_pos.maybe_tile_pos() {
         // Update visibility of the whole panel
         *panel_query.single_mut() = Visibility::VISIBLE;
 
