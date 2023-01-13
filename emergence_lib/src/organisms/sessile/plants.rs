@@ -3,6 +3,7 @@
 use crate::{
     self as emergence_lib,
     items::{ItemCount, ItemId},
+    organisms::life_cycles::LifeCycle,
 };
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
