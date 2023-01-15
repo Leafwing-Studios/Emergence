@@ -13,6 +13,7 @@ use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
+use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 
@@ -44,10 +45,8 @@ fn setup(mut commands: Commands) {
         })
         .insert(InputManagerBundle::<CameraAction> {
             input_map: InputMap::default()
-                .insert(KeyCode::W, CameraAction::PanUp)
-                .insert(KeyCode::A, CameraAction::PanLeft)
-                .insert(KeyCode::S, CameraAction::PanDown)
-                .insert(KeyCode::D, CameraAction::PanRight)
+                .insert(VirtualDPad::wasd(), CameraAction::Pan)
+                .insert(VirtualDPad::arrow_keys(), CameraAction::Pan)
                 .build(),
             ..default()
         });
@@ -123,14 +122,8 @@ enum CameraZoom {
 /// Actions that manipulate the camera
 #[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
 enum CameraAction {
-    /// Camera pan up
-    PanUp,
-    /// Camera pan left
-    PanLeft,
-    /// Camera pan down
-    PanDown,
-    /// Camera pan right
-    PanRight,
+    /// Move the camera from side to side
+    Pan,
 }
 
 /// Plugin that adds the necessary systems for `PanCam` components to work
@@ -301,49 +294,41 @@ fn camera_movement(
         if let Some(window) = windows.get_primary() {
             let window_size = Vec2::new(window.width(), window.height());
 
-            let mut camera_pan_vector = Vec2::default();
-            for action in CameraAction::variants() {
-                if action_state.pressed(action) {
-                    camera_pan_vector += match action {
-                        CameraAction::PanUp => cam.button_pan_sensitivity * Vec2::Y,
-                        CameraAction::PanLeft => cam.button_pan_sensitivity * Vec2::NEG_X,
-                        CameraAction::PanDown => cam.button_pan_sensitivity * Vec2::NEG_Y,
-                        CameraAction::PanRight => cam.button_pan_sensitivity * Vec2::X,
-                    }
+            if let Some(camera_pan_data) = action_state.clamped_axis_pair(CameraAction::Pan) {
+                let camera_pan_vector = camera_pan_data.xy() * cam.button_pan_sensitivity;
+
+                let proj_size = Vec2::new(
+                    projection.right - projection.left,
+                    projection.top - projection.bottom,
+                ) * projection.scale;
+
+                let world_units_per_device_pixel = proj_size / window_size;
+
+                // The proposed new camera position
+                let delta_world = camera_pan_vector * world_units_per_device_pixel;
+                let mut proposed_cam_transform = transform.translation + delta_world.extend(0.);
+
+                // Check whether the proposed camera movement would be within the provided boundaries, override it if we
+                // need to do so to stay within bounds.
+                if let Some(min_x_boundary) = cam.min_x {
+                    let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
+                    proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
                 }
-            }
+                if let Some(max_x_boundary) = cam.max_x {
+                    let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
+                    proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
+                }
+                if let Some(min_y_boundary) = cam.min_y {
+                    let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
+                    proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
+                }
+                if let Some(max_y_boundary) = cam.max_y {
+                    let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
+                    proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
+                }
 
-            let proj_size = Vec2::new(
-                projection.right - projection.left,
-                projection.top - projection.bottom,
-            ) * projection.scale;
-
-            let world_units_per_device_pixel = proj_size / window_size;
-
-            // The proposed new camera position
-            let delta_world = camera_pan_vector * world_units_per_device_pixel;
-            let mut proposed_cam_transform = transform.translation + delta_world.extend(0.);
-
-            // Check whether the proposed camera movement would be within the provided boundaries, override it if we
-            // need to do so to stay within bounds.
-            if let Some(min_x_boundary) = cam.min_x {
-                let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
-                proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
+                transform.translation = proposed_cam_transform;
             }
-            if let Some(max_x_boundary) = cam.max_x {
-                let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
-                proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
-            }
-            if let Some(min_y_boundary) = cam.min_y {
-                let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
-                proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
-            }
-            if let Some(max_y_boundary) = cam.max_y {
-                let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
-                proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
-            }
-
-            transform.translation = proposed_cam_transform;
         }
     }
 }
