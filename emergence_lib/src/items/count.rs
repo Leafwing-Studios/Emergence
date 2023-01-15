@@ -5,7 +5,7 @@ use std::fmt::Display;
 use super::ItemId;
 
 /// A specific amount of a given item.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemCount {
     /// The unique identifier of the item being counted.
     item_id: ItemId,

@@ -109,7 +109,7 @@ impl Inventory {
                     items_to_add = 0;
                     break;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count,
             }
         }
 
@@ -121,7 +121,7 @@ impl Inventory {
                 Ok(_) => {
                     items_to_add = 0;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count,
             }
 
             self.slots.push(new_slot);
@@ -132,7 +132,7 @@ impl Inventory {
 
         if items_to_add > 0 {
             Err(AddOneItemError {
-                excess_count: ItemCount::new(item_count.item_id().clone(), items_to_add),
+                excess_count: items_to_add,
             })
         } else {
             Ok(())
@@ -151,10 +151,7 @@ impl Inventory {
 
         if remaining_space < item_count.count() {
             Err(AddOneItemError {
-                excess_count: ItemCount::new(
-                    item_count.item_id().clone(),
-                    item_count.count() - remaining_space,
-                ),
+                excess_count: item_count.count() - remaining_space,
             })
         } else {
             // If this unwrap panics the remaining space calculation must be wrong
