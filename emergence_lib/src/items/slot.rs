@@ -32,6 +32,22 @@ impl ItemSlot {
         }
     }
 
+    /// Create a slot fro the given item with the given count.
+    ///
+    /// # Panics
+    ///
+    /// It must be `count <= max_item_count` or this function will panic.
+    #[cfg(test)]
+    pub fn new_with_count(item_id: ItemId, max_item_count: usize, count: usize) -> Self {
+        assert!(count <= max_item_count);
+
+        Self {
+            item_id,
+            max_item_count,
+            count,
+        }
+    }
+
     /// The unique identifier of the item in the slot.
     pub fn item_id(&self) -> &ItemId {
         &self.item_id

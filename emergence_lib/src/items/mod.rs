@@ -17,6 +17,12 @@ impl ItemId {
     pub fn acacia_leaf() -> Self {
         Self("acacia_leaf")
     }
+
+    /// An item ID solely used for testing.
+    #[cfg(test)]
+    pub fn test() -> Self {
+        Self("test")
+    }
 }
 
 impl Display for ItemId {
