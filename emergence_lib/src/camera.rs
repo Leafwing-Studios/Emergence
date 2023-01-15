@@ -24,8 +24,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<PanCam>();
 
-        app.add_plugin(InputManagerPlugin::<CameraZoom>::default())
-            .add_plugin(InputManagerPlugin::<CameraAction>::default())
+        app.add_plugin(InputManagerPlugin::<CameraAction>::default())
             .add_startup_system_to_stage(StartupStage::Startup, setup)
             .add_system(camera_movement.label(PanCamSystemLabel))
             .add_system(camera_zoom.label(PanCamSystemLabel));
@@ -37,16 +36,11 @@ fn setup(mut commands: Commands) {
     commands
         .spawn(Camera2dBundle::default())
         .insert(PanCam::default())
-        .insert(InputManagerBundle::<CameraZoom> {
-            input_map: InputMap::default()
-                .insert(SingleAxis::mouse_wheel_y(), CameraZoom::Zoom)
-                .build(),
-            ..default()
-        })
         .insert(InputManagerBundle::<CameraAction> {
             input_map: InputMap::default()
                 .insert(VirtualDPad::wasd(), CameraAction::Pan)
                 .insert(VirtualDPad::arrow_keys(), CameraAction::Pan)
+                .insert(SingleAxis::mouse_wheel_y(), CameraAction::Zoom)
                 .build(),
             ..default()
         });
@@ -112,18 +106,13 @@ impl Default for PanCam {
     }
 }
 
-/// Enumerates actions that are managed by `leafwing_input_manager` for camera zoom
-#[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
-enum CameraZoom {
-    /// Camera zoom
-    Zoom,
-}
-
 /// Actions that manipulate the camera
 #[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
 enum CameraAction {
     /// Move the camera from side to side
     Pan,
+    /// Reveal more or less of the map by pulling the camera away or moving it closer
+    Zoom,
 }
 
 /// Plugin that adds the necessary systems for `PanCam` components to work
@@ -149,7 +138,7 @@ fn camera_zoom(
         &PanCam,
         &mut OrthographicProjection,
         &mut Transform,
-        &ActionState<CameraZoom>,
+        &ActionState<CameraAction>,
     )>,
     windows: Res<Windows>,
     #[cfg(feature = "debug_tools")] egui_ctx: Option<ResMut<bevy_egui::EguiContext>>,
@@ -163,7 +152,7 @@ fn camera_zoom(
 
     let (cam, mut proj, mut pos, action_state) = query.single_mut();
 
-    let scroll = cam.zoom_sensitivity * action_state.value(CameraZoom::Zoom);
+    let scroll = cam.zoom_sensitivity * action_state.value(CameraAction::Zoom);
 
     if scroll == 0. {
         return;
