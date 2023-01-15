@@ -24,7 +24,7 @@ impl Plugin for CameraPlugin {
         app.register_type::<PanCam>();
 
         app.add_plugin(InputManagerPlugin::<CameraZoom>::default())
-            .add_plugin(InputManagerPlugin::<CameraPan>::default())
+            .add_plugin(InputManagerPlugin::<CameraAction>::default())
             .add_startup_system_to_stage(StartupStage::Startup, setup)
             .add_system(camera_movement.label(PanCamSystemLabel))
             .add_system(camera_zoom.label(PanCamSystemLabel));
@@ -42,12 +42,12 @@ fn setup(mut commands: Commands) {
                 .build(),
             ..default()
         })
-        .insert(InputManagerBundle::<CameraPan> {
+        .insert(InputManagerBundle::<CameraAction> {
             input_map: InputMap::default()
-                .insert(KeyCode::W, CameraPan::Up)
-                .insert(KeyCode::A, CameraPan::Left)
-                .insert(KeyCode::S, CameraPan::Down)
-                .insert(KeyCode::D, CameraPan::Right)
+                .insert(KeyCode::W, CameraAction::PanUp)
+                .insert(KeyCode::A, CameraAction::PanLeft)
+                .insert(KeyCode::S, CameraAction::PanDown)
+                .insert(KeyCode::D, CameraAction::PanRight)
                 .build(),
             ..default()
         });
@@ -123,17 +123,17 @@ enum CameraZoom {
     Zoom,
 }
 
-/// Enumerates actions that are managed by `leafwing_input_manager` for panning the camera
+/// Actions that manipulate the camera
 #[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
-enum CameraPan {
+enum CameraAction {
     /// Camera pan up
-    Up,
+    PanUp,
     /// Camera pan left
-    Left,
+    PanLeft,
     /// Camera pan down
-    Down,
+    PanDown,
     /// Camera pan right
-    Right,
+    PanRight,
 }
 
 /// Plugin that adds the necessary systems for `PanCam` components to work
@@ -292,7 +292,7 @@ fn camera_movement(
         &PanCam,
         &mut Transform,
         &OrthographicProjection,
-        &ActionState<CameraPan>,
+        &ActionState<CameraAction>,
     )>,
     #[cfg(feature = "debug_tools")] egui_ctx: Option<ResMut<bevy_egui::EguiContext>>,
 ) {
@@ -309,13 +309,13 @@ fn camera_movement(
     let window_size = Vec2::new(window.width(), window.height());
 
     let mut camera_pan_vector = Vec2::default();
-    for action in CameraPan::variants() {
+    for action in CameraAction::variants() {
         if action_state.pressed(action) {
             camera_pan_vector += match action {
-                CameraPan::Up => cam.button_pan_sensitivity * Vec2::Y,
-                CameraPan::Left => cam.button_pan_sensitivity * Vec2::NEG_X,
-                CameraPan::Down => cam.button_pan_sensitivity * Vec2::NEG_Y,
-                CameraPan::Right => cam.button_pan_sensitivity * Vec2::X,
+                CameraAction::PanUp => cam.button_pan_sensitivity * Vec2::Y,
+                CameraAction::PanLeft => cam.button_pan_sensitivity * Vec2::NEG_X,
+                CameraAction::PanDown => cam.button_pan_sensitivity * Vec2::NEG_Y,
+                CameraAction::PanRight => cam.button_pan_sensitivity * Vec2::X,
             }
         }
     }
