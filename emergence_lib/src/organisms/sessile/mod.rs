@@ -6,7 +6,7 @@ use bevy::prelude::Bundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate::{
-    items::Recipe,
+    items::recipe::Recipe,
     structures::{crafting::CraftingBundle, StructureBundle},
 };
 
