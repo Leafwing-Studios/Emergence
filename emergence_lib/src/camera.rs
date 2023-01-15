@@ -288,7 +288,7 @@ fn max_scale_within_y_bounds(
 /// Handles camera movement
 fn camera_movement(
     windows: Res<Windows>,
-    mut query: Query<(
+    mut camera_query: Query<(
         &PanCam,
         &mut Transform,
         &OrthographicProjection,
@@ -303,54 +303,56 @@ fn camera_movement(
         }
     }
 
-    let (cam, mut transform, projection, action_state) = query.single_mut();
+    if let Ok((cam, mut transform, projection, action_state)) = camera_query.get_single_mut() {
+        if let Some(window) = windows.get_primary() {
+            let window_size = Vec2::new(window.width(), window.height());
 
-    let window = windows.get_primary().unwrap();
-    let window_size = Vec2::new(window.width(), window.height());
+            let mut camera_pan_vector = Vec2::default();
+            for action in CameraAction::variants() {
+                if action_state.pressed(action) {
+                    camera_pan_vector += match action {
+                        CameraAction::PanUp => cam.button_pan_sensitivity * Vec2::Y,
+                        CameraAction::PanLeft => cam.button_pan_sensitivity * Vec2::NEG_X,
+                        CameraAction::PanDown => cam.button_pan_sensitivity * Vec2::NEG_Y,
+                        CameraAction::PanRight => cam.button_pan_sensitivity * Vec2::X,
+                    }
+                }
+            }
 
-    let mut camera_pan_vector = Vec2::default();
-    for action in CameraAction::variants() {
-        if action_state.pressed(action) {
-            camera_pan_vector += match action {
-                CameraAction::PanUp => cam.button_pan_sensitivity * Vec2::Y,
-                CameraAction::PanLeft => cam.button_pan_sensitivity * Vec2::NEG_X,
-                CameraAction::PanDown => cam.button_pan_sensitivity * Vec2::NEG_Y,
-                CameraAction::PanRight => cam.button_pan_sensitivity * Vec2::X,
+            if cam.enabled {
+                let proj_size = Vec2::new(
+                    projection.right - projection.left,
+                    projection.top - projection.bottom,
+                ) * projection.scale;
+
+                let world_units_per_device_pixel = proj_size / window_size;
+
+                // The proposed new camera position
+                let delta_world = camera_pan_vector * world_units_per_device_pixel;
+                let mut proposed_cam_transform = transform.translation + delta_world.extend(0.);
+
+                // Check whether the proposed camera movement would be within the provided boundaries, override it if we
+                // need to do so to stay within bounds.
+                if let Some(min_x_boundary) = cam.min_x {
+                    let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
+                    proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
+                }
+                if let Some(max_x_boundary) = cam.max_x {
+                    let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
+                    proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
+                }
+                if let Some(min_y_boundary) = cam.min_y {
+                    let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
+                    proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
+                }
+                if let Some(max_y_boundary) = cam.max_y {
+                    let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
+                    proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
+                }
+
+                transform.translation = proposed_cam_transform;
             }
         }
-    }
-    if cam.enabled {
-        let proj_size = Vec2::new(
-            projection.right - projection.left,
-            projection.top - projection.bottom,
-        ) * projection.scale;
-
-        let world_units_per_device_pixel = proj_size / window_size;
-
-        // The proposed new camera position
-        let delta_world = camera_pan_vector * world_units_per_device_pixel;
-        let mut proposed_cam_transform = transform.translation + delta_world.extend(0.);
-
-        // Check whether the proposed camera movement would be within the provided boundaries, override it if we
-        // need to do so to stay within bounds.
-        if let Some(min_x_boundary) = cam.min_x {
-            let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
-            proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
-        }
-        if let Some(max_x_boundary) = cam.max_x {
-            let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
-            proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
-        }
-        if let Some(min_y_boundary) = cam.min_y {
-            let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
-            proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
-        }
-        if let Some(max_y_boundary) = cam.max_y {
-            let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
-            proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
-        }
-
-        transform.translation = proposed_cam_transform;
     }
 }
 
