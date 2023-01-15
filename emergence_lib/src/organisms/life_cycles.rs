@@ -5,7 +5,7 @@ use bevy::{
     utils::{Duration, HashMap},
 };
 
-use crate::items::Recipe;
+use crate::items::recipe::Recipe;
 
 use super::Species;
 

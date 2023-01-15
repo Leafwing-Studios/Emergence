@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::items::{Inventory, Recipe};
+use crate::items::{inventory::Inventory, recipe::Recipe};
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]

@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 use crate::{
     cursor::CursorTilePos,
-    items::{Inventory, Recipe},
+    items::{inventory::Inventory, recipe::Recipe},
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
     },
