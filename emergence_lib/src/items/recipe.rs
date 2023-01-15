@@ -61,3 +61,21 @@ impl Display for Recipe {
         write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::items::ItemId;
+
+    use super::*;
+
+    #[test]
+    fn should_display_inputs_outputs_craft_time() {
+        let recipe = Recipe {
+            inputs: Vec::new(),
+            outputs: vec![ItemCount::one(ItemId::acacia_leaf())],
+            craft_time: Duration::from_secs(1),
+        };
+
+        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00s")
+    }
+}
