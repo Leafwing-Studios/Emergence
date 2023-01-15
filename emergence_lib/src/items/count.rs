@@ -41,3 +41,15 @@ impl Display for ItemCount {
         write!(f, "{} ({})", self.item_id, self.count)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_display_item_type_and_count() {
+        let item_count = ItemCount::new(ItemId::acacia_leaf(), 3);
+
+        assert_eq!(format!("{item_count}"), "acacia_leaf (3)".to_string());
+    }
+}
