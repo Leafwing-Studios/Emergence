@@ -3,6 +3,8 @@
 #![deny(clippy::missing_docs_in_private_items)]
 #![forbid(unsafe_code)]
 #![warn(clippy::doc_markdown)]
+// Often exceeded by queries
+#![allow(clippy::type_complexity)]
 
 use bevy::app::{App, Plugin};
 
@@ -17,6 +19,7 @@ pub mod items;
 pub mod organisms;
 pub mod signals;
 pub mod simulation;
+pub mod structures;
 pub mod terrain;
 
 /// All of the code needed for users to interact with the simulation.
@@ -26,6 +29,9 @@ impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(cursor::CursorTilePosPlugin)
+            // We add this here instead of the organisms plugin for better testability
+            // Otherwise the organism plugin would depend on mouse input
+            .add_plugin(organisms::organism_details::DetailsPlugin)
             .add_plugin(hive_mind::HiveMindPlugin);
 
         #[cfg(feature = "debug_tools")]

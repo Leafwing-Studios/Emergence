@@ -53,8 +53,17 @@ impl Default for CursorWorldPos {
 }
 
 /// The tile position of the mouse cursor, if it lies over the map.
-#[derive(Resource, Default, Clone, Copy, Deref, DerefMut)]
+#[derive(Resource, Default, Clone, Copy)]
 pub struct CursorTilePos(Option<TilePos>);
+
+impl CursorTilePos {
+    /// The position of the cursor in hex coordinates, if it is on the hex map.
+    ///
+    /// If the cursor is outside the map, this will return `None`.
+    pub fn maybe_tile_pos(&self) -> Option<TilePos> {
+        self.0
+    }
+}
 
 /// Convert a world position into a tile position, if applicable.
 pub fn tile_pos_from_world_pos(
@@ -96,5 +105,5 @@ pub fn update_cursor_pos(
         cursor_map_pos.xy()
     };
 
-    **cursor_tile_pos_res = tile_pos_from_world_pos(&cursor_map_pos, map_size, grid_size);
+    cursor_tile_pos_res.0 = tile_pos_from_world_pos(&cursor_map_pos, map_size, grid_size);
 }

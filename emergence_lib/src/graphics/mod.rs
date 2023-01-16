@@ -2,7 +2,7 @@
 
 use crate::enum_iter::IterableEnum;
 use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
-use crate::organisms::structures::plants::Plant;
+use crate::organisms::sessile::plants::Acacia;
 use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::asset::AssetServer;
 use bevy::ecs::component::Component;
@@ -27,7 +27,7 @@ use emergence_macros::IterableEnum;
 
 use crate::graphics::produce::{ProduceSprite, ProduceTilemap};
 use crate::graphics::sprites::{IntoSprite, SpriteIndex};
-use crate::organisms::structures::fungi::Fungi;
+use crate::organisms::sessile::fungi::Leuco;
 use crate::organisms::units::Ant;
 use crate::simulation::map::MapGeometry;
 use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
@@ -54,9 +54,10 @@ pub enum GraphicsStage {
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
+            .add_plugin(ui::UiPlugin)
             .register_component_as::<dyn IntoSprite, Ant>()
-            .register_component_as::<dyn IntoSprite, Fungi>()
-            .register_component_as::<dyn IntoSprite, Plant>()
+            .register_component_as::<dyn IntoSprite, Leuco>()
+            .register_component_as::<dyn IntoSprite, Acacia>()
             .register_component_as::<dyn IntoSprite, HighTerrain>()
             .register_component_as::<dyn IntoSprite, RockyTerrain>()
             .register_component_as::<dyn IntoSprite, PlainTerrain>()
