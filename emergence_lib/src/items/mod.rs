@@ -2,6 +2,8 @@
 
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use crate::manifest::Manifest;
 
 pub mod count;
@@ -34,7 +36,7 @@ impl Display for ItemId {
 }
 
 /// The data associated with each item.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ItemData {
     /// The number of items that can fit in a single item slot.
     stack_size: usize,

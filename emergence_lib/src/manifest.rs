@@ -1,9 +1,10 @@
 //! Read-only definitions for entities.
 use bevy::{prelude::*, utils::HashMap};
+use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, hash::Hash};
 
 /// Read-only data definitions.
-#[derive(Debug, Resource)]
+#[derive(Debug, Resource, Serialize, Deserialize)]
 pub struct Manifest<Id, Data>(HashMap<Id, Data>)
 where
     Id: Debug + PartialEq + Eq + Hash,
