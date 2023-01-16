@@ -16,6 +16,7 @@ pub mod graphics;
 pub mod hive_mind;
 pub mod interactable;
 pub mod items;
+pub mod manifest;
 pub mod organisms;
 pub mod signals;
 pub mod simulation;
