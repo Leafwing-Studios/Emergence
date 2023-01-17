@@ -6,6 +6,7 @@ pub mod camera;
 pub mod cursor;
 pub mod hive_mind;
 pub mod organism_details;
+pub mod tile_selection;
 
 /// All of the code needed for users to interact with the simulation.
 pub struct InteractionPlugin;

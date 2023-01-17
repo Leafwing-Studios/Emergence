@@ -1,6 +1,7 @@
 //! Represents the player.
 
 use super::cursor::CursorTilePos;
+use super::tile_selection::{SelectedTiles, TileSelectionAction};
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::{PheromoneAttract, PheromoneRepulse};
 use crate::signals::SignalModificationEvent;
@@ -57,7 +58,6 @@ fn initialize_hive_mind(mut commands: Commands) {
         .spawn_empty()
         .insert(HiveMind)
         .insert(InputManagerBundle::<HiveMindAction> {
-            action_state: ActionState::default(),
             input_map: InputMap::new([
                 (
                     controls.attractive_pheromone.into(),
@@ -68,7 +68,13 @@ fn initialize_hive_mind(mut commands: Commands) {
                     HiveMindAction::PlaceRepulsivePheromone,
                 ),
             ]),
-        });
+            ..default()
+        })
+        .insert(InputManagerBundle::<TileSelectionAction> {
+            input_map: TileSelectionAction::default_input_map(),
+            ..default()
+        })
+        .insert(SelectedTiles::default());
 }
 
 // TODO: figure out a different control scheme
