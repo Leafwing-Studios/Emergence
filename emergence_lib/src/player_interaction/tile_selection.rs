@@ -95,7 +95,7 @@ impl SelectedTiles {
     /// Toggles the selection of a group of tiles.
     ///
     /// For each tile:
-    /// - if it are not selected, select it.
+    /// - if it is not selected, select it.
     /// - if it is already selected, remove it from the selection.
     pub fn toggle_tiles(&mut self, tile_pos_collection: impl IntoIterator<Item = TilePos>) {
         self.cache_selection();
