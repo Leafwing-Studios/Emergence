@@ -1,6 +1,6 @@
 //! Represents the player.
 
-use crate::cursor::CursorTilePos;
+use super::cursor::CursorTilePos;
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::{PheromoneAttract, PheromoneRepulse};
 use crate::signals::SignalModificationEvent;

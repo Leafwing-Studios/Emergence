@@ -6,16 +6,13 @@ use bevy_ecs_tilemap::tiles::TilePos;
 use std::fmt::Display;
 
 use crate::{
-    cursor::CursorTilePos,
     items::{inventory::Inventory, recipe::Recipe},
+    organisms::sessile::{fungi::Fungi, plants::Plant},
+    organisms::units::Ant,
+    player_interaction::cursor::CursorTilePos,
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
     },
-};
-
-use super::{
-    sessile::{fungi::Fungi, plants::Plant},
-    units::Ant,
 };
 
 /// The type of the organism, e.g. plant or fungus.

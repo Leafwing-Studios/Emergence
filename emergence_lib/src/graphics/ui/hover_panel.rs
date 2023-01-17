@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    cursor::CursorTilePos, organisms::organism_details::HoverDetails,
+    player_interaction::{cursor::CursorTilePos, organism_details::HoverDetails},
     structures::crafting::CraftingState,
 };
 
