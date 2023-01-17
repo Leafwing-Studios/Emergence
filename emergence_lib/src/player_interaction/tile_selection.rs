@@ -1,10 +1,10 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{
-    prelude::{App, MouseButton, Plugin, Res, ResMut, Resource},
+    prelude::{App, Color, Commands, Entity, MouseButton, Plugin, Query, Res, ResMut, Resource},
     utils::HashSet,
 };
-use bevy_ecs_tilemap::tiles::TilePos;
+use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -88,6 +88,11 @@ impl SelectedTiles {
     pub fn is_empty(&self) -> bool {
         self.selection.is_empty()
     }
+
+    /// Does the selection contain `tile_pos`?
+    pub fn contains(&self, tile_pos: &TilePos) -> bool {
+        self.selection.contains(tile_pos)
+    }
 }
 
 /// All tile selection logic and graphics
@@ -119,8 +124,16 @@ fn select_single_tile(
     }
 }
 
-fn display_selected_tiles(selected_tiles: Res<SelectedTiles>) {
+fn display_selected_tiles(
+    selected_tiles: Res<SelectedTiles>,
+    mut tile_query: Query<(&mut TileColor, &TilePos)>,
+) {
     if selected_tiles.is_changed() {
-        dbg!(selected_tiles);
+        for (mut tile_color, tile_pos) in tile_query.iter_mut() {
+            *tile_color = match selected_tiles.contains(tile_pos) {
+                true => TileColor(Color::YELLOW),
+                false => TileColor(Color::WHITE),
+            };
+        }
     }
 }
