@@ -45,14 +45,50 @@ impl TileSelectionAction {
 #[derive(Resource, Debug, Default)]
 pub struct SelectedTiles {
     selection: HashSet<TilePos>,
+    // TODO: use this for more efficient tile selection toggling
+    previous_selection: HashSet<TilePos>,
 }
 
 impl SelectedTiles {
-    /// Adds or removes a tile to the selection.
+    /// Selects or unselects a single tile.
     ///
     /// If it is not selected, select it.
     /// If it is already selected, remove it from the selection.
     pub fn toggle_tile(&mut self, tile_pos: TilePos) {
+        self.cache_selection();
+        if self.selection.contains(&tile_pos) {
+            self.selection.clear();
+        } else {
+            // Clear and then reinsert rather than making a new struct
+            // to avoid a pointless allocation
+            self.selection.clear();
+            self.selection.insert(tile_pos);
+        }
+    }
+
+    /// Toggles the selection of a group of tiles.
+    ///
+    /// For each tile:
+    /// - if it are not selected, select it.
+    /// - if it is already selected, remove it from the selection.
+    pub fn toggle_tiles(&mut self, tile_pos_collection: impl IntoIterator<Item = TilePos>) {
+        self.cache_selection();
+
+        tile_pos_collection.into_iter().for_each(|tile_pos| {
+            if self.selection.contains(&tile_pos) {
+                self.selection.remove(&tile_pos);
+            } else {
+                self.selection.insert(tile_pos);
+            }
+        });
+    }
+
+    /// Adds or removes a tile to the selection.
+    ///
+    /// If it is not selected, select it.
+    /// If it is already selected, remove it from the selection.
+    pub fn modify_selection(&mut self, tile_pos: TilePos) {
+        self.cache_selection();
         if self.selection.contains(&tile_pos) {
             self.selection.remove(&tile_pos);
         } else {
@@ -60,15 +96,19 @@ impl SelectedTiles {
         }
     }
 
-    /// Toggles a selection of tiles.
-    ///
-    /// For each tile:
-    /// - if it are not selected, select it.
-    /// - if it is already selected, remove it from the selection.
-    pub fn toggle_tiles(&mut self, tile_pos_collection: impl IntoIterator<Item = TilePos>) {
-        tile_pos_collection
-            .into_iter()
-            .for_each(|tile_pos| self.toggle_tile(tile_pos));
+    /// The current set of selected tiles
+    pub fn selection(&self) -> &HashSet<TilePos> {
+        &self.selection
+    }
+
+    /// The previous set of selected tiles
+    pub fn previous_selection(&self) -> &HashSet<TilePos> {
+        &self.previous_selection
+    }
+
+    /// Stores the current tile selection to be used to compute the set of changed tiles efficiently
+    fn cache_selection(&mut self) {
+        self.previous_selection = self.selection.clone();
     }
 
     /// Clears the set of selected tiles.
@@ -86,9 +126,27 @@ impl SelectedTiles {
         self.selection.is_empty()
     }
 
-    /// Does the selection contain `tile_pos`?
+    /// Is the given tile in the selection?
     pub fn contains(&self, tile_pos: &TilePos) -> bool {
-        self.selection.contains(tile_pos)
+        self.selection.contains(&tile_pos)
+    }
+
+    /// Compute the set of newly added tiles
+    pub fn added_tiles(&self) -> HashSet<TilePos> {
+        self.selection
+            .difference(self.previous_selection())
+            .into_iter()
+            .map(|p| *p)
+            .collect()
+    }
+
+    /// Compute the set of newly removed tiles
+    pub fn removed_tiles(&self) -> HashSet<TilePos> {
+        self.previous_selection
+            .difference(self.selection())
+            .into_iter()
+            .map(|p| *p)
+            .collect()
     }
 }
 
@@ -101,21 +159,20 @@ impl Plugin for TileSelectionPlugin {
             .init_resource::<ActionState<TileSelectionAction>>()
             .insert_resource(TileSelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
-            .add_system(select_single_tile)
-            .add_system(display_selected_tiles.after(select_single_tile));
+            .add_system(select_tiles)
+            .add_system(display_selected_tiles.after(select_tiles));
     }
 }
 
-fn select_single_tile(
+fn select_tiles(
     cursor_tile_pos: Res<CursorTilePos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
 ) {
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
         if actions.just_pressed(TileSelectionAction::ModifySelection) {
-            selected_tiles.toggle_tile(cursor_tile);
+            selected_tiles.modify_selection(cursor_tile);
         } else if actions.just_pressed(TileSelectionAction::Single) {
-            selected_tiles.clear_selection();
             selected_tiles.toggle_tile(cursor_tile);
         }
     }
