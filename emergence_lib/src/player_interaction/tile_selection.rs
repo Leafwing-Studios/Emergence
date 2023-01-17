@@ -1,15 +1,17 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{
-    prelude::{Component, MouseButton},
+    prelude::{App, MouseButton, Plugin, Res, ResMut, Resource},
     utils::HashSet,
 };
 use bevy_ecs_tilemap::tiles::TilePos;
 use leafwing_input_manager::{
-    prelude::InputMap,
+    prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
     Actionlike,
 };
+
+use super::cursor::CursorTilePos;
 
 /// Actions that can be used to select tiles.
 ///
@@ -43,7 +45,7 @@ impl TileSelectionAction {
 }
 
 /// The set of tiles that is currently selected
-#[derive(Component, Default)]
+#[derive(Resource, Debug, Default)]
 pub struct SelectedTiles {
     selection: HashSet<TilePos>,
 }
@@ -83,5 +85,40 @@ impl SelectedTiles {
     /// Are any tiles selected?
     pub fn is_empty(&self) -> bool {
         self.selection.is_empty()
+    }
+}
+
+/// All tile selection logic and graphics
+pub struct TileSelectionPlugin;
+
+impl Plugin for TileSelectionPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<SelectedTiles>()
+            .init_resource::<ActionState<TileSelectionAction>>()
+            .insert_resource(TileSelectionAction::default_input_map())
+            .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
+            .add_system(select_single_tile)
+            .add_system(display_selected_tiles);
+    }
+}
+
+fn select_single_tile(
+    cursor_tile_pos: Res<CursorTilePos>,
+    mut selected_tiles: ResMut<SelectedTiles>,
+    actions: Res<ActionState<TileSelectionAction>>,
+) {
+    if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
+        if actions.pressed(TileSelectionAction::ModifySelection) {
+            selected_tiles.toggle_tile(cursor_tile);
+        } else if actions.pressed(TileSelectionAction::Single) {
+            selected_tiles.clear_selection();
+            selected_tiles.toggle_tile(cursor_tile);
+        }
+    }
+}
+
+fn display_selected_tiles(selected_tiles: Res<SelectedTiles>) {
+    if selected_tiles.is_changed() {
+        dbg!(selected_tiles);
     }
 }
