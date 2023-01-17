@@ -23,7 +23,17 @@ pub enum TileSelectionAction {
     /// Adds additional tiles to the selection
     ///
     /// This behavior is performed by `Control + Click` in most applications.
-    ModifySelection,
+    Modify,
+    /// Selects or deselects a group of hex tiles by dragging over them
+    Drag,
+}
+
+#[derive(PartialEq, Default)]
+enum SelectMode {
+    #[default]
+    None,
+    Select,
+    Deselect,
 }
 
 impl TileSelectionAction {
@@ -35,7 +45,11 @@ impl TileSelectionAction {
             ),
             (
                 UserInput::modified(Modifier::Control, MouseButton::Left),
-                TileSelectionAction::ModifySelection,
+                TileSelectionAction::Modify,
+            ),
+            (
+                UserInput::modified(Modifier::Shift, MouseButton::Left),
+                TileSelectionAction::Drag,
             ),
         ])
     }
@@ -50,6 +64,18 @@ pub struct SelectedTiles {
 }
 
 impl SelectedTiles {
+    /// Selects a single tile
+    pub fn select_tile(&mut self, tile_pos: TilePos) {
+        self.cache_selection();
+        self.selection.insert(tile_pos);
+    }
+
+    /// Deselects a single tile
+    pub fn deselect_tile(&mut self, tile_pos: TilePos) {
+        self.cache_selection();
+        self.selection.remove(&tile_pos);
+    }
+
     /// Selects or unselects a single tile.
     ///
     /// If it is not selected, select it.
@@ -168,12 +194,31 @@ fn select_tiles(
     cursor_tile_pos: Res<CursorTilePos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
+    mut selection_mode: Local<SelectMode>,
 ) {
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
-        if actions.just_pressed(TileSelectionAction::ModifySelection) {
+        if actions.pressed(TileSelectionAction::Drag) {
+            if *selection_mode == SelectMode::None {
+                *selection_mode = match selected_tiles.contains(&cursor_tile) {
+                    // If you start with a selected tile, subtract from the selection
+                    true => SelectMode::Deselect,
+                    // If you start with an unselected tile, add to the selection
+                    false => SelectMode::Select,
+                }
+            }
+            match *selection_mode {
+                SelectMode::Select => selected_tiles.select_tile(cursor_tile),
+                SelectMode::Deselect => selected_tiles.deselect_tile(cursor_tile),
+                SelectMode::None => unreachable!(),
+            }
+        } else if actions.just_pressed(TileSelectionAction::Modify) {
             selected_tiles.modify_selection(cursor_tile);
         } else if actions.just_pressed(TileSelectionAction::Single) {
             selected_tiles.toggle_tile(cursor_tile);
+        }
+
+        if actions.released(TileSelectionAction::Drag) {
+            *selection_mode = SelectMode::None;
         }
     }
 }
