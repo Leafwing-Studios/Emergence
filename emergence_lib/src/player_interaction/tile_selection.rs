@@ -4,7 +4,7 @@ use bevy::{
     prelude::{App, Color, Commands, Entity, MouseButton, Plugin, Query, Res, ResMut, Resource},
     utils::HashSet,
 };
-use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
+use bevy_ecs_tilemap::tiles::{TileColor, TilePos, TileVisible};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -126,13 +126,13 @@ fn select_single_tile(
 
 fn display_selected_tiles(
     selected_tiles: Res<SelectedTiles>,
-    mut tile_query: Query<(&mut TileColor, &TilePos)>,
+    mut tile_query: Query<(&mut TileVisible, &TilePos)>,
 ) {
     if selected_tiles.is_changed() {
-        for (mut tile_color, tile_pos) in tile_query.iter_mut() {
-            *tile_color = match selected_tiles.contains(tile_pos) {
-                true => TileColor(Color::YELLOW),
-                false => TileColor(Color::WHITE),
+        for (mut tile_visibility, tile_pos) in tile_query.iter_mut() {
+            *tile_visibility = match selected_tiles.contains(tile_pos) {
+                true => TileVisible(true),
+                false => TileVisible(false),
             };
         }
     }
