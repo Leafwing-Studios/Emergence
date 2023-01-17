@@ -1,10 +1,7 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use bevy::{
-    prelude::{App, Color, Commands, Entity, MouseButton, Plugin, Query, Res, ResMut, Resource},
-    utils::HashSet,
-};
-use bevy_ecs_tilemap::tiles::{TileColor, TilePos, TileVisible};
+use bevy::{prelude::*, utils::HashSet};
+use bevy_ecs_tilemap::tiles::{TilePos, TileVisible};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -105,7 +102,7 @@ impl Plugin for TileSelectionPlugin {
             .insert_resource(TileSelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
             .add_system(select_single_tile)
-            .add_system(display_selected_tiles);
+            .add_system(display_selected_tiles.after(select_single_tile));
     }
 }
 
@@ -115,9 +112,9 @@ fn select_single_tile(
     actions: Res<ActionState<TileSelectionAction>>,
 ) {
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
-        if actions.pressed(TileSelectionAction::ModifySelection) {
+        if actions.just_pressed(TileSelectionAction::ModifySelection) {
             selected_tiles.toggle_tile(cursor_tile);
-        } else if actions.pressed(TileSelectionAction::Single) {
+        } else if actions.just_pressed(TileSelectionAction::Single) {
             selected_tiles.clear_selection();
             selected_tiles.toggle_tile(cursor_tile);
         }
