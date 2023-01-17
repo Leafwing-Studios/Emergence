@@ -57,6 +57,8 @@ impl SelectedTiles {
     /// If it is already selected, remove it from the selection.
     pub fn toggle_tile(&mut self, tile_pos: TilePos) {
         if self.selection.contains(&tile_pos) {
+            self.selection.remove(&tile_pos);
+        } else {
             self.selection.insert(tile_pos);
         }
     }
@@ -89,7 +91,7 @@ impl SelectedTiles {
 }
 
 /// All tile selection logic and graphics
-pub struct TileSelectionPlugin;
+pub(super) struct TileSelectionPlugin;
 
 impl Plugin for TileSelectionPlugin {
     fn build(&self, app: &mut App) {
