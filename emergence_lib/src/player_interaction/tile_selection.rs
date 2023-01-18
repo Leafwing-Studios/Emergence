@@ -74,13 +74,13 @@ pub struct SelectedTiles {
 
 impl SelectedTiles {
     /// Selects a single tile
-    pub fn select_tile(&mut self, tile_pos: TilePos) {
+    pub fn add_tile_to_selection(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         self.selection.insert(tile_pos);
     }
 
     /// Deselects a single tile
-    pub fn deselect_tile(&mut self, tile_pos: TilePos) {
+    pub fn remove_tile_from_selection(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         self.selection.remove(&tile_pos);
     }
