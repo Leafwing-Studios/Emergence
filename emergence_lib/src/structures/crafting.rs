@@ -5,10 +5,9 @@ use std::time::Duration;
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::items::{
-    count::ItemCount,
     inventory::Inventory,
     recipe::{Recipe, RecipeId, RecipeManifest},
-    ItemId,
+    ItemData, ItemId, ItemManifest,
 };
 
 /// The current state in the crafting progress.
@@ -185,18 +184,19 @@ pub struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
+        // TODO: LOad this from an asset file
+        let mut item_manifest = HashMap::new();
+        item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
+
         // TODO: Load this from an asset file
         let mut recipe_manifest = HashMap::new();
         recipe_manifest.insert(
             RecipeId::acacia_leaf_production(),
-            Recipe::new(
-                Vec::new(),
-                vec![ItemCount::one(ItemId::acacia_leaf())],
-                Duration::from_secs(10),
-            ),
+            Recipe::acacia_leaf_production(),
         );
 
-        app.insert_resource(RecipeManifest::new(recipe_manifest))
+        app.insert_resource(ItemManifest::new(item_manifest))
+            .insert_resource(RecipeManifest::new(recipe_manifest))
             .add_system(progress_crafting)
             .add_system(start_and_finish_crafting.after(progress_crafting));
     }

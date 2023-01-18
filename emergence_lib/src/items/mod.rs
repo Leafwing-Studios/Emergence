@@ -47,6 +47,12 @@ impl ItemData {
     pub fn stack_size(&self) -> usize {
         self.stack_size
     }
+
+    // TODO: Remove this once we can load item data from asset files
+    /// A leaf from an acacia plant.
+    pub fn acacia_leaf() -> Self {
+        Self { stack_size: 10 }
+    }
 }
 
 /// The data definitions for all items.

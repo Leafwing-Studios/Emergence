@@ -4,7 +4,7 @@ use std::{fmt::Display, time::Duration};
 
 use crate::manifest::Manifest;
 
-use super::count::ItemCount;
+use super::{count::ItemCount, ItemId};
 
 /// The unique identifier of a recipe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -38,6 +38,16 @@ impl Recipe {
             outputs,
             craft_time,
         }
+    }
+
+    // TODO: Remove this once we load recipes from asset files
+    /// An acacia plant producing leaves.
+    pub fn acacia_leaf_production() -> Self {
+        Recipe::new(
+            Vec::new(),
+            vec![ItemCount::one(ItemId::acacia_leaf())],
+            Duration::from_secs(10),
+        )
     }
 
     /// The inputs needed to craft the recipe.
