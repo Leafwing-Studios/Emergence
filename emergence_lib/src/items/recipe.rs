@@ -2,7 +2,20 @@
 
 use std::{fmt::Display, time::Duration};
 
+use crate::manifest::Manifest;
+
 use super::count::ItemCount;
+
+/// The unique identifier of a recipe.
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct RecipeId(&'static str);
+
+impl RecipeId {
+    /// The ID of the recipe for the leaf production of acacia plants.
+    pub fn acacia_leaf_production() -> Self {
+        Self("acacia_leaf_production")
+    }
+}
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
@@ -61,6 +74,9 @@ impl Display for Recipe {
         write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
     }
 }
+
+/// The definitions for all recipes.
+pub type RecipeManifest = Manifest<RecipeId, Recipe>;
 
 #[cfg(test)]
 mod tests {

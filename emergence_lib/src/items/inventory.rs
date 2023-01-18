@@ -8,6 +8,7 @@ use super::{
     slot::ItemSlot,
     ItemId,
 };
+
 /// An inventory to store multiple types of items.
 #[derive(Debug, Default, Clone)]
 pub struct Inventory {

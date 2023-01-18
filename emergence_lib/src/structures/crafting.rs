@@ -4,7 +4,10 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::items::{inventory::Inventory, recipe::Recipe};
+use crate::items::{
+    inventory::Inventory,
+    recipe::{RecipeId, RecipeManifest},
+};
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
@@ -44,11 +47,11 @@ impl OutputInventory {
 
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default)]
-pub struct ActiveRecipe(Option<Recipe>);
+pub struct ActiveRecipe(Option<RecipeId>);
 
 impl ActiveRecipe {
-    /// The currently active recipe, if one has been selected.
-    pub fn maybe_recipe(&self) -> &Option<Recipe> {
+    /// The ID of the currently active recipe, if one has been selected.
+    pub fn recipe_id(&self) -> &Option<RecipeId> {
         &self.0
     }
 }
@@ -97,13 +100,13 @@ impl CraftingBundle {
     }
 
     /// Create a new crafting bundle for the given recipe.
-    pub fn new_with_recipe(recipe: Recipe) -> Self {
+    pub fn new_with_recipe(recipe_id: RecipeId) -> Self {
         Self {
             // TODO: Don't hard-code these values
             input_inventory: InputInventory(Inventory::new(0, 0)),
             output_inventory: OutputInventory(Inventory::new(1, 10)),
-            craft_timer: CraftTimer(Timer::new(*recipe.craft_time(), TimerMode::Once)),
-            active_recipe: ActiveRecipe(Some(recipe)),
+            craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
+            active_recipe: ActiveRecipe(Some(recipe_id)),
             craft_state: CraftingState::WaitingForInput,
         }
     }
@@ -124,6 +127,7 @@ fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut Cr
 
 /// Finish the crafting process once the timer ticked down and start the crafting of the next recipe.
 fn start_and_finish_crafting(
+    recipe_manifest: Res<RecipeManifest>,
     mut query: Query<(
         &ActiveRecipe,
         &mut CraftTimer,
@@ -134,15 +138,20 @@ fn start_and_finish_crafting(
 ) {
     for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
     {
-        if let Some(recipe) = &active_recipe.0 {
+        if let Some(recipe_id) = &active_recipe.0 {
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(recipe.outputs())
+                    .add_all_or_nothing_many_items(
+                        recipe_manifest.get(recipe_id).unwrap().outputs(),
+                    )
                     .is_ok()
             {
-                info!("Crafted items: {:?}", recipe.outputs());
+                info!(
+                    "Crafted items: {:?}",
+                    recipe_manifest.get(recipe_id).unwrap().outputs()
+                );
                 // The next item can be crafted
                 *craft_state = CraftingState::WaitingForInput;
             }
@@ -151,11 +160,15 @@ fn start_and_finish_crafting(
             if *craft_state == CraftingState::WaitingForInput
                 && input
                     .0
-                    .remove_all_or_nothing_many_items(recipe.inputs())
+                    .remove_all_or_nothing_many_items(
+                        recipe_manifest.get(recipe_id).unwrap().inputs(),
+                    )
                     .is_ok()
             {
                 // Set the timer to the recipe time
-                craft_timer.0.set_duration(*recipe.craft_time());
+                craft_timer
+                    .0
+                    .set_duration(*recipe_manifest.get(recipe_id).unwrap().craft_time());
                 craft_timer.0.reset();
 
                 // Start crafting

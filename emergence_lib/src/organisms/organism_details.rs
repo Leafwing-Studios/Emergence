@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 use crate::{
     cursor::CursorTilePos,
-    items::{inventory::Inventory, recipe::Recipe},
+    items::{inventory::Inventory, recipe::RecipeId},
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
     },
@@ -55,7 +55,7 @@ pub struct CraftingDetails {
     pub output_inventory: Inventory,
 
     /// The recipe that's currently being crafted, if any.
-    pub active_recipe: Option<Recipe>,
+    pub active_recipe: Option<RecipeId>,
 
     /// The state of the ongoing crafting process.
     pub state: CraftingState,
@@ -134,7 +134,7 @@ fn hover_details(
                         Some(CraftingDetails {
                             input_inventory: input.inventory().clone(),
                             output_inventory: output.inventory().clone(),
-                            active_recipe: recipe.maybe_recipe().clone(),
+                            active_recipe: recipe.recipe_id().clone(),
                             state: state.clone(),
                             timer: timer.timer().clone(),
                         })
