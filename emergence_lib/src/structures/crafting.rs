@@ -2,11 +2,13 @@
 
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use crate::items::{
+    count::ItemCount,
     inventory::Inventory,
-    recipe::{RecipeId, RecipeManifest},
+    recipe::{Recipe, RecipeId, RecipeManifest},
+    ItemId,
 };
 
 /// The current state in the crafting progress.
@@ -183,7 +185,19 @@ pub struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(progress_crafting)
+        // TODO: Load this from an asset file
+        let mut recipe_manifest = HashMap::new();
+        recipe_manifest.insert(
+            RecipeId::acacia_leaf_production(),
+            Recipe::new(
+                Vec::new(),
+                vec![ItemCount::one(ItemId::acacia_leaf())],
+                Duration::from_secs(10),
+            ),
+        );
+
+        app.insert_resource(RecipeManifest::new(recipe_manifest))
+            .add_system(progress_crafting)
             .add_system(start_and_finish_crafting.after(progress_crafting));
     }
 }
