@@ -167,7 +167,7 @@ impl SelectedTiles {
     }
 
     /// Is the given tile in the selection?
-    pub fn contains_in_selection(&self, tile_pos: &TilePos) -> bool {
+    pub fn contains_pos(&self, tile_pos: &TilePos) -> bool {
         self.selection.contains(tile_pos)
     }
 
@@ -215,7 +215,7 @@ fn select_tiles(
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
         if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
-                *selection_mode = match selected_tiles.contains_in_selection(&cursor_tile) {
+                *selection_mode = match selected_tiles.contains_pos(&cursor_tile) {
                     // If you start with a selected tile, subtract from the selection
                     true => SelectMode::Deselect,
                     // If you start with an unselected tile, add to the selection
@@ -239,7 +239,7 @@ fn select_tiles(
     }
 }
 
-// TODO: display an outline instead of toggle the visibility
+// TODO: display an outline/tile highlight instead of toggle the visibility
 /// Show some type of highlight for the selected tiles.
 ///
 /// This function currently toggles the visibility of the selected tiles but can be repurposed to show highlights instead.  
@@ -249,11 +249,10 @@ fn highlight_selected_tiles(
 ) {
     if selected_tiles.is_changed() {
         for (mut tile_visibility, tile_pos) in tile_query.iter_mut() {
-            if selected_tiles.contains_in_selection(tile_pos) {
-                *tile_visibility = TileVisible(false);
-            } else if !selected_tiles.contains_in_selection(tile_pos) {
-                *tile_visibility = TileVisible(true);
-            }
+            *tile_visibility = match selected_tiles.contains_pos(tile_pos) {
+                true => TileVisible(false), // TODO: Add a color change here
+                false => TileVisible(true), // TODO: Remove color change
+            };
         }
     }
 }
