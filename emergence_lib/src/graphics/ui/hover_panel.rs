@@ -155,7 +155,7 @@ fn update_hover_panel(
                 text.sections[1].value = format!("{}", crafting_details.input_inventory);
                 text.sections[3].value = format!("{}", crafting_details.output_inventory);
                 text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe {
-                    format!("{}", recipe)
+                    format!("{recipe}")
                 } else {
                     "None".to_string()
                 };
