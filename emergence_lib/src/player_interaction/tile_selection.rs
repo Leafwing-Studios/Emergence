@@ -85,7 +85,7 @@ impl SelectedTiles {
         self.selection.remove(&tile_pos);
     }
 
-    /// Toggles the selected tile single tile selection mode
+    /// Chooses what happens to a tile in single tile selection mode  
     ///
     /// If a tile is not selected, select it.
     /// If a tile is already selected, remove it from the selection.
@@ -167,7 +167,7 @@ impl SelectedTiles {
     }
 
     /// Is the given tile in the selection?
-    pub fn contains(&self, tile_pos: &TilePos) -> bool {
+    pub fn contains_in_selection(&self, tile_pos: &TilePos) -> bool {
         self.selection.contains(tile_pos)
     }
 
@@ -176,8 +176,8 @@ impl SelectedTiles {
         self.selection
             .difference(self.previous_selection())
             .into_iter()
-            // .copied() // TODO: determine if it's better to copy or map
-            .map(|p| *p)
+            .copied()
+            // .map(|p| *p) // TODO: determine if it's better to copy or map
             .collect()
     }
 
@@ -215,7 +215,7 @@ fn select_tiles(
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
         if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
-                *selection_mode = match selected_tiles.contains(&cursor_tile) {
+                *selection_mode = match selected_tiles.contains_in_selection(&cursor_tile) {
                     // If you start with a selected tile, subtract from the selection
                     true => SelectMode::Deselect,
                     // If you start with an unselected tile, add to the selection
@@ -223,8 +223,8 @@ fn select_tiles(
                 }
             }
             match *selection_mode {
-                SelectMode::Select => selected_tiles.select_tile(cursor_tile),
-                SelectMode::Deselect => selected_tiles.deselect_tile(cursor_tile),
+                SelectMode::Select => selected_tiles.add_tile_to_selection(cursor_tile),
+                SelectMode::Deselect => selected_tiles.remove_tile_from_selection(cursor_tile),
                 SelectMode::None => unreachable!(),
             }
         } else if actions.just_pressed(TileSelectionAction::Modify) {
@@ -249,10 +249,11 @@ fn highlight_selected_tiles(
 ) {
     if selected_tiles.is_changed() {
         for (mut tile_visibility, tile_pos) in tile_query.iter_mut() {
-            *tile_visibility = match selected_tiles.contains(tile_pos) {
-                true => TileVisible(true),
-                false => TileVisible(false),
-            };
+            if selected_tiles.contains_in_selection(tile_pos) {
+                *tile_visibility = TileVisible(false);
+            } else if !selected_tiles.contains_in_selection(tile_pos) {
+                *tile_visibility = TileVisible(true);
+            }
         }
     }
 }
