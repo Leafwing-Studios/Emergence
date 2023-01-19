@@ -147,7 +147,7 @@ fn start_and_finish_crafting(
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(recipe.outputs(), &*item_manifest)
+                    .add_all_or_nothing_many_items(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
                 info!("Crafted items: {:?}", recipe.outputs());

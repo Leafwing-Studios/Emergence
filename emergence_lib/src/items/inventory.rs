@@ -355,6 +355,7 @@ mod tests {
     fn item_manifest() -> ItemManifest {
         let mut item_manifest = HashMap::new();
         item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
+        item_manifest.insert(ItemId::test(), ItemData { stack_size: 10 });
 
         ItemManifest::new(item_manifest)
     }
