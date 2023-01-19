@@ -140,19 +140,16 @@ fn start_and_finish_crafting(
     for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
     {
         if let Some(recipe_id) = &active_recipe.0 {
+            let recipe = recipe_manifest.get(recipe_id).unwrap();
+
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(
-                        recipe_manifest.get(recipe_id).unwrap().outputs(),
-                    )
+                    .add_all_or_nothing_many_items(recipe.outputs())
                     .is_ok()
             {
-                info!(
-                    "Crafted items: {:?}",
-                    recipe_manifest.get(recipe_id).unwrap().outputs()
-                );
+                info!("Crafted items: {:?}", recipe.outputs());
                 // The next item can be crafted
                 *craft_state = CraftingState::WaitingForInput;
             }
@@ -161,15 +158,11 @@ fn start_and_finish_crafting(
             if *craft_state == CraftingState::WaitingForInput
                 && input
                     .0
-                    .remove_all_or_nothing_many_items(
-                        recipe_manifest.get(recipe_id).unwrap().inputs(),
-                    )
+                    .remove_all_or_nothing_many_items(recipe.inputs())
                     .is_ok()
             {
                 // Set the timer to the recipe time
-                craft_timer
-                    .0
-                    .set_duration(*recipe_manifest.get(recipe_id).unwrap().craft_time());
+                craft_timer.0.set_duration(*recipe.craft_time());
                 craft_timer.0.reset();
 
                 // Start crafting
