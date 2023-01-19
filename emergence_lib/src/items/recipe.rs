@@ -17,6 +17,12 @@ impl RecipeId {
     }
 }
 
+impl Display for RecipeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
 pub struct Recipe {

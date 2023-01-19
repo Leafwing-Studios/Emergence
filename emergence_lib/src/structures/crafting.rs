@@ -92,8 +92,8 @@ impl CraftingBundle {
     pub fn new() -> Self {
         Self {
             // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0, 0)),
-            output_inventory: OutputInventory(Inventory::new(1, 10)),
+            input_inventory: InputInventory(Inventory::new(0)),
+            output_inventory: OutputInventory(Inventory::new(1)),
             craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
             active_recipe: ActiveRecipe(None),
             craft_state: CraftingState::WaitingForInput,
@@ -104,8 +104,8 @@ impl CraftingBundle {
     pub fn new_with_recipe(recipe_id: RecipeId) -> Self {
         Self {
             // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0, 0)),
-            output_inventory: OutputInventory(Inventory::new(1, 10)),
+            input_inventory: InputInventory(Inventory::new(0)),
+            output_inventory: OutputInventory(Inventory::new(1)),
             craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
             active_recipe: ActiveRecipe(Some(recipe_id)),
             craft_state: CraftingState::WaitingForInput,
@@ -129,6 +129,7 @@ fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut Cr
 /// Finish the crafting process once the timer ticked down and start the crafting of the next recipe.
 fn start_and_finish_crafting(
     recipe_manifest: Res<RecipeManifest>,
+    item_manifest: Res<ItemManifest>,
     mut query: Query<(
         &ActiveRecipe,
         &mut CraftTimer,
@@ -140,13 +141,13 @@ fn start_and_finish_crafting(
     for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
     {
         if let Some(recipe_id) = &active_recipe.0 {
-            let recipe = recipe_manifest.get(recipe_id).unwrap();
+            let recipe = recipe_manifest.get(recipe_id);
 
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(recipe.outputs())
+                    .add_all_or_nothing_many_items(recipe.outputs(), &*item_manifest)
                     .is_ok()
             {
                 info!("Crafted items: {:?}", recipe.outputs());
@@ -177,7 +178,7 @@ pub struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: LOad this from an asset file
+        // TODO: Load this from an asset file
         let mut item_manifest = HashMap::new();
         item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
 
