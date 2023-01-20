@@ -101,27 +101,7 @@ impl SelectedTiles {
         }
     }
 
-    // TODO: determine if we need a multiple tile selection toggle
-    // TODO: deduplicate this function from `modify_selection`
-    /// Toggles the selection of a group of tiles.
-    ///
-    /// For each tile:
-    /// - if it are not selected, select it.
-    /// - if it is already selected, remove it from the selection.
-    // pub fn multiple_tile_selection_toggle(
-    //     &mut self,
-    //     tile_pos_collection: impl IntoIterator<Item = TilePos>,
-    // ) {
-    //     self.cache_selection();
-
-    //     tile_pos_collection.into_iter().for_each(|tile_pos| {
-    //         if self.selection.contains(&tile_pos) {
-    //             self.selection.remove(&tile_pos);
-    //         } else {
-    //             self.selection.insert(tile_pos);
-    //         }
-    //     });
-    // }
+    // TODO: Determine if we need a `multiple_tile_selection_toggle`
 
     /// Adds or removes a tile from the cached selection.
     ///
@@ -177,7 +157,6 @@ impl SelectedTiles {
             .difference(self.previous_selection())
             .into_iter()
             .copied()
-            // .map(|p| *p) // TODO: determine if it's better to copy or map
             .collect()
     }
 
@@ -187,7 +166,6 @@ impl SelectedTiles {
             .difference(self.selection())
             .into_iter()
             .copied()
-            // .map(|p| *p) // TODO: determine if it's better to copy or to map
             .collect()
     }
 }
