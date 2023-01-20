@@ -22,7 +22,7 @@ jobs:
           components: rustfmt, clippy
           override: true
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@6dc28e2602e677d85fa9d7cad58f725b659213be
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: CI job
@@ -38,7 +38,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@6dc28e2602e677d85fa9d7cad58f725b659213be
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Build & run tests
@@ -57,7 +57,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@6dc28e2602e677d85fa9d7cad58f725b659213be
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Check Compile
@@ -72,7 +72,7 @@ jobs:
         with:
           toolchain: stable
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@6dc28e2602e677d85fa9d7cad58f725b659213be
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
         if: runner.os == 'linux'
@@ -95,7 +95,7 @@ jobs:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           override: true
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@6dc28e2602e677d85fa9d7cad58f725b659213be
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       # We don't --force install to reduce CI times (drastically)
       # We fix the version so that it overwrites when we specify a new one
       # We need to remember to update the version from time to time
