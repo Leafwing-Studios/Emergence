@@ -1,6 +1,6 @@
 //! Represents the player.
 
-use crate::cursor::CursorTilePos;
+use super::cursor::CursorTilePos;
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::{PheromoneAttract, PheromoneRepulse};
 use crate::signals::SignalModificationEvent;
@@ -57,7 +57,6 @@ fn initialize_hive_mind(mut commands: Commands) {
         .spawn_empty()
         .insert(HiveMind)
         .insert(InputManagerBundle::<HiveMindAction> {
-            action_state: ActionState::default(),
             input_map: InputMap::new([
                 (
                     controls.attractive_pheromone.into(),
@@ -68,6 +67,7 @@ fn initialize_hive_mind(mut commands: Commands) {
                     HiveMindAction::PlaceRepulsivePheromone,
                 ),
             ]),
+            ..default()
         });
 }
 

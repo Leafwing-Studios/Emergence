@@ -11,7 +11,6 @@ use self::{
 };
 
 pub mod life_cycles;
-pub mod organism_details;
 pub mod sessile;
 pub mod units;
 

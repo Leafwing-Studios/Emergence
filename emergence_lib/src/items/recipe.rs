@@ -2,7 +2,26 @@
 
 use std::{fmt::Display, time::Duration};
 
-use super::count::ItemCount;
+use crate::manifest::Manifest;
+
+use super::{count::ItemCount, ItemId};
+
+/// The unique identifier of a recipe.
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct RecipeId(&'static str);
+
+impl RecipeId {
+    /// The ID of the recipe for the leaf production of acacia plants.
+    pub fn acacia_leaf_production() -> Self {
+        Self("acacia_leaf_production")
+    }
+}
+
+impl Display for RecipeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
@@ -25,6 +44,16 @@ impl Recipe {
             outputs,
             craft_time,
         }
+    }
+
+    // TODO: Remove this once we load recipes from asset files
+    /// An acacia plant producing leaves.
+    pub fn acacia_leaf_production() -> Self {
+        Recipe::new(
+            Vec::new(),
+            vec![ItemCount::one(ItemId::acacia_leaf())],
+            Duration::from_secs(10),
+        )
     }
 
     /// The inputs needed to craft the recipe.
@@ -61,6 +90,9 @@ impl Display for Recipe {
         write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
     }
 }
+
+/// The definitions for all recipes.
+pub type RecipeManifest = Manifest<RecipeId, Recipe>;
 
 #[cfg(test)]
 mod tests {

@@ -2,9 +2,13 @@
 
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
-use crate::items::{inventory::Inventory, recipe::Recipe};
+use crate::items::{
+    inventory::Inventory,
+    recipe::{Recipe, RecipeId, RecipeManifest},
+    ItemData, ItemId, ItemManifest,
+};
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
@@ -44,11 +48,11 @@ impl OutputInventory {
 
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default)]
-pub struct ActiveRecipe(Option<Recipe>);
+pub struct ActiveRecipe(Option<RecipeId>);
 
 impl ActiveRecipe {
-    /// The currently active recipe, if one has been selected.
-    pub fn maybe_recipe(&self) -> &Option<Recipe> {
+    /// The ID of the currently active recipe, if one has been selected.
+    pub fn recipe_id(&self) -> &Option<RecipeId> {
         &self.0
     }
 }
@@ -88,8 +92,8 @@ impl CraftingBundle {
     pub fn new() -> Self {
         Self {
             // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0, 0)),
-            output_inventory: OutputInventory(Inventory::new(1, 10)),
+            input_inventory: InputInventory(Inventory::new(0)),
+            output_inventory: OutputInventory(Inventory::new(1)),
             craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
             active_recipe: ActiveRecipe(None),
             craft_state: CraftingState::WaitingForInput,
@@ -97,13 +101,13 @@ impl CraftingBundle {
     }
 
     /// Create a new crafting bundle for the given recipe.
-    pub fn new_with_recipe(recipe: Recipe) -> Self {
+    pub fn new_with_recipe(recipe_id: RecipeId) -> Self {
         Self {
             // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0, 0)),
-            output_inventory: OutputInventory(Inventory::new(1, 10)),
-            craft_timer: CraftTimer(Timer::new(*recipe.craft_time(), TimerMode::Once)),
-            active_recipe: ActiveRecipe(Some(recipe)),
+            input_inventory: InputInventory(Inventory::new(0)),
+            output_inventory: OutputInventory(Inventory::new(1)),
+            craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
+            active_recipe: ActiveRecipe(Some(recipe_id)),
             craft_state: CraftingState::WaitingForInput,
         }
     }
@@ -124,6 +128,8 @@ fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut Cr
 
 /// Finish the crafting process once the timer ticked down and start the crafting of the next recipe.
 fn start_and_finish_crafting(
+    recipe_manifest: Res<RecipeManifest>,
+    item_manifest: Res<ItemManifest>,
     mut query: Query<(
         &ActiveRecipe,
         &mut CraftTimer,
@@ -134,12 +140,14 @@ fn start_and_finish_crafting(
 ) {
     for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
     {
-        if let Some(recipe) = &active_recipe.0 {
+        if let Some(recipe_id) = &active_recipe.0 {
+            let recipe = recipe_manifest.get(recipe_id);
+
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(recipe.outputs())
+                    .add_all_or_nothing_many_items(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
                 info!("Crafted items: {:?}", recipe.outputs());
@@ -170,7 +178,20 @@ pub struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(progress_crafting)
+        // TODO: Load this from an asset file
+        let mut item_manifest = HashMap::new();
+        item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
+
+        // TODO: Load this from an asset file
+        let mut recipe_manifest = HashMap::new();
+        recipe_manifest.insert(
+            RecipeId::acacia_leaf_production(),
+            Recipe::acacia_leaf_production(),
+        );
+
+        app.insert_resource(ItemManifest::new(item_manifest))
+            .insert_resource(RecipeManifest::new(recipe_manifest))
+            .add_system(progress_crafting)
             .add_system(start_and_finish_crafting.after(progress_crafting));
     }
 }

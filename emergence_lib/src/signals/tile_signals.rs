@@ -2,9 +2,7 @@
 
 use crate::signals::configs::SignalConfigs;
 use crate::signals::emitters::Emitter;
-use crate::signals::map_overlay::{AlphaCompose, RGBA_WHITE};
 use crate::signals::Signal;
-use bevy::prelude::*;
 use bevy::utils::HashMap;
 
 /// Keeps track of the different signals present at a tile.
@@ -94,34 +92,6 @@ impl TileSignals {
         for signal in self.map.values_mut() {
             signal.apply_deltas();
         }
-    }
-
-    /// Compute colors due to each emitter.
-    pub fn compute_colors(&self, signal_configs: &SignalConfigs) -> Vec<Color> {
-        signal_configs
-            .iter()
-            .filter_map(|(emitter, config)| {
-                self.map
-                    .get(emitter)
-                    .and_then(|signal| signal.compute_color(&config.color_config))
-            })
-            .collect()
-    }
-
-    /// Compute color by combining (using the over operator) color for each emitter, in order, using
-    /// the [`over`](AlphaCompose::over) to the baseline [`RGBA_WHITE`].
-    ///
-    /// The order of the emitters is governed by the order they were registered into the given
-    /// [`SignalConfigs`].
-    pub fn compute_combined_color(&self, signal_configs: &SignalConfigs) -> Color {
-        let colors = self.compute_colors(signal_configs);
-
-        let mut total_color = RGBA_WHITE;
-        for color in colors {
-            total_color = color.over(&total_color)
-        }
-
-        total_color
     }
 
     /// Retrieve value of signal from specified `Emitter`.

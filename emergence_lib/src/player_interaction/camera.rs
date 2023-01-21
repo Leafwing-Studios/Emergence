@@ -157,7 +157,6 @@ fn camera_zoom(
     if scroll == 0. {
         return;
     }
-    info!("scroll: {scroll}");
 
     let window = windows.get_primary().unwrap();
     let window_size = Vec2::new(window.width(), window.height());

@@ -6,38 +6,18 @@
 // Often exceeded by queries
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Plugin};
-
-pub mod camera;
-pub mod cursor;
 pub mod curves;
 pub mod enum_iter;
 pub mod graphics;
-pub mod hive_mind;
 pub mod interactable;
 pub mod items;
+pub mod manifest;
 pub mod organisms;
+pub mod player_interaction;
 pub mod signals;
 pub mod simulation;
 pub mod structures;
 pub mod terrain;
-
-/// All of the code needed for users to interact with the simulation.
-pub struct InteractionPlugin;
-
-impl Plugin for InteractionPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(camera::CameraPlugin)
-            .add_plugin(cursor::CursorTilePosPlugin)
-            // We add this here instead of the organisms plugin for better testability
-            // Otherwise the organism plugin would depend on mouse input
-            .add_plugin(organisms::organism_details::DetailsPlugin)
-            .add_plugin(hive_mind::HiveMindPlugin);
-
-        #[cfg(feature = "debug_tools")]
-        app.add_plugin(debug_tools::DebugToolsPlugin);
-    }
-}
 
 /// Various app configurations, used for testing.
 ///
@@ -68,7 +48,7 @@ pub mod testing {
     pub fn interaction_app(gen_config: GenerationConfig) -> App {
         let mut app = simulation_app(gen_config);
         app.add_plugin(bevy::input::InputPlugin)
-            .add_plugin(super::InteractionPlugin);
+            .add_plugin(crate::player_interaction::InteractionPlugin);
         app
     }
 }

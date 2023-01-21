@@ -6,7 +6,7 @@ use bevy::prelude::Bundle;
 use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate::{
-    items::recipe::Recipe,
+    items::recipe::RecipeId,
     structures::{crafting::CraftingBundle, StructureBundle},
 };
 
@@ -43,11 +43,11 @@ impl<S: Species> SessileBundle<S> {
     }
 
     /// Create a new [`SessileBundle`] at the given `tile_pos`, which will attempt to produce the provided `recipe` automatically.
-    pub fn new_with_recipe(tile_pos: TilePos, recipe: Recipe) -> SessileBundle<S> {
+    pub fn new_with_recipe(tile_pos: TilePos, recipe_id: RecipeId) -> SessileBundle<S> {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
             structure_bundle: StructureBundle::default(),
-            crafting_bundle: CraftingBundle::new_with_recipe(recipe),
+            crafting_bundle: CraftingBundle::new_with_recipe(recipe_id),
             tile_pos,
         }
     }
