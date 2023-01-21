@@ -74,22 +74,24 @@ pub struct SelectedTiles {
 
 impl SelectedTiles {
     /// Selects a single tile
-    pub fn add_tile_to_selection(&mut self, tile_pos: TilePos) {
+    pub fn add_tile(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         self.selection.insert(tile_pos);
     }
 
     /// Deselects a single tile
-    pub fn remove_tile_from_selection(&mut self, tile_pos: TilePos) {
+    pub fn remove_tile(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         self.selection.remove(&tile_pos);
     }
 
-    /// Chooses what happens to a tile in single tile selection mode  
+    /// Selects a single tile, at the expense of any other tiles already selected.
     ///
     /// If a tile is not selected, select it.
     /// If a tile is already selected, remove it from the selection.
-    pub fn single_tile_selection_toggle(&mut self, tile_pos: TilePos) {
+    ///
+    /// This is the behavior controlled by [`TileSelectionAction::Single`].
+    pub fn select_single(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         if self.selection.contains(&tile_pos) {
             self.selection.clear();
@@ -105,6 +107,8 @@ impl SelectedTiles {
     ///
     /// If it is not selected, select it.
     /// If it is already selected, remove it from the selection.
+    ///
+    /// This is the behavior controlled by [`TileSelectionAction::Modify`].
     pub fn modify_selection(&mut self, tile_pos: TilePos) {
         self.cache_selection();
         if self.selection.contains(&tile_pos) {
@@ -199,14 +203,14 @@ fn select_tiles(
                 }
             }
             match *selection_mode {
-                SelectMode::Select => selected_tiles.add_tile_to_selection(cursor_tile),
-                SelectMode::Deselect => selected_tiles.remove_tile_from_selection(cursor_tile),
+                SelectMode::Select => selected_tiles.add_tile(cursor_tile),
+                SelectMode::Deselect => selected_tiles.remove_tile(cursor_tile),
                 SelectMode::None => unreachable!(),
             }
         } else if actions.just_pressed(TileSelectionAction::Modify) {
             selected_tiles.modify_selection(cursor_tile);
         } else if actions.just_pressed(TileSelectionAction::Single) {
-            selected_tiles.single_tile_selection_toggle(cursor_tile);
+            selected_tiles.select_single(cursor_tile);
         }
 
         if actions.released(TileSelectionAction::Multiple) {
