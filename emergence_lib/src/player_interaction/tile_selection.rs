@@ -16,16 +16,17 @@ use super::cursor::CursorTilePos;
 /// If it is already selected, it will be removed from the selection.
 #[derive(Actionlike, Clone)]
 pub enum TileSelectionAction {
-    /// Selects a single tile.
+    /// Selects a single tile, deselecting any others.
     ///
-    /// This behavior is performed by `Left Click`.
-    /// This will only select a single tile and remove others from the selection
+    /// If the tile is already selected, it will be unselected.
     Single,
-    /// Adds additional tiles to the selection
+    /// Adds or subtracts tiles from the selection.
     ///
-    /// This behavior is performed by `Control + Click`.
+    /// Unselected tiles will be selected, and selected tiles be unslected.
     Modify,
     /// Selects or deselects a group of hex tiles by dragging over them
+    ///
+    /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
     Multiple,
 }
 
@@ -41,9 +42,8 @@ enum SelectMode {
     Deselect,
 }
 
-/// Input map for `leafwing-input-manager` controls
 impl TileSelectionAction {
-    /// Maps inputs to actions
+    /// The default key bindings
     pub(super) fn default_input_map() -> InputMap<TileSelectionAction> {
         InputMap::new([
             (
@@ -100,8 +100,6 @@ impl SelectedTiles {
             self.selection.insert(tile_pos);
         }
     }
-
-    // TODO: Determine if we need a `multiple_tile_selection_toggle`
 
     /// Adds or removes a tile from the cached selection.
     ///
