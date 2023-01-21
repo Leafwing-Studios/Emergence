@@ -1,7 +1,7 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{prelude::*, utils::HashSet};
-use bevy_ecs_tilemap::tiles::{TilePos, TileVisible};
+use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -225,13 +225,13 @@ fn select_tiles(
 /// This function currently toggles the visibility of the selected tiles but can be repurposed to show highlights instead.  
 fn highlight_selected_tiles(
     selected_tiles: Res<SelectedTiles>,
-    mut tile_query: Query<(&mut TileVisible, &TilePos)>,
+    mut tile_query: Query<(&mut TileColor, &TilePos)>,
 ) {
     if selected_tiles.is_changed() {
-        for (mut tile_visibility, tile_pos) in tile_query.iter_mut() {
-            *tile_visibility = match selected_tiles.contains_pos(tile_pos) {
-                true => TileVisible(false), // TODO: Add a color change here
-                false => TileVisible(true), // TODO: Remove color change
+        for (mut tile_color, tile_pos) in tile_query.iter_mut() {
+            *tile_color = match selected_tiles.contains_pos(tile_pos) {
+                true => TileColor(Color::YELLOW),
+                false => TileColor(Color::WHITE),
             };
         }
     }

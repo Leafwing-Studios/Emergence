@@ -1,6 +1,5 @@
 //! Utilities to manage configuration of signals (colour, decay rate, etc.).
 
-use crate::curves::Sigmoid;
 use crate::enum_iter::IterableEnum;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use bevy::ecs::system::Resource;
@@ -26,56 +25,26 @@ impl Default for SignalConfigs {
                 StockEmitter::Ant => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
-                        is_visible: true,
-                    },
                 },
                 StockEmitter::Plant => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
-                        is_visible: true,
-                    },
                 },
                 StockEmitter::Fungus => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
-                        is_visible: true,
-                    },
                 },
                 StockEmitter::Unspecified => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
-                        is_visible: true,
-                    },
                 },
                 StockEmitter::PheromoneAttract => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-2,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.2),
-                        is_visible: true,
-                    },
                 },
                 StockEmitter::PheromoneRepulse => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
-                    color_config: SignalColorConfig {
-                        rgb_color: [0.3, 0.3, 0.9],
-                        sigmoid: Sigmoid::new(0.0, 1.0, 0.01, 0.1),
-                        is_visible: true,
-                    },
                 },
             };
             configs.insert(Emitter::Stock(variant), config);
@@ -115,26 +84,4 @@ pub struct SignalConfig {
     pub diffusion_factor: f32,
     /// The probability with which a signal naturally decays per tick.
     pub decay_probability: f32,
-    /// Color settings.
-    pub color_config: SignalColorConfig,
-}
-
-/// Color configuration for a [`Signal`](crate::signals::Signal).
-///
-/// The final coloration for a [`Signal`](crate::signals::Signal) at a particular tile position will depend upon the
-/// `rgb_color` specified in the color configuration, and the `value` of the [`Signal`](crate::signals::Signal), which will
-/// affect the computed color's `alpha`.
-///
-/// If `value` is below `zero_value`, then the computed color will have alpha `0.0`, otherwise if
-/// the value is above `one_value`, then the computed color will have alpha `1.0`. If `value` is
-/// between `zero_value` and `one_value`, then `alpha` will be mapped to some point between these
-/// two.
-#[derive(Clone, Copy, Debug)]
-pub struct SignalColorConfig {
-    /// The three primary colour values (rgb) defining the colour used.
-    pub rgb_color: [f32; 3],
-    /// The sigmoid that maps a signal value to an alpha value.
-    pub sigmoid: Sigmoid,
-    /// Should this signal be visible on the map?
-    pub is_visible: bool,
 }

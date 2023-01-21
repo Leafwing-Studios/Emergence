@@ -3,13 +3,10 @@
 //! Signals diffuse, can be convected, and so on.
 pub mod configs;
 pub mod emitters;
-pub mod map_overlay;
 pub mod tile_signals;
-use crate::curves::Mapping;
 use crate::enum_iter::IterableEnum;
-use crate::signals::configs::{SignalColorConfig, SignalConfig, SignalConfigs};
+use crate::signals::configs::{SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
-use crate::signals::map_overlay::MapOverlayPlugin;
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::hex_patch::HexPatchLocation;
 use crate::simulation::map::resources::MapResource;
@@ -27,7 +24,6 @@ impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SignalConfigs>()
             .add_event::<SignalModificationEvent>()
-            .add_plugin(MapOverlayPlugin)
             .add_startup_system_to_stage(StartupStage::PostStartup, initialize_map_signals)
             .add_system(handle_signal_modification_events)
             .add_system(decay.after(handle_signal_modification_events))
@@ -200,22 +196,6 @@ impl Signal {
         self.current_value = (self.current_value + self.incoming - self.outgoing).max(0.0);
         self.incoming = 0.0;
         self.outgoing = 0.0;
-    }
-
-    /// Compute the color of this signal given a color configuration, if the signal's color
-    /// configuration indicates it is to be visible.
-    fn compute_color(&self, color_config: &SignalColorConfig) -> Option<Color> {
-        color_config.is_visible.then_some({
-            // This produces a Color::Rgba variant.
-            let mut color = Color::from(color_config.rgb_color);
-
-            // What are the possible values for a signal? [0, \infty)
-            // What are we mapping to? [0, 1), the alpha component of our color
-            // Use a shifted sigmoid to represent this
-            color.set_a(color_config.sigmoid.map(self.current_value));
-
-            color
-        })
     }
 }
 
