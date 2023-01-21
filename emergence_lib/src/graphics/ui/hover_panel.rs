@@ -2,8 +2,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    cursor::CursorTilePos, items::recipe::RecipeManifest,
-    organisms::organism_details::HoverDetails, structures::crafting::CraftingState,
+    items::recipe::RecipeManifest,
+    player_interaction::{cursor::CursorTilePos, organism_details::HoverDetails},
+    structures::crafting::CraftingState,
 };
 
 use super::{FiraSansFontFamily, RightPanel, UiStage};
