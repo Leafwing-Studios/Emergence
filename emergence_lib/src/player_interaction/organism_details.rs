@@ -6,9 +6,11 @@ use bevy_ecs_tilemap::tiles::TilePos;
 use std::fmt::Display;
 
 use crate::{
-    items::{inventory::Inventory, recipe::Recipe},
-    organisms::sessile::{fungi::Fungi, plants::Plant},
-    organisms::units::Ant,
+    items::{inventory::Inventory, recipe::RecipeId},
+    organisms::{
+        sessile::{fungi::Fungi, plants::Plant},
+        units::Ant,
+    },
     player_interaction::cursor::CursorTilePos,
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
@@ -52,7 +54,7 @@ pub struct CraftingDetails {
     pub output_inventory: Inventory,
 
     /// The recipe that's currently being crafted, if any.
-    pub active_recipe: Option<Recipe>,
+    pub active_recipe: Option<RecipeId>,
 
     /// The state of the ongoing crafting process.
     pub state: CraftingState,
@@ -131,7 +133,7 @@ fn hover_details(
                         Some(CraftingDetails {
                             input_inventory: input.inventory().clone(),
                             output_inventory: output.inventory().clone(),
-                            active_recipe: recipe.maybe_recipe().clone(),
+                            active_recipe: recipe.recipe_id().clone(),
                             state: state.clone(),
                             timer: timer.timer().clone(),
                         })

@@ -1,10 +1,6 @@
 //! Plants are structures powered by photosynthesis.
 
-use crate::{
-    self as emergence_lib,
-    items::{count::ItemCount, ItemId},
-    organisms::life_cycles::LifeCycle,
-};
+use crate::{self as emergence_lib, items::recipe::RecipeId, organisms::life_cycles::LifeCycle};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
@@ -12,11 +8,10 @@ use emergence_macros::IterableEnum;
 use crate::{
     enum_iter::IterableEnum,
     graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
-    items::recipe::Recipe,
     organisms::Species,
 };
 
-use std::{default::Default, time::Duration};
+use std::default::Default;
 
 use super::SessileBundle;
 
@@ -79,11 +74,7 @@ impl AcaciaBundle {
             plant: Plant,
             sessile_bundle: SessileBundle::new_with_recipe(
                 tile_pos,
-                Recipe::new(
-                    Vec::new(),
-                    vec![ItemCount::one(ItemId::acacia_leaf())],
-                    Duration::from_secs(10),
-                ),
+                RecipeId::acacia_leaf_production(),
             ),
         }
     }

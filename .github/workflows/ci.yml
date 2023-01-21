@@ -21,23 +21,8 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
           override: true
-      - name: Create Cargo.lock file
-        run: cargo update
-      - uses: actions/cache@v3
-        with:
-          # cache the build files! see: https://github.com/actions/cache
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          # Update the cache every time the lock file changes
-          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          # Restore caches from the same job and toml files
-          restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ runner.os }}-${{ github.job }}-
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: CI job
@@ -52,22 +37,8 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: Create Cargo.lock file
-        run: cargo update
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          # Update the cache every time the lock file changes
-          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          # Restore caches from the same job and toml files
-          restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ runner.os }}-${{ github.job }}-
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Build & run tests
@@ -85,22 +56,8 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: Create Cargo.lock file
-        run: cargo update
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          # Update the cache every time the lock file changes
-          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          # Restore caches from the same job and toml files
-          restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ runner.os }}-${{ github.job }}-
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Check Compile
@@ -114,22 +71,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Create Cargo.lock file
-        run: cargo update
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          # Update the cache every time the lock file changes
-          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          # Restore caches from the same job and toml files
-          restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ runner.os }}-${{ github.job }}-
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
         if: runner.os == 'linux'
@@ -151,22 +94,8 @@ jobs:
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           override: true
-      - name: Create Cargo.lock file
-        run: cargo update
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          # Update the cache every time the lock file changes
-          key: ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          # Restore caches from the same job and toml files
-          restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ runner.os }}-${{ github.job }}-
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       # We don't --force install to reduce CI times (drastically)
       # We fix the version so that it overwrites when we specify a new one
       # We need to remember to update the version from time to time

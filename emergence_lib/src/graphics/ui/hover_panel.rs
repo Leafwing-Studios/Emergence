@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    items::recipe::RecipeManifest,
     player_interaction::{cursor::CursorTilePos, organism_details::HoverDetails},
     structures::crafting::CraftingState,
 };
@@ -109,6 +110,7 @@ fn setup_hover_panel(
 fn update_hover_panel(
     cursor_tile_pos: Res<CursorTilePos>,
     hover_details: Res<HoverDetails>,
+    recipe_manifest: Res<RecipeManifest>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
     mut organism_query: Query<
@@ -154,8 +156,9 @@ fn update_hover_panel(
                 // Update all text entries for crafting
                 text.sections[1].value = format!("{}", crafting_details.input_inventory);
                 text.sections[3].value = format!("{}", crafting_details.output_inventory);
-                text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe {
-                    format!("{recipe}")
+                text.sections[5].value = if let Some(recipe_id) = &crafting_details.active_recipe {
+                    let recipe = recipe_manifest.get(recipe_id);
+                    format!("{}", recipe)
                 } else {
                     "None".to_string()
                 };
