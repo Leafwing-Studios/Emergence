@@ -21,6 +21,7 @@ bevy-trait-query = { git = "https://github.com/Leafwing-Studios/bevy-trait-query
 indexmap = "1.9"
 debug_tools = { path = "../tools/debug_tools", optional = true }
 petitset = "0.2"
+serde = "1.0.152"
 
 [dev-dependencies]
 # We need headless operation in tests
