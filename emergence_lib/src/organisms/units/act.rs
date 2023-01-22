@@ -23,8 +23,8 @@ fn wander(
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
         pheromone_sensor.signal_to_weight(
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneAttract)),
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneRepulse)),
+            tile_signals.get(&Emitter::Stock(StockEmitter::Lure)),
+            tile_signals.get(&Emitter::Stock(StockEmitter::Warning)),
         )
     };
 

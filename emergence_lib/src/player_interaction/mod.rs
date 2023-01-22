@@ -2,9 +2,9 @@
 
 use bevy::prelude::{App, Plugin, SystemLabel};
 
+pub mod abilities;
 pub mod camera;
 pub mod cursor;
-pub mod hive_mind;
 pub mod organism_details;
 pub mod tile_selection;
 pub mod zoning;
@@ -17,7 +17,7 @@ impl Plugin for InteractionPlugin {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(cursor::CursorTilePosPlugin)
             .add_plugin(organism_details::DetailsPlugin)
-            .add_plugin(hive_mind::HiveMindPlugin)
+            .add_plugin(abilities::HiveMindPlugin)
             .add_plugin(tile_selection::TileSelectionPlugin)
             .add_plugin(zoning::ZoningPlugin);
 

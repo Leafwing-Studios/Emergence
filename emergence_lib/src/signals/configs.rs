@@ -38,11 +38,11 @@ impl Default for SignalConfigs {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
                 },
-                StockEmitter::PheromoneAttract => SignalConfig {
+                StockEmitter::Lure => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-2,
                 },
-                StockEmitter::PheromoneRepulse => SignalConfig {
+                StockEmitter::Warning => SignalConfig {
                     diffusion_factor: 1e-4,
                     decay_probability: 1e-4,
                 },
