@@ -1,6 +1,8 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
 use super::cursor::CursorTilePos;
+use super::intent::Intent;
+use super::InteractionSystem;
 use crate::signals::emitters::Emitter;
 use crate::signals::emitters::StockEmitter::{Lure, Warning};
 use crate::signals::SignalModificationEvent;
@@ -15,7 +17,12 @@ impl Plugin for AbilitiesPlugin {
         app.add_plugin(InputManagerPlugin::<IntentAbility>::default())
             .init_resource::<ActionState<IntentAbility>>()
             .insert_resource(IntentAbility::default_input_map())
-            .add_system(use_ability);
+            .add_system(
+                use_ability
+                    .label(InteractionSystem::UseAbilities)
+                    // If we don't have enough intent, zoning should be applied first to reduce the risk of an error message.
+                    .after(InteractionSystem::ApplyZoning),
+            );
     }
 }
 
@@ -35,6 +42,14 @@ impl IntentAbility {
             (KeyCode::F, IntentAbility::Lure),
             (KeyCode::G, IntentAbility::Warning),
         ])
+    }
+
+    /// The cost of each ability
+    fn cost(&self) -> Intent {
+        match self {
+            IntentAbility::Lure => Intent(10.),
+            IntentAbility::Warning => Intent(20.),
+        }
     }
 }
 

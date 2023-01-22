@@ -6,9 +6,27 @@
 
 use std::ops::{Div, Mul};
 
-use bevy::prelude::Resource;
+use bevy::{
+    prelude::{App, IntoSystemDescriptor, Plugin, Res, ResMut, Resource},
+    time::Time,
+};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+
+use super::InteractionSystem;
+
+pub(super) struct IntentPlugin;
+
+impl Plugin for IntentPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<IntentPool>().add_system(
+            regenerate_intent
+                .label(InteractionSystem::ReplenishIntent)
+                .before(InteractionSystem::ApplyZoning)
+                .before(InteractionSystem::UseAbilities),
+        );
+    }
+}
 
 /// The amount of Intent available to the player.
 /// If they spend it all, they can no longer act.
@@ -22,6 +40,19 @@ pub struct IntentPool {
     max: Intent,
     /// The amount of intent regenerated per second.
     pub regen_per_second: Intent,
+}
+
+const MAX_INTENT: Intent = Intent(100.);
+const INTENT_REGEN: Intent = Intent(10.);
+
+impl Default for IntentPool {
+    fn default() -> Self {
+        IntentPool {
+            current: MAX_INTENT,
+            max: MAX_INTENT,
+            regen_per_second: INTENT_REGEN,
+        }
+    }
 }
 
 /// A quantity of Intent, used to modify an [`IntentPool`].
@@ -89,4 +120,11 @@ impl Pool for IntentPool {
     fn set_regen_per_second(&mut self, new_regen_per_second: Self::Quantity) {
         self.regen_per_second = new_regen_per_second;
     }
+}
+
+/// Regenerates the [`Intent`] of the hive mind.
+///
+/// Note that we cannot use the built-in system for this, as our pool is stored somewhat unusually as a resource.
+fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<Time>) {
+    intent_pool.regenerate(time.delta());
 }

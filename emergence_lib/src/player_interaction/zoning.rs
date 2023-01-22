@@ -22,7 +22,11 @@ impl Plugin for ZoningPlugin {
                     .label(InteractionSystem::SelectStructure)
                     .after(InteractionSystem::ComputeCursorPos),
             )
-            .add_system(zone_selected_tiles.after(InteractionSystem::SelectTiles))
+            .add_system(
+                zone_selected_tiles
+                    .label(InteractionSystem::ApplyZoning)
+                    .after(InteractionSystem::SelectTiles),
+            )
             .add_system(display_selected_structure.after(InteractionSystem::SelectStructure));
     }
 }

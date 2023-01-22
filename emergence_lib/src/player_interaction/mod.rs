@@ -16,9 +16,10 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(camera::CameraPlugin)
-            .add_plugin(cursor::CursorTilePosPlugin)
-            .add_plugin(organism_details::DetailsPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
+            .add_plugin(cursor::CursorTilePosPlugin)
+            .add_plugin(intent::IntentPlugin)
+            .add_plugin(organism_details::DetailsPlugin)
             .add_plugin(tile_selection::TileSelectionPlugin)
             .add_plugin(zoning::ZoningPlugin);
 
@@ -38,4 +39,10 @@ pub enum InteractionSystem {
     SelectTiles,
     /// Held structure is selected
     SelectStructure,
+    /// Replenishes the [`IntentPool`](intent::IntentPool) of the hive mind
+    ReplenishIntent,
+    /// Apply zoning to tiles
+    ApplyZoning,
+    /// Use intent-spending abilities
+    UseAbilities,
 }
