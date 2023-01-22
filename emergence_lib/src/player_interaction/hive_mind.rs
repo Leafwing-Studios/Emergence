@@ -31,47 +31,27 @@ pub enum HiveMindAction {
     PlaceRepulsivePheromone,
 }
 
-// TODO: rework this to use LWIM conventions for mapping controls
-/// Interface for player controls
-pub struct HiveMindControls {
-    /// Place an attractive pheromone
-    pub attractive_pheromone: KeyCode,
-    /// Place a repulsive pheromone
-    pub repulsive_pheromone: UserInput,
-}
-
-/// Add a default control scheme
-impl Default for HiveMindControls {
-    fn default() -> Self {
-        Self {
-            attractive_pheromone: KeyCode::Space,
-            repulsive_pheromone: UserInput::chord([KeyCode::LShift, KeyCode::Space]),
-        }
+impl HiveMindAction {
+    /// The starting keybinds
+    fn default_input_map() -> InputMap<HiveMindAction> {
+        InputMap::new([
+            (KeyCode::F, HiveMindAction::PlaceAttractivePheromone),
+            (KeyCode::G, HiveMindAction::PlaceRepulsivePheromone),
+        ])
     }
 }
 
 /// Startup system initializing the [`HiveMind`].
 fn initialize_hive_mind(mut commands: Commands) {
-    let controls = HiveMindControls::default();
     commands
         .spawn_empty()
         .insert(HiveMind)
         .insert(InputManagerBundle::<HiveMindAction> {
-            input_map: InputMap::new([
-                (
-                    controls.attractive_pheromone.into(),
-                    HiveMindAction::PlaceAttractivePheromone,
-                ),
-                (
-                    controls.repulsive_pheromone,
-                    HiveMindAction::PlaceRepulsivePheromone,
-                ),
-            ]),
+            input_map: HiveMindAction::default_input_map(),
             ..default()
         });
 }
 
-// TODO: figure out a different control scheme
 /// Place pheromone, if the mouse is hovered over a hex tile.
 fn place_pheromone(
     mut signal_create_evw: EventWriter<SignalModificationEvent>,
