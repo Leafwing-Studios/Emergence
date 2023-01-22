@@ -8,7 +8,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-use super::cursor::CursorTilePos;
+use super::{cursor::CursorTilePos, InteractionSystem};
 
 /// Actions that can be used to select tiles.
 ///
@@ -28,6 +28,8 @@ pub enum TileSelectionAction {
     ///
     /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
     Multiple,
+    /// Clears the entire tile selection.
+    Clear,
 }
 
 /// Determines how the player input impacts a chosen tile.
@@ -135,6 +137,7 @@ impl SelectedTiles {
 
     /// Clears the set of selected tiles.
     pub fn clear_selection(&mut self) {
+        self.cache_selection();
         self.selection.clear();
     }
 
@@ -181,10 +184,15 @@ impl Plugin for TileSelectionPlugin {
             .init_resource::<ActionState<TileSelectionAction>>()
             .insert_resource(TileSelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
-            .add_system(select_tiles)
-            .add_system(highlight_selected_tiles.after(select_tiles));
+            .add_system(
+                select_tiles
+                    .label(InteractionSystem::SelectTiles)
+                    .after(InteractionSystem::ComputeCursorPos),
+            )
+            .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
     }
 }
+
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 fn select_tiles(
     cursor_tile_pos: Res<CursorTilePos>,
@@ -193,7 +201,9 @@ fn select_tiles(
     mut selection_mode: Local<SelectMode>,
 ) {
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
-        if actions.pressed(TileSelectionAction::Multiple) {
+        if actions.pressed(TileSelectionAction::Clear) {
+            selected_tiles.clear_selection();
+        } else if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
                 *selection_mode = match selected_tiles.contains_pos(&cursor_tile) {
                     // If you start with a selected tile, subtract from the selection

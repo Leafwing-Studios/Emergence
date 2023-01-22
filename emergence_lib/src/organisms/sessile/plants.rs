@@ -1,6 +1,10 @@
 //! Plants are structures powered by photosynthesis.
 
-use crate::{self as emergence_lib, items::recipe::RecipeId, organisms::life_cycles::LifeCycle};
+use crate::{
+    self as emergence_lib,
+    items::recipe::RecipeId,
+    organisms::{life_cycles::LifeCycle, OrganismType},
+};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
@@ -33,6 +37,8 @@ pub struct AcaciaBundle {
 }
 
 impl Species for Acacia {
+    const ORGANISM_TYPE: OrganismType = OrganismType::Plant;
+
     type LifeStage = AcaciaLifeStage;
 
     fn life_cycle() -> LifeCycle<Self> {

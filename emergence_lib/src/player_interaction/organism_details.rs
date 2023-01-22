@@ -3,46 +3,18 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
-use std::fmt::Display;
-
 use crate::{
     items::{inventory::Inventory, recipe::RecipeId},
     organisms::{
         sessile::{fungi::Fungi, plants::Plant},
         units::Ant,
+        OrganismType,
     },
     player_interaction::cursor::CursorTilePos,
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
     },
 };
-
-/// The type of the organism, e.g. plant or fungus.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OrganismType {
-    /// A plant.
-    Plant,
-
-    /// A fungus.
-    Fungus,
-
-    /// An ant.
-    Ant,
-}
-
-impl Display for OrganismType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                OrganismType::Plant => "Plant",
-                OrganismType::Fungus => "Fungus",
-                OrganismType::Ant => "Ant",
-            }
-        )
-    }
-}
 
 /// The details about crafting processes.
 #[derive(Debug, Clone)]
