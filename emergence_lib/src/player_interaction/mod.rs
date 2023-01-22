@@ -5,6 +5,7 @@ use bevy::prelude::{App, Plugin, SystemLabel};
 pub mod abilities;
 pub mod camera;
 pub mod cursor;
+pub mod intent;
 pub mod organism_details;
 pub mod tile_selection;
 pub mod zoning;
