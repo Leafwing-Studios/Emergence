@@ -28,6 +28,8 @@ pub enum TileSelectionAction {
     ///
     /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
     Multiple,
+    /// Clears the entire tile selection.
+    Clear,
 }
 
 /// Determines how the player input impacts a chosen tile.
@@ -135,6 +137,7 @@ impl SelectedTiles {
 
     /// Clears the set of selected tiles.
     pub fn clear_selection(&mut self) {
+        self.cache_selection();
         self.selection.clear();
     }
 
@@ -193,7 +196,9 @@ fn select_tiles(
     mut selection_mode: Local<SelectMode>,
 ) {
     if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
-        if actions.pressed(TileSelectionAction::Multiple) {
+        if actions.pressed(TileSelectionAction::Clear) {
+            selected_tiles.clear_selection();
+        } else if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
                 *selection_mode = match selected_tiles.contains_pos(&cursor_tile) {
                     // If you start with a selected tile, subtract from the selection
