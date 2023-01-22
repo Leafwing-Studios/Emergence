@@ -9,7 +9,7 @@ use crate::signals::configs::{SignalConfig, SignalConfigs};
 use crate::signals::emitters::Emitter;
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::hex_patch::HexPatchLocation;
-use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::TilePos;
@@ -37,7 +37,7 @@ impl Plugin for SignalsPlugin {
 /// This is a startup system that should run after terrain generation, i.e. in
 /// [`StartupStage::PostStartup`]. It will panic if it cannot find the [`MapPositions`] resource.
 fn initialize_map_signals(mut commands: Commands, map_positions: Res<MapPositions>) {
-    commands.insert_resource(MapResource::<TileSignals>::default_from_template(
+    commands.insert_resource(MapIndex::<TileSignals>::default_from_template(
         &map_positions,
     ))
 }
@@ -72,7 +72,7 @@ pub struct SignalIncrementEvent {}
 /// Reads [`SignalIncrementEvent`]s to create new signals on the map.
 fn handle_signal_modification_events(
     mut modification_events: EventReader<SignalModificationEvent>,
-    map_signals: Res<MapResource<TileSignals>>,
+    map_signals: Res<MapIndex<TileSignals>>,
     mut signal_configs: ResMut<SignalConfigs>,
 ) {
     for creation_event in modification_events.iter() {
@@ -106,7 +106,7 @@ fn handle_signal_modification_events(
 }
 
 /// System that decays signals at all positions, at their configured per-tick decay probability
-fn decay(mut map_signals: ResMut<MapResource<TileSignals>>, signal_configs: Res<SignalConfigs>) {
+fn decay(mut map_signals: ResMut<MapIndex<TileSignals>>, signal_configs: Res<SignalConfigs>) {
     for tile_signals in map_signals.values_mut() {
         tile_signals.get_mut().decay(&signal_configs);
     }
@@ -118,7 +118,7 @@ fn decay(mut map_signals: ResMut<MapResource<TileSignals>>, signal_configs: Res<
 /// Currently movement only occurs due to diffusion.
 fn compute_deltas(
     map_positions: Res<MapPositions>,
-    mut map_signals: ResMut<MapResource<TileSignals>>,
+    mut map_signals: ResMut<MapIndex<TileSignals>>,
     signal_configs: Res<SignalConfigs>,
 ) {
     for tile_pos in map_positions.iter_positions() {
@@ -128,7 +128,7 @@ fn compute_deltas(
         for (emitter_id, current_value) in current_values {
             let signal_config = signal_configs.get(&emitter_id).unwrap();
 
-            // TODO: this should also be cached in a MapResource?
+            // TODO: this should also be cached in a MapIndex?
             // normalize the diffusion factors into a probability
             let neighbor_diffusion_probability = if signal_config.diffusion_factor > 0.0 {
                 let count = map_positions.get_patch_count(tile_pos).unwrap();
@@ -157,7 +157,7 @@ fn compute_deltas(
 /// Applies deltas due to movement of signals between tiles.
 ///
 /// Should run after [`compute_deltas`].
-fn apply_deltas(mut map_signals: ResMut<MapResource<TileSignals>>) {
+fn apply_deltas(mut map_signals: ResMut<MapIndex<TileSignals>>) {
     for tile_signals in map_signals.values_mut() {
         tile_signals.get_mut().apply_deltas();
     }

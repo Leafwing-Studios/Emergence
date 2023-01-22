@@ -8,7 +8,7 @@ use bevy_ecs_tilemap::tiles::TilePos;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-/// Spatial data for use with the [`MapResource`] struct.
+/// Spatial data for use with the [`MapIndex`] struct.
 #[derive(Debug)]
 pub struct MapData<T> {
     /// The `Arc` allows for multiple references to the data, the `RwLock` allows for
@@ -60,7 +60,7 @@ impl<T> MapData<T> {
 /// Internally, [`MapData`] is stored in a [`HashMap`] for each position, in the `storage` field,
 /// and this same data is then referenced by the `patches` field.
 #[derive(Resource)]
-pub struct MapResource<T> {
+pub struct MapIndex<T> {
     /// Primary internal storage of data associated with each position
     pub(crate) storage: HashMap<TilePos, MapData<T>>,
     /// [`HexPatch`] of data centered at each position
@@ -69,7 +69,7 @@ pub struct MapResource<T> {
     pub(crate) patches: HashMap<TilePos, HexPatch<MapData<T>>>,
 }
 
-impl<T> MapResource<T>
+impl<T> MapIndex<T>
 where
     T: Default,
 {
@@ -78,21 +78,21 @@ where
     /// This allocates capacity and initializes patches based on the template provided.
     ///
     /// This method only exists when `T` implements [`Default`].
-    pub fn default_from_template(template: &MapPositions) -> MapResource<T> {
-        let storage = MapResource::generate_storage(
+    pub fn default_from_template(template: &MapPositions) -> MapIndex<T> {
+        let storage = MapIndex::generate_storage(
             template,
             template
                 .iter_positions()
                 .map(|position| (*position, T::default())),
         );
 
-        let patches = MapResource::generate_patches(&storage, template);
+        let patches = MapIndex::generate_patches(&storage, template);
 
-        MapResource { storage, patches }
+        MapIndex { storage, patches }
     }
 }
 
-impl<T> MapResource<T> {
+impl<T> MapIndex<T> {
     /// Generate the storage [`HashMap`]
     pub fn generate_storage(
         template: &MapPositions,
@@ -126,15 +126,12 @@ impl<T> MapResource<T> {
     /// This allocates capacity and initializes patches based on the template provided.
     ///
     /// If your underlying data implements [`Default`], you could use
-    /// [`default_from_template`](MapResource::default_from_template) to also initialize data.
-    pub fn new(
-        template: &MapPositions,
-        data: impl Iterator<Item = (TilePos, T)>,
-    ) -> MapResource<T> {
-        let storage = MapResource::generate_storage(template, data);
-        let patches = MapResource::generate_patches(&storage, template);
+    /// [`default_from_template`](MapIndex::default_from_template) to also initialize data.
+    pub fn new(template: &MapPositions, data: impl Iterator<Item = (TilePos, T)>) -> MapIndex<T> {
+        let storage = MapIndex::generate_storage(template, data);
+        let patches = MapIndex::generate_patches(&storage, template);
 
-        MapResource { storage, patches }
+        MapIndex { storage, patches }
     }
 
     /// Update data for given tile positions
