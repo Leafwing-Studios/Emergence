@@ -7,20 +7,17 @@ use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-/// Provides the interface between the player and the hive.
-pub struct HiveMindPlugin;
+/// Controls, interface and effects of intent-spending abilities.
+pub struct AbilitiesPlugin;
 
-impl Plugin for HiveMindPlugin {
+impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<IntentAbility>::default())
-            .add_startup_system(initialize_hive_mind)
+            .init_resource::<ActionState<IntentAbility>>()
+            .insert_resource(IntentAbility::default_input_map())
             .add_system(use_ability);
     }
 }
-
-/// Represents the interface between the player and the hive.
-#[derive(Component, Clone, Copy)]
-pub struct HiveMind;
 
 /// The different intent-spending "abilities" that the hive mind can use
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
@@ -41,25 +38,12 @@ impl IntentAbility {
     }
 }
 
-/// Startup system initializing the [`HiveMind`].
-fn initialize_hive_mind(mut commands: Commands) {
-    commands
-        .spawn_empty()
-        .insert(HiveMind)
-        .insert(InputManagerBundle::<IntentAbility> {
-            input_map: IntentAbility::default_input_map(),
-            ..default()
-        });
-}
-
 /// Marks the tile the mouse is over top of with  if the mouse is hovered over a hex tile.
 fn use_ability(
     mut signal_create_evw: EventWriter<SignalModificationEvent>,
     cursor_tile_pos: Res<CursorTilePos>,
-    hive_mind_query: Query<&ActionState<IntentAbility>, With<HiveMind>>,
+    hive_mind_state: Res<ActionState<IntentAbility>>,
 ) {
-    let hive_mind_state = hive_mind_query.single();
-
     if hive_mind_state.pressed(IntentAbility::Lure) {
         if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
             signal_create_evw.send(SignalModificationEvent::SignalIncrement {

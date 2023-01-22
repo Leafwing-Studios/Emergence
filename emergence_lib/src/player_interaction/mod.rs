@@ -17,7 +17,7 @@ impl Plugin for InteractionPlugin {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(cursor::CursorTilePosPlugin)
             .add_plugin(organism_details::DetailsPlugin)
-            .add_plugin(abilities::HiveMindPlugin)
+            .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(tile_selection::TileSelectionPlugin)
             .add_plugin(zoning::ZoningPlugin);
 
