@@ -29,10 +29,10 @@ pub enum StockEmitter {
     Ant,
     /// Emitter is stock fungus.
     Fungus,
-    /// Hive mind's signal for attracting ants.
-    PheromoneAttract,
-    /// Hive mind's signal for repelling ants.
-    PheromoneRepulse,
+    /// Draws nearby allied units.
+    Lure,
+    /// Repels nearby allied units.
+    Warning,
     /// Emitter is a plant.
     Plant,
 }
