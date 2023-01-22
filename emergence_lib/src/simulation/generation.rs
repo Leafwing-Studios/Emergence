@@ -3,7 +3,7 @@ use crate::enum_iter::IterableEnum;
 use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
-use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
 use crate::simulation::pathfinding::Impassable;
 use crate::terrain::entity_map::TerrainEntityMap;
@@ -157,7 +157,7 @@ pub fn generate_terrain(
     });
 
     let terrain_entities = TerrainEntityMap {
-        inner: MapResource::new(&map_positions, entity_data),
+        inner: MapIndex::new(&map_positions, entity_data),
     };
     commands.insert_resource(terrain_entities)
 }

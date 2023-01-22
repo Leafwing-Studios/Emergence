@@ -2,7 +2,7 @@
 
 pub mod filters;
 pub mod hex_patch;
-pub mod resources;
+pub mod index;
 
 use crate::simulation::generation::GenerationConfig;
 use crate::simulation::map::hex_patch::HexPatch;

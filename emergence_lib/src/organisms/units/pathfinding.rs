@@ -1,7 +1,7 @@
 //! Utilities to support organism pathfinding.
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::hex_patch::HexPatch;
-use crate::simulation::map::resources::MapData;
+use crate::simulation::map::index::MapData;
 use bevy_ecs_tilemap::tiles::TilePos;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;

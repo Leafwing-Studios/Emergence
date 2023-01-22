@@ -5,7 +5,7 @@ use crate::organisms::units::pathfinding::get_weighted_position;
 use crate::curves::BottomClampedLine;
 use crate::signals::emitters::{Emitter, StockEmitter};
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::PassabilityCache;
 use bevy::prelude::*;
@@ -18,7 +18,7 @@ fn wander(
     position: &TilePos,
     map_positions: &MapPositions,
     passable_filters: &PassabilityCache,
-    map_signals: &MapResource<TileSignals>,
+    map_signals: &MapIndex<TileSignals>,
     sensor: &SignalTransducer<BottomClampedLine>,
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
@@ -46,7 +46,7 @@ pub(super) fn act(
     mut unit_query: Query<(&Unit, &mut TilePos)>,
     map_positions: Res<MapPositions>,
     passable_filters: Res<PassabilityCache>,
-    map_signals: Res<MapResource<TileSignals>>,
+    map_signals: Res<MapIndex<TileSignals>>,
     sensor: Res<SignalTransducer<BottomClampedLine>>,
 ) {
     timer.0.tick(time.delta());
