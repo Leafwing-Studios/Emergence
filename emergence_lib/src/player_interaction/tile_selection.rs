@@ -8,7 +8,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-use super::cursor::CursorTilePos;
+use super::{cursor::CursorTilePos, InteractionSystem};
 
 /// Actions that can be used to select tiles.
 ///
@@ -184,10 +184,15 @@ impl Plugin for TileSelectionPlugin {
             .init_resource::<ActionState<TileSelectionAction>>()
             .insert_resource(TileSelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
-            .add_system(select_tiles)
-            .add_system(highlight_selected_tiles.after(select_tiles));
+            .add_system(
+                select_tiles
+                    .label(InteractionSystem::SelectTiles)
+                    .after(InteractionSystem::ComputeCursorPos),
+            )
+            .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
     }
 }
+
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 fn select_tiles(
     cursor_tile_pos: Res<CursorTilePos>,
