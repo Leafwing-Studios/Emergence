@@ -9,7 +9,6 @@ use std::fmt::Debug;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Spatial data for use with the [`MapResource`] struct.
-// We cannot derive Clone on this, because:https://stackoverflow.com/questions/39415052/deriving-a-trait-results-in-unexpected-compiler-error-but-the-manual-implementa
 #[derive(Debug)]
 pub struct MapData<T> {
     /// The `Arc` allows for multiple references to the data, the `RwLock` allows for
@@ -17,6 +16,7 @@ pub struct MapData<T> {
     pub(crate) inner: Arc<RwLock<T>>,
 }
 
+// We cannot derive Clone as it would force a `Clone` bound on `T`.
 impl<T> Clone for MapData<T> {
     fn clone(&self) -> Self {
         MapData {
@@ -52,14 +52,13 @@ impl<T> MapData<T> {
     }
 }
 
-/// A helper for managing game resources that are naturally tied to a fixed specific position on
-/// the map
+/// An acceleration data structure for looking up game data that is tied to a fixed [`TilePos`].
 ///
 /// It can give you [`MapData<T>`](MapData) at a given tile position, or it can give you
 /// [`Hexpatches<MapData<T>>`](HexPatch) for the given position.
 ///
 /// Internally, [`MapData`] is stored in a [`HashMap`] for each position, in the `storage` field,
-/// and this same data is then referenced to by the `patches` field.
+/// and this same data is then referenced by the `patches` field.
 #[derive(Resource)]
 pub struct MapResource<T> {
     /// Primary internal storage of data associated with each position
@@ -78,7 +77,7 @@ where
     ///
     /// This allocates capacity and initializes patches based on the template provided.
     ///
-    /// This requires that that there is a `Default` impl for the underlying data type
+    /// This method only exists when `T` implements [`Default`].
     pub fn default_from_template(template: &MapPositions) -> MapResource<T> {
         let storage = MapResource::generate_storage(
             template,
@@ -104,8 +103,7 @@ impl<T> MapResource<T> {
         storage
     }
 
-    /// Generate patches for the given storage
-    /// TODO: improve doc string
+    /// Generate patches, recording the data of type `T` in each adjacent cell
     pub fn generate_patches(
         storage: &HashMap<TilePos, MapData<T>>,
         template: &MapPositions,
@@ -153,22 +151,22 @@ impl<T> MapResource<T> {
         *(self.storage.get_mut(position).unwrap().get_mut()) = replace_with;
     }
 
-    /// Get data stored at given position
+    /// Get data stored at `position`
     pub fn get(&self, position: &TilePos) -> Option<MapData<T>> {
         self.storage.get(position).cloned()
     }
 
-    /// Get mutable access to data stored at given position
+    /// Get mutable access to data stored at `position`
     pub fn get_mut(&mut self, position: &TilePos) -> Option<&mut MapData<T>> {
         self.storage.get_mut(position)
     }
 
-    /// Get immutable access to [`HexPatch`] of data for given position
+    /// Get immutable access to the [`HexPatch`] of adjacent data around `position`
     pub fn get_patch(&self, position: &TilePos) -> Option<&HexPatch<MapData<T>>> {
         self.patches.get(position)
     }
 
-    /// Get mutable access to [`HexPatch`] of data for given position
+    /// Get mutable access to [`HexPatch`] of adjacent data around `position`
     pub fn get_patch_mut(&mut self, position: &TilePos) -> Option<&mut HexPatch<MapData<T>>> {
         self.patches.get_mut(position)
     }
@@ -178,12 +176,12 @@ impl<T> MapResource<T> {
         self.storage.keys()
     }
 
-    /// Iterate over the data at all positions
+    /// Iterate over the data stored at each position, returning a shared reference
     pub fn values(&self) -> impl Iterator<Item = &MapData<T>> {
         self.storage.values()
     }
 
-    /// Iterate over the data at all positions, returning a mutable reference
+    /// Iterate over the data stored at each position, returning a mutable reference
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut MapData<T>> {
         self.storage.values_mut()
     }
