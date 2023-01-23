@@ -1,7 +1,6 @@
 //! Utilities to manage configuration of signals (colour, decay rate, etc.).
 
-use crate::enum_iter::IterableEnum;
-use crate::signals::emitters::{Emitter, StockEmitter};
+use crate::signals::emitters::Emitter;
 use bevy::ecs::system::Resource;
 use indexmap::IndexMap;
 
@@ -10,48 +9,10 @@ use indexmap::IndexMap;
 /// Internally, this uses an [`IndexMap`], so that there is also a notion of order: the order
 /// in which elements are inserted into the dictionary. Some notion of order is necessary in order
 /// to color tiles consistently.
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Default, Clone, Debug)]
 pub struct SignalConfigs {
     /// Stores the configuration associated with each emitter.
     configs: IndexMap<Emitter, SignalConfig>,
-}
-
-impl Default for SignalConfigs {
-    fn default() -> Self {
-        let variants = StockEmitter::variants();
-        let mut configs = IndexMap::with_capacity(variants.len());
-        for variant in variants {
-            let config = match variant {
-                StockEmitter::Ant => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Plant => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Fungus => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Unspecified => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Lure => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-2,
-                },
-                StockEmitter::Warning => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-            };
-            configs.insert(Emitter::Stock(variant), config);
-        }
-
-        SignalConfigs { configs }
-    }
 }
 
 impl SignalConfigs {

@@ -126,30 +126,32 @@ fn compute_deltas(
         let signals_patch = map_signals.get_patch_mut(tile_pos).unwrap();
 
         for (emitter_id, current_value) in current_values {
-            let signal_config = signal_configs.get(&emitter_id).unwrap();
+            if let Some(signal_config) = signal_configs.get(&emitter_id) {
+                // TODO: this should also be cached in a MapIndex?
+                // normalize the diffusion factors into a probability
+                let neighbor_diffusion_probability = if signal_config.diffusion_factor > 0.0 {
+                    let count = map_positions.get_patch_count(tile_pos).unwrap();
+                    signal_config.diffusion_factor / (signal_config.diffusion_factor * count as f32)
+                } else {
+                    0.0
+                };
 
-            // TODO: this should also be cached in a MapIndex?
-            // normalize the diffusion factors into a probability
-            let neighbor_diffusion_probability = if signal_config.diffusion_factor > 0.0 {
-                let count = map_positions.get_patch_count(tile_pos).unwrap();
-                signal_config.diffusion_factor / (signal_config.diffusion_factor * count as f32)
-            } else {
-                0.0
-            };
-
-            let mut total_outgoing = 0.0;
-            for location in HexPatchLocation::variants() {
-                if let Some(s) = signals_patch.get_inner_mut(location) {
-                    let delta = neighbor_diffusion_probability * current_value;
-                    s.get_mut().increment_incoming(&emitter_id, delta);
-                    total_outgoing += delta;
+                let mut total_outgoing = 0.0;
+                for location in HexPatchLocation::variants() {
+                    if let Some(s) = signals_patch.get_inner_mut(location) {
+                        let delta = neighbor_diffusion_probability * current_value;
+                        s.get_mut().increment_incoming(&emitter_id, delta);
+                        total_outgoing += delta;
+                    }
                 }
+                signals_patch
+                    .get_inner_mut(HexPatchLocation::Center)
+                    .unwrap()
+                    .get_mut()
+                    .increment_outgoing(&emitter_id, total_outgoing);
+            } else {
+                error!("No config found for {emitter_id:?}!");
             }
-            signals_patch
-                .get_inner_mut(HexPatchLocation::Center)
-                .unwrap()
-                .get_mut()
-                .increment_outgoing(&emitter_id, total_outgoing);
         }
     }
 }
@@ -210,10 +212,4 @@ pub enum SignalInfo {
     Pull(Emitter),
     /// Signal that requests work be carried out.
     Work,
-}
-
-impl Default for SignalInfo {
-    fn default() -> Self {
-        Self::Passive(Emitter::default())
-    }
 }
