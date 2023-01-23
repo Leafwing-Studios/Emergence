@@ -3,6 +3,7 @@
 use crate::signals::configs::SignalConfigs;
 use crate::signals::emitters::Emitter;
 use crate::signals::Signal;
+use bevy::prelude::error;
 use bevy::utils::HashMap;
 
 /// Keeps track of the different signals present at a tile.
@@ -78,12 +79,13 @@ impl TileSignals {
     }
 
     /// Decay signal at the tile.
-    ///
-    /// Panics if there is no signal from the specified `Emitter`.
     pub fn decay(&mut self, signal_configs: &SignalConfigs) {
         for (emitter, signal) in self.map.iter_mut() {
-            let config = signal_configs.get(emitter).unwrap();
-            signal.current_value *= 1.0 - config.decay_probability;
+            if let Some(config) = signal_configs.get(emitter) {
+                signal.current_value *= 1.0 - config.decay_probability;
+            } else {
+                error!("No config found for {signal:?}!");
+            };
         }
     }
 
