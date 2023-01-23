@@ -63,6 +63,8 @@ fn use_ability(
     if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
         for variant in IntentAbility::variants() {
             if ability_state.pressed(variant) {
+                #[allow(clippy::collapsible_if)]
+                // The expend method has side effects, and needs to be guarded
                 if intent_pool.expend(variant.cost()).is_ok() {
                     event_writer.send(SignalModificationEvent::SignalIncrement {
                         emitter: Emitter::Ability(variant),

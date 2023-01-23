@@ -9,19 +9,10 @@ use indexmap::IndexMap;
 /// Internally, this uses an [`IndexMap`], so that there is also a notion of order: the order
 /// in which elements are inserted into the dictionary. Some notion of order is necessary in order
 /// to color tiles consistently.
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Default, Clone, Debug)]
 pub struct SignalConfigs {
     /// Stores the configuration associated with each emitter.
     configs: IndexMap<Emitter, SignalConfig>,
-}
-
-impl Default for SignalConfigs {
-    fn default() -> Self {
-        // TODO: revise and set this up.
-        SignalConfigs {
-            configs: IndexMap::default(),
-        }
-    }
 }
 
 impl SignalConfigs {

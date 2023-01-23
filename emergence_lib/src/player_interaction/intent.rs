@@ -15,6 +15,7 @@ use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 
 use super::InteractionSystem;
 
+/// Tracks, regenerates and displays [`IntentPool`].
 pub(super) struct IntentPlugin;
 
 impl Plugin for IntentPlugin {
@@ -49,7 +50,9 @@ pub struct IntentPool {
     pub regen_per_second: Intent,
 }
 
+/// The maximum amount of intent that can be stored at once
 const MAX_INTENT: Intent = Intent(100.);
+/// Amount of intent that is regenerated each second
 const INTENT_REGEN: Intent = Intent(10.);
 
 impl Default for IntentPool {
