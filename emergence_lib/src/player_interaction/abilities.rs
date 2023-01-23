@@ -1,12 +1,12 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
 use super::cursor::CursorTilePos;
-use super::intent::Intent;
+use super::intent::{Intent, IntentPool};
 use super::InteractionSystem;
 use crate::signals::emitters::Emitter;
-use crate::signals::emitters::StockEmitter::{Lure, Warning};
 use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
+use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::*;
 
 /// Controls, interface and effects of intent-spending abilities.
@@ -27,7 +27,7 @@ impl Plugin for AbilitiesPlugin {
 }
 
 /// The different intent-spending "abilities" that the hive mind can use
-#[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum IntentAbility {
     /// Gather allied units.
     Lure,
@@ -53,29 +53,24 @@ impl IntentAbility {
     }
 }
 
-/// Marks the tile the mouse is over top of with  if the mouse is hovered over a hex tile.
+/// Uses abilities when pressed at the cursor's location.
 fn use_ability(
-    mut signal_create_evw: EventWriter<SignalModificationEvent>,
     cursor_tile_pos: Res<CursorTilePos>,
-    hive_mind_state: Res<ActionState<IntentAbility>>,
+    ability_state: Res<ActionState<IntentAbility>>,
+    mut intent_pool: ResMut<IntentPool>,
+    mut event_writer: EventWriter<SignalModificationEvent>,
 ) {
-    if hive_mind_state.pressed(IntentAbility::Lure) {
-        if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
-            signal_create_evw.send(SignalModificationEvent::SignalIncrement {
-                emitter: Emitter::Stock(Lure),
-                pos,
-                increment: 0.1,
-            })
-        }
-    }
-    // TODO: Fix the failing clamp in curves
-    if hive_mind_state.pressed(IntentAbility::Warning) {
-        if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
-            signal_create_evw.send(SignalModificationEvent::SignalIncrement {
-                emitter: Emitter::Stock(Warning),
-                pos,
-                increment: 0.01,
-            });
+    if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
+        for variant in IntentAbility::variants() {
+            if ability_state.pressed(variant) {
+                if intent_pool.expend(variant.cost()).is_ok() {
+                    event_writer.send(SignalModificationEvent::SignalIncrement {
+                        emitter: Emitter::Ability(variant),
+                        pos,
+                        increment: 0.1,
+                    })
+                };
+            }
         }
     }
 }

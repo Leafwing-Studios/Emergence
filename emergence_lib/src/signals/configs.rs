@@ -1,7 +1,6 @@
 //! Utilities to manage configuration of signals (colour, decay rate, etc.).
 
-use crate::enum_iter::IterableEnum;
-use crate::signals::emitters::{Emitter, StockEmitter};
+use crate::signals::emitters::Emitter;
 use bevy::ecs::system::Resource;
 use indexmap::IndexMap;
 
@@ -18,39 +17,10 @@ pub struct SignalConfigs {
 
 impl Default for SignalConfigs {
     fn default() -> Self {
-        let variants = StockEmitter::variants();
-        let mut configs = IndexMap::with_capacity(variants.len());
-        for variant in variants {
-            let config = match variant {
-                StockEmitter::Ant => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Plant => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Fungus => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Unspecified => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-                StockEmitter::Lure => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-2,
-                },
-                StockEmitter::Warning => SignalConfig {
-                    diffusion_factor: 1e-4,
-                    decay_probability: 1e-4,
-                },
-            };
-            configs.insert(Emitter::Stock(variant), config);
+        // TODO: revise and set this up.
+        SignalConfigs {
+            configs: IndexMap::default(),
         }
-
-        SignalConfigs { configs }
     }
 }
 

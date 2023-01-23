@@ -1,9 +1,12 @@
 //! Unit behaviour simulation
 
-use crate::organisms::units::pathfinding::get_weighted_position;
+use crate::{
+    organisms::units::pathfinding::get_weighted_position,
+    player_interaction::abilities::IntentAbility,
+};
 
 use crate::curves::BottomClampedLine;
-use crate::signals::emitters::{Emitter, StockEmitter};
+use crate::signals::emitters::Emitter;
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
@@ -23,8 +26,8 @@ fn wander(
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
         sensor.signal_to_weight(
-            tile_signals.get(&Emitter::Stock(StockEmitter::Lure)),
-            tile_signals.get(&Emitter::Stock(StockEmitter::Warning)),
+            tile_signals.get(&Emitter::Ability(IntentAbility::Lure)),
+            tile_signals.get(&Emitter::Ability(IntentAbility::Warning)),
         )
     };
 

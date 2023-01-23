@@ -211,9 +211,3 @@ pub enum SignalInfo {
     /// Signal that requests work be carried out.
     Work,
 }
-
-impl Default for SignalInfo {
-    fn default() -> Self {
-        Self::Passive(Emitter::default())
-    }
-}
