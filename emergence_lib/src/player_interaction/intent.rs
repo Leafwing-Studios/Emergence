@@ -7,7 +7,7 @@
 use std::ops::{Div, Mul};
 
 use bevy::{
-    prelude::{App, IntoSystemDescriptor, Plugin, Res, ResMut, Resource},
+    prelude::{info, App, IntoSystemDescriptor, Plugin, Res, ResMut, Resource},
     time::Time,
 };
 use derive_more::{Add, AddAssign, Sub, SubAssign};
@@ -19,12 +19,19 @@ pub(super) struct IntentPlugin;
 
 impl Plugin for IntentPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<IntentPool>().add_system(
-            regenerate_intent
-                .label(InteractionSystem::ReplenishIntent)
-                .before(InteractionSystem::ApplyZoning)
-                .before(InteractionSystem::UseAbilities),
-        );
+        app.init_resource::<IntentPool>()
+            .add_system(
+                regenerate_intent
+                    .label(InteractionSystem::ReplenishIntent)
+                    .before(InteractionSystem::ApplyZoning)
+                    .before(InteractionSystem::UseAbilities),
+            )
+            .add_system(
+                display_intent
+                    .after(InteractionSystem::ApplyZoning)
+                    .after(InteractionSystem::UseAbilities)
+                    .after(InteractionSystem::ReplenishIntent),
+            );
     }
 }
 
@@ -126,5 +133,16 @@ impl Pool for IntentPool {
 ///
 /// Note that we cannot use the built-in system for this, as our pool is stored somewhat unusually as a resource.
 fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<Time>) {
-    intent_pool.regenerate(time.delta());
+    if intent_pool.current() != intent_pool.max() {
+        intent_pool.regenerate(time.delta());
+    }
+}
+
+/// Displays the current quantity of intent stored in the [`IntentPool`].
+fn display_intent(intent_pool: Res<IntentPool>) {
+    if intent_pool.is_changed() {
+        let current = intent_pool.current().0;
+        let max = intent_pool.max().0;
+        info!("{current} Intent / {max} Intent");
+    }
 }
