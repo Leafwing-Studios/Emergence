@@ -1,7 +1,7 @@
 //! Various odds and ends useful for pathfinding
 use crate::simulation::map::filters::MapFilter;
 use crate::simulation::map::hex_patch::HexPatch;
-use crate::simulation::map::resources::MapData;
+use crate::simulation::map::index::MapData;
 use crate::simulation::map::MapPositions;
 use bevy::prelude::{Changed, Component, Query, Resource, With, Without};
 use bevy::utils::HashSet;

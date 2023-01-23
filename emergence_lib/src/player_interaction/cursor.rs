@@ -8,6 +8,8 @@ use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize};
 use bevy_ecs_tilemap::tiles::TilePos;
 
+use super::InteractionSystem;
+
 /// Initializes the [`CursorWorldPos`] and [`CursorTilePos`] resources, which are kept updated  
 /// updated using [`update_cursor_pos`].
 pub struct CursorTilePosPlugin;
@@ -16,10 +18,11 @@ impl Plugin for CursorTilePosPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorWorldPos>()
             .init_resource::<CursorTilePos>()
-            // FIXME: Ideally, this should be executed after the bevy_pancam plugin's
-            // `camera_movement` and `camera_zoom` systems; but for now we don't have the tools to
-            // specify this.
-            .add_system_to_stage(CoreStage::Last, update_cursor_pos);
+            .add_system(
+                update_cursor_pos
+                    .label(InteractionSystem::ComputeCursorPos)
+                    .after(InteractionSystem::MoveCamera),
+            );
     }
 }
 

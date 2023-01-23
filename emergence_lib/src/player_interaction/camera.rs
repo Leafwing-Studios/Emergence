@@ -17,6 +17,8 @@ use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 
+use super::InteractionSystem;
+
 /// Camera logic
 pub struct CameraPlugin;
 
@@ -26,8 +28,8 @@ impl Plugin for CameraPlugin {
 
         app.add_plugin(InputManagerPlugin::<CameraAction>::default())
             .add_startup_system_to_stage(StartupStage::Startup, setup)
-            .add_system(camera_movement.label(PanCamSystemLabel))
-            .add_system(camera_zoom.label(PanCamSystemLabel));
+            .add_system(camera_movement.label(InteractionSystem::MoveCamera))
+            .add_system(camera_zoom.label(InteractionSystem::MoveCamera));
     }
 }
 
@@ -113,23 +115,6 @@ enum CameraAction {
     Pan,
     /// Reveal more or less of the map by pulling the camera away or moving it closer
     Zoom,
-}
-
-/// Plugin that adds the necessary systems for `PanCam` components to work
-#[derive(Default)]
-pub struct PanCamPlugin;
-
-/// Label to allow ordering of `PanCamPlugin`
-#[derive(SystemLabel)]
-pub struct PanCamSystemLabel;
-
-impl Plugin for PanCamPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(camera_movement.label(PanCamSystemLabel))
-            .add_system(camera_zoom.label(PanCamSystemLabel));
-
-        app.register_type::<PanCam>();
-    }
 }
 
 /// Handles camera zoom

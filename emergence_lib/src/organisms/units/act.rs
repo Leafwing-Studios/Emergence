@@ -1,30 +1,33 @@
 //! Unit behaviour simulation
 
-use crate::organisms::units::pathfinding::get_weighted_position;
+use crate::{
+    organisms::units::pathfinding::get_weighted_position,
+    player_interaction::abilities::IntentAbility,
+};
 
 use crate::curves::BottomClampedLine;
-use crate::signals::emitters::{Emitter, StockEmitter};
+use crate::signals::emitters::Emitter;
 use crate::signals::tile_signals::TileSignals;
-use crate::simulation::map::resources::MapResource;
+use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::PassabilityCache;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::TilePos;
 
-use super::{PheromoneTransducer, Unit, UnitTimer};
+use super::{SignalTransducer, Unit, UnitTimer};
 
 /// Pathfinding for ants.
 fn wander(
     position: &TilePos,
     map_positions: &MapPositions,
     passable_filters: &PassabilityCache,
-    map_signals: &MapResource<TileSignals>,
-    pheromone_sensor: &PheromoneTransducer<BottomClampedLine>,
+    map_signals: &MapIndex<TileSignals>,
+    sensor: &SignalTransducer<BottomClampedLine>,
 ) -> TilePos {
     let signals_to_weight = |tile_signals: &TileSignals| {
-        pheromone_sensor.signal_to_weight(
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneAttract)),
-            tile_signals.get(&Emitter::Stock(StockEmitter::PheromoneRepulse)),
+        sensor.signal_to_weight(
+            tile_signals.get(&Emitter::Ability(IntentAbility::Lure)),
+            tile_signals.get(&Emitter::Ability(IntentAbility::Warning)),
         )
     };
 
@@ -46,8 +49,8 @@ pub(super) fn act(
     mut unit_query: Query<(&Unit, &mut TilePos)>,
     map_positions: Res<MapPositions>,
     passable_filters: Res<PassabilityCache>,
-    map_signals: Res<MapResource<TileSignals>>,
-    pheromone_sensor: Res<PheromoneTransducer<BottomClampedLine>>,
+    map_signals: Res<MapIndex<TileSignals>>,
+    sensor: Res<SignalTransducer<BottomClampedLine>>,
 ) {
     timer.0.tick(time.delta());
     if timer.0.finished() {
@@ -57,7 +60,7 @@ pub(super) fn act(
                 &map_positions,
                 &passable_filters,
                 &map_signals,
-                &pheromone_sensor,
+                &sensor,
             );
         }
     }

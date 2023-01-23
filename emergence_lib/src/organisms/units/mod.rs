@@ -90,7 +90,7 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
-            .insert_resource(PheromoneTransducer::<BottomClampedLine>::default())
+            .insert_resource(SignalTransducer::<BottomClampedLine>::default())
             .add_event::<IdleThisTurn>()
             .add_event::<MoveThisTurn>()
             .add_event::<PickUpThisTurn>()
@@ -114,24 +114,24 @@ impl Plugin for UnitsPlugin {
 #[derive(Resource, Debug)]
 struct UnitTimer(Timer);
 
-/// Transduces a pheromone signal into a weight used to make decisions.
+/// Transforms a signal into a weight used to make decisions.
 ///
 /// The transduction is modelled by mapping the signal to a weight using a curve.
 #[derive(Resource)]
-pub struct PheromoneTransducer<C: Mapping> {
+pub struct SignalTransducer<C: Mapping> {
     /// Curve used to model transduction.
     curve: C,
 }
 
-impl PheromoneTransducer<Sigmoid> {
+impl SignalTransducer<Sigmoid> {
     /// Creates a [`Sigmoid`]-based transducer.
     pub fn new(
         min: f32,
         max: f32,
         first_percentile: f32,
         last_percentile: f32,
-    ) -> PheromoneTransducer<Sigmoid> {
-        PheromoneTransducer {
+    ) -> SignalTransducer<Sigmoid> {
+        SignalTransducer {
             curve: Sigmoid::new(min, max, first_percentile, last_percentile),
         }
     }
@@ -142,18 +142,18 @@ impl PheromoneTransducer<Sigmoid> {
     }
 }
 
-impl Default for PheromoneTransducer<Sigmoid> {
+impl Default for SignalTransducer<Sigmoid> {
     fn default() -> Self {
-        PheromoneTransducer {
+        SignalTransducer {
             curve: Sigmoid::new(0.0, 0.1, 0.01, 0.09),
         }
     }
 }
 
-impl PheromoneTransducer<BottomClampedLine> {
+impl SignalTransducer<BottomClampedLine> {
     /// Creates a [`BottomClampedLine`]-based transducer.
-    pub fn new(p0: Vec2, p1: Vec2) -> PheromoneTransducer<BottomClampedLine> {
-        PheromoneTransducer {
+    pub fn new(p0: Vec2, p1: Vec2) -> SignalTransducer<BottomClampedLine> {
+        SignalTransducer {
             curve: BottomClampedLine::new_from_points(p0, p1),
         }
     }
@@ -164,9 +164,9 @@ impl PheromoneTransducer<BottomClampedLine> {
     }
 }
 
-impl Default for PheromoneTransducer<BottomClampedLine> {
+impl Default for SignalTransducer<BottomClampedLine> {
     fn default() -> Self {
-        PheromoneTransducer {
+        SignalTransducer {
             curve: BottomClampedLine::new_from_points(Vec2::new(0.0, 0.0), Vec2::new(0.01, 1.0)),
         }
     }

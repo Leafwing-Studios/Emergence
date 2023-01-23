@@ -2,7 +2,7 @@
 
 use crate as emergence_lib;
 use crate::enum_iter::IterableEnum;
-use crate::simulation::map::resources::MapData;
+use crate::simulation::map::index::MapData;
 use crate::simulation::map::MapGeometry;
 use bevy_ecs_tilemap::helpers::hex_grid::axial::AxialPos;
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexRowDirection;

@@ -22,6 +22,8 @@ indexmap = "1.9"
 debug_tools = { path = "../tools/debug_tools", optional = true }
 petitset = "0.2"
 serde = "1.0.152"
+leafwing_abilities = "0.3.0"
+derive_more = "0.99.17"
 
 [dev-dependencies]
 # We need headless operation in tests
