@@ -72,8 +72,7 @@ impl Default for DebugInfo {
     fn default() -> Self {
         Self {
             dev_mode: true,
-            // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
-            // enable_console: true,
+            enable_console: true,
             show_tile_labels: true,
             show_fps_info: true,
             show_inspector: true,
