@@ -158,7 +158,7 @@ fn update_hover_panel(
                 text.sections[3].value = format!("{}", crafting_details.output_inventory);
                 text.sections[5].value = if let Some(recipe_id) = &crafting_details.active_recipe {
                     let recipe = recipe_manifest.get(recipe_id);
-                    format!("{}", recipe)
+                    format!("{recipe}")
                 } else {
                     "None".to_string()
                 };
