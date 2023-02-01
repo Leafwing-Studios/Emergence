@@ -153,7 +153,7 @@ pub fn generate_terrain(
 pub fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    passable_tiles: Query<&TilePos>,
+    tile_query: Query<&TilePos>,
 ) {
     info!("Generating organisms...");
     let n_ant = config.n_ant;
@@ -161,9 +161,10 @@ pub fn generate_organisms(
     let n_fungi = config.n_fungi;
 
     let n_entities = n_ant + n_plant + n_fungi;
+    assert!(n_entities <= tile_query.iter().len());
 
     let mut entity_positions: Vec<TilePos> = {
-        let possible_positions: Vec<TilePos> = passable_tiles.iter().copied().collect();
+        let possible_positions: Vec<TilePos> = tile_query.iter().copied().collect();
 
         let mut rng = &mut thread_rng();
         possible_positions
