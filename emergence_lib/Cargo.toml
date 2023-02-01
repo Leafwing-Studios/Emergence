@@ -24,6 +24,7 @@ petitset = "0.2"
 serde = "1.0.152"
 leafwing_abilities = "0.3.0"
 derive_more = "0.99.17"
+hexx = "0.2.0"
 
 [dev-dependencies]
 # We need headless operation in tests
