@@ -57,7 +57,7 @@ fn use_ability(
     ability_state: Res<ActionState<IntentAbility>>,
     mut intent_pool: ResMut<IntentPool>,
 ) {
-    if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
+    if let Some(_pos) = cursor_tile_pos.maybe_tile_pos() {
         for variant in IntentAbility::variants() {
             if ability_state.pressed(variant) {
                 #[allow(clippy::collapsible_if)]
