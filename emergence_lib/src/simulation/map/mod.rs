@@ -10,10 +10,6 @@ use bevy::ecs::system::Resource;
 use bevy::log::info;
 use bevy::prelude::{Commands, Res};
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::map::TilemapSize;
-use bevy_ecs_tilemap::prelude::axial::AxialPos;
-use bevy_ecs_tilemap::prelude::generate_hexagon;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 /// Resource that stores information regarding the size of the game map.
 #[derive(Resource, Debug)]
@@ -66,8 +62,6 @@ impl MapGeometry {
     }
 
     /// Computes the [`TilePos`] of the tile at the center of this map.
-    ///
-    /// This is not (0,0) as `bevy_ecs_tilemap` works with `u32` coordinates.
     #[inline]
     pub const fn center(&self) -> TilePos {
         self.center

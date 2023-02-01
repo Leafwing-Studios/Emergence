@@ -1,12 +1,7 @@
 //! Units are organisms that can move freely.
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
-use crate::enum_iter::IterableEnum;
-use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::sprites::IntoSprite;
-use crate::graphics::Tilemap;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use self::behavior::events::{
     DropOffThisTurn, IdleThisTurn, MoveThisTurn, PickUpThisTurn, WorkThisTurn,
@@ -39,16 +34,6 @@ pub struct UnitBundle {
 /// Data characterizing ants
 #[derive(Component, Clone, Default)]
 pub struct Ant;
-
-impl IntoSprite for Ant {
-    fn tilemap(&self) -> Tilemap {
-        Tilemap::Organisms
-    }
-
-    fn index(&self) -> u32 {
-        OrganismSprite::Ant.index() as u32
-    }
-}
 
 /// A worker ant
 #[derive(Bundle)]

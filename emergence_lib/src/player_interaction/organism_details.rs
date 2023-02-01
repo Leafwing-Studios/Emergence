@@ -1,7 +1,6 @@
 //! Detailed info about a given organism.
 
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate::{
     items::{inventory::Inventory, recipe::RecipeId},

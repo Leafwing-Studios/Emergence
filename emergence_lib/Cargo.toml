@@ -13,7 +13,6 @@ debug_tools = ['dep:debug_tools']
 
 [dependencies]
 bevy = "0.9"
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "2967a394dc59c29fac14cb8cb187d601ea604a1e" }
 rand = "0.8"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros", version = "0.6" }
@@ -25,7 +24,3 @@ serde = "1.0.152"
 leafwing_abilities = "0.3.0"
 derive_more = "0.99.17"
 hexx = "0.2.0"
-
-[dev-dependencies]
-# We need headless operation in tests
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "2967a394dc59c29fac14cb8cb187d601ea604a1e", default-features = false }

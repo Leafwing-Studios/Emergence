@@ -4,7 +4,6 @@ use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::MapPositions;
 use bevy::prelude::Resource;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::tiles::TilePos;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 

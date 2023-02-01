@@ -11,7 +11,6 @@ use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::system::Commands;
 
-use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
 
 /// Available terrain types.

@@ -14,7 +14,6 @@ name = "debug_tools"
 bevy = "0.9"
 # TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
 # bevy_console = { git = "https://github.com/RichoDemus/bevy-console", rev = "fa09da33ee752facc8eb3b2ba93682005d179624" } # add bevy 0.9 revision
-#bevy_ecs_tilemap # may need to be added back but is unused and unplanned for use atm so it has been removed
 # bevy_egui = "0.18.0" # TODO add when we use bevy_egui for debug ui
 # ALERT: using bevy-inspector-egui > 0.14 might cause issues with bevy_console
 bevy-inspector-egui = "0.15"

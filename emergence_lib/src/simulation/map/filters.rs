@@ -2,7 +2,6 @@
 
 use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 /// Boolean valued [`MapIndex`]s are useful as filters.
 pub type MapFilter = MapIndex<bool>;

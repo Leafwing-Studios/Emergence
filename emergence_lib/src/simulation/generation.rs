@@ -12,7 +12,6 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::tiles::TilePos;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 

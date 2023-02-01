@@ -12,7 +12,6 @@ use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
 use crate::simulation::pathfinding::PassabilityCache;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use super::{SignalTransducer, Unit, UnitTimer};
 

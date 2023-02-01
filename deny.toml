@@ -81,9 +81,6 @@ unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # If you add something here please also add a comment explaining why it's necessary :)
 allow-git = [
-  # Was for rapid development
-  # See <https://github.com/Leafwing-Studios/Emergence/issues/157>
-  "https://github.com/StarArawn/bevy_ecs_tilemap.git",
   # For `Added`/`Changed` functionality
   # Waiting for <https://github.com/JoJoJet/bevy-trait-query/pull/30>
   "https://github.com/Leafwing-Studios/bevy-trait-query.git",

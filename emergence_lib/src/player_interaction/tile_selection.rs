@@ -1,7 +1,6 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{prelude::*, utils::HashSet};
-use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
