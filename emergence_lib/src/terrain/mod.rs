@@ -1,7 +1,6 @@
 //! Generating and representing terrain as game objects.
 
 pub mod components;
-pub mod entity_map;
 
 use crate as emergence_lib;
 
