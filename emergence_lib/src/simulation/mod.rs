@@ -3,15 +3,10 @@
 //! All plugins in this module should work without rendering.
 
 use crate::organisms::OrganismPlugin;
-use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
-use crate::simulation::map::MapPositions;
 use crate::structures::StructuresPlugin;
-use bevy::app::{App, CoreStage, Plugin, StartupStage};
+use bevy::app::{App, Plugin};
 use bevy::log::info;
-use bevy::prelude::{Commands, Query, Res, ResMut, With};
-
-use self::map::TilePos;
 
 pub mod generation;
 pub mod map;
@@ -29,7 +24,6 @@ impl Plugin for SimulationPlugin {
             config: self.gen_config.clone(),
         })
         .add_plugin(StructuresPlugin)
-        .add_plugin(OrganismPlugin)
-        .add_plugin(SignalsPlugin)
+        .add_plugin(OrganismPlugin);
     }
 }

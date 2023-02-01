@@ -229,21 +229,3 @@ fn select_tiles(
         }
     }
 }
-
-// TODO: display an outline/tile highlight instead of toggle the visibility
-/// Show some type of highlight for the selected tiles.
-///
-/// This function currently toggles the visibility of the selected tiles but can be repurposed to show highlights instead.  
-fn highlight_selected_tiles(
-    selected_tiles: Res<SelectedTiles>,
-    mut tile_query: Query<(&mut TileColor, &TilePos)>,
-) {
-    if selected_tiles.is_changed() {
-        for (mut tile_color, tile_pos) in tile_query.iter_mut() {
-            *tile_color = match selected_tiles.contains_pos(tile_pos) {
-                true => TileColor(Color::YELLOW),
-                false => TileColor(Color::WHITE),
-            };
-        }
-    }
-}

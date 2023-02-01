@@ -3,8 +3,6 @@
 use super::cursor::CursorTilePos;
 use super::intent::{Intent, IntentPool};
 use super::InteractionSystem;
-use crate::signals::emitters::Emitter;
-use crate::signals::SignalModificationEvent;
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::*;
@@ -58,7 +56,6 @@ fn use_ability(
     cursor_tile_pos: Res<CursorTilePos>,
     ability_state: Res<ActionState<IntentAbility>>,
     mut intent_pool: ResMut<IntentPool>,
-    mut event_writer: EventWriter<SignalModificationEvent>,
 ) {
     if let Some(pos) = cursor_tile_pos.maybe_tile_pos() {
         for variant in IntentAbility::variants() {
@@ -66,11 +63,7 @@ fn use_ability(
                 #[allow(clippy::collapsible_if)]
                 // The expend method has side effects, and needs to be guarded
                 if intent_pool.expend(variant.cost()).is_ok() {
-                    event_writer.send(SignalModificationEvent::SignalIncrement {
-                        emitter: Emitter::Ability(variant),
-                        pos,
-                        increment: 0.1,
-                    })
+                    // TODO: actually take effect
                 };
             }
         }
