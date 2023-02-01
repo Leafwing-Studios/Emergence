@@ -8,6 +8,7 @@
 
 pub mod curves;
 pub mod enum_iter;
+pub mod graphics;
 pub mod interactable;
 pub mod items;
 pub mod manifest;

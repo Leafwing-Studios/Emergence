@@ -17,5 +17,6 @@ fn main() {
             gen_config: GenerationConfig::default(),
         })
         .add_plugin(emergence_lib::player_interaction::InteractionPlugin)
+        .add_plugin(emergence_lib::graphics::GraphicsPlugin)
         .run();
 }
