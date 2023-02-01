@@ -8,8 +8,16 @@ use crate::simulation::generation::GenerationConfig;
 use crate::simulation::map::hex_patch::HexPatch;
 use bevy::ecs::system::Resource;
 use bevy::log::info;
-use bevy::prelude::{Commands, Res};
+use bevy::prelude::{Commands, Component, Deref, DerefMut, Res};
 use bevy::utils::HashMap;
+use hexx::Hex;
+
+/// A hex-based coordinate, that represents exactly one tile.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Deref, DerefMut)]
+pub struct TilePos {
+    /// The underlying hex coordinate
+    pub hex: Hex,
+}
 
 /// Resource that stores information regarding the size of the game map.
 #[derive(Resource, Debug)]

@@ -9,6 +9,8 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use std::fmt::Debug;
 
+use super::TilePos;
+
 /// Enumerates the positions in a 7-tile hex patch (central tile + 6 neighbors)
 #[derive(Debug, Clone, Copy, Hash, IterableEnum)]
 pub enum HexPatchLocation {

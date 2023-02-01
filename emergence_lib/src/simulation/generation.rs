@@ -3,10 +3,8 @@ use crate::enum_iter::IterableEnum;
 use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
-use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
 use crate::simulation::pathfinding::Impassable;
-use crate::terrain::entity_map::TerrainEntityMap;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -14,6 +12,8 @@ use bevy::log::info;
 use bevy::utils::HashMap;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+
+use super::map::TilePos;
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -155,9 +155,6 @@ pub fn generate_terrain(
         (*position, terrain.instantiate(&mut commands, position))
     });
 
-    let terrain_entities = TerrainEntityMap {
-        inner: MapIndex::new(&map_positions, entity_data),
-    };
     commands.insert_resource(terrain_entities)
 }
 

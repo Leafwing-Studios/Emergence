@@ -2,7 +2,7 @@
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::hex_patch::HexPatch;
 use crate::simulation::map::index::MapData;
-use bevy_ecs_tilemap::tiles::TilePos;
+use crate::simulation::map::TilePos;
 use rand::distributions::WeightedError;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};

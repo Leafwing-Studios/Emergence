@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 use crate::interactable::Interactable;
 use crate::organisms::units::Unit;
+use crate::simulation::map::TilePos;
 
 /// A unit's current goals.
 ///
@@ -46,6 +47,8 @@ pub mod events {
         ecs::{entity::Entity, system::SystemParam},
         prelude::EventWriter,
     };
+
+    use crate::simulation::map::TilePos;
 
     /// A struct that wraps all of the events defined in this module
     #[derive(SystemParam)]

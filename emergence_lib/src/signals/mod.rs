@@ -10,9 +10,8 @@ use crate::signals::emitters::Emitter;
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::hex_patch::HexPatchLocation;
 use crate::simulation::map::index::MapIndex;
-use crate::simulation::map::MapPositions;
+use crate::simulation::map::{MapPositions, TilePos};
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::TilePos;
 
 /// This plugin manages all aspects of signals:
 /// * creation,

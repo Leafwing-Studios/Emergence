@@ -2,6 +2,7 @@
 use crate::{
     self as emergence_lib,
     organisms::{life_cycles::LifeCycle, OrganismType},
+    simulation::map::TilePos,
 };
 use bevy::prelude::*;
 use emergence_macros::IterableEnum;

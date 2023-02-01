@@ -4,6 +4,7 @@ use crate::{
     self as emergence_lib,
     items::recipe::RecipeId,
     organisms::{life_cycles::LifeCycle, OrganismType},
+    simulation::map::TilePos,
 };
 use bevy::prelude::*;
 use emergence_macros::IterableEnum;

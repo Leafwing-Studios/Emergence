@@ -7,6 +7,8 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
+use crate::simulation::map::TilePos;
+
 use super::{cursor::CursorTilePos, InteractionSystem};
 
 /// Actions that can be used to select tiles.

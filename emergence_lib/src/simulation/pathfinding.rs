@@ -6,6 +6,8 @@ use crate::simulation::map::MapPositions;
 use bevy::prelude::{Changed, Component, Query, Resource, With, Without};
 use bevy::utils::HashSet;
 
+use super::map::TilePos;
+
 /// Marker struct specifying that an entity is impassable for pathfinding
 #[derive(Component, Clone, Copy, Default)]
 pub struct Impassable;

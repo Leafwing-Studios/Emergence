@@ -12,6 +12,8 @@ use bevy::app::{App, CoreStage, Plugin, StartupStage};
 use bevy::log::info;
 use bevy::prelude::{Commands, Query, Res, ResMut, With};
 
+use self::map::TilePos;
+
 pub mod generation;
 pub mod map;
 pub mod pathfinding;

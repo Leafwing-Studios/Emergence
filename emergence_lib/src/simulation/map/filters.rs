@@ -3,6 +3,8 @@
 use crate::simulation::map::index::MapIndex;
 use crate::simulation::map::MapPositions;
 
+use super::TilePos;
+
 /// Boolean valued [`MapIndex`]s are useful as filters.
 pub type MapFilter = MapIndex<bool>;
 

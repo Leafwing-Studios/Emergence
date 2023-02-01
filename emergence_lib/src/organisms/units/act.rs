@@ -9,7 +9,7 @@ use crate::curves::BottomClampedLine;
 use crate::signals::emitters::Emitter;
 use crate::signals::tile_signals::TileSignals;
 use crate::simulation::map::index::MapIndex;
-use crate::simulation::map::MapPositions;
+use crate::simulation::map::{MapPositions, TilePos};
 use crate::simulation::pathfinding::PassabilityCache;
 use bevy::prelude::*;
 

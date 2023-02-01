@@ -1,10 +1,9 @@
 //! Selecting structures to place, and then setting tiles as those structures.
 
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 use leafwing_input_manager::prelude::*;
 
-use crate::organisms::OrganismType;
+use crate::{organisms::OrganismType, simulation::map::TilePos};
 
 use super::{cursor::CursorTilePos, tile_selection::SelectedTiles, InteractionSystem};
 

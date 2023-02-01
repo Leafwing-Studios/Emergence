@@ -4,6 +4,8 @@ use bevy::math::Vec4Swizzles;
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::*;
 
+use crate::simulation::map::TilePos;
+
 use super::InteractionSystem;
 
 /// Initializes the [`CursorWorldPos`] and [`CursorTilePos`] resources, which are kept updated  

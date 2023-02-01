@@ -7,6 +7,8 @@ use bevy::utils::HashMap;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use super::TilePos;
+
 /// Spatial data for use with the [`MapIndex`] struct.
 #[derive(Debug)]
 pub struct MapData<T> {
