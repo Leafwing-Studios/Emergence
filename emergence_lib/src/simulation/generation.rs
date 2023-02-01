@@ -3,7 +3,6 @@ use crate::enum_iter::IterableEnum;
 use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
-use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -122,19 +121,13 @@ impl Plugin for GenerationPlugin {
                 GenerationStage::Configuration,
                 SystemStage::parallel(),
             )
-            .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
-            .add_startup_system_to_stage(GenerationStage::PositionCaching, create_map_positions)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
             .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
     }
 }
 
 /// Creates the world according to [`GenerationConfig`].
-pub fn generate_terrain(
-    mut commands: Commands,
-    config: Res<GenerationConfig>,
-    map_positions: Res<MapPositions>,
-) {
+pub fn generate_terrain(mut commands: Commands, config: Res<GenerationConfig>) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
