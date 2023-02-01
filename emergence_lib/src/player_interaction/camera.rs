@@ -39,7 +39,8 @@ fn setup(mut commands: Commands) {
                 .insert(SingleAxis::mouse_wheel_y(), CameraAction::Zoom)
                 .build(),
             ..default()
-        });
+        })
+        .insert(CameraSettings::default());
 }
 
 /// Actions that manipulate the camera
@@ -51,23 +52,43 @@ enum CameraAction {
     Zoom,
 }
 
+#[derive(Component)]
+struct CameraSettings {
+    zoom_speed: f32,
+    pan_speed: f32,
+}
+
+impl Default for CameraSettings {
+    fn default() -> Self {
+        CameraSettings {
+            zoom_speed: 500.,
+            pan_speed: 50.,
+        }
+    }
+}
+
 /// Handles camera motion
 fn camera_movement(
-    mut camera_query: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera3d>>,
+    mut camera_query: Query<
+        (&mut Transform, &ActionState<CameraAction>, &CameraSettings),
+        With<Camera3d>,
+    >,
+    time: Res<Time>,
 ) {
-    let (mut camera_transform, camera_actions) = camera_query.single_mut();
+    let (mut camera_transform, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
-    if camera_actions.just_pressed(CameraAction::Zoom) {
+    if camera_actions.pressed(CameraAction::Zoom) {
         // FIXME: swap to z-up
-        camera_transform.translation.y += camera_actions.value(CameraAction::Zoom);
+        camera_transform.translation.y +=
+            camera_actions.value(CameraAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
     }
 
     // Pan
-    if camera_actions.just_pressed(CameraAction::Pan) {
+    if camera_actions.pressed(CameraAction::Pan) {
         let dual_axis_data = camera_actions.axis_pair(CameraAction::Pan).unwrap();
-        let delta_x = dual_axis_data.x();
-        let delta_y = dual_axis_data.y();
+        let delta_x = dual_axis_data.x() * time.delta_seconds() * settings.pan_speed;
+        let delta_y = dual_axis_data.y() * time.delta_seconds() * settings.pan_speed;
 
         camera_transform.translation.x += delta_x;
         // FIXME: swap to z-up
