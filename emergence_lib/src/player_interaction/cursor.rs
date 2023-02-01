@@ -1,6 +1,5 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
-use bevy::math::Vec4Swizzles;
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::*;
 
@@ -64,38 +63,4 @@ impl CursorTilePos {
     pub fn maybe_tile_pos(&self) -> Option<TilePos> {
         self.0
     }
-}
-
-/// Keeps the cursor position updated based on [`CursorMoved`] events.
-pub fn update_cursor_pos(
-    windows: Res<Windows>,
-    camera_query: Query<(&Transform, &Camera)>,
-    mut cursor_moved_events: EventReader<CursorMoved>,
-    mut cursor_world_pos_res: ResMut<CursorWorldPos>,
-    mut cursor_tile_pos_res: ResMut<CursorTilePos>,
-    terrain_tilemap_query: Query<
-        (&TilemapSize, &TilemapGridSize, &Transform),
-        With<TerrainTilemap>,
-    >,
-) {
-    // We only have one camera.
-    let (cam_t, cam) = camera_query.single();
-    let (map_size, grid_size, map_transform) = terrain_tilemap_query.single();
-
-    if let Some(cursor_moved) = cursor_moved_events.iter().last() {
-        **cursor_world_pos_res = cursor_pos_in_world(&windows, cursor_moved.position, cam_t, cam);
-    }
-
-    // Grab the cursor position from the `Res<CursorPos>`
-    let cursor_world_pos: Vec3 = cursor_world_pos_res.0;
-    // We need to make sure that the cursor's world position is correct relative to the map
-    // due to any map transformation.
-    let cursor_map_pos: Vec2 = {
-        // Extend the cursor_pos vec3 by 1.0
-        let cursor_pos = Vec4::from((cursor_world_pos, 1.0));
-        let cursor_map_pos = map_transform.compute_matrix().inverse() * cursor_pos;
-        cursor_map_pos.xy()
-    };
-
-    cursor_tile_pos_res.0 = tile_pos_from_world_pos(&cursor_map_pos, map_size, grid_size);
 }

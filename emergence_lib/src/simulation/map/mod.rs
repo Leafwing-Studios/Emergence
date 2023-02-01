@@ -1,11 +1,6 @@
 //! Manages the game world's grid and data tied to that grid
 
-pub mod filters;
-pub mod hex_patch;
-pub mod index;
-
 use crate::simulation::generation::GenerationConfig;
-use crate::simulation::map::hex_patch::HexPatch;
 use bevy::ecs::system::Resource;
 use bevy::log::info;
 use bevy::prelude::{Commands, Component, Deref, DerefMut, Res};
@@ -26,8 +21,6 @@ pub struct MapGeometry {
     radius: u32,
     /// The location of the central tile
     center: TilePos,
-    /// The [`TilemapSize`] of the map
-    size: TilemapSize,
 }
 
 impl Default for MapGeometry {
@@ -41,14 +34,7 @@ impl MapGeometry {
     pub const fn new(radius: u32) -> Self {
         MapGeometry {
             radius,
-            center: TilePos {
-                x: radius + 1,
-                y: radius + 1,
-            },
-            size: TilemapSize {
-                x: 2 * radius + 1,
-                y: 2 * radius + 1,
-            },
+            center: TilePos { hex: Hex::ZERO },
         }
     }
 

@@ -9,9 +9,7 @@ use self::behavior::events::{
 };
 use self::behavior::CurrentGoal;
 
-mod act;
 mod behavior;
-mod pathfinding;
 
 /// Available types of units
 pub enum UnitType {
@@ -87,11 +85,6 @@ impl Plugin for UnitsPlugin {
                 behavior::choose_action
                     .label(UnitSystem::ChooseAction)
                     .after(UnitSystem::ChooseGoal),
-            )
-            .add_system(
-                act::act
-                    .label(UnitSystem::Act)
-                    .after(UnitSystem::ChooseAction),
             );
     }
 }

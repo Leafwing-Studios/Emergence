@@ -5,7 +5,6 @@ pub mod components;
 use crate as emergence_lib;
 
 use crate::simulation::map::TilePos;
-use crate::simulation::pathfinding::Impassable;
 use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
@@ -36,7 +35,6 @@ impl TerrainType {
             }
             TerrainType::Rocky => {
                 builder.insert(RockyTerrain);
-                builder.insert(Impassable);
             }
             TerrainType::High => {
                 builder.insert(HighTerrain);

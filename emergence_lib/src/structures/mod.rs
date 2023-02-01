@@ -2,7 +2,6 @@
 //!
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
-use crate::simulation::pathfinding::Impassable;
 
 use bevy::prelude::*;
 
@@ -15,8 +14,6 @@ pub mod crafting;
 pub struct StructureBundle {
     /// Data characterizing structures
     structure: Structure,
-    /// Structures cannot be walked over
-    impassable: Impassable,
 }
 
 /// Structures are static buildings that take up one or more tile

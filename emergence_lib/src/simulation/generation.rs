@@ -154,8 +154,6 @@ pub fn generate_terrain(
             .unwrap();
         (*position, terrain.instantiate(&mut commands, position))
     });
-
-    commands.insert_resource(terrain_entities)
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
