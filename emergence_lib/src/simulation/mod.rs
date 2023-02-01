@@ -4,6 +4,7 @@
 
 use crate::organisms::OrganismPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
+use crate::simulation::geometry::MapGeometry;
 use crate::structures::StructuresPlugin;
 use bevy::app::{App, Plugin};
 use bevy::log::info;
@@ -20,10 +21,11 @@ pub struct SimulationPlugin {
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
-        app.add_plugin(GenerationPlugin {
-            config: self.gen_config.clone(),
-        })
-        .add_plugin(StructuresPlugin)
-        .add_plugin(OrganismPlugin);
+        app.init_resource::<MapGeometry>()
+            .add_plugin(GenerationPlugin {
+                config: self.gen_config.clone(),
+            })
+            .add_plugin(StructuresPlugin)
+            .add_plugin(OrganismPlugin);
     }
 }
