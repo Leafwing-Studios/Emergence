@@ -4,7 +4,7 @@ use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::geometry::TilePos;
-use crate::terrain::TerrainType;
+use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
@@ -24,7 +24,7 @@ pub struct GenerationConfig {
     /// Initial number of fungi.
     pub n_fungi: usize,
     /// Relative probability of generating tiles of each terrain type.
-    pub terrain_weights: HashMap<TerrainType, f32>,
+    pub terrain_weights: HashMap<Terrain, f32>,
 }
 
 impl GenerationConfig {
@@ -48,10 +48,10 @@ impl GenerationConfig {
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
-        let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
-        terrain_weights.insert(TerrainType::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(TerrainType::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(TerrainType::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
+        let mut terrain_weights: HashMap<Terrain, f32> = HashMap::new();
+        terrain_weights.insert(Terrain::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(Terrain::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(Terrain::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
             map_radius: GenerationConfig::MAP_RADIUS,
@@ -134,17 +134,17 @@ pub fn generate_terrain(
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let terrain_variants = TerrainType::variants().collect::<Vec<TerrainType>>();
+    let terrain_variants = Terrain::variants().collect::<Vec<Terrain>>();
     let terrain_weights = &config.terrain_weights;
 
-    for tile_pos in tile_query.iter() {
-        let terrain = terrain_variants
+    for &tile_pos in tile_query.iter() {
+        let terrain_type = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
                 terrain_weights.get(terrain_type).unwrap()
             })
             .unwrap();
 
-        terrain.instantiate(&mut commands, tile_pos);
+        commands.spawn(TerrainBundle::new(*terrain_type, tile_pos));
     }
 }
 

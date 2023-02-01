@@ -1,20 +1,17 @@
 //! Generating and representing terrain as game objects.
 
-pub mod components;
+use bevy::prelude::*;
 
 use crate as emergence_lib;
 
 use crate::simulation::geometry::TilePos;
-use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::system::Commands;
 
 use emergence_macros::IterableEnum;
 
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
-pub enum TerrainType {
+pub enum Terrain {
     /// Terrain with no distinguishing characteristics.
     Plain,
     /// Terrain that is rocky, and thus difficult to traverse.
@@ -23,24 +20,19 @@ pub enum TerrainType {
     High,
 }
 
-impl TerrainType {
-    /// Instantiates an entity bundled with components necessary to characterize terrain
-    pub fn instantiate(&self, commands: &mut Commands, position: &TilePos) -> Entity {
-        let mut builder = commands.spawn_empty();
+/// All of the components needed to define a piece of terrain.
+#[derive(Bundle)]
+pub struct TerrainBundle {
+    terrain_type: Terrain,
+    tile_pos: TilePos,
+}
 
-        builder.insert(*position);
-        match self {
-            TerrainType::Plain => {
-                builder.insert(PlainTerrain);
-            }
-            TerrainType::Rocky => {
-                builder.insert(RockyTerrain);
-            }
-            TerrainType::High => {
-                builder.insert(HighTerrain);
-            }
+impl TerrainBundle {
+    /// Creates a new Terrain entity.
+    pub fn new(terrain_type: Terrain, tile_pos: TilePos) -> Self {
+        TerrainBundle {
+            terrain_type,
+            tile_pos,
         }
-        builder.insert(*self);
-        builder.id()
     }
 }
