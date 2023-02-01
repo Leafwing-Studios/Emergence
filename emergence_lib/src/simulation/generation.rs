@@ -4,7 +4,6 @@ use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
-use crate::simulation::pathfinding::Impassable;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;

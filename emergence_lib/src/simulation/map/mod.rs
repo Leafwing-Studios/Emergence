@@ -4,7 +4,6 @@ use crate::simulation::generation::GenerationConfig;
 use bevy::ecs::system::Resource;
 use bevy::log::info;
 use bevy::prelude::{Commands, Component, Deref, DerefMut, Res};
-use bevy::utils::HashMap;
 use hexx::Hex;
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -43,18 +42,6 @@ impl MapGeometry {
         1 + 6 * ((self.radius * (self.radius + 1)) / 2) as usize
     }
 
-    /// Computes the total diameter from end-to-end of the game world
-    #[inline]
-    pub const fn diameter(&self) -> u32 {
-        self.size.x
-    }
-
-    /// Computes the [`TilemapSize`] of the game world
-    #[inline]
-    pub const fn size(&self) -> TilemapSize {
-        self.size
-    }
-
     /// Computes the [`TilePos`] of the tile at the center of this map.
     #[inline]
     pub const fn center(&self) -> TilePos {
@@ -65,18 +52,6 @@ impl MapGeometry {
     #[inline]
     pub const fn radius(&self) -> u32 {
         self.radius
-    }
-
-    /// Checks to see if the given tile position lies within the map
-    #[inline]
-    pub const fn check_inclusion(&self, tile_pos: &TilePos) -> bool {
-        let delta_x = (tile_pos.x as isize - self.center.x as isize).unsigned_abs() as u32;
-        if delta_x < self.radius + 1 {
-            let delta_y = (tile_pos.y as isize - self.center.y as isize).unsigned_abs() as u32;
-            delta_y < self.radius + 1
-        } else {
-            false
-        }
     }
 }
 
@@ -95,10 +70,6 @@ pub struct MapPositions {
     n_positions: usize,
     /// Vector of positions that exist in the map
     positions: Vec<TilePos>,
-    /// [`HashMap`] caching the [`HexPatch`] centered at each position
-    patches: HashMap<TilePos, HexPatch<TilePos>>,
-    /// [`HashMap`] caching the number of hex neighbors at each position
-    patch_sizes: HashMap<TilePos, usize>,
 }
 
 impl MapPositions {
@@ -109,23 +80,15 @@ impl MapPositions {
         let mut map_positions = MapPositions {
             n_positions,
             positions: Vec::with_capacity(n_positions),
-            patches: HashMap::with_capacity(n_positions),
-            patch_sizes: HashMap::with_capacity(n_positions),
         };
 
         let center = map_geometry.center();
         let radius = map_geometry.radius();
-        // When using HexCoordSystem::Row, TilePos is the same as AxialPos, so we can get away with
-        // unchecked/fast conversions between AxialPos and TilePos
         for position in generate_hexagon(AxialPos::from(&center), radius)
             .into_iter()
             .map(|axial_pos| axial_pos.as_tile_pos_unchecked())
         {
-            let patch = HexPatch::generate(&position, map_geometry);
-            let patch_size = patch.count();
             map_positions.positions.push(position);
-            map_positions.patches.insert(position, patch);
-            map_positions.patch_sizes.insert(position, patch_size);
         }
 
         map_positions
@@ -134,23 +97,6 @@ impl MapPositions {
     /// Get an iterator over tile positions
     pub fn iter_positions(&self) -> impl Iterator<Item = &TilePos> + '_ {
         self.positions.iter()
-    }
-
-    /// Get an iterator over neighbors
-    pub fn iter_neighbors(&self) -> impl Iterator<Item = &HexPatch<TilePos>> + '_ {
-        self.patches.values()
-    }
-
-    /// Get neighbors associated with a given tile position, if it exists in the cache
-    pub fn get_patch(&self, tile_pos: &TilePos) -> Option<&HexPatch<TilePos>> {
-        self.patches.get(tile_pos)
-    }
-
-    /// Get number of positions in the given position's [`HexPatch`], if it exists in the cache
-    ///
-    /// Usually, missing positions indicate map edges
-    pub fn get_patch_count(&self, tile_pos: &TilePos) -> Option<usize> {
-        self.patch_sizes.get(tile_pos).copied()
     }
 
     /// Get the number of positions that are managed by this structure
