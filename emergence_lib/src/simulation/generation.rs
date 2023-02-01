@@ -126,25 +126,26 @@ impl Plugin for GenerationPlugin {
 }
 
 /// Creates the world according to [`GenerationConfig`].
-pub fn generate_terrain(mut commands: Commands, config: Res<GenerationConfig>) {
+pub fn generate_terrain(
+    mut commands: Commands,
+    config: Res<GenerationConfig>,
+    tile_query: Query<&TilePos>,
+) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
     let terrain_variants = TerrainType::variants().collect::<Vec<TerrainType>>();
     let terrain_weights = &config.terrain_weights;
 
-    let entity_data = map_positions.iter_positions().map(|position| {
-        let terrain: TerrainType = terrain_variants
+    for tile_pos in tile_query.iter() {
+        let terrain = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
-                terrain_weights
-                    .get(terrain_type)
-                    .copied()
-                    .unwrap_or_default()
+                terrain_weights.get(terrain_type).unwrap()
             })
-            .copied()
             .unwrap();
-        (*position, terrain.instantiate(&mut commands, position))
-    });
+
+        terrain.instantiate(&mut commands, tile_pos);
+    }
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
@@ -152,7 +153,7 @@ pub fn generate_terrain(mut commands: Commands, config: Res<GenerationConfig>) {
 pub fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    passable_tiles: Query<&TilePos, Without<Impassable>>,
+    passable_tiles: Query<&TilePos>,
 ) {
     info!("Generating organisms...");
     let n_ant = config.n_ant;
