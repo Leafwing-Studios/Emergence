@@ -65,10 +65,10 @@ impl CursorTilePos {
     }
 }
 
-fn update_cursor_pos() {
+pub(super) fn update_cursor_pos() {
     // FIXME: rewrite
 }
 
-fn highlight_selected_tiles() {
+pub(super) fn highlight_selected_tiles() {
     // FIXME: rewrite
 }

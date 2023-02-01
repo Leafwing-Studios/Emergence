@@ -9,7 +9,10 @@ use leafwing_input_manager::{
 
 use crate::simulation::geometry::TilePos;
 
-use super::{cursor::CursorTilePos, InteractionSystem};
+use super::{
+    cursor::{highlight_selected_tiles, CursorTilePos},
+    InteractionSystem,
+};
 
 /// Actions that can be used to select tiles.
 ///
