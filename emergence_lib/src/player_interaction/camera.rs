@@ -29,7 +29,7 @@ fn setup(mut commands: Commands) {
     // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
     commands
         .spawn(Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 10.0, 0.0).looking_at(Vec3::ZERO, -Vec3::Z),
+            transform: Transform::from_xyz(0.0, -10.0, 0.0).looking_at(Vec3::ZERO, Vec3::Z),
             ..Default::default()
         })
         .insert(InputManagerBundle::<CameraAction> {

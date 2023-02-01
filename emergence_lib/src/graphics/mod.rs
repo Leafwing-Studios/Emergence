@@ -58,7 +58,7 @@ fn populate_terrain(
 fn populate_organisms() {}
 
 fn hexagonal_plane(hex_layout: &HexLayout) -> Mesh {
-    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, 1.0);
+    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, 1.0);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
