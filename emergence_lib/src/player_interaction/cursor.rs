@@ -3,7 +3,7 @@
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::*;
 
-use crate::simulation::map::TilePos;
+use crate::simulation::geometry::TilePos;
 
 use super::InteractionSystem;
 
@@ -63,4 +63,12 @@ impl CursorTilePos {
     pub fn maybe_tile_pos(&self) -> Option<TilePos> {
         self.0
     }
+}
+
+fn update_cursor_pos() {
+    // FIXME: rewrite
+}
+
+fn highlight_selected_tiles() {
+    // FIXME: rewrite
 }

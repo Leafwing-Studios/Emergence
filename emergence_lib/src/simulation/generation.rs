@@ -3,6 +3,7 @@ use crate::enum_iter::IterableEnum;
 use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
+use crate::simulation::geometry::TilePos;
 use crate::terrain::TerrainType;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -10,8 +11,6 @@ use bevy::log::info;
 use bevy::utils::HashMap;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-
-use super::map::TilePos;
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -75,7 +74,7 @@ pub struct GenerationPlugin {
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
 pub enum GenerationStage {
-    /// Creates and inserts the [`MapGeometry`](crate::simulation::map::MapGeometry) resource based on the [`GenerationConfig`] resource
+    /// Creates and inserts the [`MapGeometry`](crate::simulation::geometry::MapGeometry) resource based on the [`GenerationConfig`] resource
     ///
     /// Systems:
     /// * [`configure_map_geometry`]

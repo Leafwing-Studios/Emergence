@@ -10,7 +10,7 @@ use crate::{
         OrganismType,
     },
     player_interaction::cursor::CursorTilePos,
-    simulation::map::TilePos,
+    simulation::geometry::TilePos,
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
     },

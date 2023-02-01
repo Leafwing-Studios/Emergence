@@ -7,7 +7,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-use crate::simulation::map::TilePos;
+use crate::simulation::geometry::TilePos;
 
 use super::{cursor::CursorTilePos, InteractionSystem};
 

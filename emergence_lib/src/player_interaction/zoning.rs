@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::{organisms::OrganismType, simulation::map::TilePos};
+use crate::{organisms::OrganismType, simulation::geometry::TilePos};
 
 use super::{cursor::CursorTilePos, tile_selection::SelectedTiles, InteractionSystem};
 

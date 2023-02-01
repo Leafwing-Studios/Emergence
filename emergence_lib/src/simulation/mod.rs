@@ -9,7 +9,7 @@ use bevy::app::{App, Plugin};
 use bevy::log::info;
 
 pub mod generation;
-pub mod map;
+pub mod geometry;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {

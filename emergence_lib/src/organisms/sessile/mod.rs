@@ -6,7 +6,7 @@ use bevy::prelude::Bundle;
 
 use crate::{
     items::recipe::RecipeId,
-    simulation::map::TilePos,
+    simulation::geometry::TilePos,
     structures::{crafting::CraftingBundle, StructureBundle},
 };
 

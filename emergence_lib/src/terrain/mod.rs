@@ -4,7 +4,7 @@ pub mod components;
 
 use crate as emergence_lib;
 
-use crate::simulation::map::TilePos;
+use crate::simulation::geometry::TilePos;
 use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
