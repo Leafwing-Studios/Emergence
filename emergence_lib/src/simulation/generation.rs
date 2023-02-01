@@ -78,16 +78,6 @@ pub struct GenerationPlugin {
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
 pub enum GenerationStage {
-    /// Creates and inserts the [`MapGeometry`](crate::simulation::geometry::MapGeometry) resource based on the [`GenerationConfig`] resource
-    ///
-    /// Systems:
-    /// * [`configure_map_geometry`]
-    Configuration,
-    /// Creates and inserts the [`MapPositions`] resource.
-    ///
-    /// Systems:
-    /// * [`create_map_positions`]
-    PositionCaching,
     /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
     ///
     /// Systems:
@@ -112,16 +102,6 @@ impl Plugin for GenerationPlugin {
             .add_startup_stage_before(
                 GenerationStage::OrganismGeneration,
                 GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                GenerationStage::TerrainGeneration,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                GenerationStage::PositionCaching,
-                GenerationStage::Configuration,
                 SystemStage::parallel(),
             )
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
