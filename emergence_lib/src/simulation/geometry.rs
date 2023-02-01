@@ -18,6 +18,10 @@ pub struct TilePos {
 pub struct MapGeometry {
     /// The size and orientation of the map.
     pub layout: HexLayout,
+    /// The number of tiles from the center to the edge of the map.
+    ///
+    /// Note that the central tile is not counted.
+    pub radius: u32,
     /// Which tile entity is stored at each tile position
     pub tiles_index: HashMap<TilePos, Entity>,
     /// Which structure is stored at each tile position
@@ -28,6 +32,7 @@ impl Default for MapGeometry {
     fn default() -> Self {
         MapGeometry {
             layout: HexLayout::default(),
+            radius: 10,
             tiles_index: HashMap::default(),
             structure_index: HashMap::default(),
         }

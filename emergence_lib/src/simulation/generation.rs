@@ -9,8 +9,12 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::utils::HashMap;
+use hexx::shapes::hexagon;
+use hexx::Hex;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+
+use super::geometry::MapGeometry;
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -129,7 +133,7 @@ impl Plugin for GenerationPlugin {
 pub fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    tile_query: Query<&TilePos>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
@@ -137,14 +141,14 @@ pub fn generate_terrain(
     let terrain_variants = Terrain::variants().collect::<Vec<Terrain>>();
     let terrain_weights = &config.terrain_weights;
 
-    for &tile_pos in tile_query.iter() {
-        let terrain_type = terrain_variants
+    for hex in hexagon(Hex::ZERO, map_geometry.radius) {
+        let &terrain_type = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
                 terrain_weights.get(terrain_type).unwrap()
             })
             .unwrap();
 
-        commands.spawn(TerrainBundle::new(*terrain_type, tile_pos));
+        commands.spawn(TerrainBundle::new(terrain_type, TilePos { hex }));
     }
 }
 
@@ -153,7 +157,7 @@ pub fn generate_terrain(
 pub fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    tile_query: Query<&TilePos>,
+    tile_query: Query<&TilePos, With<Terrain>>,
 ) {
     info!("Generating organisms...");
     let n_ant = config.n_ant;
