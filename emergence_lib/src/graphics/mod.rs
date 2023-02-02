@@ -11,6 +11,10 @@ use crate::{
     terrain::Terrain,
 };
 
+use self::lighting::LightingPlugin;
+
+mod lighting;
+
 /// Adds all logic required to render the game.
 ///
 /// The game should be able to run and function without this plugin: no gameplay logic allowed!
@@ -18,7 +22,8 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
+        app.add_plugin(LightingPlugin)
+            .add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
             .add_system_to_stage(CoreStage::PostUpdate, populate_organisms);
     }
 }
