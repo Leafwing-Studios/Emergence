@@ -129,7 +129,7 @@ fn translate_camera(
     mut camera_query: Query<
         (
             &mut CameraFocus,
-            &Transform,
+            &Facing,
             &ActionState<CameraAction>,
             &CameraSettings,
         ),
@@ -137,7 +137,7 @@ fn translate_camera(
     >,
     time: Res<Time>,
 ) {
-    let (mut focus, transform, camera_actions, settings) = camera_query.single_mut();
+    let (mut focus, facing, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
@@ -155,11 +155,18 @@ fn translate_camera(
         let dual_axis_data = camera_actions.axis_pair(CameraAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed;
+        // Plane is XZ, but gamepads are XY
+        let unoriented_translation = Vec3 {
+            x: scaled_xy.y,
+            y: 0.,
+            z: scaled_xy.x,
+        };
 
-        let x_motion = transform.right() * scaled_xy.x;
-        let y_motion = transform.forward() * scaled_xy.y;
+        let facing_angle = angle(facing.direction);
+        let rotation = Quat::from_rotation_y(facing_angle);
+        let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
-        focus.translation += x_motion + y_motion;
+        focus.translation += oriented_translation;
     }
 }
 
