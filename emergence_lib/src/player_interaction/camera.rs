@@ -38,7 +38,9 @@ impl Plugin for CameraPlugin {
 }
 
 /// The distance from the origin that the camera begins at.
-const STARTING_DISTANCE_FROM_ORIGIN: f32 = 15.;
+///
+/// Should be between the default values of [`CameraSettings`] `min_zoom` and `max_zoom`.
+const STARTING_DISTANCE_FROM_ORIGIN: f32 = 10.;
 
 /// The angle in radians that the camera forms with the ground.
 ///
@@ -110,6 +112,14 @@ struct CameraSettings {
     ///
     /// Should always be positive.
     pan_speed: f32,
+    /// The minimum distance that the camera can be from its focus.
+    ///
+    /// Should always be positive, and less than `max_zoom`.
+    min_zoom: f32,
+    /// The maximum distance that the camera can be from its focus.
+    ///
+    /// Should always be positive, and less than `max_zoom`.
+    max_zoom: f32,
 }
 
 impl Default for CameraSettings {
@@ -117,6 +127,8 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: 500.,
             pan_speed: 50.,
+            min_zoom: 2.,
+            max_zoom: 100.,
         }
     }
 }
@@ -141,13 +153,13 @@ fn translate_camera(
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
-        let delta_zoom = camera_actions.value(CameraAction::Zoom)
+        let delta_zoom = -camera_actions.value(CameraAction::Zoom)
             * time.delta_seconds()
             * settings.zoom_speed
             * ZOOM_PAN_SCALE;
 
         // Zoom in / out on whatever we're looking at
-        focus.zoom -= delta_zoom;
+        focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
     }
 
     // Pan
