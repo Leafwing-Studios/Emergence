@@ -57,6 +57,7 @@ fn populate_terrain(
         commands.entity(terrain_entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
             material: material.clone(),
+            // FIXME: use z-up
             transform: Transform::from_xyz(pos.x, 0.0, pos.y),
             ..default()
         });
@@ -85,6 +86,7 @@ fn populate_structures(
         commands.entity(entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
             material: material.clone(),
+            // FIXME: use z-up
             transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
             ..default()
         });
@@ -113,6 +115,7 @@ fn populate_units(
         commands.entity(entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
             material: material.clone(),
+            // FIXME: use z-up
             transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
             ..default()
         });
