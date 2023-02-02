@@ -76,7 +76,7 @@ fn populate_structures(
     /// The size of a single structure
     const SIZE: f32 = 1.0;
     /// The offset required to have a structure sit on top of the tile correctly
-    const OFFSET: f32 = -SIZE / 2.;
+    const OFFSET: f32 = HEX_HEIGHT + (SIZE / 2.0);
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
     let mesh_handle = meshes.add(mesh);
@@ -108,7 +108,7 @@ fn populate_units(
     /// The size of a single unit
     const SIZE: f32 = 0.5;
     /// The offset required to have a unit stand on top of the tile correctly
-    const OFFSET: f32 = -SIZE / 2.;
+    const OFFSET: f32 = HEX_HEIGHT + (SIZE / 2.0);
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
     let mesh_handle = meshes.add(mesh);
@@ -129,9 +129,12 @@ fn populate_units(
     }
 }
 
+/// Default height of a single hex tile
+pub const HEX_HEIGHT: f32 = 1.0;
+
 /// Constructs the mesh for a single hexagonal column
 fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
-    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, 1.0);
+    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, HEX_HEIGHT);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());

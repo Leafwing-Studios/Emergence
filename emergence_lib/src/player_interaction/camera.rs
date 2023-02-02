@@ -2,6 +2,8 @@
 //!
 //! This RTS-style camera can zoom and pan.
 
+// use std::f32::consts::FRAC_PI_3;
+
 use bevy::prelude::*;
 use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
@@ -24,12 +26,17 @@ impl Plugin for CameraPlugin {
     }
 }
 
+/// Sets the angle the camera is oriented around the z-axis.
+const CAM_ANG: f32 = 0.733;
+
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
     // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
     commands
         .spawn(Camera3dBundle {
-            transform: Transform::from_xyz(0.0, -10.0, 0.0).looking_at(Vec3::ZERO, Vec3::Z),
+            transform: Transform::from_xyz(20.0, 6.0, 30.0)
+                .looking_at(Vec3::ZERO, -Vec3::Y)
+                .with_rotation(Quat::from_euler(EulerRot::XZY, 0., 0., CAM_ANG)),
             ..Default::default()
         })
         .insert(InputManagerBundle::<CameraAction> {
@@ -74,6 +81,9 @@ impl Default for CameraSettings {
     }
 }
 
+/// The scale that controls the amount the camera will move in the x direction
+const ZOOM_PAN_SCALE: f32 = 0.5;
+
 /// Handles camera motion
 fn camera_movement(
     mut camera_query: Query<
@@ -87,8 +97,14 @@ fn camera_movement(
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
         // FIXME: swap to z-up
-        camera_transform.translation.y +=
-            camera_actions.value(CameraAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
+        let camera_actions = camera_actions.value(CameraAction::Zoom);
+        let delta_x = camera_actions * time.delta_seconds() * settings.zoom_speed * ZOOM_PAN_SCALE;
+        let delta_y = camera_actions * time.delta_seconds() * settings.pan_speed;
+        // oriented from the POV that you're the player trying to zoom in to the game map
+        camera_transform.translation.y -= delta_y;
+
+        camera_transform.translation.x -= delta_x;
+        camera_transform.translation.z -= delta_x;
     }
 
     // Pan
@@ -99,6 +115,6 @@ fn camera_movement(
 
         camera_transform.translation.x += delta_x;
         // FIXME: swap to z-up
-        camera_transform.translation.z += delta_y;
+        camera_transform.translation.z -= delta_y;
     }
 }
