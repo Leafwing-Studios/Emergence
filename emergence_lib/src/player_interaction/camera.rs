@@ -5,6 +5,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_mod_picking::PickingCameraBundle;
 use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
@@ -63,7 +64,8 @@ fn setup(mut commands: Commands) {
         })
         .insert(CameraSettings::default())
         .insert(CameraFocus::default())
-        .insert(Facing::default());
+        .insert(Facing::default())
+        .insert(PickingCameraBundle::default());
 }
 
 /// Actions that manipulate the camera

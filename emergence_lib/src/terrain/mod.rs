@@ -1,6 +1,7 @@
 //! Generating and representing terrain as game objects.
 
 use bevy::prelude::*;
+use bevy_mod_picking::PickableBundle;
 
 use crate as emergence_lib;
 
@@ -27,6 +28,8 @@ pub struct TerrainBundle {
     terrain_type: Terrain,
     /// The location of this terrain hex
     tile_pos: TilePos,
+    /// Makes the tiles pickable
+    pickable_bundle: PickableBundle,
 }
 
 impl TerrainBundle {
@@ -35,6 +38,7 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_type,
             tile_pos,
+            pickable_bundle: PickableBundle::default(),
         }
     }
 }

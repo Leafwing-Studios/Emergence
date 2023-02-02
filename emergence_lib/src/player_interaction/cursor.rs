@@ -2,6 +2,7 @@
 //! available.
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::*;
+use bevy_mod_picking::{DebugCursorPickingPlugin, DebugEventsPickingPlugin, DefaultPickingPlugins};
 
 use crate::simulation::geometry::TilePos;
 
@@ -15,6 +16,8 @@ impl Plugin for CursorTilePosPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorWorldPos>()
             .init_resource::<CursorTilePos>()
+            .add_plugins(DefaultPickingPlugins) // <- Adds picking, interaction, and highlighting
+            .add_plugin(DebugEventsPickingPlugin) // <- Adds debug event logging (optional)
             .add_system(
                 update_cursor_pos
                     .label(InteractionSystem::ComputeCursorPos)
