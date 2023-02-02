@@ -3,10 +3,10 @@
 //! These are a special subset of structures which act on their own, go through life stages and must produce in order to survive.
 
 use bevy::prelude::Bundle;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate::{
     items::recipe::RecipeId,
+    simulation::geometry::TilePos,
     structures::{crafting::CraftingBundle, StructureBundle},
 };
 

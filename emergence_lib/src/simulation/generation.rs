@@ -3,18 +3,18 @@ use crate::enum_iter::IterableEnum;
 use crate::organisms::sessile::fungi::LeucoBundle;
 use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
-use crate::simulation::map::index::MapIndex;
-use crate::simulation::map::{configure_map_geometry, create_map_positions, MapPositions};
-use crate::simulation::pathfinding::Impassable;
-use crate::terrain::entity_map::TerrainEntityMap;
-use crate::terrain::TerrainType;
+use crate::simulation::geometry::TilePos;
+use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::tiles::TilePos;
+use hexx::shapes::hexagon;
+use hexx::Hex;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+
+use super::geometry::MapGeometry;
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]
@@ -28,7 +28,7 @@ pub struct GenerationConfig {
     /// Initial number of fungi.
     pub n_fungi: usize,
     /// Relative probability of generating tiles of each terrain type.
-    pub terrain_weights: HashMap<TerrainType, f32>,
+    pub terrain_weights: HashMap<Terrain, f32>,
 }
 
 impl GenerationConfig {
@@ -52,10 +52,10 @@ impl GenerationConfig {
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
-        let mut terrain_weights: HashMap<TerrainType, f32> = HashMap::new();
-        terrain_weights.insert(TerrainType::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(TerrainType::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(TerrainType::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
+        let mut terrain_weights: HashMap<Terrain, f32> = HashMap::new();
+        terrain_weights.insert(Terrain::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(Terrain::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(Terrain::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
             map_radius: GenerationConfig::MAP_RADIUS,
@@ -78,16 +78,6 @@ pub struct GenerationPlugin {
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
 pub enum GenerationStage {
-    /// Creates and inserts the [`MapGeometry`](crate::simulation::map::MapGeometry) resource based on the [`GenerationConfig`] resource
-    ///
-    /// Systems:
-    /// * [`configure_map_geometry`]
-    Configuration,
-    /// Creates and inserts the [`MapPositions`] resource.
-    ///
-    /// Systems:
-    /// * [`create_map_positions`]
-    PositionCaching,
     /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
     ///
     /// Systems:
@@ -114,18 +104,6 @@ impl Plugin for GenerationPlugin {
                 GenerationStage::TerrainGeneration,
                 SystemStage::parallel(),
             )
-            .add_startup_stage_before(
-                GenerationStage::TerrainGeneration,
-                GenerationStage::PositionCaching,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                GenerationStage::PositionCaching,
-                GenerationStage::Configuration,
-                SystemStage::parallel(),
-            )
-            .add_startup_system_to_stage(GenerationStage::Configuration, configure_map_geometry)
-            .add_startup_system_to_stage(GenerationStage::PositionCaching, create_map_positions)
             .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
             .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
     }
@@ -135,31 +113,23 @@ impl Plugin for GenerationPlugin {
 pub fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    map_positions: Res<MapPositions>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let terrain_variants = TerrainType::variants().collect::<Vec<TerrainType>>();
+    let terrain_variants = Terrain::variants().collect::<Vec<Terrain>>();
     let terrain_weights = &config.terrain_weights;
 
-    let entity_data = map_positions.iter_positions().map(|position| {
-        let terrain: TerrainType = terrain_variants
+    for hex in hexagon(Hex::ZERO, map_geometry.radius) {
+        let &terrain_type = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
-                terrain_weights
-                    .get(terrain_type)
-                    .copied()
-                    .unwrap_or_default()
+                terrain_weights.get(terrain_type).unwrap()
             })
-            .copied()
             .unwrap();
-        (*position, terrain.instantiate(&mut commands, position))
-    });
 
-    let terrain_entities = TerrainEntityMap {
-        inner: MapIndex::new(&map_positions, entity_data),
-    };
-    commands.insert_resource(terrain_entities)
+        commands.spawn(TerrainBundle::new(terrain_type, TilePos { hex }));
+    }
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
@@ -167,7 +137,7 @@ pub fn generate_terrain(
 pub fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    passable_tiles: Query<&TilePos, Without<Impassable>>,
+    tile_query: Query<&TilePos, With<Terrain>>,
 ) {
     info!("Generating organisms...");
     let n_ant = config.n_ant;
@@ -175,9 +145,10 @@ pub fn generate_organisms(
     let n_fungi = config.n_fungi;
 
     let n_entities = n_ant + n_plant + n_fungi;
+    assert!(n_entities <= tile_query.iter().len());
 
     let mut entity_positions: Vec<TilePos> = {
-        let possible_positions: Vec<TilePos> = passable_tiles.iter().copied().collect();
+        let possible_positions: Vec<TilePos> = tile_query.iter().copied().collect();
 
         let mut rng = &mut thread_rng();
         possible_positions

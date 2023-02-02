@@ -14,7 +14,6 @@ pub mod items;
 pub mod manifest;
 pub mod organisms;
 pub mod player_interaction;
-pub mod signals;
 pub mod simulation;
 pub mod structures;
 pub mod terrain;

@@ -4,16 +4,12 @@ use crate::{
     self as emergence_lib,
     items::recipe::RecipeId,
     organisms::{life_cycles::LifeCycle, OrganismType},
+    simulation::geometry::TilePos,
 };
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 use emergence_macros::IterableEnum;
 
-use crate::{
-    enum_iter::IterableEnum,
-    graphics::{organisms::OrganismSprite, sprites::IntoSprite, Tilemap},
-    organisms::Species,
-};
+use crate::organisms::Species;
 
 use std::default::Default;
 
@@ -61,16 +57,6 @@ pub enum AcaciaLifeStage {
     Adult,
     /// A plant that ran out of sun, water or nutrients
     Dead,
-}
-
-impl IntoSprite for Acacia {
-    fn tilemap(&self) -> Tilemap {
-        Tilemap::Organisms
-    }
-
-    fn index(&self) -> u32 {
-        OrganismSprite::Plant.index() as u32
-    }
 }
 
 impl AcaciaBundle {

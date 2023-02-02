@@ -1,14 +1,18 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{prelude::*, utils::HashSet};
-use bevy_ecs_tilemap::tiles::{TileColor, TilePos};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
     Actionlike,
 };
 
-use super::{cursor::CursorTilePos, InteractionSystem};
+use crate::simulation::geometry::TilePos;
+
+use super::{
+    cursor::{highlight_selected_tiles, CursorTilePos},
+    InteractionSystem,
+};
 
 /// Actions that can be used to select tiles.
 ///
@@ -160,7 +164,6 @@ impl SelectedTiles {
     pub fn added_tiles(&self) -> HashSet<TilePos> {
         self.selection
             .difference(self.previous_selection())
-            .into_iter()
             .copied()
             .collect()
     }
@@ -169,7 +172,6 @@ impl SelectedTiles {
     pub fn removed_tiles(&self) -> HashSet<TilePos> {
         self.previous_selection
             .difference(self.selection())
-            .into_iter()
             .copied()
             .collect()
     }
@@ -225,24 +227,6 @@ fn select_tiles(
 
         if actions.released(TileSelectionAction::Multiple) {
             *selection_mode = SelectMode::None;
-        }
-    }
-}
-
-// TODO: display an outline/tile highlight instead of toggle the visibility
-/// Show some type of highlight for the selected tiles.
-///
-/// This function currently toggles the visibility of the selected tiles but can be repurposed to show highlights instead.  
-fn highlight_selected_tiles(
-    selected_tiles: Res<SelectedTiles>,
-    mut tile_query: Query<(&mut TileColor, &TilePos)>,
-) {
-    if selected_tiles.is_changed() {
-        for (mut tile_color, tile_pos) in tile_query.iter_mut() {
-            *tile_color = match selected_tiles.contains_pos(tile_pos) {
-                true => TileColor(Color::YELLOW),
-                false => TileColor(Color::WHITE),
-            };
         }
     }
 }

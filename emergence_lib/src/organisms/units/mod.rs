@@ -1,21 +1,15 @@
 //! Units are organisms that can move freely.
 
 use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
-use crate::enum_iter::IterableEnum;
-use crate::graphics::organisms::OrganismSprite;
-use crate::graphics::sprites::IntoSprite;
-use crate::graphics::Tilemap;
+use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use self::behavior::events::{
     DropOffThisTurn, IdleThisTurn, MoveThisTurn, PickUpThisTurn, WorkThisTurn,
 };
 use self::behavior::CurrentGoal;
 
-mod act;
 mod behavior;
-mod pathfinding;
 
 /// Available types of units
 pub enum UnitType {
@@ -39,16 +33,6 @@ pub struct UnitBundle {
 /// Data characterizing ants
 #[derive(Component, Clone, Default)]
 pub struct Ant;
-
-impl IntoSprite for Ant {
-    fn tilemap(&self) -> Tilemap {
-        Tilemap::Organisms
-    }
-
-    fn index(&self) -> u32 {
-        OrganismSprite::Ant.index() as u32
-    }
-}
 
 /// A worker ant
 #[derive(Bundle)]
@@ -101,11 +85,6 @@ impl Plugin for UnitsPlugin {
                 behavior::choose_action
                     .label(UnitSystem::ChooseAction)
                     .after(UnitSystem::ChooseGoal),
-            )
-            .add_system(
-                act::act
-                    .label(UnitSystem::Act)
-                    .after(UnitSystem::ChooseAction),
             );
     }
 }

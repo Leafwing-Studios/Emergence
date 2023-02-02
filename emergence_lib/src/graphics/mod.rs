@@ -1,214 +1,141 @@
-//! Utilities for defining and visualizing game graphics.
+//! Rendering and animation logic.
 
-use crate::enum_iter::IterableEnum;
-use crate::graphics::terrain::{TerrainSprite, TerrainTilemap};
-use crate::organisms::sessile::plants::Acacia;
-use bevy::app::{App, CoreStage, Plugin, StartupStage};
-use bevy::asset::AssetServer;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::{Res, ResMut, Resource};
-use bevy::log::info;
-use bevy::prelude::{StageLabel, SystemStage};
-use bevy_ecs_tilemap::map::{
-    HexCoordSystem, TilemapGridSize, TilemapId, TilemapTexture, TilemapTileSize, TilemapType,
+use bevy::{
+    prelude::*,
+    render::{mesh::Indices, render_resource::PrimitiveTopology},
 };
-use bevy_ecs_tilemap::prelude::get_tilemap_center_transform;
-use bevy_ecs_tilemap::tiles::TilePos;
-use bevy_ecs_tilemap::TilemapBundle;
+use hexx::{Hex, HexLayout, MeshInfo};
 
-use crate as emergence_lib;
-use crate::graphics::organisms::{OrganismSprite, OrganismsTilemap};
-#[cfg(feature = "debug_tools")]
-use debug_tools::debug_ui::*;
-use emergence_macros::IterableEnum;
+use crate::{
+    organisms::units::Unit,
+    simulation::geometry::{MapGeometry, TilePos},
+    structures::Structure,
+    terrain::Terrain,
+};
 
-use crate::graphics::produce::{ProduceSprite, ProduceTilemap};
-use crate::graphics::sprites::{IntoSprite, SpriteIndex};
-use crate::organisms::sessile::fungi::Leuco;
-use crate::organisms::units::Ant;
-use crate::simulation::map::MapGeometry;
-use crate::terrain::components::{HighTerrain, PlainTerrain, RockyTerrain};
-use bevy_trait_query::{ChangedOne, RegisterExt};
+use self::lighting::LightingPlugin;
 
-pub mod organisms;
-pub mod produce;
-pub mod sprites;
-pub mod terrain;
-pub mod ui;
+mod lighting;
 
-/// All of the code needed to draw things on screen.
+/// Adds all logic required to render the game.
+///
+/// The game should be able to run and function without this plugin: no gameplay logic allowed!
 pub struct GraphicsPlugin;
-
-/// The stages in which graphics systems run
-#[derive(StageLabel)]
-pub enum GraphicsStage {
-    /// Stage in which tilemap initialization happens, should run after [`StartupStage::Startup`]
-    TilemapInitialization,
-    /// Stage in which debug label generation happens, should run after [`TilemapInitialization`](GraphicsStage::TilemapInitialization)
-    DebugLabelGeneration,
-}
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(bevy_ecs_tilemap::TilemapPlugin)
-            .add_plugin(ui::UiPlugin)
-            .register_component_as::<dyn IntoSprite, Ant>()
-            .register_component_as::<dyn IntoSprite, Leuco>()
-            .register_component_as::<dyn IntoSprite, Acacia>()
-            .register_component_as::<dyn IntoSprite, HighTerrain>()
-            .register_component_as::<dyn IntoSprite, RockyTerrain>()
-            .register_component_as::<dyn IntoSprite, PlainTerrain>()
-            .init_resource::<TilemapRegister>()
-            .add_startup_stage_after(
-                StartupStage::Startup,
-                GraphicsStage::TilemapInitialization,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_after(
-                GraphicsStage::TilemapInitialization,
-                GraphicsStage::DebugLabelGeneration,
-                SystemStage::parallel(),
-            )
-            // we put these systems in PostStartup, because we need the MapGeometry resource ready
-            .add_startup_system_to_stage(GraphicsStage::TilemapInitialization, initialize_tilemaps)
-            .add_system_to_stage(CoreStage::PreUpdate, update_sprites);
-
-        #[cfg(feature = "debug_tools")]
-        app.add_startup_system_to_stage(GraphicsStage::DebugLabelGeneration, initialize_infotext)
-            .add_system_to_stage(CoreStage::Update, change_infotext);
+        app.add_plugin(LightingPlugin)
+            .add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
+            .add_system_to_stage(CoreStage::PostUpdate, populate_units)
+            .add_system_to_stage(CoreStage::PostUpdate, populate_structures);
     }
 }
 
-/// Initialize required tilemaps.
-fn initialize_tilemaps(
+/// Adds rendering components to every spawned terrain tile
+fn populate_terrain(
+    new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     map_geometry: Res<MapGeometry>,
-    asset_server: Res<AssetServer>,
-    mut layer_register: ResMut<TilemapRegister>,
 ) {
-    Tilemap::variants().for_each(|tilemap| {
-        let entity = tilemap.spawn(&mut commands, &map_geometry, &asset_server);
-        layer_register
-            .register
-            .insert(tilemap.index(), TilemapId(entity));
-    });
-}
+    // mesh
+    let mesh = hexagonal_column(&map_geometry.layout);
+    let mesh_handle = meshes.add(mesh);
 
-/// Update entities that have a newly added/changed component which implements [`IntoSprite`] with
-/// new `bevy_ecs_tilemap` [`TileBundle`](bevy_ecs_tilemap::tiles::TileBundle) information.
-fn update_sprites(
-    mut commands: Commands,
-    into_sprites_query: Query<(Entity, &TilePos, ChangedOne<&dyn IntoSprite>)>,
-    tilemap_register: Res<TilemapRegister>,
-) {
-    into_sprites_query.for_each(|(entity, position, maybe_sprite)| {
-        if let Some(sprite) = maybe_sprite {
-            commands
-                .entity(entity)
-                .insert(sprite.tile_bundle(*position, &tilemap_register));
-        }
-    });
-}
+    for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
 
-/// We use a hexagonal map with "pointy-topped" (row oriented) tiles, and prefer an axial coordinate
-/// system instead of an offset-coordinate system.
-pub const MAP_COORD_SYSTEM: HexCoordSystem = HexCoordSystem::Row;
-/// We are using a map with hexagonal tiles.
-pub const MAP_TYPE: TilemapType = TilemapType::Hexagon(HexCoordSystem::Row);
-
-/// Enumerates the different tilemaps we are organizing our graphics into
-///
-/// These should be ordered by their z-height. So, the terrain tilemap is the lowest (z-height `0`),
-/// the organism tilemap is above it, etc.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, IterableEnum)]
-pub enum Tilemap {
-    /// Terrain tilemap
-    Terrain,
-    /// Organisms tilemap
-    Organisms,
-    /// Produce tilemap
-    Produce,
-}
-
-impl Tilemap {
-    /// The tile size (hex tile width by hex tile height) in pixels of the tilemap's tile image assets.
-    ///
-    /// Note that in general, a regular hexagon "pointy top" (row oriented) hexagon has a
-    /// `width:height` ratio of [`sqrt(3.0)/2.0`](https://www.redblobgames.com/grids/hexagons/#basics),
-    /// but because pixels are integer values, there will usually be some rounding, so tiles will
-    /// only approximately match this ratio.
-    pub const fn tile_size(&self) -> TilemapTileSize {
-        // Currently all tilemaps have the same tile size
-        TilemapTileSize { x: 48.0, y: 54.0 }
-    }
-
-    /// The grid size of this tilemap, in pixels.
-    ///
-    /// This can differ from [`tile_size`](Self::tile_size), in order to overlap tiles, or pad tiles.
-    pub fn grid_size(&self) -> TilemapGridSize {
-        // Currently all tilemaps have the same grid size as their tile size
-        self.tile_size().into()
-    }
-
-    /// The z-height of this tile map, it is the same as the index of the tilemap's variant
-    /// in the [`Tilemap`] enum
-    pub const fn z_height(&self) -> f32 {
-        *self as usize as f32
-    }
-
-    /// Loads the texture for this tilemap, using its corresponding [`SpriteIndex`] implementor
-    pub fn load_texture(&self, asset_server: &AssetServer) -> TilemapTexture {
-        match self {
-            Tilemap::Terrain => TerrainSprite::load(asset_server),
-            Tilemap::Organisms => OrganismSprite::load(asset_server),
-            Tilemap::Produce => ProduceSprite::load(asset_server),
-        }
-    }
-
-    /// Spawns tilemap component associated with each variant
-    pub fn spawn(
-        &self,
-        commands: &mut Commands,
-        map_geometry: &MapGeometry,
-        asset_server: &AssetServer,
-    ) -> Entity {
-        info!("Inserting TilemapBundle for {:?}...", self);
-
-        let texture = self.load_texture(asset_server);
-        let tile_size = self.tile_size();
-        let grid_size = self.grid_size();
-
-        let mut entity_commands = commands.spawn(TilemapBundle {
-            grid_size,
-            map_type: MAP_TYPE,
-            size: map_geometry.size(),
-            texture,
-            tile_size,
-            transform: get_tilemap_center_transform(
-                &map_geometry.size(),
-                &grid_size,
-                &MAP_TYPE,
-                self.z_height(),
-            ),
-            ..Default::default()
-        });
-
-        match self {
-            Tilemap::Terrain => entity_commands.insert(TerrainTilemap),
-            Tilemap::Organisms => entity_commands.insert(OrganismsTilemap),
-            Tilemap::Produce => entity_commands.insert(ProduceTilemap),
+        let color = match terrain {
+            Terrain::Plain => Color::WHITE,
+            Terrain::High => Color::YELLOW,
+            Terrain::Rocky => Color::RED,
         };
 
-        entity_commands.id()
+        // PERF: this is wildly inefficient and lazy. Store the handles instead!
+        let material = materials.add(color.into());
+
+        commands.entity(terrain_entity).insert(PbrBundle {
+            mesh: mesh_handle.clone(),
+            material: material.clone(),
+            // FIXME: use z-up
+            transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+            ..default()
+        });
     }
 }
 
-/// Manages the mapping between [`Tilemap`]s and `bevy_ecs_tilemap` tilemaps
-#[derive(Resource, Default, Debug)]
-pub struct TilemapRegister {
-    /// A vector consisting of the tilemaps initialized with each corresponding [`Tilemap`] variant.
-    pub register: Vec<TilemapId>,
+/// Adds rendering components to every spawned structure
+fn populate_structures(
+    new_structures: Query<(Entity, &TilePos), Added<Structure>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    map_geometry: Res<MapGeometry>,
+) {
+    /// The size of a single structure
+    const SIZE: f32 = 1.0;
+    /// The offset required to have a structure sit on top of the tile correctly
+    const OFFSET: f32 = -SIZE / 2.;
+
+    let mesh = Mesh::from(shape::Cube { size: SIZE });
+    let mesh_handle = meshes.add(mesh);
+
+    for (entity, tile_pos) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+
+        // PERF: this is wildly inefficient and lazy. Store the handles instead!
+        let material = materials.add(Color::PINK.into());
+
+        commands.entity(entity).insert(PbrBundle {
+            mesh: mesh_handle.clone(),
+            material: material.clone(),
+            // FIXME: use z-up
+            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
+
+/// Adds rendering components to every spawned unit
+fn populate_units(
+    new_structures: Query<(Entity, &TilePos), Added<Unit>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    map_geometry: Res<MapGeometry>,
+) {
+    /// The size of a single unit
+    const SIZE: f32 = 0.5;
+    /// The offset required to have a unit stand on top of the tile correctly
+    const OFFSET: f32 = -SIZE / 2.;
+
+    let mesh = Mesh::from(shape::Cube { size: SIZE });
+    let mesh_handle = meshes.add(mesh);
+
+    for (entity, tile_pos) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+
+        // PERF: this is wildly inefficient and lazy. Store the handles instead!
+        let material = materials.add(Color::BLACK.into());
+
+        commands.entity(entity).insert(PbrBundle {
+            mesh: mesh_handle.clone(),
+            material: material.clone(),
+            // FIXME: use z-up
+            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
+
+/// Constructs the mesh for a single hexagonal column
+fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
+    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, 1.0);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
+    mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
+    mesh
 }

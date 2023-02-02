@@ -3,10 +3,10 @@
 //! The AI model of Emergence.
 
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TilePos;
 
 use crate::interactable::Interactable;
 use crate::organisms::units::Unit;
+use crate::simulation::geometry::TilePos;
 
 /// A unit's current goals.
 ///
@@ -47,7 +47,8 @@ pub mod events {
         ecs::{entity::Entity, system::SystemParam},
         prelude::EventWriter,
     };
-    use bevy_ecs_tilemap::tiles::TilePos;
+
+    use crate::simulation::geometry::TilePos;
 
     /// A struct that wraps all of the events defined in this module
     #[derive(SystemParam)]
