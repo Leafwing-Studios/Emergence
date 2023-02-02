@@ -80,8 +80,4 @@ unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # If you add something here please also add a comment explaining why it's necessary :)
-allow-git = [
-  # For `Added`/`Changed` functionality
-  # Waiting for <https://github.com/JoJoJet/bevy-trait-query/pull/30>
-  "https://github.com/Leafwing-Studios/bevy-trait-query.git",
-]
+allow-git = []
