@@ -1,10 +1,9 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
 use bevy::prelude::*;
-use bevy_mod_picking::{DebugEventsPickingPlugin, InteractablePickingPlugin, PickingPlugin};
-use hexx::Hex;
+use bevy_mod_picking::{InteractablePickingPlugin, PickingPlugin};
 
-use crate::simulation::geometry::TilePos;
+use crate::{simulation::geometry::TilePos, terrain::Terrain};
 
 use super::InteractionSystem;
 
@@ -17,7 +16,6 @@ impl Plugin for CursorTilePosPlugin {
         app.init_resource::<CursorPos>()
             .add_plugin(PickingPlugin)
             .add_plugin(InteractablePickingPlugin)
-            .add_plugin(DebugEventsPickingPlugin)
             .add_system(
                 update_cursor_pos
                     .label(InteractionSystem::ComputeCursorPos)
@@ -27,7 +25,7 @@ impl Plugin for CursorTilePosPlugin {
 }
 
 /// The tile position of the mouse cursor, if it lies over the map.
-#[derive(Resource, Default, Clone, Copy)]
+#[derive(Resource, Default, Debug, Clone, Copy)]
 pub struct CursorPos(Option<TilePos>);
 
 impl CursorPos {
@@ -39,7 +37,21 @@ impl CursorPos {
     }
 }
 
-/// Updates which tile the cursor is hovering over
-pub fn update_cursor_pos(mut cursor_pos: ResMut<CursorPos>) {
-    cursor_pos.0 = Some(TilePos { hex: Hex::ZERO });
+/// Records which tile is currently under the cursor, if any
+pub fn update_cursor_pos(
+    mut cursor_pos: ResMut<CursorPos>,
+    terrain_query: Query<(&TilePos, &Interaction), With<Terrain>>,
+) {
+    let mut found = false;
+    for (tile_pos, interaction) in terrain_query.iter() {
+        if let Interaction::Hovered = interaction {
+            cursor_pos.0 = Some(*tile_pos);
+            found = true;
+            break;
+        }
+    }
+
+    if !found {
+        cursor_pos.0 = None;
+    }
 }
