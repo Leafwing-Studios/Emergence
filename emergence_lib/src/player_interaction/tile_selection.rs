@@ -10,7 +10,7 @@ use leafwing_input_manager::{
 use crate::simulation::geometry::TilePos;
 
 use super::{
-    cursor::{highlight_selected_tiles, CursorTilePos},
+    cursor::{highlight_selected_tiles, CursorPos},
     InteractionSystem,
 };
 
@@ -197,7 +197,7 @@ impl Plugin for TileSelectionPlugin {
 
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 fn select_tiles(
-    cursor_tile_pos: Res<CursorTilePos>,
+    cursor_tile_pos: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,

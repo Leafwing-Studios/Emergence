@@ -14,8 +14,7 @@ pub struct CursorTilePosPlugin;
 
 impl Plugin for CursorTilePosPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CursorWorldPos>()
-            .init_resource::<CursorTilePos>()
+        app.init_resource::<CursorPos>()
             .add_plugin(PickingPlugin)
             .add_plugin(InteractablePickingPlugin)
             .add_plugin(DebugEventsPickingPlugin)
@@ -46,21 +45,11 @@ pub fn cursor_pos_in_world(
     ndc_to_world.project_point3(ndc.extend(0.0))
 }
 
-/// The world position of the mouse cursor.
-#[derive(Resource, Clone, Copy, Deref, DerefMut)]
-pub struct CursorWorldPos(Vec3);
-
-impl Default for CursorWorldPos {
-    fn default() -> Self {
-        Self(Vec3::new(f32::INFINITY, f32::INFINITY, 0.0))
-    }
-}
-
 /// The tile position of the mouse cursor, if it lies over the map.
 #[derive(Resource, Default, Clone, Copy)]
-pub struct CursorTilePos(Option<TilePos>);
+pub struct CursorPos(Option<TilePos>);
 
-impl CursorTilePos {
+impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.

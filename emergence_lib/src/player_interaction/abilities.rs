@@ -1,6 +1,6 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
-use super::cursor::CursorTilePos;
+use super::cursor::CursorPos;
 use super::intent::{Intent, IntentPool};
 use super::InteractionSystem;
 use bevy::prelude::*;
@@ -53,7 +53,7 @@ impl IntentAbility {
 
 /// Uses abilities when pressed at the cursor's location.
 fn use_ability(
-    cursor_tile_pos: Res<CursorTilePos>,
+    cursor_tile_pos: Res<CursorPos>,
     ability_state: Res<ActionState<IntentAbility>>,
     mut intent_pool: ResMut<IntentPool>,
 ) {
