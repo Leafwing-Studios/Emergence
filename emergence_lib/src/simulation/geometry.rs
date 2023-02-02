@@ -32,7 +32,7 @@ impl Default for MapGeometry {
     fn default() -> Self {
         MapGeometry {
             layout: HexLayout::default(),
-            radius: 10,
+            radius: 50,
             tiles_index: HashMap::default(),
             structure_index: HashMap::default(),
         }
