@@ -24,10 +24,16 @@ impl Plugin for CameraPlugin {
     }
 }
 
+/// The height above the ground that the camera begins.
+const STARTING_HEIGHT: f32 = 10.;
+/// The distance away from the origin that the camera begins.
+const STARTING_OFFSET: f32 = 10.;
+
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
     // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
-    let initial_transform = Transform::from_xyz(0.0, 1.0, 0.0);
+    let initial_transform =
+        Transform::from_xyz(STARTING_OFFSET, STARTING_HEIGHT, 0.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     commands
         .spawn(Camera3dBundle {
@@ -82,7 +88,7 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: 500.,
             pan_speed: 50.,
-            rotation_speed: 1.,
+            rotation_speed: 4.,
         }
     }
 }
@@ -108,7 +114,7 @@ fn camera_movement(
             * ZOOM_PAN_SCALE;
 
         // Zoom in / out on whatever we're looking at
-        let delta = -transform.up() * delta_zoom;
+        let delta = Vec3::NEG_Y * delta_zoom;
 
         transform.translation += delta;
     }
@@ -127,10 +133,10 @@ fn camera_movement(
 
     // Rotate
     if camera_actions.pressed(CameraAction::RotateLeft) {
-        transform.rotate_local_y(settings.rotation_speed * time.delta_seconds());
+        transform.rotate_y(settings.rotation_speed * time.delta_seconds());
     }
 
     if camera_actions.pressed(CameraAction::RotateRight) {
-        transform.rotate_local_y(-settings.rotation_speed * time.delta_seconds());
+        transform.rotate_y(-settings.rotation_speed * time.delta_seconds());
     }
 }
