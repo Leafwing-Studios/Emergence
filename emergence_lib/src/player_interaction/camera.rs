@@ -98,38 +98,39 @@ fn camera_movement(
     >,
     time: Res<Time>,
 ) {
-    let (mut camera_transform, camera_actions, settings) = camera_query.single_mut();
+    let (mut transform, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
-        // FIXME: swap to z-up
-        let camera_actions = camera_actions.value(CameraAction::Zoom);
-        let delta_x = camera_actions * time.delta_seconds() * settings.zoom_speed * ZOOM_PAN_SCALE;
-        let delta_y = camera_actions * time.delta_seconds() * settings.pan_speed;
-        // oriented from the POV that you're the player trying to zoom in to the game map
-        camera_transform.translation.y -= delta_y;
+        let delta_zoom = camera_actions.value(CameraAction::Zoom)
+            * time.delta_seconds()
+            * settings.zoom_speed
+            * ZOOM_PAN_SCALE;
 
-        camera_transform.translation.x -= delta_x;
-        camera_transform.translation.z -= delta_x;
+        // Zoom in / out on whatever we're looking at
+        let delta = -transform.up() * delta_zoom;
+
+        transform.translation += delta;
     }
 
     // Pan
     if camera_actions.pressed(CameraAction::Pan) {
         let dual_axis_data = camera_actions.axis_pair(CameraAction::Pan).unwrap();
-        let delta_x = dual_axis_data.x() * time.delta_seconds() * settings.pan_speed;
-        let delta_y = dual_axis_data.y() * time.delta_seconds() * settings.pan_speed;
+        let base_xy = dual_axis_data.xy();
+        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed;
 
-        camera_transform.translation.x += delta_x;
-        // FIXME: swap to z-up
-        camera_transform.translation.z -= delta_y;
+        let x_motion = transform.right() * scaled_xy.x;
+        let y_motion = transform.forward() * scaled_xy.y;
+
+        transform.translation += x_motion + y_motion;
     }
 
     // Rotate
     if camera_actions.pressed(CameraAction::RotateLeft) {
-        camera_transform.rotate_local_y(settings.rotation_speed * time.delta_seconds());
+        transform.rotate_local_y(settings.rotation_speed * time.delta_seconds());
     }
 
     if camera_actions.pressed(CameraAction::RotateRight) {
-        camera_transform.rotate_local_y(-settings.rotation_speed * time.delta_seconds());
+        transform.rotate_local_y(-settings.rotation_speed * time.delta_seconds());
     }
 }
