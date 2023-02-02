@@ -30,7 +30,8 @@ impl Plugin for CameraPlugin {
             .add_system(
                 rotate_camera
                     .label(InteractionSystem::MoveCamera)
-                    .before(translate_camera),
+                    // We rely on the updated focus information from this system
+                    .after(translate_camera),
             )
             .add_system(translate_camera.label(InteractionSystem::MoveCamera));
     }
@@ -46,26 +47,8 @@ const CAMERA_ANGLE: f32 = PI / 4.;
 
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
-    // Always begin due "south" of the origin.
-    let mut initial_transform =
-        Transform::from_translation(Vec3::NEG_X * STARTING_DISTANCE_FROM_ORIGIN);
-    info!("{:?}", initial_transform);
-
-    // Lift the camera up, towards the +y axis
-    initial_transform
-        .translate_around(Vec3::ZERO, Quat::from_axis_angle(Vec3::NEG_Z, CAMERA_ANGLE));
-    info!("{:?}", initial_transform);
-
-    // Look down at the origin
-    // FIXME: this is not working as expected
-    initial_transform.look_at(Vec3::ZERO, Vec3::Y);
-    info!("{:?}", initial_transform);
-
     commands
-        .spawn(Camera3dBundle {
-            transform: initial_transform,
-            ..Default::default()
-        })
+        .spawn(Camera3dBundle::default())
         .insert(InputManagerBundle::<CameraAction> {
             input_map: InputMap::default()
                 .insert(VirtualDPad::wasd(), CameraAction::Pan)
@@ -77,6 +60,7 @@ fn setup(mut commands: Commands) {
             ..default()
         })
         .insert(CameraSettings::default())
+        .insert(CameraFocus::default())
         .insert(Facing::default());
 }
 
@@ -91,6 +75,28 @@ enum CameraAction {
     RotateLeft,
     /// Rotates the camera clockwise
     RotateRight,
+}
+
+/// The position that the camera is looking at.
+///
+/// When panning and zooming, this struct is updated, rather than modifying the camera's [`Transform`] directly.
+#[derive(Component, Debug)]
+struct CameraFocus {
+    /// The coordinate that the camera is looking at.
+    ///
+    /// This should be the top of the column at the center of the screen.
+    translation: Vec3,
+    /// The distance from the focus to the camera.
+    zoom: f32,
+}
+
+impl Default for CameraFocus {
+    fn default() -> Self {
+        CameraFocus {
+            translation: Vec3::ZERO,
+            zoom: STARTING_DISTANCE_FROM_ORIGIN,
+        }
+    }
 }
 
 /// Configure how the camera moves and feels.
@@ -121,12 +127,17 @@ const ZOOM_PAN_SCALE: f32 = 0.5;
 /// Pan and zoom the camera
 fn translate_camera(
     mut camera_query: Query<
-        (&mut Transform, &ActionState<CameraAction>, &CameraSettings),
+        (
+            &mut CameraFocus,
+            &Transform,
+            &ActionState<CameraAction>,
+            &CameraSettings,
+        ),
         With<Camera3d>,
     >,
     time: Res<Time>,
 ) {
-    let (mut transform, camera_actions, settings) = camera_query.single_mut();
+    let (mut focus, transform, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
@@ -136,9 +147,7 @@ fn translate_camera(
             * ZOOM_PAN_SCALE;
 
         // Zoom in / out on whatever we're looking at
-        let delta = Vec3::NEG_Y * delta_zoom;
-
-        transform.translation += delta;
+        focus.zoom -= delta_zoom;
     }
 
     // Pan
@@ -150,17 +159,25 @@ fn translate_camera(
         let x_motion = transform.right() * scaled_xy.x;
         let y_motion = transform.forward() * scaled_xy.y;
 
-        transform.translation += x_motion + y_motion;
+        focus.translation += x_motion + y_motion;
     }
 }
 
-/// Rotates the camera around a central point.
+/// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<(&mut Transform, &mut Facing, &ActionState<CameraAction>), With<Camera3d>>,
+    mut query: Query<
+        (
+            &mut Transform,
+            &mut Facing,
+            &CameraFocus,
+            &ActionState<CameraAction>,
+        ),
+        With<Camera3d>,
+    >,
 ) {
-    let (mut transform, mut facing, camera_actions) = query.single_mut();
+    let (mut transform, mut facing, focus, camera_actions) = query.single_mut();
 
-    // Rotate
+    // Set facing
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
         facing.direction = counterclockwise(facing.direction);
     }
@@ -169,7 +186,25 @@ fn rotate_camera(
         facing.direction = clockwise(facing.direction);
     }
 
-    // Rotate the object in the correct direction
-    let target = Quat::from_axis_angle(Vec3::Y, angle(facing.direction));
-    transform.rotation = target;
+    // Goal: move the camera around a central point
+
+    // Always begin due "south" of the focus.
+    let mut new_transform =
+        Transform::from_translation(focus.translation + Vec3::NEG_X * focus.zoom);
+
+    // Tilt up
+    new_transform.translate_around(
+        focus.translation,
+        Quat::from_axis_angle(Vec3::NEG_Z, CAMERA_ANGLE),
+    );
+
+    // Rotate around on the xz plane
+    let planar_angle = angle(facing.direction);
+    new_transform.translate_around(focus.translation, Quat::from_rotation_y(planar_angle));
+
+    // Look at that central point
+    new_transform.look_at(focus.translation, Vec3::Y);
+
+    // Replace the previous transform
+    *transform = new_transform;
 }
