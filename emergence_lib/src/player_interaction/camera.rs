@@ -40,7 +40,7 @@ impl Plugin for CameraPlugin {
 /// The distance from the origin that the camera begins at.
 ///
 /// Should be between the default values of [`CameraSettings`] `min_zoom` and `max_zoom`.
-const STARTING_DISTANCE_FROM_ORIGIN: f32 = 10.;
+const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 
 /// The angle in radians that the camera forms with the ground.
 ///
@@ -120,21 +120,28 @@ struct CameraSettings {
     ///
     /// Should always be positive, and less than `max_zoom`.
     max_zoom: f32,
+    /// The linear interpolation coefficient for camera movement.
+    ///
+    /// Should always be between 0 (unmoving) and 1 (instant).
+    linear_interpolation: f32,
+    /// The spherical linear interpolation coefficient for camera rotation.
+    ///
+    /// Should always be between 0 (unmoving) and 1 (instant).
+    rotational_interpolation: f32,
 }
 
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
             zoom_speed: 500.,
-            pan_speed: 50.,
+            pan_speed: 100.,
             min_zoom: 2.,
             max_zoom: 100.,
+            linear_interpolation: 0.2,
+            rotational_interpolation: 0.1,
         }
     }
 }
-
-/// The scale that controls the amount the camera will move in the x direction
-const ZOOM_PAN_SCALE: f32 = 0.5;
 
 /// Pan and zoom the camera
 fn translate_camera(
@@ -153,10 +160,8 @@ fn translate_camera(
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
-        let delta_zoom = -camera_actions.value(CameraAction::Zoom)
-            * time.delta_seconds()
-            * settings.zoom_speed
-            * ZOOM_PAN_SCALE;
+        let delta_zoom =
+            -camera_actions.value(CameraAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
 
         // Zoom in / out on whatever we're looking at
         focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
@@ -189,12 +194,13 @@ fn rotate_camera(
             &mut Transform,
             &mut Facing,
             &CameraFocus,
+            &CameraSettings,
             &ActionState<CameraAction>,
         ),
         With<Camera3d>,
     >,
 ) {
-    let (mut transform, mut facing, focus, camera_actions) = query.single_mut();
+    let (mut transform, mut facing, focus, settings, camera_actions) = query.single_mut();
 
     // Set facing
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
@@ -225,5 +231,11 @@ fn rotate_camera(
     new_transform.look_at(focus.translation, Vec3::Y);
 
     // Replace the previous transform
-    *transform = new_transform;
+    // Use lerping to smooth the transition
+    transform.translation = transform
+        .translation
+        .lerp(new_transform.translation, settings.linear_interpolation);
+    transform.rotation = transform
+        .rotation
+        .slerp(new_transform.rotation, settings.rotational_interpolation)
 }
