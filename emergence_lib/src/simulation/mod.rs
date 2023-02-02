@@ -4,7 +4,7 @@
 
 use crate::organisms::OrganismPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
-use crate::simulation::geometry::{coordinate_rotation_and_facing, MapGeometry};
+use crate::simulation::geometry::{sync_rotation_to_facing, MapGeometry};
 use crate::structures::StructuresPlugin;
 use bevy::app::{App, Plugin};
 use bevy::log::info;
@@ -22,7 +22,7 @@ impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
         app.init_resource::<MapGeometry>()
-            .add_system(coordinate_rotation_and_facing)
+            .add_system(sync_rotation_to_facing)
             .add_plugin(GenerationPlugin {
                 config: self.gen_config.clone(),
             })

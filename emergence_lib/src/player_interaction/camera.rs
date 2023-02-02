@@ -138,10 +138,10 @@ fn camera_movement(
 
     // Rotate
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
-        *facing = Facing(counterclockwise(facing.0));
+        facing.direction = counterclockwise(facing.direction);
     }
 
     if camera_actions.just_pressed(CameraAction::RotateRight) {
-        *facing = Facing(clockwise(facing.0));
+        facing.direction = clockwise(facing.direction);
     }
 }

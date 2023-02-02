@@ -1,5 +1,7 @@
 //! Manages the game world's grid and data tied to that grid
 
+use std::f32::consts::PI;
+
 use bevy::{prelude::*, utils::HashMap};
 use hexx::{Direction, Hex, HexLayout};
 
@@ -40,21 +42,30 @@ impl Default for MapGeometry {
 ///
 /// Stored as a component on each entity with a grid-aligned rotation.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Deref, DerefMut)]
-pub struct Facing(pub Direction);
+pub struct Facing {
+    /// The desired direction.
+    ///
+    /// Defaults to [`Direction::Top`].
+    pub direction: Direction,
+}
 
 impl Default for Facing {
     fn default() -> Self {
-        Facing(Direction::Top)
+        Facing {
+            direction: Direction::Top,
+        }
     }
 }
 
 /// Rotates objects so they are facing the correct direction.
-pub(super) fn coordinate_rotation_and_facing(
+pub(super) fn sync_rotation_to_facing(
     mut query: Query<(&mut Transform, &Facing), Changed<Facing>>,
 ) {
     for (mut transform, &facing) in query.iter_mut() {
-        // Rotate the object in the correct direction, preserving any tilt relative to the vertical axis.
-        todo!();
+        // Rotate the object in the correct direction
+        // FIXME: preserve any tilt relative to the vertical axis.
+        let target = Quat::from_axis_angle(Vec3::Y, angle(facing.direction));
+        transform.rotation = target;
     }
 }
 
@@ -84,6 +95,23 @@ pub fn counterclockwise(direction: Direction) -> Direction {
         BottomLeft => Bottom,
         Bottom => BottomRight,
     }
+}
+
+/// Returns the angle associated with the provided hex [`Direction`].
+///
+/// Measured in radians counterclockwise from the +x axis.
+pub fn angle(direction: Direction) -> f32 {
+    use Direction::*;
+    // See https://dr282zn36sxxg.cloudfront.net/datastreams/f-d%3Adff233ddd1e7e4c34a6545a8dfc1d63bbaf7eefbb40215febc633a30%2BIMAGE_TINY%2BIMAGE_TINY.1
+    PI / 6.
+        * match direction {
+            BottomRight => 11.,
+            TopRight => 1.,
+            Top => 3.,
+            TopLeft => 5.,
+            BottomLeft => 7.,
+            Bottom => 9.,
+        }
 }
 
 #[cfg(test)]
