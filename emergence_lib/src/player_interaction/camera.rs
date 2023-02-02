@@ -52,9 +52,16 @@ enum CameraAction {
     Zoom,
 }
 
+/// Configure how the camera moves and feels.
 #[derive(Component)]
 struct CameraSettings {
+    /// Scaling factor for how fast the camera zooms in and out.
+    ///
+    /// Should always be positive.
     zoom_speed: f32,
+    /// Scaling factor for how fast the camera moves from side to side.
+    ///
+    /// Should always be positive.
     pan_speed: f32,
 }
 

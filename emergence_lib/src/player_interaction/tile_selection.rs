@@ -164,7 +164,6 @@ impl SelectedTiles {
     pub fn added_tiles(&self) -> HashSet<TilePos> {
         self.selection
             .difference(self.previous_selection())
-            .into_iter()
             .copied()
             .collect()
     }
@@ -173,7 +172,6 @@ impl SelectedTiles {
     pub fn removed_tiles(&self) -> HashSet<TilePos> {
         self.previous_selection
             .difference(self.selection())
-            .into_iter()
             .copied()
             .collect()
     }

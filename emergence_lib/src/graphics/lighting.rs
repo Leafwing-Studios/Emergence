@@ -1,5 +1,8 @@
+//! Lights and lighting.
+
 use bevy::prelude::*;
 
+/// Handles all lighting logic
 pub(super) struct LightingPlugin;
 
 impl Plugin for LightingPlugin {

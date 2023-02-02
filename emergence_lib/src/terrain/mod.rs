@@ -23,7 +23,9 @@ pub enum Terrain {
 /// All of the components needed to define a piece of terrain.
 #[derive(Bundle)]
 pub struct TerrainBundle {
+    /// The type of terrain
     terrain_type: Terrain,
+    /// The location of this terrain hex
     tile_pos: TilePos,
 }
 

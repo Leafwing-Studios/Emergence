@@ -31,6 +31,7 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
+/// Adds rendering components to every spawned terrain tile
 fn populate_terrain(
     new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
@@ -39,7 +40,7 @@ fn populate_terrain(
     map_geometry: Res<MapGeometry>,
 ) {
     // mesh
-    let mesh = hexagonal_plane(&map_geometry.layout);
+    let mesh = hexagonal_column(&map_geometry.layout);
     let mesh_handle = meshes.add(mesh);
 
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
@@ -64,6 +65,7 @@ fn populate_terrain(
     }
 }
 
+/// Adds rendering components to every spawned structure
 fn populate_structures(
     new_structures: Query<(Entity, &TilePos), Added<Structure>>,
     mut commands: Commands,
@@ -71,7 +73,9 @@ fn populate_structures(
     mut materials: ResMut<Assets<StandardMaterial>>,
     map_geometry: Res<MapGeometry>,
 ) {
+    /// The size of a single structure
     const SIZE: f32 = 1.0;
+    /// The offset required to have a structure sit on top of the tile correctly
     const OFFSET: f32 = -SIZE / 2.;
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
@@ -93,6 +97,7 @@ fn populate_structures(
     }
 }
 
+/// Adds rendering components to every spawned unit
 fn populate_units(
     new_structures: Query<(Entity, &TilePos), Added<Unit>>,
     mut commands: Commands,
@@ -100,7 +105,9 @@ fn populate_units(
     mut materials: ResMut<Assets<StandardMaterial>>,
     map_geometry: Res<MapGeometry>,
 ) {
+    /// The size of a single unit
     const SIZE: f32 = 0.5;
+    /// The offset required to have a unit stand on top of the tile correctly
     const OFFSET: f32 = -SIZE / 2.;
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
@@ -122,7 +129,8 @@ fn populate_units(
     }
 }
 
-fn hexagonal_plane(hex_layout: &HexLayout) -> Mesh {
+/// Constructs the mesh for a single hexagonal column
+fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
     let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, 1.0);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());

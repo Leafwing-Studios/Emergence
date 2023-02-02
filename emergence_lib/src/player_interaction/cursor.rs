@@ -65,10 +65,12 @@ impl CursorTilePos {
     }
 }
 
+/// Updates which tile the cursor is hovering over
 pub(super) fn update_cursor_pos() {
     // FIXME: rewrite
 }
 
+/// Highlights the current set of selected tiles
 pub(super) fn highlight_selected_tiles() {
     // FIXME: rewrite
 }
