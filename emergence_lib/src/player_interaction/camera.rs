@@ -134,7 +134,7 @@ impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
             zoom_speed: 500.,
-            pan_speed: 100.,
+            pan_speed: 1.,
             min_zoom: 2.,
             max_zoom: 100.,
             linear_interpolation: 0.2,
@@ -171,7 +171,7 @@ fn translate_camera(
     if camera_actions.pressed(CameraAction::Pan) {
         let dual_axis_data = camera_actions.axis_pair(CameraAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
-        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed;
+        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed * focus.zoom;
         // Plane is XZ, but gamepads are XY
         let unoriented_translation = Vec3 {
             x: scaled_xy.y,
