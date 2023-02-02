@@ -1,8 +1,6 @@
 //! Camera controls and movement.
 //!
-//! This RTS-style camera can zoom and pan.
-
-// use std::f32::consts::FRAC_PI_3;
+//! This RTS-style camera can zoom, pan and rotate.
 
 use bevy::prelude::*;
 use leafwing_input_manager::axislike::SingleAxis;
@@ -29,9 +27,11 @@ impl Plugin for CameraPlugin {
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
     // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
+    let initial_transform = Transform::from_xyz(0.0, 1.0, 0.0);
+
     commands
         .spawn(Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 12.0, 0.0),
+            transform: initial_transform,
             ..Default::default()
         })
         .insert(InputManagerBundle::<CameraAction> {
