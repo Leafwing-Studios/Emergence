@@ -59,11 +59,11 @@ impl Default for Facing {
 
 /// Rotates objects so they are facing the correct direction.
 pub(super) fn sync_rotation_to_facing(
-    mut query: Query<(&mut Transform, &Facing), Changed<Facing>>,
+    // Camera requires different logic, it rotates "around" a central point
+    mut query: Query<(&mut Transform, &Facing), (Changed<Facing>, Without<Camera3d>)>,
 ) {
     for (mut transform, &facing) in query.iter_mut() {
         // Rotate the object in the correct direction
-        // FIXME: preserve any tilt relative to the vertical axis.
         let target = Quat::from_axis_angle(Vec3::Y, angle(facing.direction));
         transform.rotation = target;
     }

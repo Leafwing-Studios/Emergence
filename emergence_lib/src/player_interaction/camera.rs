@@ -11,6 +11,7 @@ use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 
+use crate::simulation::geometry::angle;
 use crate::simulation::geometry::clockwise;
 use crate::simulation::geometry::counterclockwise;
 use crate::simulation::geometry::Facing;
@@ -24,7 +25,12 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<CameraAction>::default())
             .add_startup_system_to_stage(StartupStage::Startup, setup)
-            .add_system(camera_movement.label(InteractionSystem::MoveCamera));
+            .add_system(
+                rotate_camera
+                    .label(InteractionSystem::MoveCamera)
+                    .before(translate_camera),
+            )
+            .add_system(translate_camera.label(InteractionSystem::MoveCamera));
     }
 }
 
@@ -96,20 +102,15 @@ impl Default for CameraSettings {
 /// The scale that controls the amount the camera will move in the x direction
 const ZOOM_PAN_SCALE: f32 = 0.5;
 
-/// Handles camera motion
-fn camera_movement(
+/// Pan and zoom the camera
+fn translate_camera(
     mut camera_query: Query<
-        (
-            &mut Transform,
-            &mut Facing,
-            &ActionState<CameraAction>,
-            &CameraSettings,
-        ),
+        (&mut Transform, &ActionState<CameraAction>, &CameraSettings),
         With<Camera3d>,
     >,
     time: Res<Time>,
 ) {
-    let (mut transform, mut facing, camera_actions, settings) = camera_query.single_mut();
+    let (mut transform, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
@@ -135,6 +136,13 @@ fn camera_movement(
 
         transform.translation += x_motion + y_motion;
     }
+}
+
+/// Rotates the camera around a central point.
+fn rotate_camera(
+    mut query: Query<(&mut Transform, &mut Facing, &ActionState<CameraAction>), With<Camera3d>>,
+) {
+    let (mut transform, mut facing, camera_actions) = query.single_mut();
 
     // Rotate
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
@@ -144,4 +152,8 @@ fn camera_movement(
     if camera_actions.just_pressed(CameraAction::RotateRight) {
         facing.direction = clockwise(facing.direction);
     }
+
+    // Rotate the object in the correct direction
+    let target = Quat::from_axis_angle(Vec3::Y, angle(facing.direction));
+    transform.rotation = target;
 }
