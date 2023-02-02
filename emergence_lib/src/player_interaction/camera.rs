@@ -39,6 +39,8 @@ fn setup(mut commands: Commands) {
                 .insert(VirtualDPad::wasd(), CameraAction::Pan)
                 .insert(VirtualDPad::arrow_keys(), CameraAction::Pan)
                 .insert(SingleAxis::mouse_wheel_y(), CameraAction::Zoom)
+                .insert(KeyCode::Q, CameraAction::RotateLeft)
+                .insert(KeyCode::E, CameraAction::RotateRight)
                 .build(),
             ..default()
         })
@@ -52,6 +54,10 @@ enum CameraAction {
     Pan,
     /// Reveal more or less of the map by pulling the camera away or moving it closer
     Zoom,
+    /// Rotates the camera counterclockwise
+    RotateLeft,
+    /// Rotates the camera clockwise
+    RotateRight,
 }
 
 /// Configure how the camera moves and feels.
@@ -65,6 +71,10 @@ struct CameraSettings {
     ///
     /// Should always be positive.
     pan_speed: f32,
+    /// The rate at which the camera rotates.
+    ///
+    /// Should always be positive.
+    rotation_speed: f32,
 }
 
 impl Default for CameraSettings {
@@ -72,6 +82,7 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: 500.,
             pan_speed: 50.,
+            rotation_speed: 1.,
         }
     }
 }
@@ -111,5 +122,14 @@ fn camera_movement(
         camera_transform.translation.x += delta_x;
         // FIXME: swap to z-up
         camera_transform.translation.z -= delta_y;
+    }
+
+    // Rotate
+    if camera_actions.pressed(CameraAction::RotateLeft) {
+        camera_transform.rotate_local_y(settings.rotation_speed * time.delta_seconds());
+    }
+
+    if camera_actions.pressed(CameraAction::RotateRight) {
+        camera_transform.rotate_local_y(-settings.rotation_speed * time.delta_seconds());
     }
 }
