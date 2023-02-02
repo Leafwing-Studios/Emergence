@@ -5,6 +5,8 @@
 
 use bevy::prelude::*;
 
+use crate::simulation::geometry::Facing;
+
 use self::crafting::CraftingPlugin;
 
 pub mod crafting;
@@ -14,6 +16,8 @@ pub mod crafting;
 pub struct StructureBundle {
     /// Data characterizing structures
     structure: Structure,
+    /// The direction this structure is facing
+    facing: Facing,
 }
 
 /// Structures are static buildings that take up one or more tile

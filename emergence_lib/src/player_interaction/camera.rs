@@ -11,6 +11,10 @@ use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 
+use crate::simulation::geometry::clockwise;
+use crate::simulation::geometry::counterclockwise;
+use crate::simulation::geometry::Facing;
+
 use super::InteractionSystem;
 
 /// Camera logic
@@ -50,7 +54,8 @@ fn setup(mut commands: Commands) {
                 .build(),
             ..default()
         })
-        .insert(CameraSettings::default());
+        .insert(CameraSettings::default())
+        .insert(Facing::default());
 }
 
 /// Actions that manipulate the camera
@@ -77,10 +82,6 @@ struct CameraSettings {
     ///
     /// Should always be positive.
     pan_speed: f32,
-    /// The rate at which the camera rotates.
-    ///
-    /// Should always be positive.
-    rotation_speed: f32,
 }
 
 impl Default for CameraSettings {
@@ -88,7 +89,6 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: 500.,
             pan_speed: 50.,
-            rotation_speed: 4.,
         }
     }
 }
@@ -99,12 +99,17 @@ const ZOOM_PAN_SCALE: f32 = 0.5;
 /// Handles camera motion
 fn camera_movement(
     mut camera_query: Query<
-        (&mut Transform, &ActionState<CameraAction>, &CameraSettings),
+        (
+            &mut Transform,
+            &mut Facing,
+            &ActionState<CameraAction>,
+            &CameraSettings,
+        ),
         With<Camera3d>,
     >,
     time: Res<Time>,
 ) {
-    let (mut transform, camera_actions, settings) = camera_query.single_mut();
+    let (mut transform, mut facing, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
     if camera_actions.pressed(CameraAction::Zoom) {
@@ -132,11 +137,11 @@ fn camera_movement(
     }
 
     // Rotate
-    if camera_actions.pressed(CameraAction::RotateLeft) {
-        transform.rotate_y(settings.rotation_speed * time.delta_seconds());
+    if camera_actions.just_pressed(CameraAction::RotateLeft) {
+        *facing = Facing(counterclockwise(facing.0));
     }
 
-    if camera_actions.pressed(CameraAction::RotateRight) {
-        transform.rotate_y(-settings.rotation_speed * time.delta_seconds());
+    if camera_actions.just_pressed(CameraAction::RotateRight) {
+        *facing = Facing(clockwise(facing.0));
     }
 }

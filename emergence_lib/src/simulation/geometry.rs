@@ -1,9 +1,6 @@
 //! Manages the game world's grid and data tied to that grid
 
-use bevy::{
-    prelude::{Component, Deref, DerefMut, Entity, Resource},
-    utils::HashMap,
-};
+use bevy::{prelude::*, utils::HashMap};
 use hexx::{Direction, Hex, HexLayout};
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -36,6 +33,28 @@ impl Default for MapGeometry {
             tiles_index: HashMap::default(),
             structure_index: HashMap::default(),
         }
+    }
+}
+
+/// The hex direction that this entity is facing.
+///
+/// Stored as a component on each entity with a grid-aligned rotation.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Deref, DerefMut)]
+pub struct Facing(pub Direction);
+
+impl Default for Facing {
+    fn default() -> Self {
+        Facing(Direction::Top)
+    }
+}
+
+/// Rotates objects so they are facing the correct direction.
+pub(super) fn coordinate_rotation_and_facing(
+    mut query: Query<(&mut Transform, &Facing), Changed<Facing>>,
+) {
+    for (mut transform, &facing) in query.iter_mut() {
+        // Rotate the object in the correct direction, preserving any tilt relative to the vertical axis.
+        todo!();
     }
 }
 
