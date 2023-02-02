@@ -2,6 +2,8 @@
 //!
 //! This RTS-style camera can zoom, pan and rotate.
 
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
@@ -34,16 +36,30 @@ impl Plugin for CameraPlugin {
     }
 }
 
-/// The height above the ground that the camera begins.
-const STARTING_HEIGHT: f32 = 10.;
-/// The distance away from the origin that the camera begins.
-const STARTING_OFFSET: f32 = 10.;
+/// The distance from the origin that the camera begins at.
+const STARTING_DISTANCE_FROM_ORIGIN: f32 = 15.;
+
+/// The angle in radians that the camera forms with the ground.
+///
+/// This value should be between 0 (horizontal) and PI / 2 (vertical).
+const CAMERA_ANGLE: f32 = PI / 4.;
 
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
-    // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
-    let initial_transform =
-        Transform::from_xyz(STARTING_OFFSET, STARTING_HEIGHT, 0.0).looking_at(Vec3::ZERO, Vec3::Y);
+    // Always begin due "south" of the origin.
+    let mut initial_transform =
+        Transform::from_translation(Vec3::NEG_X * STARTING_DISTANCE_FROM_ORIGIN);
+    info!("{:?}", initial_transform);
+
+    // Lift the camera up, towards the +y axis
+    initial_transform
+        .translate_around(Vec3::ZERO, Quat::from_axis_angle(Vec3::NEG_Z, CAMERA_ANGLE));
+    info!("{:?}", initial_transform);
+
+    // Look down at the origin
+    // FIXME: this is not working as expected
+    initial_transform.look_at(Vec3::ZERO, Vec3::Y);
+    info!("{:?}", initial_transform);
 
     commands
         .spawn(Camera3dBundle {
