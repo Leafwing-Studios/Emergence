@@ -7,7 +7,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-use crate::simulation::geometry::TilePos;
+use crate::terrain::Terrain;
 
 use super::{cursor::CursorPos, InteractionSystem};
 
@@ -69,23 +69,18 @@ impl TileSelectionAction {
 #[derive(Resource, Debug, Default)]
 pub struct SelectedTiles {
     /// Actively selected tiles
-    selection: HashSet<TilePos>,
-    // TODO: use this for more efficient tile selection toggling
-    /// Most recently deselected tiles
-    previous_selection: HashSet<TilePos>,
+    selection: HashSet<Entity>,
 }
 
 impl SelectedTiles {
     /// Selects a single tile
-    pub fn add_tile(&mut self, tile_pos: TilePos) {
-        self.cache_selection();
-        self.selection.insert(tile_pos);
+    pub fn add_tile(&mut self, tile_entity: Entity) {
+        self.selection.insert(tile_entity);
     }
 
     /// Deselects a single tile
-    pub fn remove_tile(&mut self, tile_pos: TilePos) {
-        self.cache_selection();
-        self.selection.remove(&tile_pos);
+    pub fn remove_tile(&mut self, tile_entity: Entity) {
+        self.selection.remove(&tile_entity);
     }
 
     /// Selects a single tile, at the expense of any other tiles already selected.
@@ -94,15 +89,14 @@ impl SelectedTiles {
     /// If a tile is already selected, remove it from the selection.
     ///
     /// This is the behavior controlled by [`TileSelectionAction::Single`].
-    pub fn select_single(&mut self, tile_pos: TilePos) {
-        self.cache_selection();
-        if self.selection.contains(&tile_pos) {
+    pub fn select_single(&mut self, tile_entity: Entity) {
+        if self.selection.contains(&tile_entity) {
             self.selection.clear();
         } else {
             // Clear cache then reinsert in the previous cache structure rather than making a new one
             // to avoid a pointless reallocation
             self.selection.clear();
-            self.selection.insert(tile_pos);
+            self.selection.insert(tile_entity);
         }
     }
 
@@ -112,33 +106,21 @@ impl SelectedTiles {
     /// If it is already selected, remove it from the selection.
     ///
     /// This is the behavior controlled by [`TileSelectionAction::Modify`].
-    pub fn modify_selection(&mut self, tile_pos: TilePos) {
-        self.cache_selection();
-        if self.selection.contains(&tile_pos) {
-            self.selection.remove(&tile_pos);
+    pub fn modify_selection(&mut self, tile_entity: Entity) {
+        if self.selection.contains(&tile_entity) {
+            self.selection.remove(&tile_entity);
         } else {
-            self.selection.insert(tile_pos);
+            self.selection.insert(tile_entity);
         }
     }
 
     /// The current set of selected tiles
-    pub fn selection(&self) -> &HashSet<TilePos> {
+    pub fn selection(&self) -> &HashSet<Entity> {
         &self.selection
-    }
-
-    /// The previous set of selected tiles
-    pub fn previous_selection(&self) -> &HashSet<TilePos> {
-        &self.previous_selection
-    }
-
-    /// Stores the current tile selection to be used to compute the set of changed tiles efficiently
-    fn cache_selection(&mut self) {
-        self.previous_selection = self.selection.clone();
     }
 
     /// Clears the set of selected tiles.
     pub fn clear_selection(&mut self) {
-        self.cache_selection();
         self.selection.clear();
     }
 
@@ -153,24 +135,8 @@ impl SelectedTiles {
     }
 
     /// Is the given tile in the selection?
-    pub fn contains_pos(&self, tile_pos: &TilePos) -> bool {
-        self.selection.contains(tile_pos)
-    }
-
-    /// Compute the set of newly added tiles
-    pub fn added_tiles(&self) -> HashSet<TilePos> {
-        self.selection
-            .difference(self.previous_selection())
-            .copied()
-            .collect()
-    }
-
-    /// Compute the set of newly removed tiles
-    pub fn removed_tiles(&self) -> HashSet<TilePos> {
-        self.previous_selection
-            .difference(self.selection())
-            .copied()
-            .collect()
+    pub fn contains_tile(&self, tile_entity: Entity) -> bool {
+        self.selection.contains(&tile_entity)
     }
 }
 
@@ -194,17 +160,17 @@ impl Plugin for TileSelectionPlugin {
 
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 fn select_tiles(
-    cursor_tile_pos: Res<CursorPos>,
+    cursor_tile_entity: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,
 ) {
-    if let Some(cursor_tile) = cursor_tile_pos.maybe_tile_pos() {
+    if let Some(cursor_entity) = cursor_tile_entity.maybe_entity() {
         if actions.pressed(TileSelectionAction::Clear) {
             selected_tiles.clear_selection();
         } else if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
-                *selection_mode = match selected_tiles.contains_pos(&cursor_tile) {
+                *selection_mode = match selected_tiles.contains_tile(cursor_entity) {
                     // If you start with a selected tile, subtract from the selection
                     true => SelectMode::Deselect,
                     // If you start with an unselected tile, add to the selection
@@ -212,14 +178,14 @@ fn select_tiles(
                 }
             }
             match *selection_mode {
-                SelectMode::Select => selected_tiles.add_tile(cursor_tile),
-                SelectMode::Deselect => selected_tiles.remove_tile(cursor_tile),
+                SelectMode::Select => selected_tiles.add_tile(cursor_entity),
+                SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity),
                 SelectMode::None => unreachable!(),
             }
         } else if actions.just_pressed(TileSelectionAction::Modify) {
-            selected_tiles.modify_selection(cursor_tile);
+            selected_tiles.modify_selection(cursor_entity);
         } else if actions.just_pressed(TileSelectionAction::Single) {
-            selected_tiles.select_single(cursor_tile);
+            selected_tiles.select_single(cursor_entity);
         }
 
         if actions.released(TileSelectionAction::Multiple) {
@@ -229,6 +195,22 @@ fn select_tiles(
 }
 
 /// Highlights the current set of selected tiles
-pub fn highlight_selected_tiles() {
-    // FIXME: rewrite
+pub fn highlight_selected_tiles(
+    selected_tiles: Res<SelectedTiles>,
+    mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>), With<Terrain>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    if selected_tiles.is_changed() {
+        let selection = selected_tiles.selection();
+        // PERF: We should probably avoid a linear scan over all tiles here
+        for (terrain_entity, mut material) in terrain_query.iter_mut() {
+            if selection.contains(&terrain_entity) {
+                // PERF: cache these materials
+                *material = materials.add(Color::GREEN.into());
+            } else {
+                // FIXME: reset to the correct material
+                *material = materials.add(Color::WHITE.into());
+            }
+        }
+    }
 }

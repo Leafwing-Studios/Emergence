@@ -26,32 +26,45 @@ impl Plugin for CursorTilePosPlugin {
 
 /// The tile position of the mouse cursor, if it lies over the map.
 #[derive(Resource, Default, Debug, Clone, Copy)]
-pub struct CursorPos(Option<TilePos>);
+pub struct CursorPos {
+    entity: Option<Entity>,
+    tile_pos: Option<TilePos>,
+}
 
 impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
     pub fn maybe_tile_pos(&self) -> Option<TilePos> {
-        self.0
+        self.tile_pos
+    }
+
+    /// The terrain entity under the cursor, if any.
+    ///
+    /// If the cursor is outside the map, this will return `None`.
+    pub fn maybe_entity(&self) -> Option<Entity> {
+        self.entity
     }
 }
 
 /// Records which tile is currently under the cursor, if any
 pub fn update_cursor_pos(
     mut cursor_pos: ResMut<CursorPos>,
-    terrain_query: Query<(&TilePos, &Interaction), With<Terrain>>,
+    terrain_query: Query<(Entity, &TilePos, &Interaction), With<Terrain>>,
 ) {
     let mut found = false;
-    for (tile_pos, interaction) in terrain_query.iter() {
+    // PERF: We should probably avoid a linear scan over all tiles here
+    for (entity, tile_pos, interaction) in terrain_query.iter() {
         if let Interaction::Hovered = interaction {
-            cursor_pos.0 = Some(*tile_pos);
+            cursor_pos.entity = Some(entity);
+            cursor_pos.tile_pos = Some(*tile_pos);
             found = true;
             break;
         }
     }
 
     if !found {
-        cursor_pos.0 = None;
+        cursor_pos.entity = None;
+        cursor_pos.tile_pos = None;
     }
 }
