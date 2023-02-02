@@ -26,17 +26,12 @@ impl Plugin for CameraPlugin {
     }
 }
 
-/// Sets the angle the camera is oriented around the z-axis.
-const CAM_ANG: f32 = 0.733;
-
 /// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
 fn setup(mut commands: Commands) {
     // FIXME: swap to z-up coordinates. Blocked on https://github.com/ManevilleF/hexx/issues/10
     commands
         .spawn(Camera3dBundle {
-            transform: Transform::from_xyz(20.0, 6.0, 30.0)
-                .looking_at(Vec3::ZERO, -Vec3::Y)
-                .with_rotation(Quat::from_euler(EulerRot::XZY, 0., 0., CAM_ANG)),
+            transform: Transform::from_xyz(0.0, 12.0, 0.0),
             ..Default::default()
         })
         .insert(InputManagerBundle::<CameraAction> {
