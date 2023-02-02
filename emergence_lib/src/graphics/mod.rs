@@ -7,7 +7,9 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
+    organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
+    structures::Structure,
     terrain::Terrain,
 };
 
@@ -24,7 +26,8 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_organisms);
+            .add_system_to_stage(CoreStage::PostUpdate, populate_units)
+            .add_system_to_stage(CoreStage::PostUpdate, populate_structures);
     }
 }
 
@@ -60,7 +63,61 @@ fn populate_terrain(
     }
 }
 
-fn populate_organisms() {}
+fn populate_structures(
+    new_structures: Query<(Entity, &TilePos), Added<Structure>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    map_geometry: Res<MapGeometry>,
+) {
+    const SIZE: f32 = 1.0;
+    const OFFSET: f32 = -SIZE / 2.;
+
+    let mesh = Mesh::from(shape::Cube { size: SIZE });
+    let mesh_handle = meshes.add(mesh);
+
+    for (entity, tile_pos) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+
+        // PERF: this is wildly inefficient and lazy. Store the handles instead!
+        let material = materials.add(Color::PINK.into());
+
+        commands.entity(entity).insert(PbrBundle {
+            mesh: mesh_handle.clone(),
+            material: material.clone(),
+            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
+
+fn populate_units(
+    new_structures: Query<(Entity, &TilePos), Added<Unit>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    map_geometry: Res<MapGeometry>,
+) {
+    const SIZE: f32 = 0.5;
+    const OFFSET: f32 = -SIZE / 2.;
+
+    let mesh = Mesh::from(shape::Cube { size: SIZE });
+    let mesh_handle = meshes.add(mesh);
+
+    for (entity, tile_pos) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+
+        // PERF: this is wildly inefficient and lazy. Store the handles instead!
+        let material = materials.add(Color::BLACK.into());
+
+        commands.entity(entity).insert(PbrBundle {
+            mesh: mesh_handle.clone(),
+            material: material.clone(),
+            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
 
 fn hexagonal_plane(hex_layout: &HexLayout) -> Mesh {
     let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, 1.0);
