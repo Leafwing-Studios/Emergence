@@ -12,17 +12,30 @@ use self::crafting::CraftingPlugin;
 pub mod crafting;
 
 /// The data needed to build a structure
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct StructureBundle {
     /// Data characterizing structures
-    structure: Structure,
+    structure: StructureId,
     /// The direction this structure is facing
     facing: Facing,
 }
 
+impl StructureBundle {
+    /// Creates a new structure
+    pub fn new(id: StructureId) -> Self {
+        StructureBundle {
+            structure: id,
+            facing: Facing::default(),
+        }
+    }
+}
+
 /// Structures are static buildings that take up one or more tile
-#[derive(Default, Component, Clone)]
-pub struct Structure;
+#[derive(Component, Clone)]
+pub struct StructureId {
+    /// The unique identifier for this variety of structure.
+    pub(crate) id: String,
+}
 
 /// The systems that make structures tick.
 pub struct StructuresPlugin;

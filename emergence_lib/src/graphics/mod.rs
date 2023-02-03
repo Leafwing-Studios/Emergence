@@ -10,7 +10,7 @@ use crate::{
     asset_management::TileHandles,
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::Structure,
+    structures::StructureId,
     terrain::Terrain,
 };
 
@@ -58,7 +58,7 @@ fn populate_terrain(
 
 /// Adds rendering components to every spawned structure
 fn populate_structures(
-    new_structures: Query<(Entity, &TilePos), Added<Structure>>,
+    new_structures: Query<(Entity, &TilePos), Added<StructureId>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
