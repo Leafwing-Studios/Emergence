@@ -9,7 +9,7 @@ use crate::{
         units::Ant,
         OrganismType,
     },
-    player_interaction::cursor::CursorTilePos,
+    player_interaction::cursor::CursorPos,
     simulation::geometry::TilePos,
     structures::crafting::{
         ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
@@ -67,7 +67,7 @@ impl Plugin for DetailsPlugin {
 
 /// Get details about the hovered entity.
 fn hover_details(
-    cursor_pos: Res<CursorTilePos>,
+    cursor_pos: Res<CursorPos>,
     mut hover_details: ResMut<HoverDetails>,
     query: Query<(
         Entity,

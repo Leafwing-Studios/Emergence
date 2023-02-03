@@ -1,20 +1,22 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
-use bevy::math::{Vec2, Vec3};
 use bevy::prelude::*;
-
-use crate::simulation::geometry::TilePos;
+use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
 
 use super::InteractionSystem;
+use crate::{simulation::geometry::TilePos, terrain::Terrain};
 
-/// Initializes the [`CursorWorldPos`] and [`CursorTilePos`] resources, which are kept updated  
-/// updated using [`update_cursor_pos`].
-pub struct CursorTilePosPlugin;
+/// Controls raycasting and cursor aethetics.
+pub struct CursorPlugin;
 
-impl Plugin for CursorTilePosPlugin {
+impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CursorWorldPos>()
-            .init_resource::<CursorTilePos>()
+        app.init_resource::<CursorPos>()
+            .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
+            .add_system_to_stage(
+                CoreStage::First,
+                update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
+            )
             .add_system(
                 update_cursor_pos
                     .label(InteractionSystem::ComputeCursorPos)
@@ -23,54 +25,64 @@ impl Plugin for CursorTilePosPlugin {
     }
 }
 
-/// Converts cursor screen position into a world position, taking into account any transforms
-/// applied to the camera.
-pub fn cursor_pos_in_world(
-    windows: &Windows,
-    cursor_pos: Vec2,
-    cam_t: &Transform,
-    cam: &Camera,
-) -> Vec3 {
-    let window = windows.primary();
-
-    let window_size = Vec2::new(window.width(), window.height());
-
-    // Convert screen position [0..resolution] to ndc [-1..1]
-    // (ndc = normalized device coordinates)
-    let ndc_to_world = cam_t.compute_matrix() * cam.projection_matrix().inverse();
-    let ndc = (cursor_pos / window_size) * 2.0 - Vec2::ONE;
-    ndc_to_world.project_point3(ndc.extend(0.0))
-}
-
-/// The world position of the mouse cursor.
-#[derive(Resource, Clone, Copy, Deref, DerefMut)]
-pub struct CursorWorldPos(Vec3);
-
-impl Default for CursorWorldPos {
-    fn default() -> Self {
-        Self(Vec3::new(f32::INFINITY, f32::INFINITY, 0.0))
-    }
-}
-
 /// The tile position of the mouse cursor, if it lies over the map.
-#[derive(Resource, Default, Clone, Copy)]
-pub struct CursorTilePos(Option<TilePos>);
+#[derive(Resource, Default, Debug, Clone, Copy)]
+pub struct CursorPos {
+    /// The terrain entity that the cursor is over top of.
+    terrain_entity: Option<Entity>,
+    /// The tile position that the cursor is over top of.
+    tile_pos: Option<TilePos>,
+}
 
-impl CursorTilePos {
+impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
     pub fn maybe_tile_pos(&self) -> Option<TilePos> {
-        self.0
+        self.tile_pos
+    }
+
+    /// The terrain entity under the cursor, if any.
+    ///
+    /// If the cursor is outside the map, this will return `None`.
+    pub fn maybe_entity(&self) -> Option<Entity> {
+        self.terrain_entity
     }
 }
 
-/// Updates which tile the cursor is hovering over
-pub fn update_cursor_pos() {
-    // FIXME: rewrite
+/// Updates the raycast with the cursor position
+///
+/// This system was borrowed from <https://github.com/aevyrie/bevy_mod_raycast/blob/79012e4c7b12896ccfed09a129d163726d3a6516/examples/mouse_picking.rs#L45>
+/// and used under the MIT License. Thanks!
+fn update_raycast_with_cursor(
+    mut cursor: EventReader<CursorMoved>,
+    mut query: Query<&mut RaycastSource<Terrain>>,
+) {
+    // Grab the most recent cursor event if it exists:
+    let cursor_position = match cursor.iter().last() {
+        Some(cursor_moved) => cursor_moved.position,
+        None => return,
+    };
+
+    for mut pick_source in &mut query {
+        pick_source.cast_method = RaycastMethod::Screenspace(cursor_position);
+    }
 }
 
-/// Highlights the current set of selected tiles
-pub fn highlight_selected_tiles() {
-    // FIXME: rewrite
+/// Records which tile is currently under the cursor, if any
+fn update_cursor_pos(
+    mut cursor_pos: ResMut<CursorPos>,
+    camera_query: Query<&RaycastSource<Terrain>, With<Camera>>,
+    terrain_query: Query<&TilePos, With<Terrain>>,
+) {
+    let raycast_source = camera_query.single();
+    let maybe_intersection = raycast_source.get_nearest_intersection();
+
+    if let Some((terrain_entity, _intersection_data)) = maybe_intersection {
+        cursor_pos.terrain_entity = Some(terrain_entity);
+        cursor_pos.tile_pos = terrain_query.get(terrain_entity).ok().copied();
+    } else {
+        cursor_pos.terrain_entity = None;
+        cursor_pos.tile_pos = None;
+    }
 }

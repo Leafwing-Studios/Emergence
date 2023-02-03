@@ -6,6 +6,7 @@
 // Often exceeded by queries
 #![allow(clippy::type_complexity)]
 
+pub mod asset_management;
 pub mod curves;
 pub mod enum_iter;
 pub mod graphics;

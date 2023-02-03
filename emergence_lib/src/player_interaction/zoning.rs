@@ -5,7 +5,7 @@ use leafwing_input_manager::prelude::*;
 
 use crate::{organisms::OrganismType, simulation::geometry::TilePos};
 
-use super::{cursor::CursorTilePos, tile_selection::SelectedTiles, InteractionSystem};
+use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem};
 
 /// Logic and resources for structure selection and placement.
 pub struct ZoningPlugin;
@@ -69,7 +69,7 @@ impl ZoningAction {
 fn set_selected_structure(
     zoning_actions: Res<ActionState<ZoningAction>>,
     mut selected_structure: ResMut<SelectedStructure>,
-    cursor_pos: Res<CursorTilePos>,
+    cursor_pos: Res<CursorPos>,
     structure_query: Query<(&TilePos, &OrganismType)>,
 ) {
     // Clearing should take priority over selecting a new item (on the same frame)
