@@ -157,6 +157,7 @@ fn select_tiles(
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,
+    mut selection_start: Local<Option<TilePos>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
@@ -182,7 +183,12 @@ fn select_tiles(
                 SelectMode::None => unreachable!(),
             }
         } else if actions.pressed(TileSelectionAction::Hexagonal) {
-            let hex_coord = hexagon(cursor_tile.hex, 7);
+            if selection_start.is_none() {
+                *selection_start = Some(cursor_tile);
+            }
+
+            let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
+            let hex_coord = hexagon(selection_start.unwrap().hex, radius);
 
             for hex in hex_coord {
                 let target_pos = TilePos { hex };
@@ -200,6 +206,10 @@ fn select_tiles(
         } else {
             *selection_mode = SelectMode::None;
         };
+
+        if actions.just_released(TileSelectionAction::Hexagonal) {
+            *selection_start = None;
+        }
 
         if actions.just_pressed(TileSelectionAction::Single) {
             selected_tiles.select_single(cursor_entity, cursor_tile);
