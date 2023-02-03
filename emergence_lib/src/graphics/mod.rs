@@ -123,7 +123,7 @@ pub const HEX_HEIGHT: f32 = 1.0;
 
 /// Constructs the mesh for a single hexagonal column
 fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
-    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, HEX_HEIGHT);
+    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, HEX_HEIGHT);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
