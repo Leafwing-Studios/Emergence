@@ -21,10 +21,6 @@ pub enum TileSelectionAction {
     ///
     /// If the tile is already selected, it will be unselected.
     Single,
-    /// Adds or subtracts tiles from the selection.
-    ///
-    /// Unselected tiles will be selected, and selected tiles be unslected.
-    Modify,
     /// Selects or deselects a group of hex tiles by dragging over them
     ///
     /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
@@ -52,10 +48,6 @@ impl TileSelectionAction {
             (
                 UserInput::Single(InputKind::Mouse(MouseButton::Left)),
                 TileSelectionAction::Single,
-            ),
-            (
-                UserInput::modified(Modifier::Control, MouseButton::Left),
-                TileSelectionAction::Modify,
             ),
             (
                 UserInput::modified(Modifier::Shift, MouseButton::Left),
@@ -190,10 +182,6 @@ fn select_tiles(
             }
         } else {
             *selection_mode = SelectMode::None;
-        };
-
-        if actions.just_pressed(TileSelectionAction::Modify) {
-            selected_tiles.modify_selection(cursor_entity);
         };
 
         if actions.just_pressed(TileSelectionAction::Single) {
