@@ -1,9 +1,7 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
 use bevy::prelude::*;
-use bevy_mod_raycast::{
-    DefaultPluginState, DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem,
-};
+use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
 
 use super::InteractionSystem;
 use crate::{simulation::geometry::TilePos, terrain::Terrain};
@@ -16,7 +14,6 @@ impl Plugin for CursorTilePosPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
-            .insert_resource(DefaultPluginState::<Terrain>::default().with_debug_cursor())
             .add_system_to_stage(
                 CoreStage::First,
                 update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
