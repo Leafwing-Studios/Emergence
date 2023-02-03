@@ -3,7 +3,10 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::{organisms::OrganismType, simulation::geometry::TilePos};
+use crate::{
+    simulation::geometry::TilePos,
+    structures::{StructureBundle, StructureId},
+};
 
 use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem};
 
@@ -31,11 +34,10 @@ impl Plugin for ZoningPlugin {
 }
 
 /// Tracks which structure the player has selected, if any
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug)]
 pub struct SelectedStructure {
     /// Which structure is selected
-    // FIXME: should only be able to store structures. Units should be excluded.
-    pub maybe_structure: Option<OrganismType>,
+    pub maybe_structure: Option<StructureId>,
 }
 
 /// Actions that the player can take to select and place structures
@@ -70,7 +72,7 @@ fn set_selected_structure(
     zoning_actions: Res<ActionState<ZoningAction>>,
     mut selected_structure: ResMut<SelectedStructure>,
     cursor_pos: Res<CursorPos>,
-    structure_query: Query<(&TilePos, &OrganismType)>,
+    structure_query: Query<(&TilePos, &StructureId)>,
 ) {
     // Clearing should take priority over selecting a new item (on the same frame)
     if zoning_actions.just_pressed(ZoningAction::ClearSelection) {
@@ -102,12 +104,15 @@ fn zone_selected_tiles(
     zoning_actions: Res<ActionState<ZoningAction>>,
     selected_structure: Res<SelectedStructure>,
     selected_tiles: Res<SelectedTiles>,
+    mut commands: Commands,
 ) {
     if zoning_actions.pressed(ZoningAction::Zone) {
-        // TODO: actually zone tiles
-        for &tile in selected_tiles.selection() {
-            let selected_structure = &selected_structure.maybe_structure;
-            info!("Zoning: {tile:?} to {selected_structure:?}.");
+        if let Some(selected_structure) = &selected_structure.maybe_structure {
+            for (_entity, tile_pos) in selected_tiles.selection() {
+                let structure = StructureBundle::new(selected_structure.clone(), *tile_pos);
+
+                commands.spawn(structure);
+            }
         }
     }
 }

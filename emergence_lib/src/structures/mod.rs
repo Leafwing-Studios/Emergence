@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::geometry::Facing;
+use crate::simulation::geometry::{Facing, TilePos};
 
 use self::crafting::CraftingPlugin;
 
@@ -18,20 +18,23 @@ pub struct StructureBundle {
     structure: StructureId,
     /// The direction this structure is facing
     facing: Facing,
+    /// The location of this structure
+    tile_pos: TilePos,
 }
 
 impl StructureBundle {
     /// Creates a new structure
-    pub fn new(id: StructureId) -> Self {
+    pub fn new(id: StructureId, tile_pos: TilePos) -> Self {
         StructureBundle {
             structure: id,
             facing: Facing::default(),
+            tile_pos,
         }
     }
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone, PartialEq, Eq, Hash)]
+#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: String,

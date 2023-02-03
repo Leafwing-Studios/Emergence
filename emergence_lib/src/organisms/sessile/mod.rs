@@ -26,9 +26,6 @@ pub struct SessileBundle<S: Species> {
 
     /// Sessile organisms can craft things
     pub crafting_bundle: CraftingBundle,
-
-    /// Which tile is this sessile organism on top of
-    pub tile_pos: TilePos,
 }
 
 impl<S: Species> SessileBundle<S> {
@@ -36,9 +33,8 @@ impl<S: Species> SessileBundle<S> {
     pub fn new(tile_pos: TilePos, structure_id: StructureId) -> SessileBundle<S> {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
-            structure_bundle: StructureBundle::new(structure_id),
+            structure_bundle: StructureBundle::new(structure_id, tile_pos),
             crafting_bundle: CraftingBundle::new(),
-            tile_pos,
         }
     }
 
@@ -50,9 +46,8 @@ impl<S: Species> SessileBundle<S> {
     ) -> SessileBundle<S> {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
-            structure_bundle: StructureBundle::new(structure_id),
+            structure_bundle: StructureBundle::new(structure_id, tile_pos),
             crafting_bundle: CraftingBundle::new_with_recipe(recipe_id),
-            tile_pos,
         }
     }
 }
