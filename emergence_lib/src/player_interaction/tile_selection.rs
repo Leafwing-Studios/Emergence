@@ -62,18 +62,10 @@ impl TileSelectionAction {
 }
 
 /// The set of tiles that is currently selected
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Default)]
 pub struct SelectedTiles {
     /// Actively selected tiles
     selection: HashSet<(Entity, TilePos)>,
-}
-
-impl Default for SelectedTiles {
-    fn default() -> Self {
-        SelectedTiles {
-            selection: HashSet::default(),
-        }
-    }
 }
 
 impl SelectedTiles {

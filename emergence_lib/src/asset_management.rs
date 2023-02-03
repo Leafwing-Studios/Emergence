@@ -49,6 +49,7 @@ pub(crate) struct StructureHandles {
     pub(crate) meshes: HashMap<StructureId, Handle<Mesh>>,
 }
 
+/// The base size of structures
 pub(crate) const STRUCTURE_SCALE: f32 = 1.0;
 
 impl FromWorld for StructureHandles {
