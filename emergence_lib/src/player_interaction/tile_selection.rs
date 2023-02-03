@@ -1,13 +1,18 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{prelude::*, utils::HashSet};
+use hexx::shapes::hexagon;
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
     Actionlike,
 };
 
-use crate::{asset_management::TileHandles, simulation::geometry::TilePos, terrain::Terrain};
+use crate::{
+    asset_management::TileHandles,
+    simulation::geometry::{MapGeometry, TilePos},
+    terrain::Terrain,
+};
 
 use super::{cursor::CursorPos, InteractionSystem};
 
@@ -25,6 +30,8 @@ pub enum TileSelectionAction {
     ///
     /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
     Multiple,
+    /// Selects a large hexagon around the cursor, based on the second position clicked.
+    Hexagonal,
     /// Clears the entire tile selection.
     Clear,
 }
@@ -52,6 +59,10 @@ impl TileSelectionAction {
             (
                 UserInput::modified(Modifier::Shift, MouseButton::Left),
                 TileSelectionAction::Multiple,
+            ),
+            (
+                UserInput::modified(Modifier::Control, MouseButton::Left),
+                TileSelectionAction::Hexagonal,
             ),
             (
                 UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
@@ -146,6 +157,7 @@ fn select_tiles(
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,
+    map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
         (cursor.maybe_entity(), cursor.maybe_tile_pos())
@@ -154,19 +166,36 @@ fn select_tiles(
             selected_tiles.clear_selection();
         };
 
-        if actions.pressed(TileSelectionAction::Multiple) {
-            if *selection_mode == SelectMode::None {
-                *selection_mode = match selected_tiles.contains_tile(cursor_entity, cursor_tile) {
-                    // If you start with a selected tile, subtract from the selection
-                    true => SelectMode::Deselect,
-                    // If you start with an unselected tile, add to the selection
-                    false => SelectMode::Select,
-                }
+        if *selection_mode == SelectMode::None {
+            *selection_mode = match selected_tiles.contains_tile(cursor_entity, cursor_tile) {
+                // If you start with a selected tile, subtract from the selection
+                true => SelectMode::Deselect,
+                // If you start with an unselected tile, add to the selection
+                false => SelectMode::Select,
             }
+        }
+
+        if actions.pressed(TileSelectionAction::Multiple) {
             match *selection_mode {
                 SelectMode::Select => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 SelectMode::None => unreachable!(),
+            }
+        } else if actions.pressed(TileSelectionAction::Hexagonal) {
+            let hex_coord = hexagon(cursor_tile.hex, 7);
+
+            for hex in hex_coord {
+                let target_pos = TilePos { hex };
+                // Selection may have overflowed map
+                if let Some(target_entity) = map_geometry.terrain_index.get(&target_pos) {
+                    match *selection_mode {
+                        SelectMode::Select => selected_tiles.add_tile(*target_entity, target_pos),
+                        SelectMode::Deselect => {
+                            selected_tiles.remove_tile(*target_entity, target_pos)
+                        }
+                        SelectMode::None => unreachable!(),
+                    }
+                }
             }
         } else {
             *selection_mode = SelectMode::None;
