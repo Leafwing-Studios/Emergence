@@ -7,7 +7,7 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
-    asset_management::TileHandles,
+    asset_management::{StructureHandles, TileHandles},
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
     structures::StructureId,
@@ -58,10 +58,9 @@ fn populate_terrain(
 
 /// Adds rendering components to every spawned structure
 fn populate_structures(
-    new_structures: Query<(Entity, &TilePos), Added<StructureId>>,
+    new_structures: Query<(Entity, &TilePos, &StructureId), Added<StructureId>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
     /// The size of a single structure
@@ -69,19 +68,25 @@ fn populate_structures(
     /// The offset required to have a structure sit on top of the tile correctly
     const OFFSET: f32 = SIZE / 2.0;
 
-    let mesh = Mesh::from(shape::Cube { size: SIZE });
-    let mesh_handle = meshes.add(mesh);
-
-    for (entity, tile_pos) in new_structures.iter() {
+    for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        // PERF: this is wildly inefficient and lazy. Store the handles instead!
-        let material = materials.add(Color::PINK.into());
+        let material = structure_handles
+            .materials
+            .get(structure_id)
+            .unwrap()
+            .clone_weak();
+
+        let mesh = structure_handles
+            .meshes
+            .get(structure_id)
+            .unwrap()
+            .clone_weak();
 
         commands.entity(entity).insert(PbrBundle {
-            mesh: mesh_handle.clone(),
-            material: material.clone(),
+            mesh,
+            material,
             transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
             ..default()
         });

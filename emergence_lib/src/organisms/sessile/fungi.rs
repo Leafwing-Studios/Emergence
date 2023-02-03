@@ -35,12 +35,7 @@ impl LeucoBundle {
     pub fn new(tile_pos: TilePos) -> Self {
         Self {
             plant: Fungi,
-            sessile_bundle: SessileBundle::new(
-                tile_pos,
-                StructureId {
-                    id: "leuco".to_string(),
-                },
-            ),
+            sessile_bundle: SessileBundle::new(tile_pos, StructureId::new("leuco")),
         }
     }
 }

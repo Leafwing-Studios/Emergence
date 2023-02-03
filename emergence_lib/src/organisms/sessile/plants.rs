@@ -68,9 +68,7 @@ impl AcaciaBundle {
             sessile_bundle: SessileBundle::new_with_recipe(
                 tile_pos,
                 RecipeId::acacia_leaf_production(),
-                StructureId {
-                    id: "acacia".to_string(),
-                },
+                StructureId::new("acacia"),
             ),
         }
     }

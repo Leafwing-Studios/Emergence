@@ -31,10 +31,17 @@ impl StructureBundle {
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone)]
+#[derive(Component, Clone, PartialEq, Eq, Hash)]
 pub struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: String,
+}
+
+impl StructureId {
+    /// Initialize a structure ID via a string.
+    pub(crate) fn new(id: &'static str) -> Self {
+        StructureId { id: id.to_string() }
+    }
 }
 
 /// The systems that make structures tick.
