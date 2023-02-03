@@ -58,8 +58,8 @@ fn setup(mut commands: Commands) {
                 .insert(VirtualDPad::wasd(), CameraAction::Pan)
                 .insert(VirtualDPad::arrow_keys(), CameraAction::Pan)
                 .insert(SingleAxis::mouse_wheel_y(), CameraAction::Zoom)
-                .insert(KeyCode::Q, CameraAction::RotateLeft)
-                .insert(KeyCode::E, CameraAction::RotateRight)
+                .insert(KeyCode::Z, CameraAction::RotateLeft)
+                .insert(KeyCode::C, CameraAction::RotateRight)
                 .build(),
             ..default()
         })
