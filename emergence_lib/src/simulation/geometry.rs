@@ -21,10 +21,10 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub radius: u32,
-    /// Which tile entity is stored at each tile position
-    pub tiles_index: HashMap<TilePos, Entity>,
-    /// Which structure is stored at each tile position
-    pub structure_index: HashMap<TilePos, Entity>,
+    /// Which terrain entity is stored at each tile position
+    pub terrain_index: HashMap<TilePos, Entity>,
+    /// The height of the terrain at each tile position
+    pub height_index: HashMap<TilePos, f32>,
 }
 
 impl Default for MapGeometry {
@@ -32,8 +32,8 @@ impl Default for MapGeometry {
         MapGeometry {
             layout: HexLayout::default(),
             radius: 50,
-            tiles_index: HashMap::default(),
-            structure_index: HashMap::default(),
+            terrain_index: HashMap::default(),
+            height_index: HashMap::default(),
         }
     }
 }

@@ -11,8 +11,9 @@ use bevy::log::info;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
+use rand::distributions::Uniform;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 use super::geometry::MapGeometry;
 
@@ -113,7 +114,7 @@ impl Plugin for GenerationPlugin {
 pub fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
@@ -128,7 +129,17 @@ pub fn generate_terrain(
             })
             .unwrap();
 
-        commands.spawn(TerrainBundle::new(terrain_type, TilePos { hex }));
+        let tile_pos = TilePos { hex };
+        let hex_height = rng.sample(Uniform::new(1., 3.));
+
+        // Spawn the terrain entity
+        let terrain_entity = commands
+            .spawn(TerrainBundle::new(terrain_type, tile_pos))
+            .id();
+
+        // Update the index
+        map_geometry.height_index.insert(tile_pos, hex_height);
+        map_geometry.terrain_index.insert(tile_pos, terrain_entity);
     }
 }
 
