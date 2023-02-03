@@ -6,11 +6,10 @@ use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, Ra
 use super::InteractionSystem;
 use crate::{simulation::geometry::TilePos, terrain::Terrain};
 
-/// Initializes the [`CursorWorldPos`] and [`CursorTilePos`] resources, which are kept updated  
-/// updated using [`update_cursor_pos`].
-pub struct CursorTilePosPlugin;
+/// Controls raycasting and cursor aethetics.
+pub struct CursorPlugin;
 
-impl Plugin for CursorTilePosPlugin {
+impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())

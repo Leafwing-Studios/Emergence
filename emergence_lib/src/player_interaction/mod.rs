@@ -17,7 +17,7 @@ impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(camera::CameraPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
-            .add_plugin(cursor::CursorTilePosPlugin)
+            .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(organism_details::DetailsPlugin)
             .add_plugin(tile_selection::TileSelectionPlugin)

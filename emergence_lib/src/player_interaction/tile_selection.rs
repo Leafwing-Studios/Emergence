@@ -100,8 +100,6 @@ impl SelectedTiles {
     ///
     /// If it is not selected, select it.
     /// If it is already selected, remove it from the selection.
-    ///
-    /// This is the behavior controlled by [`TileSelectionAction::Modify`].
     pub fn modify_selection(&mut self, tile_entity: Entity) {
         if self.selection.contains(&tile_entity) {
             self.selection.remove(&tile_entity);
