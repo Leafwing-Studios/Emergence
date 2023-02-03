@@ -189,6 +189,7 @@ impl Plugin for TileSelectionPlugin {
 }
 
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
+#[allow(clippy::too_many_arguments)]
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
@@ -220,7 +221,7 @@ fn select_tiles(
                 cursor_tile,
                 *previous_radius,
                 map_geometry.as_ref(),
-                &*selection_mode,
+                &selection_mode,
             );
         } else if actions.pressed(TileSelectionAction::Multiple) {
             match *selection_mode {
@@ -244,7 +245,7 @@ fn select_tiles(
                 selection_start.unwrap(),
                 radius,
                 map_geometry.as_ref(),
-                &*selection_mode,
+                &selection_mode,
             )
         } else {
             *selection_mode = SelectMode::None;
