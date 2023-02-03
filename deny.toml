@@ -55,7 +55,8 @@ skip = [
   { name = "windows_i686_msvc", version = "0.36" },    # from notify v5.0.0
   { name = "windows_x86_64_gnu", version = "0.36" },   # from notify v5.0.0
   { name = "windows_x86_64_msvc", version = "0.36" },  # from notify v5.0.0
-  { name = "windows-sys", version = "0.42" },          # from notify v5.0.0
+  { name = "windows-sys", version = "0.36" },          # from notify v5.0.0
+  { name = "windows-sys", version = "0.45" },          # from parking_lot_core 0.9.7
   { name = "windows", version = "0.37" },              # from rodio v0.16.0
   { name = "windows_aarch64_msvc", version = "0.37" }, # from rodio v0.16.0
   { name = "windows_i686_gnu", version = "0.37" },     # from rodio v0.16.0
