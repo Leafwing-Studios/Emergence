@@ -214,3 +214,75 @@ pub fn highlight_selected_tiles(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SelectedTiles;
+    use bevy::ecs::entity::Entity;
+
+    #[test]
+    fn simple_selection() {
+        let mut selected_tiles = SelectedTiles::default();
+        let tile_entity = Entity::from_bits(0);
+
+        selected_tiles.add_tile(tile_entity);
+        assert!(selected_tiles.contains_tile(tile_entity));
+        assert!(!selected_tiles.is_empty());
+        assert_eq!(selected_tiles.selection().len(), 1);
+
+        selected_tiles.remove_tile(tile_entity);
+        assert!(!selected_tiles.contains_tile(tile_entity));
+        assert!(selected_tiles.is_empty());
+        assert_eq!(selected_tiles.selection().len(), 0);
+    }
+
+    #[test]
+    fn multi_select() {
+        let mut selected_tiles = SelectedTiles::default();
+        selected_tiles.add_tile(Entity::from_bits(0));
+        // Intentionally doubled
+        selected_tiles.add_tile(Entity::from_bits(0));
+        selected_tiles.add_tile(Entity::from_bits(1));
+        selected_tiles.add_tile(Entity::from_bits(2));
+
+        assert_eq!(selected_tiles.selection().len(), 3);
+    }
+
+    #[test]
+    fn clear_selection() {
+        let mut selected_tiles = SelectedTiles::default();
+        selected_tiles.add_tile(Entity::from_bits(0));
+        selected_tiles.add_tile(Entity::from_bits(1));
+        selected_tiles.add_tile(Entity::from_bits(2));
+
+        assert_eq!(selected_tiles.selection().len(), 3);
+        selected_tiles.clear_selection();
+        assert_eq!(selected_tiles.selection().len(), 0);
+    }
+
+    #[test]
+    fn select_single_not_yet_selected() {
+        let mut selected_tiles = SelectedTiles::default();
+        let existing_entity = Entity::from_bits(0);
+        let new_entity = Entity::from_bits(1);
+
+        selected_tiles.add_tile(existing_entity);
+
+        selected_tiles.select_single(new_entity);
+        assert_eq!(selected_tiles.selection().len(), 1);
+        assert!(!selected_tiles.contains_tile(existing_entity));
+        assert!(selected_tiles.contains_tile(new_entity));
+    }
+
+    #[test]
+    fn select_single_already_selected() {
+        let mut selected_tiles = SelectedTiles::default();
+        let existing_entity = Entity::from_bits(0);
+
+        selected_tiles.add_tile(existing_entity);
+
+        selected_tiles.select_single(existing_entity);
+        assert_eq!(selected_tiles.selection().len(), 0);
+        assert!(!selected_tiles.contains_tile(existing_entity));
+    }
+}
