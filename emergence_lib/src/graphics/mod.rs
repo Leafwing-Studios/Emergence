@@ -5,6 +5,7 @@ use bevy::{
     render::{mesh::Indices, render_resource::PrimitiveTopology},
 };
 use hexx::{Hex, HexLayout, MeshInfo};
+use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     asset_management::TileHandles,
@@ -40,12 +41,14 @@ fn populate_terrain(
     materials: Res<TileHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
-    // mesh
-    let mesh = hexagonal_column(&map_geometry.layout);
-    let mesh_handle = meshes.add(mesh);
+    let mut rng = thread_rng();
 
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        let hex_height = rng.sample(Uniform::new(1., 3.));
+
+        let mesh = hexagonal_column(&map_geometry.layout, hex_height);
+        let mesh_handle = meshes.add(mesh);
 
         commands.entity(terrain_entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
@@ -67,7 +70,7 @@ fn populate_structures(
     /// The size of a single structure
     const SIZE: f32 = 1.0;
     /// The offset required to have a structure sit on top of the tile correctly
-    const OFFSET: f32 = HEX_HEIGHT + (SIZE / 2.0);
+    const OFFSET: f32 = SIZE / 2.0;
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
     let mesh_handle = meshes.add(mesh);
@@ -98,7 +101,7 @@ fn populate_units(
     /// The size of a single unit
     const SIZE: f32 = 0.5;
     /// The offset required to have a unit stand on top of the tile correctly
-    const OFFSET: f32 = HEX_HEIGHT + (SIZE / 2.0);
+    const OFFSET: f32 = SIZE / 2.0;
 
     let mesh = Mesh::from(shape::Cube { size: SIZE });
     let mesh_handle = meshes.add(mesh);
@@ -118,12 +121,9 @@ fn populate_units(
     }
 }
 
-/// Default height of a single hex tile
-pub const HEX_HEIGHT: f32 = 1.0;
-
 /// Constructs the mesh for a single hexagonal column
-fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
-    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, HEX_HEIGHT);
+fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
+    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, hex_height);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
