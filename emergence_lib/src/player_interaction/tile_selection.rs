@@ -73,7 +73,7 @@ impl TileSelectionAction {
 }
 
 /// The set of tiles that is currently selected
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug, Default, Clone)]
 pub struct SelectedTiles {
     /// Actively selected tiles
     selection: HashSet<(Entity, TilePos)>,
@@ -158,6 +158,7 @@ fn select_tiles(
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,
     mut selection_start: Local<Option<TilePos>>,
+    mut initial_selection: Local<Option<SelectedTiles>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
@@ -185,10 +186,15 @@ fn select_tiles(
         } else if actions.pressed(TileSelectionAction::Hexagonal) {
             if selection_start.is_none() {
                 *selection_start = Some(cursor_tile);
+                *initial_selection = Some(selected_tiles.clone());
             }
 
             let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
             let hex_coord = hexagon(selection_start.unwrap().hex, radius);
+
+            // We need to be able to expand and shrink the selection reversibly
+            // so we need a snapshot of the state before this action took place.
+            *selected_tiles = initial_selection.as_ref().unwrap().clone();
 
             for hex in hex_coord {
                 let target_pos = TilePos { hex };
@@ -207,8 +213,9 @@ fn select_tiles(
             *selection_mode = SelectMode::None;
         };
 
-        if actions.just_released(TileSelectionAction::Hexagonal) {
+        if actions.released(TileSelectionAction::Hexagonal) {
             *selection_start = None;
+            *initial_selection = None;
         }
 
         if actions.just_pressed(TileSelectionAction::Single) {
