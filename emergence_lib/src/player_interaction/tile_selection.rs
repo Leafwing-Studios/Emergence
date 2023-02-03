@@ -15,7 +15,7 @@ use super::{cursor::CursorPos, InteractionSystem};
 ///
 /// If a tile is not selected, it will be added to the selection.
 /// If it is already selected, it will be removed from the selection.
-#[derive(Actionlike, Clone)]
+#[derive(Actionlike, Clone, Debug)]
 pub enum TileSelectionAction {
     /// Selects a single tile, deselecting any others.
     ///
@@ -172,7 +172,9 @@ fn select_tiles(
     if let Some(cursor_entity) = cursor_tile_entity.maybe_entity() {
         if actions.pressed(TileSelectionAction::Clear) {
             selected_tiles.clear_selection();
-        } else if actions.pressed(TileSelectionAction::Multiple) {
+        };
+
+        if actions.pressed(TileSelectionAction::Multiple) {
             if *selection_mode == SelectMode::None {
                 *selection_mode = match selected_tiles.contains_tile(cursor_entity) {
                     // If you start with a selected tile, subtract from the selection
@@ -186,14 +188,16 @@ fn select_tiles(
                 SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity),
                 SelectMode::None => unreachable!(),
             }
-        } else if actions.just_pressed(TileSelectionAction::Modify) {
-            selected_tiles.modify_selection(cursor_entity);
-        } else if actions.just_pressed(TileSelectionAction::Single) {
-            selected_tiles.select_single(cursor_entity);
-        }
-
-        if actions.released(TileSelectionAction::Multiple) {
+        } else {
             *selection_mode = SelectMode::None;
+        };
+
+        if actions.just_pressed(TileSelectionAction::Modify) {
+            selected_tiles.modify_selection(cursor_entity);
+        };
+
+        if actions.just_pressed(TileSelectionAction::Single) {
+            selected_tiles.select_single(cursor_entity);
         }
     }
 }
