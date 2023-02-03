@@ -61,6 +61,10 @@ impl TileSelectionAction {
                 UserInput::modified(Modifier::Shift, MouseButton::Left),
                 TileSelectionAction::Multiple,
             ),
+            (
+                UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
+                TileSelectionAction::Clear,
+            ),
         ])
     }
 }
