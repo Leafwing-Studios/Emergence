@@ -26,8 +26,8 @@ impl FromWorld for TileHandles {
     fn from_world(world: &mut World) -> Self {
         let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
         let mut terrain_handles = HashMap::new();
-        terrain_handles.insert(Terrain::Plain, materials.add(Color::WHITE.into()));
-        terrain_handles.insert(Terrain::Rocky, materials.add(Color::BEIGE.into()));
+        terrain_handles.insert(Terrain::Plain, materials.add(Color::BEIGE.into()));
+        terrain_handles.insert(Terrain::Rocky, materials.add(Color::GRAY.into()));
         terrain_handles.insert(Terrain::High, materials.add(Color::RED.into()));
 
         let selected_tile_handle = materials.add(Color::SEA_GREEN.into());
