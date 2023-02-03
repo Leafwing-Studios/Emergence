@@ -6,7 +6,7 @@ use bevy::{prelude::*, utils::HashMap};
 use hexx::{Direction, Hex, HexLayout};
 
 /// A hex-based coordinate, that represents exactly one tile.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Deref, DerefMut)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Deref, DerefMut, Default)]
 pub struct TilePos {
     /// The underlying hex coordinate
     pub hex: Hex,

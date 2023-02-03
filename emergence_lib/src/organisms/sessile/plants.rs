@@ -5,6 +5,7 @@ use crate::{
     items::recipe::RecipeId,
     organisms::{life_cycles::LifeCycle, OrganismType},
     simulation::geometry::TilePos,
+    structures::StructureId,
 };
 use bevy::prelude::*;
 use emergence_macros::IterableEnum;
@@ -67,6 +68,7 @@ impl AcaciaBundle {
             sessile_bundle: SessileBundle::new_with_recipe(
                 tile_pos,
                 RecipeId::acacia_leaf_production(),
+                StructureId::new("acacia"),
             ),
         }
     }

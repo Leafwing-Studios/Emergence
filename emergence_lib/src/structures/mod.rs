@@ -5,32 +5,46 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::geometry::Facing;
+use crate::simulation::geometry::{Facing, TilePos};
 
 use self::crafting::CraftingPlugin;
 
 pub mod crafting;
 
 /// The data needed to build a structure
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 pub struct StructureBundle {
     /// Data characterizing structures
-    structure: Structure,
+    structure: StructureId,
     /// The direction this structure is facing
     facing: Facing,
+    /// The location of this structure
+    tile_pos: TilePos,
+}
+
+impl StructureBundle {
+    /// Creates a new structure
+    pub fn new(id: StructureId, tile_pos: TilePos) -> Self {
+        StructureBundle {
+            structure: id,
+            facing: Facing::default(),
+            tile_pos,
+        }
+    }
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Default, Component, Clone)]
-pub struct Structure;
+#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct StructureId {
+    /// The unique identifier for this variety of structure.
+    pub(crate) id: String,
+}
 
-impl Structure {
-    /// The initial mass of spawned structures
-    pub const STARTING_MASS: f32 = 0.5;
-    /// The mass at which structures will despawn
-    pub const DESPAWN_MASS: f32 = 0.01;
-    /// The upkeep cost of each structure, relative to its total mass
-    pub const UPKEEP_RATE: f32 = 0.1;
+impl StructureId {
+    /// Initialize a structure ID via a string.
+    pub(crate) fn new(id: &'static str) -> Self {
+        StructureId { id: id.to_string() }
+    }
 }
 
 /// The systems that make structures tick.
