@@ -15,6 +15,7 @@ impl Plugin for LightingPlugin {
     }
 }
 
+/// Spawns a directional light source to illuminate the scene
 fn spawn_sun(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         transform: Transform::from_xyz(30., 100., 30.).looking_at(Vec3::ZERO, Vec3::Y),
