@@ -24,15 +24,6 @@ pub struct StructureBundle {
 #[derive(Default, Component, Clone)]
 pub struct Structure;
 
-impl Structure {
-    /// The initial mass of spawned structures
-    pub const STARTING_MASS: f32 = 0.5;
-    /// The mass at which structures will despawn
-    pub const DESPAWN_MASS: f32 = 0.01;
-    /// The upkeep cost of each structure, relative to its total mass
-    pub const UPKEEP_RATE: f32 = 0.1;
-}
-
 /// The systems that make structures tick.
 pub struct StructuresPlugin;
 
