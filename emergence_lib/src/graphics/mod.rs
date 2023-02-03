@@ -7,6 +7,7 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
+    asset_management::TileHandles,
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
     structures::Structure,
@@ -36,7 +37,7 @@ fn populate_terrain(
     new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Res<TileHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
     // mesh
@@ -46,18 +47,9 @@ fn populate_terrain(
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
 
-        let color = match terrain {
-            Terrain::Plain => Color::WHITE,
-            Terrain::High => Color::YELLOW,
-            Terrain::Rocky => Color::RED,
-        };
-
-        // PERF: this is wildly inefficient and lazy. Store the handles instead!
-        let material = materials.add(color.into());
-
         commands.entity(terrain_entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
-            material: material.clone(),
+            material: materials.terrain_handles.get(terrain).unwrap().clone_weak(),
             transform: Transform::from_xyz(pos.x, 0.0, pos.y),
             ..default()
         });

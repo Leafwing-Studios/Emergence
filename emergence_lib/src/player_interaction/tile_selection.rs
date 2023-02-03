@@ -7,7 +7,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-use crate::terrain::Terrain;
+use crate::{asset_management::TileHandles, terrain::Terrain};
 
 use super::{cursor::CursorPos, InteractionSystem};
 
@@ -203,21 +203,20 @@ fn select_tiles(
 }
 
 /// Highlights the current set of selected tiles
-pub fn highlight_selected_tiles(
+fn highlight_selected_tiles(
     selected_tiles: Res<SelectedTiles>,
-    mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>), With<Terrain>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain)>,
+    materials: Res<TileHandles>,
 ) {
     if selected_tiles.is_changed() {
         let selection = selected_tiles.selection();
         // PERF: We should probably avoid a linear scan over all tiles here
-        for (terrain_entity, mut material) in terrain_query.iter_mut() {
+        for (terrain_entity, mut material, terrain) in terrain_query.iter_mut() {
             if selection.contains(&terrain_entity) {
-                // PERF: cache these materials
-                *material = materials.add(Color::GREEN.into());
+                *material = materials.selected_tile_handle.clone_weak();
             } else {
                 // FIXME: reset to the correct material
-                *material = materials.add(Color::WHITE.into());
+                *material = materials.terrain_handles.get(terrain).unwrap().clone_weak();
             }
         }
     }
