@@ -39,12 +39,13 @@ fn populate_terrain(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     materials: Res<TileHandles>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
     let mut rng = thread_rng();
 
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        // TODO: this should be refactored out of graphics
         let hex_height = rng.sample(Uniform::new(1., 3.));
 
         let mesh = hexagonal_column(&map_geometry.layout, hex_height);
@@ -56,6 +57,10 @@ fn populate_terrain(
             transform: Transform::from_xyz(pos.x, 0.0, pos.y),
             ..default()
         });
+
+        // TODO: this should be refactored out of graphics
+        map_geometry.height_index.insert(*tile_pos, hex_height);
+        map_geometry.terrain_index.insert(*tile_pos, terrain_entity);
     }
 }
 
@@ -77,6 +82,7 @@ fn populate_structures(
 
     for (entity, tile_pos) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
         // PERF: this is wildly inefficient and lazy. Store the handles instead!
         let material = materials.add(Color::PINK.into());
@@ -84,7 +90,7 @@ fn populate_structures(
         commands.entity(entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
             material: material.clone(),
-            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
             ..default()
         });
     }
@@ -108,6 +114,7 @@ fn populate_units(
 
     for (entity, tile_pos) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
         // PERF: this is wildly inefficient and lazy. Store the handles instead!
         let material = materials.add(Color::BLACK.into());
@@ -115,7 +122,7 @@ fn populate_units(
         commands.entity(entity).insert(PbrBundle {
             mesh: mesh_handle.clone(),
             material: material.clone(),
-            transform: Transform::from_xyz(pos.x, OFFSET, pos.y),
+            transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
             ..default()
         });
     }
