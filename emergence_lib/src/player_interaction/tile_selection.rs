@@ -1,13 +1,19 @@
 //! Selecting tiles to be built on, inspected or modified
 
 use bevy::{prelude::*, utils::HashSet};
+use hexx::shapes::hexagon;
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
     Actionlike,
 };
+use petitset::PetitSet;
 
-use crate::{asset_management::TileHandles, simulation::geometry::TilePos, terrain::Terrain};
+use crate::{
+    asset_management::TileHandles,
+    simulation::geometry::{MapGeometry, TilePos},
+    terrain::Terrain,
+};
 
 use super::{cursor::CursorPos, InteractionSystem};
 
@@ -25,6 +31,12 @@ pub enum TileSelectionAction {
     ///
     /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
     Multiple,
+    /// Selects or deselects a broad swath of hex tiles by dragging over them
+    ///
+    /// This action will track whether you are selecting or deselecting tiles based on the state of the first tile modified with this action.
+    AreaMultiple,
+    /// Selects a large hexagon around the cursor, based on the second position clicked.
+    Hexagonal,
     /// Clears the entire tile selection.
     Clear,
 }
@@ -44,6 +56,11 @@ enum SelectMode {
 impl TileSelectionAction {
     /// The default key bindings
     pub(super) fn default_input_map() -> InputMap<TileSelectionAction> {
+        let mut control_shift_left_click = PetitSet::<InputKind, 8>::new();
+        control_shift_left_click.insert(Modifier::Control.into());
+        control_shift_left_click.insert(Modifier::Shift.into());
+        control_shift_left_click.insert(MouseButton::Left.into());
+
         InputMap::new([
             (
                 UserInput::Single(InputKind::Mouse(MouseButton::Left)),
@@ -54,6 +71,14 @@ impl TileSelectionAction {
                 TileSelectionAction::Multiple,
             ),
             (
+                UserInput::Chord(control_shift_left_click),
+                TileSelectionAction::AreaMultiple,
+            ),
+            (
+                UserInput::modified(Modifier::Control, MouseButton::Left),
+                TileSelectionAction::Hexagonal,
+            ),
+            (
                 UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
                 TileSelectionAction::Clear,
             ),
@@ -62,7 +87,7 @@ impl TileSelectionAction {
 }
 
 /// The set of tiles that is currently selected
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug, Default, Clone)]
 pub struct SelectedTiles {
     /// Actively selected tiles
     selection: HashSet<(Entity, TilePos)>,
@@ -93,6 +118,29 @@ impl SelectedTiles {
             // to avoid a pointless reallocation
             self.selection.clear();
             self.selection.insert((tile_entity, tile_pos));
+        }
+    }
+
+    /// Selects a hexagon of tiles.
+    fn select_hexagon(
+        &mut self,
+        center: TilePos,
+        radius: u32,
+        map_geometry: &MapGeometry,
+        selection_mode: &SelectMode,
+    ) {
+        let hex_coord = hexagon(center.hex, radius);
+
+        for hex in hex_coord {
+            let target_pos = TilePos { hex };
+            // Selection may have overflowed map
+            if let Some(target_entity) = map_geometry.terrain_index.get(&target_pos) {
+                match *selection_mode {
+                    SelectMode::Select => self.add_tile(*target_entity, target_pos),
+                    SelectMode::Deselect => self.remove_tile(*target_entity, target_pos),
+                    SelectMode::None => unreachable!(),
+                }
+            }
         }
     }
 
@@ -141,11 +189,16 @@ impl Plugin for TileSelectionPlugin {
 }
 
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
+#[allow(clippy::too_many_arguments)]
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<TileSelectionAction>>,
     mut selection_mode: Local<SelectMode>,
+    mut selection_start: Local<Option<TilePos>>,
+    mut initial_selection: Local<Option<SelectedTiles>>,
+    mut previous_radius: Local<u32>,
+    map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
         (cursor.maybe_entity(), cursor.maybe_tile_pos())
@@ -154,23 +207,54 @@ fn select_tiles(
             selected_tiles.clear_selection();
         };
 
-        if actions.pressed(TileSelectionAction::Multiple) {
-            if *selection_mode == SelectMode::None {
-                *selection_mode = match selected_tiles.contains_tile(cursor_entity, cursor_tile) {
-                    // If you start with a selected tile, subtract from the selection
-                    true => SelectMode::Deselect,
-                    // If you start with an unselected tile, add to the selection
-                    false => SelectMode::Select,
-                }
+        if *selection_mode == SelectMode::None {
+            *selection_mode = match selected_tiles.contains_tile(cursor_entity, cursor_tile) {
+                // If you start with a selected tile, subtract from the selection
+                true => SelectMode::Deselect,
+                // If you start with an unselected tile, add to the selection
+                false => SelectMode::Select,
             }
+        }
+
+        if actions.pressed(TileSelectionAction::AreaMultiple) {
+            selected_tiles.select_hexagon(
+                cursor_tile,
+                *previous_radius,
+                map_geometry.as_ref(),
+                &selection_mode,
+            );
+        } else if actions.pressed(TileSelectionAction::Multiple) {
             match *selection_mode {
                 SelectMode::Select => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 SelectMode::None => unreachable!(),
             }
+        } else if actions.pressed(TileSelectionAction::Hexagonal) {
+            if selection_start.is_none() {
+                *selection_start = Some(cursor_tile);
+                *initial_selection = Some(selected_tiles.clone());
+            }
+
+            let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
+            *previous_radius = radius;
+
+            // We need to be able to expand and shrink the selection reversibly
+            // so we need a snapshot of the state before this action took place.
+            *selected_tiles = initial_selection.as_ref().unwrap().clone();
+            selected_tiles.select_hexagon(
+                selection_start.unwrap(),
+                radius,
+                map_geometry.as_ref(),
+                &selection_mode,
+            )
         } else {
             *selection_mode = SelectMode::None;
         };
+
+        if actions.released(TileSelectionAction::Hexagonal) {
+            *selection_start = None;
+            *initial_selection = None;
+        }
 
         if actions.just_pressed(TileSelectionAction::Single) {
             selected_tiles.select_single(cursor_entity, cursor_tile);
