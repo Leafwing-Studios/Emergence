@@ -29,7 +29,9 @@ impl Plugin for CursorTilePosPlugin {
 /// The tile position of the mouse cursor, if it lies over the map.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 pub struct CursorPos {
+    /// The terrain entity that the cursor is over top of.
     terrain_entity: Option<Entity>,
+    /// The tile position that the cursor is over top of.
     tile_pos: Option<TilePos>,
 }
 
