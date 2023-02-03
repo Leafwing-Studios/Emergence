@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    simulation::geometry::TilePos,
+    simulation::geometry::{MapGeometry, TilePos},
     structures::{StructureBundle, StructureId},
 };
 
@@ -61,8 +61,7 @@ impl ZoningAction {
         InputMap::new([
             (KeyCode::Q, ZoningAction::Pipette),
             (KeyCode::Space, ZoningAction::Zone),
-            (KeyCode::Back, ZoningAction::ClearSelection),
-            (KeyCode::Delete, ZoningAction::ClearSelection),
+            (KeyCode::Escape, ZoningAction::ClearSelection),
         ])
     }
 }
@@ -104,14 +103,25 @@ fn zone_selected_tiles(
     zoning_actions: Res<ActionState<ZoningAction>>,
     selected_structure: Res<SelectedStructure>,
     selected_tiles: Res<SelectedTiles>,
+    structure_query: Query<(Entity, &TilePos), With<StructureId>>,
+    map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    if zoning_actions.pressed(ZoningAction::Zone) {
+    if zoning_actions.just_pressed(ZoningAction::Zone) {
         if let Some(selected_structure) = &selected_structure.maybe_structure {
             for (_entity, tile_pos) in selected_tiles.selection() {
                 let structure = StructureBundle::new(selected_structure.clone(), *tile_pos);
 
                 commands.spawn(structure);
+            }
+        } else {
+            for (structure_entity, tile_pos) in structure_query.iter() {
+                // PERF: this is kind of a mess; we can probably improve this through a smarter SelectedStructre type
+                let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
+
+                if selected_tiles.contains_tile(*terrain_entity, *tile_pos) {
+                    commands.entity(structure_entity).despawn();
+                }
             }
         }
     }
