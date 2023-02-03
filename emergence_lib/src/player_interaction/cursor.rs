@@ -53,7 +53,7 @@ impl CursorPos {
 
 /// Updates the raycast with the cursor position
 ///
-/// This system was borrowed from https://github.com/aevyrie/bevy_mod_raycast/blob/79012e4c7b12896ccfed09a129d163726d3a6516/examples/mouse_picking.rs#L45
+/// This system was borrowed from <https://github.com/aevyrie/bevy_mod_raycast/blob/79012e4c7b12896ccfed09a129d163726d3a6516/examples/mouse_picking.rs#L45>
 /// and used under the MIT License. Thanks!
 fn update_raycast_with_cursor(
     mut cursor: EventReader<CursorMoved>,
