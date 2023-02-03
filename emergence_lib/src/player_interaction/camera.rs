@@ -5,7 +5,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_mod_picking::PickingCameraBundle;
+use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::axislike::SingleAxis;
 use leafwing_input_manager::input_map::InputMap;
 use leafwing_input_manager::plugin::InputManagerPlugin;
@@ -18,6 +18,7 @@ use crate::simulation::geometry::angle;
 use crate::simulation::geometry::clockwise;
 use crate::simulation::geometry::counterclockwise;
 use crate::simulation::geometry::Facing;
+use crate::terrain::Terrain;
 
 use super::InteractionSystem;
 
@@ -65,7 +66,7 @@ fn setup(mut commands: Commands) {
         .insert(CameraSettings::default())
         .insert(CameraFocus::default())
         .insert(Facing::default())
-        .insert(PickingCameraBundle::default());
+        .insert(RaycastSource::<Terrain>::new());
 }
 
 /// Actions that manipulate the camera
