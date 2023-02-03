@@ -5,7 +5,6 @@ use bevy::{
     render::{mesh::Indices, render_resource::PrimitiveTopology},
 };
 use hexx::{Hex, HexLayout, MeshInfo};
-use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     asset_management::TileHandles,
@@ -39,16 +38,13 @@ fn populate_terrain(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     materials: Res<TileHandles>,
-    mut map_geometry: ResMut<MapGeometry>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    let mut rng = thread_rng();
-
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
-        // TODO: this should be refactored out of graphics
-        let hex_height = rng.sample(Uniform::new(1., 3.));
+        let hex_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        let mesh = hexagonal_column(&map_geometry.layout, hex_height);
+        let mesh = hexagonal_column(&map_geometry.layout, *hex_height);
         let mesh_handle = meshes.add(mesh);
 
         commands.entity(terrain_entity).insert(PbrBundle {
@@ -57,10 +53,6 @@ fn populate_terrain(
             transform: Transform::from_xyz(pos.x, 0.0, pos.y),
             ..default()
         });
-
-        // TODO: this should be refactored out of graphics
-        map_geometry.height_index.insert(*tile_pos, hex_height);
-        map_geometry.terrain_index.insert(*tile_pos, terrain_entity);
     }
 }
 
