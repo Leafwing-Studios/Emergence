@@ -51,7 +51,7 @@ skip = [
   { name = "rustc_version", version = "0.2" },         # from postcard v1.0.2
   { name = "semver", version = "0.9" },                # from postcard v1.0.2
   { name = "windows_aarch64_msvc", version = "0.36" }, # from notify v5.0.0
-  { name = "windows_sys", version = "0.42" },          # from notify v5.0.0
+  { name = "windows_sys", version = "0.42.0" },          # from notify v5.0.0
   { name = "windows_i686_gnu", version = "0.36" },     # from notify v5.0.0
   { name = "windows_i686_msvc", version = "0.36" },    # from notify v5.0.0
   { name = "windows_x86_64_gnu", version = "0.36" },   # from notify v5.0.0
