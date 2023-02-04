@@ -14,6 +14,7 @@ debug_tools = ['dep:debug_tools']
 [dependencies]
 bevy = "0.9"
 rand = "0.8"
+noisy_bevy = "0.2"
 leafwing-input-manager = "0.7"
 emergence_macros = { path = "../emergence_macros", version = "0.6" }
 indexmap = "1.9"
