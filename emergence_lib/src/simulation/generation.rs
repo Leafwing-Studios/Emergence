@@ -8,12 +8,13 @@ use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
+use bevy::math::vec2;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
-use rand::distributions::Uniform;
+use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
 use super::geometry::MapGeometry;
 
@@ -110,6 +111,19 @@ impl Plugin for GenerationPlugin {
     }
 }
 
+/// Scale the pos to make it work better with the noise function
+const FREQUENCY_SCALE: f32 = 0.07;
+/// Scale the output of the noise function so you can more easily use the number for a height
+const AMPLITUDE_SCALE: f32 = 2.0;
+/// How many times will the fbm be sampled?
+const OCTAVES: usize = 4;
+/// Smoothing factor
+const LACUNARITY: f32 = 2.3;
+/// Scale the output of the fbm function
+const GAIN: f32 = 0.5;
+/// Seed that determines the noise function output
+const SEED: f32 = 2378.0;
+
 /// Creates the world according to [`GenerationConfig`].
 pub fn generate_terrain(
     mut commands: Commands,
@@ -130,7 +144,11 @@ pub fn generate_terrain(
             .unwrap();
 
         let tile_pos = TilePos { hex };
-        let hex_height = rng.sample(Uniform::new(1., 3.));
+        let pos = vec2(tile_pos.x as f32, tile_pos.y as f32);
+        let hex_height =
+            (fbm_simplex_2d_seeded(pos * FREQUENCY_SCALE, OCTAVES, LACUNARITY, GAIN, SEED)
+                * AMPLITUDE_SCALE)
+                .abs();
 
         // Spawn the terrain entity
         let terrain_entity = commands
