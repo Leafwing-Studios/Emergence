@@ -174,7 +174,7 @@ fn select_tiles(
             *selection_start = Some(cursor_tile);
             *initial_selection = Some(selected_tiles.clone());
         // Unless we're in the middle of an area selection, clear the cache
-        } else if !(area & !multiple) {
+        } else if !(area & !multiple) | (!select & !deselect) {
             *selection_start = None;
             *initial_selection = None;
         }
