@@ -207,7 +207,7 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(copy_selection.after(InteractionSystem::SelectTiles))
             .add_system(
-                paste_from_clipboard
+                apply_zoning
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
@@ -364,7 +364,7 @@ fn copy_selection(
 }
 
 // PERF: this pair of copy-paste systems should use an index of where the structures are
-fn paste_from_clipboard(
+fn apply_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
     clipboard: Res<Clipboard>,
@@ -386,7 +386,15 @@ fn paste_from_clipboard(
                         commands.entity(structure_entity).despawn();
                     }
                 }
-            // Apply zoning
+            // Zone using the single selected structure
+            } else if clipboard.len() == 1 {
+                let structure_id = clipboard.values().next().unwrap();
+
+                for (_terrain_entity, tile_pos) in selected_tiles.selection().iter() {
+                    // FIXME: this should use a dedicated command to get all the details right
+                    commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
+                }
+            // Paste the selection
             } else {
                 for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
                     // FIXME: this should use a dedicated command to get all the details right
