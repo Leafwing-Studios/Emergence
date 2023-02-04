@@ -271,8 +271,7 @@ fn highlight_selected_tiles(
             if selection.contains(&(terrain_entity, tile_pos)) {
                 *material = materials.selected_tile_handle.clone_weak();
             } else {
-                // FIXME: reset to the correct material
-                *material = materials.terrain_handles.get(terrain).unwrap().clone_weak();
+                *material = materials.materials.get(terrain).unwrap().clone_weak();
             }
         }
     }
