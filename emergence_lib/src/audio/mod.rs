@@ -1,4 +1,4 @@
-//! Controls audio loading and hadles
+//! Controls audio loading and handles
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
