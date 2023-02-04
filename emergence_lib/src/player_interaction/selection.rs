@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
-use hexx::shapes::hexagon;
+use hexx::{shapes::hexagon, Hex};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -317,11 +317,27 @@ struct Clipboard {
 }
 
 impl Clipboard {
-    fn normalize_positions(&mut self, origin: TilePos) {
+    fn normalize_positions(&mut self) {
+        // FIXME: this naive center calculation will overflow
+        let mut sum_x = 0;
+        let mut sum_y = 0;
+
+        for tile_pos in self.keys() {
+            sum_x += tile_pos.x as usize;
+            sum_y += tile_pos.x as usize;
+        }
+
+        let center = TilePos {
+            hex: Hex {
+                x: (sum_x / self.len()) as i32,
+                y: (sum_y / self.len()) as i32,
+            },
+        };
+
         let mut new_map = HashMap::with_capacity(self.capacity());
 
         for (tile_pos, id) in self.iter() {
-            let new_tile_pos = *tile_pos - origin;
+            let new_tile_pos = *tile_pos - center;
             // PERF: eh maybe we can safe a clone by using remove?
             new_map.insert(new_tile_pos, id.clone());
         }
@@ -368,7 +384,7 @@ fn copy_selection(
                 }
             }
 
-            clipboard.normalize_positions(cursor_tile_pos);
+            clipboard.normalize_positions();
         }
     }
 }
