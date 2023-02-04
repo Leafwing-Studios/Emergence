@@ -349,11 +349,21 @@ fn copy_selection(
             // We want to replace our selection, rather than add to it
             clipboard.clear();
 
-            for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
-                // PERF: lol quadratic...
+            // If there is no selection, just grab whatever's under the cursor
+            if selected_tiles.is_empty() {
                 for (structure_id, structure_tile_pos) in structure_query.iter() {
-                    if terrain_tile_pos == structure_tile_pos {
-                        clipboard.insert(*structure_tile_pos, structure_id.clone());
+                    if cursor_tile_pos == *structure_tile_pos {
+                        clipboard.insert(TilePos::default(), structure_id.clone());
+                        return;
+                    }
+                }
+            } else {
+                for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
+                    // PERF: lol quadratic...
+                    for (structure_id, structure_tile_pos) in structure_query.iter() {
+                        if terrain_tile_pos == structure_tile_pos {
+                            clipboard.insert(*structure_tile_pos, structure_id.clone());
+                        }
                     }
                 }
             }
