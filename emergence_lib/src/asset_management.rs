@@ -1,8 +1,13 @@
 //! Code related to loading, storing and tracking assets
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    prelude::*,
+    render::{mesh::Indices, render_resource::PrimitiveTopology},
+    utils::HashMap,
+};
+use hexx::{Hex, HexLayout, MeshInfo};
 
-use crate::{structures::StructureId, terrain::Terrain};
+use crate::{simulation::geometry::MapGeometry, structures::StructureId, terrain::Terrain};
 
 /// Collects asset management systems and resources.
 pub struct AssetManagementPlugin;
@@ -18,23 +23,32 @@ impl Plugin for AssetManagementPlugin {
 #[derive(Resource)]
 pub(crate) struct TileHandles {
     /// The material used for each type of terrain
-    pub(crate) terrain_handles: HashMap<Terrain, Handle<StandardMaterial>>,
+    pub(crate) materials: HashMap<Terrain, Handle<StandardMaterial>>,
+    /// The mesh used for each type of structure
+    pub(crate) mesh: Handle<Mesh>,
     /// The material used for tiles when they are selected
     pub(crate) selected_tile_handle: Handle<StandardMaterial>,
 }
 
 impl FromWorld for TileHandles {
     fn from_world(world: &mut World) -> Self {
-        let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-        let mut terrain_handles = HashMap::new();
-        terrain_handles.insert(Terrain::Plain, materials.add(Color::BEIGE.into()));
-        terrain_handles.insert(Terrain::Rocky, materials.add(Color::GRAY.into()));
-        terrain_handles.insert(Terrain::High, materials.add(Color::RED.into()));
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
+        let mut materials = HashMap::new();
+        materials.insert(Terrain::Plain, material_assets.add(Color::BEIGE.into()));
+        materials.insert(Terrain::Rocky, material_assets.add(Color::GRAY.into()));
+        materials.insert(Terrain::High, material_assets.add(Color::RED.into()));
 
-        let selected_tile_handle = materials.add(Color::SEA_GREEN.into());
+        let selected_tile_handle = material_assets.add(Color::SEA_GREEN.into());
+
+        let map_geometry = world.resource::<MapGeometry>();
+
+        let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
+        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
+        let mesh = mesh_assets.add(mesh_object);
 
         TileHandles {
-            terrain_handles,
+            materials,
+            mesh,
             selected_tile_handle,
         }
     }
@@ -82,4 +96,15 @@ impl FromWorld for StructureHandles {
 
         StructureHandles { materials, meshes }
     }
+}
+
+/// Constructs the mesh for a single hexagonal column
+fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
+    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, hex_height);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
+    mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
+    mesh
 }

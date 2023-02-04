@@ -1,10 +1,6 @@
 //! Rendering and animation logic.
 
-use bevy::{
-    prelude::*,
-    render::{mesh::Indices, render_resource::PrimitiveTopology},
-};
-use hexx::{Hex, HexLayout, MeshInfo};
+use bevy::prelude::*;
 
 use crate::{
     asset_management::{StructureHandles, TileHandles},
@@ -36,21 +32,21 @@ impl Plugin for GraphicsPlugin {
 fn populate_terrain(
     new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    materials: Res<TileHandles>,
+    handles: Res<TileHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
-        let hex_height = map_geometry.height_index.get(tile_pos).unwrap();
-
-        let mesh = hexagonal_column(&map_geometry.layout, *hex_height);
-        let mesh_handle = meshes.add(mesh);
+        let hex_height = *map_geometry.height_index.get(tile_pos).unwrap();
 
         commands.entity(terrain_entity).insert(PbrBundle {
-            mesh: mesh_handle.clone(),
-            material: materials.terrain_handles.get(terrain).unwrap().clone_weak(),
-            transform: Transform::from_xyz(pos.x, 0.0, pos.y),
+            mesh: handles.mesh.clone_weak(),
+            material: handles.materials.get(terrain).unwrap().clone_weak(),
+            transform: Transform::from_xyz(pos.x, 0.0, pos.y).with_scale(Vec3 {
+                x: 1.,
+                y: hex_height,
+                z: 1.,
+            }),
             ..default()
         });
     }
@@ -123,15 +119,4 @@ fn populate_units(
             ..default()
         });
     }
-}
-
-/// Constructs the mesh for a single hexagonal column
-fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, hex_height);
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
-    mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
-    mesh
 }
