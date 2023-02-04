@@ -12,7 +12,18 @@ edition = "2021"
 debug_tools = ['dep:debug_tools']
 
 [dependencies]
-bevy = "0.9"
+bevy = { version = "0.9", default-features = false, features = [
+    "animation",
+    "bevy_asset",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "render",
+    "png",
+    "x11",
+] }
+bevy_asset_loader = "0.14"
+bevy_kira_audio = { version = "0.13", features = ["mp3"] }
 rand = "0.8"
 noisy_bevy = "0.2"
 leafwing-input-manager = "0.7"
@@ -23,5 +34,5 @@ petitset = "0.2"
 serde = "1.0.152"
 leafwing_abilities = "0.3.0"
 derive_more = "0.99.17"
-hexx = "0.2.0"
+hexx = "0.2"
 bevy_mod_raycast = "0.7.0"

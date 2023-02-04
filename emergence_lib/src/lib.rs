@@ -7,6 +7,7 @@
 #![allow(clippy::type_complexity)]
 
 pub mod asset_management;
+pub mod audio;
 pub mod curves;
 pub mod enum_iter;
 pub mod graphics;

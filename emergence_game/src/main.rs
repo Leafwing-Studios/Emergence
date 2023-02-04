@@ -19,5 +19,6 @@ fn main() {
         .add_plugin(emergence_lib::player_interaction::InteractionPlugin)
         .add_plugin(emergence_lib::graphics::GraphicsPlugin)
         .add_plugin(emergence_lib::asset_management::AssetManagementPlugin)
+        .add_plugin(emergence_lib::audio::GameAudioPlugin)
         .run();
 }
