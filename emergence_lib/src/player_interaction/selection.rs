@@ -43,10 +43,14 @@ pub enum SelectionAction {
     Hexagonal,
     /// Clears the entire tile selection.
     Clear,
-    /// Copies the structures on the tile in the selection to the clipboard.
-    Copy,
-    /// Pastes the structures on the tile in the selection from the clipboard.
-    Paste,
+    /// Selects the structure on the tile under the player's cursor.
+    ///
+    /// If there is no structure there, the player's selection is cleared.
+    Pipette,
+    /// Sets the zoning of all currently selected tiles to the currently selected structure.
+    ///
+    /// If no structure is selected, any zoning will be removed.
+    Zone,
 }
 
 /// Determines how the player input impacts a chosen tile.
@@ -91,12 +95,12 @@ impl SelectionAction {
                 SelectionAction::Clear,
             ),
             (
-                UserInput::modified(Modifier::Control, KeyCode::C),
-                SelectionAction::Copy,
+                UserInput::Single(KeyCode::Q.into()),
+                SelectionAction::Pipette,
             ),
             (
-                UserInput::modified(Modifier::Control, KeyCode::V),
-                SelectionAction::Paste,
+                UserInput::Single(KeyCode::Space.into()),
+                SelectionAction::Zone,
             ),
         ])
     }
@@ -341,7 +345,10 @@ fn copy_selection(
     structure_query: Query<(&StructureId, &TilePos)>,
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
-        if actions.just_pressed(SelectionAction::Copy) {
+        if actions.just_pressed(SelectionAction::Pipette) {
+            // We want to replace our selection, rather than add to it
+            clipboard.clear();
+
             for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
                 // PERF: lol quadratic...
                 for (structure_id, structure_tile_pos) in structure_query.iter() {
@@ -361,12 +368,30 @@ fn paste_from_clipboard(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
     clipboard: Res<Clipboard>,
+    structure_query: Query<(Entity, &TilePos), With<StructureId>>,
+    map_geometry: Res<MapGeometry>,
+    selected_tiles: Res<SelectedTiles>,
     mut commands: Commands,
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
-        if actions.pressed(SelectionAction::Paste) {
-            for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
-                commands.spawn(StructureBundle::new(structure_id, tile_pos));
+        if actions.pressed(SelectionAction::Zone) {
+            // Clear zoning
+            if clipboard.is_empty() {
+                // PERF: this needs to use an index, rather than a linear time search
+                for (structure_entity, tile_pos) in structure_query.iter() {
+                    // PERF: this is kind of a mess; we can probably improve this through a smarter SelectedStructure type
+                    let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
+
+                    if selected_tiles.contains_tile(*terrain_entity, *tile_pos) {
+                        commands.entity(structure_entity).despawn();
+                    }
+                }
+            // Apply zoning
+            } else {
+                for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
+                    // FIXME: this should use a dedicated command to get all the details right
+                    commands.spawn(StructureBundle::new(structure_id, tile_pos));
+                }
             }
         }
     }
