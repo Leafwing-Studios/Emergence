@@ -7,7 +7,7 @@ pub mod camera;
 pub mod cursor;
 pub mod intent;
 pub mod organism_details;
-pub mod tile_selection;
+pub mod selection;
 pub mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
@@ -20,7 +20,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(organism_details::DetailsPlugin)
-            .add_plugin(tile_selection::TileSelectionPlugin)
+            .add_plugin(selection::SelectionPlugin)
             .add_plugin(zoning::ZoningPlugin);
 
         #[cfg(feature = "debug_tools")]

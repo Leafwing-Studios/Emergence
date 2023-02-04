@@ -1,7 +1,10 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use bevy::{prelude::*, utils::HashSet};
-use hexx::shapes::hexagon;
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
+use hexx::{shapes::hexagon, Hex};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
     user_input::{InputKind, Modifier, UserInput},
@@ -12,6 +15,7 @@ use petitset::PetitSet;
 use crate::{
     asset_management::TileHandles,
     simulation::geometry::{MapGeometry, TilePos},
+    structures::{StructureBundle, StructureId},
     terrain::Terrain,
 };
 
@@ -22,7 +26,7 @@ use super::{cursor::CursorPos, InteractionSystem};
 /// If a tile is not selected, it will be added to the selection.
 /// If it is already selected, it will be removed from the selection.
 #[derive(Actionlike, Clone, Debug)]
-pub enum TileSelectionAction {
+pub enum SelectionAction {
     /// Selects a single tile, deselecting any others.
     ///
     /// If the tile is already selected, it will be unselected.
@@ -39,6 +43,14 @@ pub enum TileSelectionAction {
     Hexagonal,
     /// Clears the entire tile selection.
     Clear,
+    /// Selects the structure on the tile under the player's cursor.
+    ///
+    /// If there is no structure there, the player's selection is cleared.
+    Pipette,
+    /// Sets the zoning of all currently selected tiles to the currently selected structure.
+    ///
+    /// If no structure is selected, any zoning will be removed.
+    Zone,
 }
 
 /// Determines how the player input impacts a chosen tile.
@@ -53,9 +65,9 @@ enum SelectMode {
     Deselect,
 }
 
-impl TileSelectionAction {
+impl SelectionAction {
     /// The default key bindings
-    pub(super) fn default_input_map() -> InputMap<TileSelectionAction> {
+    pub(super) fn default_input_map() -> InputMap<SelectionAction> {
         let mut control_shift_left_click = PetitSet::<InputKind, 8>::new();
         control_shift_left_click.insert(Modifier::Control.into());
         control_shift_left_click.insert(Modifier::Shift.into());
@@ -64,23 +76,31 @@ impl TileSelectionAction {
         InputMap::new([
             (
                 UserInput::Single(InputKind::Mouse(MouseButton::Left)),
-                TileSelectionAction::Single,
+                SelectionAction::Single,
             ),
             (
                 UserInput::modified(Modifier::Shift, MouseButton::Left),
-                TileSelectionAction::Multiple,
+                SelectionAction::Multiple,
             ),
             (
                 UserInput::Chord(control_shift_left_click),
-                TileSelectionAction::AreaMultiple,
+                SelectionAction::AreaMultiple,
             ),
             (
                 UserInput::modified(Modifier::Control, MouseButton::Left),
-                TileSelectionAction::Hexagonal,
+                SelectionAction::Hexagonal,
             ),
             (
                 UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
-                TileSelectionAction::Clear,
+                SelectionAction::Clear,
+            ),
+            (
+                UserInput::Single(KeyCode::Q.into()),
+                SelectionAction::Pipette,
+            ),
+            (
+                UserInput::Single(KeyCode::Space.into()),
+                SelectionAction::Zone,
             ),
         ])
     }
@@ -109,7 +129,7 @@ impl SelectedTiles {
     /// If a tile is not selected, select it.
     /// If a tile is already selected, remove it from the selection.
     ///
-    /// This is the behavior controlled by [`TileSelectionAction::Single`].
+    /// This is the behavior controlled by [`SelectionAction::Single`].
     pub fn select_single(&mut self, tile_entity: Entity, tile_pos: TilePos) {
         if self.selection.contains(&(tile_entity, tile_pos)) {
             self.selection.clear();
@@ -170,19 +190,26 @@ impl SelectedTiles {
     }
 }
 
-/// All tile selection logic and graphics
-pub(super) struct TileSelectionPlugin;
+/// All tile, structure and unit selection logic and graphics
+pub(super) struct SelectionPlugin;
 
-impl Plugin for TileSelectionPlugin {
+impl Plugin for SelectionPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectedTiles>()
-            .init_resource::<ActionState<TileSelectionAction>>()
-            .insert_resource(TileSelectionAction::default_input_map())
-            .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
+            .init_resource::<ActionState<SelectionAction>>()
+            .init_resource::<Clipboard>()
+            .insert_resource(SelectionAction::default_input_map())
+            .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
                 select_tiles
                     .label(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos),
+            )
+            .add_system(copy_selection.after(InteractionSystem::SelectTiles))
+            .add_system(
+                apply_zoning
+                    .after(InteractionSystem::SelectTiles)
+                    .after(copy_selection),
             )
             .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
     }
@@ -193,7 +220,7 @@ impl Plugin for TileSelectionPlugin {
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
-    actions: Res<ActionState<TileSelectionAction>>,
+    actions: Res<ActionState<SelectionAction>>,
     mut selection_mode: Local<SelectMode>,
     mut selection_start: Local<Option<TilePos>>,
     mut initial_selection: Local<Option<SelectedTiles>>,
@@ -203,7 +230,7 @@ fn select_tiles(
     if let (Some(cursor_entity), Some(cursor_tile)) =
         (cursor.maybe_entity(), cursor.maybe_tile_pos())
     {
-        if actions.pressed(TileSelectionAction::Clear) {
+        if actions.pressed(SelectionAction::Clear) {
             selected_tiles.clear_selection();
         };
 
@@ -216,20 +243,20 @@ fn select_tiles(
             }
         }
 
-        if actions.pressed(TileSelectionAction::AreaMultiple) {
+        if actions.pressed(SelectionAction::AreaMultiple) {
             selected_tiles.select_hexagon(
                 cursor_tile,
                 *previous_radius,
                 map_geometry.as_ref(),
                 &selection_mode,
             );
-        } else if actions.pressed(TileSelectionAction::Multiple) {
+        } else if actions.pressed(SelectionAction::Multiple) {
             match *selection_mode {
                 SelectMode::Select => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 SelectMode::None => unreachable!(),
             }
-        } else if actions.pressed(TileSelectionAction::Hexagonal) {
+        } else if actions.pressed(SelectionAction::Hexagonal) {
             if selection_start.is_none() {
                 *selection_start = Some(cursor_tile);
                 *initial_selection = Some(selected_tiles.clone());
@@ -251,12 +278,12 @@ fn select_tiles(
             *selection_mode = SelectMode::None;
         };
 
-        if actions.released(TileSelectionAction::Hexagonal) {
+        if actions.released(SelectionAction::Hexagonal) {
             *selection_start = None;
             *initial_selection = None;
         }
 
-        if actions.just_pressed(TileSelectionAction::Single) {
+        if actions.just_pressed(SelectionAction::Single) {
             selected_tiles.select_single(cursor_entity, cursor_tile);
         }
     }
@@ -277,6 +304,155 @@ fn highlight_selected_tiles(
             } else {
                 // FIXME: reset to the correct material
                 *material = materials.terrain_handles.get(terrain).unwrap().clone_weak();
+            }
+        }
+    }
+}
+
+/// Stores a selection to copy and paste.
+#[derive(Default, Resource, Debug, Deref, DerefMut)]
+struct Clipboard {
+    /// The internal map of structures.
+    contents: HashMap<TilePos, StructureId>,
+}
+
+impl Clipboard {
+    /// Normalizes the positions of the items on the clipboard.
+    ///
+    /// Centers relative to the mean selected tile position.
+    fn normalize_positions(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        // FIXME: this naive center calculation will overflow
+        let mut sum_x = 0;
+        let mut sum_y = 0;
+
+        for tile_pos in self.keys() {
+            sum_x += tile_pos.x as usize;
+            sum_y += tile_pos.x as usize;
+        }
+
+        let center = TilePos {
+            hex: Hex {
+                x: (sum_x / self.len()) as i32,
+                y: (sum_y / self.len()) as i32,
+            },
+        };
+
+        let mut new_map = HashMap::with_capacity(self.capacity());
+
+        for (tile_pos, id) in self.iter() {
+            let new_tile_pos = *tile_pos - center;
+            // PERF: eh maybe we can safe a clone by using remove?
+            new_map.insert(new_tile_pos, id.clone());
+        }
+
+        self.contents = new_map;
+    }
+
+    /// Apply a tile-position shift to the items on the clipboard.
+    ///
+    /// Used to place items in the correct location relative to the cursor.
+    fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureId)> {
+        self.iter()
+            .map(|(k, v)| ((*k + origin), v.clone()))
+            .collect()
+    }
+}
+
+// PERF: this pair of copy-paste systems should use an index of where the structures are
+/// Copies the selected structure(s) to the clipboard, to be placed later.
+///
+/// This system also handles the "pipette" functionality.
+fn copy_selection(
+    cursor: Res<CursorPos>,
+    actions: Res<ActionState<SelectionAction>>,
+    mut clipboard: ResMut<Clipboard>,
+    selected_tiles: Res<SelectedTiles>,
+    structure_query: Query<(&StructureId, &TilePos)>,
+) {
+    if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
+        if actions.just_pressed(SelectionAction::Pipette) {
+            // We want to replace our selection, rather than add to it
+            clipboard.clear();
+
+            // If there is no selection, just grab whatever's under the cursor
+            if selected_tiles.is_empty() {
+                for (structure_id, structure_tile_pos) in structure_query.iter() {
+                    if cursor_tile_pos == *structure_tile_pos {
+                        clipboard.insert(TilePos::default(), structure_id.clone());
+                        return;
+                    }
+                }
+            } else {
+                for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
+                    // PERF: lol quadratic...
+                    for (structure_id, structure_tile_pos) in structure_query.iter() {
+                        if terrain_tile_pos == structure_tile_pos {
+                            clipboard.insert(*structure_tile_pos, structure_id.clone());
+                        }
+                    }
+                }
+            }
+
+            clipboard.normalize_positions();
+        }
+    }
+}
+
+// PERF: this pair of copy-paste systems should use an index of where the structures are
+/// Applies zoning to an area, causing structures to be created (or removed) there.
+///
+/// This system also handles the "paste" functionality.
+fn apply_zoning(
+    cursor: Res<CursorPos>,
+    actions: Res<ActionState<SelectionAction>>,
+    clipboard: Res<Clipboard>,
+    structure_query: Query<(Entity, &TilePos), With<StructureId>>,
+    map_geometry: Res<MapGeometry>,
+    selected_tiles: Res<SelectedTiles>,
+    mut commands: Commands,
+) {
+    if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
+        if actions.pressed(SelectionAction::Zone) {
+            // Clear zoning
+            if clipboard.is_empty() {
+                // PERF: this needs to use an index, rather than a linear time search
+                for (structure_entity, tile_pos) in structure_query.iter() {
+                    // PERF: this is kind of a mess; we can probably improve this through a smarter SelectedStructure type
+                    let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
+
+                    if selected_tiles.contains_tile(*terrain_entity, *tile_pos) {
+                        commands.entity(structure_entity).despawn();
+                    }
+                }
+            // Zone using the single selected structure
+            } else if clipboard.len() == 1 {
+                let structure_id = clipboard.values().next().unwrap();
+
+                if selected_tiles.is_empty() {
+                    if map_geometry.height_index.contains_key(&cursor_tile_pos) {
+                        // FIXME: this should use a dedicated command to get all the details right
+                        commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
+                    }
+                } else {
+                    for (_terrain_entity, tile_pos) in selected_tiles.selection().iter() {
+                        if map_geometry.height_index.contains_key(tile_pos) {
+                            // FIXME: this should use a dedicated command to get all the details right
+                            commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
+                        }
+                    }
+                }
+            // Paste the selection
+            } else {
+                for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
+                    if map_geometry.height_index.contains_key(&tile_pos) {
+                        // FIXME: this should use a dedicated command to get all the details right
+                        commands.spawn(StructureBundle::new(structure_id.clone(), tile_pos));
+                    }
+                }
             }
         }
     }
