@@ -8,7 +8,7 @@ use crate::{
     structures::{StructureBundle, StructureId},
 };
 
-use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem};
+use super::{cursor::CursorPos, selection::SelectedTiles, InteractionSystem};
 
 /// Logic and resources for structure selection and placement.
 pub struct ZoningPlugin;

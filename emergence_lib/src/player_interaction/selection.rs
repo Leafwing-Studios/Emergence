@@ -22,7 +22,7 @@ use super::{cursor::CursorPos, InteractionSystem};
 /// If a tile is not selected, it will be added to the selection.
 /// If it is already selected, it will be removed from the selection.
 #[derive(Actionlike, Clone, Debug)]
-pub enum TileSelectionAction {
+pub enum SelectionAction {
     /// Selects a single tile, deselecting any others.
     ///
     /// If the tile is already selected, it will be unselected.
@@ -53,9 +53,9 @@ enum SelectMode {
     Deselect,
 }
 
-impl TileSelectionAction {
+impl SelectionAction {
     /// The default key bindings
-    pub(super) fn default_input_map() -> InputMap<TileSelectionAction> {
+    pub(super) fn default_input_map() -> InputMap<SelectionAction> {
         let mut control_shift_left_click = PetitSet::<InputKind, 8>::new();
         control_shift_left_click.insert(Modifier::Control.into());
         control_shift_left_click.insert(Modifier::Shift.into());
@@ -64,23 +64,23 @@ impl TileSelectionAction {
         InputMap::new([
             (
                 UserInput::Single(InputKind::Mouse(MouseButton::Left)),
-                TileSelectionAction::Single,
+                SelectionAction::Single,
             ),
             (
                 UserInput::modified(Modifier::Shift, MouseButton::Left),
-                TileSelectionAction::Multiple,
+                SelectionAction::Multiple,
             ),
             (
                 UserInput::Chord(control_shift_left_click),
-                TileSelectionAction::AreaMultiple,
+                SelectionAction::AreaMultiple,
             ),
             (
                 UserInput::modified(Modifier::Control, MouseButton::Left),
-                TileSelectionAction::Hexagonal,
+                SelectionAction::Hexagonal,
             ),
             (
                 UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
-                TileSelectionAction::Clear,
+                SelectionAction::Clear,
             ),
         ])
     }
@@ -109,7 +109,7 @@ impl SelectedTiles {
     /// If a tile is not selected, select it.
     /// If a tile is already selected, remove it from the selection.
     ///
-    /// This is the behavior controlled by [`TileSelectionAction::Single`].
+    /// This is the behavior controlled by [`SelectionAction::Single`].
     pub fn select_single(&mut self, tile_entity: Entity, tile_pos: TilePos) {
         if self.selection.contains(&(tile_entity, tile_pos)) {
             self.selection.clear();
@@ -170,15 +170,15 @@ impl SelectedTiles {
     }
 }
 
-/// All tile selection logic and graphics
-pub(super) struct TileSelectionPlugin;
+/// All tile, structure and unit selection logic and graphics
+pub(super) struct SelectionPlugin;
 
-impl Plugin for TileSelectionPlugin {
+impl Plugin for SelectionPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectedTiles>()
-            .init_resource::<ActionState<TileSelectionAction>>()
-            .insert_resource(TileSelectionAction::default_input_map())
-            .add_plugin(InputManagerPlugin::<TileSelectionAction>::default())
+            .init_resource::<ActionState<SelectionAction>>()
+            .insert_resource(SelectionAction::default_input_map())
+            .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
                 select_tiles
                     .label(InteractionSystem::SelectTiles)
@@ -193,7 +193,7 @@ impl Plugin for TileSelectionPlugin {
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
-    actions: Res<ActionState<TileSelectionAction>>,
+    actions: Res<ActionState<SelectionAction>>,
     mut selection_mode: Local<SelectMode>,
     mut selection_start: Local<Option<TilePos>>,
     mut initial_selection: Local<Option<SelectedTiles>>,
@@ -203,7 +203,7 @@ fn select_tiles(
     if let (Some(cursor_entity), Some(cursor_tile)) =
         (cursor.maybe_entity(), cursor.maybe_tile_pos())
     {
-        if actions.pressed(TileSelectionAction::Clear) {
+        if actions.pressed(SelectionAction::Clear) {
             selected_tiles.clear_selection();
         };
 
@@ -216,20 +216,20 @@ fn select_tiles(
             }
         }
 
-        if actions.pressed(TileSelectionAction::AreaMultiple) {
+        if actions.pressed(SelectionAction::AreaMultiple) {
             selected_tiles.select_hexagon(
                 cursor_tile,
                 *previous_radius,
                 map_geometry.as_ref(),
                 &selection_mode,
             );
-        } else if actions.pressed(TileSelectionAction::Multiple) {
+        } else if actions.pressed(SelectionAction::Multiple) {
             match *selection_mode {
                 SelectMode::Select => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 SelectMode::Deselect => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 SelectMode::None => unreachable!(),
             }
-        } else if actions.pressed(TileSelectionAction::Hexagonal) {
+        } else if actions.pressed(SelectionAction::Hexagonal) {
             if selection_start.is_none() {
                 *selection_start = Some(cursor_tile);
                 *initial_selection = Some(selected_tiles.clone());
@@ -251,12 +251,12 @@ fn select_tiles(
             *selection_mode = SelectMode::None;
         };
 
-        if actions.released(TileSelectionAction::Hexagonal) {
+        if actions.released(SelectionAction::Hexagonal) {
             *selection_start = None;
             *initial_selection = None;
         }
 
-        if actions.just_pressed(TileSelectionAction::Single) {
+        if actions.just_pressed(SelectionAction::Single) {
             selected_tiles.select_single(cursor_entity, cursor_tile);
         }
     }
