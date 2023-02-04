@@ -400,10 +400,17 @@ fn apply_zoning(
             } else if clipboard.len() == 1 {
                 let structure_id = clipboard.values().next().unwrap();
 
-                for (_terrain_entity, tile_pos) in selected_tiles.selection().iter() {
-                    if map_geometry.height_index.contains_key(tile_pos) {
+                if selected_tiles.is_empty() {
+                    if map_geometry.height_index.contains_key(&cursor_tile_pos) {
                         // FIXME: this should use a dedicated command to get all the details right
-                        commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
+                        commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
+                    }
+                } else {
+                    for (_terrain_entity, tile_pos) in selected_tiles.selection().iter() {
+                        if map_geometry.height_index.contains_key(tile_pos) {
+                            // FIXME: this should use a dedicated command to get all the details right
+                            commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
+                        }
                     }
                 }
             // Paste the selection
