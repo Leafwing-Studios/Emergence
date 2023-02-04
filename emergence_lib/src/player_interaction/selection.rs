@@ -317,6 +317,9 @@ struct Clipboard {
 }
 
 impl Clipboard {
+    /// Normalizes the positions of the items on the clipboard.
+    ///
+    /// Centers relative to the mean selected tile position.
     fn normalize_positions(&mut self) {
         if self.is_empty() {
             return;
@@ -349,14 +352,20 @@ impl Clipboard {
         self.contents = new_map;
     }
 
+    /// Apply a tile-position shift to the items on the clipboard.
+    ///
+    /// Used to place items in the correct location relative to the cursor.
     fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureId)> {
         self.iter()
-            .map(|(k, v)| ((*k + origin).clone(), v.clone()))
+            .map(|(k, v)| ((*k + origin), v.clone()))
             .collect()
     }
 }
 
 // PERF: this pair of copy-paste systems should use an index of where the structures are
+/// Copies the selected structure(s) to the clipboard, to be placed later.
+///
+/// This system also handles the "pipette" functionality.
 fn copy_selection(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
@@ -394,6 +403,9 @@ fn copy_selection(
 }
 
 // PERF: this pair of copy-paste systems should use an index of where the structures are
+/// Applies zoning to an area, causing structures to be created (or removed) there.
+///
+/// This system also handles the "paste" functionality.
 fn apply_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
