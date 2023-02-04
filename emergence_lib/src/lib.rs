@@ -8,6 +8,7 @@
 
 pub mod asset_management;
 pub mod curves;
+pub mod dev_tools;
 pub mod enum_iter;
 pub mod graphics;
 pub mod interactable;
