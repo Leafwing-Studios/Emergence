@@ -7,7 +7,10 @@ use bevy::{
 };
 use hexx::{Hex, HexLayout, MeshInfo};
 
-use crate::{simulation::geometry::MapGeometry, structures::StructureId, terrain::Terrain};
+use crate::{
+    enum_iter::IterableEnum, simulation::geometry::MapGeometry, structures::StructureId,
+    terrain::Terrain,
+};
 
 /// Collects asset management systems and resources.
 pub struct AssetManagementPlugin;
@@ -34,9 +37,11 @@ impl FromWorld for TileHandles {
     fn from_world(world: &mut World) -> Self {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
         let mut materials = HashMap::new();
-        materials.insert(Terrain::Plain, material_assets.add(Color::BEIGE.into()));
-        materials.insert(Terrain::Rocky, material_assets.add(Color::GRAY.into()));
-        materials.insert(Terrain::High, material_assets.add(Color::RED.into()));
+
+        for variant in Terrain::variants() {
+            let material_handle = material_assets.add(variant.material());
+            materials.insert(variant, material_handle);
+        }
 
         let selected_tile_handle = material_assets.add(Color::SEA_GREEN.into());
 

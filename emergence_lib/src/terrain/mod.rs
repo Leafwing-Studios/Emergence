@@ -17,8 +17,24 @@ pub enum Terrain {
     Plain,
     /// Terrain that is rocky, and thus difficult to traverse.
     Rocky,
-    /// Terrain that has higher altitude compared to others.
-    High,
+    /// Terrain that is unusually muddy.
+    Muddy,
+}
+
+impl Terrain {
+    /// The rendering material associated with this terrain type.
+    pub fn material(&self) -> StandardMaterial {
+        let base_color = match self {
+            Terrain::Plain => Color::BEIGE,
+            Terrain::Rocky => Color::GRAY,
+            Terrain::Muddy => Color::BISQUE,
+        };
+
+        StandardMaterial {
+            base_color,
+            ..Default::default()
+        }
+    }
 }
 
 /// All of the components needed to define a piece of terrain.
