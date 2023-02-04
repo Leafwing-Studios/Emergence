@@ -3,10 +3,26 @@
 use std::f32::consts::PI;
 
 use bevy::{prelude::*, utils::HashMap};
+use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex, HexLayout};
 
 /// A hex-based coordinate, that represents exactly one tile.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Deref, DerefMut, Default)]
+#[derive(
+    Component,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Deref,
+    DerefMut,
+    Default,
+    Add,
+    Sub,
+    AddAssign,
+    SubAssign,
+)]
 pub struct TilePos {
     /// The underlying hex coordinate
     pub hex: Hex,

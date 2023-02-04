@@ -1,6 +1,9 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use bevy::{prelude::*, utils::HashSet};
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
 use hexx::shapes::hexagon;
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
@@ -12,6 +15,7 @@ use petitset::PetitSet;
 use crate::{
     asset_management::TileHandles,
     simulation::geometry::{MapGeometry, TilePos},
+    structures::{StructureBundle, StructureId},
     terrain::Terrain,
 };
 
@@ -39,6 +43,10 @@ pub enum SelectionAction {
     Hexagonal,
     /// Clears the entire tile selection.
     Clear,
+    /// Copies the structures on the tile in the selection to the clipboard.
+    Copy,
+    /// Pastes the structures on the tile in the selection from the clipboard.
+    Paste,
 }
 
 /// Determines how the player input impacts a chosen tile.
@@ -81,6 +89,14 @@ impl SelectionAction {
             (
                 UserInput::Single(InputKind::Keyboard(KeyCode::Escape)),
                 SelectionAction::Clear,
+            ),
+            (
+                UserInput::modified(Modifier::Control, KeyCode::C),
+                SelectionAction::Copy,
+            ),
+            (
+                UserInput::modified(Modifier::Control, KeyCode::V),
+                SelectionAction::Paste,
             ),
         ])
     }
@@ -177,12 +193,19 @@ impl Plugin for SelectionPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectedTiles>()
             .init_resource::<ActionState<SelectionAction>>()
+            .init_resource::<Clipboard>()
             .insert_resource(SelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
                 select_tiles
                     .label(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos),
+            )
+            .add_system(copy_selection.after(InteractionSystem::SelectTiles))
+            .add_system(
+                paste_from_clipboard
+                    .after(InteractionSystem::SelectTiles)
+                    .after(copy_selection),
             )
             .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
     }
@@ -277,6 +300,73 @@ fn highlight_selected_tiles(
             } else {
                 // FIXME: reset to the correct material
                 *material = materials.terrain_handles.get(terrain).unwrap().clone_weak();
+            }
+        }
+    }
+}
+
+/// Stores a selection to copy and paste.
+#[derive(Default, Resource, Debug, Deref, DerefMut)]
+struct Clipboard {
+    /// The internal map of structures.
+    contents: HashMap<TilePos, StructureId>,
+}
+
+impl Clipboard {
+    fn normalize_positions(&mut self, origin: TilePos) {
+        let mut new_map = HashMap::with_capacity(self.capacity());
+
+        for (tile_pos, id) in self.iter() {
+            let new_tile_pos = *tile_pos - origin;
+            // PERF: eh maybe we can safe a clone by using remove?
+            new_map.insert(new_tile_pos, id.clone());
+        }
+
+        self.contents = new_map;
+    }
+
+    fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureId)> {
+        self.iter()
+            .map(|(k, v)| ((*k + origin).clone(), v.clone()))
+            .collect()
+    }
+}
+
+// PERF: this pair of copy-paste systems should use an index of where the structures are
+fn copy_selection(
+    cursor: Res<CursorPos>,
+    actions: Res<ActionState<SelectionAction>>,
+    mut clipboard: ResMut<Clipboard>,
+    selected_tiles: Res<SelectedTiles>,
+    structure_query: Query<(&StructureId, &TilePos)>,
+) {
+    if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
+        if actions.just_pressed(SelectionAction::Copy) {
+            for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
+                // PERF: lol quadratic...
+                for (structure_id, structure_tile_pos) in structure_query.iter() {
+                    if terrain_tile_pos == structure_tile_pos {
+                        clipboard.insert(*structure_tile_pos, structure_id.clone());
+                    }
+                }
+            }
+
+            clipboard.normalize_positions(cursor_tile_pos);
+        }
+    }
+}
+
+// PERF: this pair of copy-paste systems should use an index of where the structures are
+fn paste_from_clipboard(
+    cursor: Res<CursorPos>,
+    actions: Res<ActionState<SelectionAction>>,
+    clipboard: Res<Clipboard>,
+    mut commands: Commands,
+) {
+    if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
+        if actions.pressed(SelectionAction::Paste) {
+            for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
+                commands.spawn(StructureBundle::new(structure_id, tile_pos));
             }
         }
     }
