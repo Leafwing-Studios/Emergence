@@ -8,7 +8,6 @@ pub mod cursor;
 pub mod intent;
 pub mod organism_details;
 pub mod selection;
-pub mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
 pub struct InteractionPlugin;
@@ -20,8 +19,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(organism_details::DetailsPlugin)
-            .add_plugin(selection::SelectionPlugin)
-            .add_plugin(zoning::ZoningPlugin);
+            .add_plugin(selection::SelectionPlugin);
 
         #[cfg(feature = "debug_tools")]
         app.add_plugin(debug_tools::DebugToolsPlugin);
