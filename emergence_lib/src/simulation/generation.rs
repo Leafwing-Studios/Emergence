@@ -9,14 +9,12 @@ use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::math::vec2;
-use bevy::prelude::Vec2;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
 use noisy_bevy::fbm_simplex_2d_seeded;
-use rand::distributions::Uniform;
 use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
 use super::geometry::MapGeometry;
 
