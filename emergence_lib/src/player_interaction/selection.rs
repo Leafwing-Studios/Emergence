@@ -318,6 +318,10 @@ struct Clipboard {
 
 impl Clipboard {
     fn normalize_positions(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
         // FIXME: this naive center calculation will overflow
         let mut sum_x = 0;
         let mut sum_y = 0;
