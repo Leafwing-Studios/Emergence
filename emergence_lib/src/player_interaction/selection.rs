@@ -319,25 +319,24 @@ struct Clipboard {
 impl Clipboard {
     /// Normalizes the positions of the items on the clipboard.
     ///
-    /// Centers relative to the mean selected tile position.
+    /// Centers relative to the median selected tile position.
+    /// Each axis is computed independently.
     fn normalize_positions(&mut self) {
         if self.is_empty() {
             return;
         }
 
-        // FIXME: this naive center calculation will overflow
-        let mut sum_x = 0;
-        let mut sum_y = 0;
+        let mut x_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.x));
+        let mut y_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.y));
 
-        for tile_pos in self.keys() {
-            sum_x += tile_pos.x as usize;
-            sum_y += tile_pos.x as usize;
-        }
+        x_vec.sort_unstable();
+        y_vec.sort_unstable();
 
+        let mid = self.len() / 2;
         let center = TilePos {
             hex: Hex {
-                x: (sum_x / self.len()) as i32,
-                y: (sum_y / self.len()) as i32,
+                x: x_vec[mid],
+                y: y_vec[mid],
             },
         };
 
