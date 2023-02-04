@@ -57,7 +57,7 @@ impl SelectionAction {
             .insert(MouseButton::Left, SelectionAction::Select)
             .insert(MouseButton::Right, SelectionAction::Deselect)
             .insert(Modifier::Shift, SelectionAction::Multiple)
-            .insert(Modifier::Alt, SelectionAction::Area)
+            .insert(Modifier::Control, SelectionAction::Area)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
             .build()
