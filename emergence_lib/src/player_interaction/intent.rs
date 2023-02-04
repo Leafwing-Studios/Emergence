@@ -1,7 +1,7 @@
 //! Intent represents the hive mind's ability to act.
 //!
 //! It slowly recovers over time, with a generous cap,
-//! and can be spent on [abilities](super::abilities), [zoning](super::zoning)
+//! and can be spent on [abilities](super::abilities), zoning
 //! and in other minor ways to influence the world.
 
 use std::ops::{Div, Mul};
