@@ -544,13 +544,12 @@ mod tests {
     #[test]
     fn multi_select() {
         let mut selected_tiles = SelectedTiles::default();
-        let tile_pos = TilePos::default();
 
-        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(TilePos::new(1, 1));
         // Intentionally doubled
-        selected_tiles.add_tile(tile_pos);
-        selected_tiles.add_tile(tile_pos);
-        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(TilePos::new(1, 1));
+        selected_tiles.add_tile(TilePos::new(2, 2));
+        selected_tiles.add_tile(TilePos::new(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
     }
@@ -558,11 +557,9 @@ mod tests {
     #[test]
     fn clear_selection() {
         let mut selected_tiles = SelectedTiles::default();
-        let tile_pos = TilePos::default();
-
-        selected_tiles.add_tile(tile_pos);
-        selected_tiles.add_tile(tile_pos);
-        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(TilePos::new(1, 1));
+        selected_tiles.add_tile(TilePos::new(2, 2));
+        selected_tiles.add_tile(TilePos::new(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
         selected_tiles.clear_selection();
