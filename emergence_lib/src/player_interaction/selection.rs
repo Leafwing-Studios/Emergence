@@ -187,50 +187,21 @@ struct AreaSelection {
     center: Option<TilePos>,
     /// The radius of the selection.
     radius: u32,
+    /// The tiles selected at the start of this action.
+    initial_selection: Option<SelectedTiles>,
 }
 
 impl AreaSelection {
     /// Set things up to start a line selection action.
-    fn begin(
-        &mut self,
-        initial_selection: &mut Option<SelectedTiles>,
-        selected_tiles: &SelectedTiles,
-        cursor_pos: TilePos,
-    ) {
+    fn begin(&mut self, selected_tiles: &SelectedTiles, cursor_pos: TilePos) {
         self.center = Some(cursor_pos);
-        *initial_selection = Some(selected_tiles.clone());
+        self.initial_selection = Some(selected_tiles.clone());
     }
 
     /// Clean things up to conclude a line selection action.
-    fn finish(&mut self, initial_selection: &mut Option<SelectedTiles>) {
+    fn finish(&mut self) {
         self.center = None;
-        *initial_selection = None;
-    }
-}
-
-/// The state needed by [`SelectionAction::Line`].
-#[derive(Resource, Default)]
-struct LineSelection {
-    /// The starting tile, where the line selection began.
-    start: Option<TilePos>,
-}
-
-impl LineSelection {
-    /// Set things up to start a line selection action.
-    fn begin(
-        &mut self,
-        initial_selection: &mut Option<SelectedTiles>,
-        selected_tiles: &SelectedTiles,
-        cursor_pos: TilePos,
-    ) {
-        self.start = Some(cursor_pos);
-        *initial_selection = Some(selected_tiles.clone());
-    }
-
-    /// Clean things up to conclude a line selection action.
-    fn finish(&mut self, initial_selection: &mut Option<SelectedTiles>) {
-        self.start = None;
-        *initial_selection = None;
+        self.initial_selection = None;
     }
 }
 
@@ -239,7 +210,31 @@ impl Default for AreaSelection {
         AreaSelection {
             center: None,
             radius: 1,
+            initial_selection: None,
         }
+    }
+}
+
+/// The state needed by [`SelectionAction::Line`].
+#[derive(Resource, Default)]
+struct LineSelection {
+    /// The starting tile, where the line selection began.
+    start: Option<TilePos>,
+    /// The tiles selected at the start of this action.
+    initial_selection: Option<SelectedTiles>,
+}
+
+impl LineSelection {
+    /// Set things up to start a line selection action.
+    fn begin(&mut self, selected_tiles: &SelectedTiles, cursor_pos: TilePos) {
+        self.start = Some(cursor_pos);
+        self.initial_selection = Some(selected_tiles.clone());
+    }
+
+    /// Clean things up to conclude a line selection action.
+    fn finish(&mut self) {
+        self.start = None;
+        self.initial_selection = None;
     }
 }
 
@@ -249,35 +244,35 @@ fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<SelectionAction>>,
-    mut initial_selection: Local<Option<SelectedTiles>>,
     mut area_selection: ResMut<AreaSelection>,
     mut line_selection: ResMut<LineSelection>,
 ) {
     if let Some(cursor_pos) = cursor.maybe_tile_pos() {
+        let select = actions.pressed(SelectionAction::Select);
+        let deselect = actions.pressed(SelectionAction::Deselect);
+
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
         let simple_area = area & !multiple & !line;
 
-        let select = actions.pressed(SelectionAction::Select);
-        let deselect = actions.pressed(SelectionAction::Deselect);
-
         // Cache the starting state to make selections reversible
-        if simple_area & initial_selection.is_none() {
-            area_selection.begin(&mut initial_selection, &selected_tiles, cursor_pos);
+
+        if simple_area & area_selection.initial_selection.is_none() {
+            area_selection.begin(&selected_tiles, cursor_pos);
         }
 
-        if line & initial_selection.is_none() {
-            line_selection.begin(&mut initial_selection, &selected_tiles, cursor_pos);
+        if line & line_selection.initial_selection.is_none() {
+            line_selection.begin(&selected_tiles, cursor_pos);
         }
 
         // Clean up state from area and line selections
         if !simple_area {
-            area_selection.finish(&mut initial_selection);
+            area_selection.finish();
         }
 
         if !line {
-            line_selection.finish(&mut initial_selection);
+            line_selection.finish();
         }
 
         // Record which tiles should have the "hovered" effect
