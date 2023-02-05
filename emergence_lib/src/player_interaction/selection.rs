@@ -108,6 +108,8 @@ impl ObjectInteraction {
 pub struct SelectedTiles {
     /// Actively selected tiles
     selection: HashSet<(Entity, TilePos)>,
+    /// Tiles that are hovered over
+    hovered: HashSet<TilePos>,
 }
 
 impl SelectedTiles {
@@ -227,7 +229,9 @@ fn select_tiles(
     mut line_selection: ResMut<LineSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if let Some(cursor_tile) = cursor.maybe_tile_pos() {
+    if let (Some(cursor_entity), Some(cursor_pos)) =
+        (cursor.maybe_entity(), cursor.maybe_tile_pos())
+    {
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
@@ -237,7 +241,7 @@ fn select_tiles(
         let deselect = actions.pressed(SelectionAction::Deselect);
 
         // Cache the starting state to make selections reversible
-        if (simple_area | line) & (select | deselect) {
+        if simple_area | line {
             // If we're in the middle of a selection
             if let Some(initial_selection) = &*initial_selection {
                 *selected_tiles = initial_selection.clone();
@@ -246,16 +250,33 @@ fn select_tiles(
                 *initial_selection = Some(selected_tiles.clone());
                 if simple_area {
                     // Store area starting tile
-                    area_selection.center = Some(cursor_tile);
+                    area_selection.center = Some(cursor_pos);
                 } else {
                     // Store line starting tile
-                    line_selection.start = Some(cursor_tile);
+                    line_selection.start = Some(cursor_pos);
                 }
             }
-        } else if !(simple_area | line) {
+        } else if !(simple_area | line) & !(select | deselect) {
             area_selection.center = None;
             line_selection.start = None;
             *initial_selection = None;
+        }
+
+        // Record which tiles should have the "hovered" effect
+        selected_tiles.hovered.clear();
+        if simple_area {
+            selected_tiles
+                .hovered
+                .insert(area_selection.center.unwrap());
+            let ring = cursor_pos.hex.ring(area_selection.radius);
+            for hex in ring {
+                selected_tiles.hovered.insert(TilePos { hex });
+            }
+        } else if line {
+            selected_tiles.hovered.insert(cursor_pos);
+            selected_tiles.hovered.insert(line_selection.start.unwrap());
+        } else {
+            selected_tiles.hovered.insert(cursor_pos);
         }
 
         // Don't attempt to handle conflicting inputs.
@@ -269,32 +290,32 @@ fn select_tiles(
         }
 
         // Clear the selection, unless we're using the multiple select mode
-        if !multiple {
+        if select & !multiple {
             selected_tiles.clear_selection();
         }
 
         // Compute the center and radius
         let (center, radius) = if area {
             let center = if multiple {
-                cursor_tile
+                cursor_pos
             } else {
                 area_selection.center.unwrap()
             };
 
             if !multiple {
-                area_selection.radius = cursor_tile.unsigned_distance_to(center.hex);
+                area_selection.radius = cursor_pos.unsigned_distance_to(center.hex);
             }
 
             (center, area_selection.radius)
         } else if area {
-            (cursor_tile, area_selection.radius)
+            (cursor_pos, area_selection.radius)
         } else {
-            (cursor_tile, 0)
+            (cursor_pos, 0)
         };
 
         if line {
             let start = line_selection.start.unwrap();
-            let hexes = start.line_to(cursor_tile.hex);
+            let hexes = start.line_to(cursor_pos.hex);
             for hex in hexes {
                 selected_tiles.select_hexagon(TilePos { hex }, radius, &map_geometry, select)
             }
@@ -308,28 +329,15 @@ fn select_tiles(
 fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
-    cursor: Res<CursorPos>,
-    area_selection: Res<AreaSelection>,
     materials: Res<TileHandles>,
 ) {
-    if selected_tiles.is_changed() || cursor.is_changed() {
-        let selection = selected_tiles.selection();
-        let mut hovered = HashSet::new();
-
-        if let Some(center) = area_selection.center {
-            hovered.insert(center);
-            let ring = center.hex.ring(area_selection.radius);
-            for hex in ring {
-                hovered.insert(TilePos { hex });
-            }
-        } else if let Some(cursor_pos) = cursor.maybe_tile_pos() {
-            hovered.insert(cursor_pos);
-        };
-
+    if selected_tiles.is_changed() {
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let hovered = hovered.contains(&tile_pos);
-            let selected = selection.contains(&(terrain_entity, tile_pos));
+            let id = &(terrain_entity, tile_pos);
+
+            let hovered = selected_tiles.hovered.contains(&tile_pos);
+            let selected = selected_tiles.selection.contains(id);
 
             *material = materials.get_material(terrain, hovered, selected);
         }
