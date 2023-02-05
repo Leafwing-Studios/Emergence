@@ -41,7 +41,7 @@ fn populate_terrain(
 
         commands.entity(terrain_entity).insert(PbrBundle {
             mesh: handles.mesh.clone_weak(),
-            material: handles.materials.get(terrain).unwrap().clone_weak(),
+            material: handles.terrain_materials.get(terrain).unwrap().clone_weak(),
             transform: Transform::from_xyz(pos.x, 0.0, pos.y).with_scale(Vec3 {
                 x: 1.,
                 y: hex_height,

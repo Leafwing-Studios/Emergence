@@ -1,9 +1,12 @@
 //! Selecting tiles to be built on, inspected or modified
 
+use crate as emergence_lib;
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
+use emergence_macros::IterableEnum;
+
 use hexx::{shapes::hexagon, Hex};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
@@ -61,6 +64,39 @@ impl SelectionAction {
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
             .build()
+    }
+}
+
+/// How a given object is being interacted with by the player.
+#[derive(PartialEq, Eq, Hash, Clone, Debug, IterableEnum)]
+pub(crate) enum ObjectInteraction {
+    /// Currently in the selection.
+    Selected,
+    /// Hovered over with the cursor.
+    Hovered,
+    /// Hovered over and simultaneously selected.
+    ///
+    /// This exists to allow easy visual distinction of this state,
+    /// and should include visual elements of both.
+    ///
+    // TODO: this is silly and probably shouldn't exist, but we're using colors for everything for now so...
+    // Tracked in https://github.com/Leafwing-Studios/Emergence/issues/263
+    HoveredAndSelected,
+}
+
+impl ObjectInteraction {
+    /// The material used by objects that are being interacted with.
+    pub(crate) fn material(&self) -> StandardMaterial {
+        let base_color = match self {
+            ObjectInteraction::Selected => Color::DARK_GREEN,
+            ObjectInteraction::Hovered => Color::YELLOW,
+            ObjectInteraction::HoveredAndSelected => Color::YELLOW_GREEN,
+        };
+
+        StandardMaterial {
+            base_color,
+            ..Default::default()
+        }
     }
 }
 
@@ -269,9 +305,17 @@ fn highlight_selected_tiles(
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
             if selection.contains(&(terrain_entity, tile_pos)) {
-                *material = materials.selected_tile_handle.clone_weak();
+                *material = materials
+                    .interaction_materials
+                    .get(&ObjectInteraction::Selected)
+                    .unwrap()
+                    .clone_weak();
             } else {
-                *material = materials.materials.get(terrain).unwrap().clone_weak();
+                *material = materials
+                    .terrain_materials
+                    .get(terrain)
+                    .unwrap()
+                    .clone_weak();
             }
         }
     }
