@@ -338,11 +338,13 @@ fn select_tiles(
             if actions.just_released(SelectionAction::Select) {
                 let line_hexes = line_selection.draw_line(cursor_pos, radius);
                 selected_tiles.selected.extend(line_hexes);
+                line_selection.start = Some(cursor_pos);
             } else if actions.just_released(SelectionAction::Deselect) {
                 let line_hexes = line_selection.draw_line(cursor_pos, radius);
                 for tile_pos in line_hexes {
                     selected_tiles.selected.remove(&tile_pos);
                 }
+                line_selection.start = Some(cursor_pos);
             }
         } else {
             if select {
