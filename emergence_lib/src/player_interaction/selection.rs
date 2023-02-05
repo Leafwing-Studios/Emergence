@@ -38,6 +38,8 @@ pub enum SelectionAction {
     Multiple,
     /// Modifies the selection to cover a hexagonal area.
     Area,
+    /// Modifies the selection to cover a line between the start and end of the selection.
+    Line,
     /// Selects the structure on the tile under the player's cursor.
     ///
     /// If there is no structure there, the player's selection is cleared.
@@ -61,6 +63,7 @@ impl SelectionAction {
             .insert(MouseButton::Right, SelectionAction::Deselect)
             .insert(Modifier::Shift, SelectionAction::Multiple)
             .insert(Modifier::Control, SelectionAction::Area)
+            .insert(Modifier::Alt, SelectionAction::Line)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
             .build()
@@ -220,6 +223,8 @@ fn select_tiles(
     {
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
+        let line = actions.pressed(SelectionAction::Line);
+
         let select = actions.pressed(SelectionAction::Select);
         let deselect = actions.pressed(SelectionAction::Deselect);
 
