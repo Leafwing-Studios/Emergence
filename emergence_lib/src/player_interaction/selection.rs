@@ -107,47 +107,34 @@ impl ObjectInteraction {
 #[derive(Resource, Debug, Default, Clone)]
 pub struct SelectedTiles {
     /// Actively selected tiles
-    selection: HashSet<(Entity, TilePos)>,
+    selection: HashSet<TilePos>,
     /// Tiles that are hovered over
     hovered: HashSet<TilePos>,
 }
 
 impl SelectedTiles {
     /// Selects a single tile
-    fn add_tile(&mut self, tile_entity: Entity, tile_pos: TilePos) {
-        self.selection.insert((tile_entity, tile_pos));
+    fn add_tile(&mut self, tile_pos: TilePos) {
+        self.selection.insert(tile_pos);
     }
 
     /// Deselects a single tile
-    fn remove_tile(&mut self, tile_entity: Entity, tile_pos: TilePos) {
-        self.selection.remove(&(tile_entity, tile_pos));
+    fn remove_tile(&mut self, tile_pos: TilePos) {
+        self.selection.remove(&tile_pos);
     }
 
     /// Selects a hexagon of tiles.
-    fn select_hexagon(
-        &mut self,
-        center: TilePos,
-        radius: u32,
-        map_geometry: &MapGeometry,
-        select: bool,
-    ) {
+    fn select_hexagon(&mut self, center: TilePos, radius: u32, select: bool) {
         let hex_coord = hexagon(center.hex, radius);
 
         for hex in hex_coord {
             let target_pos = TilePos { hex };
             // Selection may have overflowed map
-            if let Some(target_entity) = map_geometry.terrain_index.get(&target_pos) {
-                match select {
-                    true => self.add_tile(*target_entity, target_pos),
-                    false => self.remove_tile(*target_entity, target_pos),
-                }
+            match select {
+                true => self.add_tile(target_pos),
+                false => self.remove_tile(target_pos),
             }
         }
-    }
-
-    /// The current set of selected tiles
-    fn selection(&self) -> &HashSet<(Entity, TilePos)> {
-        &self.selection
     }
 
     /// Clears the set of selected tiles.
@@ -161,8 +148,8 @@ impl SelectedTiles {
     }
 
     /// Is the given tile in the selection?
-    fn contains_tile(&self, tile_entity: Entity, tile_pos: TilePos) -> bool {
-        self.selection.contains(&(tile_entity, tile_pos))
+    fn contains_tile(&self, tile_pos: TilePos) -> bool {
+        self.selection.contains(&tile_pos)
     }
 }
 
@@ -227,11 +214,8 @@ fn select_tiles(
     mut initial_selection: Local<Option<SelectedTiles>>,
     mut area_selection: ResMut<AreaSelection>,
     mut line_selection: ResMut<LineSelection>,
-    map_geometry: Res<MapGeometry>,
 ) {
-    if let (Some(cursor_entity), Some(cursor_pos)) =
-        (cursor.maybe_entity(), cursor.maybe_tile_pos())
-    {
+    if let Some(cursor_pos) = cursor.maybe_tile_pos() {
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
@@ -317,10 +301,10 @@ fn select_tiles(
             let start = line_selection.start.unwrap();
             let hexes = start.line_to(cursor_pos.hex);
             for hex in hexes {
-                selected_tiles.select_hexagon(TilePos { hex }, radius, &map_geometry, select)
+                selected_tiles.select_hexagon(TilePos { hex }, radius, select)
             }
         } else {
-            selected_tiles.select_hexagon(center, radius, &map_geometry, select);
+            selected_tiles.select_hexagon(center, radius, select);
         }
     }
 }
@@ -328,16 +312,14 @@ fn select_tiles(
 /// Shows which tiles are being hovered and selected.
 fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
-    mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
+    mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
     materials: Res<TileHandles>,
 ) {
     if selected_tiles.is_changed() {
         // PERF: We should probably avoid a linear scan over all tiles here
-        for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let id = &(terrain_entity, tile_pos);
-
+        for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
             let hovered = selected_tiles.hovered.contains(&tile_pos);
-            let selected = selected_tiles.selection.contains(id);
+            let selected = selected_tiles.selection.contains(&tile_pos);
 
             *material = materials.get_material(terrain, hovered, selected);
         }
@@ -421,7 +403,7 @@ fn copy_selection(
                     }
                 }
             } else {
-                for (_terrain_entity, terrain_tile_pos) in selected_tiles.selection().iter() {
+                for terrain_tile_pos in selected_tiles.selection.iter() {
                     // PERF: lol quadratic...
                     for (structure_id, structure_tile_pos) in structure_query.iter() {
                         if terrain_tile_pos == structure_tile_pos {
@@ -455,10 +437,7 @@ fn apply_zoning(
             if clipboard.is_empty() {
                 // PERF: this needs to use an index, rather than a linear time search
                 for (structure_entity, tile_pos) in structure_query.iter() {
-                    // PERF: this is kind of a mess; we can probably improve this through a smarter SelectedStructure type
-                    let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-
-                    if selected_tiles.contains_tile(*terrain_entity, *tile_pos) {
+                    if selected_tiles.contains_tile(*tile_pos) {
                         commands.entity(structure_entity).despawn();
                     }
                 }
@@ -472,7 +451,7 @@ fn apply_zoning(
                         commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
                     }
                 } else {
-                    for (_terrain_entity, tile_pos) in selected_tiles.selection().iter() {
+                    for tile_pos in selected_tiles.selection.iter() {
                         if map_geometry.height_index.contains_key(tile_pos) {
                             // FIXME: this should use a dedicated command to get all the details right
                             commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
@@ -496,23 +475,21 @@ fn apply_zoning(
 mod tests {
     use super::SelectedTiles;
     use crate::simulation::geometry::TilePos;
-    use bevy::ecs::entity::Entity;
 
     #[test]
     fn simple_selection() {
         let mut selected_tiles = SelectedTiles::default();
-        let tile_entity = Entity::from_bits(0);
         let tile_pos = TilePos::default();
 
-        selected_tiles.add_tile(tile_entity, tile_pos);
-        assert!(selected_tiles.contains_tile(tile_entity, tile_pos));
+        selected_tiles.add_tile(tile_pos);
+        assert!(selected_tiles.contains_tile(tile_pos));
         assert!(!selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selection().len(), 1);
+        assert_eq!(selected_tiles.selection.len(), 1);
 
-        selected_tiles.remove_tile(tile_entity, tile_pos);
-        assert!(!selected_tiles.contains_tile(tile_entity, tile_pos));
+        selected_tiles.remove_tile(tile_pos);
+        assert!(!selected_tiles.contains_tile(tile_pos));
         assert!(selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selection().len(), 0);
+        assert_eq!(selected_tiles.selection.len(), 0);
     }
 
     #[test]
@@ -520,13 +497,13 @@ mod tests {
         let mut selected_tiles = SelectedTiles::default();
         let tile_pos = TilePos::default();
 
-        selected_tiles.add_tile(Entity::from_bits(0), tile_pos);
+        selected_tiles.add_tile(tile_pos);
         // Intentionally doubled
-        selected_tiles.add_tile(Entity::from_bits(0), tile_pos);
-        selected_tiles.add_tile(Entity::from_bits(1), tile_pos);
-        selected_tiles.add_tile(Entity::from_bits(2), tile_pos);
+        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(tile_pos);
 
-        assert_eq!(selected_tiles.selection().len(), 3);
+        assert_eq!(selected_tiles.selection.len(), 3);
     }
 
     #[test]
@@ -534,12 +511,12 @@ mod tests {
         let mut selected_tiles = SelectedTiles::default();
         let tile_pos = TilePos::default();
 
-        selected_tiles.add_tile(Entity::from_bits(0), tile_pos);
-        selected_tiles.add_tile(Entity::from_bits(1), tile_pos);
-        selected_tiles.add_tile(Entity::from_bits(2), tile_pos);
+        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(tile_pos);
+        selected_tiles.add_tile(tile_pos);
 
-        assert_eq!(selected_tiles.selection().len(), 3);
+        assert_eq!(selected_tiles.selection.len(), 3);
         selected_tiles.clear_selection();
-        assert_eq!(selected_tiles.selection().len(), 0);
+        assert_eq!(selected_tiles.selection.len(), 0);
     }
 }
