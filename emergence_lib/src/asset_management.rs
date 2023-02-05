@@ -33,6 +33,27 @@ pub(crate) struct TileHandles {
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
 
+impl TileHandles {
+    /// Returns a weakly cloned handle to the correct material for a terrain tile
+    pub(crate) fn get_material(
+        &self,
+        terrain: &Terrain,
+        hovered: bool,
+        selected: bool,
+    ) -> Handle<StandardMaterial> {
+        let maybe_handle = match (hovered, selected) {
+            (false, false) => self.terrain_materials.get(terrain),
+            (true, false) => self.interaction_materials.get(&ObjectInteraction::Hovered),
+            (false, true) => self.interaction_materials.get(&ObjectInteraction::Selected),
+            (true, true) => self
+                .interaction_materials
+                .get(&ObjectInteraction::HoveredAndSelected),
+        };
+
+        maybe_handle.unwrap().clone_weak()
+    }
+}
+
 impl FromWorld for TileHandles {
     fn from_world(world: &mut World) -> Self {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();

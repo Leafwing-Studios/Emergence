@@ -315,29 +315,10 @@ fn display_tile_interactions(
         let selection = selected_tiles.selection();
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let maybe_new_handle = if selection.contains(&(terrain_entity, tile_pos)) {
-                if cursor.maybe_tile_pos() == Some(tile_pos) {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::HoveredAndSelected)
-                } else {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::Selected)
-                }
-            } else {
-                // This is somewhat clearer by comparison to the above branch when uncollapsed
-                #[allow(clippy::collapsible_if)]
-                if cursor.maybe_tile_pos() == Some(tile_pos) {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::Hovered)
-                } else {
-                    materials.terrain_materials.get(terrain)
-                }
-            };
+            let hovered = cursor.maybe_tile_pos() == Some(tile_pos);
+            let selected = selection.contains(&(terrain_entity, tile_pos));
 
-            *material = maybe_new_handle.unwrap().clone_weak();
+            *material = materials.get_material(terrain, hovered, selected);
         }
     }
 }
