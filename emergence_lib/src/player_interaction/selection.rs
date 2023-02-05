@@ -288,8 +288,6 @@ fn select_tiles(
             }
 
             (center, area_selection.radius)
-        } else if area {
-            (cursor_pos, area_selection.radius)
         } else {
             (cursor_pos, 0)
         };
