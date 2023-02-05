@@ -32,6 +32,8 @@ impl Terrain {
 
         StandardMaterial {
             base_color,
+            perceptual_roughness: 0.6,
+            metallic: 0.01,
             ..Default::default()
         }
     }
