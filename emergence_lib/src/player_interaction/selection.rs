@@ -236,6 +236,21 @@ impl LineSelection {
         self.start = None;
         self.initial_selection = None;
     }
+
+    /// Computes the set of hexagons between `self.start` and `end`, with a thickness determnind by `radius`.
+    fn draw_line(&self, end: TilePos, radius: u32) -> HashSet<TilePos> {
+        let start = self.start.unwrap();
+        let line = start.line_to(end.hex);
+        let mut tiles = HashSet::<TilePos>::new();
+
+        for line_hex in line {
+            let hexagon = hexagon(line_hex, radius);
+            for hex in hexagon {
+                tiles.insert(TilePos { hex });
+            }
+        }
+        tiles
+    }
 }
 
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
@@ -302,8 +317,8 @@ fn select_tiles(
                 selected_tiles.hovered.insert(TilePos { hex });
             }
         } else if line {
-            selected_tiles.hovered.insert(cursor_pos);
-            selected_tiles.hovered.insert(line_selection.start.unwrap());
+            let line_hexes = line_selection.draw_line(cursor_pos, radius);
+            selected_tiles.hovered.extend(line_hexes);
         } else {
             selected_tiles.hovered.insert(cursor_pos);
         }
@@ -325,11 +340,8 @@ fn select_tiles(
 
         // Actually select tiles
         if line {
-            let start = line_selection.start.unwrap();
-            let hexes = start.line_to(cursor_pos.hex);
-            for hex in hexes {
-                selected_tiles.select_hexagon(TilePos { hex }, radius, select)
-            }
+            let line_hexes = line_selection.draw_line(cursor_pos, radius);
+            selected_tiles.hovered.extend(line_hexes);
         } else {
             selected_tiles.select_hexagon(center, radius, select);
         }
