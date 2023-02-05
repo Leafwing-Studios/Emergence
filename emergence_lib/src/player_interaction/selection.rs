@@ -1,9 +1,12 @@
 //! Selecting tiles to be built on, inspected or modified
 
+use crate as emergence_lib;
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
+use emergence_macros::IterableEnum;
+
 use hexx::{shapes::hexagon, Hex};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
@@ -61,6 +64,39 @@ impl SelectionAction {
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
             .build()
+    }
+}
+
+/// How a given object is being interacted with by the player.
+#[derive(PartialEq, Eq, Hash, Clone, Debug, IterableEnum)]
+pub(crate) enum ObjectInteraction {
+    /// Currently in the selection.
+    Selected,
+    /// Hovered over with the cursor.
+    Hovered,
+    /// Hovered over and simultaneously selected.
+    ///
+    /// This exists to allow easy visual distinction of this state,
+    /// and should include visual elements of both.
+    ///
+    // TODO: this is silly and probably shouldn't exist, but we're using colors for everything for now so...
+    // Tracked in https://github.com/Leafwing-Studios/Emergence/issues/263
+    HoveredAndSelected,
+}
+
+impl ObjectInteraction {
+    /// The material used by objects that are being interacted with.
+    pub(crate) fn material(&self) -> StandardMaterial {
+        let base_color = match self {
+            ObjectInteraction::Selected => Color::DARK_GREEN,
+            ObjectInteraction::Hovered => Color::YELLOW,
+            ObjectInteraction::HoveredAndSelected => Color::YELLOW_GREEN,
+        };
+
+        StandardMaterial {
+            base_color,
+            ..Default::default()
+        }
     }
 }
 
@@ -146,7 +182,7 @@ impl Plugin for SelectionPlugin {
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
-            .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
+            .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
 
@@ -258,21 +294,40 @@ fn select_tiles(
     }
 }
 
-/// Highlights the current set of selected tiles
-fn highlight_selected_tiles(
+/// Shows which tiles are being hovered and selected.
+fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
+    cursor: Res<CursorPos>,
     materials: Res<TileHandles>,
 ) {
-    if selected_tiles.is_changed() {
+    if selected_tiles.is_changed() || cursor.is_changed() {
         let selection = selected_tiles.selection();
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            if selection.contains(&(terrain_entity, tile_pos)) {
-                *material = materials.selected_tile_handle.clone_weak();
+            let maybe_new_handle = if selection.contains(&(terrain_entity, tile_pos)) {
+                if cursor.maybe_tile_pos() == Some(tile_pos) {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::HoveredAndSelected)
+                } else {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::Selected)
+                }
             } else {
-                *material = materials.materials.get(terrain).unwrap().clone_weak();
-            }
+                // This is somewhat clearer by comparison to the above branch when uncollapsed
+                #[allow(clippy::collapsible_if)]
+                if cursor.maybe_tile_pos() == Some(tile_pos) {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::Hovered)
+                } else {
+                    materials.terrain_materials.get(terrain)
+                }
+            };
+
+            *material = maybe_new_handle.unwrap().clone_weak();
         }
     }
 }

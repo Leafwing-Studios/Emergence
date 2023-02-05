@@ -8,8 +8,8 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
-    enum_iter::IterableEnum, simulation::geometry::MapGeometry, structures::StructureId,
-    terrain::Terrain,
+    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
+    simulation::geometry::MapGeometry, structures::StructureId, terrain::Terrain,
 };
 
 /// Collects asset management systems and resources.
@@ -26,35 +26,38 @@ impl Plugin for AssetManagementPlugin {
 #[derive(Resource)]
 pub(crate) struct TileHandles {
     /// The material used for each type of terrain
-    pub(crate) materials: HashMap<Terrain, Handle<StandardMaterial>>,
+    pub(crate) terrain_materials: HashMap<Terrain, Handle<StandardMaterial>>,
     /// The mesh used for each type of structure
     pub(crate) mesh: Handle<Mesh>,
-    /// The material used for tiles when they are selected
-    pub(crate) selected_tile_handle: Handle<StandardMaterial>,
+    /// The materials used for tiles when they are selected or otherwise interacted with
+    pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
 
 impl FromWorld for TileHandles {
     fn from_world(world: &mut World) -> Self {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
-        let mut materials = HashMap::new();
 
+        let mut terrain_materials = HashMap::new();
         for variant in Terrain::variants() {
             let material_handle = material_assets.add(variant.material());
-            materials.insert(variant, material_handle);
+            terrain_materials.insert(variant, material_handle);
         }
 
-        let selected_tile_handle = material_assets.add(Color::SEA_GREEN.into());
+        let mut interaction_materials = HashMap::new();
+        for variant in ObjectInteraction::variants() {
+            let material_handle = material_assets.add(variant.material());
+            interaction_materials.insert(variant, material_handle);
+        }
 
         let map_geometry = world.resource::<MapGeometry>();
-
         let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let mesh = mesh_assets.add(mesh_object);
 
         TileHandles {
-            materials,
+            terrain_materials,
             mesh,
-            selected_tile_handle,
+            interaction_materials,
         }
     }
 }
