@@ -173,6 +173,7 @@ impl Plugin for SelectionPlugin {
             .init_resource::<ActionState<SelectionAction>>()
             .init_resource::<Clipboard>()
             .init_resource::<AreaSelection>()
+            .init_resource::<LineSelection>()
             .insert_resource(SelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
@@ -199,6 +200,13 @@ struct AreaSelection {
     radius: u32,
 }
 
+/// The state needed by [`SelectionAction::Line`].
+#[derive(Resource, Default)]
+struct LineSelection {
+    /// The starting tile, where the line selection began.
+    start: Option<TilePos>,
+}
+
 impl Default for AreaSelection {
     fn default() -> Self {
         AreaSelection {
@@ -216,6 +224,7 @@ fn select_tiles(
     actions: Res<ActionState<SelectionAction>>,
     mut initial_selection: Local<Option<SelectedTiles>>,
     mut area_selection: ResMut<AreaSelection>,
+    mut line_selection: ResMut<LineSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_tile) = cursor.maybe_tile_pos() {
@@ -234,6 +243,13 @@ fn select_tiles(
         } else if !(area & !multiple) | (!select & !deselect) {
             area_selection.center = None;
             *initial_selection = None;
+        }
+
+        // Store the starting line tile
+        if line & (select | deselect) & line_selection.start.is_none() {
+            line_selection.start = Some(cursor_tile);
+        } else if !line | (!select & !deselect) {
+            line_selection.start = None;
         }
 
         // Don't attempt to handle conflicting inputs.
@@ -270,7 +286,15 @@ fn select_tiles(
             cursor_tile
         };
 
-        selected_tiles.select_hexagon(center, radius, &map_geometry, select);
+        if line {
+            let start = line_selection.start.unwrap();
+            let hexes = start.line_to(cursor_tile.hex);
+            for hex in hexes {
+                selected_tiles.select_hexagon(TilePos { hex }, radius, &map_geometry, select)
+            }
+        } else {
+            selected_tiles.select_hexagon(center, radius, &map_geometry, select);
+        }
     }
 }
 
