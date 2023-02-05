@@ -23,5 +23,5 @@ petitset = "0.2"
 serde = "1.0.152"
 leafwing_abilities = "0.3.0"
 derive_more = "0.99.17"
-hexx = {git = "https://github.com/ManevilleF/hexx/", rev = "cc1625146032d936a370791352afa2975afd8c22"}
+hexx = {git = "https://github.com/ManevilleF/hexx/", rev = "4fdff13f0159b97f2d06a230d7ed59b1acc54f2f"}
 bevy_mod_raycast = "0.7.0"
