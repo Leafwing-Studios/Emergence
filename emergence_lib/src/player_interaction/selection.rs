@@ -218,9 +218,7 @@ fn select_tiles(
     mut area_selection: ResMut<AreaSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if let (Some(cursor_entity), Some(cursor_tile)) =
-        (cursor.maybe_entity(), cursor.maybe_tile_pos())
-    {
+    if let Some(cursor_tile) = cursor.maybe_tile_pos() {
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
@@ -253,62 +251,26 @@ fn select_tiles(
             selected_tiles.clear_selection();
         }
 
-        // Selection logic
-        if select {
-            match (multiple, area) {
-                // Simple select
-                (false, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
-                // Multiple select
-                (true, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
-                // Area select
-                (false, true) => {
-                    let center = area_selection.center.unwrap();
-                    let radius = cursor_tile.unsigned_distance_to(center.hex);
-                    area_selection.radius = radius;
+        // Scale the area selected reversibly
+        if area & !multiple {
+            let center = area_selection.center.unwrap();
+            let radius = cursor_tile.unsigned_distance_to(center.hex);
+            area_selection.radius = radius;
 
-                    // We need to be able to expand and shrink the selection reversibly
-                    // so we need a snapshot of the state before this action took place.
-                    *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), true);
-                }
-                // Multiple area select
-                (true, true) => selected_tiles.select_hexagon(
-                    cursor_tile,
-                    area_selection.radius,
-                    &map_geometry,
-                    true,
-                ),
-            }
+            // We need to be able to expand and shrink the selection reversibly
+            // so we need a snapshot of the state before this action took place.
+            *selected_tiles = initial_selection.as_ref().unwrap().clone();
         }
 
-        // Deselection logic
-        if deselect {
-            match (multiple, area) {
-                // Simple deselect
-                // We've already cleared the selection above.
-                (false, false) => (),
-                // Multiple deselect
-                (true, false) => selected_tiles.remove_tile(cursor_entity, cursor_tile),
-                // Area deselect
-                (false, true) => {
-                    let center = area_selection.center.unwrap();
-                    let radius = cursor_tile.unsigned_distance_to(center.hex);
-                    area_selection.radius = radius;
+        // Set the parameters for the selection
+        let radius = if area { area_selection.radius } else { 0 };
+        let center = if area & !multiple {
+            area_selection.center.unwrap()
+        } else {
+            cursor_tile
+        };
 
-                    // We need to be able to expand and shrink the selection reversibly
-                    // so we need a snapshot of the state before this action took place.
-                    *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), false);
-                }
-                // Multiple area deselect
-                (true, true) => selected_tiles.select_hexagon(
-                    cursor_tile,
-                    area_selection.radius,
-                    &map_geometry,
-                    false,
-                ),
-            }
-        }
+        selected_tiles.select_hexagon(center, radius, &map_geometry, select);
     }
 }
 
