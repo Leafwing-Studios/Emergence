@@ -56,7 +56,7 @@ impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Terrain, f32> = HashMap::new();
         terrain_weights.insert(Terrain::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(Terrain::High, GenerationConfig::TERRAIN_WEIGHT_HIGH);
+        terrain_weights.insert(Terrain::Muddy, GenerationConfig::TERRAIN_WEIGHT_HIGH);
         terrain_weights.insert(Terrain::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
@@ -111,6 +111,10 @@ impl Plugin for GenerationPlugin {
     }
 }
 
+/// The minimum height of any tile.
+///
+/// This should always be a multiple of 1.0;
+const MIN_HEIGHT: f32 = 1.0;
 /// Scale the pos to make it work better with the noise function
 const FREQUENCY_SCALE: f32 = 0.07;
 /// Scale the output of the noise function so you can more easily use the number for a height
@@ -145,10 +149,13 @@ pub fn generate_terrain(
 
         let tile_pos = TilePos { hex };
         let pos = vec2(tile_pos.x as f32, tile_pos.y as f32);
-        let hex_height =
-            (fbm_simplex_2d_seeded(pos * FREQUENCY_SCALE, OCTAVES, LACUNARITY, GAIN, SEED)
+
+        let hex_height = MIN_HEIGHT
+            + (fbm_simplex_2d_seeded(pos * FREQUENCY_SCALE, OCTAVES, LACUNARITY, GAIN, SEED)
                 * AMPLITUDE_SCALE)
-                .abs();
+                .abs()
+                // Height is stepped, and should always be a multiple of 1.0
+                .round();
 
         // Spawn the terrain entity
         let terrain_entity = commands
