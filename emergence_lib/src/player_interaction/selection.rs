@@ -107,7 +107,7 @@ impl ObjectInteraction {
 #[derive(Resource, Debug, Default, Clone)]
 pub struct SelectedTiles {
     /// Actively selected tiles
-    selection: HashSet<TilePos>,
+    selected: HashSet<TilePos>,
     /// Tiles that are hovered over
     hovered: HashSet<TilePos>,
 }
@@ -115,12 +115,12 @@ pub struct SelectedTiles {
 impl SelectedTiles {
     /// Selects a single tile
     fn add_tile(&mut self, tile_pos: TilePos) {
-        self.selection.insert(tile_pos);
+        self.selected.insert(tile_pos);
     }
 
     /// Deselects a single tile
     fn remove_tile(&mut self, tile_pos: TilePos) {
-        self.selection.remove(&tile_pos);
+        self.selected.remove(&tile_pos);
     }
 
     /// Selects a hexagon of tiles.
@@ -139,17 +139,17 @@ impl SelectedTiles {
 
     /// Clears the set of selected tiles.
     fn clear_selection(&mut self) {
-        self.selection.clear();
+        self.selected.clear();
     }
 
     /// Are any tiles selected?
     fn is_empty(&self) -> bool {
-        self.selection.is_empty()
+        self.selected.is_empty()
     }
 
     /// Is the given tile in the selection?
     fn contains_tile(&self, tile_pos: TilePos) -> bool {
-        self.selection.contains(&tile_pos)
+        self.selected.contains(&tile_pos)
     }
 }
 
@@ -328,11 +328,6 @@ fn select_tiles(
             return;
         }
 
-        // This system has no further work to do if we are not atempting to select or deselect anything
-        if !select & !deselect {
-            return;
-        }
-
         // Clear the selection
         if simple_deselect | (select & !multiple) {
             selected_tiles.clear_selection()
@@ -340,10 +335,23 @@ fn select_tiles(
 
         // Actually select tiles
         if line {
-            let line_hexes = line_selection.draw_line(cursor_pos, radius);
-            selected_tiles.hovered.extend(line_hexes);
+            if actions.just_released(SelectionAction::Select) {
+                let line_hexes = line_selection.draw_line(cursor_pos, radius);
+                selected_tiles.selected.extend(line_hexes);
+            } else if actions.just_released(SelectionAction::Deselect) {
+                let line_hexes = line_selection.draw_line(cursor_pos, radius);
+                for tile_pos in line_hexes {
+                    selected_tiles.selected.remove(&tile_pos);
+                }
+            }
         } else {
-            selected_tiles.select_hexagon(center, radius, select);
+            if select {
+                selected_tiles.select_hexagon(center, radius, true);
+            }
+
+            if deselect {
+                selected_tiles.select_hexagon(center, radius, false);
+            }
         }
     }
 }
@@ -358,7 +366,7 @@ fn display_tile_interactions(
         // PERF: We should probably avoid a linear scan over all tiles here
         for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
             let hovered = selected_tiles.hovered.contains(&tile_pos);
-            let selected = selected_tiles.selection.contains(&tile_pos);
+            let selected = selected_tiles.selected.contains(&tile_pos);
 
             *material = materials.get_material(terrain, hovered, selected);
         }
@@ -442,7 +450,7 @@ fn copy_selection(
                     }
                 }
             } else {
-                for terrain_tile_pos in selected_tiles.selection.iter() {
+                for terrain_tile_pos in selected_tiles.selected.iter() {
                     // PERF: lol quadratic...
                     for (structure_id, structure_tile_pos) in structure_query.iter() {
                         if terrain_tile_pos == structure_tile_pos {
@@ -490,7 +498,7 @@ fn apply_zoning(
                         commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
                     }
                 } else {
-                    for tile_pos in selected_tiles.selection.iter() {
+                    for tile_pos in selected_tiles.selected.iter() {
                         if map_geometry.height_index.contains_key(tile_pos) {
                             // FIXME: this should use a dedicated command to get all the details right
                             commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
@@ -523,12 +531,12 @@ mod tests {
         selected_tiles.add_tile(tile_pos);
         assert!(selected_tiles.contains_tile(tile_pos));
         assert!(!selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selection.len(), 1);
+        assert_eq!(selected_tiles.selected.len(), 1);
 
         selected_tiles.remove_tile(tile_pos);
         assert!(!selected_tiles.contains_tile(tile_pos));
         assert!(selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selection.len(), 0);
+        assert_eq!(selected_tiles.selected.len(), 0);
     }
 
     #[test]
@@ -542,7 +550,7 @@ mod tests {
         selected_tiles.add_tile(tile_pos);
         selected_tiles.add_tile(tile_pos);
 
-        assert_eq!(selected_tiles.selection.len(), 3);
+        assert_eq!(selected_tiles.selected.len(), 3);
     }
 
     #[test]
@@ -554,8 +562,8 @@ mod tests {
         selected_tiles.add_tile(tile_pos);
         selected_tiles.add_tile(tile_pos);
 
-        assert_eq!(selected_tiles.selection.len(), 3);
+        assert_eq!(selected_tiles.selected.len(), 3);
         selected_tiles.clear_selection();
-        assert_eq!(selected_tiles.selection.len(), 0);
+        assert_eq!(selected_tiles.selected.len(), 0);
     }
 }
