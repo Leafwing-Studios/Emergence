@@ -243,14 +243,16 @@ fn select_tiles(
             return;
         }
 
+        // Clear the selection, unless we're using the multiple select mode
+        if !multiple {
+            selected_tiles.clear_selection();
+        }
+
         // Selection logic
         if select {
             match (multiple, area) {
                 // Simple select
-                (false, false) => {
-                    selected_tiles.clear_selection();
-                    selected_tiles.add_tile(cursor_entity, cursor_tile)
-                }
+                (false, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 // Multiple select
                 (true, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 // Area select
@@ -278,7 +280,8 @@ fn select_tiles(
         if deselect {
             match (multiple, area) {
                 // Simple deselect
-                (false, false) => selected_tiles.clear_selection(),
+                // We've already cleared the selection above.
+                (false, false) => (),
                 // Multiple deselect
                 (true, false) => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 // Area deselect
