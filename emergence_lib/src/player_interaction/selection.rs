@@ -231,25 +231,31 @@ fn select_tiles(
         let multiple = actions.pressed(SelectionAction::Multiple);
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
+        let simple_area = area & !multiple & !line;
 
         let select = actions.pressed(SelectionAction::Select);
         let deselect = actions.pressed(SelectionAction::Deselect);
 
-        // Cache the previous state to make area selection reversible
-        if area & !multiple & initial_selection.is_none() & (select | deselect) {
-            area_selection.center = Some(cursor_tile);
-            *initial_selection = Some(selected_tiles.clone());
-        // Unless we're in the middle of an area selection, clear the cache
-        } else if !(area & !multiple) | (!select & !deselect) {
+        // Cache the starting state to make selections reversible
+        if (simple_area | line) & (select | deselect) {
+            // If we're in the middle of a selection
+            if let Some(initial_selection) = &*initial_selection {
+                *selected_tiles = initial_selection.clone();
+            // If we're beginnning a selection
+            } else {
+                *initial_selection = Some(selected_tiles.clone());
+                if simple_area {
+                    // Store area starting tile
+                    area_selection.center = Some(cursor_tile);
+                } else {
+                    // Store line starting tile
+                    line_selection.start = Some(cursor_tile);
+                }
+            }
+        } else if !(simple_area | line) {
             area_selection.center = None;
-            *initial_selection = None;
-        }
-
-        // Store the starting line tile
-        if line & (select | deselect) & line_selection.start.is_none() {
-            line_selection.start = Some(cursor_tile);
-        } else if !line | (!select & !deselect) {
             line_selection.start = None;
+            *initial_selection = None;
         }
 
         // Don't attempt to handle conflicting inputs.
@@ -257,7 +263,7 @@ fn select_tiles(
             return;
         }
 
-        // This system has no work to do if we are not atempting to select or deselect anything
+        // This system has no further work to do if we are not atempting to select or deselect anything
         if !select & !deselect {
             return;
         }
@@ -267,23 +273,23 @@ fn select_tiles(
             selected_tiles.clear_selection();
         }
 
-        // Scale the area selected reversibly
-        if area & !multiple {
-            let center = area_selection.center.unwrap();
-            let radius = cursor_tile.unsigned_distance_to(center.hex);
-            area_selection.radius = radius;
+        // Compute the center and radius
+        let (center, radius) = if area {
+            let center = if multiple {
+                cursor_tile
+            } else {
+                area_selection.center.unwrap()
+            };
 
-            // We need to be able to expand and shrink the selection reversibly
-            // so we need a snapshot of the state before this action took place.
-            *selected_tiles = initial_selection.as_ref().unwrap().clone();
-        }
+            if !multiple {
+                area_selection.radius = cursor_tile.unsigned_distance_to(center.hex);
+            }
 
-        // Set the parameters for the selection
-        let radius = if area { area_selection.radius } else { 0 };
-        let center = if area & !multiple {
-            area_selection.center.unwrap()
+            (center, area_selection.radius)
+        } else if area {
+            (cursor_tile, area_selection.radius)
         } else {
-            cursor_tile
+            (cursor_tile, 0)
         };
 
         if line {
