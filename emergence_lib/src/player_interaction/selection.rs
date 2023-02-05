@@ -275,11 +275,6 @@ fn select_tiles(
             line_selection.finish();
         }
 
-        // Clear the selection, unless we're using the multiple select mode
-        if select & !multiple {
-            selected_tiles.clear_selection();
-        }
-
         // Compute the center and radius
         let (center, radius) = if area {
             let center = if multiple {
@@ -312,6 +307,11 @@ fn select_tiles(
             selected_tiles.hovered.insert(line_selection.start.unwrap());
         } else {
             selected_tiles.hovered.insert(cursor_pos);
+        }
+
+        // Clear the selection
+        if (select & !multiple) | (deselect & !area & !line & !multiple) {
+            selected_tiles.clear_selection();
         }
 
         // Don't attempt to handle conflicting inputs.
