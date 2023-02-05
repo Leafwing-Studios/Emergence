@@ -277,7 +277,7 @@ fn select_tiles(
 
         // Compute the center and radius
         let (center, radius) = if area {
-            let center = if multiple {
+            let center = if !simple_area {
                 cursor_pos
             } else {
                 area_selection.center.unwrap()
