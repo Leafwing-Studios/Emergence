@@ -182,7 +182,7 @@ impl Plugin for SelectionPlugin {
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
-            .add_system(highlight_selected_tiles.after(InteractionSystem::SelectTiles));
+            .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
 
@@ -294,29 +294,38 @@ fn select_tiles(
     }
 }
 
-/// Highlights the current set of selected tiles
-fn highlight_selected_tiles(
+/// Shows which tiles are being hovered and selected.
+fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
+    cursor: Res<CursorPos>,
     materials: Res<TileHandles>,
 ) {
-    if selected_tiles.is_changed() {
+    if selected_tiles.is_changed() || cursor.is_changed() {
         let selection = selected_tiles.selection();
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            if selection.contains(&(terrain_entity, tile_pos)) {
-                *material = materials
-                    .interaction_materials
-                    .get(&ObjectInteraction::Selected)
-                    .unwrap()
-                    .clone_weak();
+            let maybe_new_handle = if selection.contains(&(terrain_entity, tile_pos)) {
+                if cursor.maybe_tile_pos() == Some(tile_pos) {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::HoveredAndSelected)
+                } else {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::Selected)
+                }
             } else {
-                *material = materials
-                    .terrain_materials
-                    .get(terrain)
-                    .unwrap()
-                    .clone_weak();
-            }
+                if cursor.maybe_tile_pos() == Some(tile_pos) {
+                    materials
+                        .interaction_materials
+                        .get(&ObjectInteraction::Hovered)
+                } else {
+                    materials.terrain_materials.get(terrain)
+                }
+            };
+
+            *material = maybe_new_handle.unwrap().clone_weak();
         }
     }
 }
