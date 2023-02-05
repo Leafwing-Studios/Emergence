@@ -169,6 +169,7 @@ impl Plugin for SelectionPlugin {
         app.init_resource::<SelectedTiles>()
             .init_resource::<ActionState<SelectionAction>>()
             .init_resource::<Clipboard>()
+            .init_resource::<AreaSelection>()
             .insert_resource(SelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
@@ -186,15 +187,32 @@ impl Plugin for SelectionPlugin {
     }
 }
 
+/// The state needed by [`SelectionAction::Area`].
+#[derive(Resource)]
+struct AreaSelection {
+    /// The central tile, where the area selection began.
+    center: Option<TilePos>,
+    /// The radius of the selection.
+    radius: u32,
+}
+
+impl Default for AreaSelection {
+    fn default() -> Self {
+        AreaSelection {
+            center: None,
+            radius: 1,
+        }
+    }
+}
+
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 #[allow(clippy::too_many_arguments)]
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<SelectionAction>>,
-    mut selection_start: Local<Option<TilePos>>,
     mut initial_selection: Local<Option<SelectedTiles>>,
-    mut previous_radius: Local<u32>,
+    mut area_selection: ResMut<AreaSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
@@ -206,12 +224,12 @@ fn select_tiles(
         let deselect = actions.pressed(SelectionAction::Deselect);
 
         // Cache the previous state to make area selection reversible
-        if area & !multiple & initial_selection.is_none() {
-            *selection_start = Some(cursor_tile);
+        if area & !multiple & initial_selection.is_none() & (select | deselect) {
+            area_selection.center = Some(cursor_tile);
             *initial_selection = Some(selected_tiles.clone());
         // Unless we're in the middle of an area selection, clear the cache
         } else if !(area & !multiple) | (!select & !deselect) {
-            *selection_start = None;
+            area_selection.center = None;
             *initial_selection = None;
         }
 
@@ -237,23 +255,19 @@ fn select_tiles(
                 (true, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 // Area select
                 (false, true) => {
-                    let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
-                    *previous_radius = radius;
+                    let center = area_selection.center.unwrap();
+                    let radius = cursor_tile.unsigned_distance_to(center.hex);
+                    area_selection.radius = radius;
 
                     // We need to be able to expand and shrink the selection reversibly
                     // so we need a snapshot of the state before this action took place.
                     *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(
-                        selection_start.unwrap(),
-                        radius,
-                        map_geometry.as_ref(),
-                        true,
-                    );
+                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), true);
                 }
                 // Multiple area select
                 (true, true) => selected_tiles.select_hexagon(
                     cursor_tile,
-                    *previous_radius,
+                    area_selection.radius,
                     &map_geometry,
                     true,
                 ),
@@ -269,23 +283,19 @@ fn select_tiles(
                 (true, false) => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 // Area deselect
                 (false, true) => {
-                    let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
-                    *previous_radius = radius;
+                    let center = area_selection.center.unwrap();
+                    let radius = cursor_tile.unsigned_distance_to(center.hex);
+                    area_selection.radius = radius;
 
                     // We need to be able to expand and shrink the selection reversibly
                     // so we need a snapshot of the state before this action took place.
                     *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(
-                        selection_start.unwrap(),
-                        radius,
-                        map_geometry.as_ref(),
-                        false,
-                    );
+                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), false);
                 }
                 // Multiple area deselect
                 (true, true) => selected_tiles.select_hexagon(
                     cursor_tile,
-                    *previous_radius,
+                    area_selection.radius,
                     &map_geometry,
                     false,
                 ),
@@ -299,35 +309,29 @@ fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
     cursor: Res<CursorPos>,
+    area_selection: Res<AreaSelection>,
     materials: Res<TileHandles>,
 ) {
     if selected_tiles.is_changed() || cursor.is_changed() {
         let selection = selected_tiles.selection();
+        let mut hovered = HashSet::new();
+
+        if let Some(center) = area_selection.center {
+            hovered.insert(center);
+            let ring = center.hex.ring(area_selection.radius);
+            for hex in ring {
+                hovered.insert(TilePos { hex });
+            }
+        } else if let Some(cursor_pos) = cursor.maybe_tile_pos() {
+            hovered.insert(cursor_pos);
+        };
+
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let maybe_new_handle = if selection.contains(&(terrain_entity, tile_pos)) {
-                if cursor.maybe_tile_pos() == Some(tile_pos) {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::HoveredAndSelected)
-                } else {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::Selected)
-                }
-            } else {
-                // This is somewhat clearer by comparison to the above branch when uncollapsed
-                #[allow(clippy::collapsible_if)]
-                if cursor.maybe_tile_pos() == Some(tile_pos) {
-                    materials
-                        .interaction_materials
-                        .get(&ObjectInteraction::Hovered)
-                } else {
-                    materials.terrain_materials.get(terrain)
-                }
-            };
+            let hovered = hovered.contains(&tile_pos);
+            let selected = selection.contains(&(terrain_entity, tile_pos));
 
-            *material = maybe_new_handle.unwrap().clone_weak();
+            *material = materials.get_material(terrain, hovered, selected);
         }
     }
 }
