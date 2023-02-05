@@ -316,6 +316,8 @@ fn display_tile_interactions(
                         .get(&ObjectInteraction::Selected)
                 }
             } else {
+                // This is somewhat clearer by comparison to the above branch when uncollapsed
+                #[allow(clippy::collapsible_if)]
                 if cursor.maybe_tile_pos() == Some(tile_pos) {
                     materials
                         .interaction_materials
