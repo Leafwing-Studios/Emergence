@@ -229,7 +229,7 @@ fn select_tiles(
             *initial_selection = Some(selected_tiles.clone());
         // Unless we're in the middle of an area selection, clear the cache
         } else if !(area & !multiple) | (!select & !deselect) {
-            area_selection.center = Some(cursor_tile);
+            area_selection.center = None;
             *initial_selection = None;
         }
 
