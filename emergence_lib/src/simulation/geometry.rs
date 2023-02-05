@@ -28,6 +28,13 @@ pub struct TilePos {
     pub hex: Hex,
 }
 
+impl TilePos {
+    /// Generates a new [`TilePos`] from axial coordinates.
+    pub fn new(x: i32, y: i32) -> Self {
+        TilePos { hex: Hex { x, y } }
+    }
+}
+
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
 pub struct MapGeometry {
