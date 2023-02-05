@@ -224,7 +224,7 @@ fn select_tiles(
         let deselect = actions.pressed(SelectionAction::Deselect);
 
         // Cache the previous state to make area selection reversible
-        if area & !multiple & initial_selection.is_none() {
+        if area & !multiple & initial_selection.is_none() & (select | deselect) {
             area_selection.center = Some(cursor_tile);
             *initial_selection = Some(selected_tiles.clone());
         // Unless we're in the middle of an area selection, clear the cache
