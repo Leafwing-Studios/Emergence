@@ -275,33 +275,6 @@ fn select_tiles(
             line_selection.finish();
         }
 
-        // Record which tiles should have the "hovered" effect
-        selected_tiles.hovered.clear();
-        if simple_area {
-            selected_tiles
-                .hovered
-                .insert(area_selection.center.unwrap());
-            let ring = cursor_pos.hex.ring(area_selection.radius);
-            for hex in ring {
-                selected_tiles.hovered.insert(TilePos { hex });
-            }
-        } else if line {
-            selected_tiles.hovered.insert(cursor_pos);
-            selected_tiles.hovered.insert(line_selection.start.unwrap());
-        } else {
-            selected_tiles.hovered.insert(cursor_pos);
-        }
-
-        // Don't attempt to handle conflicting inputs.
-        if select & deselect {
-            return;
-        }
-
-        // This system has no further work to do if we are not atempting to select or deselect anything
-        if !select & !deselect {
-            return;
-        }
-
         // Clear the selection, unless we're using the multiple select mode
         if select & !multiple {
             selected_tiles.clear_selection();
@@ -326,6 +299,32 @@ fn select_tiles(
             (cursor_pos, 0)
         };
 
+        // Record which tiles should have the "hovered" effect
+        selected_tiles.hovered.clear();
+        if simple_area {
+            selected_tiles.hovered.insert(center);
+            let ring = center.hex.ring(radius);
+            for hex in ring {
+                selected_tiles.hovered.insert(TilePos { hex });
+            }
+        } else if line {
+            selected_tiles.hovered.insert(cursor_pos);
+            selected_tiles.hovered.insert(line_selection.start.unwrap());
+        } else {
+            selected_tiles.hovered.insert(cursor_pos);
+        }
+
+        // Don't attempt to handle conflicting inputs.
+        if select & deselect {
+            return;
+        }
+
+        // This system has no further work to do if we are not atempting to select or deselect anything
+        if !select & !deselect {
+            return;
+        }
+
+        // Actually select tiles
         if line {
             let start = line_selection.start.unwrap();
             let hexes = start.line_to(cursor_pos.hex);
