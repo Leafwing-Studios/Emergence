@@ -189,11 +189,49 @@ struct AreaSelection {
     radius: u32,
 }
 
+impl AreaSelection {
+    /// Set things up to start a line selection action.
+    fn begin(
+        &mut self,
+        initial_selection: &mut Option<SelectedTiles>,
+        selected_tiles: &SelectedTiles,
+        cursor_pos: TilePos,
+    ) {
+        self.center = Some(cursor_pos);
+        *initial_selection = Some(selected_tiles.clone());
+    }
+
+    /// Clean things up to conclude a line selection action.
+    fn finish(&mut self, initial_selection: &mut Option<SelectedTiles>) {
+        self.center = None;
+        *initial_selection = None;
+    }
+}
+
 /// The state needed by [`SelectionAction::Line`].
 #[derive(Resource, Default)]
 struct LineSelection {
     /// The starting tile, where the line selection began.
     start: Option<TilePos>,
+}
+
+impl LineSelection {
+    /// Set things up to start a line selection action.
+    fn begin(
+        &mut self,
+        initial_selection: &mut Option<SelectedTiles>,
+        selected_tiles: &SelectedTiles,
+        cursor_pos: TilePos,
+    ) {
+        self.start = Some(cursor_pos);
+        *initial_selection = Some(selected_tiles.clone());
+    }
+
+    /// Clean things up to conclude a line selection action.
+    fn finish(&mut self, initial_selection: &mut Option<SelectedTiles>) {
+        self.start = None;
+        *initial_selection = None;
+    }
 }
 
 impl Default for AreaSelection {
@@ -225,25 +263,21 @@ fn select_tiles(
         let deselect = actions.pressed(SelectionAction::Deselect);
 
         // Cache the starting state to make selections reversible
-        if simple_area | line {
-            // If we're in the middle of a selection
-            if let Some(initial_selection) = &*initial_selection {
-                *selected_tiles = initial_selection.clone();
-            // If we're beginnning a selection
-            } else {
-                *initial_selection = Some(selected_tiles.clone());
-                if simple_area {
-                    // Store area starting tile
-                    area_selection.center = Some(cursor_pos);
-                } else {
-                    // Store line starting tile
-                    line_selection.start = Some(cursor_pos);
-                }
-            }
-        } else if !(simple_area | line) & !(select | deselect) {
-            area_selection.center = None;
-            line_selection.start = None;
-            *initial_selection = None;
+        if simple_area & initial_selection.is_none() {
+            area_selection.begin(&mut initial_selection, &selected_tiles, cursor_pos);
+        }
+
+        if line & initial_selection.is_none() {
+            line_selection.begin(&mut initial_selection, &selected_tiles, cursor_pos);
+        }
+
+        // Clean up state from area and line selections
+        if !simple_area {
+            area_selection.finish(&mut initial_selection);
+        }
+
+        if !line {
+            line_selection.finish(&mut initial_selection);
         }
 
         // Record which tiles should have the "hovered" effect
