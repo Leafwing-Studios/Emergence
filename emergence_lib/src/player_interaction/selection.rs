@@ -283,7 +283,7 @@ fn select_tiles(
                 area_selection.center.unwrap()
             };
 
-            if !multiple {
+            if simple_area {
                 area_selection.radius = cursor_pos.unsigned_distance_to(center.hex);
             }
 
@@ -326,6 +326,7 @@ fn select_tiles(
         if line {
             let start = line_selection.start.unwrap();
             let hexes = start.line_to(cursor_pos.hex);
+            warn!(radius);
             for hex in hexes {
                 selected_tiles.select_hexagon(TilePos { hex }, radius, select)
             }
