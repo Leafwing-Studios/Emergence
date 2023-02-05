@@ -169,6 +169,7 @@ impl Plugin for SelectionPlugin {
         app.init_resource::<SelectedTiles>()
             .init_resource::<ActionState<SelectionAction>>()
             .init_resource::<Clipboard>()
+            .init_resource::<AreaSelection>()
             .insert_resource(SelectionAction::default_input_map())
             .add_plugin(InputManagerPlugin::<SelectionAction>::default())
             .add_system(
@@ -186,15 +187,32 @@ impl Plugin for SelectionPlugin {
     }
 }
 
+/// The state needed by [`SelectionAction::Area`].
+#[derive(Resource)]
+struct AreaSelection {
+    /// The central tile, where the area selection began.
+    center: Option<TilePos>,
+    /// The radius of the selection.
+    radius: u32,
+}
+
+impl Default for AreaSelection {
+    fn default() -> Self {
+        AreaSelection {
+            center: None,
+            radius: 1,
+        }
+    }
+}
+
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 #[allow(clippy::too_many_arguments)]
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<SelectionAction>>,
-    mut selection_start: Local<Option<TilePos>>,
     mut initial_selection: Local<Option<SelectedTiles>>,
-    mut previous_radius: Local<u32>,
+    mut area_selection: ResMut<AreaSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let (Some(cursor_entity), Some(cursor_tile)) =
@@ -207,11 +225,11 @@ fn select_tiles(
 
         // Cache the previous state to make area selection reversible
         if area & !multiple & initial_selection.is_none() {
-            *selection_start = Some(cursor_tile);
+            area_selection.center = Some(cursor_tile);
             *initial_selection = Some(selected_tiles.clone());
         // Unless we're in the middle of an area selection, clear the cache
         } else if !(area & !multiple) | (!select & !deselect) {
-            *selection_start = None;
+            area_selection.center = Some(cursor_tile);
             *initial_selection = None;
         }
 
@@ -237,23 +255,19 @@ fn select_tiles(
                 (true, false) => selected_tiles.add_tile(cursor_entity, cursor_tile),
                 // Area select
                 (false, true) => {
-                    let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
-                    *previous_radius = radius;
+                    let center = area_selection.center.unwrap();
+                    let radius = cursor_tile.unsigned_distance_to(center.hex);
+                    area_selection.radius = radius;
 
                     // We need to be able to expand and shrink the selection reversibly
                     // so we need a snapshot of the state before this action took place.
                     *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(
-                        selection_start.unwrap(),
-                        radius,
-                        map_geometry.as_ref(),
-                        true,
-                    );
+                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), true);
                 }
                 // Multiple area select
                 (true, true) => selected_tiles.select_hexagon(
                     cursor_tile,
-                    *previous_radius,
+                    area_selection.radius,
                     &map_geometry,
                     true,
                 ),
@@ -269,23 +283,19 @@ fn select_tiles(
                 (true, false) => selected_tiles.remove_tile(cursor_entity, cursor_tile),
                 // Area deselect
                 (false, true) => {
-                    let radius = cursor_tile.unsigned_distance_to(selection_start.unwrap().hex);
-                    *previous_radius = radius;
+                    let center = area_selection.center.unwrap();
+                    let radius = cursor_tile.unsigned_distance_to(center.hex);
+                    area_selection.radius = radius;
 
                     // We need to be able to expand and shrink the selection reversibly
                     // so we need a snapshot of the state before this action took place.
                     *selected_tiles = initial_selection.as_ref().unwrap().clone();
-                    selected_tiles.select_hexagon(
-                        selection_start.unwrap(),
-                        radius,
-                        map_geometry.as_ref(),
-                        false,
-                    );
+                    selected_tiles.select_hexagon(center, radius, map_geometry.as_ref(), false);
                 }
                 // Multiple area deselect
                 (true, true) => selected_tiles.select_hexagon(
                     cursor_tile,
-                    *previous_radius,
+                    area_selection.radius,
                     &map_geometry,
                     false,
                 ),
