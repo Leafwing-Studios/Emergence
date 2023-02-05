@@ -309,13 +309,26 @@ fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(Entity, &mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
     cursor: Res<CursorPos>,
+    area_selection: Res<AreaSelection>,
     materials: Res<TileHandles>,
 ) {
     if selected_tiles.is_changed() || cursor.is_changed() {
         let selection = selected_tiles.selection();
+        let mut hovered = HashSet::new();
+
+        if let Some(center) = area_selection.center {
+            hovered.insert(center);
+            let ring = center.hex.ring(area_selection.radius);
+            for hex in ring {
+                hovered.insert(TilePos { hex });
+            }
+        } else if let Some(cursor_pos) = cursor.maybe_tile_pos() {
+            hovered.insert(cursor_pos);
+        };
+
         // PERF: We should probably avoid a linear scan over all tiles here
         for (terrain_entity, mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let hovered = cursor.maybe_tile_pos() == Some(tile_pos);
+            let hovered = hovered.contains(&tile_pos);
             let selected = selection.contains(&(terrain_entity, tile_pos));
 
             *material = materials.get_material(terrain, hovered, selected);
