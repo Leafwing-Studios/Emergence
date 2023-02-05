@@ -255,6 +255,7 @@ fn select_tiles(
         let area = actions.pressed(SelectionAction::Area);
         let line = actions.pressed(SelectionAction::Line);
         let simple_area = area & !multiple & !line;
+        let simple_deselect = deselect & !area & !multiple & !line;
 
         // Cache the starting state to make selections reversible
 
@@ -307,11 +308,6 @@ fn select_tiles(
             selected_tiles.hovered.insert(cursor_pos);
         }
 
-        // Clear the selection
-        if (select & !multiple) | (deselect & !area & !line & !multiple) {
-            selected_tiles.clear_selection();
-        }
-
         // Don't attempt to handle conflicting inputs.
         if select & deselect {
             return;
@@ -322,11 +318,15 @@ fn select_tiles(
             return;
         }
 
+        // Clear the selection
+        if simple_deselect | (select & !multiple) {
+            selected_tiles.clear_selection()
+        }
+
         // Actually select tiles
         if line {
             let start = line_selection.start.unwrap();
             let hexes = start.line_to(cursor_pos.hex);
-            warn!(radius);
             for hex in hexes {
                 selected_tiles.select_hexagon(TilePos { hex }, radius, select)
             }
