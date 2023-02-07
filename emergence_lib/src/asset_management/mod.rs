@@ -24,6 +24,9 @@ impl Plugin for AssetManagementPlugin {
                 LoadingState::new(AssetState::Loading)
                     .continue_to_state(AssetState::Ready)
                     .with_collection::<StructureHandles>(),
+            )
+            .add_system_set(
+                SystemSet::on_enter(AssetState::Ready).with_system(initialize_materials),
             );
     }
 }
@@ -102,7 +105,6 @@ impl FromWorld for TileHandles {
 /// Stores material handles for the different tile types.
 #[derive(AssetCollection, Resource)]
 pub(crate) struct StructureHandles {
-    #[asset(standard_material)]
     material: Handle<StandardMaterial>,
     /// The mesh used for each type of structure
     #[asset(path = "structures", collection(typed, mapped))]
@@ -122,6 +124,21 @@ impl StructureHandles {
     pub(crate) fn get_material(&self) -> Handle<StandardMaterial> {
         self.material.clone_weak()
     }
+
+    /// Initializes the materials from code.
+    fn initialize_materials(&mut self, mut materials: ResMut<Assets<StandardMaterial>>) {
+        self.material = materials.add(StandardMaterial {
+            ..Default::default()
+        });
+    }
+}
+
+/// A system to initialize materials from code.
+fn initialize_materials(
+    mut structure_handles: ResMut<StructureHandles>,
+    materials: ResMut<Assets<StandardMaterial>>,
+) {
+    structure_handles.initialize_materials(materials);
 }
 
 /// Constructs the mesh for a single hexagonal column
