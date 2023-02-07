@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{StructureHandles, TileHandles},
+    asset_management::{AssetState, StructureHandles, TileHandles},
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
     structures::StructureId,
@@ -21,10 +21,12 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(LightingPlugin)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_units)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_structures);
+        app.add_plugin(LightingPlugin).add_system_set(
+            SystemSet::on_update(AssetState::Ready)
+                .with_system(populate_terrain)
+                .with_system(populate_units)
+                .with_system(populate_structures),
+        );
     }
 }
 
@@ -64,28 +66,19 @@ fn populate_structures(
     /// The offset required to have a structure sit on top of the tile correctly
     const OFFSET: f32 = SIZE / 2.0;
 
+    let material = structure_handles.get_material();
     for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        let material = structure_handles
-            .materials
-            .get(structure_id)
-            .unwrap()
-            .clone_weak();
-
-        let mesh = structure_handles
-            .meshes
-            .get(structure_id)
-            .unwrap()
-            .clone_weak();
-
-        commands.entity(entity).insert(PbrBundle {
-            mesh,
-            material,
-            transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
-            ..default()
-        });
+        if let Some(mesh) = structure_handles.get_mesh(structure_id) {
+            commands.entity(entity).insert(PbrBundle {
+                mesh: mesh.clone_weak(),
+                material: material.clone_weak(),
+                transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
+                ..default()
+            });
+        }
     }
 }
 

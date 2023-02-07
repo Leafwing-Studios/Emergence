@@ -5,6 +5,7 @@ use bevy::{
     render::{mesh::Indices, render_resource::PrimitiveTopology},
     utils::HashMap,
 };
+use bevy_asset_loader::prelude::*;
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
@@ -18,8 +19,23 @@ pub struct AssetManagementPlugin;
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TileHandles>()
-            .init_resource::<StructureHandles>();
+            .add_state(AssetState::Loading)
+            .add_loading_state(
+                LoadingState::new(AssetState::Loading)
+                    .continue_to_state(AssetState::Ready)
+                    .with_collection::<StructureHandles>(),
+            );
     }
+}
+
+/// Tracks the progress of asset loading.
+#[derive(Default, Clone, PartialEq, Eq, Debug, Hash)]
+pub enum AssetState {
+    #[default]
+    /// Assets still need to be loaded.
+    Loading,
+    /// All assets are loaded.
+    Ready,
 }
 
 /// Stores material handles for the different tile types.
@@ -84,46 +100,24 @@ impl FromWorld for TileHandles {
 }
 
 /// Stores material handles for the different tile types.
-#[derive(Resource)]
+#[derive(AssetCollection, Resource)]
 pub(crate) struct StructureHandles {
-    /// The material used for each type of structures
-    pub(crate) materials: HashMap<StructureId, Handle<StandardMaterial>>,
+    #[asset(standard_material)]
+    material: Handle<StandardMaterial>,
     /// The mesh used for each type of structure
-    pub(crate) meshes: HashMap<StructureId, Handle<Mesh>>,
+    #[asset(path = "structures", collection(typed, mapped))]
+    meshes: HashMap<String, Handle<Mesh>>,
 }
 
-/// The base size of structures
-pub(crate) const STRUCTURE_SCALE: f32 = 1.0;
+impl StructureHandles {
+    /// Returns a reference to a handle to the appropriate mesh if it exists.
+    pub(crate) fn get_mesh(&self, structure_id: &StructureId) -> Option<&Handle<Mesh>> {
+        self.meshes.get(&structure_id.id)
+    }
 
-impl FromWorld for StructureHandles {
-    fn from_world(world: &mut World) -> Self {
-        let mut materials_assets = world.resource_mut::<Assets<StandardMaterial>>();
-        let mut materials = HashMap::new();
-        materials.insert(
-            StructureId::new("leuco"),
-            materials_assets.add(Color::PURPLE.into()),
-        );
-        materials.insert(
-            StructureId::new("acacia"),
-            materials_assets.add(Color::DARK_GREEN.into()),
-        );
-
-        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-        let mut meshes = HashMap::new();
-        meshes.insert(
-            StructureId::new("leuco"),
-            mesh_assets.add(Mesh::from(shape::Cube {
-                size: STRUCTURE_SCALE,
-            })),
-        );
-        meshes.insert(
-            StructureId::new("acacia"),
-            mesh_assets.add(Mesh::from(shape::Cube {
-                size: STRUCTURE_SCALE,
-            })),
-        );
-
-        StructureHandles { materials, meshes }
+    /// Returns a weakly cloned handle to the material used for structures.
+    pub(crate) fn get_material(&self) -> Handle<StandardMaterial> {
+        self.material.clone_weak()
     }
 }
 
