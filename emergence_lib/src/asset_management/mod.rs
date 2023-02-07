@@ -102,6 +102,7 @@ impl FromWorld for TileHandles {
 /// Stores material handles for the different tile types.
 #[derive(AssetCollection, Resource)]
 pub(crate) struct StructureHandles {
+    /// The material used for all structures
     #[asset(standard_material)]
     material: Handle<StandardMaterial>,
     /// The mesh used for each type of structure
