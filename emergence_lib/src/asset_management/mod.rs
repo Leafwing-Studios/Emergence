@@ -112,7 +112,10 @@ pub(crate) struct StructureHandles {
 impl StructureHandles {
     /// Returns a reference to a handle to the appropriate mesh if it exists.
     pub(crate) fn get_mesh(&self, structure_id: &StructureId) -> Option<&Handle<Mesh>> {
-        self.meshes.get(&structure_id.id)
+        let mut string = structure_id.id.clone();
+        string.push_str(".gltf");
+
+        self.meshes.get(&string)
     }
 
     /// Returns a weakly cloned handle to the material used for structures.

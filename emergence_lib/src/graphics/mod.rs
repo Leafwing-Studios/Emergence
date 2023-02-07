@@ -78,6 +78,8 @@ fn populate_structures(
                 transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
                 ..default()
             });
+        } else {
+            error!("No mesh loaded for {structure_id:?}!");
         }
     }
 }
