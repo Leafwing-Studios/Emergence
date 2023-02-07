@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{AssetState, StructureHandles, TileHandles},
+    asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
     structures::StructureId,
@@ -34,7 +34,7 @@ impl Plugin for GraphicsPlugin {
 fn populate_terrain(
     new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
-    handles: Res<TileHandles>,
+    handles: Res<TerrainHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
