@@ -60,13 +60,17 @@ fn populate_structures(
     mut commands: Commands,
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
+    materials: Res<Assets<StandardMaterial>>,
 ) {
     /// The size of a single structure
     const SIZE: f32 = 1.0;
     /// The offset required to have a structure sit on top of the tile correctly
     const OFFSET: f32 = SIZE / 2.0;
 
-    let material = structure_handles.get_material();
+    let material_handle = structure_handles.get_material();
+    let material = materials.get(&material_handle).unwrap();
+    dbg!(material);
+
     for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
@@ -74,7 +78,7 @@ fn populate_structures(
         if let Some(mesh) = structure_handles.get_mesh(structure_id) {
             commands.entity(entity).insert(PbrBundle {
                 mesh: mesh.clone_weak(),
-                material: material.clone_weak(),
+                material: material_handle.clone_weak(),
                 transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
                 ..default()
             });
