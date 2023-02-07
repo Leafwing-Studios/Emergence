@@ -40,9 +40,9 @@ impl GenerationConfig {
     /// The number of ants in the default generation config
     pub const N_ANT: usize = 5;
     /// The number of plants in the default generation config
-    pub const N_PLANT: usize = 7;
+    pub const N_PLANT: usize = 50;
     /// The number of fungi in the default generation config
-    pub const N_FUNGI: usize = 4;
+    pub const N_FUNGI: usize = 25;
 
     /// The choice weight for plain terrain in default generation config
     pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
