@@ -65,7 +65,11 @@ impl StructureHandles {
         asset_server: Res<AssetServer>,
         mut asset_state: ResMut<State<AssetState>>,
     ) {
-        if structure_handles.load_state(&*asset_server) == LoadState::Loaded {
+        let structure_load_state = structure_handles.load_state(&*asset_server);
+        info!("Structures are {structure_load_state:?}");
+
+        if structure_load_state == LoadState::Loaded {
+            info!("Transitioning to AssetState::Ready");
             asset_state.set(AssetState::Ready).unwrap();
         }
     }
