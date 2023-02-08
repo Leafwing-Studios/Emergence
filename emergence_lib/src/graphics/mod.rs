@@ -1,6 +1,6 @@
 //! Rendering and animation logic.
 
-use bevy::prelude::{shape::Cube, *};
+use bevy::prelude::*;
 
 use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},

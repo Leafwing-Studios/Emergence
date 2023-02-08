@@ -1,8 +1,7 @@
 use crate::structures::StructureId;
-use bevy::{
-    prelude::{shape::Cube, *},
-    utils::HashMap,
-};
+use bevy::{asset::LoadState, prelude::*, utils::HashMap};
+
+use super::AssetState;
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
@@ -20,8 +19,7 @@ impl FromWorld for StructureHandles {
             meshes: HashMap::default(),
         };
 
-        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-
+        let asset_server = world.resource::<AssetServer>();
         // TODO: discover this from the file directory
         let structure_names: Vec<String> = vec!["acacia", "leuco"]
             .iter()
@@ -29,13 +27,12 @@ impl FromWorld for StructureHandles {
             .collect();
 
         for structure_name in structure_names {
-            let structure_id = StructureId { id: structure_name };
-            let mesh = mesh_assets.add(
-                Cube {
-                    size: StructureId::SIZE,
-                }
-                .into(),
-            );
+            let structure_id = StructureId {
+                id: structure_name.clone(),
+            };
+            let structure_path = format!("structures/{structure_name}.gltf#Scene0");
+
+            let mesh = asset_server.load(structure_path);
             handles.meshes.insert(structure_id, mesh);
         }
 
@@ -44,5 +41,32 @@ impl FromWorld for StructureHandles {
         handles.material = material_assets.add(StandardMaterial::default());
 
         handles
+    }
+}
+
+impl StructureHandles {
+    /// How far along are we in loading these assets?
+    fn load_state(&self, asset_server: &AssetServer) -> LoadState {
+        for (structure, mesh_handle) in &self.meshes {
+            let mesh_load_state = asset_server.get_load_state(mesh_handle);
+            info!("{structure:?} is {mesh_load_state:?}");
+
+            if mesh_load_state != LoadState::Loaded {
+                return mesh_load_state;
+            }
+        }
+
+        LoadState::Loaded
+    }
+
+    /// A system that checks if these assets are loaded.
+    pub(super) fn check_loaded(
+        structure_handles: Res<StructureHandles>,
+        asset_server: Res<AssetServer>,
+        mut asset_state: ResMut<State<AssetState>>,
+    ) {
+        if structure_handles.load_state(&*asset_server) == LoadState::Loaded {
+            asset_state.set(AssetState::Ready).unwrap();
+        }
     }
 }

@@ -13,7 +13,11 @@ impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TerrainHandles>()
             .init_resource::<StructureHandles>()
-            .add_state(AssetState::Ready);
+            .add_state(AssetState::Loading)
+            .add_system_set(
+                SystemSet::on_update(AssetState::Loading)
+                    .with_system(StructureHandles::check_loaded),
+            );
     }
 }
 
