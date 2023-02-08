@@ -66,6 +66,7 @@ fn populate_structures(
     for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
+
         let mesh_handle = structure_handles.meshes.get(structure_id).unwrap();
 
         commands.entity(entity).insert(PbrBundle {

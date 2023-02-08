@@ -1,5 +1,9 @@
 use crate::structures::StructureId;
-use bevy::{asset::LoadState, prelude::*, utils::HashMap};
+use bevy::{
+    asset::LoadState,
+    prelude::{shape::Cube, *},
+    utils::HashMap,
+};
 
 use super::AssetState;
 
@@ -19,7 +23,9 @@ impl FromWorld for StructureHandles {
             meshes: HashMap::default(),
         };
 
-        let asset_server = world.resource::<AssetServer>();
+        //let asset_server = world.resource::<AssetServer>();
+        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+
         // TODO: discover this from the file directory
         let structure_names: Vec<String> = vec!["acacia", "leuco"]
             .iter()
@@ -30,9 +36,9 @@ impl FromWorld for StructureHandles {
             let structure_id = StructureId {
                 id: structure_name.clone(),
             };
-            let structure_path = format!("structures/{structure_name}.gltf#Scene0");
-
-            let mesh = asset_server.load(structure_path);
+            //let structure_path = format!("structures/{structure_name}.gltf#Scene0");
+            //let mesh = asset_server.load(structure_path);
+            let mesh = meshes.add(Cube::default().into());
             handles.meshes.insert(structure_id, mesh);
         }
 
@@ -68,9 +74,9 @@ impl StructureHandles {
         let structure_load_state = structure_handles.load_state(&*asset_server);
         info!("Structures are {structure_load_state:?}");
 
-        if structure_load_state == LoadState::Loaded {
-            info!("Transitioning to AssetState::Ready");
-            asset_state.set(AssetState::Ready).unwrap();
-        }
+        //if structure_load_state == LoadState::Loaded {
+        info!("Transitioning to AssetState::Ready");
+        asset_state.set(AssetState::Ready).unwrap();
+        //}
     }
 }
