@@ -41,6 +41,11 @@ pub struct StructureId {
 }
 
 impl StructureId {
+    /// The size of a single structure
+    pub const SIZE: f32 = 1.0;
+    /// The offset required to have a structure sit on top of the tile correctly
+    pub const OFFSET: f32 = Self::SIZE / 2.0;
+
     /// Initialize a structure ID via a string.
     pub(crate) fn new(id: &'static str) -> Self {
         StructureId { id: id.to_string() }

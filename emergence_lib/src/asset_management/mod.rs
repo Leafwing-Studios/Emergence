@@ -1,9 +1,7 @@
 //! Code related to loading, storing and tracking assets
 
-use bevy::prelude::*;
-use bevy_asset_loader::prelude::*;
-
 use self::{structures::StructureHandles, terrain::TerrainHandles};
+use bevy::prelude::*;
 
 pub(crate) mod structures;
 pub(crate) mod terrain;
@@ -14,12 +12,8 @@ pub struct AssetManagementPlugin;
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TerrainHandles>()
-            .add_state(AssetState::Loading)
-            .add_loading_state(
-                LoadingState::new(AssetState::Loading)
-                    .continue_to_state(AssetState::Ready)
-                    .with_collection::<StructureHandles>(),
-            );
+            .init_resource::<StructureHandles>()
+            .add_state(AssetState::Ready);
     }
 }
 

@@ -25,4 +25,3 @@ leafwing_abilities = "0.3.0"
 derive_more = "0.99.17"
 hexx = {git = "https://github.com/ManevilleF/hexx/", rev = "4fdff13f0159b97f2d06a230d7ed59b1acc54f2f"}
 bevy_mod_raycast = "0.7.0"
-bevy_asset_loader = {git = "https://github.com/NiklasEi/bevy_asset_loader", rev = "b346c3ef4065ba996e68c04d2c1be20d6a92bbb3", features = ["3d"]}

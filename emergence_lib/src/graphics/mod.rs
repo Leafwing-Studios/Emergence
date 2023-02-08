@@ -1,6 +1,6 @@
 //! Rendering and animation logic.
 
-use bevy::prelude::*;
+use bevy::prelude::{shape::Cube, *};
 
 use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
@@ -60,31 +60,20 @@ fn populate_structures(
     mut commands: Commands,
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
-    materials: Res<Assets<StandardMaterial>>,
 ) {
-    /// The size of a single structure
-    const SIZE: f32 = 1.0;
-    /// The offset required to have a structure sit on top of the tile correctly
-    const OFFSET: f32 = SIZE / 2.0;
-
-    let material_handle = structure_handles.get_material();
-    let material = materials.get(&material_handle).unwrap();
-    dbg!(material);
+    let material_handle = &structure_handles.material;
 
     for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
+        let mesh_handle = structure_handles.meshes.get(structure_id).unwrap();
 
-        if let Some(mesh) = structure_handles.get_mesh(structure_id) {
-            commands.entity(entity).insert(PbrBundle {
-                mesh: mesh.clone_weak(),
-                material: material_handle.clone_weak(),
-                transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
-                ..default()
-            });
-        } else {
-            error!("No mesh loaded for {structure_id:?}!");
-        }
+        commands.entity(entity).insert(PbrBundle {
+            mesh: mesh_handle.clone_weak(),
+            material: material_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            ..default()
+        });
     }
 }
 
