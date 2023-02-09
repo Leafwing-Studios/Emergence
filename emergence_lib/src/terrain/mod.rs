@@ -5,6 +5,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate as emergence_lib;
 
+use crate::player_interaction::selection::Zoning;
 use crate::simulation::geometry::TilePos;
 use bevy::ecs::component::Component;
 
@@ -48,6 +49,8 @@ pub struct TerrainBundle {
     tile_pos: TilePos,
     /// Makes the tiles pickable
     raycast_mesh: RaycastMesh<Terrain>,
+    /// The structure that should be built here.
+    zoning: Zoning,
 }
 
 impl TerrainBundle {
@@ -57,6 +60,7 @@ impl TerrainBundle {
             terrain_type,
             tile_pos,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
+            zoning: Zoning::None,
         }
     }
 }

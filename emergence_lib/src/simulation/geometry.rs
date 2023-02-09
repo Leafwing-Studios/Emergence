@@ -1,6 +1,6 @@
 //! Manages the game world's grid and data tied to that grid
 
-use std::{f32::consts::PI, iter::Map};
+use std::f32::consts::PI;
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
