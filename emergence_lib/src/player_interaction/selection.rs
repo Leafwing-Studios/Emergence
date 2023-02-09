@@ -487,7 +487,7 @@ fn apply_zoning(
                 // PERF: this needs to use an index, rather than a linear time search
                 for (structure_entity, tile_pos) in structure_query.iter() {
                     if selected_tiles.contains_tile(*tile_pos) {
-                        commands.entity(structure_entity).despawn();
+                        commands.entity(structure_entity).despawn_recursive();
                     }
                 }
             // Zone using the single selected structure
