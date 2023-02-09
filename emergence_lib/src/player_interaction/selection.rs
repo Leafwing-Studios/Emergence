@@ -287,7 +287,6 @@ fn select_tiles(
         let simple_deselect = deselect & !area & !multiple & !line;
 
         // Cache the starting state to make selections reversible
-
         if simple_area & area_selection.initial_selection.is_none() {
             area_selection.begin(&selected_tiles, cursor_pos);
         }
