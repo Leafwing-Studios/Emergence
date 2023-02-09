@@ -18,14 +18,18 @@ pub mod crafting;
 /// A central lookup for how each variety the structure works.
 #[derive(Resource, Debug, Deref, DerefMut)]
 struct StructureInfo {
+    /// A simple lookup table
     map: HashMap<StructureId, StructureData>,
 }
 
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
 struct StructureData {
+    /// Is this structure alive?
     organism: bool,
+    /// Can this structure make things?
     crafts: bool,
+    /// Does this structure start with a recipe pre-selected?
     starting_recipe: Option<RecipeId>,
 }
 
@@ -132,7 +136,9 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
 
 /// A [`Command`] used to spawn a structure via [`StructureCommandsExt`].
 struct SpawnStructureCommand {
+    /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
+    /// The variety of structure to spawn.
     id: StructureId,
 }
 
@@ -184,6 +190,7 @@ impl Command for SpawnStructureCommand {
 
 /// A [`Command`] used to despawn a structure via [`StructureCommandsExt`].
 struct DespawnStructureCommand {
+    /// The tile position at which the structure to be despawned is found.
     tile_pos: TilePos,
 }
 

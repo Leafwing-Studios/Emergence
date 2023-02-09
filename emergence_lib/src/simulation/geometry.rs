@@ -53,7 +53,7 @@ pub(crate) struct MapGeometry {
 }
 
 impl MapGeometry {
-    /// Is the provided tile_pos in the map?
+    /// Is the provided `tile_pos` in the map?
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32

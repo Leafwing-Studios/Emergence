@@ -29,7 +29,7 @@ use super::{cursor::CursorPos, InteractionSystem};
 /// If a tile is not selected, it will be added to the selection.
 /// If it is already selected, it will be removed from the selection.
 #[derive(Actionlike, Clone, Debug)]
-pub enum SelectionAction {
+pub(crate) enum SelectionAction {
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -501,7 +501,7 @@ fn set_zoning(
             selected_tiles
                 .selected
                 .iter()
-                .map(|tile_pos| *map_geometry.terrain_index.get(&tile_pos).unwrap())
+                .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
                 .collect()
         };
 

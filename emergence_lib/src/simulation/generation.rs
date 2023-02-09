@@ -78,7 +78,7 @@ pub struct GenerationPlugin {
 ///
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub enum GenerationStage {
+pub(crate) enum GenerationStage {
     /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
     ///
     /// Systems:
