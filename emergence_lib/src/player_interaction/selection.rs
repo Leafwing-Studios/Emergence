@@ -488,7 +488,6 @@ fn set_zoning(
     actions: Res<ActionState<SelectionAction>>,
     clipboard: Res<Clipboard>,
     structure_query: Query<(Entity, &TilePos), With<StructureId>>,
-    map_geometry: Res<MapGeometry>,
     selected_tiles: Res<SelectedTiles>,
     mut commands: Commands,
 ) {
@@ -509,14 +508,14 @@ fn set_zoning(
                 if selected_tiles.is_empty() {
                     commands.spawn_structure(cursor_tile_pos, structure_id.clone());
                 } else {
-                    for tile_pos in selected_tiles.selected.iter() {
-                        commands.spawn_structure(cursor_tile_pos, structure_id.clone());
+                    for &tile_pos in selected_tiles.selected.iter() {
+                        commands.spawn_structure(tile_pos, structure_id.clone());
                     }
                 }
             // Paste the selection
             } else {
                 for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
-                    commands.spawn_structure(cursor_tile_pos, structure_id.clone());
+                    commands.spawn_structure(tile_pos, structure_id.clone());
                 }
             }
         }
