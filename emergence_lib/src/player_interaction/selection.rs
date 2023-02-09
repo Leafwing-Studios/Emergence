@@ -16,7 +16,7 @@ use leafwing_input_manager::{
 use petitset::PetitSet;
 
 use crate::{
-    asset_management::TileHandles,
+    asset_management::terrain::TerrainHandles,
     simulation::geometry::{MapGeometry, TilePos},
     structures::{StructureBundle, StructureId},
     terrain::Terrain,
@@ -362,7 +362,7 @@ fn select_tiles(
 fn display_tile_interactions(
     selected_tiles: Res<SelectedTiles>,
     mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
-    materials: Res<TileHandles>,
+    materials: Res<TerrainHandles>,
 ) {
     if selected_tiles.is_changed() {
         // PERF: We should probably avoid a linear scan over all tiles here

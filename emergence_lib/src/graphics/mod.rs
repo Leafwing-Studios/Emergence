@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{StructureHandles, TileHandles},
+    asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
     structures::StructureId,
@@ -21,10 +21,12 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(LightingPlugin)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_terrain)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_units)
-            .add_system_to_stage(CoreStage::PostUpdate, populate_structures);
+        app.add_plugin(LightingPlugin).add_system_set(
+            SystemSet::on_update(AssetState::Ready)
+                .with_system(populate_terrain)
+                .with_system(populate_units)
+                .with_system(populate_structures),
+        );
     }
 }
 
@@ -32,7 +34,7 @@ impl Plugin for GraphicsPlugin {
 fn populate_terrain(
     new_terrain: Query<(Entity, &TilePos, &Terrain), Added<Terrain>>,
     mut commands: Commands,
-    handles: Res<TileHandles>,
+    handles: Res<TerrainHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
@@ -59,31 +61,15 @@ fn populate_structures(
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
-    /// The size of a single structure
-    const SIZE: f32 = 1.0;
-    /// The offset required to have a structure sit on top of the tile correctly
-    const OFFSET: f32 = SIZE / 2.0;
-
     for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        let material = structure_handles
-            .materials
-            .get(structure_id)
-            .unwrap()
-            .clone_weak();
+        let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
 
-        let mesh = structure_handles
-            .meshes
-            .get(structure_id)
-            .unwrap()
-            .clone_weak();
-
-        commands.entity(entity).insert(PbrBundle {
-            mesh,
-            material,
-            transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
+        commands.entity(entity).insert(SceneBundle {
+            scene: scene_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
             ..default()
         });
     }

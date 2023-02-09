@@ -1,4 +1,4 @@
-//! Code related to loading, storing and tracking assets
+//! Asset loading for terrain
 
 use bevy::{
     prelude::*,
@@ -9,22 +9,12 @@ use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
     enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
-    simulation::geometry::MapGeometry, structures::StructureId, terrain::Terrain,
+    simulation::geometry::MapGeometry, terrain::Terrain,
 };
-
-/// Collects asset management systems and resources.
-pub struct AssetManagementPlugin;
-
-impl Plugin for AssetManagementPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<TileHandles>()
-            .init_resource::<StructureHandles>();
-    }
-}
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
-pub(crate) struct TileHandles {
+pub(crate) struct TerrainHandles {
     /// The material used for each type of terrain
     pub(crate) terrain_materials: HashMap<Terrain, Handle<StandardMaterial>>,
     /// The mesh used for each type of structure
@@ -33,7 +23,7 @@ pub(crate) struct TileHandles {
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
 
-impl TileHandles {
+impl TerrainHandles {
     /// Returns a weakly cloned handle to the correct material for a terrain tile
     pub(crate) fn get_material(
         &self,
@@ -54,7 +44,7 @@ impl TileHandles {
     }
 }
 
-impl FromWorld for TileHandles {
+impl FromWorld for TerrainHandles {
     fn from_world(world: &mut World) -> Self {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
 
@@ -75,55 +65,11 @@ impl FromWorld for TileHandles {
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let mesh = mesh_assets.add(mesh_object);
 
-        TileHandles {
+        TerrainHandles {
             terrain_materials,
             mesh,
             interaction_materials,
         }
-    }
-}
-
-/// Stores material handles for the different tile types.
-#[derive(Resource)]
-pub(crate) struct StructureHandles {
-    /// The material used for each type of structures
-    pub(crate) materials: HashMap<StructureId, Handle<StandardMaterial>>,
-    /// The mesh used for each type of structure
-    pub(crate) meshes: HashMap<StructureId, Handle<Mesh>>,
-}
-
-/// The base size of structures
-pub(crate) const STRUCTURE_SCALE: f32 = 1.0;
-
-impl FromWorld for StructureHandles {
-    fn from_world(world: &mut World) -> Self {
-        let mut materials_assets = world.resource_mut::<Assets<StandardMaterial>>();
-        let mut materials = HashMap::new();
-        materials.insert(
-            StructureId::new("leuco"),
-            materials_assets.add(Color::PURPLE.into()),
-        );
-        materials.insert(
-            StructureId::new("acacia"),
-            materials_assets.add(Color::DARK_GREEN.into()),
-        );
-
-        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-        let mut meshes = HashMap::new();
-        meshes.insert(
-            StructureId::new("leuco"),
-            mesh_assets.add(Mesh::from(shape::Cube {
-                size: STRUCTURE_SCALE,
-            })),
-        );
-        meshes.insert(
-            StructureId::new("acacia"),
-            mesh_assets.add(Mesh::from(shape::Cube {
-                size: STRUCTURE_SCALE,
-            })),
-        );
-
-        StructureHandles { materials, meshes }
     }
 }
 
