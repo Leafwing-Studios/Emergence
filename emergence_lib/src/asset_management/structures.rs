@@ -6,8 +6,6 @@ use super::AssetState;
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct StructureHandles {
-    /// The material used for all structures
-    pub(crate) material: Handle<StandardMaterial>,
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
 }
@@ -15,7 +13,6 @@ pub(crate) struct StructureHandles {
 impl FromWorld for StructureHandles {
     fn from_world(world: &mut World) -> Self {
         let mut handles = StructureHandles {
-            material: Handle::default(),
             scenes: HashMap::default(),
         };
 
@@ -35,10 +32,6 @@ impl FromWorld for StructureHandles {
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);
         }
-
-        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
-
-        handles.material = material_assets.add(StandardMaterial::default());
 
         handles
     }
@@ -68,9 +61,9 @@ impl StructureHandles {
         let structure_load_state = structure_handles.load_state(&*asset_server);
         info!("Structures are {structure_load_state:?}");
 
-        //if structure_load_state == LoadState::Loaded {
-        info!("Transitioning to AssetState::Ready");
-        asset_state.set(AssetState::Ready).unwrap();
-        //}
+        if structure_load_state == LoadState::Loaded {
+            info!("Transitioning to AssetState::Ready");
+            asset_state.set(AssetState::Ready).unwrap();
+        }
     }
 }
