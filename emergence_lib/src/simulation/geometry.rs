@@ -1,6 +1,6 @@
 //! Manages the game world's grid and data tied to that grid
 
-use std::f32::consts::PI;
+use std::{f32::consts::PI, iter::Map};
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
@@ -37,19 +37,27 @@ impl TilePos {
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
-pub struct MapGeometry {
+pub(crate) struct MapGeometry {
     /// The size and orientation of the map.
-    pub layout: HexLayout,
+    pub(crate) layout: HexLayout,
     /// The number of tiles from the center to the edge of the map.
     ///
     /// Note that the central tile is not counted.
-    pub radius: u32,
+    pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::Terrain) entity is stored at each tile position
-    pub terrain_index: HashMap<TilePos, Entity>,
+    pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`StructureId`](crate::structures::StructureId) entity is stored at each tile position
-    pub structure_index: HashMap<TilePos, Entity>,
+    pub(crate) structure_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
-    pub height_index: HashMap<TilePos, f32>,
+    pub(crate) height_index: HashMap<TilePos, f32>,
+}
+
+impl MapGeometry {
+    /// Is the provided tile_pos in the map?
+    pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
+        let distance = Hex::ZERO.distance_to(tile_pos.hex);
+        distance <= self.radius as i32
+    }
 }
 
 impl Default for MapGeometry {

@@ -128,7 +128,7 @@ const GAIN: f32 = 0.5;
 const SEED: f32 = 2378.0;
 
 /// Creates the world according to [`GenerationConfig`].
-pub fn generate_terrain(
+pub(crate) fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     mut map_geometry: ResMut<MapGeometry>,

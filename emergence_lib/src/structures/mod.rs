@@ -100,6 +100,11 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
+        // Check that the tile is within the bounds of the map
+        if !geometry.is_valid(self.tile_pos) {
+            return;
+        }
+
         let structure_entity = world
             .spawn(StructureBundle::new(self.id, self.tile_pos))
             .id();
