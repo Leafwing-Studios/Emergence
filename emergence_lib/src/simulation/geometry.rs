@@ -44,8 +44,10 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub radius: u32,
-    /// Which terrain entity is stored at each tile position
+    /// Which [`Terrain`](crate::terrain::Terrain) entity is stored at each tile position
     pub terrain_index: HashMap<TilePos, Entity>,
+    /// Which [`StructureId`](crate::structures::StructureId) entity is stored at each tile position
+    pub structure_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     pub height_index: HashMap<TilePos, f32>,
 }
@@ -56,6 +58,7 @@ impl Default for MapGeometry {
             layout: HexLayout::default(),
             radius: 50,
             terrain_index: HashMap::default(),
+            structure_index: HashMap::default(),
             height_index: HashMap::default(),
         }
     }

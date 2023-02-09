@@ -1,6 +1,6 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use crate as emergence_lib;
+use crate::{self as emergence_lib, structures::StructureCommandsExt};
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
@@ -18,7 +18,7 @@ use petitset::PetitSet;
 use crate::{
     asset_management::terrain::TerrainHandles,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{StructureBundle, StructureId},
+    structures::StructureId,
     terrain::Terrain,
 };
 
@@ -427,7 +427,6 @@ impl Clipboard {
     }
 }
 
-// PERF: this pair of copy-paste systems should use an index of where the structures are
 /// Copies the selected structure(s) to the clipboard, to be placed later.
 ///
 /// This system also handles the "pipette" functionality.
@@ -467,7 +466,6 @@ fn copy_selection(
     }
 }
 
-// PERF: this pair of copy-paste systems should use an index of where the structures are
 /// Applies zoning to an area, causing structures to be created (or removed) there.
 ///
 /// This system also handles the "paste" functionality.
@@ -495,29 +493,21 @@ fn apply_zoning(
                 let structure_id = clipboard.values().next().unwrap();
 
                 if selected_tiles.is_empty() {
-                    if map_geometry.height_index.contains_key(&cursor_tile_pos) {
-                        // FIXME: this should use a dedicated command to get all the details right
-                        commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
-                    }
+                    commands.spawn_structure(cursor_tile_pos, structure_id.clone());
                 } else {
                     for tile_pos in selected_tiles.selected.iter() {
-                        if map_geometry.height_index.contains_key(tile_pos) {
-                            // FIXME: this should use a dedicated command to get all the details right
-                            commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
-                        }
+                        commands.spawn_structure(cursor_tile_pos, structure_id.clone());
                     }
                 }
             // Paste the selection
             } else {
                 for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
-                    if map_geometry.height_index.contains_key(&tile_pos) {
-                        // FIXME: this should use a dedicated command to get all the details right
-                        commands.spawn(StructureBundle::new(structure_id.clone(), tile_pos));
-                    }
+                    commands.spawn_structure(cursor_tile_pos, structure_id.clone());
                 }
             }
         }
     }
+}
 }
 
 #[cfg(test)]

@@ -1,36 +1,29 @@
-//! Organisms that cannot move.
+//! Sessile organisms are both structures and orgnanisms.
 //!
-//! These are a special subset of structures which act on their own, go through life stages and must produce in order to survive.
+//! These are typically plants and fungi.
 
-use bevy::prelude::Bundle;
+use bevy::prelude::*;
 
-use crate::{
-    items::recipe::RecipeId,
-    simulation::geometry::TilePos,
-    structures::{crafting::CraftingBundle, StructureBundle, StructureId},
-};
+use crate::{items::recipe::RecipeId, organisms::OrganismBundle, simulation::geometry::TilePos};
 
-use super::{OrganismBundle, Species};
-
-pub mod fungi;
-pub mod plants;
+use super::{crafting::CraftingBundle, StructureBundle, StructureId};
 
 /// Sessile organisms cannot move, and automatically process nutrients from their environment
 #[derive(Bundle)]
-pub struct SessileBundle<S: Species> {
+struct SessileBundle {
     /// Sessile organisms are organisms
-    pub organism_bundle: OrganismBundle<S>,
+    organism_bundle: OrganismBundle,
 
     /// Sessile organisms are structures
-    pub structure_bundle: StructureBundle,
+    structure_bundle: StructureBundle,
 
     /// Sessile organisms can craft things
-    pub crafting_bundle: CraftingBundle,
+    crafting_bundle: CraftingBundle,
 }
 
-impl<S: Species> SessileBundle<S> {
+impl SessileBundle {
     /// Create a new [`SessileBundle`] at the given `tile_pos`, without an active crafting recipe.
-    pub fn new(tile_pos: TilePos, structure_id: StructureId) -> SessileBundle<S> {
+    pub fn new(tile_pos: TilePos, structure_id: StructureId) -> SessileBundle {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
             structure_bundle: StructureBundle::new(structure_id, tile_pos),
@@ -43,7 +36,7 @@ impl<S: Species> SessileBundle<S> {
         tile_pos: TilePos,
         recipe_id: RecipeId,
         structure_id: StructureId,
-    ) -> SessileBundle<S> {
+    ) -> SessileBundle {
         SessileBundle {
             organism_bundle: OrganismBundle::default(),
             structure_bundle: StructureBundle::new(structure_id, tile_pos),

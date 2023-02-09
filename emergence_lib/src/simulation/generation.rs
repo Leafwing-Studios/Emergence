@@ -1,9 +1,8 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::sessile::fungi::LeucoBundle;
-use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::geometry::TilePos;
+use crate::structures::{StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -199,9 +198,13 @@ pub fn generate_organisms(
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    commands.spawn_batch(plant_positions.into_iter().map(AcaciaBundle::new));
+    for position in plant_positions {
+        commands.spawn_structure(position, StructureId::new("acacia"));
+    }
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    commands.spawn_batch(fungus_positions.into_iter().map(LeucoBundle::new));
+    for position in fungus_positions {
+        commands.spawn_structure(position, StructureId::new("leuco"));
+    }
 }
