@@ -3,14 +3,58 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use bevy::{ecs::system::Command, prelude::*};
+use bevy::{ecs::system::Command, prelude::*, utils::HashMap};
 
-use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
+use crate::{
+    items::recipe::RecipeId,
+    organisms::OrganismBundle,
+    simulation::geometry::{Facing, MapGeometry, TilePos},
+};
 
-use self::crafting::CraftingPlugin;
+use self::crafting::{CraftingBundle, CraftingPlugin};
 
 pub mod crafting;
-mod sessile;
+
+/// A central lookup for how each variety the structure works.
+#[derive(Resource, Debug, Deref, DerefMut)]
+struct StructureInfo {
+    map: HashMap<StructureId, StructureData>,
+}
+
+/// Information about a single [`StructureId`] variety of structure.
+#[derive(Debug, Clone)]
+struct StructureData {
+    organism: bool,
+    crafts: bool,
+    starting_recipe: Option<RecipeId>,
+}
+
+impl Default for StructureInfo {
+    fn default() -> Self {
+        let mut map = HashMap::default();
+
+        // TODO: read these from files
+        map.insert(
+            StructureId::new("leuco"),
+            StructureData {
+                organism: true,
+                crafts: true,
+                starting_recipe: None,
+            },
+        );
+
+        map.insert(
+            StructureId::new("acacia"),
+            StructureData {
+                organism: true,
+                crafts: true,
+                starting_recipe: Some(RecipeId::acacia_leaf_production()),
+            },
+        );
+
+        StructureInfo { map }
+    }
+}
 
 /// The data needed to build a structure
 #[derive(Bundle)]
@@ -58,7 +102,8 @@ pub struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(CraftingPlugin);
+        app.add_plugin(CraftingPlugin)
+            .init_resource::<StructureInfo>();
     }
 }
 
@@ -105,9 +150,30 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        let structure_entity = world
-            .spawn(StructureBundle::new(self.id, self.tile_pos))
-            .id();
+        let structure_entity = world.resource_scope(|world, structure_info: Mut<StructureInfo>| {
+            let structure_details = structure_info.get(&self.id).unwrap();
+
+            let structure_entity = world
+                .spawn(StructureBundle::new(self.id, self.tile_pos))
+                .id();
+
+            // PERF: this could be done in a single archetype move with more branching
+            if structure_details.organism {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(OrganismBundle::default());
+            };
+
+            if structure_details.crafts {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(CraftingBundle::new(
+                        structure_details.starting_recipe.clone(),
+                    ));
+            };
+
+            structure_entity
+        });
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry
