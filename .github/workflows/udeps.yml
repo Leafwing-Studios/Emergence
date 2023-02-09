@@ -1,0 +1,30 @@
+name: cargo udeps
+
+on:
+  schedule:
+    # Every week at 12 p.m. on Sundays
+    - "0 12 * * 0"
+
+jobs:
+  check-unused-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          # Nightly is needed for udeps
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
+      # We don't --force install to reduce CI times (drastically)
+      # We fix the version so that it overwrites when we specify a new one
+      # We need to remember to update the version from time to time
+      - name: Installs cargo-udeps
+        run: cargo install cargo-udeps@0.1.35
+        # Cargo gives an error if it's already installed
+        continue-on-error: true
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      - name: Check for unused dependencies
+        run: cargo udeps
