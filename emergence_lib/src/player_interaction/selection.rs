@@ -48,6 +48,10 @@ pub enum SelectionAction {
     ///
     /// If no structure is selected, any zoning will be removed.
     Zone,
+    /// Sets the zoning of all currently selected tiles to [`Zoning::None`].
+    ///
+    /// If no structure is selected, any zoning will be removed.
+    Clear,
 }
 
 impl SelectionAction {
@@ -66,8 +70,18 @@ impl SelectionAction {
             .insert(Modifier::Alt, SelectionAction::Line)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
+            .insert(KeyCode::Back, SelectionAction::Clear)
             .build()
     }
+}
+
+/// The zoning of a given tile, which specifies which structure *should* be built there.
+#[derive(Component, PartialEq, Eq, Clone, Debug)]
+pub(crate) enum Zoning {
+    /// The provided structure should be built on this tile.
+    Structure(StructureId),
+    /// No zoning is set.
+    None,
 }
 
 /// How a given object is being interacted with by the player.
@@ -172,7 +186,7 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(copy_selection.after(InteractionSystem::SelectTiles))
             .add_system(
-                apply_zoning
+                set_zoning
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
@@ -469,7 +483,7 @@ fn copy_selection(
 /// Applies zoning to an area, causing structures to be created (or removed) there.
 ///
 /// This system also handles the "paste" functionality.
-fn apply_zoning(
+fn set_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
     clipboard: Res<Clipboard>,
@@ -508,6 +522,12 @@ fn apply_zoning(
         }
     }
 }
+
+fn act_on_zoning(
+    terrain_query: Query<(&Zoning, &TilePos), With<Terrain>>,
+    structure_query: Query<&StructureId>,
+    map_geometry: Res<MapGeometry>,
+) {
 }
 
 #[cfg(test)]
