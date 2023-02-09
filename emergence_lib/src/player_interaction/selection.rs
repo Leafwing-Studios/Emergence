@@ -1,6 +1,6 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use crate as emergence_lib;
+use crate::{self as emergence_lib, structures::StructureCommandsExt};
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
@@ -18,7 +18,7 @@ use petitset::PetitSet;
 use crate::{
     asset_management::terrain::TerrainHandles,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{StructureBundle, StructureId},
+    structures::StructureId,
     terrain::Terrain,
 };
 
@@ -29,7 +29,7 @@ use super::{cursor::CursorPos, InteractionSystem};
 /// If a tile is not selected, it will be added to the selection.
 /// If it is already selected, it will be removed from the selection.
 #[derive(Actionlike, Clone, Debug)]
-pub enum SelectionAction {
+pub(crate) enum SelectionAction {
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -48,6 +48,10 @@ pub enum SelectionAction {
     ///
     /// If no structure is selected, any zoning will be removed.
     Zone,
+    /// Sets the zoning of all currently selected tiles to [`Zoning::None`].
+    ///
+    /// If no structure is selected, any zoning will be removed.
+    Clear,
 }
 
 impl SelectionAction {
@@ -66,8 +70,20 @@ impl SelectionAction {
             .insert(Modifier::Alt, SelectionAction::Line)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
+            .insert(KeyCode::Back, SelectionAction::Clear)
             .build()
     }
+}
+
+/// The zoning of a given tile, which specifies which structure *should* be built there.
+#[derive(Component, PartialEq, Eq, Clone, Debug)]
+pub(crate) enum Zoning {
+    /// The provided structure should be built on this tile.
+    Structure(StructureId),
+    /// No zoning is set.
+    None,
+    /// Zoning is set to keep the tile clear.
+    Clear,
 }
 
 /// How a given object is being interacted with by the player.
@@ -148,6 +164,7 @@ impl SelectedTiles {
     }
 
     /// Is the given tile in the selection?
+    #[cfg(test)]
     fn contains_tile(&self, tile_pos: TilePos) -> bool {
         self.selected.contains(&tile_pos)
     }
@@ -172,10 +189,11 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(copy_selection.after(InteractionSystem::SelectTiles))
             .add_system(
-                apply_zoning
+                set_zoning
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
+            .add_system(act_on_zoning.after(set_zoning))
             .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
@@ -273,7 +291,6 @@ fn select_tiles(
         let simple_deselect = deselect & !area & !multiple & !line;
 
         // Cache the starting state to make selections reversible
-
         if simple_area & area_selection.initial_selection.is_none() {
             area_selection.begin(&selected_tiles, cursor_pos);
         }
@@ -427,7 +444,6 @@ impl Clipboard {
     }
 }
 
-// PERF: this pair of copy-paste systems should use an index of where the structures are
 /// Copies the selected structure(s) to the clipboard, to be placed later.
 ///
 /// This system also handles the "pipette" functionality.
@@ -467,56 +483,79 @@ fn copy_selection(
     }
 }
 
-// PERF: this pair of copy-paste systems should use an index of where the structures are
 /// Applies zoning to an area, causing structures to be created (or removed) there.
 ///
 /// This system also handles the "paste" functionality.
-fn apply_zoning(
+fn set_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<SelectionAction>>,
     clipboard: Res<Clipboard>,
-    structure_query: Query<(Entity, &TilePos), With<StructureId>>,
-    map_geometry: Res<MapGeometry>,
+    mut terrain_query: Query<&mut Zoning, With<Terrain>>,
     selected_tiles: Res<SelectedTiles>,
-    mut commands: Commands,
+    map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
+        let relevant_terrain_entities: Vec<Entity> = if selected_tiles.is_empty() {
+            vec![*map_geometry.terrain_index.get(&cursor_tile_pos).unwrap()]
+        } else {
+            selected_tiles
+                .selected
+                .iter()
+                .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
+                .collect()
+        };
+
+        // Explicitly clear the selection
+        if actions.pressed(SelectionAction::Clear) {
+            for terrain_entity in relevant_terrain_entities {
+                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                *zoning = Zoning::Clear;
+            }
+
+            // Don't try to clear and zone in the same frame
+            return;
+        }
+
+        // Apply zoning
         if actions.pressed(SelectionAction::Zone) {
-            // Clear zoning
             if clipboard.is_empty() {
-                // PERF: this needs to use an index, rather than a linear time search
-                for (structure_entity, tile_pos) in structure_query.iter() {
-                    if selected_tiles.contains_tile(*tile_pos) {
-                        commands.entity(structure_entity).despawn();
-                    }
+                // Clear zoning
+                for terrain_entity in relevant_terrain_entities {
+                    let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                    *zoning = Zoning::Clear;
                 }
             // Zone using the single selected structure
             } else if clipboard.len() == 1 {
                 let structure_id = clipboard.values().next().unwrap();
-
-                if selected_tiles.is_empty() {
-                    if map_geometry.height_index.contains_key(&cursor_tile_pos) {
-                        // FIXME: this should use a dedicated command to get all the details right
-                        commands.spawn(StructureBundle::new(structure_id.clone(), cursor_tile_pos));
-                    }
-                } else {
-                    for tile_pos in selected_tiles.selected.iter() {
-                        if map_geometry.height_index.contains_key(tile_pos) {
-                            // FIXME: this should use a dedicated command to get all the details right
-                            commands.spawn(StructureBundle::new(structure_id.clone(), *tile_pos));
-                        }
-                    }
+                for terrain_entity in relevant_terrain_entities {
+                    let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                    *zoning = Zoning::Structure(structure_id.clone());
                 }
             // Paste the selection
             } else {
                 for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
-                    if map_geometry.height_index.contains_key(&tile_pos) {
-                        // FIXME: this should use a dedicated command to get all the details right
-                        commands.spawn(StructureBundle::new(structure_id.clone(), tile_pos));
+                    // Avoid trying to operate on terrain that doesn't exist
+                    if let Some(&terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
+                        let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                        *zoning = Zoning::Structure(structure_id.clone());
                     }
                 }
             }
         }
+    }
+}
+
+/// Spawn and despawn structures based on their zoning.
+fn act_on_zoning(
+    terrain_query: Query<(&Zoning, &TilePos), (With<Terrain>, Changed<Zoning>)>,
+    mut commands: Commands,
+) {
+    for (zoning, &tile_pos) in terrain_query.iter() {
+        match zoning {
+            Zoning::Structure(id) => commands.spawn_structure(tile_pos, id.clone()),
+            Zoning::None => (), // Do nothing
+            Zoning::Clear => commands.despawn_structure(tile_pos),
+        };
     }
 }
 

@@ -1,9 +1,8 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::sessile::fungi::LeucoBundle;
-use crate::organisms::sessile::plants::AcaciaBundle;
 use crate::organisms::units::AntBundle;
 use crate::simulation::geometry::TilePos;
+use crate::structures::{StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -79,7 +78,7 @@ pub struct GenerationPlugin {
 ///
 /// We must use stage labels, as we need commands to be flushed between each stage.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub enum GenerationStage {
+pub(crate) enum GenerationStage {
     /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
     ///
     /// Systems:
@@ -129,7 +128,7 @@ const GAIN: f32 = 0.5;
 const SEED: f32 = 2378.0;
 
 /// Creates the world according to [`GenerationConfig`].
-pub fn generate_terrain(
+pub(crate) fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     mut map_geometry: ResMut<MapGeometry>,
@@ -199,9 +198,13 @@ pub fn generate_organisms(
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    commands.spawn_batch(plant_positions.into_iter().map(AcaciaBundle::new));
+    for position in plant_positions {
+        commands.spawn_structure(position, StructureId::new("acacia"));
+    }
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    commands.spawn_batch(fungus_positions.into_iter().map(LeucoBundle::new));
+    for position in fungus_positions {
+        commands.spawn_structure(position, StructureId::new("leuco"));
+    }
 }

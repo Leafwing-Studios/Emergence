@@ -4,15 +4,11 @@ use bevy::prelude::*;
 
 use crate::{
     items::{inventory::Inventory, recipe::RecipeId},
-    organisms::{
-        sessile::{fungi::Fungi, plants::Plant},
-        units::Ant,
-        OrganismType,
-    },
     player_interaction::cursor::CursorPos,
-    simulation::geometry::TilePos,
-    structures::crafting::{
-        ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
+    simulation::geometry::MapGeometry,
+    structures::{
+        crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
+        StructureId,
     },
 };
 
@@ -37,12 +33,12 @@ pub struct CraftingDetails {
 
 /// Detailed info about a given entity.
 #[derive(Debug, Clone)]
-pub struct OrganismDetails {
+pub struct StructureDetails {
     /// The entity ID of the organism that this info is about.
     pub entity: Entity,
 
-    /// The type of the organism, e.g. plant or fungus.
-    pub organism_type: OrganismType,
+    /// The type of structure, e.g. plant or fungus.
+    pub structure_id: StructureId,
 
     /// If this organism is crafting something, the details about that.
     pub crafting_details: Option<CraftingDetails>,
@@ -50,7 +46,7 @@ pub struct OrganismDetails {
 
 /// Detailed info about the organism that is being hovered.
 #[derive(Debug, Resource, Default, Deref)]
-pub struct HoverDetails(Option<OrganismDetails>);
+pub struct HoverDetails(Option<StructureDetails>);
 
 /// Display detailed info on hover.
 pub struct DetailsPlugin;
@@ -69,12 +65,10 @@ impl Plugin for DetailsPlugin {
 fn hover_details(
     cursor_pos: Res<CursorPos>,
     mut hover_details: ResMut<HoverDetails>,
-    query: Query<(
+    // TODO: use a WorldQuery type
+    structure_query: Query<(
         Entity,
-        &TilePos,
-        Option<&Plant>,
-        Option<&Fungi>,
-        Option<&Ant>,
+        &StructureId,
         Option<(
             &InputInventory,
             &OutputInventory,
@@ -83,46 +77,34 @@ fn hover_details(
             &CraftTimer,
         )>,
     )>,
+    map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
         hover_details.0 = None;
 
-        for (entity, tile_pos, plant, fungi, ant, crafting_stuff) in query.iter() {
-            if *tile_pos == cursor_pos {
-                // Determine the organism type via the marker components
-                let organism_type = if plant.is_some() {
-                    Some(OrganismType::Plant)
-                } else if fungi.is_some() {
-                    Some(OrganismType::Fungus)
-                } else if ant.is_some() {
-                    Some(OrganismType::Ant)
+        if let Some(&structure_entity) = map_geometry.structure_index.get(&cursor_pos) {
+            let structure_details = structure_query.get(structure_entity).unwrap();
+
+            let crafting_details =
+                if let Some((input, output, recipe, state, timer)) = structure_details.2 {
+                    Some(CraftingDetails {
+                        input_inventory: input.inventory().clone(),
+                        output_inventory: output.inventory().clone(),
+                        active_recipe: recipe.recipe_id().clone(),
+                        state: state.clone(),
+                        timer: timer.timer().clone(),
+                    })
                 } else {
                     None
                 };
 
-                let crafting_details =
-                    if let Some((input, output, recipe, state, timer)) = crafting_stuff {
-                        Some(CraftingDetails {
-                            input_inventory: input.inventory().clone(),
-                            output_inventory: output.inventory().clone(),
-                            active_recipe: recipe.recipe_id().clone(),
-                            state: state.clone(),
-                            timer: timer.timer().clone(),
-                        })
-                    } else {
-                        None
-                    };
-
-                if let Some(organism_type) = organism_type {
-                    hover_details.0 = Some(OrganismDetails {
-                        entity,
-                        organism_type,
-                        crafting_details,
-                    });
-                }
-            }
+            hover_details.0 = Some(StructureDetails {
+                entity: structure_entity,
+                structure_id: structure_details.1.clone(),
+                crafting_details,
+            });
+        } else {
+            hover_details.0 = None;
         }
-    } else {
-        hover_details.0 = None;
     }
 }

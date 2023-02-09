@@ -89,26 +89,25 @@ pub struct CraftingBundle {
 
 impl CraftingBundle {
     /// Create a new crafting bundle without an active recipe set.
-    pub fn new() -> Self {
-        Self {
-            // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0)),
-            output_inventory: OutputInventory(Inventory::new(1)),
-            craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
-            active_recipe: ActiveRecipe(None),
-            craft_state: CraftingState::WaitingForInput,
-        }
-    }
-
-    /// Create a new crafting bundle for the given recipe.
-    pub fn new_with_recipe(recipe_id: RecipeId) -> Self {
-        Self {
-            // TODO: Don't hard-code these values
-            input_inventory: InputInventory(Inventory::new(0)),
-            output_inventory: OutputInventory(Inventory::new(1)),
-            craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
-            active_recipe: ActiveRecipe(Some(recipe_id)),
-            craft_state: CraftingState::WaitingForInput,
+    pub fn new(starting_recipe: Option<RecipeId>) -> Self {
+        if let Some(recipe_id) = starting_recipe {
+            Self {
+                // TODO: Don't hard-code these values
+                input_inventory: InputInventory(Inventory::new(0)),
+                output_inventory: OutputInventory(Inventory::new(1)),
+                craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
+                active_recipe: ActiveRecipe(Some(recipe_id)),
+                craft_state: CraftingState::WaitingForInput,
+            }
+        } else {
+            Self {
+                // TODO: Don't hard-code these values
+                input_inventory: InputInventory(Inventory::new(0)),
+                output_inventory: OutputInventory(Inventory::new(1)),
+                craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
+                active_recipe: ActiveRecipe(None),
+                craft_state: CraftingState::WaitingForInput,
+            }
         }
     }
 }
