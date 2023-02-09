@@ -19,7 +19,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
     commands.spawn(SceneBundle {
-        scene: asset_server.load("structures/leuco.gltf#Scene0"),
+        scene: asset_server.load("structures/acacia.gltf#Scene0"),
         ..default()
     });
 }

@@ -1,9 +1,5 @@
 use crate::structures::StructureId;
-use bevy::{
-    asset::LoadState,
-    prelude::{shape::Cube, *},
-    utils::HashMap,
-};
+use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use super::AssetState;
 
@@ -12,19 +8,18 @@ use super::AssetState;
 pub(crate) struct StructureHandles {
     /// The material used for all structures
     pub(crate) material: Handle<StandardMaterial>,
-    /// The mesh used for each type of structure
-    pub(crate) meshes: HashMap<StructureId, Handle<Mesh>>,
+    /// The scene for each type of structure
+    pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
 }
 
 impl FromWorld for StructureHandles {
     fn from_world(world: &mut World) -> Self {
         let mut handles = StructureHandles {
             material: Handle::default(),
-            meshes: HashMap::default(),
+            scenes: HashMap::default(),
         };
 
-        //let asset_server = world.resource::<AssetServer>();
-        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+        let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
         let structure_names: Vec<String> = vec!["acacia", "leuco"]
@@ -36,10 +31,9 @@ impl FromWorld for StructureHandles {
             let structure_id = StructureId {
                 id: structure_name.clone(),
             };
-            //let structure_path = format!("structures/{structure_name}.gltf#Scene0");
-            //let mesh = asset_server.load(structure_path);
-            let mesh = meshes.add(Cube::default().into());
-            handles.meshes.insert(structure_id, mesh);
+            let structure_path = format!("structures/{structure_name}.gltf#Scene0");
+            let scene = asset_server.load(structure_path);
+            handles.scenes.insert(structure_id, scene);
         }
 
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
@@ -53,12 +47,12 @@ impl FromWorld for StructureHandles {
 impl StructureHandles {
     /// How far along are we in loading these assets?
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
-        for (structure, mesh_handle) in &self.meshes {
-            let mesh_load_state = asset_server.get_load_state(mesh_handle);
-            info!("{structure:?} is {mesh_load_state:?}");
+        for (structure, scene_handle) in &self.scenes {
+            let scene_load_state = asset_server.get_load_state(scene_handle);
+            info!("{structure:?}'s scene is {scene_load_state:?}");
 
-            if mesh_load_state != LoadState::Loaded {
-                return mesh_load_state;
+            if scene_load_state != LoadState::Loaded {
+                return scene_load_state;
             }
         }
 
