@@ -1,3 +1,5 @@
+//! Asset loading for terrain
+
 use bevy::{
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology},

@@ -1,3 +1,5 @@
+//! Asset loading for structures
+
 use crate::structures::StructureId;
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
@@ -58,7 +60,7 @@ impl StructureHandles {
         asset_server: Res<AssetServer>,
         mut asset_state: ResMut<State<AssetState>>,
     ) {
-        let structure_load_state = structure_handles.load_state(&*asset_server);
+        let structure_load_state = structure_handles.load_state(&asset_server);
         info!("Structures are {structure_load_state:?}");
 
         if structure_load_state == LoadState::Loaded {
