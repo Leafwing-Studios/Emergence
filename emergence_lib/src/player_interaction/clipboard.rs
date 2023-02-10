@@ -88,8 +88,20 @@ impl Clipboard {
     /// Rotates the contents of the clipboard around the `center`.
     ///
     /// You must ensure that the contents are normalized first.
-    fn rotate_around(&mut self, center: TilePos, clockwise: bool) {
-        todo!()
+    fn rotate_around(&mut self, clockwise: bool) {
+        let mut new_map = HashMap::with_capacity(self.capacity());
+
+        for (&original_pos, id) in self.iter() {
+            let new_pos = if clockwise {
+                original_pos.rotate_right_around(Hex::ZERO)
+            } else {
+                original_pos.rotate_left_around(Hex::ZERO)
+            };
+
+            new_map.insert(TilePos { hex: new_pos }, id.clone());
+        }
+
+        self.contents = new_map;
     }
 }
 
@@ -136,25 +148,19 @@ fn copy_selection(
     }
 }
 
-fn rotate_selection(
-    actions: Res<ActionState<SelectionAction>>,
-    mut clipboard: ResMut<Clipboard>,
-    cursor_pos: Res<CursorPos>,
-) {
-    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        if actions.just_pressed(SelectionAction::RotateClipboardLeft)
-            && actions.just_pressed(SelectionAction::RotateClipboardRight)
-        {
-            return;
-        }
+fn rotate_selection(actions: Res<ActionState<SelectionAction>>, mut clipboard: ResMut<Clipboard>) {
+    if actions.just_pressed(SelectionAction::RotateClipboardLeft)
+        && actions.just_pressed(SelectionAction::RotateClipboardRight)
+    {
+        return;
+    }
 
-        if actions.just_pressed(SelectionAction::RotateClipboardLeft) {
-            clipboard.rotate_around(cursor_pos, false);
-        }
+    if actions.just_pressed(SelectionAction::RotateClipboardLeft) {
+        clipboard.rotate_around(false);
+    }
 
-        if actions.just_pressed(SelectionAction::RotateClipboardRight) {
-            clipboard.rotate_around(cursor_pos, true);
-        }
+    if actions.just_pressed(SelectionAction::RotateClipboardRight) {
+        clipboard.rotate_around(true);
     }
 }
 
