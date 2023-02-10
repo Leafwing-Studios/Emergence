@@ -44,9 +44,9 @@ pub struct StructureDetails {
     pub crafting_details: Option<CraftingDetails>,
 }
 
-/// Detailed info about the organism that is being hovered.
+/// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default, Deref)]
-pub(crate) struct HoverDetails(pub(crate) Option<StructureDetails>);
+pub(crate) struct SelectionDetails(pub(crate) Option<StructureDetails>);
 
 /// Display detailed info on hover.
 pub(super) struct DetailsPlugin;
@@ -55,7 +55,7 @@ impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
         info!("Building DetailsPlugin...");
 
-        app.init_resource::<HoverDetails>().add_system(
+        app.init_resource::<SelectionDetails>().add_system(
             hover_details
                 .label(InteractionSystem::HoverDetails)
                 .after(InteractionSystem::SelectTiles),
@@ -83,7 +83,7 @@ struct HoverDetailsQuery {
 /// Get details about the hovered entity.
 fn hover_details(
     cursor_pos: Res<CursorPos>,
-    mut hover_details: ResMut<HoverDetails>,
+    mut hover_details: ResMut<SelectionDetails>,
     structure_query: Query<HoverDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {

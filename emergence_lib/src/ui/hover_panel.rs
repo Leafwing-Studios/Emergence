@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    player_interaction::{organism_details::HoverDetails, InteractionSystem},
+    player_interaction::{organism_details::SelectionDetails, InteractionSystem},
     structures::crafting::CraftingState,
 };
 
@@ -118,7 +118,7 @@ fn populate_hover_details(
 
 /// Updates UI elements for hover details based on new information.
 fn update_hover_details(
-    hover_details: Res<HoverDetails>,
+    hover_details: Res<SelectionDetails>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
     mut organism_query: Query<
