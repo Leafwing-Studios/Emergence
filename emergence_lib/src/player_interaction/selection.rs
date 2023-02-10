@@ -13,10 +13,9 @@ use emergence_macros::IterableEnum;
 use hexx::{shapes::hexagon, Hex};
 use leafwing_input_manager::{
     prelude::{ActionState, InputManagerPlugin, InputMap},
-    user_input::{InputKind, Modifier},
+    user_input::{Modifier, UserInput},
     Actionlike,
 };
-use petitset::PetitSet;
 
 use crate::{
     asset_management::terrain::TerrainHandles,
@@ -57,27 +56,40 @@ pub(crate) enum SelectionAction {
     ClearZoning,
     /// Removes all structures from the clipboard.
     ClearClipboard,
+    /// Rotates the contents of the clipboard clockwise.
+    RotateClipboardRight,
+    /// Rotates the conents of the clipboard counterclockwise.
+    RotateClipboardLeft,
 }
 
 impl SelectionAction {
-    /// The default key bindings
-    pub(super) fn default_input_map() -> InputMap<SelectionAction> {
-        let mut control_shift_left_click = PetitSet::<InputKind, 8>::new();
-        control_shift_left_click.insert(Modifier::Control.into());
-        control_shift_left_click.insert(Modifier::Shift.into());
-        control_shift_left_click.insert(MouseButton::Left.into());
+    /// The default keybindings for mouse and keyboard.
+    fn kbm_binding(&self) -> UserInput {
+        match self {
+            SelectionAction::Select => MouseButton::Left.into(),
+            SelectionAction::Deselect => MouseButton::Right.into(),
+            SelectionAction::Multiple => Modifier::Shift.into(),
+            SelectionAction::Area => Modifier::Control.into(),
+            SelectionAction::Line => Modifier::Alt.into(),
+            SelectionAction::Pipette => KeyCode::Q.into(),
+            SelectionAction::Zone => KeyCode::Space.into(),
+            SelectionAction::ClearZoning => KeyCode::Back.into(),
+            SelectionAction::ClearClipboard => KeyCode::Escape.into(),
+            SelectionAction::RotateClipboardRight => KeyCode::R.into(),
+            SelectionAction::RotateClipboardLeft => {
+                UserInput::modified(Modifier::Shift, KeyCode::R)
+            }
+        }
+    }
 
-        InputMap::default()
-            .insert(MouseButton::Left, SelectionAction::Select)
-            .insert(MouseButton::Right, SelectionAction::Deselect)
-            .insert(Modifier::Shift, SelectionAction::Multiple)
-            .insert(Modifier::Control, SelectionAction::Area)
-            .insert(Modifier::Alt, SelectionAction::Line)
-            .insert(KeyCode::Q, SelectionAction::Pipette)
-            .insert(KeyCode::Space, SelectionAction::Zone)
-            .insert(KeyCode::Back, SelectionAction::ClearZoning)
-            .insert(KeyCode::Escape, SelectionAction::ClearClipboard)
-            .build()
+    /// The default key bindings
+    fn default_input_map() -> InputMap<SelectionAction> {
+        let mut input_map = InputMap::default();
+
+        for variant in SelectionAction::variants() {
+            input_map.insert(variant.kbm_binding(), variant);
+        }
+        input_map
     }
 }
 
