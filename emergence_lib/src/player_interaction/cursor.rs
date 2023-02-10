@@ -30,6 +30,10 @@ impl Plugin for CursorPlugin {
 pub struct CursorPos {
     /// The tile position that the cursor is over top of.
     tile_pos: Option<TilePos>,
+    /// The screen position of the cursor.
+    ///
+    /// Measured from the top-left corner in logical units.
+    screen_pos: Option<Vec2>,
 }
 
 impl CursorPos {
@@ -38,6 +42,11 @@ impl CursorPos {
     /// If the cursor is outside the map, this will return `None`.
     pub(crate) fn maybe_tile_pos(&self) -> Option<TilePos> {
         self.tile_pos
+    }
+
+    /// The position of the cursor on the screen, if available.
+    pub(crate) fn maybe_screen_pos(&self) -> Option<Vec2> {
+        self.screen_pos
     }
 }
 
@@ -65,6 +74,7 @@ fn update_cursor_pos(
     mut cursor_pos: ResMut<CursorPos>,
     camera_query: Query<&RaycastSource<Terrain>, With<Camera>>,
     terrain_query: Query<&TilePos, With<Terrain>>,
+    mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
     let raycast_source = camera_query.single();
     let maybe_intersection = raycast_source.get_nearest_intersection();
@@ -73,5 +83,9 @@ fn update_cursor_pos(
         cursor_pos.tile_pos = terrain_query.get(terrain_entity).ok().copied();
     } else {
         cursor_pos.tile_pos = None;
+    }
+
+    if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
+        cursor_pos.screen_pos = Some(last_mouse_position.position);
     }
 }
