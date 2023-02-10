@@ -574,14 +574,15 @@ fn display_selection(
     mut commands: Commands,
     ghost_query: Query<&TilePos, With<Ghost>>,
 ) {
-    if clipboard.is_changed() || cursor_pos.is_changed() {
-        for &tile_pos in ghost_query.iter() {
-            // PERF: we can probably be more clever here
-            // TODO: this is going to hit ghosts created via zoning too :(
-            commands.despawn_ghost(tile_pos);
-        }
+    for &tile_pos in ghost_query.iter() {
+        // PERF: we can probably be more clever here
+        // TODO: this is going to hit ghosts created via zoning too :(
+        commands.despawn_ghost(tile_pos);
+    }
 
-        for (&tile_pos, id) in clipboard.iter() {
+    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
+        for (&normalized_clipboard_pos, id) in clipboard.iter() {
+            let tile_pos = cursor_pos + normalized_clipboard_pos;
             commands.spawn_ghost(tile_pos, id.clone());
         }
     }
