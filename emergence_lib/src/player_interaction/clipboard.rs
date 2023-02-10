@@ -100,14 +100,16 @@ impl Clipboard {
     fn rotate_around(&mut self, clockwise: bool) {
         let mut new_map = HashMap::with_capacity(self.capacity());
 
-        for (&original_pos, id) in self.iter() {
+        for (&original_pos, item) in self.iter_mut() {
             let new_pos = if clockwise {
+                item.facing.rotate_right();
                 original_pos.rotate_right_around(Hex::ZERO)
             } else {
+                item.facing.rotate_left();
                 original_pos.rotate_left_around(Hex::ZERO)
             };
 
-            new_map.insert(TilePos { hex: new_pos }, id.clone());
+            new_map.insert(TilePos { hex: new_pos }, item.clone());
         }
 
         self.contents = new_map;

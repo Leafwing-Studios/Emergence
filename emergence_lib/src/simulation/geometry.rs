@@ -77,11 +77,23 @@ impl Default for MapGeometry {
 ///
 /// Stored as a component on each entity with a grid-aligned rotation.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Deref, DerefMut)]
-pub struct Facing {
+pub(crate) struct Facing {
     /// The desired direction.
     ///
     /// Defaults to [`Direction::Top`].
     pub direction: Direction,
+}
+
+impl Facing {
+    /// Rotates this facing one 60 degree step clockwise.
+    pub(crate) fn rotate_left(&mut self) {
+        self.direction = self.direction.rotate_right(1);
+    }
+
+    /// Rotates this facing one 60 degree step counterclockwise.
+    pub(crate) fn rotate_right(&mut self) {
+        self.direction = self.direction.rotate_right(1);
+    }
 }
 
 impl Default for Facing {
