@@ -207,11 +207,11 @@ fn rotate_camera(
 
     // Set facing
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
-        facing.direction = facing.direction.left();
+        facing.rotate_left();
     }
 
     if camera_actions.just_pressed(CameraAction::RotateRight) {
-        facing.direction = facing.direction.right();
+        facing.rotate_right();
     }
 
     // Goal: move the camera around a central point

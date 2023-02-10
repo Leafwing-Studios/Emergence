@@ -87,12 +87,12 @@ pub(crate) struct Facing {
 impl Facing {
     /// Rotates this facing one 60 degree step clockwise.
     pub(crate) fn rotate_left(&mut self) {
-        self.direction = self.direction.rotate_right(1);
+        self.direction = self.direction.left();
     }
 
     /// Rotates this facing one 60 degree step counterclockwise.
     pub(crate) fn rotate_right(&mut self) {
-        self.direction = self.direction.rotate_right(1);
+        self.direction = self.direction.right();
     }
 }
 
