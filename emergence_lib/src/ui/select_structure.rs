@@ -28,7 +28,10 @@ impl Plugin for SelectStructurePlugin {
 struct HexMenu;
 
 /// An error that can occur when selecting items from a hex menu.
+#[derive(PartialEq, Debug)]
 enum HexMenuError {
+    /// The menu action is not yet released.
+    NotYetReleased,
     /// No item was selected.
     NoSelection,
 }
@@ -52,7 +55,7 @@ fn spawn_hex_menu(
 }
 
 fn select_hex(
-    hex_wedge: Query<&Transform, With<HexMenu>>,
+    hex_wedges: Query<&Transform, With<HexMenu>>,
     cursor_pos: Res<CursorPos>,
 ) -> Result<StructureData, HexMenuError> {
     todo!()
@@ -61,5 +64,22 @@ fn select_hex(
 fn handle_selection(
     In(result): In<Result<StructureData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
+    hex_wedges: Query<Entity, With<HexMenu>>,
+    mut commands: Commands,
 ) {
+    if result != Err(HexMenuError::NotYetReleased) {
+        for entity in hex_wedges.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+
+    match result {
+        Ok(data) => {
+            clipboard.set(Some(data));
+        }
+        Err(HexMenuError::NoSelection) => {
+            clipboard.set(None);
+        }
+        _ => (),
+    }
 }
