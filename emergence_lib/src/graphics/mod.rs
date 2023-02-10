@@ -97,7 +97,6 @@ fn populate_ghosts(
 
     // TODO: vary ghost mesh based on structure_id
     for (entity, tile_pos, _structure_id) in new_structures.iter() {
-        info!("Meshing ghost.");
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
