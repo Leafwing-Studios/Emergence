@@ -117,32 +117,25 @@ impl Default for CameraSettings {
 
 /// Pan and zoom the camera
 fn translate_camera(
-    mut camera_query: Query<
-        (
-            &mut CameraFocus,
-            &Facing,
-            &ActionState<PlayerAction>,
-            &CameraSettings,
-        ),
-        With<Camera3d>,
-    >,
+    mut camera_query: Query<(&mut CameraFocus, &Facing, &CameraSettings), With<Camera3d>>,
     time: Res<Time>,
+    actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    let (mut focus, facing, camera_actions, settings) = camera_query.single_mut();
+    let (mut focus, facing, settings) = camera_query.single_mut();
 
     // Zoom
-    if camera_actions.pressed(PlayerAction::Zoom) {
+    if actions.pressed(PlayerAction::Zoom) {
         let delta_zoom =
-            -camera_actions.value(PlayerAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
+            -actions.value(PlayerAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
 
         // Zoom in / out on whatever we're looking at
         focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
     }
 
     // Pan
-    if camera_actions.pressed(PlayerAction::Pan) {
-        let dual_axis_data = camera_actions.axis_pair(PlayerAction::Pan).unwrap();
+    if actions.pressed(PlayerAction::Pan) {
+        let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed * focus.zoom;
         // Plane is XZ, but gamepads are XY
@@ -162,26 +155,18 @@ fn translate_camera(
 
 /// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<
-        (
-            &mut Transform,
-            &mut Facing,
-            &CameraFocus,
-            &CameraSettings,
-            &ActionState<PlayerAction>,
-        ),
-        With<Camera3d>,
-    >,
+    mut query: Query<(&mut Transform, &mut Facing, &CameraFocus, &CameraSettings), With<Camera3d>>,
+    actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    let (mut transform, mut facing, focus, settings, camera_actions) = query.single_mut();
+    let (mut transform, mut facing, focus, settings) = query.single_mut();
 
     // Set facing
-    if camera_actions.just_pressed(PlayerAction::RotateCameraLeft) {
+    if actions.just_pressed(PlayerAction::RotateCameraLeft) {
         facing.rotate_left();
     }
 
-    if camera_actions.just_pressed(PlayerAction::RotateCameraRight) {
+    if actions.just_pressed(PlayerAction::RotateCameraRight) {
         facing.rotate_right();
     }
 
