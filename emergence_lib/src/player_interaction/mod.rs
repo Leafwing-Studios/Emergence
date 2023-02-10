@@ -76,6 +76,8 @@ pub(crate) enum PlayerAction {
     Area,
     /// Modifies the selection to cover a line between the start and end of the selection.
     Line,
+    /// Selects a structure from a wheel menu.
+    SelectStructure,
     /// Selects the structure on the tile under the player's cursor.
     ///
     /// If there is no structure there, the player's selection is cleared.
@@ -115,6 +117,7 @@ impl PlayerAction {
             PlayerAction::Multiple => Modifier::Shift.into(),
             PlayerAction::Area => Modifier::Control.into(),
             PlayerAction::Line => Modifier::Alt.into(),
+            PlayerAction::SelectStructure => KeyCode::E.into(),
             PlayerAction::Pipette => KeyCode::Q.into(),
             PlayerAction::Zone => KeyCode::Space.into(),
             PlayerAction::ClearZoning => KeyCode::Back.into(),
@@ -141,6 +144,7 @@ impl PlayerAction {
             PlayerAction::Multiple => RightTrigger.into(),
             PlayerAction::Area => LeftTrigger.into(),
             PlayerAction::Line => LeftTrigger2.into(),
+            PlayerAction::SelectStructure => RightThumb.into(),
             PlayerAction::Pipette => West.into(),
             PlayerAction::Zone => North.into(),
             PlayerAction::ClearZoning => DPadUp.into(),

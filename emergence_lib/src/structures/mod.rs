@@ -7,7 +7,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     items::recipe::RecipeId,
-    player_interaction::clipboard::ClipboardItem,
+    player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -18,21 +18,30 @@ pub(crate) mod crafting;
 pub(crate) mod ghost;
 
 /// A central lookup for how each variety the structure works.
-#[derive(Resource, Debug, Deref, DerefMut)]
-struct StructureInfo {
+#[derive(Resource, Debug, Deref)]
+pub(crate) struct StructureInfo {
     /// A simple lookup table
-    map: HashMap<StructureId, StructureData>,
+    map: HashMap<StructureId, StructureVariety>,
+}
+
+impl StructureInfo {
+    /// The color associated with this structure.
+    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
+        self.get(structure_id).unwrap().color
+    }
 }
 
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
-struct StructureData {
+pub(crate) struct StructureVariety {
     /// Is this structure alive?
     organism: bool,
     /// Can this structure make things?
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
     starting_recipe: Option<RecipeId>,
+    /// The color associated with this structure
+    color: Color,
 }
 
 impl Default for StructureInfo {
@@ -42,19 +51,21 @@ impl Default for StructureInfo {
         // TODO: read these from files
         map.insert(
             StructureId::new("leuco"),
-            StructureData {
+            StructureVariety {
                 organism: true,
                 crafts: true,
                 starting_recipe: None,
+                color: Color::ORANGE_RED,
             },
         );
 
         map.insert(
             StructureId::new("acacia"),
-            StructureData {
+            StructureVariety {
                 organism: true,
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
+                color: Color::GREEN,
             },
         );
 
@@ -75,10 +86,10 @@ struct StructureBundle {
 
 impl StructureBundle {
     /// Creates a new structure
-    pub fn new(tile_pos: TilePos, item: ClipboardItem) -> Self {
+    pub fn new(tile_pos: TilePos, data: StructureData) -> Self {
         StructureBundle {
-            structure: item.id,
-            facing: item.facing,
+            structure: data.id,
+            facing: data.facing,
             tile_pos,
         }
     }

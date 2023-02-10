@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    clipboard::{Clipboard, ClipboardItem},
+    clipboard::{Clipboard, StructureData},
     cursor::CursorPos,
     tile_selection::SelectedTiles,
     InteractionSystem, PlayerAction,
@@ -39,7 +39,7 @@ impl Plugin for ZoningPlugin {
 #[derive(Component, PartialEq, Eq, Clone, Debug)]
 pub(crate) enum Zoning {
     /// The provided structure should be built on this tile.
-    Structure(ClipboardItem),
+    Structure(StructureData),
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.

@@ -38,14 +38,25 @@ impl Plugin for ClipboardPlugin {
 
 /// Stores a selection to copy and paste.
 #[derive(Default, Resource, Debug, Deref, DerefMut)]
-pub(super) struct Clipboard {
+pub(crate) struct Clipboard {
     /// The internal map of structures.
-    contents: HashMap<TilePos, ClipboardItem>,
+    contents: HashMap<TilePos, StructureData>,
+}
+
+impl Clipboard {
+    /// Sets the contents of the clipboard to a single structure (or clears it if [`None`] is provided).
+    pub(crate) fn set(&mut self, maybe_structure: Option<StructureData>) {
+        self.contents.clear();
+
+        if let Some(structure) = maybe_structure {
+            self.contents.insert(TilePos::default(), structure);
+        }
+    }
 }
 
 /// The data copied via the clipboard for a single structure.
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub(crate) struct ClipboardItem {
+pub(crate) struct StructureData {
     /// The identity of the structure.
     pub(crate) id: StructureId,
     /// The orientation of the structure.
@@ -90,7 +101,7 @@ impl Clipboard {
     /// Apply a tile-position shift to the items on the clipboard.
     ///
     /// Used to place items in the correct location relative to the cursor.
-    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardItem)> {
+    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureData)> {
         self.iter()
             .map(|(k, v)| ((*k + origin), v.clone()))
             .collect()
@@ -146,7 +157,7 @@ fn copy_selection(
             if selected_tiles.is_empty() {
                 if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
                     let (id, facing) = structure_query.get(*structure_entity).unwrap();
-                    let clipboard_item = ClipboardItem {
+                    let clipboard_item = StructureData {
                         id: id.clone(),
                         facing: *facing,
                     };
@@ -159,7 +170,7 @@ fn copy_selection(
                         map_geometry.structure_index.get(selected_tile_pos)
                     {
                         let (id, facing) = structure_query.get(*structure_entity).unwrap();
-                        let clipboard_item = ClipboardItem {
+                        let clipboard_item = StructureData {
                             id: id.clone(),
                             facing: *facing,
                         };
@@ -198,7 +209,7 @@ fn display_selection(
     mut ghost_query: Query<(&TilePos, &mut StructureId, &mut Facing), With<Ghost>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        let mut desired_ghosts: HashMap<TilePos, ClipboardItem> =
+        let mut desired_ghosts: HashMap<TilePos, StructureData> =
             HashMap::with_capacity(clipboard.capacity());
         for (&clipboard_pos, clipboard_item) in clipboard.iter() {
             let tile_pos = cursor_pos + clipboard_pos;
