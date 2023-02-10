@@ -460,7 +460,8 @@ fn copy_selection(
     actions: Res<ActionState<SelectionAction>>,
     mut clipboard: ResMut<Clipboard>,
     selected_tiles: Res<SelectedTiles>,
-    structure_query: Query<(&StructureId, &TilePos)>,
+    structure_query: Query<&StructureId>,
+    map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         if actions.just_pressed(SelectionAction::Pipette) {
@@ -469,24 +470,21 @@ fn copy_selection(
 
             // If there is no selection, just grab whatever's under the cursor
             if selected_tiles.is_empty() {
-                for (structure_id, structure_tile_pos) in structure_query.iter() {
-                    if cursor_tile_pos == *structure_tile_pos {
-                        clipboard.insert(TilePos::default(), structure_id.clone());
-                        return;
-                    }
+                if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
+                    let structure_id = structure_query.get(*structure_entity).unwrap();
+                    clipboard.insert(TilePos::default(), structure_id.clone());
                 }
             } else {
-                for terrain_tile_pos in selected_tiles.selected.iter() {
-                    // PERF: lol quadratic...
-                    for (structure_id, structure_tile_pos) in structure_query.iter() {
-                        if terrain_tile_pos == structure_tile_pos {
-                            clipboard.insert(*structure_tile_pos, structure_id.clone());
-                        }
+                for selected_tile_pos in selected_tiles.selected.iter() {
+                    if let Some(structure_entity) =
+                        map_geometry.structure_index.get(selected_tile_pos)
+                    {
+                        let structure_id = structure_query.get(*structure_entity).unwrap();
+                        clipboard.insert(*selected_tile_pos, structure_id.clone());
                     }
                 }
+                clipboard.normalize_positions();
             }
-
-            clipboard.normalize_positions();
         }
     }
 }
