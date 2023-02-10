@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 use leafwing_input_manager::{
-    prelude::{ActionState, InputManagerPlugin, InputMap},
+    prelude::{ActionState, InputManagerPlugin, InputMap, SingleAxis, VirtualDPad},
     user_input::{Modifier, UserInput},
     Actionlike,
 };
@@ -21,9 +21,9 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<SelectionAction>::default())
-            .init_resource::<ActionState<SelectionAction>>()
-            .insert_resource(SelectionAction::default_input_map())
+        app.add_plugin(InputManagerPlugin::<PlayerAction>::default())
+            .init_resource::<ActionState<PlayerAction>>()
+            .insert_resource(PlayerAction::default_input_map())
             .add_plugin(camera::CameraPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(cursor::CursorPlugin)
@@ -61,12 +61,11 @@ pub(crate) enum InteractionSystem {
     HoverDetails,
 }
 
-/// Actions that can be used to select tiles.
+/// Actions that the player can take to modify the game world or their view of it.
 ///
-/// If a tile is not selected, it will be added to the selection.
-/// If it is already selected, it will be removed from the selection.
+/// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
-pub(crate) enum SelectionAction {
+pub(crate) enum PlayerAction {
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -91,37 +90,47 @@ pub(crate) enum SelectionAction {
     ClearZoning,
     /// Removes all structures from the clipboard.
     ClearClipboard,
-    /// Rotates the contents of the clipboard clockwise.
-    RotateClipboardRight,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
+    /// Rotates the contents of the clipboard clockwise.
+    RotateClipboardRight,
+    /// Move the camera from side to side
+    Pan,
+    /// Reveal more or less of the map by pulling the camera away or moving it closer
+    Zoom,
+    /// Rotates the camera counterclockwise
+    RotateCameraLeft,
+    /// Rotates the camera clockwise
+    RotateCameraRight,
 }
 
-impl SelectionAction {
+impl PlayerAction {
     /// The default keybindings for mouse and keyboard.
     fn kbm_binding(&self) -> UserInput {
         match self {
-            SelectionAction::Select => MouseButton::Left.into(),
-            SelectionAction::Deselect => MouseButton::Right.into(),
-            SelectionAction::Multiple => Modifier::Shift.into(),
-            SelectionAction::Area => Modifier::Control.into(),
-            SelectionAction::Line => Modifier::Alt.into(),
-            SelectionAction::Pipette => KeyCode::Q.into(),
-            SelectionAction::Zone => KeyCode::Space.into(),
-            SelectionAction::ClearZoning => KeyCode::Back.into(),
-            SelectionAction::ClearClipboard => KeyCode::Escape.into(),
-            SelectionAction::RotateClipboardRight => KeyCode::R.into(),
-            SelectionAction::RotateClipboardLeft => {
-                UserInput::modified(Modifier::Shift, KeyCode::R)
-            }
+            PlayerAction::Select => MouseButton::Left.into(),
+            PlayerAction::Deselect => MouseButton::Right.into(),
+            PlayerAction::Multiple => Modifier::Shift.into(),
+            PlayerAction::Area => Modifier::Control.into(),
+            PlayerAction::Line => Modifier::Alt.into(),
+            PlayerAction::Pipette => KeyCode::Q.into(),
+            PlayerAction::Zone => KeyCode::Space.into(),
+            PlayerAction::ClearZoning => KeyCode::Back.into(),
+            PlayerAction::ClearClipboard => KeyCode::Escape.into(),
+            PlayerAction::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
+            PlayerAction::RotateClipboardRight => KeyCode::R.into(),
+            PlayerAction::Pan => VirtualDPad::wasd().into(),
+            PlayerAction::Zoom => SingleAxis::mouse_wheel_y().into(),
+            PlayerAction::RotateCameraLeft => KeyCode::Z.into(),
+            PlayerAction::RotateCameraRight => KeyCode::C.into(),
         }
     }
 
     /// The default key bindings
-    fn default_input_map() -> InputMap<SelectionAction> {
+    fn default_input_map() -> InputMap<PlayerAction> {
         let mut input_map = InputMap::default();
 
-        for variant in SelectionAction::variants() {
+        for variant in PlayerAction::variants() {
             input_map.insert(variant.kbm_binding(), variant);
         }
         input_map
