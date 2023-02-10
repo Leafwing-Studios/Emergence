@@ -159,7 +159,7 @@ impl Command for SpawnGhostCommand {
         let ghost_entity = world.spawn(GhostBundle::new(self.id, self.tile_pos)).id();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.structure_index.insert(self.tile_pos, ghost_entity);
+        geometry.ghost_index.insert(self.tile_pos, ghost_entity);
     }
 }
 
@@ -172,7 +172,7 @@ struct DespawnGhostCommand {
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.structure_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.ghost_index.remove(&self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
