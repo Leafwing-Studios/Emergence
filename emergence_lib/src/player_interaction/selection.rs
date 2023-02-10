@@ -479,6 +479,8 @@ fn copy_selection(
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         if actions.just_pressed(SelectionAction::Pipette) {
+            info!("Before: {clipboard:?}");
+
             // We want to replace our selection, rather than add to it
             clipboard.clear();
 
@@ -499,6 +501,7 @@ fn copy_selection(
                 }
                 clipboard.normalize_positions();
             }
+            info!("After: {clipboard:?}");
         }
     }
 }

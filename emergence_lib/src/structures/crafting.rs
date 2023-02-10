@@ -149,7 +149,6 @@ fn start_and_finish_crafting(
                     .add_all_or_nothing_many_items(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
-                info!("Crafted items: {:?}", recipe.outputs());
                 // The next item can be crafted
                 *craft_state = CraftingState::WaitingForInput;
             }
