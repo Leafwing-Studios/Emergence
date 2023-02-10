@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     organisms::units::Unit,
+    player_interaction::InteractionSystem,
     simulation::geometry::{MapGeometry, TilePos},
     structures::{ghost::Ghost, StructureId},
     terrain::Terrain,
@@ -25,7 +26,9 @@ impl Plugin for GraphicsPlugin {
             SystemSet::on_update(AssetState::Ready)
                 .with_system(populate_terrain)
                 .with_system(populate_units)
-                .with_system(populate_structures),
+                .with_system(populate_structures)
+                // We need to avoid attempting to insert bundles into entities that no longer exist
+                .before(InteractionSystem::ManageGhosts),
         );
     }
 }

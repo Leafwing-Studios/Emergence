@@ -43,4 +43,6 @@ pub(crate) enum InteractionSystem {
     ApplyZoning,
     /// Use intent-spending abilities
     UseAbilities,
+    /// Spawn and despawn ghosts
+    ManageGhosts,
 }

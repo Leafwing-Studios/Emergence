@@ -193,16 +193,30 @@ impl Plugin for SelectionPlugin {
             .add_system(
                 copy_selection
                     .label(InteractionSystem::SetClipboard)
+                    .after(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::SelectTiles),
             )
             .add_system(
                 set_zoning
+                    .label(InteractionSystem::ApplyZoning)
                     .after(InteractionSystem::SelectTiles)
-                    .after(copy_selection),
+                    .after(InteractionSystem::SetClipboard),
             )
-            .add_system(act_on_zoning.after(set_zoning))
-            .add_system(display_selection.after(InteractionSystem::SetClipboard))
-            .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
+            .add_system(
+                act_on_zoning
+                    .label(InteractionSystem::ManageGhosts)
+                    .after(InteractionSystem::ApplyZoning),
+            )
+            .add_system(
+                display_selection
+                    .label(InteractionSystem::ManageGhosts)
+                    .after(InteractionSystem::SetClipboard),
+            )
+            .add_system(
+                display_tile_interactions
+                    .after(InteractionSystem::SelectTiles)
+                    .after(InteractionSystem::ComputeCursorPos),
+            );
     }
 }
 
