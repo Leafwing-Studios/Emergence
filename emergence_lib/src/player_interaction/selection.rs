@@ -1,6 +1,9 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use crate::{self as emergence_lib, structures::StructureCommandsExt};
+use crate::{
+    self as emergence_lib,
+    structures::{commands::StructureCommandsExt, ghost::Ghost},
+};
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
@@ -51,7 +54,9 @@ pub(crate) enum SelectionAction {
     /// Sets the zoning of all currently selected tiles to [`Zoning::None`].
     ///
     /// If no structure is selected, any zoning will be removed.
-    Clear,
+    ClearZoning,
+    /// Removes all structures from the clipboard.
+    ClearClipboard,
 }
 
 impl SelectionAction {
@@ -70,7 +75,8 @@ impl SelectionAction {
             .insert(Modifier::Alt, SelectionAction::Line)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
-            .insert(KeyCode::Back, SelectionAction::Clear)
+            .insert(KeyCode::Back, SelectionAction::ClearZoning)
+            .insert(KeyCode::Escape, SelectionAction::ClearClipboard)
             .build()
     }
 }
@@ -187,14 +193,33 @@ impl Plugin for SelectionPlugin {
                     .label(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos),
             )
-            .add_system(copy_selection.after(InteractionSystem::SelectTiles))
+            .add_system(
+                copy_selection
+                    .label(InteractionSystem::SetClipboard)
+                    .after(InteractionSystem::ComputeCursorPos)
+                    .after(InteractionSystem::SelectTiles),
+            )
             .add_system(
                 set_zoning
+                    .label(InteractionSystem::ApplyZoning)
                     .after(InteractionSystem::SelectTiles)
-                    .after(copy_selection),
+                    .after(InteractionSystem::SetClipboard),
             )
-            .add_system(act_on_zoning.after(set_zoning))
-            .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
+            .add_system(
+                act_on_zoning
+                    .label(InteractionSystem::ManageGhosts)
+                    .after(InteractionSystem::ApplyZoning),
+            )
+            .add_system(
+                display_selection
+                    .label(InteractionSystem::ManageGhosts)
+                    .after(InteractionSystem::SetClipboard),
+            )
+            .add_system(
+                display_tile_interactions
+                    .after(InteractionSystem::SelectTiles)
+                    .after(InteractionSystem::ComputeCursorPos),
+            );
     }
 }
 
@@ -452,8 +477,15 @@ fn copy_selection(
     actions: Res<ActionState<SelectionAction>>,
     mut clipboard: ResMut<Clipboard>,
     selected_tiles: Res<SelectedTiles>,
-    structure_query: Query<(&StructureId, &TilePos)>,
+    structure_query: Query<&StructureId>,
+    map_geometry: Res<MapGeometry>,
 ) {
+    if actions.pressed(SelectionAction::ClearClipboard) {
+        clipboard.clear();
+        // Don't try to clear and set the clipboard on the same frame.
+        return;
+    }
+
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         if actions.just_pressed(SelectionAction::Pipette) {
             // We want to replace our selection, rather than add to it
@@ -461,24 +493,21 @@ fn copy_selection(
 
             // If there is no selection, just grab whatever's under the cursor
             if selected_tiles.is_empty() {
-                for (structure_id, structure_tile_pos) in structure_query.iter() {
-                    if cursor_tile_pos == *structure_tile_pos {
-                        clipboard.insert(TilePos::default(), structure_id.clone());
-                        return;
-                    }
+                if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
+                    let structure_id = structure_query.get(*structure_entity).unwrap();
+                    clipboard.insert(TilePos::default(), structure_id.clone());
                 }
             } else {
-                for terrain_tile_pos in selected_tiles.selected.iter() {
-                    // PERF: lol quadratic...
-                    for (structure_id, structure_tile_pos) in structure_query.iter() {
-                        if terrain_tile_pos == structure_tile_pos {
-                            clipboard.insert(*structure_tile_pos, structure_id.clone());
-                        }
+                for selected_tile_pos in selected_tiles.selected.iter() {
+                    if let Some(structure_entity) =
+                        map_geometry.structure_index.get(selected_tile_pos)
+                    {
+                        let structure_id = structure_query.get(*structure_entity).unwrap();
+                        clipboard.insert(*selected_tile_pos, structure_id.clone());
                     }
                 }
+                clipboard.normalize_positions();
             }
-
-            clipboard.normalize_positions();
         }
     }
 }
@@ -506,7 +535,7 @@ fn set_zoning(
         };
 
         // Explicitly clear the selection
-        if actions.pressed(SelectionAction::Clear) {
+        if actions.pressed(SelectionAction::ClearZoning) {
             for terrain_entity in relevant_terrain_entities {
                 let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                 *zoning = Zoning::Clear;
@@ -556,6 +585,46 @@ fn act_on_zoning(
             Zoning::None => (), // Do nothing
             Zoning::Clear => commands.despawn_structure(tile_pos),
         };
+    }
+}
+
+/// Show the current selection under the cursor
+fn display_selection(
+    clipboard: Res<Clipboard>,
+    cursor_pos: Res<CursorPos>,
+    mut commands: Commands,
+    mut ghost_query: Query<(&TilePos, &mut StructureId), With<Ghost>>,
+) {
+    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
+        let mut desired_ghosts: HashMap<TilePos, StructureId> =
+            HashMap::with_capacity(clipboard.capacity());
+        for (&clipboard_pos, structure_id) in clipboard.iter() {
+            let tile_pos = cursor_pos + clipboard_pos;
+            desired_ghosts.insert(tile_pos, structure_id.clone());
+        }
+
+        // Handle ghosts that already exist
+        for (tile_pos, mut existing_structure_id) in ghost_query.iter_mut() {
+            // Ghost should exist
+            if let Some(desired_structure_id) = desired_ghosts.get(tile_pos) {
+                // Ghost's identity changed
+                if *existing_structure_id != *desired_structure_id {
+                    // TODO: Bevy 0.10, use set_if_neq
+                    *existing_structure_id = desired_structure_id.clone();
+                }
+
+                // This ghost has been handled
+                desired_ghosts.remove(tile_pos);
+            // Ghost should no longer exist
+            } else {
+                commands.despawn_ghost(*tile_pos);
+            }
+        }
+
+        // Handle any remaining new ghosts
+        for (&tile_pos, id) in desired_ghosts.iter() {
+            commands.spawn_ghost(tile_pos, id.clone());
+        }
     }
 }
 

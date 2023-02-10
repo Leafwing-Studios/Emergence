@@ -28,19 +28,21 @@ impl Plugin for InteractionPlugin {
 
 /// Public system sets for player interaction, used for system ordering and config
 #[derive(SystemLabel, Clone, PartialEq, Eq, Hash, Debug)]
-pub enum InteractionSystem {
+pub(crate) enum InteractionSystem {
     /// Moves the camera
     MoveCamera,
     /// Cursor position is set
     ComputeCursorPos,
     /// Tiles are selected
     SelectTiles,
-    /// Held structure is selected
-    SelectStructure,
+    /// Held structure(s) are selected
+    SetClipboard,
     /// Replenishes the [`IntentPool`](intent::IntentPool) of the hive mind
     ReplenishIntent,
     /// Apply zoning to tiles
     ApplyZoning,
     /// Use intent-spending abilities
     UseAbilities,
+    /// Spawn and despawn ghosts
+    ManageGhosts,
 }

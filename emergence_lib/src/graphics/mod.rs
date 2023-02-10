@@ -5,8 +5,9 @@ use bevy::prelude::*;
 use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     organisms::units::Unit,
+    player_interaction::InteractionSystem,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::StructureId,
+    structures::{ghost::Ghost, StructureId},
     terrain::Terrain,
 };
 
@@ -25,7 +26,9 @@ impl Plugin for GraphicsPlugin {
             SystemSet::on_update(AssetState::Ready)
                 .with_system(populate_terrain)
                 .with_system(populate_units)
-                .with_system(populate_structures),
+                .with_system(populate_structures)
+                // We need to avoid attempting to insert bundles into entities that no longer exist
+                .with_system(populate_ghosts.before(InteractionSystem::ManageGhosts)),
         );
     }
 }
@@ -56,7 +59,7 @@ fn populate_terrain(
 
 /// Adds rendering components to every spawned structure
 fn populate_structures(
-    new_structures: Query<(Entity, &TilePos, &StructureId), Added<StructureId>>,
+    new_structures: Query<(Entity, &TilePos, &StructureId), (Added<StructureId>, Without<Ghost>)>,
     mut commands: Commands,
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
@@ -69,6 +72,37 @@ fn populate_structures(
 
         commands.entity(entity).insert(SceneBundle {
             scene: scene_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
+
+/// Adds rendering components to every spawned ghost
+fn populate_ghosts(
+    new_structures: Query<(Entity, &TilePos, &StructureId), (Added<StructureId>, With<Ghost>)>,
+    mut commands: Commands,
+    map_geometry: Res<MapGeometry>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let mesh = Mesh::from(shape::Cube {
+        size: StructureId::SIZE,
+    });
+    let mesh_handle = meshes.add(mesh);
+    let material_handle = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.9, 0.9, 0.9, 0.7),
+        ..Default::default()
+    });
+
+    // TODO: vary ghost mesh based on structure_id
+    for (entity, tile_pos, _structure_id) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
+
+        commands.entity(entity).insert(PbrBundle {
+            material: material_handle.clone(),
+            mesh: mesh_handle.clone(),
             transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
             ..default()
         });
