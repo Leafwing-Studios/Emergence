@@ -22,6 +22,11 @@ impl Plugin for ClipboardPlugin {
                     .after(InteractionSystem::SelectTiles),
             )
             .add_system(
+                rotate_selection
+                    .label(InteractionSystem::SetClipboard)
+                    .after(copy_selection),
+            )
+            .add_system(
                 display_selection
                     .label(InteractionSystem::ManageGhosts)
                     .after(InteractionSystem::SetClipboard),
@@ -79,6 +84,13 @@ impl Clipboard {
             .map(|(k, v)| ((*k + origin), v.clone()))
             .collect()
     }
+
+    /// Rotates the contents of the clipboard around the `center`.
+    ///
+    /// You must ensure that the contents are normalized first.
+    fn rotate_around(&mut self, center: TilePos, clockwise: bool) {
+        todo!()
+    }
 }
 
 /// Copies the selected structure(s) to the clipboard, to be placed later.
@@ -120,6 +132,28 @@ fn copy_selection(
                 }
                 clipboard.normalize_positions();
             }
+        }
+    }
+}
+
+fn rotate_selection(
+    actions: Res<ActionState<SelectionAction>>,
+    mut clipboard: ResMut<Clipboard>,
+    cursor_pos: Res<CursorPos>,
+) {
+    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
+        if actions.just_pressed(SelectionAction::RotateClipboardLeft)
+            && actions.just_pressed(SelectionAction::RotateClipboardRight)
+        {
+            return;
+        }
+
+        if actions.just_pressed(SelectionAction::RotateClipboardLeft) {
+            clipboard.rotate_around(cursor_pos, false);
+        }
+
+        if actions.just_pressed(SelectionAction::RotateClipboardRight) {
+            clipboard.rotate_around(cursor_pos, true);
         }
     }
 }
