@@ -2,7 +2,7 @@
 //!
 use bevy::prelude::*;
 
-use crate::ui::hover_panel::HoverDetailsPlugin;
+use crate::ui::{hover_panel::HoverDetailsPlugin, select_structure::SelectStructurePlugin};
 
 mod hover_panel;
 mod intent;
@@ -56,7 +56,8 @@ impl Plugin for UiPlugin {
             SystemStage::parallel(),
         )
         .add_startup_system_to_stage(UiStage::LayoutInitialization, setup_ui)
-        .add_plugin(HoverDetailsPlugin);
+        .add_plugin(HoverDetailsPlugin)
+        .add_plugin(SelectStructurePlugin);
     }
 }
 
