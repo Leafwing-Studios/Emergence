@@ -91,7 +91,7 @@ fn spawn_hex_menu(
             // Any larger than this is quite unwieldy
             let range = 3;
 
-            let hexes = Hex::ZERO.custom_spiral_range(range, hexx::Direction::Top, true);
+            let hexes = Hex::ZERO.custom_spiral_range(range, hexx::Direction::BottomRight, true);
 
             for (i, structure_id) in structure_info.keys().enumerate() {
                 // Center is reserved for easy cancellation.
