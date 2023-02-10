@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 use leafwing_input_manager::{
-    prelude::{ActionState, InputManagerPlugin, InputMap, SingleAxis, VirtualDPad},
+    prelude::{ActionState, DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
     user_input::{Modifier, UserInput},
     Actionlike,
 };
@@ -96,8 +96,10 @@ pub(crate) enum PlayerAction {
     RotateClipboardRight,
     /// Move the camera from side to side
     Pan,
-    /// Reveal more or less of the map by pulling the camera away or moving it closer
-    Zoom,
+    /// Reveal less of the map by moving the camera closer
+    ZoomIn,
+    /// Reveal more of the map by pulling the camera away
+    ZoomOut,
     /// Rotates the camera counterclockwise
     RotateCameraLeft,
     /// Rotates the camera clockwise
@@ -120,9 +122,37 @@ impl PlayerAction {
             PlayerAction::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             PlayerAction::RotateClipboardRight => KeyCode::R.into(),
             PlayerAction::Pan => VirtualDPad::wasd().into(),
-            PlayerAction::Zoom => SingleAxis::mouse_wheel_y().into(),
+            PlayerAction::ZoomIn => KeyCode::Plus.into(),
+            PlayerAction::ZoomOut => KeyCode::Minus.into(),
             PlayerAction::RotateCameraLeft => KeyCode::Z.into(),
             PlayerAction::RotateCameraRight => KeyCode::C.into(),
+        }
+    }
+
+    /// The default keybindings for gamepads.
+    fn gamepad_binding(&self) -> UserInput {
+        use GamepadButtonType::*;
+        let camera_modifier = RightTrigger2;
+
+        match self {
+            PlayerAction::Select => South.into(),
+            PlayerAction::Deselect => East.into(),
+            PlayerAction::Multiple => RightTrigger.into(),
+            PlayerAction::Area => LeftTrigger.into(),
+            PlayerAction::Line => LeftTrigger2.into(),
+            PlayerAction::Pipette => West.into(),
+            PlayerAction::Zone => North.into(),
+            PlayerAction::ClearZoning => DPadUp.into(),
+            PlayerAction::ClearClipboard => DPadDown.into(),
+            PlayerAction::RotateClipboardLeft => DPadLeft.into(),
+            PlayerAction::RotateClipboardRight => DPadRight.into(),
+            PlayerAction::Pan => DualAxis::right_stick().into(),
+            PlayerAction::ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
+            PlayerAction::ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
+            PlayerAction::RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft.into()]),
+            PlayerAction::RotateCameraRight => {
+                UserInput::chord([camera_modifier, DPadRight.into()])
+            }
         }
     }
 
@@ -131,7 +161,8 @@ impl PlayerAction {
         let mut input_map = InputMap::default();
 
         for variant in PlayerAction::variants() {
-            input_map.insert(variant.kbm_binding(), variant);
+            input_map.insert(variant.kbm_binding(), variant.clone());
+            input_map.insert(variant.gamepad_binding(), variant);
         }
         input_map
     }

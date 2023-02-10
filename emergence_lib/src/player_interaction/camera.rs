@@ -105,7 +105,7 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: 500.,
+            zoom_speed: 10.,
             pan_speed: 1.,
             min_zoom: 2.,
             max_zoom: 100.,
@@ -125,13 +125,17 @@ fn translate_camera(
     let (mut focus, facing, settings) = camera_query.single_mut();
 
     // Zoom
-    if actions.pressed(PlayerAction::Zoom) {
-        let delta_zoom =
-            -actions.value(PlayerAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
-
-        // Zoom in / out on whatever we're looking at
-        focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
+    let mut delta_zoom = 0.;
+    if actions.pressed(PlayerAction::ZoomIn) {
+        delta_zoom -= time.delta_seconds() * settings.zoom_speed;
     }
+
+    if actions.pressed(PlayerAction::ZoomOut) {
+        delta_zoom += time.delta_seconds() * settings.zoom_speed;
+    }
+
+    // Zoom in / out on whatever we're looking at
+    focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
