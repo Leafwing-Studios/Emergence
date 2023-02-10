@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    player_interaction::{organism_details::HoverDetails, InteractionSystem},
+    player_interaction::{organism_details::SelectionDetails, InteractionSystem},
     structures::crafting::CraftingState,
 };
 
@@ -118,7 +118,7 @@ fn populate_hover_details(
 
 /// Updates UI elements for hover details based on new information.
 fn update_hover_details(
-    hover_details: Res<HoverDetails>,
+    hover_details: Res<SelectionDetails>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
     mut organism_query: Query<
@@ -142,14 +142,14 @@ fn update_hover_details(
     >,
 ) {
     let mut parent_visibility = panel_query.single_mut();
-    if hover_details.0.is_none() {
+    if hover_details.structure.is_none() {
         *parent_visibility = Visibility::INVISIBLE;
         return;
     } else {
         *parent_visibility = Visibility::VISIBLE;
     }
 
-    let details = hover_details.0.as_ref().unwrap();
+    let details = hover_details.structure.as_ref().unwrap();
     position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
     organism_query.single_mut().sections[1].value = format!("Variety: {}", details.structure_id.id);
 
