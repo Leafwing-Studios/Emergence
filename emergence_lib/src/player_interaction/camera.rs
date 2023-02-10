@@ -4,6 +4,7 @@
 
 use std::f32::consts::PI;
 
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::prelude::ActionState;
@@ -27,6 +28,7 @@ impl Plugin for CameraPlugin {
                     // We rely on the updated focus information from this system
                     .after(translate_camera),
             )
+            .add_system(mousewheel_zoom.before(translate_camera))
             .add_system(translate_camera.label(InteractionSystem::MoveCamera));
     }
 }
@@ -113,6 +115,23 @@ impl Default for CameraSettings {
             rotational_interpolation: 0.1,
         }
     }
+}
+
+/// Zoom the camera based on the mouse wheel
+///
+/// This is needed to normalize gamepad / keyboard and mouse wheel zoom rates.
+fn mousewheel_zoom(
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    mut actions: ResMut<ActionState<PlayerAction>>,
+) {
+    if let Some(first_event) = mouse_wheel_events.iter().next() {
+        if first_event.y > 0. {
+            actions.press(PlayerAction::ZoomIn);
+        } else {
+            actions.press(PlayerAction::ZoomOut);
+        }
+    }
+    mouse_wheel_events.clear();
 }
 
 /// Pan and zoom the camera
