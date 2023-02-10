@@ -122,7 +122,8 @@ impl PlayerAction {
             PlayerAction::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             PlayerAction::RotateClipboardRight => KeyCode::R.into(),
             PlayerAction::Pan => VirtualDPad::wasd().into(),
-            PlayerAction::ZoomIn => KeyCode::Plus.into(),
+            // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
+            PlayerAction::ZoomIn => KeyCode::Equals.into(),
             PlayerAction::ZoomOut => KeyCode::Minus.into(),
             PlayerAction::RotateCameraLeft => KeyCode::Z.into(),
             PlayerAction::RotateCameraRight => KeyCode::C.into(),
