@@ -71,7 +71,7 @@ fn spawn_hex_menu(
     structure_info: Res<StructureInfo>,
 ) {
     /// The size of the hexes used in this menu.
-    const HEX_SIZE: f32 = 100.0;
+    const HEX_SIZE: f32 = 64.0;
 
     if actions.just_pressed(PlayerAction::SelectStructure) {
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
@@ -134,14 +134,19 @@ impl HexMenuIconBundle {
         layout: &HexLayout,
     ) -> Self {
         let color = structure_info.color(structure_id);
-        let screen_pos: Vec2 = layout.hex_to_world_pos(hex);
+        // Correct for center vs corner positioning
+        let half_cell = Vec2 {
+            x: layout.hex_size.x / 2.,
+            y: layout.hex_size.y / 2.,
+        };
+        let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
 
         let image_bundle = ImageBundle {
             background_color: BackgroundColor(color),
             style: Style {
                 position: UiRect {
-                    right: Val::Px(screen_pos.x),
-                    top: Val::Px(screen_pos.y),
+                    left: Val::Px(screen_pos.x),
+                    bottom: Val::Px(screen_pos.y),
                     ..Default::default()
                 },
                 position_type: PositionType::Absolute,
