@@ -54,7 +54,9 @@ pub(crate) enum SelectionAction {
     /// Sets the zoning of all currently selected tiles to [`Zoning::None`].
     ///
     /// If no structure is selected, any zoning will be removed.
-    Clear,
+    ClearZoning,
+    /// Removes all structures from the clipboard.
+    ClearClipboard,
 }
 
 impl SelectionAction {
@@ -73,7 +75,8 @@ impl SelectionAction {
             .insert(Modifier::Alt, SelectionAction::Line)
             .insert(KeyCode::Q, SelectionAction::Pipette)
             .insert(KeyCode::Space, SelectionAction::Zone)
-            .insert(KeyCode::Back, SelectionAction::Clear)
+            .insert(KeyCode::Back, SelectionAction::ClearZoning)
+            .insert(KeyCode::Escape, SelectionAction::ClearClipboard)
             .build()
     }
 }
@@ -477,6 +480,12 @@ fn copy_selection(
     structure_query: Query<&StructureId>,
     map_geometry: Res<MapGeometry>,
 ) {
+    if actions.pressed(SelectionAction::ClearClipboard) {
+        clipboard.clear();
+        // Don't try to clear and set the clipboard on the same frame.
+        return;
+    }
+
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         if actions.just_pressed(SelectionAction::Pipette) {
             info!("Before: {clipboard:?}");
@@ -529,7 +538,7 @@ fn set_zoning(
         };
 
         // Explicitly clear the selection
-        if actions.pressed(SelectionAction::Clear) {
+        if actions.pressed(SelectionAction::ClearZoning) {
             for terrain_entity in relevant_terrain_entities {
                 let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                 *zoning = Zoning::Clear;
