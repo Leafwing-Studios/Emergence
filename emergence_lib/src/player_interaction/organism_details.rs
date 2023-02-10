@@ -49,6 +49,7 @@ pub struct StructureDetails {
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default, Deref)]
 pub(crate) struct SelectionDetails {
+    /// Structure-related information
     pub(crate) structure: Option<StructureDetails>,
 }
 
