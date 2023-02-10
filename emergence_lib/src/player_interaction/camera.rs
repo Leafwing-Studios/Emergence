@@ -13,7 +13,7 @@ use crate::simulation::geometry::MapGeometry;
 use crate::terrain::Terrain;
 
 use super::InteractionSystem;
-use super::PlayerActions;
+use super::PlayerAction;
 
 /// Camera logic
 pub struct CameraPlugin;
@@ -121,7 +121,7 @@ fn translate_camera(
         (
             &mut CameraFocus,
             &Facing,
-            &ActionState<PlayerActions>,
+            &ActionState<PlayerAction>,
             &CameraSettings,
         ),
         With<Camera3d>,
@@ -132,17 +132,17 @@ fn translate_camera(
     let (mut focus, facing, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
-    if camera_actions.pressed(PlayerActions::Zoom) {
+    if camera_actions.pressed(PlayerAction::Zoom) {
         let delta_zoom =
-            -camera_actions.value(PlayerActions::Zoom) * time.delta_seconds() * settings.zoom_speed;
+            -camera_actions.value(PlayerAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
 
         // Zoom in / out on whatever we're looking at
         focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
     }
 
     // Pan
-    if camera_actions.pressed(PlayerActions::Pan) {
-        let dual_axis_data = camera_actions.axis_pair(PlayerActions::Pan).unwrap();
+    if camera_actions.pressed(PlayerAction::Pan) {
+        let dual_axis_data = camera_actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed * focus.zoom;
         // Plane is XZ, but gamepads are XY
@@ -168,7 +168,7 @@ fn rotate_camera(
             &mut Facing,
             &CameraFocus,
             &CameraSettings,
-            &ActionState<PlayerActions>,
+            &ActionState<PlayerAction>,
         ),
         With<Camera3d>,
     >,
@@ -177,11 +177,11 @@ fn rotate_camera(
     let (mut transform, mut facing, focus, settings, camera_actions) = query.single_mut();
 
     // Set facing
-    if camera_actions.just_pressed(PlayerActions::RotateCameraLeft) {
+    if camera_actions.just_pressed(PlayerAction::RotateCameraLeft) {
         facing.rotate_left();
     }
 
-    if camera_actions.just_pressed(PlayerActions::RotateCameraRight) {
+    if camera_actions.just_pressed(PlayerAction::RotateCameraRight) {
         facing.rotate_right();
     }
 

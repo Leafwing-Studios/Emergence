@@ -13,7 +13,7 @@ use super::{
     clipboard::{Clipboard, ClipboardItem},
     cursor::CursorPos,
     tile_selection::SelectedTiles,
-    InteractionSystem, PlayerActions,
+    InteractionSystem, PlayerAction,
 };
 
 /// Code and data for setting zoning of areas for construction.
@@ -51,7 +51,7 @@ pub(crate) enum Zoning {
 /// This system also handles the "paste" functionality.
 fn set_zoning(
     cursor: Res<CursorPos>,
-    actions: Res<ActionState<PlayerActions>>,
+    actions: Res<ActionState<PlayerAction>>,
     clipboard: Res<Clipboard>,
     mut terrain_query: Query<&mut Zoning, With<Terrain>>,
     selected_tiles: Res<SelectedTiles>,
@@ -69,7 +69,7 @@ fn set_zoning(
         };
 
         // Explicitly clear the selection
-        if actions.pressed(PlayerActions::ClearZoning) {
+        if actions.pressed(PlayerAction::ClearZoning) {
             for terrain_entity in relevant_terrain_entities {
                 let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                 *zoning = Zoning::Clear;
@@ -80,7 +80,7 @@ fn set_zoning(
         }
 
         // Apply zoning
-        if actions.pressed(PlayerActions::Zone) {
+        if actions.pressed(PlayerAction::Zone) {
             if clipboard.is_empty() {
                 // Clear zoning
                 for terrain_entity in relevant_terrain_entities {

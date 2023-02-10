@@ -21,9 +21,9 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<PlayerActions>::default())
-            .init_resource::<ActionState<PlayerActions>>()
-            .insert_resource(PlayerActions::default_input_map())
+        app.add_plugin(InputManagerPlugin::<PlayerAction>::default())
+            .init_resource::<ActionState<PlayerAction>>()
+            .insert_resource(PlayerAction::default_input_map())
             .add_plugin(camera::CameraPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(cursor::CursorPlugin)
@@ -65,7 +65,7 @@ pub(crate) enum InteractionSystem {
 ///
 /// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
-pub(crate) enum PlayerActions {
+pub(crate) enum PlayerAction {
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -104,33 +104,33 @@ pub(crate) enum PlayerActions {
     RotateCameraRight,
 }
 
-impl PlayerActions {
+impl PlayerAction {
     /// The default keybindings for mouse and keyboard.
     fn kbm_binding(&self) -> UserInput {
         match self {
-            PlayerActions::Select => MouseButton::Left.into(),
-            PlayerActions::Deselect => MouseButton::Right.into(),
-            PlayerActions::Multiple => Modifier::Shift.into(),
-            PlayerActions::Area => Modifier::Control.into(),
-            PlayerActions::Line => Modifier::Alt.into(),
-            PlayerActions::Pipette => KeyCode::Q.into(),
-            PlayerActions::Zone => KeyCode::Space.into(),
-            PlayerActions::ClearZoning => KeyCode::Back.into(),
-            PlayerActions::ClearClipboard => KeyCode::Escape.into(),
-            PlayerActions::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
-            PlayerActions::RotateClipboardRight => KeyCode::R.into(),
-            PlayerActions::Pan => VirtualDPad::wasd().into(),
-            PlayerActions::Zoom => SingleAxis::mouse_wheel_y().into(),
-            PlayerActions::RotateCameraLeft => KeyCode::Z.into(),
-            PlayerActions::RotateCameraRight => KeyCode::C.into(),
+            PlayerAction::Select => MouseButton::Left.into(),
+            PlayerAction::Deselect => MouseButton::Right.into(),
+            PlayerAction::Multiple => Modifier::Shift.into(),
+            PlayerAction::Area => Modifier::Control.into(),
+            PlayerAction::Line => Modifier::Alt.into(),
+            PlayerAction::Pipette => KeyCode::Q.into(),
+            PlayerAction::Zone => KeyCode::Space.into(),
+            PlayerAction::ClearZoning => KeyCode::Back.into(),
+            PlayerAction::ClearClipboard => KeyCode::Escape.into(),
+            PlayerAction::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
+            PlayerAction::RotateClipboardRight => KeyCode::R.into(),
+            PlayerAction::Pan => VirtualDPad::wasd().into(),
+            PlayerAction::Zoom => SingleAxis::mouse_wheel_y().into(),
+            PlayerAction::RotateCameraLeft => KeyCode::Z.into(),
+            PlayerAction::RotateCameraRight => KeyCode::C.into(),
         }
     }
 
     /// The default key bindings
-    fn default_input_map() -> InputMap<PlayerActions> {
+    fn default_input_map() -> InputMap<PlayerAction> {
         let mut input_map = InputMap::default();
 
-        for variant in PlayerActions::variants() {
+        for variant in PlayerAction::variants() {
             input_map.insert(variant.kbm_binding(), variant);
         }
         input_map

@@ -9,7 +9,7 @@ use crate::{
     structures::{commands::StructureCommandsExt, ghost::Ghost, StructureId},
 };
 
-use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem, PlayerActions};
+use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem, PlayerAction};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;
@@ -125,20 +125,20 @@ impl Clipboard {
 /// This system also handles the "pipette" functionality.
 fn copy_selection(
     cursor: Res<CursorPos>,
-    actions: Res<ActionState<PlayerActions>>,
+    actions: Res<ActionState<PlayerAction>>,
     mut clipboard: ResMut<Clipboard>,
     selected_tiles: Res<SelectedTiles>,
     structure_query: Query<(&StructureId, &Facing), Without<Ghost>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if actions.pressed(PlayerActions::ClearClipboard) {
+    if actions.pressed(PlayerAction::ClearClipboard) {
         clipboard.clear();
         // Don't try to clear and set the clipboard on the same frame.
         return;
     }
 
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
-        if actions.just_pressed(PlayerActions::Pipette) {
+        if actions.just_pressed(PlayerAction::Pipette) {
             // We want to replace our selection, rather than add to it
             clipboard.clear();
 
@@ -174,18 +174,18 @@ fn copy_selection(
 }
 
 /// Rotates the contents of the clipboard based on player input
-fn rotate_selection(actions: Res<ActionState<PlayerActions>>, mut clipboard: ResMut<Clipboard>) {
-    if actions.just_pressed(PlayerActions::RotateClipboardLeft)
-        && actions.just_pressed(PlayerActions::RotateClipboardRight)
+fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResMut<Clipboard>) {
+    if actions.just_pressed(PlayerAction::RotateClipboardLeft)
+        && actions.just_pressed(PlayerAction::RotateClipboardRight)
     {
         return;
     }
 
-    if actions.just_pressed(PlayerActions::RotateClipboardLeft) {
+    if actions.just_pressed(PlayerAction::RotateClipboardLeft) {
         clipboard.rotate_around(false);
     }
 
-    if actions.just_pressed(PlayerActions::RotateClipboardRight) {
+    if actions.just_pressed(PlayerAction::RotateClipboardRight) {
         clipboard.rotate_around(true);
     }
 }
