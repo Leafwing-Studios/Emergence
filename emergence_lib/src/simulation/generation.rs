@@ -1,7 +1,8 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
 use crate::organisms::units::AntBundle;
-use crate::simulation::geometry::TilePos;
+use crate::player_interaction::clipboard::ClipboardItem;
+use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
@@ -199,12 +200,22 @@ pub fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        commands.spawn_structure(position, StructureId::new("acacia"));
+        let item = ClipboardItem {
+            id: StructureId::new("acacia"),
+            facing: Facing::default(),
+        };
+
+        commands.spawn_structure(position, item);
     }
 
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        commands.spawn_structure(position, StructureId::new("leuco"));
+        let item = ClipboardItem {
+            id: StructureId::new("leuco"),
+            facing: Facing::default(),
+        };
+
+        commands.spawn_structure(position, item);
     }
 }

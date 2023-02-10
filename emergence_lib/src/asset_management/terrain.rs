@@ -8,7 +8,7 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 use crate::{
-    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
+    enum_iter::IterableEnum, player_interaction::tile_selection::ObjectInteraction,
     simulation::geometry::MapGeometry, terrain::Terrain,
 };
 

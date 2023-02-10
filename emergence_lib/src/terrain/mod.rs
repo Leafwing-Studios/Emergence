@@ -5,7 +5,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate as emergence_lib;
 
-use crate::player_interaction::selection::Zoning;
+use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::TilePos;
 use bevy::ecs::component::Component;
 

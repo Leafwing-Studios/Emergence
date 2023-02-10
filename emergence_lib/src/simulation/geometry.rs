@@ -1,7 +1,5 @@
 //! Manages the game world's grid and data tied to that grid
 
-use std::f32::consts::PI;
-
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex, HexLayout};
@@ -79,11 +77,23 @@ impl Default for MapGeometry {
 ///
 /// Stored as a component on each entity with a grid-aligned rotation.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Deref, DerefMut)]
-pub struct Facing {
+pub(crate) struct Facing {
     /// The desired direction.
     ///
     /// Defaults to [`Direction::Top`].
     pub direction: Direction,
+}
+
+impl Facing {
+    /// Rotates this facing one 60 degree step clockwise.
+    pub(crate) fn rotate_left(&mut self) {
+        self.direction = self.direction.left();
+    }
+
+    /// Rotates this facing one 60 degree step counterclockwise.
+    pub(crate) fn rotate_right(&mut self) {
+        self.direction = self.direction.right();
+    }
 }
 
 impl Default for Facing {
@@ -97,85 +107,15 @@ impl Default for Facing {
 /// Rotates objects so they are facing the correct direction.
 pub(super) fn sync_rotation_to_facing(
     // Camera requires different logic, it rotates "around" a central point
-    mut query: Query<(&mut Transform, &Facing), (Changed<Facing>, Without<Camera3d>)>,
+    // PERF: re-enable change detection. For some reason this wasn't working on structures,
+    // but was on ghosts.
+    mut query: Query<(&mut Transform, &Facing), Without<Camera3d>>,
+    map_geometry: Res<MapGeometry>,
 ) {
     for (mut transform, &facing) in query.iter_mut() {
         // Rotate the object in the correct direction
-        let target = Quat::from_axis_angle(Vec3::Y, angle(facing.direction));
+        let angle = facing.direction.angle(&map_geometry.layout.orientation);
+        let target = Quat::from_axis_angle(Vec3::Y, angle);
         transform.rotation = target;
-    }
-}
-
-/// Rotates a hex [`Direction`] one step clockwise.
-#[must_use]
-pub fn clockwise(direction: Direction) -> Direction {
-    use Direction::*;
-    match direction {
-        BottomRight => Bottom,
-        TopRight => BottomRight,
-        Top => TopRight,
-        TopLeft => Top,
-        BottomLeft => TopLeft,
-        Bottom => BottomLeft,
-    }
-}
-
-/// Rotates a hex [`Direction`] one step counterclockwise.
-#[must_use]
-pub fn counterclockwise(direction: Direction) -> Direction {
-    use Direction::*;
-    match direction {
-        BottomRight => TopRight,
-        TopRight => Top,
-        Top => TopLeft,
-        TopLeft => BottomLeft,
-        BottomLeft => Bottom,
-        Bottom => BottomRight,
-    }
-}
-
-/// Returns the angle associated with the provided hex [`Direction`].
-///
-/// Measured in radians counterclockwise from the +x axis.
-pub fn angle(direction: Direction) -> f32 {
-    use Direction::*;
-    // See https://dr282zn36sxxg.cloudfront.net/datastreams/f-d%3Adff233ddd1e7e4c34a6545a8dfc1d63bbaf7eefbb40215febc633a30%2BIMAGE_TINY%2BIMAGE_TINY.1
-    PI / 6.
-        * match direction {
-            BottomRight => 11.,
-            TopRight => 1.,
-            Top => 3.,
-            TopLeft => 5.,
-            BottomLeft => 7.,
-            Bottom => 9.,
-        }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rotations_reverse_each_other() {
-        for direction in Direction::ALL_DIRECTIONS {
-            assert_eq!(direction, counterclockwise(clockwise(direction)));
-            assert_eq!(direction, clockwise(counterclockwise(direction)));
-        }
-    }
-
-    #[test]
-    fn six_rotations_comes_home() {
-        for direction in Direction::ALL_DIRECTIONS {
-            let mut cw_direction = direction;
-            let mut ccw_direction = direction;
-
-            for _ in 0..6 {
-                cw_direction = clockwise(cw_direction);
-                ccw_direction = counterclockwise(ccw_direction);
-            }
-
-            assert_eq!(direction, cw_direction);
-            assert_eq!(direction, ccw_direction);
-        }
     }
 }

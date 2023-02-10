@@ -7,6 +7,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     items::recipe::RecipeId,
+    player_interaction::clipboard::ClipboardItem,
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -74,10 +75,10 @@ struct StructureBundle {
 
 impl StructureBundle {
     /// Creates a new structure
-    pub fn new(id: StructureId, tile_pos: TilePos) -> Self {
+    pub fn new(tile_pos: TilePos, item: ClipboardItem) -> Self {
         StructureBundle {
-            structure: id,
-            facing: Facing::default(),
+            structure: item.id,
+            facing: item.facing,
             tile_pos,
         }
     }

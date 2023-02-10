@@ -28,8 +28,6 @@ impl Plugin for CursorPlugin {
 /// The tile position of the mouse cursor, if it lies over the map.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 pub struct CursorPos {
-    /// The terrain entity that the cursor is over top of.
-    terrain_entity: Option<Entity>,
     /// The tile position that the cursor is over top of.
     tile_pos: Option<TilePos>,
 }
@@ -38,15 +36,8 @@ impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
-    pub fn maybe_tile_pos(&self) -> Option<TilePos> {
+    pub(crate) fn maybe_tile_pos(&self) -> Option<TilePos> {
         self.tile_pos
-    }
-
-    /// The terrain entity under the cursor, if any.
-    ///
-    /// If the cursor is outside the map, this will return `None`.
-    pub fn maybe_entity(&self) -> Option<Entity> {
-        self.terrain_entity
     }
 }
 
@@ -79,10 +70,8 @@ fn update_cursor_pos(
     let maybe_intersection = raycast_source.get_nearest_intersection();
 
     if let Some((terrain_entity, _intersection_data)) = maybe_intersection {
-        cursor_pos.terrain_entity = Some(terrain_entity);
         cursor_pos.tile_pos = terrain_query.get(terrain_entity).ok().copied();
     } else {
-        cursor_pos.terrain_entity = None;
         cursor_pos.tile_pos = None;
     }
 }
