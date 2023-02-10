@@ -2,7 +2,7 @@
 use crate::enum_iter::IterableEnum;
 use crate::organisms::units::AntBundle;
 use crate::simulation::geometry::TilePos;
-use crate::structures::{StructureCommandsExt, StructureId};
+use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;

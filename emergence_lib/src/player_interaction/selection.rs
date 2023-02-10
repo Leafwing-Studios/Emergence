@@ -1,6 +1,6 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use crate::{self as emergence_lib, structures::StructureCommandsExt};
+use crate::{self as emergence_lib, structures::commands::StructureCommandsExt};
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
