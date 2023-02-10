@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 use leafwing_input_manager::{
-    prelude::{ActionState, InputManagerPlugin, InputMap},
+    prelude::{ActionState, InputManagerPlugin, InputMap, SingleAxis, VirtualDPad},
     user_input::{Modifier, UserInput},
     Actionlike,
 };
@@ -90,10 +90,18 @@ pub(crate) enum PlayerActions {
     ClearZoning,
     /// Removes all structures from the clipboard.
     ClearClipboard,
-    /// Rotates the contents of the clipboard clockwise.
-    RotateClipboardRight,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
+    /// Rotates the contents of the clipboard clockwise.
+    RotateClipboardRight,
+    /// Move the camera from side to side
+    Pan,
+    /// Reveal more or less of the map by pulling the camera away or moving it closer
+    Zoom,
+    /// Rotates the camera counterclockwise
+    RotateCameraLeft,
+    /// Rotates the camera clockwise
+    RotateCameraRight,
 }
 
 impl PlayerActions {
@@ -109,8 +117,12 @@ impl PlayerActions {
             PlayerActions::Zone => KeyCode::Space.into(),
             PlayerActions::ClearZoning => KeyCode::Back.into(),
             PlayerActions::ClearClipboard => KeyCode::Escape.into(),
-            PlayerActions::RotateClipboardRight => KeyCode::R.into(),
             PlayerActions::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
+            PlayerActions::RotateClipboardRight => KeyCode::R.into(),
+            PlayerActions::Pan => VirtualDPad::wasd().into(),
+            PlayerActions::Zoom => SingleAxis::mouse_wheel_y().into(),
+            PlayerActions::RotateCameraLeft => KeyCode::Z.into(),
+            PlayerActions::RotateCameraRight => KeyCode::C.into(),
         }
     }
 

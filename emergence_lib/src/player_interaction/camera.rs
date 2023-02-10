@@ -6,27 +6,21 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
-use leafwing_input_manager::axislike::SingleAxis;
-use leafwing_input_manager::input_map::InputMap;
-use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::ActionState;
-use leafwing_input_manager::prelude::VirtualDPad;
-use leafwing_input_manager::Actionlike;
-use leafwing_input_manager::InputManagerBundle;
 
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::terrain::Terrain;
 
 use super::InteractionSystem;
+use super::PlayerActions;
 
 /// Camera logic
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<CameraAction>::default())
-            .add_startup_system_to_stage(StartupStage::Startup, setup)
+        app.add_startup_system_to_stage(StartupStage::Startup, setup)
             .add_system(
                 rotate_camera
                     .label(InteractionSystem::MoveCamera)
@@ -51,33 +45,10 @@ const CAMERA_ANGLE: f32 = PI / 4.;
 fn setup(mut commands: Commands) {
     commands
         .spawn(Camera3dBundle::default())
-        .insert(InputManagerBundle::<CameraAction> {
-            input_map: InputMap::default()
-                .insert(VirtualDPad::wasd(), CameraAction::Pan)
-                .insert(VirtualDPad::arrow_keys(), CameraAction::Pan)
-                .insert(SingleAxis::mouse_wheel_y(), CameraAction::Zoom)
-                .insert(KeyCode::Z, CameraAction::RotateLeft)
-                .insert(KeyCode::C, CameraAction::RotateRight)
-                .build(),
-            ..default()
-        })
         .insert(CameraSettings::default())
         .insert(CameraFocus::default())
         .insert(Facing::default())
         .insert(RaycastSource::<Terrain>::new());
-}
-
-/// Actions that manipulate the camera
-#[derive(Actionlike, Clone, Debug, Copy, PartialEq, Eq)]
-enum CameraAction {
-    /// Move the camera from side to side
-    Pan,
-    /// Reveal more or less of the map by pulling the camera away or moving it closer
-    Zoom,
-    /// Rotates the camera counterclockwise
-    RotateLeft,
-    /// Rotates the camera clockwise
-    RotateRight,
 }
 
 /// The position that the camera is looking at.
@@ -150,7 +121,7 @@ fn translate_camera(
         (
             &mut CameraFocus,
             &Facing,
-            &ActionState<CameraAction>,
+            &ActionState<PlayerActions>,
             &CameraSettings,
         ),
         With<Camera3d>,
@@ -161,17 +132,17 @@ fn translate_camera(
     let (mut focus, facing, camera_actions, settings) = camera_query.single_mut();
 
     // Zoom
-    if camera_actions.pressed(CameraAction::Zoom) {
+    if camera_actions.pressed(PlayerActions::Zoom) {
         let delta_zoom =
-            -camera_actions.value(CameraAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
+            -camera_actions.value(PlayerActions::Zoom) * time.delta_seconds() * settings.zoom_speed;
 
         // Zoom in / out on whatever we're looking at
         focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
     }
 
     // Pan
-    if camera_actions.pressed(CameraAction::Pan) {
-        let dual_axis_data = camera_actions.axis_pair(CameraAction::Pan).unwrap();
+    if camera_actions.pressed(PlayerActions::Pan) {
+        let dual_axis_data = camera_actions.axis_pair(PlayerActions::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed * focus.zoom;
         // Plane is XZ, but gamepads are XY
@@ -197,7 +168,7 @@ fn rotate_camera(
             &mut Facing,
             &CameraFocus,
             &CameraSettings,
-            &ActionState<CameraAction>,
+            &ActionState<PlayerActions>,
         ),
         With<Camera3d>,
     >,
@@ -206,11 +177,11 @@ fn rotate_camera(
     let (mut transform, mut facing, focus, settings, camera_actions) = query.single_mut();
 
     // Set facing
-    if camera_actions.just_pressed(CameraAction::RotateLeft) {
+    if camera_actions.just_pressed(PlayerActions::RotateCameraLeft) {
         facing.rotate_left();
     }
 
-    if camera_actions.just_pressed(CameraAction::RotateRight) {
+    if camera_actions.just_pressed(PlayerActions::RotateCameraRight) {
         facing.rotate_right();
     }
 
