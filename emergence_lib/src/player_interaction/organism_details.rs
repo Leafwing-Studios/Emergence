@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     items::{inventory::Inventory, recipe::RecipeId},
-    player_interaction::cursor::CursorPos,
+    player_interaction::{cursor::CursorPos, InteractionSystem},
     simulation::geometry::MapGeometry,
     structures::{
         crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
@@ -56,8 +56,7 @@ impl Plugin for DetailsPlugin {
         info!("Building DetailsPlugin...");
 
         app.init_resource::<HoverDetails>()
-            // TODO: This should be done after the cursor system
-            .add_system(hover_details);
+            .add_system(hover_details.after(InteractionSystem::SelectTiles));
     }
 }
 
