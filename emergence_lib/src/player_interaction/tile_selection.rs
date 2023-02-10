@@ -11,7 +11,7 @@ use crate::{
 
 use crate as emergence_lib;
 
-use super::{cursor::CursorPos, InteractionSystem, SelectionAction};
+use super::{cursor::CursorPos, InteractionSystem, PlayerActions};
 
 /// Code and data for selecting groups of tiles
 pub(super) struct TileSelectionPlugin;
@@ -201,17 +201,17 @@ impl LineSelection {
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
-    actions: Res<ActionState<SelectionAction>>,
+    actions: Res<ActionState<PlayerActions>>,
     mut area_selection: ResMut<AreaSelection>,
     mut line_selection: ResMut<LineSelection>,
 ) {
     if let Some(cursor_pos) = cursor.maybe_tile_pos() {
-        let select = actions.pressed(SelectionAction::Select);
-        let deselect = actions.pressed(SelectionAction::Deselect);
+        let select = actions.pressed(PlayerActions::Select);
+        let deselect = actions.pressed(PlayerActions::Deselect);
 
-        let multiple = actions.pressed(SelectionAction::Multiple);
-        let area = actions.pressed(SelectionAction::Area);
-        let line = actions.pressed(SelectionAction::Line);
+        let multiple = actions.pressed(PlayerActions::Multiple);
+        let area = actions.pressed(PlayerActions::Area);
+        let line = actions.pressed(PlayerActions::Line);
         let simple_area = area & !multiple & !line;
         let simple_deselect = deselect & !area & !multiple & !line;
 
@@ -277,11 +277,11 @@ fn select_tiles(
 
         // Actually select tiles
         if line {
-            if actions.just_released(SelectionAction::Select) {
+            if actions.just_released(PlayerActions::Select) {
                 let line_hexes = line_selection.draw_line(cursor_pos, radius);
                 selected_tiles.selected.extend(line_hexes);
                 line_selection.start = Some(cursor_pos);
-            } else if actions.just_released(SelectionAction::Deselect) {
+            } else if actions.just_released(PlayerActions::Deselect) {
                 let line_hexes = line_selection.draw_line(cursor_pos, radius);
                 for tile_pos in line_hexes {
                     selected_tiles.selected.remove(&tile_pos);

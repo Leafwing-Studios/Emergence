@@ -21,9 +21,9 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<SelectionAction>::default())
-            .init_resource::<ActionState<SelectionAction>>()
-            .insert_resource(SelectionAction::default_input_map())
+        app.add_plugin(InputManagerPlugin::<PlayerActions>::default())
+            .init_resource::<ActionState<PlayerActions>>()
+            .insert_resource(PlayerActions::default_input_map())
             .add_plugin(camera::CameraPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(cursor::CursorPlugin)
@@ -61,12 +61,11 @@ pub(crate) enum InteractionSystem {
     HoverDetails,
 }
 
-/// Actions that can be used to select tiles.
+/// Actions that the player can take to modify the game world or their view of it.
 ///
-/// If a tile is not selected, it will be added to the selection.
-/// If it is already selected, it will be removed from the selection.
+/// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
-pub(crate) enum SelectionAction {
+pub(crate) enum PlayerActions {
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -97,31 +96,29 @@ pub(crate) enum SelectionAction {
     RotateClipboardLeft,
 }
 
-impl SelectionAction {
+impl PlayerActions {
     /// The default keybindings for mouse and keyboard.
     fn kbm_binding(&self) -> UserInput {
         match self {
-            SelectionAction::Select => MouseButton::Left.into(),
-            SelectionAction::Deselect => MouseButton::Right.into(),
-            SelectionAction::Multiple => Modifier::Shift.into(),
-            SelectionAction::Area => Modifier::Control.into(),
-            SelectionAction::Line => Modifier::Alt.into(),
-            SelectionAction::Pipette => KeyCode::Q.into(),
-            SelectionAction::Zone => KeyCode::Space.into(),
-            SelectionAction::ClearZoning => KeyCode::Back.into(),
-            SelectionAction::ClearClipboard => KeyCode::Escape.into(),
-            SelectionAction::RotateClipboardRight => KeyCode::R.into(),
-            SelectionAction::RotateClipboardLeft => {
-                UserInput::modified(Modifier::Shift, KeyCode::R)
-            }
+            PlayerActions::Select => MouseButton::Left.into(),
+            PlayerActions::Deselect => MouseButton::Right.into(),
+            PlayerActions::Multiple => Modifier::Shift.into(),
+            PlayerActions::Area => Modifier::Control.into(),
+            PlayerActions::Line => Modifier::Alt.into(),
+            PlayerActions::Pipette => KeyCode::Q.into(),
+            PlayerActions::Zone => KeyCode::Space.into(),
+            PlayerActions::ClearZoning => KeyCode::Back.into(),
+            PlayerActions::ClearClipboard => KeyCode::Escape.into(),
+            PlayerActions::RotateClipboardRight => KeyCode::R.into(),
+            PlayerActions::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
         }
     }
 
     /// The default key bindings
-    fn default_input_map() -> InputMap<SelectionAction> {
+    fn default_input_map() -> InputMap<PlayerActions> {
         let mut input_map = InputMap::default();
 
-        for variant in SelectionAction::variants() {
+        for variant in PlayerActions::variants() {
             input_map.insert(variant.kbm_binding(), variant);
         }
         input_map
