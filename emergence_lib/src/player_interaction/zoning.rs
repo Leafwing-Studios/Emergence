@@ -1,3 +1,5 @@
+//! Zoning is used to indicate that a tile should contain the specified structure.
+
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 

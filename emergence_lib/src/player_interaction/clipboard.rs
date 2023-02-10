@@ -1,3 +1,5 @@
+//! The clipboard stores selected structures, to later be placed via zoning.
+
 use bevy::{prelude::*, utils::HashMap};
 use hexx::Hex;
 use leafwing_input_manager::prelude::ActionState;
@@ -171,6 +173,7 @@ fn copy_selection(
     }
 }
 
+/// Rotates the contents of the clipboard based on player input
 fn rotate_selection(actions: Res<ActionState<SelectionAction>>, mut clipboard: ResMut<Clipboard>) {
     if actions.just_pressed(SelectionAction::RotateClipboardLeft)
         && actions.just_pressed(SelectionAction::RotateClipboardRight)

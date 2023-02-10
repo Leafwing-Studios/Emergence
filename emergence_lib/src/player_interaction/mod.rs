@@ -83,7 +83,7 @@ pub(crate) enum SelectionAction {
     ///
     /// If no structure is selected, any zoning will be removed.
     Zone,
-    /// Sets the zoning of all currently selected tiles to [`Zoning::None`].
+    /// Sets the zoning of all currently selected tiles to [`Zoning::None`](zoning::Zoning::None).
     ///
     /// If no structure is selected, any zoning will be removed.
     ClearZoning,

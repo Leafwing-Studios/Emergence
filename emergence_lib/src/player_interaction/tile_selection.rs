@@ -1,3 +1,5 @@
+//! Tiles can be selected, serving as a building block for clipboard, inspection and zoning operations.
+
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
