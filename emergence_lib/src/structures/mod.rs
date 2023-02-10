@@ -24,6 +24,13 @@ pub(crate) struct StructureInfo {
     map: HashMap<StructureId, StructureVariety>,
 }
 
+impl StructureInfo {
+    /// The color associated with this structure.
+    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
+        self.get(structure_id).unwrap().color
+    }
+}
+
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureVariety {
@@ -33,6 +40,8 @@ pub(crate) struct StructureVariety {
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
     starting_recipe: Option<RecipeId>,
+    /// The color associated with this structure
+    color: Color,
 }
 
 impl Default for StructureInfo {
@@ -46,6 +55,7 @@ impl Default for StructureInfo {
                 organism: true,
                 crafts: true,
                 starting_recipe: None,
+                color: Color::ORANGE_RED,
             },
         );
 
@@ -55,6 +65,7 @@ impl Default for StructureInfo {
                 organism: true,
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
+                color: Color::GREEN,
             },
         );
 

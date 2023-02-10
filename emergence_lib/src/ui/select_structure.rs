@@ -62,11 +62,6 @@ impl HexMenuArrangement {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
-
-    fn get_icon_entity(&self, cursor_pos: Vec2) -> Option<Entity> {
-        let hex = self.get_hex(cursor_pos);
-        self.icon_map.get(&hex).cloned()
-    }
 }
 
 fn spawn_hex_menu(
@@ -105,7 +100,11 @@ fn spawn_hex_menu(
                     arrangement.content_map.insert(hex, structure_id.clone());
                     let screen_pos: Vec2 = arrangement.layout.hex_to_world_pos(hex);
                     let icon_entity = commands
-                        .spawn(HexMenuIconBundle::new(structure_id, screen_pos))
+                        .spawn(HexMenuIconBundle::new(
+                            structure_id,
+                            screen_pos,
+                            &*structure_info,
+                        ))
                         .id();
                     arrangement.icon_map.insert(hex, icon_entity);
                 } else {
@@ -128,10 +127,11 @@ struct HexMenuIconBundle {
 }
 
 impl HexMenuIconBundle {
-    fn new(structure_id: &StructureId, screen_pos: Vec2) -> Self {
-        // TODO: customize these
+    fn new(structure_id: &StructureId, screen_pos: Vec2, structure_info: &StructureInfo) -> Self {
+        let color = structure_info.color(structure_id);
+
         let image_bundle = ImageBundle {
-            background_color: BackgroundColor(Color::RED),
+            background_color: BackgroundColor(color),
             style: Style {
                 position: UiRect {
                     right: Val::Px(screen_pos.x),
