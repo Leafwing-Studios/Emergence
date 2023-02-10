@@ -90,7 +90,10 @@ fn populate_ghosts(
         size: StructureId::SIZE,
     });
     let mesh_handle = meshes.add(mesh);
-    let material_handle = materials.add(Color::rgba(0.8, 0.8, 0.8, 0.5).into());
+    let material_handle = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.9, 0.9, 0.9, 0.7),
+        ..Default::default()
+    });
 
     // TODO: vary ghost mesh based on structure_id
     for (entity, tile_pos, _structure_id) in new_structures.iter() {
