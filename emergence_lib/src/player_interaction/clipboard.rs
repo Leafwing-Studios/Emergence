@@ -3,7 +3,7 @@ use hexx::Hex;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, ghost::Ghost, StructureId},
 };
 
@@ -38,7 +38,16 @@ impl Plugin for ClipboardPlugin {
 #[derive(Default, Resource, Debug, Deref, DerefMut)]
 pub(super) struct Clipboard {
     /// The internal map of structures.
-    contents: HashMap<TilePos, StructureId>,
+    contents: HashMap<TilePos, ClipboardItem>,
+}
+
+/// The data copied via the clipboard for a single structure.
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub(crate) struct ClipboardItem {
+    /// The identity of the structure.
+    pub(crate) id: StructureId,
+    /// The orientation of the structure.
+    pub(crate) facing: Facing,
 }
 
 impl Clipboard {
@@ -79,7 +88,7 @@ impl Clipboard {
     /// Apply a tile-position shift to the items on the clipboard.
     ///
     /// Used to place items in the correct location relative to the cursor.
-    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureId)> {
+    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardItem)> {
         self.iter()
             .map(|(k, v)| ((*k + origin), v.clone()))
             .collect()
@@ -113,7 +122,7 @@ fn copy_selection(
     actions: Res<ActionState<SelectionAction>>,
     mut clipboard: ResMut<Clipboard>,
     selected_tiles: Res<SelectedTiles>,
-    structure_query: Query<&StructureId>,
+    structure_query: Query<(&StructureId, &Facing), Without<Ghost>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if actions.pressed(SelectionAction::ClearClipboard) {
@@ -130,16 +139,26 @@ fn copy_selection(
             // If there is no selection, just grab whatever's under the cursor
             if selected_tiles.is_empty() {
                 if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
-                    let structure_id = structure_query.get(*structure_entity).unwrap();
-                    clipboard.insert(TilePos::default(), structure_id.clone());
+                    let (id, facing) = structure_query.get(*structure_entity).unwrap();
+                    let clipboard_item = ClipboardItem {
+                        id: id.clone(),
+                        facing: *facing,
+                    };
+
+                    clipboard.insert(TilePos::default(), clipboard_item);
                 }
             } else {
                 for selected_tile_pos in selected_tiles.selection().iter() {
                     if let Some(structure_entity) =
                         map_geometry.structure_index.get(selected_tile_pos)
                     {
-                        let structure_id = structure_query.get(*structure_entity).unwrap();
-                        clipboard.insert(*selected_tile_pos, structure_id.clone());
+                        let (id, facing) = structure_query.get(*structure_entity).unwrap();
+                        let clipboard_item = ClipboardItem {
+                            id: id.clone(),
+                            facing: *facing,
+                        };
+
+                        clipboard.insert(*selected_tile_pos, clipboard_item);
                     }
                 }
                 clipboard.normalize_positions();
@@ -169,24 +188,33 @@ fn display_selection(
     clipboard: Res<Clipboard>,
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
-    mut ghost_query: Query<(&TilePos, &mut StructureId), With<Ghost>>,
+    mut ghost_query: Query<(&TilePos, &mut StructureId, &mut Facing), With<Ghost>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        let mut desired_ghosts: HashMap<TilePos, StructureId> =
+        let mut desired_ghosts: HashMap<TilePos, ClipboardItem> =
             HashMap::with_capacity(clipboard.capacity());
-        for (&clipboard_pos, structure_id) in clipboard.iter() {
+        for (&clipboard_pos, clipboard_item) in clipboard.iter() {
             let tile_pos = cursor_pos + clipboard_pos;
-            desired_ghosts.insert(tile_pos, structure_id.clone());
+            desired_ghosts.insert(tile_pos, clipboard_item.clone());
         }
 
         // Handle ghosts that already exist
-        for (tile_pos, mut existing_structure_id) in ghost_query.iter_mut() {
+        for (tile_pos, mut existing_structure_id, mut existing_facing) in ghost_query.iter_mut() {
             // Ghost should exist
-            if let Some(desired_structure_id) = desired_ghosts.get(tile_pos) {
+            if let Some(desired_clipboard_item) = desired_ghosts.get(tile_pos) {
+                let desired_structure_id = &desired_clipboard_item.id;
+                let desired_facing = desired_clipboard_item.facing;
+
                 // Ghost's identity changed
                 if *existing_structure_id != *desired_structure_id {
                     // TODO: Bevy 0.10, use set_if_neq
                     *existing_structure_id = desired_structure_id.clone();
+                }
+
+                // Ghost's facing has changed
+                if *existing_facing != desired_facing {
+                    // TODO: Bevy 0.10, use set_if_neq
+                    *existing_facing = desired_facing;
                 }
 
                 // This ghost has been handled
@@ -198,8 +226,8 @@ fn display_selection(
         }
 
         // Handle any remaining new ghosts
-        for (&tile_pos, id) in desired_ghosts.iter() {
-            commands.spawn_ghost(tile_pos, id.clone());
+        for (&tile_pos, clipboard_item) in desired_ghosts.iter() {
+            commands.spawn_ghost(tile_pos, clipboard_item.clone());
         }
     }
 }

@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::geometry::TilePos;
+use crate::{
+    player_interaction::clipboard::ClipboardItem,
+    simulation::geometry::{Facing, TilePos},
+};
 
 use super::StructureId;
 
@@ -15,19 +18,22 @@ pub(crate) struct Ghost;
 pub(super) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
-    /// The variety of structure
-    structure_id: StructureId,
     /// The location of the ghost
     tile_pos: TilePos,
+    /// The variety of structure
+    structure_id: StructureId,
+    /// The direction the ghost is facing
+    facing: Facing,
 }
 
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
-    pub(super) fn new(id: StructureId, tile_pos: TilePos) -> Self {
+    pub fn new(tile_pos: TilePos, item: ClipboardItem) -> Self {
         GhostBundle {
             ghost: Ghost,
-            structure_id: id,
             tile_pos,
+            structure_id: item.id,
+            facing: item.facing,
         }
     }
 }

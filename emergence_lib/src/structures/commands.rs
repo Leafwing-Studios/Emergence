@@ -7,29 +7,28 @@ use bevy::{
 
 use crate::{
     organisms::OrganismBundle,
+    player_interaction::clipboard::ClipboardItem,
     simulation::geometry::{MapGeometry, TilePos},
 };
 
-use super::{
-    crafting::CraftingBundle, ghost::GhostBundle, StructureBundle, StructureId, StructureInfo,
-};
-/// An extension trait for [`Commands`] for working with structures.
+use super::{crafting::CraftingBundle, ghost::GhostBundle, StructureBundle, StructureInfo};
 
+/// An extension trait for [`Commands`] for working with structures.
 pub(crate) trait StructureCommandsExt {
-    /// Spawns a structure of type `id` at `tile_pos`.
+    /// Spawns a structure with data defined by `item` at `tile_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
-    fn spawn_structure(&mut self, tile_pos: TilePos, id: StructureId);
+    fn spawn_structure(&mut self, tile_pos: TilePos, item: ClipboardItem);
 
     /// Despawns any structure at the provided `tile_pos`.
     ///
     /// Has no effect if the tile position is already empty.
     fn despawn_structure(&mut self, tile_pos: TilePos);
 
-    /// Spawns a ghost of type `id` at `tile_pos`.
+    /// Spawns a ghost with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost(&mut self, tile_pos: TilePos, id: StructureId);
+    fn spawn_ghost(&mut self, tile_pos: TilePos, item: ClipboardItem);
 
     /// Despawns any ghost at the provided `tile_pos`.
     ///
@@ -38,16 +37,16 @@ pub(crate) trait StructureCommandsExt {
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
-    fn spawn_structure(&mut self, tile_pos: TilePos, id: StructureId) {
-        self.add(SpawnStructureCommand { tile_pos, id });
+    fn spawn_structure(&mut self, tile_pos: TilePos, item: ClipboardItem) {
+        self.add(SpawnStructureCommand { tile_pos, item });
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
         self.add(DespawnStructureCommand { tile_pos });
     }
 
-    fn spawn_ghost(&mut self, tile_pos: TilePos, id: StructureId) {
-        self.add(SpawnGhostCommand { tile_pos, id });
+    fn spawn_ghost(&mut self, tile_pos: TilePos, item: ClipboardItem) {
+        self.add(SpawnGhostCommand { tile_pos, item });
     }
 
     fn despawn_ghost(&mut self, tile_pos: TilePos) {
@@ -59,8 +58,8 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
 struct SpawnStructureCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
-    /// The variety of structure to spawn.
-    id: StructureId,
+    /// Data about the structure to spawn.
+    item: ClipboardItem,
 }
 
 impl Command for SpawnStructureCommand {
@@ -78,10 +77,10 @@ impl Command for SpawnStructureCommand {
         }
 
         let structure_entity = world.resource_scope(|world, structure_info: Mut<StructureInfo>| {
-            let structure_details = structure_info.get(&self.id).unwrap();
+            let structure_details = structure_info.get(&self.item.id).unwrap();
 
             let structure_entity = world
-                .spawn(StructureBundle::new(self.id, self.tile_pos))
+                .spawn(StructureBundle::new(self.tile_pos, self.item))
                 .id();
 
             // PERF: this could be done in a single archetype move with more branching
@@ -135,8 +134,8 @@ impl Command for DespawnStructureCommand {
 struct SpawnGhostCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
-    /// The variety of structure to spawn.
-    id: StructureId,
+    /// Data about the structure to spawn.
+    item: ClipboardItem,
 }
 
 impl Command for SpawnGhostCommand {
@@ -156,7 +155,7 @@ impl Command for SpawnGhostCommand {
         }
 
         // Spawn a ghost
-        let ghost_entity = world.spawn(GhostBundle::new(self.id, self.tile_pos)).id();
+        let ghost_entity = world.spawn(GhostBundle::new(self.tile_pos, self.item)).id();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry.ghost_index.insert(self.tile_pos, ghost_entity);

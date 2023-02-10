@@ -3,13 +3,15 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, StructureId},
+    structures::commands::StructureCommandsExt,
     terrain::Terrain,
 };
 
 use super::{
-    clipboard::Clipboard, cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem,
-    SelectionAction,
+    clipboard::{Clipboard, ClipboardItem},
+    cursor::CursorPos,
+    tile_selection::SelectedTiles,
+    InteractionSystem, SelectionAction,
 };
 
 /// Code and data for setting zoning of areas for construction.
@@ -35,7 +37,7 @@ impl Plugin for ZoningPlugin {
 #[derive(Component, PartialEq, Eq, Clone, Debug)]
 pub(crate) enum Zoning {
     /// The provided structure should be built on this tile.
-    Structure(StructureId),
+    Structure(ClipboardItem),
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
@@ -85,18 +87,18 @@ fn set_zoning(
                 }
             // Zone using the single selected structure
             } else if clipboard.len() == 1 {
-                let structure_id = clipboard.values().next().unwrap();
+                let clipboard_item = clipboard.values().next().unwrap();
                 for terrain_entity in relevant_terrain_entities {
                     let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                    *zoning = Zoning::Structure(structure_id.clone());
+                    *zoning = Zoning::Structure(clipboard_item.clone());
                 }
             // Paste the selection
             } else {
-                for (tile_pos, structure_id) in clipboard.offset_positions(cursor_tile_pos) {
+                for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
                     // Avoid trying to operate on terrain that doesn't exist
                     if let Some(&terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
                         let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                        *zoning = Zoning::Structure(structure_id.clone());
+                        *zoning = Zoning::Structure(clipboard_item.clone());
                     }
                 }
             }
@@ -111,7 +113,7 @@ fn act_on_zoning(
 ) {
     for (zoning, &tile_pos) in terrain_query.iter() {
         match zoning {
-            Zoning::Structure(id) => commands.spawn_structure(tile_pos, id.clone()),
+            Zoning::Structure(item) => commands.spawn_structure(tile_pos, item.clone()),
             Zoning::None => (), // Do nothing
             Zoning::Clear => commands.despawn_structure(tile_pos),
         };
