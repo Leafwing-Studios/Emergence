@@ -53,17 +53,19 @@ struct HexMenuArrangement {
 }
 
 impl HexMenuArrangement {
-    /// Evaluates the hex that is stored under the
+    /// Computes the hex that corresponds to the cursor position.
     fn get_hex(&self, cursor_pos: Vec2) -> Hex {
         self.layout.world_pos_to_hex(cursor_pos)
     }
 
+    /// Fetches the element under the cursor.
     fn get_item(&self, cursor_pos: Vec2) -> Option<StructureId> {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
 }
 
+/// Creates a new hex menu.
 fn spawn_hex_menu(
     mut commands: Commands,
     actions: Res<ActionState<PlayerAction>>,
@@ -102,7 +104,7 @@ fn spawn_hex_menu(
                         .spawn(HexMenuIconBundle::new(
                             structure_id,
                             hex,
-                            &*structure_info,
+                            &structure_info,
                             &arrangement.layout,
                         ))
                         .id();
@@ -127,6 +129,7 @@ struct HexMenuIconBundle {
 }
 
 impl HexMenuIconBundle {
+    /// Create a new icon with the appropriate positioning and appearance.
     fn new(
         structure_id: &StructureId,
         hex: Hex,
@@ -163,6 +166,7 @@ impl HexMenuIconBundle {
     }
 }
 
+/// Select a hexagon from the hex menu.
 fn select_hex(
     cursor_pos: Res<CursorPos>,
     hex_menu_arrangement: Option<Res<HexMenuArrangement>>,
@@ -187,6 +191,7 @@ fn select_hex(
     }
 }
 
+/// Set the selected structure based on the results of the hex menu.
 fn handle_selection(
     In(result): In<Result<StructureId, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
