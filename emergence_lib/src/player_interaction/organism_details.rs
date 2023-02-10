@@ -12,6 +12,8 @@ use crate::{
     },
 };
 
+use super::tile_selection::SelectedTiles;
+
 /// The details about crafting processes.
 #[derive(Debug, Clone)]
 pub struct CraftingDetails {
@@ -85,37 +87,47 @@ struct HoverDetailsQuery {
 /// Get details about the hovered entity.
 fn hover_details(
     cursor_pos: Res<CursorPos>,
+    selected_tiles: Res<SelectedTiles>,
     mut hover_details: ResMut<SelectionDetails>,
     structure_query: Query<HoverDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
+    // If only one tile is selected, use that.
+    let tile_pos = if selected_tiles.selection().len() == 1 {
+        *selected_tiles.selection().iter().next().unwrap()
+    // Otherwise use the cursor
+    } else if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
+        cursor_pos
+    // If the cursor isn't over a tile, just return early
+    } else {
+        return;
+    };
+
+    hover_details.structure = None;
+
+    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+        let structure_details = structure_query.get(structure_entity).unwrap();
+
+        let crafting_details =
+            if let Some((input, output, recipe, state, timer)) = structure_details.crafting {
+                Some(CraftingDetails {
+                    input_inventory: input.inventory().clone(),
+                    output_inventory: output.inventory().clone(),
+                    active_recipe: recipe.recipe_id().clone(),
+                    state: state.clone(),
+                    timer: timer.timer().clone(),
+                })
+            } else {
+                None
+            };
+
+        hover_details.structure = Some(StructureDetails {
+            entity: structure_entity,
+            tile_pos,
+            structure_id: structure_details.structure_id.clone(),
+            crafting_details,
+        });
+    } else {
         hover_details.structure = None;
-
-        if let Some(&structure_entity) = map_geometry.structure_index.get(&cursor_pos) {
-            let structure_details = structure_query.get(structure_entity).unwrap();
-
-            let crafting_details =
-                if let Some((input, output, recipe, state, timer)) = structure_details.crafting {
-                    Some(CraftingDetails {
-                        input_inventory: input.inventory().clone(),
-                        output_inventory: output.inventory().clone(),
-                        active_recipe: recipe.recipe_id().clone(),
-                        state: state.clone(),
-                        timer: timer.timer().clone(),
-                    })
-                } else {
-                    None
-                };
-
-            hover_details.structure = Some(StructureDetails {
-                entity: structure_entity,
-                tile_pos: cursor_pos,
-                structure_id: structure_details.structure_id.clone(),
-                crafting_details,
-            });
-        } else {
-            hover_details.structure = None;
-        }
     }
 }
