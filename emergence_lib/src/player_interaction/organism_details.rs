@@ -1,11 +1,11 @@
 //! Detailed info about a given organism.
 
-use bevy::prelude::*;
+use bevy::{ecs::query::WorldQuery, prelude::*};
 
 use crate::{
     items::{inventory::Inventory, recipe::RecipeId},
-    player_interaction::cursor::CursorPos,
-    simulation::geometry::MapGeometry,
+    player_interaction::{cursor::CursorPos, InteractionSystem},
+    simulation::geometry::{MapGeometry, TilePos},
     structures::{
         crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
         StructureId,
@@ -34,49 +34,57 @@ pub struct CraftingDetails {
 /// Detailed info about a given entity.
 #[derive(Debug, Clone)]
 pub struct StructureDetails {
-    /// The entity ID of the organism that this info is about.
+    /// The entity ID of the structure that this info is about.
     pub entity: Entity,
-
+    /// The tile position of this organism.
+    pub tile_pos: TilePos,
     /// The type of structure, e.g. plant or fungus.
     pub structure_id: StructureId,
-
     /// If this organism is crafting something, the details about that.
     pub crafting_details: Option<CraftingDetails>,
 }
 
 /// Detailed info about the organism that is being hovered.
 #[derive(Debug, Resource, Default, Deref)]
-pub struct HoverDetails(Option<StructureDetails>);
+pub(crate) struct HoverDetails(pub(crate) Option<StructureDetails>);
 
 /// Display detailed info on hover.
-pub struct DetailsPlugin;
+pub(super) struct DetailsPlugin;
 
 impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
         info!("Building DetailsPlugin...");
 
-        app.init_resource::<HoverDetails>()
-            // TODO: This should be done after the cursor system
-            .add_system(hover_details);
+        app.init_resource::<HoverDetails>().add_system(
+            hover_details
+                .label(InteractionSystem::HoverDetails)
+                .after(InteractionSystem::SelectTiles),
+        );
     }
+}
+
+/// Data needed to populate [`StructureDetails`].
+#[derive(WorldQuery)]
+struct HoverDetailsQuery {
+    /// The type of structure
+    structure_id: &'static StructureId,
+    /// The location
+    tile_pos: &'static TilePos,
+    /// Crafting-related components
+    crafting: Option<(
+        &'static InputInventory,
+        &'static OutputInventory,
+        &'static ActiveRecipe,
+        &'static CraftingState,
+        &'static CraftTimer,
+    )>,
 }
 
 /// Get details about the hovered entity.
 fn hover_details(
     cursor_pos: Res<CursorPos>,
     mut hover_details: ResMut<HoverDetails>,
-    // TODO: use a WorldQuery type
-    structure_query: Query<(
-        Entity,
-        &StructureId,
-        Option<(
-            &InputInventory,
-            &OutputInventory,
-            &ActiveRecipe,
-            &CraftingState,
-            &CraftTimer,
-        )>,
-    )>,
+    structure_query: Query<HoverDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
@@ -86,7 +94,7 @@ fn hover_details(
             let structure_details = structure_query.get(structure_entity).unwrap();
 
             let crafting_details =
-                if let Some((input, output, recipe, state, timer)) = structure_details.2 {
+                if let Some((input, output, recipe, state, timer)) = structure_details.crafting {
                     Some(CraftingDetails {
                         input_inventory: input.inventory().clone(),
                         output_inventory: output.inventory().clone(),
@@ -100,7 +108,8 @@ fn hover_details(
 
             hover_details.0 = Some(StructureDetails {
                 entity: structure_entity,
-                structure_id: structure_details.1.clone(),
+                tile_pos: cursor_pos,
+                structure_id: structure_details.structure_id.clone(),
                 crafting_details,
             });
         } else {

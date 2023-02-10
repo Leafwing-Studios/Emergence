@@ -57,6 +57,8 @@ pub(crate) enum InteractionSystem {
     UseAbilities,
     /// Spawn and despawn ghosts
     ManageGhosts,
+    /// Updates information about the hovered entities
+    HoverDetails,
 }
 
 /// Actions that can be used to select tiles.

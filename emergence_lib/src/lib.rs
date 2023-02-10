@@ -18,6 +18,7 @@ pub mod player_interaction;
 pub mod simulation;
 pub mod structures;
 pub mod terrain;
+pub mod ui;
 
 /// Various app configurations, used for testing.
 ///
