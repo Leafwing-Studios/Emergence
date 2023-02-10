@@ -6,7 +6,7 @@ use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     organisms::units::Unit,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::StructureId,
+    structures::{ghost::Ghost, StructureId},
     terrain::Terrain,
 };
 
@@ -56,16 +56,21 @@ fn populate_terrain(
 
 /// Adds rendering components to every spawned structure
 fn populate_structures(
-    new_structures: Query<(Entity, &TilePos, &StructureId), Added<StructureId>>,
+    new_structures: Query<(Entity, &TilePos, &StructureId, Option<&Ghost>), Added<StructureId>>,
     mut commands: Commands,
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (entity, tile_pos, structure_id) in new_structures.iter() {
+    for (entity, tile_pos, structure_id, maybe_ghost) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
+        let scene_handle = if maybe_ghost.is_some() {
+            // TODO: mutate materials to be a uniform translucent white.
+            structure_handles.scenes.get(structure_id).unwrap()
+        } else {
+            structure_handles.scenes.get(structure_id).unwrap()
+        };
 
         commands.entity(entity).insert(SceneBundle {
             scene: scene_handle.clone_weak(),
