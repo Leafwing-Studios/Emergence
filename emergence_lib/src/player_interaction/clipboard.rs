@@ -38,9 +38,20 @@ impl Plugin for ClipboardPlugin {
 
 /// Stores a selection to copy and paste.
 #[derive(Default, Resource, Debug, Deref, DerefMut)]
-pub(super) struct Clipboard {
+pub(crate) struct Clipboard {
     /// The internal map of structures.
     contents: HashMap<TilePos, ClipboardItem>,
+}
+
+impl Clipboard {
+    /// Sets the contents of the clipboard to a single structure (or clears it if [`None`] is provided).
+    pub(crate) fn set(&mut self, maybe_structure: Option<ClipboardItem>) {
+        self.contents.clear();
+
+        if let Some(structure) = maybe_structure {
+            self.contents.insert(TilePos::default(), structure);
+        }
+    }
 }
 
 /// The data copied via the clipboard for a single structure.

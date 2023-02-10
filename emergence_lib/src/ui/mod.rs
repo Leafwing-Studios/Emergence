@@ -6,6 +6,7 @@ use crate::ui::hover_panel::HoverDetailsPlugin;
 
 mod hover_panel;
 mod intent;
+mod select_structure;
 
 /// The different stages of the UI setup.
 ///
