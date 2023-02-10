@@ -150,10 +150,8 @@ impl PlayerAction {
             PlayerAction::Pan => DualAxis::right_stick().into(),
             PlayerAction::ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
             PlayerAction::ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
-            PlayerAction::RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft.into()]),
-            PlayerAction::RotateCameraRight => {
-                UserInput::chord([camera_modifier, DPadRight.into()])
-            }
+            PlayerAction::RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
+            PlayerAction::RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
         }
     }
 

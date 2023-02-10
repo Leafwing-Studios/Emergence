@@ -123,7 +123,7 @@ impl ObjectInteraction {
     }
 }
 
-/// The state needed by [`SelectionAction::Area`].
+/// The state needed by [`PlayerAction::Area`].
 #[derive(Resource)]
 struct AreaSelection {
     /// The central tile, where the area selection began.
@@ -158,7 +158,7 @@ impl Default for AreaSelection {
     }
 }
 
-/// The state needed by [`SelectionAction::Line`].
+/// The state needed by [`PlayerAction::Line`].
 #[derive(Resource, Default)]
 struct LineSelection {
     /// The starting tile, where the line selection began.

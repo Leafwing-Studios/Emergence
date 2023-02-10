@@ -41,7 +41,7 @@ const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 /// This value should be between 0 (horizontal) and PI / 2 (vertical).
 const CAMERA_ANGLE: f32 = PI / 4.;
 
-/// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
+/// Spawns a [`Camera3dBundle`] and associated camera components.
 fn setup(mut commands: Commands) {
     commands
         .spawn(Camera3dBundle::default())
