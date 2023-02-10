@@ -1,7 +1,7 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
 use crate::organisms::units::AntBundle;
-use crate::player_interaction::clipboard::ClipboardItem;
+use crate::player_interaction::clipboard::StructureData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
@@ -200,7 +200,7 @@ pub fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let item = ClipboardItem {
+        let item = StructureData {
             id: StructureId::new("acacia"),
             facing: Facing::default(),
         };
@@ -211,7 +211,7 @@ pub fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let item = ClipboardItem {
+        let item = StructureData {
             id: StructureId::new("leuco"),
             facing: Facing::default(),
         };

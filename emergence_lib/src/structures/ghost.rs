@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    player_interaction::clipboard::ClipboardItem,
+    player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -28,12 +28,12 @@ pub(super) struct GhostBundle {
 
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
-    pub fn new(tile_pos: TilePos, item: ClipboardItem) -> Self {
+    pub fn new(tile_pos: TilePos, data: StructureData) -> Self {
         GhostBundle {
             ghost: Ghost,
             tile_pos,
-            structure_id: item.id,
-            facing: item.facing,
+            structure_id: data.id,
+            facing: data.facing,
         }
     }
 }

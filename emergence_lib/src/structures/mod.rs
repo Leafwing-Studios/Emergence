@@ -7,7 +7,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     items::recipe::RecipeId,
-    player_interaction::clipboard::ClipboardItem,
+    player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -21,12 +21,12 @@ pub(crate) mod ghost;
 #[derive(Resource, Debug, Deref, DerefMut)]
 struct StructureInfo {
     /// A simple lookup table
-    map: HashMap<StructureId, StructureData>,
+    map: HashMap<StructureId, StructureVariety>,
 }
 
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
-struct StructureData {
+struct StructureVariety {
     /// Is this structure alive?
     organism: bool,
     /// Can this structure make things?
@@ -42,7 +42,7 @@ impl Default for StructureInfo {
         // TODO: read these from files
         map.insert(
             StructureId::new("leuco"),
-            StructureData {
+            StructureVariety {
                 organism: true,
                 crafts: true,
                 starting_recipe: None,
@@ -51,7 +51,7 @@ impl Default for StructureInfo {
 
         map.insert(
             StructureId::new("acacia"),
-            StructureData {
+            StructureVariety {
                 organism: true,
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
@@ -75,10 +75,10 @@ struct StructureBundle {
 
 impl StructureBundle {
     /// Creates a new structure
-    pub fn new(tile_pos: TilePos, item: ClipboardItem) -> Self {
+    pub fn new(tile_pos: TilePos, data: StructureData) -> Self {
         StructureBundle {
-            structure: item.id,
-            facing: item.facing,
+            structure: data.id,
+            facing: data.facing,
             tile_pos,
         }
     }

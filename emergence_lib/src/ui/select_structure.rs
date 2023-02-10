@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     player_interaction::{
-        clipboard::{Clipboard, ClipboardItem},
+        clipboard::{Clipboard, StructureData},
         cursor::CursorPos,
         PlayerAction,
     },
@@ -54,12 +54,12 @@ fn spawn_hex_menu(
 fn select_hex(
     hex_wedge: Query<&Transform, With<HexMenu>>,
     cursor_pos: Res<CursorPos>,
-) -> Result<ClipboardItem, HexMenuError> {
+) -> Result<StructureData, HexMenuError> {
     todo!()
 }
 
 fn handle_selection(
-    In(result): In<Result<ClipboardItem, HexMenuError>>,
+    In(result): In<Result<StructureData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
 ) {
 }
