@@ -46,7 +46,9 @@ pub struct StructureDetails {
 
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default, Deref)]
-pub(crate) struct SelectionDetails(pub(crate) Option<StructureDetails>);
+pub(crate) struct SelectionDetails {
+    pub(crate) structure: Option<StructureDetails>,
+}
 
 /// Display detailed info on hover.
 pub(super) struct DetailsPlugin;
@@ -88,7 +90,7 @@ fn hover_details(
     map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        hover_details.0 = None;
+        hover_details.structure = None;
 
         if let Some(&structure_entity) = map_geometry.structure_index.get(&cursor_pos) {
             let structure_details = structure_query.get(structure_entity).unwrap();
@@ -106,14 +108,14 @@ fn hover_details(
                     None
                 };
 
-            hover_details.0 = Some(StructureDetails {
+            hover_details.structure = Some(StructureDetails {
                 entity: structure_entity,
                 tile_pos: cursor_pos,
                 structure_id: structure_details.structure_id.clone(),
                 crafting_details,
             });
         } else {
-            hover_details.0 = None;
+            hover_details.structure = None;
         }
     }
 }

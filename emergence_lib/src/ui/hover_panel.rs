@@ -142,14 +142,14 @@ fn update_hover_details(
     >,
 ) {
     let mut parent_visibility = panel_query.single_mut();
-    if hover_details.0.is_none() {
+    if hover_details.structure.is_none() {
         *parent_visibility = Visibility::INVISIBLE;
         return;
     } else {
         *parent_visibility = Visibility::VISIBLE;
     }
 
-    let details = hover_details.0.as_ref().unwrap();
+    let details = hover_details.structure.as_ref().unwrap();
     position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
     organism_query.single_mut().sections[1].value = format!("Variety: {}", details.structure_id.id);
 
