@@ -28,7 +28,7 @@ impl Plugin for GraphicsPlugin {
                 .with_system(populate_units)
                 .with_system(populate_structures)
                 // We need to avoid attempting to insert bundles into entities that no longer exist
-                .before(InteractionSystem::ManageGhosts),
+                .with_system(populate_ghosts.before(InteractionSystem::ManageGhosts)),
         );
     }
 }
@@ -59,24 +59,46 @@ fn populate_terrain(
 
 /// Adds rendering components to every spawned structure
 fn populate_structures(
-    new_structures: Query<(Entity, &TilePos, &StructureId, Option<&Ghost>), Added<StructureId>>,
+    new_structures: Query<(Entity, &TilePos, &StructureId), (Added<StructureId>, Without<Ghost>)>,
     mut commands: Commands,
     structure_handles: Res<StructureHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (entity, tile_pos, structure_id, maybe_ghost) in new_structures.iter() {
+    for (entity, tile_pos, structure_id) in new_structures.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
-        let scene_handle = if maybe_ghost.is_some() {
-            // TODO: mutate materials to be a uniform translucent white.
-            structure_handles.scenes.get(structure_id).unwrap()
-        } else {
-            structure_handles.scenes.get(structure_id).unwrap()
-        };
+        let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
 
         commands.entity(entity).insert(SceneBundle {
             scene: scene_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            ..default()
+        });
+    }
+}
+
+/// Adds rendering components to every spawned ghost
+fn populate_ghosts(
+    new_structures: Query<(Entity, &TilePos, &StructureId), (Added<StructureId>, With<Ghost>)>,
+    mut commands: Commands,
+    map_geometry: Res<MapGeometry>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let mesh = Mesh::from(shape::Cube {
+        size: StructureId::SIZE,
+    });
+    let mesh_handle = meshes.add(mesh);
+    let material_handle = materials.add(Color::rgba(0.8, 0.8, 0.8, 0.5).into());
+
+    for (entity, tile_pos, structure_id) in new_structures.iter() {
+        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
+        let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
+
+        commands.entity(entity).insert(PbrBundle {
+            material: material_handle.clone(),
+            mesh: mesh_handle.clone(),
             transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
             ..default()
         });
