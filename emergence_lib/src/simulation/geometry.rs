@@ -107,7 +107,9 @@ impl Default for Facing {
 /// Rotates objects so they are facing the correct direction.
 pub(super) fn sync_rotation_to_facing(
     // Camera requires different logic, it rotates "around" a central point
-    mut query: Query<(&mut Transform, &Facing), (Changed<Facing>, Without<Camera3d>)>,
+    // PERF: re-enable change detection. For some reason this wasn't working on structures,
+    // but was on ghosts.
+    mut query: Query<(&mut Transform, &Facing), Without<Camera3d>>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (mut transform, &facing) in query.iter_mut() {
