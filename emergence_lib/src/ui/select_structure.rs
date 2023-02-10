@@ -10,6 +10,7 @@ use crate::{
         cursor::CursorPos,
         PlayerAction,
     },
+    simulation::geometry::Facing,
     structures::StructureId,
 };
 
@@ -34,6 +35,8 @@ enum HexMenuError {
     NotYetReleased,
     /// No item was selected.
     NoSelection,
+    /// No menu exists.
+    NoMenu,
 }
 
 /// The location of the items in the hex menu.
@@ -42,9 +45,30 @@ struct HexMenuArrangement {
     /// A simple mapping from position to contents.
     ///
     /// If entries are missing, the action will be cancelled if released there.
-    map: HashMap<Hex, StructureId>,
+    content_map: HashMap<Hex, StructureId>,
+    /// The collection of menu icon entities at each hex coordinate
+    icon_map: HashMap<Hex, Entity>,
     /// The size of each hex in pixels
     hex_size: f32,
+    /// The origin of this menu, in screen coordinates
+    center: Vec2,
+}
+
+impl HexMenuArrangement {
+    /// Evaluates the hex that is stored under the
+    fn get_hex(&self, cursor_pos: Vec2) -> Hex {
+        todo!()
+    }
+
+    fn get_item(&self, cursor_pos: Vec2) -> Option<StructureId> {
+        let hex = self.get_hex(cursor_pos);
+        self.content_map.get(&hex).cloned()
+    }
+
+    fn get_icon_entity(&self, cursor_pos: Vec2) -> Option<Entity> {
+        let hex = self.get_hex(cursor_pos);
+        self.icon_map.get(&hex).cloned()
+    }
 }
 
 fn spawn_hex_menu(
@@ -55,31 +79,57 @@ fn spawn_hex_menu(
 }
 
 fn select_hex(
-    hex_wedges: Query<&Transform, With<HexMenu>>,
     cursor_pos: Res<CursorPos>,
-) -> Result<StructureData, HexMenuError> {
-    todo!()
+    hex_menu_arrangement: Option<Res<HexMenuArrangement>>,
+    actions: Res<ActionState<PlayerAction>>,
+) -> Result<StructureId, HexMenuError> {
+    if let Some(arrangement) = hex_menu_arrangement {
+        if actions.released(PlayerAction::SelectStructure) {
+            if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
+                let selection = arrangement.get_item(cursor_pos);
+                match selection {
+                    Some(item) => Ok(item),
+                    None => Err(HexMenuError::NoSelection),
+                }
+            } else {
+                Err(HexMenuError::NoSelection)
+            }
+        } else {
+            Err(HexMenuError::NotYetReleased)
+        }
+    } else {
+        Err(HexMenuError::NoMenu)
+    }
 }
 
 fn handle_selection(
-    In(result): In<Result<StructureData, HexMenuError>>,
+    In(result): In<Result<StructureId, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     hex_wedges: Query<Entity, With<HexMenu>>,
     mut commands: Commands,
 ) {
-    if result != Err(HexMenuError::NotYetReleased) {
-        for entity in hex_wedges.iter() {
-            commands.entity(entity).despawn_recursive();
-        }
+    if result == Err(HexMenuError::NoMenu) || result == Err(HexMenuError::NotYetReleased) {
+        return;
     }
 
     match result {
-        Ok(data) => {
-            clipboard.set(Some(data));
+        Ok(id) => {
+            let structure_data = StructureData {
+                id,
+                facing: Facing::default(),
+            };
+
+            clipboard.set(Some(structure_data));
         }
         Err(HexMenuError::NoSelection) => {
             clipboard.set(None);
         }
         _ => (),
     }
+
+    for entity in hex_wedges.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    commands.remove_resource::<HexMenuArrangement>();
 }
