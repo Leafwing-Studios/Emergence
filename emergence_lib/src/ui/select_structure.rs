@@ -71,7 +71,7 @@ fn spawn_hex_menu(
     structure_info: Res<StructureInfo>,
 ) {
     /// The size of the hexes used in this menu.
-    const HEX_SIZE: f32 = 10.0;
+    const HEX_SIZE: f32 = 100.0;
 
     if actions.just_pressed(PlayerAction::SelectStructure) {
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
@@ -98,12 +98,12 @@ fn spawn_hex_menu(
                 // Just give up rather than panic if too many entities are found
                 if let Some(&hex) = hexes.get(i + 1) {
                     arrangement.content_map.insert(hex, structure_id.clone());
-                    let screen_pos: Vec2 = arrangement.layout.hex_to_world_pos(hex);
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
                             structure_id,
-                            screen_pos,
+                            hex,
                             &*structure_info,
+                            &arrangement.layout,
                         ))
                         .id();
                     arrangement.icon_map.insert(hex, icon_entity);
@@ -127,8 +127,14 @@ struct HexMenuIconBundle {
 }
 
 impl HexMenuIconBundle {
-    fn new(structure_id: &StructureId, screen_pos: Vec2, structure_info: &StructureInfo) -> Self {
+    fn new(
+        structure_id: &StructureId,
+        hex: Hex,
+        structure_info: &StructureInfo,
+        layout: &HexLayout,
+    ) -> Self {
         let color = structure_info.color(structure_id);
+        let screen_pos: Vec2 = layout.hex_to_world_pos(hex);
 
         let image_bundle = ImageBundle {
             background_color: BackgroundColor(color),
@@ -138,6 +144,8 @@ impl HexMenuIconBundle {
                     top: Val::Px(screen_pos.y),
                     ..Default::default()
                 },
+                position_type: PositionType::Absolute,
+                size: Size::new(Val::Px(layout.hex_size.x), Val::Px(layout.hex_size.y)),
                 ..Default::default()
             },
             ..Default::default()
