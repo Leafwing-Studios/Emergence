@@ -1,6 +1,9 @@
 //! Selecting tiles to be built on, inspected or modified
 
-use crate::{self as emergence_lib, structures::commands::StructureCommandsExt};
+use crate::{
+    self as emergence_lib,
+    structures::{commands::StructureCommandsExt, ghost::Ghost},
+};
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
@@ -187,13 +190,18 @@ impl Plugin for SelectionPlugin {
                     .label(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos),
             )
-            .add_system(copy_selection.after(InteractionSystem::SelectTiles))
+            .add_system(
+                copy_selection
+                    .label(InteractionSystem::SetClipboard)
+                    .after(InteractionSystem::SelectTiles),
+            )
             .add_system(
                 set_zoning
                     .after(InteractionSystem::SelectTiles)
                     .after(copy_selection),
             )
             .add_system(act_on_zoning.after(set_zoning))
+            .add_system(display_selection.after(InteractionSystem::SetClipboard))
             .add_system(display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
@@ -556,6 +564,26 @@ fn act_on_zoning(
             Zoning::None => (), // Do nothing
             Zoning::Clear => commands.despawn_structure(tile_pos),
         };
+    }
+}
+
+/// Show the current selection under the cursor
+fn display_selection(
+    clipboard: Res<Clipboard>,
+    cursor_pos: Res<CursorPos>,
+    mut commands: Commands,
+    ghost_query: Query<&TilePos, With<Ghost>>,
+) {
+    if clipboard.is_changed() || cursor_pos.is_changed() {
+        for &tile_pos in ghost_query.iter() {
+            // PERF: we can probably be more clever here
+            // TODO: this is going to hit ghosts created via zoning too :(
+            commands.despawn_ghost(tile_pos);
+        }
+
+        for (&tile_pos, id) in clipboard.iter() {
+            commands.spawn_ghost(tile_pos, id.clone());
+        }
     }
 }
 
