@@ -14,10 +14,8 @@ use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 
-use crate::simulation::geometry::angle;
-use crate::simulation::geometry::clockwise;
-use crate::simulation::geometry::counterclockwise;
 use crate::simulation::geometry::Facing;
+use crate::simulation::geometry::MapGeometry;
 use crate::terrain::Terrain;
 
 use super::InteractionSystem;
@@ -158,6 +156,7 @@ fn translate_camera(
         With<Camera3d>,
     >,
     time: Res<Time>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let (mut focus, facing, camera_actions, settings) = camera_query.single_mut();
 
@@ -182,7 +181,7 @@ fn translate_camera(
             z: scaled_xy.x,
         };
 
-        let facing_angle = angle(facing.direction);
+        let facing_angle = facing.direction.angle(&map_geometry.layout.orientation);
         let rotation = Quat::from_rotation_y(facing_angle);
         let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
@@ -202,16 +201,17 @@ fn rotate_camera(
         ),
         With<Camera3d>,
     >,
+    map_geometry: Res<MapGeometry>,
 ) {
     let (mut transform, mut facing, focus, settings, camera_actions) = query.single_mut();
 
     // Set facing
     if camera_actions.just_pressed(CameraAction::RotateLeft) {
-        facing.direction = counterclockwise(facing.direction);
+        facing.direction = facing.direction.left();
     }
 
     if camera_actions.just_pressed(CameraAction::RotateRight) {
-        facing.direction = clockwise(facing.direction);
+        facing.direction = facing.direction.right();
     }
 
     // Goal: move the camera around a central point
@@ -227,7 +227,7 @@ fn rotate_camera(
     );
 
     // Rotate around on the xz plane
-    let planar_angle = angle(facing.direction);
+    let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
     new_transform.translate_around(focus.translation, Quat::from_rotation_y(planar_angle));
 
     // Look at that central point
