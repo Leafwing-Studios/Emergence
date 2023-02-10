@@ -4,6 +4,7 @@
 
 use std::f32::consts::PI;
 
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::prelude::ActionState;
@@ -27,6 +28,7 @@ impl Plugin for CameraPlugin {
                     // We rely on the updated focus information from this system
                     .after(translate_camera),
             )
+            .add_system(mousewheel_zoom.before(translate_camera))
             .add_system(translate_camera.label(InteractionSystem::MoveCamera));
     }
 }
@@ -41,7 +43,7 @@ const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 /// This value should be between 0 (horizontal) and PI / 2 (vertical).
 const CAMERA_ANGLE: f32 = PI / 4.;
 
-/// Spawns a [`Camera3dBundle`] and sets up the [`InputManagerBundle`]s that handle camera motion
+/// Spawns a [`Camera3dBundle`] and associated camera components.
 fn setup(mut commands: Commands) {
     commands
         .spawn(Camera3dBundle::default())
@@ -105,14 +107,31 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: 500.,
+            zoom_speed: 50.,
             pan_speed: 1.,
-            min_zoom: 2.,
+            min_zoom: 7.,
             max_zoom: 100.,
             linear_interpolation: 0.2,
             rotational_interpolation: 0.1,
         }
     }
+}
+
+/// Zoom the camera based on the mouse wheel
+///
+/// This is needed to normalize gamepad / keyboard and mouse wheel zoom rates.
+fn mousewheel_zoom(
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    mut actions: ResMut<ActionState<PlayerAction>>,
+) {
+    if let Some(first_event) = mouse_wheel_events.iter().next() {
+        if first_event.y > 0. {
+            actions.press(PlayerAction::ZoomIn);
+        } else {
+            actions.press(PlayerAction::ZoomOut);
+        }
+    }
+    mouse_wheel_events.clear();
 }
 
 /// Pan and zoom the camera
@@ -125,13 +144,17 @@ fn translate_camera(
     let (mut focus, facing, settings) = camera_query.single_mut();
 
     // Zoom
-    if actions.pressed(PlayerAction::Zoom) {
-        let delta_zoom =
-            -actions.value(PlayerAction::Zoom) * time.delta_seconds() * settings.zoom_speed;
-
-        // Zoom in / out on whatever we're looking at
-        focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
+    let mut delta_zoom = 0.;
+    if actions.pressed(PlayerAction::ZoomIn) {
+        delta_zoom -= time.delta_seconds() * settings.zoom_speed;
     }
+
+    if actions.pressed(PlayerAction::ZoomOut) {
+        delta_zoom += time.delta_seconds() * settings.zoom_speed;
+    }
+
+    // Zoom in / out on whatever we're looking at
+    focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
