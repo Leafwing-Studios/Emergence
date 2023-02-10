@@ -160,7 +160,7 @@ fn update_hover_details(
         crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
         crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
         crafting_text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe {
-            format!("{}", recipe)
+            format!("{recipe}")
         } else {
             "None".to_string()
         };
