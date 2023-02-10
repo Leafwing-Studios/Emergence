@@ -587,17 +587,36 @@ fn display_selection(
     clipboard: Res<Clipboard>,
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
-    ghost_query: Query<&TilePos, With<Ghost>>,
+    mut ghost_query: Query<(&TilePos, &mut StructureId), With<Ghost>>,
 ) {
-    for &tile_pos in ghost_query.iter() {
-        // PERF: we can probably be more clever here
-        // TODO: this is going to hit ghosts created via zoning too :(
-        commands.despawn_ghost(tile_pos);
-    }
-
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        for (&normalized_clipboard_pos, id) in clipboard.iter() {
-            let tile_pos = cursor_pos + normalized_clipboard_pos;
+        let mut desired_ghosts: HashMap<TilePos, StructureId> =
+            HashMap::with_capacity(clipboard.capacity());
+        for (&clipboard_pos, structure_id) in clipboard.iter() {
+            let tile_pos = cursor_pos + clipboard_pos;
+            desired_ghosts.insert(tile_pos, structure_id.clone());
+        }
+
+        // Handle ghosts that already exist
+        for (tile_pos, mut existing_structure_id) in ghost_query.iter_mut() {
+            // Ghost should exist
+            if let Some(desired_structure_id) = desired_ghosts.get(tile_pos) {
+                // Ghost's identity changed
+                if *existing_structure_id != *desired_structure_id {
+                    // TODO: Bevy 0.10, use set_if_neq
+                    *existing_structure_id = desired_structure_id.clone();
+                }
+
+                // This ghost has been handled
+                desired_ghosts.remove(tile_pos);
+            // Ghost should no longer exist
+            } else {
+                commands.despawn_ghost(*tile_pos);
+            }
+        }
+
+        // Handle any remaining new ghosts
+        for (&tile_pos, id) in desired_ghosts.iter() {
             commands.spawn_ghost(tile_pos, id.clone());
         }
     }
