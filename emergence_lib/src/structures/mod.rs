@@ -18,15 +18,15 @@ pub(crate) mod crafting;
 pub(crate) mod ghost;
 
 /// A central lookup for how each variety the structure works.
-#[derive(Resource, Debug, Deref, DerefMut)]
-struct StructureInfo {
+#[derive(Resource, Debug, Deref)]
+pub(crate) struct StructureInfo {
     /// A simple lookup table
     map: HashMap<StructureId, StructureVariety>,
 }
 
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
-struct StructureVariety {
+pub(crate) struct StructureVariety {
     /// Is this structure alive?
     organism: bool,
     /// Can this structure make things?
