@@ -46,17 +46,20 @@ pub struct StructureDetails {
 
 /// Detailed info about the organism that is being hovered.
 #[derive(Debug, Resource, Default, Deref)]
-pub struct HoverDetails(Option<StructureDetails>);
+pub(crate) struct HoverDetails(pub(crate) Option<StructureDetails>);
 
 /// Display detailed info on hover.
-pub struct DetailsPlugin;
+pub(super) struct DetailsPlugin;
 
 impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
         info!("Building DetailsPlugin...");
 
-        app.init_resource::<HoverDetails>()
-            .add_system(hover_details.after(InteractionSystem::SelectTiles));
+        app.init_resource::<HoverDetails>().add_system(
+            hover_details
+                .label(InteractionSystem::HoverDetails)
+                .after(InteractionSystem::SelectTiles),
+        );
     }
 }
 
