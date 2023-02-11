@@ -63,6 +63,21 @@ impl HexMenuArrangement {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
+
+    /// Fetches the entity corresponding to the icon under the cursor.
+    fn get_icon(&self, cursor_pos: Vec2) -> Option<Entity> {
+        let hex = self.get_hex(cursor_pos);
+        self.icon_map.get(&hex).copied()
+    }
+}
+
+/// The data corresponding to one element of the hex menu.
+#[derive(Debug, PartialEq, Eq)]
+struct HexMenuData {
+    /// The type of structure to place.
+    structure_id: StructureId,
+    /// The entity corresponding to the [`HexMenuIconBundle`].
+    icon_entity: Entity,
 }
 
 /// Creates a new hex menu.
@@ -171,14 +186,20 @@ fn select_hex(
     cursor_pos: Res<CursorPos>,
     hex_menu_arrangement: Option<Res<HexMenuArrangement>>,
     actions: Res<ActionState<PlayerAction>>,
-) -> Result<StructureId, HexMenuError> {
+) -> Result<HexMenuData, HexMenuError> {
     if let Some(arrangement) = hex_menu_arrangement {
         if actions.released(PlayerAction::SelectStructure) {
             if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-                let selection = arrangement.get_item(cursor_pos);
-                match selection {
-                    Some(item) => Ok(item),
-                    None => Err(HexMenuError::NoSelection),
+                let maybe_item = arrangement.get_item(cursor_pos);
+                let maybe_icon_entity = arrangement.get_icon(cursor_pos);
+
+                if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
+                    Ok(HexMenuData {
+                        structure_id: item,
+                        icon_entity,
+                    })
+                } else {
+                    Err(HexMenuError::NoSelection)
                 }
             } else {
                 Err(HexMenuError::NoSelection)
@@ -193,7 +214,7 @@ fn select_hex(
 
 /// Set the selected structure based on the results of the hex menu.
 fn handle_selection(
-    In(result): In<Result<StructureId, HexMenuError>>,
+    In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     hex_wedges: Query<Entity, With<HexMenu>>,
     mut commands: Commands,
@@ -203,9 +224,9 @@ fn handle_selection(
     }
 
     match result {
-        Ok(id) => {
+        Ok(data) => {
             let structure_data = StructureData {
-                id,
+                id: data.structure_id,
                 facing: Facing::default(),
             };
 
