@@ -61,6 +61,7 @@ impl AssetsToLoad {
         }
     }
 
+    /// A system that moves into [`AssetState::Ready`] when all assets are loaded.
     fn transition_when_complete(
         assets_to_load: Res<AssetsToLoad>,
         mut asset_state: ResMut<State<AssetState>>,
@@ -79,7 +80,7 @@ pub trait Loadable: Resource + FromWorld + Sized {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState;
 }
 
-/// An extension trait to add [`Loadable`] and [`AssetsToLoad`] methods to [`App`].
+/// An [`App`] extension trait to add and setup [`Loadable`] collections.
 pub trait AssetCollectionExt {
     /// Sets up all resources and systems needed to load the asset collection of type `T` to the app.
     fn add_asset_collection<T: Loadable>(&mut self);
@@ -101,7 +102,7 @@ impl AssetCollectionExt for App {
 
         // Store the asset collection as a resource
         self.init_resource::<T>();
-        /// Poll each asset collection
+        // Poll each asset collection
         self.add_system_set(
             SystemSet::on_update(AssetState::Loading).with_system(AssetsToLoad::check_loaded::<T>),
         );
