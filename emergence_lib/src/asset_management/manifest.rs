@@ -20,6 +20,7 @@ where
     Id: Debug + PartialEq + Eq + Hash,
     Data: Debug,
 {
+    /// The internal mapping.
     map: HashMap<Id, Data>,
 }
 

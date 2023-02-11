@@ -15,6 +15,7 @@ pub mod slot;
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ItemId {
+    /// The associated string.
     id: &'static str,
 }
 
