@@ -10,12 +10,22 @@ use super::AssetState;
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
+    /// The material to be used for all ghosts
+    pub(crate) ghost_material: Handle<StandardMaterial>,
 }
 
 impl FromWorld for StructureHandles {
     fn from_world(world: &mut World) -> Self {
+        let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+        let ghost_material = materials.add(StandardMaterial {
+            base_color: Color::hsla(0., 0., 0.9, 0.7),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        });
+
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
+            ghost_material,
         };
 
         let asset_server = world.resource::<AssetServer>();
