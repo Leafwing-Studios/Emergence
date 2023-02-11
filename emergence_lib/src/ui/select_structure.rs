@@ -216,7 +216,8 @@ fn select_hex(
 fn handle_selection(
     In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
-    hex_wedges: Query<Entity, With<HexMenu>>,
+    menu_query: Query<Entity, With<HexMenu>>,
+    icon_query: Query<&mut BackgroundColor, With<HexMenu>>,
     mut commands: Commands,
 ) {
     if result == Err(HexMenuError::NoMenu) || result == Err(HexMenuError::NotYetReleased) {
@@ -238,7 +239,7 @@ fn handle_selection(
         _ => (),
     }
 
-    for entity in hex_wedges.iter() {
+    for entity in menu_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
