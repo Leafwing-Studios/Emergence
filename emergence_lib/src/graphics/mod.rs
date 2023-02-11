@@ -84,16 +84,12 @@ fn populate_ghosts(
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    structure_handles: Res<StructureHandles>,
 ) {
     let mesh = Mesh::from(shape::Cube {
         size: StructureId::SIZE,
     });
     let mesh_handle = meshes.add(mesh);
-    let material_handle = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.9, 0.9, 0.9, 0.7),
-        ..Default::default()
-    });
 
     // TODO: vary ghost mesh based on structure_id
     for (entity, tile_pos, _structure_id) in new_structures.iter() {
@@ -101,7 +97,7 @@ fn populate_ghosts(
         let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
 
         commands.entity(entity).insert(PbrBundle {
-            material: material_handle.clone(),
+            material: structure_handles.ghost_material.clone(),
             mesh: mesh_handle.clone(),
             transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
             ..default()
