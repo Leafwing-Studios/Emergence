@@ -120,7 +120,7 @@ fn spawn_hex_menu(
                     arrangement.content_map.insert(hex, structure_id.clone());
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
-                            structure_id,
+                            structure_id.clone(),
                             hex,
                             &structure_info,
                             &arrangement.layout,
@@ -144,17 +144,19 @@ struct HexMenuIconBundle {
     hex_menu: HexMenu,
     /// Small image of structure
     image_bundle: ImageBundle,
+    /// The corresponding `StructureId`
+    structure_id: StructureId,
 }
 
 impl HexMenuIconBundle {
     /// Create a new icon with the appropriate positioning and appearance.
     fn new(
-        structure_id: &StructureId,
+        structure_id: StructureId,
         hex: Hex,
         structure_info: &StructureInfo,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_info.color(structure_id);
+        let color = structure_info.color(&structure_id);
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -180,6 +182,7 @@ impl HexMenuIconBundle {
         HexMenuIconBundle {
             hex_menu: HexMenu,
             image_bundle,
+            structure_id,
         }
     }
 }
@@ -222,7 +225,8 @@ fn handle_selection(
     In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
-    mut icon_query: Query<&mut BackgroundColor, With<HexMenu>>,
+    mut icon_query: Query<(Entity, &StructureId, &mut BackgroundColor), With<HexMenu>>,
+    structure_info: Res<StructureInfo>,
     commands: Commands,
 ) {
     /// Clean up the menu when we are done with it
@@ -245,8 +249,13 @@ fn handle_selection(
                 clipboard.set(Some(structure_data));
                 cleanup(commands, menu_query);
             } else {
-                let mut icon_color = icon_query.get_mut(data.icon_entity).unwrap();
-                *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
+                for (icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                    if icon_entity == data.icon_entity {
+                        *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
+                    } else {
+                        *icon_color = BackgroundColor(structure_info.color(structure_id));
+                    }
+                }
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
@@ -254,6 +263,10 @@ fn handle_selection(
 
             if complete {
                 cleanup(commands, menu_query);
+            } else {
+                for (_icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                    *icon_color = BackgroundColor(structure_info.color(&structure_id));
+                }
             }
         }
         Err(HexMenuError::NoMenu) => (),
