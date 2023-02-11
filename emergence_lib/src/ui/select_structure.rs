@@ -265,7 +265,7 @@ fn handle_selection(
                 cleanup(commands, menu_query);
             } else {
                 for (_icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
-                    *icon_color = BackgroundColor(structure_info.color(&structure_id));
+                    *icon_color = BackgroundColor(structure_info.color(structure_id));
                 }
             }
         }
