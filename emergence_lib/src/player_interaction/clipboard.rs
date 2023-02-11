@@ -204,7 +204,7 @@ fn display_selection(
     clipboard: Res<Clipboard>,
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
-    mut ghost_query: Query<(&TilePos, &mut StructureId, &mut Facing), With<Ghost>>,
+    ghost_query: Query<(&TilePos, &StructureId, &Facing), With<Ghost>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
         let mut desired_ghosts: HashMap<TilePos, StructureData> =
@@ -215,26 +215,19 @@ fn display_selection(
         }
 
         // Handle ghosts that already exist
-        for (tile_pos, mut existing_structure_id, mut existing_facing) in ghost_query.iter_mut() {
+        for (tile_pos, existing_structure_id, existing_facing) in ghost_query.iter() {
             // Ghost should exist
             if let Some(desired_clipboard_item) = desired_ghosts.get(tile_pos) {
-                let desired_structure_id = &desired_clipboard_item.id;
-                let desired_facing = desired_clipboard_item.facing;
-
                 // Ghost's identity changed
-                if *existing_structure_id != *desired_structure_id {
-                    // TODO: Bevy 0.10, use set_if_neq
-                    *existing_structure_id = desired_structure_id.clone();
+                if *existing_structure_id != desired_clipboard_item.id
+                    || *existing_facing != desired_clipboard_item.facing
+                {
+                    commands.despawn_ghost(*tile_pos);
+                } else {
+                    // This ghost is still correct
+                    desired_ghosts.remove(tile_pos);
                 }
 
-                // Ghost's facing has changed
-                if *existing_facing != desired_facing {
-                    // TODO: Bevy 0.10, use set_if_neq
-                    *existing_facing = desired_facing;
-                }
-
-                // This ghost has been handled
-                desired_ghosts.remove(tile_pos);
             // Ghost should no longer exist
             } else {
                 commands.despawn_ghost(*tile_pos);
