@@ -31,10 +31,11 @@ struct HexMenu;
 /// An error that can occur when selecting items from a hex menu.
 #[derive(PartialEq, Debug)]
 enum HexMenuError {
-    /// The menu action is not yet released.
-    NotYetReleased,
     /// No item was selected.
-    NoSelection,
+    NoSelection {
+        /// Is the action complete?
+        complete: bool,
+    },
     /// No menu exists.
     NoMenu,
 }
@@ -63,6 +64,23 @@ impl HexMenuArrangement {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
+
+    /// Fetches the entity corresponding to the icon under the cursor.
+    fn get_icon(&self, cursor_pos: Vec2) -> Option<Entity> {
+        let hex = self.get_hex(cursor_pos);
+        self.icon_map.get(&hex).copied()
+    }
+}
+
+/// The data corresponding to one element of the hex menu.
+#[derive(Debug, PartialEq, Eq)]
+struct HexMenuData {
+    /// The type of structure to place.
+    structure_id: StructureId,
+    /// The entity corresponding to the [`HexMenuIconBundle`].
+    icon_entity: Entity,
+    /// Is the action complete?
+    complete: bool,
 }
 
 /// Creates a new hex menu.
@@ -102,7 +120,7 @@ fn spawn_hex_menu(
                     arrangement.content_map.insert(hex, structure_id.clone());
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
-                            structure_id,
+                            structure_id.clone(),
                             hex,
                             &structure_info,
                             &arrangement.layout,
@@ -126,17 +144,19 @@ struct HexMenuIconBundle {
     hex_menu: HexMenu,
     /// Small image of structure
     image_bundle: ImageBundle,
+    /// The corresponding `StructureId`
+    structure_id: StructureId,
 }
 
 impl HexMenuIconBundle {
     /// Create a new icon with the appropriate positioning and appearance.
     fn new(
-        structure_id: &StructureId,
+        structure_id: StructureId,
         hex: Hex,
         structure_info: &StructureInfo,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_info.color(structure_id);
+        let color = structure_info.color(&structure_id);
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -162,6 +182,7 @@ impl HexMenuIconBundle {
         HexMenuIconBundle {
             hex_menu: HexMenu,
             image_bundle,
+            structure_id,
         }
     }
 }
@@ -171,55 +192,83 @@ fn select_hex(
     cursor_pos: Res<CursorPos>,
     hex_menu_arrangement: Option<Res<HexMenuArrangement>>,
     actions: Res<ActionState<PlayerAction>>,
-) -> Result<StructureId, HexMenuError> {
+) -> Result<HexMenuData, HexMenuError> {
     if let Some(arrangement) = hex_menu_arrangement {
-        if actions.released(PlayerAction::SelectStructure) {
-            if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-                let selection = arrangement.get_item(cursor_pos);
-                match selection {
-                    Some(item) => Ok(item),
-                    None => Err(HexMenuError::NoSelection),
-                }
+        let complete = actions.released(PlayerAction::SelectStructure);
+
+        if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
+            let maybe_item = arrangement.get_item(cursor_pos);
+            let maybe_icon_entity = arrangement.get_icon(cursor_pos);
+
+            if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
+                Ok(HexMenuData {
+                    structure_id: item,
+                    icon_entity,
+                    complete,
+                })
             } else {
-                Err(HexMenuError::NoSelection)
+                // Nothing found on lookup
+                Err(HexMenuError::NoSelection { complete })
             }
         } else {
-            Err(HexMenuError::NotYetReleased)
+            // No cursor
+            Err(HexMenuError::NoSelection { complete })
         }
     } else {
+        // No menu exists
         Err(HexMenuError::NoMenu)
     }
 }
 
 /// Set the selected structure based on the results of the hex menu.
 fn handle_selection(
-    In(result): In<Result<StructureId, HexMenuError>>,
+    In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
-    hex_wedges: Query<Entity, With<HexMenu>>,
-    mut commands: Commands,
+    menu_query: Query<Entity, With<HexMenu>>,
+    mut icon_query: Query<(Entity, &StructureId, &mut BackgroundColor), With<HexMenu>>,
+    structure_info: Res<StructureInfo>,
+    commands: Commands,
 ) {
-    if result == Err(HexMenuError::NoMenu) || result == Err(HexMenuError::NotYetReleased) {
-        return;
+    /// Clean up the menu when we are done with it
+    fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
+        for entity in menu_query.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        commands.remove_resource::<HexMenuArrangement>();
     }
 
     match result {
-        Ok(id) => {
-            let structure_data = StructureData {
-                id,
-                facing: Facing::default(),
-            };
+        Ok(data) => {
+            if data.complete {
+                let structure_data = StructureData {
+                    id: data.structure_id,
+                    facing: Facing::default(),
+                };
 
-            clipboard.set(Some(structure_data));
+                clipboard.set(Some(structure_data));
+                cleanup(commands, menu_query);
+            } else {
+                for (icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                    if icon_entity == data.icon_entity {
+                        *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
+                    } else {
+                        *icon_color = BackgroundColor(structure_info.color(structure_id));
+                    }
+                }
+            }
         }
-        Err(HexMenuError::NoSelection) => {
+        Err(HexMenuError::NoSelection { complete }) => {
             clipboard.set(None);
+
+            if complete {
+                cleanup(commands, menu_query);
+            } else {
+                for (_icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                    *icon_color = BackgroundColor(structure_info.color(structure_id));
+                }
+            }
         }
-        _ => (),
+        Err(HexMenuError::NoMenu) => (),
     }
-
-    for entity in hex_wedges.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    commands.remove_resource::<HexMenuArrangement>();
 }
