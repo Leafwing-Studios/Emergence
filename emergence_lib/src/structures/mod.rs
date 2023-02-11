@@ -29,20 +29,6 @@ impl StructureManifest {
     }
 }
 
-/// A central lookup for how each variety the structure works.
-#[derive(Resource, Debug, Deref)]
-pub(crate) struct StructureInfo {
-    /// A simple lookup table
-    map: HashMap<StructureId, StructureVariety>,
-}
-
-impl StructureInfo {
-    /// The color associated with this structure.
-    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
-        self.get(structure_id).unwrap().color
-    }
-}
-
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureVariety {
@@ -56,7 +42,7 @@ pub(crate) struct StructureVariety {
     color: Color,
 }
 
-impl Default for StructureInfo {
+impl Default for StructureManifest {
     fn default() -> Self {
         let mut map = HashMap::default();
 
@@ -81,7 +67,7 @@ impl Default for StructureInfo {
             },
         );
 
-        StructureInfo { map }
+        StructureManifest { map }
     }
 }
 
@@ -133,6 +119,6 @@ pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin)
-            .init_resource::<StructureInfo>();
+            .init_resource::<StructureManifest>();
     }
 }

@@ -11,7 +11,7 @@ use crate::{
     simulation::geometry::{MapGeometry, TilePos},
 };
 
-use super::{crafting::CraftingBundle, ghost::GhostBundle, StructureBundle, StructureInfo};
+use super::{crafting::CraftingBundle, ghost::GhostBundle, StructureBundle, StructureManifest};
 
 /// An extension trait for [`Commands`] for working with structures.
 pub(crate) trait StructureCommandsExt {
@@ -76,30 +76,31 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        let structure_entity = world.resource_scope(|world, structure_info: Mut<StructureInfo>| {
-            let structure_details = structure_info.get(&self.data.id).unwrap();
+        let structure_entity =
+            world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
+                let structure_details = structure_manifest.get(&self.data.id);
 
-            let structure_entity = world
-                .spawn(StructureBundle::new(self.tile_pos, self.data))
-                .id();
+                let structure_entity = world
+                    .spawn(StructureBundle::new(self.tile_pos, self.data))
+                    .id();
 
-            // PERF: this could be done in a single archetype move with more branching
-            if structure_details.organism {
-                world
-                    .entity_mut(structure_entity)
-                    .insert(OrganismBundle::default());
-            };
+                // PERF: this could be done in a single archetype move with more branching
+                if structure_details.organism {
+                    world
+                        .entity_mut(structure_entity)
+                        .insert(OrganismBundle::default());
+                };
 
-            if structure_details.crafts {
-                world
-                    .entity_mut(structure_entity)
-                    .insert(CraftingBundle::new(
-                        structure_details.starting_recipe.clone(),
-                    ));
-            };
+                if structure_details.crafts {
+                    world
+                        .entity_mut(structure_entity)
+                        .insert(CraftingBundle::new(
+                            structure_details.starting_recipe.clone(),
+                        ));
+                };
 
-            structure_entity
-        });
+                structure_entity
+            });
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry

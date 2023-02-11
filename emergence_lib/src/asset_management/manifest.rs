@@ -13,10 +13,13 @@ use std::{
 
 /// Read-only data definitions.
 #[derive(Debug, Resource, Serialize, Deserialize)]
-pub struct Manifest<Id, Data>(HashMap<Id, Data>)
+pub struct Manifest<Id, Data>
 where
     Id: Debug + PartialEq + Eq + Hash,
-    Data: Debug;
+    Data: Debug,
+{
+    map: HashMap<Id, Data>,
+}
 
 impl<Id, Data> Manifest<Id, Data>
 where
@@ -25,7 +28,7 @@ where
 {
     /// Create a new manifest with the given definitions.
     pub fn new(map: HashMap<Id, Data>) -> Self {
-        Self(map)
+        Self { map }
     }
 
     /// Get the data entry for the given ID.
@@ -35,8 +38,15 @@ where
     /// This function panics when the given ID does not exist in the manifest.
     /// We assume that all IDs are valid and the manifests are complete.
     pub fn get(&self, id: &Id) -> &Data {
-        self.0
+        self.map
             .get(id)
             .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
+    }
+
+    /// The complete list of loaded options.
+    ///
+    /// The order is arbitrary.
+    pub fn variants(&self) -> impl IntoIterator<Item = &Id> {
+        self.map.keys()
     }
 }

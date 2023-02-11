@@ -11,7 +11,7 @@ use crate::{
         PlayerAction,
     },
     simulation::geometry::Facing,
-    structures::{StructureId, StructureInfo},
+    structures::{StructureId, StructureManifest},
 };
 
 /// Hex menu and selection modifying logic.
@@ -88,7 +88,7 @@ fn spawn_hex_menu(
     mut commands: Commands,
     actions: Res<ActionState<PlayerAction>>,
     cursor_pos: Res<CursorPos>,
-    structure_info: Res<StructureInfo>,
+    structure_manifest: Res<StructureManifest>,
 ) {
     /// The size of the hexes used in this menu.
     const HEX_SIZE: f32 = 64.0;
@@ -113,7 +113,7 @@ fn spawn_hex_menu(
 
             let hexes = Hex::ZERO.custom_spiral_range(range, hexx::Direction::BottomRight, true);
 
-            for (i, structure_id) in structure_info.keys().enumerate() {
+            for (i, structure_id) in structure_manifest.variants().into_iter().enumerate() {
                 // Center is reserved for easy cancellation.
                 // Just give up rather than panic if too many entities are found
                 if let Some(&hex) = hexes.get(i + 1) {
@@ -122,7 +122,7 @@ fn spawn_hex_menu(
                         .spawn(HexMenuIconBundle::new(
                             structure_id.clone(),
                             hex,
-                            &structure_info,
+                            &structure_manifest,
                             &arrangement.layout,
                         ))
                         .id();
@@ -153,10 +153,10 @@ impl HexMenuIconBundle {
     fn new(
         structure_id: StructureId,
         hex: Hex,
-        structure_info: &StructureInfo,
+        structure_manifest: &StructureManifest,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_info.color(&structure_id);
+        let color = structure_manifest.color(&structure_id);
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -226,7 +226,7 @@ fn handle_selection(
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
     mut icon_query: Query<(Entity, &StructureId, &mut BackgroundColor), With<HexMenu>>,
-    structure_info: Res<StructureInfo>,
+    structure_manifest: Res<StructureManifest>,
     commands: Commands,
 ) {
     /// Clean up the menu when we are done with it
@@ -253,7 +253,7 @@ fn handle_selection(
                     if icon_entity == data.icon_entity {
                         *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
                     } else {
-                        *icon_color = BackgroundColor(structure_info.color(structure_id));
+                        *icon_color = BackgroundColor(structure_manifest.color(structure_id));
                     }
                 }
             }
@@ -265,7 +265,7 @@ fn handle_selection(
                 cleanup(commands, menu_query);
             } else {
                 for (_icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
-                    *icon_color = BackgroundColor(structure_info.color(structure_id));
+                    *icon_color = BackgroundColor(structure_manifest.color(structure_id));
                 }
             }
         }
