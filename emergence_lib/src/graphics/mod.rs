@@ -94,32 +94,28 @@ fn mesh_ghosts(
 
         let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
 
-        // Spawns as a child of the root ghost
-        commands.entity(entity).insert((
-            // Every entity in this hierarchy will have this marker component
-            GhostSceneMarker,
-            SceneBundle {
-                scene: scene_handle.clone_weak(),
-                transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
-                ..default()
-            },
-        ));
+        // Spawn scene as a child of the root ghost
+        commands.entity(entity).insert(SceneBundle {
+            scene: scene_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            ..default()
+        });
     }
 }
 
-/// Marker for entities spawned as part of a scene.
-///
-/// Child of a [`Ghost`]-holding entity.
-#[derive(Component)]
-struct GhostSceneMarker;
-
 /// Modifies the material of any entities spawned due to a ghost structure.
 fn change_ghost_material(
-    mut query: Query<&mut Handle<StandardMaterial>, Added<GhostSceneMarker>>,
+    ghost_query: Query<Entity, With<Ghost>>,
+    children: Query<&Children>,
+    mut material_query: Query<&mut Handle<StandardMaterial>>,
     structure_handles: Res<StructureHandles>,
 ) {
-    for mut material in query.iter_mut() {
-        *material = structure_handles.ghost_material.clone_weak();
+    for ghost_entity in ghost_query.iter() {
+        for child in children.iter_descendants(ghost_entity) {
+            if let Ok(mut material) = material_query.get_mut(child) {
+                *material = structure_handles.ghost_material.clone_weak();
+            }
+        }
     }
 }
 
