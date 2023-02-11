@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, time::Duration};
 
-use crate::manifest::Manifest;
+use crate::asset_management::manifest::Manifest;
 
 use super::{count::ItemCount, ItemId};
 

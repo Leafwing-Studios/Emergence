@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::manifest::Manifest;
+use crate::asset_management::manifest::Manifest;
 
 pub mod count;
 pub mod errors;
