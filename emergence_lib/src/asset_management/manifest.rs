@@ -11,7 +11,9 @@ use std::{
     hash::Hash,
 };
 
-/// Read-only data definitions.
+/// Write-once data definitions.
+///
+/// These are intended to be created a single time, via [`Manifest::new`].
 #[derive(Debug, Resource, Serialize, Deserialize)]
 pub struct Manifest<Id, Data>
 where

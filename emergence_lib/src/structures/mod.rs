@@ -67,7 +67,7 @@ impl Default for StructureManifest {
             },
         );
 
-        StructureManifest { map }
+        StructureManifest::new(map)
     }
 }
 
