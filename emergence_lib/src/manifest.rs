@@ -1,4 +1,9 @@
-//! Read-only definitions for entities.
+//! Read-only definitions for game objects.
+//!
+//! These are intended to be loaded from a file or dynamically generated via gameplay.
+//! Other systems should look up the data contained here,
+//! in order to populate the properties of in-game entities.
+
 use bevy::{prelude::*, utils::HashMap};
 use serde::{Deserialize, Serialize};
 use std::{
