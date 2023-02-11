@@ -191,42 +191,28 @@ fn select_hex(
     actions: Res<ActionState<PlayerAction>>,
 ) -> Result<HexMenuData, HexMenuError> {
     if let Some(arrangement) = hex_menu_arrangement {
-        if actions.released(PlayerAction::SelectStructure) {
-            if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-                let maybe_item = arrangement.get_item(cursor_pos);
-                let maybe_icon_entity = arrangement.get_icon(cursor_pos);
+        let complete = actions.released(PlayerAction::SelectStructure);
 
-                if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
-                    Ok(HexMenuData {
-                        structure_id: item,
-                        icon_entity,
-                        complete: true,
-                    })
-                } else {
-                    Err(HexMenuError::NoSelection { complete: true })
-                }
+        if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
+            let maybe_item = arrangement.get_item(cursor_pos);
+            let maybe_icon_entity = arrangement.get_icon(cursor_pos);
+
+            if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
+                Ok(HexMenuData {
+                    structure_id: item,
+                    icon_entity,
+                    complete,
+                })
             } else {
-                Err(HexMenuError::NoSelection { complete: true })
+                // Nothing found on lookup
+                Err(HexMenuError::NoSelection { complete })
             }
         } else {
-            if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-                let maybe_item = arrangement.get_item(cursor_pos);
-                let maybe_icon_entity = arrangement.get_icon(cursor_pos);
-
-                if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
-                    Ok(HexMenuData {
-                        structure_id: item,
-                        icon_entity,
-                        complete: false,
-                    })
-                } else {
-                    Err(HexMenuError::NoSelection { complete: false })
-                }
-            } else {
-                Err(HexMenuError::NoSelection { complete: false })
-            }
+            // No cursor
+            Err(HexMenuError::NoSelection { complete })
         }
     } else {
+        // No menu exists
         Err(HexMenuError::NoMenu)
     }
 }
