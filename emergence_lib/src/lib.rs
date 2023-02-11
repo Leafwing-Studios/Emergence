@@ -12,7 +12,6 @@ pub mod enum_iter;
 pub mod graphics;
 pub mod interactable;
 pub mod items;
-pub mod manifest;
 pub mod organisms;
 pub mod player_interaction;
 pub mod simulation;

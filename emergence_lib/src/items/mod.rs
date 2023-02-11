@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::manifest::Manifest;
+use crate::asset_management::manifest::Manifest;
 
 pub mod count;
 pub mod errors;
@@ -14,24 +14,27 @@ pub mod slot;
 
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ItemId(&'static str);
+pub struct ItemId {
+    /// The associated string.
+    id: &'static str,
+}
 
 impl ItemId {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
-        Self("acacia_leaf")
+        Self { id: "acacia_leaf" }
     }
 
     /// An item ID solely used for testing.
     #[cfg(test)]
     pub fn test() -> Self {
-        Self("test")
+        Self { id: "test" }
     }
 }
 
 impl Display for ItemId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.id)
     }
 }
 

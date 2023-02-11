@@ -3,6 +3,7 @@
 use self::{structures::StructureHandles, terrain::TerrainHandles};
 use bevy::prelude::*;
 
+pub(crate) mod manifest;
 pub(crate) mod structures;
 pub(crate) mod terrain;
 

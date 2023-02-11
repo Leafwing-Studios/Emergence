@@ -201,7 +201,7 @@ pub fn generate_organisms(
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
         let item = StructureData {
-            id: StructureId::new("acacia"),
+            id: StructureId { id: "acacia" },
             facing: Facing::default(),
         };
 
@@ -212,7 +212,7 @@ pub fn generate_organisms(
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
         let item = StructureData {
-            id: StructureId::new("leuco"),
+            id: StructureId { id: "leuco" },
             facing: Facing::default(),
         };
 

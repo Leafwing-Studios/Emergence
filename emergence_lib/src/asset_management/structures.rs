@@ -31,16 +31,11 @@ impl FromWorld for StructureHandles {
         let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
-        let structure_names: Vec<String> = vec!["acacia", "leuco"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
+        let structure_names = vec!["acacia", "leuco"];
 
-        for structure_name in structure_names {
-            let structure_id = StructureId {
-                id: structure_name.clone(),
-            };
-            let structure_path = format!("structures/{structure_name}.gltf#Scene0");
+        for id in structure_names {
+            let structure_id = StructureId { id };
+            let structure_path = format!("structures/{id}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);
         }

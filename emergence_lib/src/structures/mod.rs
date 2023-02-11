@@ -6,28 +6,26 @@
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
+    asset_management::manifest::Manifest,
     items::recipe::RecipeId,
     player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
 use self::crafting::CraftingPlugin;
+use std::fmt::Display;
 
 pub(crate) mod commands;
 pub(crate) mod crafting;
 pub(crate) mod ghost;
 
-/// A central lookup for how each variety the structure works.
-#[derive(Resource, Debug, Deref)]
-pub(crate) struct StructureInfo {
-    /// A simple lookup table
-    map: HashMap<StructureId, StructureVariety>,
-}
+/// The data definitions for all structures.
+pub(crate) type StructureManifest = Manifest<StructureId, StructureVariety>;
 
-impl StructureInfo {
+impl StructureManifest {
     /// The color associated with this structure.
     pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
-        self.get(structure_id).unwrap().color
+        self.get(structure_id).color
     }
 }
 
@@ -44,13 +42,13 @@ pub(crate) struct StructureVariety {
     color: Color,
 }
 
-impl Default for StructureInfo {
+impl Default for StructureManifest {
     fn default() -> Self {
         let mut map = HashMap::default();
 
         // TODO: read these from files
         map.insert(
-            StructureId::new("leuco"),
+            StructureId { id: "leuco" },
             StructureVariety {
                 organism: true,
                 crafts: true,
@@ -60,7 +58,7 @@ impl Default for StructureInfo {
         );
 
         map.insert(
-            StructureId::new("acacia"),
+            StructureId { id: "acacia" },
             StructureVariety {
                 organism: true,
                 crafts: true,
@@ -69,7 +67,7 @@ impl Default for StructureInfo {
             },
         );
 
-        StructureInfo { map }
+        StructureManifest::new(map)
     }
 }
 
@@ -99,7 +97,7 @@ impl StructureBundle {
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct StructureId {
     /// The unique identifier for this variety of structure.
-    pub(crate) id: String,
+    pub(crate) id: &'static str,
 }
 
 impl StructureId {
@@ -107,10 +105,11 @@ impl StructureId {
     pub const SIZE: f32 = 1.0;
     /// The offset required to have a structure sit on top of the tile correctly
     pub const OFFSET: f32 = Self::SIZE / 2.0;
+}
 
-    /// Initialize a structure ID via a string.
-    pub(crate) fn new(id: &'static str) -> Self {
-        StructureId { id: id.to_string() }
+impl Display for StructureId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.id)
     }
 }
 
@@ -120,6 +119,6 @@ pub struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin)
-            .init_resource::<StructureInfo>();
+            .init_resource::<StructureManifest>();
     }
 }
