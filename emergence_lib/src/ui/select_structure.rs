@@ -31,10 +31,11 @@ struct HexMenu;
 /// An error that can occur when selecting items from a hex menu.
 #[derive(PartialEq, Debug)]
 enum HexMenuError {
-    /// The menu action is not yet released.
-    NotYetReleased,
     /// No item was selected.
-    NoSelection,
+    NoSelection {
+        /// Is the action complete?
+        complete: bool,
+    },
     /// No menu exists.
     NoMenu,
 }
@@ -78,6 +79,8 @@ struct HexMenuData {
     structure_id: StructureId,
     /// The entity corresponding to the [`HexMenuIconBundle`].
     icon_entity: Entity,
+    /// Is the action complete?
+    complete: bool,
 }
 
 /// Creates a new hex menu.
@@ -197,15 +200,31 @@ fn select_hex(
                     Ok(HexMenuData {
                         structure_id: item,
                         icon_entity,
+                        complete: true,
                     })
                 } else {
-                    Err(HexMenuError::NoSelection)
+                    Err(HexMenuError::NoSelection { complete: true })
                 }
             } else {
-                Err(HexMenuError::NoSelection)
+                Err(HexMenuError::NoSelection { complete: true })
             }
         } else {
-            Err(HexMenuError::NotYetReleased)
+            if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
+                let maybe_item = arrangement.get_item(cursor_pos);
+                let maybe_icon_entity = arrangement.get_icon(cursor_pos);
+
+                if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
+                    Ok(HexMenuData {
+                        structure_id: item,
+                        icon_entity,
+                        complete: false,
+                    })
+                } else {
+                    Err(HexMenuError::NoSelection { complete: false })
+                }
+            } else {
+                Err(HexMenuError::NoSelection { complete: false })
+            }
         }
     } else {
         Err(HexMenuError::NoMenu)
@@ -217,31 +236,40 @@ fn handle_selection(
     In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
-    icon_query: Query<&mut BackgroundColor, With<HexMenu>>,
-    mut commands: Commands,
+    mut icon_query: Query<&mut BackgroundColor, With<HexMenu>>,
+    commands: Commands,
 ) {
-    if result == Err(HexMenuError::NoMenu) || result == Err(HexMenuError::NotYetReleased) {
-        return;
+    /// Clean up the menu when we are done with it
+    fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
+        for entity in menu_query.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        commands.remove_resource::<HexMenuArrangement>();
     }
 
     match result {
         Ok(data) => {
-            let structure_data = StructureData {
-                id: data.structure_id,
-                facing: Facing::default(),
-            };
+            if data.complete {
+                let structure_data = StructureData {
+                    id: data.structure_id,
+                    facing: Facing::default(),
+                };
 
-            clipboard.set(Some(structure_data));
+                clipboard.set(Some(structure_data));
+                cleanup(commands, menu_query);
+            } else {
+                let mut icon_color = icon_query.get_mut(data.icon_entity).unwrap();
+                *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
+            }
         }
-        Err(HexMenuError::NoSelection) => {
+        Err(HexMenuError::NoSelection { complete }) => {
             clipboard.set(None);
+
+            if complete {
+                cleanup(commands, menu_query);
+            }
         }
-        _ => (),
+        Err(HexMenuError::NoMenu) => (),
     }
-
-    for entity in menu_query.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    commands.remove_resource::<HexMenuArrangement>();
 }
