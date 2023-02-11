@@ -62,7 +62,7 @@ impl Default for StructureInfo {
 
         // TODO: read these from files
         map.insert(
-            StructureId::new("leuco"),
+            StructureId { id: "leuco" },
             StructureVariety {
                 organism: true,
                 crafts: true,
@@ -72,7 +72,7 @@ impl Default for StructureInfo {
         );
 
         map.insert(
-            StructureId::new("acacia"),
+            StructureId { id: "acacia" },
             StructureVariety {
                 organism: true,
                 crafts: true,
@@ -111,7 +111,7 @@ impl StructureBundle {
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct StructureId {
     /// The unique identifier for this variety of structure.
-    pub(crate) id: String,
+    pub(crate) id: &'static str,
 }
 
 impl StructureId {
@@ -119,11 +119,6 @@ impl StructureId {
     pub const SIZE: f32 = 1.0;
     /// The offset required to have a structure sit on top of the tile correctly
     pub const OFFSET: f32 = Self::SIZE / 2.0;
-
-    /// Initialize a structure ID via a string.
-    pub(crate) fn new(id: &'static str) -> Self {
-        StructureId { id: id.to_string() }
-    }
 }
 
 impl Display for StructureId {

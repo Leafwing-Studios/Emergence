@@ -31,10 +31,7 @@ impl FromWorld for StructureHandles {
         let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
-        let structure_names: Vec<String> = vec!["acacia", "leuco"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
+        let structure_names = vec!["acacia", "leuco"];
 
         for structure_name in structure_names {
             let structure_id = StructureId {
