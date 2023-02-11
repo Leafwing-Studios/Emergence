@@ -3,7 +3,7 @@
 use crate::structures::StructureId;
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
-use super::AssetState;
+use super::Loadable;
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
@@ -44,8 +44,7 @@ impl FromWorld for StructureHandles {
     }
 }
 
-impl StructureHandles {
-    /// How far along are we in loading these assets?
+impl Loadable for StructureHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (structure, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
@@ -57,20 +56,5 @@ impl StructureHandles {
         }
 
         LoadState::Loaded
-    }
-
-    /// A system that checks if these assets are loaded.
-    pub(super) fn check_loaded(
-        structure_handles: Res<StructureHandles>,
-        asset_server: Res<AssetServer>,
-        mut asset_state: ResMut<State<AssetState>>,
-    ) {
-        let structure_load_state = structure_handles.load_state(&asset_server);
-        info!("Structures are {structure_load_state:?}");
-
-        if structure_load_state == LoadState::Loaded {
-            info!("Transitioning to AssetState::Ready");
-            asset_state.set(AssetState::Ready).unwrap();
-        }
     }
 }
