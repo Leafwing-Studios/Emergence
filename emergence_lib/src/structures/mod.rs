@@ -6,16 +6,28 @@
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
+    asset_management::manifest::Manifest,
     items::recipe::RecipeId,
     player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
 use self::crafting::CraftingPlugin;
+use std::fmt::Display;
 
 pub(crate) mod commands;
 pub(crate) mod crafting;
 pub(crate) mod ghost;
+
+/// The data definitions for all structures.
+pub(crate) type StructureManifest = Manifest<StructureId, StructureVariety>;
+
+impl StructureManifest {
+    /// The color associated with this structure.
+    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
+        self.get(structure_id).color
+    }
+}
 
 /// A central lookup for how each variety the structure works.
 #[derive(Resource, Debug, Deref)]
@@ -111,6 +123,12 @@ impl StructureId {
     /// Initialize a structure ID via a string.
     pub(crate) fn new(id: &'static str) -> Self {
         StructureId { id: id.to_string() }
+    }
+}
+
+impl Display for StructureId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.id)
     }
 }
 
