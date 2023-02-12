@@ -21,6 +21,8 @@ impl Plugin for TileSelectionPlugin {
         app.init_resource::<SelectedTiles>()
             .init_resource::<AreaSelection>()
             .init_resource::<LineSelection>()
+            .init_resource::<SelectionRadius>()
+            .add_system(set_selection_radius.before(select_tiles))
             .add_system(
                 select_tiles
                     .label(InteractionSystem::SelectTiles)
@@ -196,12 +198,37 @@ impl LineSelection {
     }
 }
 
+/// The radius of tiles that is selected at once
+#[derive(Resource, Debug, Default)]
+struct SelectionRadius {
+    size: u32,
+}
+
+impl SelectionRadius {
+    const MAX_SIZE: u32 = 20;
+}
+
+/// Sets the radius of "brush" used to select tiles.
+fn set_selection_radius(
+    mut selection_radius: ResMut<SelectionRadius>,
+    actions: Res<ActionState<PlayerAction>>,
+) {
+    if actions.just_pressed(PlayerAction::IncreaseSelectionRadius) {
+        selection_radius.size = (selection_radius.size + 1).min(SelectionRadius::MAX_SIZE);
+    }
+
+    if actions.just_pressed(PlayerAction::DecreaseSelectionRadius) {
+        selection_radius.size = selection_radius.size.saturating_sub(1);
+    }
+}
+
 /// Integrates user input into tile selection actions to let other systems handle what happens to a selected tile
 #[allow(clippy::too_many_arguments)]
 fn select_tiles(
     cursor: Res<CursorPos>,
     mut selected_tiles: ResMut<SelectedTiles>,
     actions: Res<ActionState<PlayerAction>>,
+    selection_radius: Res<SelectionRadius>,
     mut area_selection: ResMut<AreaSelection>,
     mut line_selection: ResMut<LineSelection>,
 ) {
@@ -212,11 +239,10 @@ fn select_tiles(
         let multiple = actions.pressed(PlayerAction::Multiple);
         let area = actions.pressed(PlayerAction::Area);
         let line = actions.pressed(PlayerAction::Line);
-        let simple_area = area & !multiple & !line;
         let simple_deselect = deselect & !area & !multiple & !line;
 
         // Cache the starting state to make selections reversible
-        if simple_area & area_selection.initial_selection.is_none() {
+        if area & area_selection.initial_selection.is_none() {
             area_selection.begin(&selected_tiles, cursor_pos);
         }
 
@@ -225,7 +251,7 @@ fn select_tiles(
         }
 
         // Clean up state from area and line selections
-        if !simple_area {
+        if !area {
             area_selection.finish();
         }
 
@@ -235,24 +261,18 @@ fn select_tiles(
 
         // Compute the center and radius
         let (center, radius) = if area {
-            let center = if !simple_area {
-                cursor_pos
-            } else {
-                area_selection.center.unwrap()
-            };
+            let center = area_selection.center.unwrap();
 
-            if simple_area {
-                area_selection.radius = cursor_pos.unsigned_distance_to(center.hex);
-            }
+            area_selection.radius = cursor_pos.unsigned_distance_to(center.hex);
 
             (center, area_selection.radius)
         } else {
-            (cursor_pos, 0)
+            (cursor_pos, selection_radius.size)
         };
 
         // Record which tiles should have the "hovered" effect
         selected_tiles.hovered.clear();
-        if simple_area {
+        if area {
             selected_tiles.hovered.insert(center);
             let ring = center.hex.ring(radius);
             for hex in ring {
@@ -262,7 +282,10 @@ fn select_tiles(
             let line_hexes = line_selection.draw_line(cursor_pos, radius);
             selected_tiles.hovered.extend(line_hexes);
         } else {
-            selected_tiles.hovered.insert(cursor_pos);
+            let hexagon = hexagon(center.hex, radius);
+            for hex in hexagon {
+                selected_tiles.hovered.insert(TilePos { hex });
+            }
         }
 
         // Don't attempt to handle conflicting inputs.
