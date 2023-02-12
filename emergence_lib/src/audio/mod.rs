@@ -1,6 +1,9 @@
 //! Controls audio loading and handles
 use bevy::prelude::*;
-use bevy_kira_audio::prelude::*;
+use bevy_kira_audio::{
+    prelude::{Audio, AudioPlugin},
+    AudioControl,
+};
 
 /// Label for audio plugin
 pub struct GameAudioPlugin;
