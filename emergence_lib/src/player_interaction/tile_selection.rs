@@ -138,8 +138,14 @@ struct AreaSelection {
 
 impl AreaSelection {
     /// Set things up to start a line selection action.
-    fn begin(&mut self, selected_tiles: &SelectedTiles, cursor_pos: TilePos) {
+    fn begin(
+        &mut self,
+        selected_tiles: &SelectedTiles,
+        cursor_pos: TilePos,
+        selection_radius: &SelectionRadius,
+    ) {
         self.center = Some(cursor_pos);
+        self.radius = selection_radius.size;
         self.initial_selection = Some(selected_tiles.clone());
     }
 
@@ -243,7 +249,7 @@ fn select_tiles(
 
         // Cache the starting state to make selections reversible
         if area & area_selection.initial_selection.is_none() {
-            area_selection.begin(&selected_tiles, cursor_pos);
+            area_selection.begin(&selected_tiles, cursor_pos, &selection_radius);
         }
 
         if line & line_selection.initial_selection.is_none() {
@@ -259,11 +265,19 @@ fn select_tiles(
             line_selection.finish();
         }
 
+        let mut changing_selection_radius = false;
+
         // Compute the center and radius
         let (center, radius) = if area {
             let center = area_selection.center.unwrap();
 
-            area_selection.radius = cursor_pos.unsigned_distance_to(center.hex);
+            // Don't mess with indicator for changing selection size
+            let proposed_radius = cursor_pos.unsigned_distance_to(center.hex);
+            if proposed_radius == 0 {
+                changing_selection_radius = true;
+            } else {
+                area_selection.radius = proposed_radius;
+            }
 
             (center, area_selection.radius)
         } else {
@@ -272,7 +286,7 @@ fn select_tiles(
 
         // Record which tiles should have the "hovered" effect
         selected_tiles.hovered.clear();
-        if area {
+        if area & !changing_selection_radius {
             selected_tiles.hovered.insert(center);
             let ring = center.hex.ring(radius);
             for hex in ring {
