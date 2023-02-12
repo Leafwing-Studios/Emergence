@@ -70,6 +70,10 @@ pub(crate) enum PlayerAction {
     Select,
     /// Deselects a tile or group of tiles.
     Deselect,
+    /// Increases the radius of the selection by one tile.
+    IncreaseSelectionRadius,
+    /// Decreases the radius of the selection by one tile.
+    DecreaseSelectionRadius,
     /// Modifies the selection / deselection to be sequential.
     Multiple,
     /// Modifies the selection to cover a hexagonal area.
@@ -114,6 +118,13 @@ impl PlayerAction {
         match self {
             PlayerAction::Select => MouseButton::Left.into(),
             PlayerAction::Deselect => MouseButton::Right.into(),
+            // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
+            PlayerAction::IncreaseSelectionRadius => {
+                UserInput::modified(Modifier::Control, KeyCode::Equals)
+            }
+            PlayerAction::DecreaseSelectionRadius => {
+                UserInput::modified(Modifier::Control, KeyCode::Minus)
+            }
             PlayerAction::Multiple => Modifier::Shift.into(),
             PlayerAction::Area => Modifier::Control.into(),
             PlayerAction::Line => Modifier::Alt.into(),
@@ -137,11 +148,14 @@ impl PlayerAction {
     fn gamepad_binding(&self) -> UserInput {
         use GamepadButtonType::*;
         let camera_modifier = RightTrigger2;
+        let radius_modifier = LeftTrigger;
 
         match self {
             PlayerAction::Select => South.into(),
             PlayerAction::Deselect => East.into(),
             PlayerAction::Multiple => RightTrigger.into(),
+            PlayerAction::IncreaseSelectionRadius => UserInput::chord([radius_modifier, DPadUp]),
+            PlayerAction::DecreaseSelectionRadius => UserInput::chord([radius_modifier, DPadDown]),
             PlayerAction::Area => LeftTrigger.into(),
             PlayerAction::Line => LeftTrigger2.into(),
             PlayerAction::SelectStructure => RightThumb.into(),
