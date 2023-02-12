@@ -115,61 +115,60 @@ pub(crate) enum PlayerAction {
 impl PlayerAction {
     /// The default keybindings for mouse and keyboard.
     fn kbm_binding(&self) -> UserInput {
+        use PlayerAction::*;
         match self {
-            PlayerAction::Select => MouseButton::Left.into(),
-            PlayerAction::Deselect => MouseButton::Right.into(),
+            Select => MouseButton::Left.into(),
+            Deselect => MouseButton::Right.into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
-            PlayerAction::IncreaseSelectionRadius => {
-                UserInput::modified(Modifier::Control, KeyCode::Equals)
-            }
-            PlayerAction::DecreaseSelectionRadius => {
-                UserInput::modified(Modifier::Control, KeyCode::Minus)
-            }
-            PlayerAction::Multiple => Modifier::Shift.into(),
-            PlayerAction::Area => Modifier::Control.into(),
-            PlayerAction::Line => Modifier::Alt.into(),
-            PlayerAction::SelectStructure => KeyCode::E.into(),
-            PlayerAction::Pipette => KeyCode::Q.into(),
-            PlayerAction::Zone => KeyCode::Space.into(),
-            PlayerAction::ClearZoning => KeyCode::Back.into(),
-            PlayerAction::ClearClipboard => KeyCode::Escape.into(),
-            PlayerAction::RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
-            PlayerAction::RotateClipboardRight => KeyCode::R.into(),
-            PlayerAction::Pan => VirtualDPad::wasd().into(),
+            IncreaseSelectionRadius => UserInput::modified(Modifier::Control, KeyCode::Equals),
+            DecreaseSelectionRadius => UserInput::modified(Modifier::Control, KeyCode::Minus),
+            Multiple => Modifier::Shift.into(),
+            Area => Modifier::Control.into(),
+            Line => Modifier::Alt.into(),
+            SelectStructure => KeyCode::E.into(),
+            Pipette => KeyCode::Q.into(),
+            Zone => KeyCode::Space.into(),
+            ClearZoning => KeyCode::Back.into(),
+            ClearClipboard => KeyCode::Escape.into(),
+            RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
+            RotateClipboardRight => KeyCode::R.into(),
+            Pan => VirtualDPad::wasd().into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
-            PlayerAction::ZoomIn => KeyCode::Equals.into(),
-            PlayerAction::ZoomOut => KeyCode::Minus.into(),
-            PlayerAction::RotateCameraLeft => KeyCode::Z.into(),
-            PlayerAction::RotateCameraRight => KeyCode::C.into(),
+            ZoomIn => KeyCode::Equals.into(),
+            ZoomOut => KeyCode::Minus.into(),
+            RotateCameraLeft => KeyCode::Z.into(),
+            RotateCameraRight => KeyCode::C.into(),
         }
     }
 
     /// The default keybindings for gamepads.
     fn gamepad_binding(&self) -> UserInput {
         use GamepadButtonType::*;
+        use PlayerAction::*;
+
         let camera_modifier = RightTrigger2;
         let radius_modifier = LeftTrigger;
 
         match self {
             PlayerAction::Select => South.into(),
-            PlayerAction::Deselect => East.into(),
-            PlayerAction::Multiple => RightTrigger.into(),
-            PlayerAction::IncreaseSelectionRadius => UserInput::chord([radius_modifier, DPadUp]),
-            PlayerAction::DecreaseSelectionRadius => UserInput::chord([radius_modifier, DPadDown]),
-            PlayerAction::Area => LeftTrigger.into(),
-            PlayerAction::Line => LeftTrigger2.into(),
-            PlayerAction::SelectStructure => RightThumb.into(),
-            PlayerAction::Pipette => West.into(),
-            PlayerAction::Zone => North.into(),
-            PlayerAction::ClearZoning => DPadUp.into(),
-            PlayerAction::ClearClipboard => DPadDown.into(),
-            PlayerAction::RotateClipboardLeft => DPadLeft.into(),
-            PlayerAction::RotateClipboardRight => DPadRight.into(),
-            PlayerAction::Pan => DualAxis::right_stick().into(),
-            PlayerAction::ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
-            PlayerAction::ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
-            PlayerAction::RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
-            PlayerAction::RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
+            Deselect => East.into(),
+            Multiple => RightTrigger.into(),
+            IncreaseSelectionRadius => UserInput::chord([radius_modifier, DPadUp]),
+            DecreaseSelectionRadius => UserInput::chord([radius_modifier, DPadDown]),
+            Area => LeftTrigger.into(),
+            Line => LeftTrigger2.into(),
+            SelectStructure => RightThumb.into(),
+            Pipette => West.into(),
+            Zone => North.into(),
+            ClearZoning => DPadUp.into(),
+            ClearClipboard => DPadDown.into(),
+            RotateClipboardLeft => DPadLeft.into(),
+            RotateClipboardRight => DPadRight.into(),
+            Pan => DualAxis::right_stick().into(),
+            ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
+            ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
+            RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
+            RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
         }
     }
 
