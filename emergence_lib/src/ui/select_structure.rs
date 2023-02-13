@@ -111,12 +111,13 @@ fn spawn_hex_menu(
             // Any larger than this is quite unwieldy
             let range = 3;
 
-            let hexes = Hex::ZERO.custom_spiral_range(range, hexx::Direction::BottomRight, true);
+            // Center is reserved for easy cancellation.
+            let mut hexes =
+                Hex::ZERO.custom_spiral_range(1..range, hexx::Direction::BottomRight, true);
 
-            for (i, structure_id) in structure_manifest.variants().into_iter().enumerate() {
-                // Center is reserved for easy cancellation.
+            for structure_id in structure_manifest.variants() {
                 // Just give up rather than panic if too many entities are found
-                if let Some(&hex) = hexes.get(i + 1) {
+                if let Some(hex) = hexes.next() {
                     arrangement.content_map.insert(hex, structure_id.clone());
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
