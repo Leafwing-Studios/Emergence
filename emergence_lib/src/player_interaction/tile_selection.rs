@@ -207,10 +207,16 @@ impl LineSelection {
 /// The radius of tiles that is selected at once
 #[derive(Resource, Debug, Default)]
 struct SelectionRadius {
+    /// The number of tiles away from the central tile that are selected.
+    ///
+    /// 0 selects 1 tile, 1 selects 7 tiles and so on.
     size: u32,
 }
 
 impl SelectionRadius {
+    /// The maximum radius of tiles that can be selected at once.
+    ///
+    /// This exists to avoid silly or performance degrading
     const MAX_SIZE: u32 = 20;
 }
 
