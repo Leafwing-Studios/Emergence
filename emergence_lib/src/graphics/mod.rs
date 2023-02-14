@@ -3,8 +3,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
-    organisms::units::Unit,
+    asset_management::{
+        structures::StructureHandles, terrain::TerrainHandles, units::UnitHandles, AssetState,
+    },
+    organisms::units::UnitId,
     player_interaction::InteractionSystem,
     simulation::geometry::{MapGeometry, TilePos},
     structures::{ghost::Ghost, StructureId},
@@ -121,31 +123,19 @@ fn change_ghost_material(
 
 /// Adds rendering components to every spawned unit
 fn populate_units(
-    new_structures: Query<(Entity, &TilePos), Added<Unit>>,
+    new_units: Query<(Entity, &TilePos, &UnitId), Added<UnitId>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    unit_handles: Res<UnitHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
-    /// The size of a single unit
-    const SIZE: f32 = 0.5;
-    /// The offset required to have a unit stand on top of the tile correctly
-    const OFFSET: f32 = SIZE / 2.0;
-
-    let mesh = Mesh::from(shape::Cube { size: SIZE });
-    let mesh_handle = meshes.add(mesh);
-
-    for (entity, tile_pos) in new_structures.iter() {
+    for (entity, tile_pos, unit_id) in new_units.iter() {
         let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
-        let terrain_height = map_geometry.height_index.get(tile_pos).unwrap();
+        let terrain_height = *map_geometry.height_index.get(tile_pos).unwrap();
+        let scene_handle = unit_handles.scenes.get(unit_id).unwrap();
 
-        // PERF: this is wildly inefficient and lazy. Store the handles instead!
-        let material = materials.add(Color::BLACK.into());
-
-        commands.entity(entity).insert(PbrBundle {
-            mesh: mesh_handle.clone(),
-            material: material.clone(),
-            transform: Transform::from_xyz(pos.x, terrain_height + OFFSET, pos.y),
+        commands.entity(entity).insert(SceneBundle {
+            scene: scene_handle.clone_weak(),
+            transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
             ..default()
         });
     }

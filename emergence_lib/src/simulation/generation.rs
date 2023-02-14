@@ -1,6 +1,6 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::units::AntBundle;
+use crate::organisms::units::UnitBundle;
 use crate::player_interaction::clipboard::StructureData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
@@ -38,11 +38,11 @@ impl GenerationConfig {
     pub const MAP_RADIUS: u32 = 20;
 
     /// The number of ants in the default generation config
-    pub const N_ANT: usize = 5;
+    pub const N_ANT: usize = 40;
     /// The number of plants in the default generation config
-    pub const N_PLANT: usize = 50;
+    pub const N_PLANT: usize = 100;
     /// The number of fungi in the default generation config
-    pub const N_FUNGI: usize = 25;
+    pub const N_FUNGI: usize = 50;
 
     /// The choice weight for plain terrain in default generation config
     pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
@@ -195,7 +195,11 @@ pub fn generate_organisms(
 
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    commands.spawn_batch(ant_positions.into_iter().map(AntBundle::new));
+    commands.spawn_batch(
+        ant_positions
+            .into_iter()
+            .map(|ant_position| UnitBundle::new("ant", ant_position)),
+    );
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);

@@ -5,7 +5,7 @@
 use bevy::prelude::*;
 
 use crate::interactable::Interactable;
-use crate::organisms::units::Unit;
+use crate::organisms::units::UnitId;
 use crate::simulation::geometry::TilePos;
 
 /// A unit's current goals.
@@ -105,7 +105,7 @@ pub mod events {
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<(&Unit, &mut CurrentGoal)>) {
+pub(super) fn choose_goal(mut units_query: Query<(&UnitId, &mut CurrentGoal)>) {
     for (_unit, current_goal) in units_query.iter_mut() {
         // Check to see if any of the possible goals are high enough priority to swap to
         if *current_goal == CurrentGoal::Wander {
@@ -116,7 +116,7 @@ pub(super) fn choose_goal(mut units_query: Query<(&Unit, &mut CurrentGoal)>) {
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_action(
-    units_query: Query<(Entity, &TilePos, &CurrentGoal), With<Unit>>,
+    units_query: Query<(Entity, &TilePos, &CurrentGoal), With<UnitId>>,
     _interactables_query: Query<(Entity, &TilePos, &Interactable)>,
     _behavior_event_writer: events::BehaviorEventWriters,
 ) {
