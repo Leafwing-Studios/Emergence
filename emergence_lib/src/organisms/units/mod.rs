@@ -34,6 +34,7 @@ pub(crate) struct UnitBundle {
 }
 
 impl UnitBundle {
+    /// Initializes a new unit
     pub(crate) fn new(id: &'static str, tile_pos: TilePos) -> Self {
         UnitBundle {
             id: UnitId { id },
