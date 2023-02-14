@@ -13,7 +13,7 @@ use super::OrganismBundle;
 
 mod behavior;
 
-/// Defining component for [`UnitBundle`]
+/// The unique, string-based identifier of a unit.
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnitId {
     /// The unique identifier for this variety of unit.
