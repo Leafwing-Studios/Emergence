@@ -8,6 +8,7 @@ use bevy::{asset::LoadState, prelude::*, utils::HashSet};
 pub(crate) mod manifest;
 pub(crate) mod structures;
 pub(crate) mod terrain;
+pub(crate) mod units;
 
 /// Collects asset management systems and resources.
 pub struct AssetManagementPlugin;

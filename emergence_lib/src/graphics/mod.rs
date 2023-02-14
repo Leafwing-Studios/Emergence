@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
-    organisms::units::Unit,
+    organisms::units::UnitId,
     player_interaction::InteractionSystem,
     simulation::geometry::{MapGeometry, TilePos},
     structures::{ghost::Ghost, StructureId},
@@ -121,7 +121,7 @@ fn change_ghost_material(
 
 /// Adds rendering components to every spawned unit
 fn populate_units(
-    new_structures: Query<(Entity, &TilePos), Added<Unit>>,
+    new_structures: Query<(Entity, &TilePos), Added<UnitId>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

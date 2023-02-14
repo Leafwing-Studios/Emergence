@@ -9,51 +9,37 @@ use self::behavior::events::{
 };
 use self::behavior::CurrentGoal;
 
+use super::OrganismBundle;
+
 mod behavior;
 
-/// Available types of units
-pub enum UnitType {
-    /// A worker ant
-    Ant,
+/// Defining component for [`UnitBundle`]
+#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct UnitId {
+    /// The unique identifier for this variety of unit.
+    pub(crate) id: &'static str,
 }
-
-/// Marker component for [`UnitBundle`]
-#[derive(Component, Clone, Default)]
-pub struct Unit;
 
 /// An organism that can move around freely.
-#[derive(Bundle, Default)]
-pub struct UnitBundle {
-    /// Marker component.
-    unit: Unit,
-    /// What is the unit trying to do
-    current_task: CurrentGoal,
-}
-
-/// Data characterizing ants
-#[derive(Component, Clone, Default)]
-pub struct Ant;
-
-/// A worker ant
 #[derive(Bundle)]
-pub struct AntBundle {
-    /// Data characterizing ants
-    ant: Ant,
-    /// Ants are units.
-    unit_bundle: UnitBundle,
-    /// Position in the world
-    position: TilePos,
+pub(crate) struct UnitBundle {
+    /// Marker component.
+    id: UnitId,
+    /// The tile the unit is above.
+    tile_pos: TilePos,
+    /// What is the unit trying to do
+    current_goal: CurrentGoal,
+    /// Organism data
+    organism_bundle: OrganismBundle,
 }
 
-impl AntBundle {
-    /// Creates a new [`AntBundle`]
-    pub fn new(position: TilePos) -> Self {
-        Self {
-            ant: Ant,
-            unit_bundle: UnitBundle {
-                ..Default::default()
-            },
-            position,
+impl UnitBundle {
+    pub(crate) fn new(id: &'static str, tile_pos: TilePos) -> Self {
+        UnitBundle {
+            id: UnitId { id },
+            tile_pos,
+            current_goal: CurrentGoal::default(),
+            organism_bundle: OrganismBundle::default(),
         }
     }
 }
