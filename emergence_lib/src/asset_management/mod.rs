@@ -2,7 +2,7 @@
 
 use std::any::TypeId;
 
-use self::{structures::StructureHandles, terrain::TerrainHandles};
+use self::{structures::StructureHandles, terrain::TerrainHandles, units::UnitHandles};
 use bevy::{asset::LoadState, prelude::*, utils::HashSet};
 
 pub(crate) mod manifest;
@@ -17,7 +17,8 @@ impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TerrainHandles>()
             .add_state(AssetState::Loading)
-            .add_asset_collection::<StructureHandles>();
+            .add_asset_collection::<StructureHandles>()
+            .add_asset_collection::<UnitHandles>();
     }
 }
 
@@ -84,11 +85,11 @@ pub trait Loadable: Resource + FromWorld + Sized {
 /// An [`App`] extension trait to add and setup [`Loadable`] collections.
 pub trait AssetCollectionExt {
     /// Sets up all resources and systems needed to load the asset collection of type `T` to the app.
-    fn add_asset_collection<T: Loadable>(&mut self);
+    fn add_asset_collection<T: Loadable>(&mut self) -> &mut Self;
 }
 
 impl AssetCollectionExt for App {
-    fn add_asset_collection<T: Loadable>(&mut self) {
+    fn add_asset_collection<T: Loadable>(&mut self) -> &mut Self {
         if let Some(mut assets_to_load) = self.world.get_resource_mut::<AssetsToLoad>() {
             assets_to_load.insert::<T>();
         } else {
@@ -107,5 +108,7 @@ impl AssetCollectionExt for App {
         self.add_system_set(
             SystemSet::on_update(AssetState::Loading).with_system(AssetsToLoad::check_loaded::<T>),
         );
+
+        self
     }
 }
