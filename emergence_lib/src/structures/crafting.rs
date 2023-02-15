@@ -12,7 +12,7 @@ use crate::items::{
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
-pub enum CraftingState {
+pub(crate) enum CraftingState {
     /// There are resources missing for the recipe.
     #[default]
     WaitingForInput,
@@ -26,51 +26,51 @@ pub enum CraftingState {
 
 /// The input inventory for a structure.
 #[derive(Component, Debug, Default)]
-pub struct InputInventory(Inventory);
+pub(crate) struct InputInventory(Inventory);
 
 impl InputInventory {
     /// The inventory holding the items to be crafted.
-    pub fn inventory(&self) -> &Inventory {
+    pub(crate) fn inventory(&self) -> &Inventory {
         &self.0
     }
 }
 
 /// The output inventory for a structure.
 #[derive(Component, Debug, Default)]
-pub struct OutputInventory(Inventory);
+pub(crate) struct OutputInventory(Inventory);
 
 impl OutputInventory {
     /// The inventory for the crafting output.
-    pub fn inventory(&self) -> &Inventory {
+    pub(crate) fn inventory(&self) -> &Inventory {
         &self.0
     }
 }
 
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default)]
-pub struct ActiveRecipe(Option<RecipeId>);
+pub(crate) struct ActiveRecipe(Option<RecipeId>);
 
 impl ActiveRecipe {
     /// The ID of the currently active recipe, if one has been selected.
-    pub fn recipe_id(&self) -> &Option<RecipeId> {
+    pub(crate) fn recipe_id(&self) -> &Option<RecipeId> {
         &self.0
     }
 }
 
 /// The time remaining until the recipe has been crafted.
 #[derive(Component, Debug, Default)]
-pub struct CraftTimer(Timer);
+pub(crate) struct CraftTimer(Timer);
 
 impl CraftTimer {
     /// The timer indicating how much longer the crafting process will take.
-    pub fn timer(&self) -> &Timer {
+    pub(crate) fn timer(&self) -> &Timer {
         &self.0
     }
 }
 
 /// All components needed to craft stuff.
 #[derive(Debug, Default, Bundle)]
-pub struct CraftingBundle {
+pub(crate) struct CraftingBundle {
     /// The input inventory for the items needed for crafting.
     input_inventory: InputInventory,
 
@@ -89,7 +89,7 @@ pub struct CraftingBundle {
 
 impl CraftingBundle {
     /// Create a new crafting bundle without an active recipe set.
-    pub fn new(starting_recipe: Option<RecipeId>) -> Self {
+    pub(crate) fn new(starting_recipe: Option<RecipeId>) -> Self {
         if let Some(recipe_id) = starting_recipe {
             Self {
                 // TODO: Don't hard-code these values
@@ -172,7 +172,7 @@ fn start_and_finish_crafting(
 }
 
 /// Add crafting capabilities to structures.
-pub struct CraftingPlugin;
+pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
