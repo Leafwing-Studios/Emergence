@@ -28,7 +28,7 @@ pub(super) struct GhostBundle {
 
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
-    pub fn new(tile_pos: TilePos, data: StructureData) -> Self {
+    pub(super) fn new(tile_pos: TilePos, data: StructureData) -> Self {
         GhostBundle {
             ghost: Ghost,
             tile_pos,

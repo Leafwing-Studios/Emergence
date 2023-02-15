@@ -63,11 +63,11 @@ impl Plugin for UiPlugin {
 
 /// The UI panel on the left side.
 #[derive(Debug, Component)]
-pub struct LeftPanel;
+struct LeftPanel;
 
 /// The UI panel on the right side.
 #[derive(Debug, Component)]
-pub struct RightPanel;
+struct RightPanel;
 
 /// Create the basic UI layout.
 fn setup_ui(mut commands: Commands) {

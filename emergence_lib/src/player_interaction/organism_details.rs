@@ -16,21 +16,21 @@ use super::tile_selection::SelectedTiles;
 
 /// The details about crafting processes.
 #[derive(Debug, Clone)]
-pub struct CraftingDetails {
+pub(crate) struct CraftingDetails {
     /// The inventory for the input items.
-    pub input_inventory: Inventory,
+    pub(crate) input_inventory: Inventory,
 
     /// The inventory for the output items.
-    pub output_inventory: Inventory,
+    pub(crate) output_inventory: Inventory,
 
     /// The recipe that's currently being crafted, if any.
-    pub active_recipe: Option<RecipeId>,
+    pub(crate) active_recipe: Option<RecipeId>,
 
     /// The state of the ongoing crafting process.
-    pub state: CraftingState,
+    pub(crate) state: CraftingState,
 
     /// The time remaining to finish crafting.
-    pub timer: Timer,
+    pub(crate) timer: Timer,
 }
 
 /// Detailed info about a given entity.

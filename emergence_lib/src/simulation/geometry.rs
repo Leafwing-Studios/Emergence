@@ -110,11 +110,12 @@ impl MapGeometry {
     }
 }
 
-impl Default for MapGeometry {
-    fn default() -> Self {
+impl MapGeometry {
+    /// Initializes the geometry for a new map.
+    pub(super) fn new(radius: u32) -> Self {
         MapGeometry {
             layout: HexLayout::default(),
-            radius: 50,
+            radius,
             terrain_index: HashMap::default(),
             structure_index: HashMap::default(),
             ghost_index: HashMap::default(),

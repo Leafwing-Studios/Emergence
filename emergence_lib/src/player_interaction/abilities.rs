@@ -8,7 +8,7 @@ use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::*;
 
 /// Controls, interface and effects of intent-spending abilities.
-pub struct AbilitiesPlugin;
+pub(super) struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
@@ -26,7 +26,7 @@ impl Plugin for AbilitiesPlugin {
 
 /// The different intent-spending "abilities" that the hive mind can use
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug, Hash)]
-pub enum IntentAbility {
+pub(crate) enum IntentAbility {
     /// Gather allied units.
     Lure,
     /// Repel allied units.

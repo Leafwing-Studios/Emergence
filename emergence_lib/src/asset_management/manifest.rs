@@ -15,7 +15,7 @@ use std::{
 ///
 /// These are intended to be created a single time, via [`Manifest::new`].
 #[derive(Debug, Resource, Serialize, Deserialize)]
-pub struct Manifest<Id, Data>
+pub(crate) struct Manifest<Id, Data>
 where
     Id: Debug + PartialEq + Eq + Hash,
     Data: Debug,

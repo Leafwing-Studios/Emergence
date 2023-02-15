@@ -3,15 +3,14 @@
 use std::fmt::Display;
 
 use super::{
-    count::ItemCount,
     errors::{AddManyItemsError, AddOneItemError, RemoveManyItemsError, RemoveOneItemError},
     slot::ItemSlot,
-    ItemId, ItemManifest,
+    ItemCount, ItemId, ItemManifest,
 };
 
 /// An inventory to store multiple types of items.
 #[derive(Debug, Default, Clone)]
-pub struct Inventory {
+pub(crate) struct Inventory {
     /// The item slots that are currently active.
     ///
     /// `slots.len() <= max_slot_count` is guaranteed.
@@ -21,9 +20,10 @@ pub struct Inventory {
     max_slot_count: usize,
 }
 
+#[allow(dead_code)]
 impl Inventory {
     /// Create an empty inventory with the given amount of slots.
-    pub fn new(max_slot_count: usize) -> Self {
+    pub(crate) fn new(max_slot_count: usize) -> Self {
         Self {
             slots: Vec::new(),
             max_slot_count,
@@ -31,7 +31,7 @@ impl Inventory {
     }
 
     /// Determine how many items of the given type are in the inventory.
-    pub fn item_count(&self, item_id: &ItemId) -> usize {
+    pub(crate) fn item_count(&self, item_id: &ItemId) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -45,27 +45,27 @@ impl Inventory {
     }
 
     /// Determine if the inventory holds enough of the given item.
-    pub fn has_count_of_item(&self, item_count: &ItemCount) -> bool {
+    pub(crate) fn has_count_of_item(&self, item_count: &ItemCount) -> bool {
         self.item_count(item_count.item_id()) >= item_count.count()
     }
 
     /// Returns `true` if there are no items in the inventory.
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.slots.iter().all(|slot| slot.is_empty())
     }
 
     /// Returns `true` if all slots are filled to their capacity.
-    pub fn is_full(&self) -> bool {
+    pub(crate) fn is_full(&self) -> bool {
         self.slots.len() == self.max_slot_count && self.slots.iter().all(|slot| slot.is_full())
     }
 
     /// The number of slots that don't have an item in them.
-    pub fn free_slot_count(&self) -> usize {
+    pub(crate) fn free_slot_count(&self) -> usize {
         self.max_slot_count - self.slots.len()
     }
 
     /// The remaining space for the item in the slots that it already occupies.
-    pub fn remaining_reserved_space_for_item(&self, item_id: &ItemId) -> usize {
+    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: &ItemId) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -79,7 +79,7 @@ impl Inventory {
     }
 
     /// The number of items of the given type that can still fit in the inventory.
-    pub fn remaining_space_for_item(
+    pub(crate) fn remaining_space_for_item(
         &self,
         item_id: &ItemId,
         item_manifest: &ItemManifest,
@@ -94,7 +94,7 @@ impl Inventory {
     ///
     /// - If all items can fit in the slot, they are all added and `Ok` is returned.
     /// - Otherwise, all items that can fit are added and `Err` is returned.
-    pub fn add_until_full_one_item(
+    pub(crate) fn add_until_full_one_item(
         &mut self,
         item_count: &ItemCount,
         item_manifest: &ItemManifest,

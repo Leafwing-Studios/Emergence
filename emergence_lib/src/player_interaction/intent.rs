@@ -41,13 +41,13 @@ impl Plugin for IntentPlugin {
 ///
 /// This is stored as a single global resource.
 #[derive(Debug, Clone, PartialEq, Resource)]
-pub struct IntentPool {
+pub(crate) struct IntentPool {
     /// The current amount of available intent.
     current: Intent,
     /// The maximum intent that can be stored.
     max: Intent,
     /// The amount of intent regenerated per second.
-    pub regen_per_second: Intent,
+    regen_per_second: Intent,
 }
 
 /// The maximum amount of intent that can be stored at once
@@ -69,7 +69,7 @@ impl Default for IntentPool {
 ///
 /// This is used to measure the amount of Intent that must be spent to perform various actions.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default, Add, Sub, AddAssign, SubAssign)]
-pub struct Intent(pub f32);
+pub(crate) struct Intent(pub(crate) f32);
 
 impl Mul<f32> for Intent {
     type Output = Intent;
