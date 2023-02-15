@@ -96,6 +96,7 @@ impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone())
+            .insert_resource(MapGeometry::new(self.config.map_radius))
             .add_startup_stage_before(
                 StartupStage::Startup,
                 GenerationStage::OrganismGeneration,
