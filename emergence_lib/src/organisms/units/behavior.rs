@@ -3,10 +3,11 @@
 //! The AI model of Emergence.
 
 use bevy::prelude::*;
+use rand::thread_rng;
 
 use crate::items::ItemId;
 use crate::organisms::units::UnitId;
-use crate::simulation::geometry::TilePos;
+use crate::simulation::geometry::{MapGeometry, TilePos};
 
 use self::events::MoveThisTurn;
 
@@ -135,17 +136,22 @@ pub(crate) fn choose_goal(mut units_query: Query<(&UnitId, &mut CurrentGoal)>) {
 pub(crate) fn choose_action(
     units_query: Query<(Entity, &TilePos, &CurrentGoal), With<UnitId>>,
     mut behavior_event_writer: events::BehaviorEventWriters,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (unit_entity, _unit_tile_pos, current_goal) in units_query.iter() {
+    let rng = &mut thread_rng();
+    let map_geometry = map_geometry.into_inner();
+
+    for (unit_entity, unit_tile_pos, current_goal) in units_query.iter() {
         if let Some(_required_interactable) = current_goal.required_interactable() {
             // TODO: check neighboring entities
         } else {
-            // TODO: actually pick a tile
-            let target_tile = TilePos::default();
-            behavior_event_writer.move_this_turn.send(MoveThisTurn {
-                unit_entity,
-                target_tile,
-            });
+            if let Some(target_tile) = unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
+            {
+                behavior_event_writer.move_this_turn.send(MoveThisTurn {
+                    unit_entity,
+                    target_tile,
+                });
+            }
         }
     }
 }

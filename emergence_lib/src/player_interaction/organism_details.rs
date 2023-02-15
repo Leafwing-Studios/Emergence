@@ -35,15 +35,15 @@ pub struct CraftingDetails {
 
 /// Detailed info about a given entity.
 #[derive(Debug, Clone)]
-pub struct StructureDetails {
+pub(crate) struct StructureDetails {
     /// The entity ID of the structure that this info is about.
-    pub entity: Entity,
+    pub(crate) entity: Entity,
     /// The tile position of this organism.
-    pub tile_pos: TilePos,
+    pub(crate) tile_pos: TilePos,
     /// The type of structure, e.g. plant or fungus.
-    pub structure_id: StructureId,
+    pub(crate) structure_id: StructureId,
     /// If this organism is crafting something, the details about that.
-    pub crafting_details: Option<CraftingDetails>,
+    pub(crate) crafting_details: Option<CraftingDetails>,
 }
 
 /// Detailed info about the selected organism.
