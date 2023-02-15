@@ -14,7 +14,7 @@ pub mod geometry;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {
-    /// Configuration settings for world generation, these will be passed to [`GenerationPlugin`]
+    /// Configuration settings for world generation
     pub gen_config: GenerationConfig,
 }
 
