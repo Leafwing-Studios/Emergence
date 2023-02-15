@@ -1,6 +1,5 @@
 //! Units are organisms that can move freely.
 
-use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 
