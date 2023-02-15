@@ -11,7 +11,7 @@ use self::{
 use super::OrganismBundle;
 
 mod behavior;
-mod item_interaction;
+pub(crate) mod item_interaction;
 mod movement;
 
 /// The unique, string-based identifier of a unit.
@@ -54,7 +54,7 @@ impl UnitBundle {
 
 /// System labels for unit behavior
 #[derive(SystemLabel)]
-pub enum UnitSystem {
+pub(crate) enum UnitSystem {
     /// Advances the timer of all unit actions.
     AdvanceTimers,
     /// Carry out the chosen action

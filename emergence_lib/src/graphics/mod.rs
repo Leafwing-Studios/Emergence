@@ -27,6 +27,7 @@ impl Plugin for GraphicsPlugin {
                 SystemSet::on_update(AssetState::Ready)
                     .with_system(populate_terrain)
                     .with_system(units::populate_units)
+                    .with_system(units::display_held_item)
                     .with_system(populate_structures)
                     // We need to avoid attempting to insert bundles into entities that no longer exist
                     .with_system(mesh_ghosts.before(InteractionSystem::ManageGhosts)),

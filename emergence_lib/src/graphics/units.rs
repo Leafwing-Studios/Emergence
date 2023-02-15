@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::units::UnitHandles,
-    organisms::units::UnitId,
+    organisms::units::{item_interaction::HeldItem, UnitId},
     simulation::geometry::{MapGeometry, TilePos},
 };
 
@@ -25,5 +25,13 @@ pub(super) fn populate_units(
             transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
             ..default()
         });
+    }
+}
+
+/// Shows the item that each unit is holding
+pub(super) fn display_held_item(unit_query: Query<&HeldItem, (With<UnitId>, Changed<HeldItem>)>) {
+    for held_item in unit_query.iter() {
+        let item_id = held_item.item_id();
+        info!("{item_id:?}");
     }
 }
