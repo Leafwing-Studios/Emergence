@@ -64,9 +64,9 @@ impl Plugin for UnitsPlugin {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
             .insert_resource(SignalTransducer::<BottomClampedLine>::default())
             .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
-            .add_system(behavior::advance_action_timer.before(behavior::choose_action))
+            .add_system(behavior::advance_action_timer.before(behavior::choose_actions))
             .add_system(
-                behavior::choose_action
+                behavior::choose_actions
                     .label(UnitSystem::ChooseAction)
                     .after(UnitSystem::ChooseGoal),
             )

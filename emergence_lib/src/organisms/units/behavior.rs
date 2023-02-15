@@ -3,6 +3,7 @@
 //! The AI model of Emergence.
 
 use bevy::prelude::*;
+use rand::rngs::ThreadRng;
 use rand::thread_rng;
 
 use crate::items::ItemId;
@@ -33,13 +34,26 @@ pub(crate) enum CurrentGoal {
 }
 
 impl CurrentGoal {
-    /// Get the interactable required for the unit to achieve its goal
-    fn required_interactable(&self) -> Option<ItemId> {
+    /// Choose an action based on the goal and the information about the environment.
+    fn choose_action(
+        &self,
+        unit_tile_pos: TilePos,
+        map_geometry: &MapGeometry,
+        rng: &mut ThreadRng,
+    ) -> CurrentAction {
         match self {
-            CurrentGoal::Wander => None,
-            CurrentGoal::Pickup(id) => Some(id.clone()),
-            CurrentGoal::DropOff(id) => Some(id.clone()),
-            CurrentGoal::Work(id) => Some(id.clone()),
+            CurrentGoal::Wander => {
+                if let Some(random_neighbor) =
+                    unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
+                {
+                    CurrentAction::move_to(random_neighbor)
+                } else {
+                    CurrentAction::idle()
+                }
+            }
+            CurrentGoal::Pickup(_) => todo!(),
+            CurrentGoal::DropOff(_) => todo!(),
+            CurrentGoal::Work(_) => todo!(),
         }
     }
 }
@@ -64,29 +78,16 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 }
 
 /// Choose the unit's action for this turn
-pub(super) fn choose_action(
+pub(super) fn choose_actions(
     mut units_query: Query<(&TilePos, &CurrentGoal, &mut CurrentAction), With<UnitId>>,
     map_geometry: Res<MapGeometry>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
+    for (&unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
         if current_action.timer.finished() {
-            if let Some(_required_interactable) = current_goal.required_interactable() {
-                // TODO: check neighboring entities
-            } else {
-                if let Some(target_tile) =
-                    unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
-                {
-                    *current_action = CurrentAction {
-                        timer: Timer::from_seconds(0.2, TimerMode::Once),
-                        action: UnitAction::Move(target_tile),
-                    }
-                } else {
-                    *current_action = CurrentAction::default();
-                }
-            }
+            *current_action = current_goal.choose_action(unit_tile_pos, map_geometry, rng);
         }
     }
 }
@@ -112,5 +113,21 @@ impl CurrentAction {
     /// Get the action that the unit is currently undertaking.
     pub(super) fn action(&self) -> &UnitAction {
         &self.action
+    }
+
+    /// Move to the adjacent tile
+    fn move_to(target_tile: TilePos) -> Self {
+        CurrentAction {
+            action: UnitAction::Move(target_tile),
+            timer: Timer::from_seconds(0.3, TimerMode::Once),
+        }
+    }
+
+    /// Wait, as there is nothing to be done.
+    fn idle() -> Self {
+        CurrentAction {
+            action: UnitAction::Idle,
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
+        }
     }
 }
