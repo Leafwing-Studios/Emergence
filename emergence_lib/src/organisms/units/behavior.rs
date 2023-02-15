@@ -13,7 +13,8 @@ use crate::simulation::geometry::{MapGeometry, TilePos};
 
 /// A unit's current goals.
 ///
-/// Units will be fully concentrated on any task other than [`CurrentGoal::Wander`] until it is complete (or overridden).
+/// Units will be fully concentrated on any task other than [`Goal::Wander`] until it is complete (or overridden).
+/// Once a goal is complete, they will typically transition back into [`Goal::Wander`] and attempt to find something new to do.
 ///
 /// This component serves as a state machine.
 #[derive(Component, PartialEq, Eq, Clone, Default)]
@@ -66,7 +67,11 @@ pub(super) fn choose_goal(mut units_query: Query<&mut Goal>) {
     let rng = &mut thread_rng();
 
     for mut goal in units_query.iter_mut() {
-        *goal = possible_goals.choose(rng).unwrap().clone();
+        // By default, goals are reset to wandering when completed.
+        // Pick a new goal when wandering.
+        if let Goal::Wander = *goal {
+            *goal = possible_goals.choose(rng).unwrap().clone();
+        }
     }
 }
 
