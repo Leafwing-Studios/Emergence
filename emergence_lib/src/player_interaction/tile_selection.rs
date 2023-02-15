@@ -38,7 +38,7 @@ impl Plugin for TileSelectionPlugin {
 
 /// The set of tiles that is currently selected
 #[derive(Resource, Debug, Default, Clone)]
-pub struct SelectedTiles {
+pub(crate) struct SelectedTiles {
     /// Actively selected tiles
     selected: HashSet<TilePos>,
     /// Tiles that are hovered over
