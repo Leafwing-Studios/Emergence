@@ -58,7 +58,7 @@ impl ItemData {
 }
 
 /// The data definitions for all items.
-pub type ItemManifest = Manifest<ItemId, ItemData>;
+pub(crate) type ItemManifest = Manifest<ItemId, ItemData>;
 
 /// A specific amount of a given item.
 #[derive(Debug, Clone, PartialEq, Eq)]
