@@ -30,6 +30,11 @@ impl Inventory {
         }
     }
 
+    /// Returns an iterator over the items in the inventory and their count.
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &ItemSlot> {
+        self.slots.iter()
+    }
+
     /// Determine how many items of the given type are in the inventory.
     pub(crate) fn item_count(&self, item_id: &ItemId) -> usize {
         self.slots

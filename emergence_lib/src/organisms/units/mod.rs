@@ -3,11 +3,15 @@
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 
-use self::behavior::{CurrentAction, CurrentGoal};
+use self::{
+    behavior::{CurrentAction, CurrentGoal},
+    item_interaction::HeldItem,
+};
 
 use super::OrganismBundle;
 
 mod behavior;
+mod item_interaction;
 mod movement;
 
 /// The unique, string-based identifier of a unit.
@@ -28,6 +32,8 @@ pub(crate) struct UnitBundle {
     current_goal: CurrentGoal,
     /// What is the unit currently doing.
     current_action: CurrentAction,
+    /// What is the unit currently holding, if anything?
+    held_item: HeldItem,
     /// Organism data
     organism_bundle: OrganismBundle,
 }
@@ -40,6 +46,7 @@ impl UnitBundle {
             tile_pos,
             current_goal: CurrentGoal::default(),
             current_action: CurrentAction::default(),
+            held_item: HeldItem::default(),
             organism_bundle: OrganismBundle::default(),
         }
     }
