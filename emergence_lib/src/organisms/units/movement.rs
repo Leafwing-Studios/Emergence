@@ -1,3 +1,5 @@
+//! Move units from place to place.
+
 use bevy::prelude::*;
 
 use crate::simulation::geometry::MapGeometry;
@@ -6,7 +8,8 @@ use crate::simulation::geometry::TilePos;
 use super::behavior::{CurrentAction, UnitAction};
 use super::UnitId;
 
-pub(super) fn move_unit_to_tile(
+/// Moves units between tiles based on their [`CurrentAction`].
+pub(super) fn move_units(
     mut unit_query: Query<(&mut Transform, &mut TilePos, &CurrentAction), With<UnitId>>,
     map_geometry: Res<MapGeometry>,
 ) {
@@ -19,7 +22,7 @@ pub(super) fn move_unit_to_tile(
                 transform.rotation = Quat::from_axis_angle(Vec3::Y, angle);
 
                 let pos = map_geometry.layout.hex_to_world_pos(target_tile.hex);
-                let terrain_height = *map_geometry.height_index.get(&target_tile).unwrap();
+                let terrain_height = *map_geometry.height_index.get(target_tile).unwrap();
 
                 transform.translation = Vec3 {
                     x: pos.x,

@@ -95,8 +95,10 @@ pub(super) fn choose_actions(
 /// An action that a unit can take.
 #[derive(Default)]
 pub(super) enum UnitAction {
+    /// Do nothing for now
     #[default]
     Idle,
+    /// Move to the tile position
     Move(TilePos),
 }
 

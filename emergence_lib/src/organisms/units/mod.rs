@@ -67,7 +67,7 @@ impl Plugin for UnitsPlugin {
             .insert_resource(SignalTransducer::<BottomClampedLine>::default())
             .add_system(behavior::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
-                movement::move_unit_to_tile
+                movement::move_units
                     .label(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
             )
