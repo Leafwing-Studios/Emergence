@@ -22,6 +22,7 @@ pub(crate) struct ItemSlot {
     count: usize,
 }
 
+#[allow(dead_code)]
 impl ItemSlot {
     /// Create an empty slot for the given item.
     pub(crate) fn new(item_id: ItemId, max_item_count: usize) -> Self {

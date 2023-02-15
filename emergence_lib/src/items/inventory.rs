@@ -20,6 +20,7 @@ pub(crate) struct Inventory {
     max_slot_count: usize,
 }
 
+#[allow(dead_code)]
 impl Inventory {
     /// Create an empty inventory with the given amount of slots.
     pub(crate) fn new(max_slot_count: usize) -> Self {
