@@ -13,7 +13,7 @@ use emergence_macros::IterableEnum;
 
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
-pub enum Terrain {
+pub(crate) enum Terrain {
     /// Terrain with no distinguishing characteristics.
     Plain,
     /// Terrain that is rocky, and thus difficult to traverse.
