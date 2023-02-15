@@ -12,6 +12,7 @@ use self::behavior::CurrentGoal;
 use super::OrganismBundle;
 
 mod behavior;
+mod movement;
 
 /// The unique, string-based identifier of a unit.
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
@@ -72,6 +73,11 @@ impl Plugin for UnitsPlugin {
                 behavior::choose_action
                     .label(UnitSystem::ChooseAction)
                     .after(UnitSystem::ChooseGoal),
+            )
+            .add_system(
+                movement::move_unit_to_tile
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::ChooseAction),
             );
     }
 }
