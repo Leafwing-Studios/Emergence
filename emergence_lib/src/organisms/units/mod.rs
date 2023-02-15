@@ -4,10 +4,7 @@ use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 
-use self::behavior::events::{
-    DropOffThisTurn, IdleThisTurn, MoveThisTurn, PickUpThisTurn, WorkThisTurn,
-};
-use self::behavior::CurrentGoal;
+use self::behavior::{CurrentAction, CurrentGoal};
 
 use super::OrganismBundle;
 
@@ -28,8 +25,10 @@ pub(crate) struct UnitBundle {
     id: UnitId,
     /// The tile the unit is above.
     tile_pos: TilePos,
-    /// What is the unit trying to do
+    /// What is the unit working towards.
     current_goal: CurrentGoal,
+    /// What is the unit currently doing.
+    current_action: CurrentAction,
     /// Organism data
     organism_bundle: OrganismBundle,
 }
@@ -41,6 +40,7 @@ impl UnitBundle {
             id: UnitId { id },
             tile_pos,
             current_goal: CurrentGoal::default(),
+            current_action: CurrentAction::default(),
             organism_bundle: OrganismBundle::default(),
         }
     }
@@ -63,12 +63,8 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
             .insert_resource(SignalTransducer::<BottomClampedLine>::default())
-            .add_event::<IdleThisTurn>()
-            .add_event::<MoveThisTurn>()
-            .add_event::<PickUpThisTurn>()
-            .add_event::<DropOffThisTurn>()
-            .add_event::<WorkThisTurn>()
             .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
+            .add_system(behavior::advance_action_timer.before(behavior::choose_action))
             .add_system(
                 behavior::choose_action
                     .label(UnitSystem::ChooseAction)
