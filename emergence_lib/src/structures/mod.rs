@@ -84,7 +84,7 @@ struct StructureBundle {
 
 impl StructureBundle {
     /// Creates a new structure
-    pub fn new(tile_pos: TilePos, data: StructureData) -> Self {
+    fn new(tile_pos: TilePos, data: StructureData) -> Self {
         StructureBundle {
             structure: data.id,
             facing: data.facing,
@@ -95,7 +95,7 @@ impl StructureBundle {
 
 /// Structures are static buildings that take up one or more tile
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct StructureId {
+pub(crate) struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: &'static str,
 }
@@ -107,7 +107,7 @@ impl Display for StructureId {
 }
 
 /// The systems that make structures tick.
-pub struct StructuresPlugin;
+pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
