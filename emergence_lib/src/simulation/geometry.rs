@@ -3,6 +3,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex, HexLayout};
+use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
@@ -21,15 +22,64 @@ use hexx::{Direction, Hex, HexLayout};
     AddAssign,
     SubAssign,
 )]
-pub struct TilePos {
+pub(crate) struct TilePos {
     /// The underlying hex coordinate
-    pub hex: Hex,
+    pub(crate) hex: Hex,
 }
 
 impl TilePos {
     /// Generates a new [`TilePos`] from axial coordinates.
-    pub fn new(x: i32, y: i32) -> Self {
+    #[cfg(test)]
+    pub(crate) fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
+    }
+
+    /// Choose a random adjacent tile without structures.
+    ///
+    /// It must be free of structures and on the map.
+    /// Returns [`None`] if no viable options exist.
+    pub(crate) fn choose_random_empty_neighbor(
+        &self,
+        rng: &mut ThreadRng,
+        map_geometry: &MapGeometry,
+    ) -> Option<TilePos> {
+        let empty_neighbors = self.empty_neighbors(map_geometry);
+
+        empty_neighbors.into_iter().choose(rng)
+    }
+
+    /// All adjacent tiles that are on the map.
+    pub(crate) fn neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        // PERF: this can be done without any allocations
+        let all_hexes = self.all_neighbors();
+        let mut neighbors = Vec::new();
+
+        for &hex in all_hexes.iter() {
+            let tile_pos = TilePos { hex };
+            if map_geometry.is_valid(tile_pos) {
+                neighbors.push(tile_pos);
+            }
+        }
+
+        neighbors
+    }
+
+    /// All adjacent tiles that are on the map and free of structures.
+    pub(crate) fn empty_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        let neighbors = self.neighbors(map_geometry);
+        // PERF: this can be done without allocations
+        let empty_neighbors: Vec<TilePos> = neighbors
+            .into_iter()
+            .filter(|tile_pos| !map_geometry.structure_index.contains_key(tile_pos))
+            .collect();
+
+        empty_neighbors
     }
 }
 

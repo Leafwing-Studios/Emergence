@@ -3,104 +3,58 @@
 //! The AI model of Emergence.
 
 use bevy::prelude::*;
+use rand::rngs::ThreadRng;
+use rand::thread_rng;
 
-use crate::interactable::Interactable;
+use crate::items::ItemId;
 use crate::organisms::units::UnitId;
-use crate::simulation::geometry::TilePos;
+use crate::simulation::geometry::{MapGeometry, TilePos};
 
 /// A unit's current goals.
 ///
 /// Units will be fully concentrated on any task other than [`CurrentGoal::Wander`] until it is complete (or overridden).
 ///
 /// This component serves as a state machine.
-#[allow(dead_code)]
 #[derive(Component, PartialEq, Eq, Clone, Default)]
-pub enum CurrentGoal {
+pub(crate) enum CurrentGoal {
     /// Attempting to find something useful to do
     ///
     /// Units will try and follow a signal, if they can pick up a trail, but will not fixate on it until the signal is strong enough.
     #[default]
     Wander,
     /// Attempting to pick up an object
-    Pickup(Interactable),
+    #[allow(dead_code)]
+    Pickup(ItemId),
     /// Attempting to drop off an object
-    DropOff(Interactable),
+    #[allow(dead_code)]
+    DropOff(ItemId),
     /// Attempting to perform work at a structure
-    Work(Interactable),
+    #[allow(dead_code)]
+    Work(ItemId),
 }
 
 impl CurrentGoal {
-    /// Get the interactable required for the unit to achieve its goal
-    fn required_interactable(&self) -> Option<Interactable> {
+    /// Choose an action based on the goal and the information about the environment.
+    fn choose_action(
+        &self,
+        unit_tile_pos: TilePos,
+        map_geometry: &MapGeometry,
+        rng: &mut ThreadRng,
+    ) -> CurrentAction {
         match self {
-            CurrentGoal::Wander => None,
-            CurrentGoal::Pickup(interactable) => Some(*interactable),
-            CurrentGoal::DropOff(interactable) => Some(*interactable),
-            CurrentGoal::Work(interactable) => Some(*interactable),
+            CurrentGoal::Wander => {
+                if let Some(random_neighbor) =
+                    unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
+                {
+                    CurrentAction::move_to(random_neighbor)
+                } else {
+                    CurrentAction::idle()
+                }
+            }
+            CurrentGoal::Pickup(_) => todo!(),
+            CurrentGoal::DropOff(_) => todo!(),
+            CurrentGoal::Work(_) => todo!(),
         }
-    }
-}
-
-/// Events that define what each unit is doing during their turn.
-pub mod events {
-    use bevy::{
-        ecs::{entity::Entity, system::SystemParam},
-        prelude::EventWriter,
-    };
-
-    use crate::simulation::geometry::TilePos;
-
-    /// A struct that wraps all of the events defined in this module
-    #[derive(SystemParam)]
-    pub struct BehaviorEventWriters<'w, 's> {
-        /// Writes [`IdleThisTurn`] events
-        pub idle_this_turn: EventWriter<'w, 's, IdleThisTurn>,
-        /// Writes [`MoveThisTurn`] events
-        pub move_this_turn: EventWriter<'w, 's, MoveThisTurn>,
-        /// Writes [`PickUpThisTurn`] events
-        pub pick_up_this_turn: EventWriter<'w, 's, PickUpThisTurn>,
-        /// Writes [`DropOffThisTurn`] events
-        pub drop_off_this_turn: EventWriter<'w, 's, DropOffThisTurn>,
-        /// Writes [`WorkThisTurn`] events
-        pub work_this_turn: EventWriter<'w, 's, WorkThisTurn>,
-    }
-
-    /// The unit in this event is idle this turn.
-    pub struct IdleThisTurn {
-        /// The unit performing the action
-        pub unit: Entity,
-    }
-
-    /// The unit in this event is moving to another tile
-    pub struct MoveThisTurn {
-        /// The unit performing the action
-        pub unit: Entity,
-        /// The tile to be moved into
-        pub target: TilePos,
-    }
-
-    /// The unit in this event is picking up an object
-    pub struct PickUpThisTurn {
-        /// The unit performing the action
-        pub unit: Entity,
-        /// The tile to be moved to
-        pub pickup_tile: TilePos,
-    }
-
-    /// The unit in this event is dropping off an object
-    pub struct DropOffThisTurn {
-        /// The unit performing the action
-        pub unit: Entity,
-        /// The tile to be moved to
-        pub dropoff_tile: TilePos,
-    }
-
-    /// The unit in this event is performing work at a structure
-    pub struct WorkThisTurn {
-        /// The unit performing the action
-        pub unit: Entity,
-        /// The tile that contains the structure to work at
-        pub working_at: TilePos,
     }
 }
 
@@ -114,15 +68,73 @@ pub(super) fn choose_goal(mut units_query: Query<(&UnitId, &mut CurrentGoal)>) {
     }
 }
 
+/// Ticks the timer for each [`CurrentAction`].
+pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
+    let delta = time.delta();
+
+    for mut current_action in units_query.iter_mut() {
+        current_action.timer.tick(delta);
+    }
+}
+
 /// Choose the unit's action for this turn
-pub(super) fn choose_action(
-    units_query: Query<(Entity, &TilePos, &CurrentGoal), With<UnitId>>,
-    _interactables_query: Query<(Entity, &TilePos, &Interactable)>,
-    _behavior_event_writer: events::BehaviorEventWriters,
+pub(super) fn choose_actions(
+    mut units_query: Query<(&TilePos, &CurrentGoal, &mut CurrentAction), With<UnitId>>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (_unit_entity, _unit_tile_pos, current_goal) in units_query.iter() {
-        if let Some(_required_interactable) = current_goal.required_interactable() {
-            // TODO: use HexNeighbors methods to find appropriate neighboring entities
+    let rng = &mut thread_rng();
+    let map_geometry = map_geometry.into_inner();
+
+    for (&unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
+        if current_action.finished() {
+            *current_action = current_goal.choose_action(unit_tile_pos, map_geometry, rng);
+        }
+    }
+}
+
+/// An action that a unit can take.
+#[derive(Default)]
+pub(super) enum UnitAction {
+    /// Do nothing for now
+    #[default]
+    Idle,
+    /// Move to the tile position
+    Move(TilePos),
+}
+
+#[derive(Component, Default)]
+/// The action a unit is undertaking.
+pub(super) struct CurrentAction {
+    /// The type of action being undertaken.
+    action: UnitAction,
+    /// The amount of time left to complete the action.
+    timer: Timer,
+}
+
+impl CurrentAction {
+    /// Get the action that the unit is currently undertaking.
+    pub(super) fn action(&self) -> &UnitAction {
+        &self.action
+    }
+
+    /// Have we waited long enough to perform this action?
+    pub(super) fn finished(&self) -> bool {
+        self.timer.finished()
+    }
+
+    /// Move to the adjacent tile
+    fn move_to(target_tile: TilePos) -> Self {
+        CurrentAction {
+            action: UnitAction::Move(target_tile),
+            timer: Timer::from_seconds(0.3, TimerMode::Once),
+        }
+    }
+
+    /// Wait, as there is nothing to be done.
+    fn idle() -> Self {
+        CurrentAction {
+            action: UnitAction::Idle,
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
         }
     }
 }

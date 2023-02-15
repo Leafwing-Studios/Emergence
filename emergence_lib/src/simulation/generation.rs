@@ -170,7 +170,7 @@ pub(crate) fn generate_terrain(
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
 /// passable tiles.
-pub fn generate_organisms(
+fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     tile_query: Query<&TilePos, With<Terrain>>,

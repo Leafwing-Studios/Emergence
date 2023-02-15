@@ -42,7 +42,7 @@ impl Terrain {
 
 /// All of the components needed to define a piece of terrain.
 #[derive(Bundle)]
-pub struct TerrainBundle {
+pub(crate) struct TerrainBundle {
     /// The type of terrain
     terrain_type: Terrain,
     /// The location of this terrain hex
@@ -55,7 +55,7 @@ pub struct TerrainBundle {
 
 impl TerrainBundle {
     /// Creates a new Terrain entity.
-    pub fn new(terrain_type: Terrain, tile_pos: TilePos) -> Self {
+    pub(crate) fn new(terrain_type: Terrain, tile_pos: TilePos) -> Self {
         TerrainBundle {
             terrain_type,
             tile_pos,

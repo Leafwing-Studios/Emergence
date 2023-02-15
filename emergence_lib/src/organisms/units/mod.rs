@@ -4,14 +4,12 @@ use crate::curves::{BottomClampedLine, Mapping, Sigmoid};
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 
-use self::behavior::events::{
-    DropOffThisTurn, IdleThisTurn, MoveThisTurn, PickUpThisTurn, WorkThisTurn,
-};
-use self::behavior::CurrentGoal;
+use self::behavior::{CurrentAction, CurrentGoal};
 
 use super::OrganismBundle;
 
 mod behavior;
+mod movement;
 
 /// The unique, string-based identifier of a unit.
 #[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
@@ -27,8 +25,10 @@ pub(crate) struct UnitBundle {
     id: UnitId,
     /// The tile the unit is above.
     tile_pos: TilePos,
-    /// What is the unit trying to do
+    /// What is the unit working towards.
     current_goal: CurrentGoal,
+    /// What is the unit currently doing.
+    current_action: CurrentAction,
     /// Organism data
     organism_bundle: OrganismBundle,
 }
@@ -40,6 +40,7 @@ impl UnitBundle {
             id: UnitId { id },
             tile_pos,
             current_goal: CurrentGoal::default(),
+            current_action: CurrentAction::default(),
             organism_bundle: OrganismBundle::default(),
         }
     }
@@ -48,12 +49,14 @@ impl UnitBundle {
 /// System labels for unit behavior
 #[derive(SystemLabel)]
 pub enum UnitSystem {
+    /// Advances the timer of all unit actions.
+    AdvanceTimers,
+    /// Carry out the chosen action
+    Act,
     /// Pick a higher level goal to pursue
     ChooseGoal,
     /// Pick an action that will get the agent closer to the goal being pursued
-    ChooseAction,
-    /// Carry out the chosen action
-    Act,
+    ChooseNewAction,
 }
 
 /// Contains unit behavior
@@ -62,15 +65,17 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
             .insert_resource(SignalTransducer::<BottomClampedLine>::default())
-            .add_event::<IdleThisTurn>()
-            .add_event::<MoveThisTurn>()
-            .add_event::<PickUpThisTurn>()
-            .add_event::<DropOffThisTurn>()
-            .add_event::<WorkThisTurn>()
+            .add_system(behavior::advance_action_timer.label(UnitSystem::AdvanceTimers))
+            .add_system(
+                movement::move_units
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::AdvanceTimers),
+            )
             .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
             .add_system(
-                behavior::choose_action
-                    .label(UnitSystem::ChooseAction)
+                behavior::choose_actions
+                    .label(UnitSystem::ChooseNewAction)
+                    .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             );
     }
