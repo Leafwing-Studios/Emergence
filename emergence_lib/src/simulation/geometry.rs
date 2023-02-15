@@ -24,11 +24,12 @@ use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 )]
 pub(crate) struct TilePos {
     /// The underlying hex coordinate
-    pub hex: Hex,
+    pub(crate) hex: Hex,
 }
 
 impl TilePos {
     /// Generates a new [`TilePos`] from axial coordinates.
+    #[cfg(test)]
     pub(crate) fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
     }

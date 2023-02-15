@@ -36,8 +36,6 @@ pub struct CraftingDetails {
 /// Detailed info about a given entity.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureDetails {
-    /// The entity ID of the structure that this info is about.
-    pub(crate) entity: Entity,
     /// The tile position of this organism.
     pub(crate) tile_pos: TilePos,
     /// The type of structure, e.g. plant or fungus.
@@ -123,7 +121,6 @@ fn hover_details(
             };
 
         hover_details.structure = Some(StructureDetails {
-            entity: structure_entity,
             tile_pos,
             structure_id: structure_details.structure_id.clone(),
             crafting_details,
