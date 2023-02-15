@@ -76,7 +76,7 @@ fn populate_structures(
 
         commands.entity(entity).insert(SceneBundle {
             scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            transform: Transform::from_xyz(pos.x, *terrain_height, pos.y),
             ..default()
         });
     }
@@ -99,7 +99,7 @@ fn mesh_ghosts(
         // Spawn scene as a child of the root ghost
         commands.entity(entity).insert(SceneBundle {
             scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, terrain_height + StructureId::OFFSET, pos.y),
+            transform: Transform::from_xyz(pos.x, *terrain_height, pos.y),
             ..default()
         });
     }
