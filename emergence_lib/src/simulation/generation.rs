@@ -22,34 +22,34 @@ use super::geometry::MapGeometry;
 #[derive(Resource, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
-    pub map_radius: u32,
+    map_radius: u32,
     /// Initial number of ants.
-    pub n_ant: usize,
+    n_ant: usize,
     /// Initial number of plants.
-    pub n_plant: usize,
+    n_plant: usize,
     /// Initial number of fungi.
-    pub n_fungi: usize,
+    n_fungi: usize,
     /// Relative probability of generating tiles of each terrain type.
-    pub terrain_weights: HashMap<Terrain, f32>,
+    terrain_weights: HashMap<Terrain, f32>,
 }
 
 impl GenerationConfig {
     /// The number of tiles from the center of the map to the edge
-    pub const MAP_RADIUS: u32 = 20;
+    const MAP_RADIUS: u32 = 20;
 
     /// The number of ants in the default generation config
-    pub const N_ANT: usize = 40;
+    const N_ANT: usize = 40;
     /// The number of plants in the default generation config
-    pub const N_PLANT: usize = 100;
+    const N_PLANT: usize = 100;
     /// The number of fungi in the default generation config
-    pub const N_FUNGI: usize = 50;
+    const N_FUNGI: usize = 50;
 
     /// The choice weight for plain terrain in default generation config
-    pub const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
+    const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
     /// The choice weight for high terrain in default generation config
-    pub const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
+    const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
     /// The choice weight for impassable terrain in default generation config
-    pub const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
+    const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
 }
 
 impl Default for GenerationConfig {
@@ -70,9 +70,9 @@ impl Default for GenerationConfig {
 }
 
 /// Generate the world.
-pub struct GenerationPlugin {
+pub(super) struct GenerationPlugin {
     /// Configuration settings for world generation
-    pub config: GenerationConfig,
+    pub(super) config: GenerationConfig,
 }
 
 /// Stage labels required to organize our startup systems.
