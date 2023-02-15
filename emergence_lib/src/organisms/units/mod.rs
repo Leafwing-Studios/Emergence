@@ -49,12 +49,14 @@ impl UnitBundle {
 /// System labels for unit behavior
 #[derive(SystemLabel)]
 pub enum UnitSystem {
+    /// Advances the timer of all unit actions.
+    AdvanceTimers,
+    /// Carry out the chosen action
+    Act,
     /// Pick a higher level goal to pursue
     ChooseGoal,
     /// Pick an action that will get the agent closer to the goal being pursued
-    ChooseAction,
-    /// Carry out the chosen action
-    Act,
+    ChooseNewAction,
 }
 
 /// Contains unit behavior
@@ -63,17 +65,18 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UnitTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
             .insert_resource(SignalTransducer::<BottomClampedLine>::default())
-            .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
-            .add_system(behavior::advance_action_timer.before(behavior::choose_actions))
-            .add_system(
-                behavior::choose_actions
-                    .label(UnitSystem::ChooseAction)
-                    .after(UnitSystem::ChooseGoal),
-            )
+            .add_system(behavior::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
                 movement::move_unit_to_tile
                     .label(UnitSystem::Act)
-                    .after(UnitSystem::ChooseAction),
+                    .after(UnitSystem::AdvanceTimers),
+            )
+            .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
+            .add_system(
+                behavior::choose_actions
+                    .label(UnitSystem::ChooseNewAction)
+                    .after(UnitSystem::Act)
+                    .after(UnitSystem::ChooseGoal),
             );
     }
 }

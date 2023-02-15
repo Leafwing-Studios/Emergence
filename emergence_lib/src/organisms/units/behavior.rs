@@ -86,7 +86,7 @@ pub(super) fn choose_actions(
     let map_geometry = map_geometry.into_inner();
 
     for (&unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
-        if current_action.timer.finished() {
+        if current_action.finished() {
             *current_action = current_goal.choose_action(unit_tile_pos, map_geometry, rng);
         }
     }
@@ -113,6 +113,11 @@ impl CurrentAction {
     /// Get the action that the unit is currently undertaking.
     pub(super) fn action(&self) -> &UnitAction {
         &self.action
+    }
+
+    /// Have we waited long enough to perform this action?
+    pub(super) fn finished(&self) -> bool {
+        self.timer.finished()
     }
 
     /// Move to the adjacent tile
