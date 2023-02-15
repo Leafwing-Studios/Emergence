@@ -100,13 +100,6 @@ pub struct StructureId {
     pub(crate) id: &'static str,
 }
 
-impl StructureId {
-    /// The size of a single structure
-    pub const SIZE: f32 = 1.0;
-    /// The offset required to have a structure sit on top of the tile correctly
-    pub const OFFSET: f32 = Self::SIZE / 2.0;
-}
-
 impl Display for StructureId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.id)

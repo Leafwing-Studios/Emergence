@@ -1,4 +1,14 @@
 //! Code related to loading, storing and tracking assets
+//!
+//! # Model conventions
+//!
+//! In Blender, models should:
+//! - be facing towards +x
+//! - be centered on the origin
+//! - have +Z up (Bevy does the conversion automatically)
+//! - scaled such that 1 unit = 1 hex radius
+//! - sitting just on top of the XY plane
+//! - be exported as embedded gltF files
 
 use std::any::TypeId;
 
