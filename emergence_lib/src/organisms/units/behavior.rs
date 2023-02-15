@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 use rand::rngs::ThreadRng;
+use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::items::ItemId;
@@ -16,7 +17,7 @@ use crate::simulation::geometry::{MapGeometry, TilePos};
 ///
 /// This component serves as a state machine.
 #[derive(Component, PartialEq, Eq, Clone, Default)]
-pub(crate) enum CurrentGoal {
+pub(crate) enum Goal {
     /// Attempting to find something useful to do
     ///
     /// Units will try and follow a signal, if they can pick up a trail, but will not fixate on it until the signal is strong enough.
@@ -33,7 +34,7 @@ pub(crate) enum CurrentGoal {
     Work(ItemId),
 }
 
-impl CurrentGoal {
+impl Goal {
     /// Choose an action based on the goal and the information about the environment.
     fn choose_action(
         &self,
@@ -42,7 +43,7 @@ impl CurrentGoal {
         rng: &mut ThreadRng,
     ) -> CurrentAction {
         match self {
-            CurrentGoal::Wander => {
+            Goal::Wander => {
                 if let Some(random_neighbor) =
                     unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
                 {
@@ -51,20 +52,21 @@ impl CurrentGoal {
                     CurrentAction::idle()
                 }
             }
-            CurrentGoal::Pickup(_) => todo!(),
-            CurrentGoal::DropOff(_) => todo!(),
-            CurrentGoal::Work(_) => todo!(),
+            Goal::Pickup(_) => todo!(),
+            Goal::DropOff(_) => todo!(),
+            Goal::Work(_) => todo!(),
         }
     }
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<(&UnitId, &mut CurrentGoal)>) {
-    for (_unit, current_goal) in units_query.iter_mut() {
-        // Check to see if any of the possible goals are high enough priority to swap to
-        if *current_goal == CurrentGoal::Wander {
-            //todo!()
-        }
+pub(super) fn choose_goal(mut units_query: Query<&mut Goal>) {
+    // TODO: pick goal intelligently based on local environment
+    let possible_goals = vec![Goal::Wander];
+    let rng = &mut thread_rng();
+
+    for mut goal in units_query.iter_mut() {
+        *goal = possible_goals.choose(rng).unwrap().clone();
     }
 }
 
@@ -79,7 +81,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &CurrentGoal, &mut CurrentAction), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction), With<UnitId>>,
     map_geometry: Res<MapGeometry>,
 ) {
     let rng = &mut thread_rng();
