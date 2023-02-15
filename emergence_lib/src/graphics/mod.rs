@@ -3,10 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{
-        structures::StructureHandles, terrain::TerrainHandles, units::UnitHandles, AssetState,
-    },
-    organisms::units::UnitId,
+    asset_management::{structures::StructureHandles, terrain::TerrainHandles, AssetState},
     player_interaction::InteractionSystem,
     simulation::geometry::{MapGeometry, TilePos},
     structures::{ghost::Ghost, StructureId},
@@ -16,6 +13,7 @@ use crate::{
 use self::lighting::LightingPlugin;
 
 mod lighting;
+mod units;
 
 /// Adds all logic required to render the game.
 ///
@@ -28,7 +26,7 @@ impl Plugin for GraphicsPlugin {
             .add_system_set(
                 SystemSet::on_update(AssetState::Ready)
                     .with_system(populate_terrain)
-                    .with_system(populate_units)
+                    .with_system(units::populate_units)
                     .with_system(populate_structures)
                     // We need to avoid attempting to insert bundles into entities that no longer exist
                     .with_system(mesh_ghosts.before(InteractionSystem::ManageGhosts)),
@@ -118,25 +116,5 @@ fn change_ghost_material(
                 *material = structure_handles.ghost_material.clone_weak();
             }
         }
-    }
-}
-
-/// Adds rendering components to every spawned unit
-fn populate_units(
-    new_units: Query<(Entity, &TilePos, &UnitId), Added<UnitId>>,
-    mut commands: Commands,
-    unit_handles: Res<UnitHandles>,
-    map_geometry: Res<MapGeometry>,
-) {
-    for (entity, tile_pos, unit_id) in new_units.iter() {
-        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
-        let terrain_height = *map_geometry.height_index.get(tile_pos).unwrap();
-        let scene_handle = unit_handles.scenes.get(unit_id).unwrap();
-
-        commands.entity(entity).insert(SceneBundle {
-            scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
-            ..default()
-        });
     }
 }
