@@ -146,7 +146,7 @@ fn start_and_finish_crafting(
             if *craft_state == CraftingState::Finished
                 && output
                     .0
-                    .add_all_or_nothing_many_items(recipe.outputs(), &item_manifest)
+                    .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
                 // The next item can be crafted
@@ -155,10 +155,7 @@ fn start_and_finish_crafting(
 
             // Try to craft the next item by consuming the input and restarting the timer
             if *craft_state == CraftingState::WaitingForInput
-                && input
-                    .0
-                    .remove_all_or_nothing_many_items(recipe.inputs())
-                    .is_ok()
+                && input.0.remove_items_all_or_nothing(recipe.inputs()).is_ok()
             {
                 // Set the timer to the recipe time
                 craft_timer.0.set_duration(*recipe.craft_time());

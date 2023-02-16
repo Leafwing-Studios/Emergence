@@ -64,9 +64,7 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    if let Ok(removed_items) =
-                        output_inventory.remove_until_empty_one_item(&item_count)
-                    {
+                    if let Ok(removed_items) = output_inventory.try_remove_item(&item_count) {
                         // Transfer the items
                         todo!()
                     } else {
@@ -86,7 +84,7 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    if let Ok(removed_items) = held_item.remove_until_empty_one_item(&item_count) {
+                    if let Ok(removed_items) = held_item.try_remove_item(&item_count) {
                         // Transfer the items
                         todo!()
                     } else {

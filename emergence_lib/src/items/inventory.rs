@@ -99,7 +99,7 @@ impl Inventory {
     ///
     /// - If all items can fit in the slot, they are all added and `Ok` is returned.
     /// - Otherwise, all items that can fit are added and `Err` is returned.
-    pub(crate) fn add_until_full_one_item(
+    pub(crate) fn try_add_item(
         &mut self,
         item_count: &ItemCount,
         item_manifest: &ItemManifest,
@@ -154,7 +154,7 @@ impl Inventory {
     ///
     /// - If the items can fit in the slot, they are all added and `Ok` is returned.
     /// - If at least one of the items does not fit, _no_ items are added and `Err` is returned.
-    pub fn add_all_or_nothing_one_item(
+    pub fn add_item_all_or_nothing(
         &mut self,
         item_count: &ItemCount,
         item_manifest: &ItemManifest,
@@ -167,8 +167,7 @@ impl Inventory {
             })
         } else {
             // If this unwrap panics the remaining space calculation must be wrong
-            self.add_until_full_one_item(item_count, item_manifest)
-                .unwrap();
+            self.try_add_item(item_count, item_manifest).unwrap();
 
             Ok(())
         }
@@ -180,7 +179,7 @@ impl Inventory {
     /// - Otherwise, the given items are all added to the inventory.
     ///
     /// The item counts must not contain any duplicates.
-    pub fn add_all_or_nothing_many_items(
+    pub fn add_items_all_or_nothing(
         &mut self,
         item_counts: &[ItemCount],
         item_manifest: &ItemManifest,
@@ -219,7 +218,7 @@ impl Inventory {
 
         if excess_counts.is_empty() {
             item_counts.iter().for_each(|item_count| {
-                self.add_all_or_nothing_one_item(item_count, item_manifest)
+                self.add_item_all_or_nothing(item_count, item_manifest)
                     .unwrap()
             });
             Ok(())
@@ -232,10 +231,7 @@ impl Inventory {
     ///
     /// - If the slot has enough items, they are all removed and `Ok` is returned.
     /// - Otherwise, all items that are included are removed and `Err` is returned.
-    pub fn remove_until_empty_one_item(
-        &mut self,
-        item_count: &ItemCount,
-    ) -> Result<(), RemoveOneItemError> {
+    pub fn try_remove_item(&mut self, item_count: &ItemCount) -> Result<(), RemoveOneItemError> {
         let mut items_to_remove = item_count.count();
         let mut has_to_clear_slots = false;
 
@@ -283,7 +279,7 @@ impl Inventory {
     ///
     /// - If there are enough items in the slot, they are all removed and `Ok` is returned.
     /// - If there are not enough items, _no_ item is removed and `Err` is returned.
-    pub fn remove_all_or_nothing_one_item(
+    pub fn remove_item_all_or_nothing(
         &mut self,
         item_count: &ItemCount,
     ) -> Result<(), RemoveOneItemError> {
@@ -295,7 +291,7 @@ impl Inventory {
             })
         } else {
             // If this unwrap panics the removal or the item counting must be wrong
-            self.remove_until_empty_one_item(item_count).unwrap();
+            self.try_remove_item(item_count).unwrap();
             Ok(())
         }
     }
@@ -304,7 +300,7 @@ impl Inventory {
     ///
     /// - If there are not enough items from any item type, `Err` is returned and _no_ items are removed.
     /// - If there are enough items, they are all removed and `Ok` is returned.
-    pub fn remove_all_or_nothing_many_items(
+    pub fn remove_items_all_or_nothing(
         &mut self,
         item_counts: &[ItemCount],
     ) -> Result<(), RemoveManyItemsError> {
@@ -326,7 +322,7 @@ impl Inventory {
         if missing_counts.is_empty() {
             item_counts
                 .iter()
-                .for_each(|item_count| self.remove_all_or_nothing_one_item(item_count).unwrap());
+                .for_each(|item_count| self.remove_item_all_or_nothing(item_count).unwrap());
             Ok(())
         } else {
             Err(RemoveManyItemsError { missing_counts })
@@ -534,10 +530,8 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_until_full_one_item(
-                        &ItemCount::new(ItemId::acacia_leaf(), 15),
-                        &item_manifest()
-                    ),
+                    inventory
+                        .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 15), &item_manifest()),
                     Ok(())
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
@@ -556,10 +550,8 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_until_full_one_item(
-                        &ItemCount::new(ItemId::acacia_leaf(), 20),
-                        &item_manifest()
-                    ),
+                    inventory
+                        .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 20), &item_manifest()),
                     Err(AddOneItemError { excess_count: 5 })
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
@@ -583,7 +575,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_all_or_nothing_one_item(
+                    inventory.add_item_all_or_nothing(
                         &ItemCount::new(ItemId::acacia_leaf(), 15),
                         &item_manifest()
                     ),
@@ -605,7 +597,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_all_or_nothing_one_item(
+                    inventory.add_item_all_or_nothing(
                         &ItemCount::new(ItemId::acacia_leaf(), 16),
                         &item_manifest()
                     ),
@@ -632,7 +624,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_all_or_nothing_many_items(
+                    inventory.add_items_all_or_nothing(
                         &[
                             ItemCount::new(ItemId::acacia_leaf(), 15),
                             ItemCount::new(ItemId::test(), 7)
@@ -657,7 +649,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.add_all_or_nothing_many_items(
+                    inventory.add_items_all_or_nothing(
                         &[
                             ItemCount::new(ItemId::acacia_leaf(), 15),
                             ItemCount::new(ItemId::test(), 8)
@@ -690,8 +682,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory
-                        .remove_until_empty_one_item(&ItemCount::new(ItemId::acacia_leaf(), 15)),
+                    inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 15)),
                     Ok(())
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
@@ -710,8 +701,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory
-                        .remove_until_empty_one_item(&ItemCount::new(ItemId::acacia_leaf(), 20)),
+                    inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 20)),
                     Err(RemoveOneItemError { missing_count: 5 })
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
@@ -735,7 +725,7 @@ mod tests {
 
                 assert_eq!(
                     inventory
-                        .remove_all_or_nothing_one_item(&ItemCount::new(ItemId::acacia_leaf(), 15)),
+                        .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 15)),
                     Ok(())
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
@@ -755,7 +745,7 @@ mod tests {
 
                 assert_eq!(
                     inventory
-                        .remove_all_or_nothing_one_item(&ItemCount::new(ItemId::acacia_leaf(), 16)),
+                        .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 16)),
                     Err(RemoveOneItemError { missing_count: 1 })
                 );
                 assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
@@ -778,7 +768,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.remove_all_or_nothing_many_items(&[
+                    inventory.remove_items_all_or_nothing(&[
                         ItemCount::new(ItemId::acacia_leaf(), 15),
                         ItemCount::new(ItemId::test(), 3)
                     ]),
@@ -800,7 +790,7 @@ mod tests {
                 };
 
                 assert_eq!(
-                    inventory.remove_all_or_nothing_many_items(&[
+                    inventory.remove_items_all_or_nothing(&[
                         ItemCount::new(ItemId::acacia_leaf(), 15),
                         ItemCount::new(ItemId::test(), 4)
                     ]),
