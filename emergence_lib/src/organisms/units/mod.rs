@@ -3,11 +3,15 @@
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 
-use self::behavior::{CurrentAction, CurrentGoal};
+use self::{
+    behavior::{CurrentAction, Goal},
+    item_interaction::HeldItem,
+};
 
 use super::OrganismBundle;
 
 mod behavior;
+pub(crate) mod item_interaction;
 mod movement;
 
 /// The unique, string-based identifier of a unit.
@@ -25,9 +29,11 @@ pub(crate) struct UnitBundle {
     /// The tile the unit is above.
     tile_pos: TilePos,
     /// What is the unit working towards.
-    current_goal: CurrentGoal,
+    current_goal: Goal,
     /// What is the unit currently doing.
     current_action: CurrentAction,
+    /// What is the unit currently holding, if anything?
+    held_item: HeldItem,
     /// Organism data
     organism_bundle: OrganismBundle,
 }
@@ -38,8 +44,9 @@ impl UnitBundle {
         UnitBundle {
             id: UnitId { id },
             tile_pos,
-            current_goal: CurrentGoal::default(),
+            current_goal: Goal::default(),
             current_action: CurrentAction::default(),
+            held_item: HeldItem::default(),
             organism_bundle: OrganismBundle::default(),
         }
     }
@@ -47,7 +54,7 @@ impl UnitBundle {
 
 /// System labels for unit behavior
 #[derive(SystemLabel)]
-pub enum UnitSystem {
+pub(crate) enum UnitSystem {
     /// Advances the timer of all unit actions.
     AdvanceTimers,
     /// Carry out the chosen action
@@ -65,6 +72,11 @@ impl Plugin for UnitsPlugin {
         app.add_system(behavior::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
                 movement::move_units
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::AdvanceTimers),
+            )
+            .add_system(
+                item_interaction::pickup_and_drop_items
                     .label(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
             )

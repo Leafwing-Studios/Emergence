@@ -25,25 +25,17 @@ pub(crate) enum CraftingState {
 }
 
 /// The input inventory for a structure.
-#[derive(Component, Debug, Default)]
-pub(crate) struct InputInventory(Inventory);
-
-impl InputInventory {
-    /// The inventory holding the items to be crafted.
-    pub(crate) fn inventory(&self) -> &Inventory {
-        &self.0
-    }
+#[derive(Component, Debug, Default, Deref, DerefMut)]
+pub(crate) struct InputInventory {
+    /// Inner storage
+    pub(crate) inventory: Inventory,
 }
 
 /// The output inventory for a structure.
-#[derive(Component, Debug, Default)]
-pub(crate) struct OutputInventory(Inventory);
-
-impl OutputInventory {
-    /// The inventory for the crafting output.
-    pub(crate) fn inventory(&self) -> &Inventory {
-        &self.0
-    }
+#[derive(Component, Debug, Default, Deref, DerefMut)]
+pub(crate) struct OutputInventory {
+    /// Inner storage
+    pub(crate) inventory: Inventory,
 }
 
 /// The recipe that is currently being crafted, if any.
@@ -93,8 +85,12 @@ impl CraftingBundle {
         if let Some(recipe_id) = starting_recipe {
             Self {
                 // TODO: Don't hard-code these values
-                input_inventory: InputInventory(Inventory::new(0)),
-                output_inventory: OutputInventory(Inventory::new(1)),
+                input_inventory: InputInventory {
+                    inventory: Inventory::new(0),
+                },
+                output_inventory: OutputInventory {
+                    inventory: Inventory::new(1),
+                },
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::WaitingForInput,
@@ -102,8 +98,12 @@ impl CraftingBundle {
         } else {
             Self {
                 // TODO: Don't hard-code these values
-                input_inventory: InputInventory(Inventory::new(0)),
-                output_inventory: OutputInventory(Inventory::new(1)),
+                input_inventory: InputInventory {
+                    inventory: Inventory::new(0),
+                },
+                output_inventory: OutputInventory {
+                    inventory: Inventory::new(1),
+                },
                 craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::WaitingForInput,
@@ -145,8 +145,7 @@ fn start_and_finish_crafting(
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
-                    .0
-                    .add_all_or_nothing_many_items(recipe.outputs(), &item_manifest)
+                    .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
                 // The next item can be crafted
@@ -155,10 +154,7 @@ fn start_and_finish_crafting(
 
             // Try to craft the next item by consuming the input and restarting the timer
             if *craft_state == CraftingState::WaitingForInput
-                && input
-                    .0
-                    .remove_all_or_nothing_many_items(recipe.inputs())
-                    .is_ok()
+                && input.remove_items_all_or_nothing(recipe.inputs()).is_ok()
             {
                 // Set the timer to the recipe time
                 craft_timer.0.set_duration(*recipe.craft_time());
@@ -179,12 +175,17 @@ impl Plugin for CraftingPlugin {
         // TODO: Load this from an asset file
         let mut item_manifest = HashMap::new();
         item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
+        item_manifest.insert(ItemId::leuco_chunk(), ItemData::leuco_chunk());
 
         // TODO: Load this from an asset file
         let mut recipe_manifest = HashMap::new();
         recipe_manifest.insert(
             RecipeId::acacia_leaf_production(),
             Recipe::acacia_leaf_production(),
+        );
+        recipe_manifest.insert(
+            RecipeId::leuco_chunk_production(),
+            Recipe::leuco_chunk_production(),
         );
 
         app.insert_resource(ItemManifest::new(item_manifest))

@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Manifest;
 
-mod errors;
-pub mod inventory;
-pub mod recipe;
-pub mod slot;
+pub(crate) mod errors;
+pub(crate) mod inventory;
+pub(crate) mod recipe;
+pub(crate) mod slot;
 
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -22,6 +22,11 @@ impl ItemId {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
         Self { id: "acacia_leaf" }
+    }
+
+    /// The item ID of a Leuco chunk.
+    pub fn leuco_chunk() -> Self {
+        Self { id: "leuco_chunk" }
     }
 
     /// An item ID solely used for testing.
@@ -55,6 +60,12 @@ impl ItemData {
     pub fn acacia_leaf() -> Self {
         Self { stack_size: 10 }
     }
+
+    // TODO: Remove this once we can load item data from asset files
+    /// A piece of a leuco mushroom.
+    pub fn leuco_chunk() -> Self {
+        Self { stack_size: 5 }
+    }
 }
 
 /// The data definitions for all items.
@@ -62,7 +73,7 @@ pub(crate) type ItemManifest = Manifest<ItemId, ItemData>;
 
 /// A specific amount of a given item.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ItemCount {
+pub struct ItemCount {
     /// The unique identifier of the item being counted.
     item_id: ItemId,
 
