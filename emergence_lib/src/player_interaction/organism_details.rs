@@ -68,7 +68,7 @@ impl Plugin for DetailsPlugin {
 
 /// Data needed to populate [`StructureDetails`].
 #[derive(WorldQuery)]
-struct HoverDetailsQuery {
+struct StructureDetailsQuery {
     /// The type of structure
     structure_id: &'static StructureId,
     /// The location
@@ -88,7 +88,7 @@ fn hover_details(
     cursor_pos: Res<CursorPos>,
     selected_tiles: Res<SelectedTiles>,
     mut hover_details: ResMut<SelectionDetails>,
-    structure_query: Query<HoverDetailsQuery>,
+    structure_query: Query<StructureDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {
     // If only one tile is selected, use that.
