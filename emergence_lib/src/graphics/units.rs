@@ -31,7 +31,6 @@ pub(super) fn populate_units(
 /// Shows the item that each unit is holding
 pub(super) fn display_held_item(unit_query: Query<&HeldItem, (With<UnitId>, Changed<HeldItem>)>) {
     for held_item in unit_query.iter() {
-        let item_id = held_item.item_id();
-        info!("{item_id:?}");
+        info!("{held_item:?}");
     }
 }
