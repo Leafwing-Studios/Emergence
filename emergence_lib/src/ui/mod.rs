@@ -2,11 +2,11 @@
 //!
 use bevy::prelude::*;
 
-use crate::ui::{hover_panel::HoverDetailsPlugin, select_structure::SelectStructurePlugin};
+use crate::ui::{select_structure::SelectStructurePlugin, selection_panel::HoverDetailsPlugin};
 
-mod hover_panel;
 mod intent;
 mod select_structure;
+mod selection_panel;
 
 /// The different stages of the UI setup.
 ///
