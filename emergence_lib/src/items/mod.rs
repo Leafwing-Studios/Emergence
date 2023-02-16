@@ -62,7 +62,7 @@ pub(crate) type ItemManifest = Manifest<ItemId, ItemData>;
 
 /// A specific amount of a given item.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ItemCount {
+pub struct ItemCount {
     /// The unique identifier of the item being counted.
     item_id: ItemId,
 
