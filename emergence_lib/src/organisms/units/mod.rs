@@ -75,6 +75,11 @@ impl Plugin for UnitsPlugin {
                     .label(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
             )
+            .add_system(
+                item_interaction::pickup_and_drop_items
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::AdvanceTimers),
+            )
             .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
             .add_system(
                 behavior::choose_actions

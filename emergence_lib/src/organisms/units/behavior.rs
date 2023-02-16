@@ -207,7 +207,7 @@ impl CurrentAction {
     }
 
     /// Move to the adjacent tile
-    fn move_to(target_tile: TilePos) -> Self {
+    pub(super) fn move_to(target_tile: TilePos) -> Self {
         CurrentAction {
             action: UnitAction::Move(target_tile),
             timer: Timer::from_seconds(0.3, TimerMode::Once),
@@ -215,7 +215,7 @@ impl CurrentAction {
     }
 
     /// Wait, as there is nothing to be done.
-    fn idle() -> Self {
+    pub(super) fn idle() -> Self {
         CurrentAction {
             action: UnitAction::Idle,
             timer: Timer::from_seconds(0.1, TimerMode::Once),
@@ -223,7 +223,7 @@ impl CurrentAction {
     }
 
     /// Picks up the `item_id` at the `output_entity`.
-    fn pickup(item_id: ItemId, output_entity: Entity) -> Self {
+    pub(super) fn pickup(item_id: ItemId, output_entity: Entity) -> Self {
         CurrentAction {
             action: UnitAction::PickUp {
                 item_id,
@@ -234,7 +234,7 @@ impl CurrentAction {
     }
 
     /// Drops off the `item_id` at the `input_entity`.
-    fn dropoff(item_id: ItemId, input_entity: Entity) -> Self {
+    pub(super) fn dropoff(item_id: ItemId, input_entity: Entity) -> Self {
         CurrentAction {
             action: UnitAction::DropOff {
                 item_id,
