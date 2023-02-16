@@ -67,16 +67,16 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    let transfer_result = output_inventory.transfer_item(
+                    let _ = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
                         item_manifest,
                     );
-                    match transfer_result {
-                        _ => todo!(),
+                    if output_inventory.is_empty() {
+                        should_idle = true;
                     }
                 } else {
-                    // Something has gone wrong (like the structure was despawned), just idle.
+                    // Something has gone wrong (like the structure was despawned)
                     should_idle = true;
                 }
             }
@@ -88,16 +88,18 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    let transfer_result = held_item.transfer_item(
+                    // We're handling this by checking the inventory state below
+                    let _ = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
-                    match transfer_result {
-                        _ => todo!(),
+
+                    if held_item.is_empty() {
+                        should_idle = true;
                     }
                 } else {
-                    // Something has gone wrong (like the structure was despawned), just idle.
+                    // Something has gone wrong (like the structure was despawned)
                     should_idle = true;
                 }
             }

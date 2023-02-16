@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Manifest;
 
-mod errors;
-pub mod inventory;
-pub mod recipe;
-pub mod slot;
+pub(crate) mod errors;
+pub(crate) mod inventory;
+pub(crate) mod recipe;
+pub(crate) mod slot;
 
 /// The unique identifier of an item.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
