@@ -71,7 +71,7 @@ impl Goal {
                 }
 
                 if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::pickup(output_entity, item_id)
+                    CurrentAction::pickup(item_id.clone(), *output_entity)
                 } else {
                     // TODO: walk towards destination more intelligently
                     Goal::Wander.choose_action(
@@ -97,8 +97,8 @@ impl Goal {
                     }
                 }
 
-                if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::dropoff(output_entity, item_id)
+                if let Some(input_entity) = entities_with_desired_item.choose(rng) {
+                    CurrentAction::dropoff(item_id.clone(), *input_entity)
                 } else {
                     // TODO: walk towards destination more intelligently
                     Goal::Wander.choose_action(
@@ -168,6 +168,20 @@ pub(super) enum UnitAction {
     /// Do nothing for now
     #[default]
     Idle,
+    /// Pick up the `item_id` from the `output_entity.
+    PickUp {
+        /// The item to pickup.
+        item_id: ItemId,
+        /// The entity to grab it from, which must have an [`OutputInventory`] component.
+        output_entity: Entity,
+    },
+    /// Drops off the `item_id` at the `output_entity.
+    DropOff {
+        /// The item that this unit is carrying that we should drop off.
+        item_id: ItemId,
+        /// The entity to drop it off at, which must have an [`InputInventory`] component.
+        input_entity: Entity,
+    },
     /// Move to the tile position
     Move(TilePos),
 }
@@ -204,6 +218,28 @@ impl CurrentAction {
     fn idle() -> Self {
         CurrentAction {
             action: UnitAction::Idle,
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
+        }
+    }
+
+    /// Picks up the `item_id` at the `output_entity`.
+    fn pickup(item_id: ItemId, output_entity: Entity) -> Self {
+        CurrentAction {
+            action: UnitAction::PickUp {
+                item_id,
+                output_entity,
+            },
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
+        }
+    }
+
+    /// Drops off the `item_id` at the `input_entity`.
+    fn dropoff(item_id: ItemId, input_entity: Entity) -> Self {
+        CurrentAction {
+            action: UnitAction::DropOff {
+                item_id,
+                input_entity,
+            },
             timer: Timer::from_seconds(0.1, TimerMode::Once),
         }
     }
