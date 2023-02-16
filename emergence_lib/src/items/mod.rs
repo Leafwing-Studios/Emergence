@@ -24,6 +24,11 @@ impl ItemId {
         Self { id: "acacia_leaf" }
     }
 
+    /// The item ID of a Leuco chunk.
+    pub fn leuco_chunk() -> Self {
+        Self { id: "leuco_chunk" }
+    }
+
     /// An item ID solely used for testing.
     #[cfg(test)]
     pub fn test() -> Self {
@@ -54,6 +59,12 @@ impl ItemData {
     /// A leaf from an acacia plant.
     pub fn acacia_leaf() -> Self {
         Self { stack_size: 10 }
+    }
+
+    // TODO: Remove this once we can load item data from asset files
+    /// A piece of a leuco mushroom.
+    pub fn leuco_chunk() -> Self {
+        Self { stack_size: 5 }
     }
 }
 

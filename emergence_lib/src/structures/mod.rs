@@ -52,7 +52,7 @@ impl Default for StructureManifest {
             StructureVariety {
                 organism: true,
                 crafts: true,
-                starting_recipe: None,
+                starting_recipe: Some(RecipeId::leuco_chunk_production()),
                 color: Color::ORANGE_RED,
             },
         );

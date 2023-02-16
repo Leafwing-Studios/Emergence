@@ -15,6 +15,11 @@ impl RecipeId {
     pub fn acacia_leaf_production() -> Self {
         Self("acacia_leaf_production")
     }
+
+    /// The ID of the recipe for mushroom production of leuco mushrooms.
+    pub fn leuco_chunk_production() -> Self {
+        Self("leuco_chunk_production")
+    }
 }
 
 impl Display for RecipeId {
@@ -57,6 +62,16 @@ impl Recipe {
             Vec::new(),
             vec![ItemCount::one(ItemId::acacia_leaf())],
             Duration::from_secs(10),
+        )
+    }
+
+    // TODO: Remove this once we load recipes from asset files
+    /// A leuco mushroom processing acacia leaves
+    pub(crate) fn leuco_chunk_production() -> Self {
+        Recipe::new(
+            vec![ItemCount::one(ItemId::acacia_leaf())],
+            vec![ItemCount::one(ItemId::leuco_chunk())],
+            Duration::from_secs(5),
         )
     }
 

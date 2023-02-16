@@ -173,12 +173,17 @@ impl Plugin for CraftingPlugin {
         // TODO: Load this from an asset file
         let mut item_manifest = HashMap::new();
         item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
+        item_manifest.insert(ItemId::leuco_chunk(), ItemData::leuco_chunk());
 
         // TODO: Load this from an asset file
         let mut recipe_manifest = HashMap::new();
         recipe_manifest.insert(
             RecipeId::acacia_leaf_production(),
             Recipe::acacia_leaf_production(),
+        );
+        recipe_manifest.insert(
+            RecipeId::leuco_chunk_production(),
+            Recipe::leuco_chunk_production(),
         );
 
         app.insert_resource(ItemManifest::new(item_manifest))
