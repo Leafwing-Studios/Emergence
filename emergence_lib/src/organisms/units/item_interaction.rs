@@ -48,6 +48,7 @@ impl HeldItem {
     }
 }
 
+/// A system which performs the transfer of items between units and structures.
 pub(super) fn pickup_and_drop_items(
     mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem)>,
     mut input_query: Query<&mut InputInventory>,

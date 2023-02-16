@@ -27,12 +27,14 @@ pub(crate) enum CraftingState {
 /// The input inventory for a structure.
 #[derive(Component, Debug, Default, Deref, DerefMut)]
 pub(crate) struct InputInventory {
+    /// Inner storage
     pub(crate) inventory: Inventory,
 }
 
 /// The output inventory for a structure.
 #[derive(Component, Debug, Default, Deref, DerefMut)]
 pub(crate) struct OutputInventory {
+    /// Inner storage
     pub(crate) inventory: Inventory,
 }
 
