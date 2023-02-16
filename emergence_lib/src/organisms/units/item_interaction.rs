@@ -7,7 +7,7 @@ use crate::{
     structures::crafting::{InputInventory, OutputInventory},
 };
 
-use super::behavior::{CurrentAction, UnitAction};
+use super::behavior::{CurrentAction, Goal, UnitAction};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Debug, Deref, DerefMut)]
@@ -48,16 +48,16 @@ impl HeldItem {
 }
 
 pub(super) fn pickup_and_drop_items(
-    mut unit_query: Query<(&mut CurrentAction, &mut HeldItem)>,
+    mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem)>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
     item_manifest: Res<ItemManifest>,
 ) {
     let item_manifest = &*item_manifest;
 
-    for (mut current_action, mut held_item) in unit_query.iter_mut() {
+    for (current_action, mut current_goal, mut held_item) in unit_query.iter_mut() {
         if current_action.finished() {
-            let new_action: CurrentAction = if let UnitAction::PickUp {
+            let new_goal: Goal = if let UnitAction::PickUp {
                 item_id,
                 output_entity,
             } = current_action.action()
@@ -69,11 +69,10 @@ pub(super) fn pickup_and_drop_items(
                         &mut held_item.inventory,
                         item_manifest,
                     );
-
-                    CurrentAction::idle()
+                    Goal::Wander
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    CurrentAction::idle()
+                    Goal::Wander
                 }
             } else if let UnitAction::DropOff {
                 item_id,
@@ -87,17 +86,17 @@ pub(super) fn pickup_and_drop_items(
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
-                    CurrentAction::idle()
+                    Goal::Wander
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    CurrentAction::idle()
+                    Goal::Wander
                 }
             } else {
                 // Other actions are not handled in this system
                 return;
             };
 
-            *current_action = new_action;
+            *current_goal = new_goal;
         }
     }
 }
