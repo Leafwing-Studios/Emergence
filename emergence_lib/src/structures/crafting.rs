@@ -26,24 +26,14 @@ pub(crate) enum CraftingState {
 
 /// The input inventory for a structure.
 #[derive(Component, Debug, Default, Deref, DerefMut)]
-pub(crate) struct InputInventory(Inventory);
-
-impl InputInventory {
-    /// The inventory holding the items to be crafted.
-    pub(crate) fn inventory(&self) -> &Inventory {
-        &self.0
-    }
+pub(crate) struct InputInventory {
+    pub(crate) inventory: Inventory,
 }
 
 /// The output inventory for a structure.
 #[derive(Component, Debug, Default, Deref, DerefMut)]
-pub(crate) struct OutputInventory(Inventory);
-
-impl OutputInventory {
-    /// The inventory for the crafting output.
-    pub(crate) fn inventory(&self) -> &Inventory {
-        &self.0
-    }
+pub(crate) struct OutputInventory {
+    pub(crate) inventory: Inventory,
 }
 
 /// The recipe that is currently being crafted, if any.
@@ -93,8 +83,12 @@ impl CraftingBundle {
         if let Some(recipe_id) = starting_recipe {
             Self {
                 // TODO: Don't hard-code these values
-                input_inventory: InputInventory(Inventory::new(0)),
-                output_inventory: OutputInventory(Inventory::new(1)),
+                input_inventory: InputInventory {
+                    inventory: Inventory::new(0),
+                },
+                output_inventory: OutputInventory {
+                    inventory: Inventory::new(1),
+                },
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::WaitingForInput,
@@ -102,8 +96,12 @@ impl CraftingBundle {
         } else {
             Self {
                 // TODO: Don't hard-code these values
-                input_inventory: InputInventory(Inventory::new(0)),
-                output_inventory: OutputInventory(Inventory::new(1)),
+                input_inventory: InputInventory {
+                    inventory: Inventory::new(0),
+                },
+                output_inventory: OutputInventory {
+                    inventory: Inventory::new(1),
+                },
                 craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::WaitingForInput,
@@ -145,7 +143,6 @@ fn start_and_finish_crafting(
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished
                 && output
-                    .0
                     .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
                     .is_ok()
             {
@@ -155,7 +152,7 @@ fn start_and_finish_crafting(
 
             // Try to craft the next item by consuming the input and restarting the timer
             if *craft_state == CraftingState::WaitingForInput
-                && input.0.remove_items_all_or_nothing(recipe.inputs()).is_ok()
+                && input.remove_items_all_or_nothing(recipe.inputs()).is_ok()
             {
                 // Set the timer to the recipe time
                 craft_timer.0.set_duration(*recipe.craft_time());

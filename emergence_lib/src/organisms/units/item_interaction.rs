@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    items::{inventory::Inventory, slot::ItemSlot, ItemCount, ItemId},
+    items::{inventory::Inventory, slot::ItemSlot, ItemCount, ItemId, ItemManifest},
     structures::crafting::{InputInventory, OutputInventory},
 };
 
@@ -13,7 +13,7 @@ use super::behavior::{CurrentAction, UnitAction};
 #[derive(Component, Debug, Deref, DerefMut)]
 pub(crate) struct HeldItem {
     /// The internal representation.
-    inventory: Inventory,
+    pub(crate) inventory: Inventory,
 }
 
 impl Default for HeldItem {
@@ -51,7 +51,10 @@ pub(super) fn pickup_and_drop_items(
     mut unit_query: Query<(&mut CurrentAction, &mut HeldItem)>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
+    item_manifest: Res<ItemManifest>,
 ) {
+    let item_manifest = &*item_manifest;
+
     for (mut current_action, mut held_item) in unit_query.iter_mut() {
         if current_action.finished() {
             let action = current_action.action().clone();
@@ -64,12 +67,13 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    if let Ok(removed_items) = output_inventory.try_remove_item(&item_count) {
-                        // Transfer the items
-                        todo!()
-                    } else {
-                        // Inventory was empty
-                        should_idle = true;
+                    let transfer_result = output_inventory.transfer_item(
+                        &item_count,
+                        &mut held_item.inventory,
+                        item_manifest,
+                    );
+                    match transfer_result {
+                        _ => todo!(),
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned), just idle.
@@ -84,12 +88,13 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    if let Ok(removed_items) = held_item.try_remove_item(&item_count) {
-                        // Transfer the items
-                        todo!()
-                    } else {
-                        // Inventory was empty
-                        should_idle = true;
+                    let transfer_result = held_item.transfer_item(
+                        &item_count,
+                        &mut input_inventory.inventory,
+                        item_manifest,
+                    );
+                    match transfer_result {
+                        _ => todo!(),
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned), just idle.

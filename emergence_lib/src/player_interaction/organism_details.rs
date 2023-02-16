@@ -110,8 +110,8 @@ fn hover_details(
         let crafting_details =
             if let Some((input, output, recipe, state, timer)) = structure_details.crafting {
                 Some(CraftingDetails {
-                    input_inventory: input.inventory().clone(),
-                    output_inventory: output.inventory().clone(),
+                    input_inventory: input.inventory.clone(),
+                    output_inventory: output.inventory.clone(),
                     active_recipe: recipe.recipe_id().clone(),
                     state: state.clone(),
                     timer: timer.timer().clone(),

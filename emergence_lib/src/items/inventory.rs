@@ -3,7 +3,10 @@
 use std::fmt::Display;
 
 use super::{
-    errors::{AddManyItemsError, AddOneItemError, RemoveManyItemsError, RemoveOneItemError},
+    errors::{
+        AddManyItemsError, AddOneItemError, ItemTransferError, RemoveManyItemsError,
+        RemoveOneItemError,
+    },
     slot::ItemSlot,
     ItemCount, ItemId, ItemManifest,
 };
@@ -326,6 +329,48 @@ impl Inventory {
             Ok(())
         } else {
             Err(RemoveManyItemsError { missing_counts })
+        }
+    }
+
+    /// Transfers item of the type given by `item_count` from the inventory of `self` to `other`.
+    ///
+    /// As many items will be transferred as possible.
+    /// If all items are transferred, [`Ok(())`] will be returned.
+    /// Otherwise, an [`ItemTransferError`] will be returned that contains the number of items that could not be transferred and why.
+    pub fn transfer_item(
+        &mut self,
+        item_count: &ItemCount,
+        other: &mut Inventory,
+        item_manifest: &ItemManifest,
+    ) -> Result<(), ItemTransferError> {
+        let item_id = item_count.item_id();
+
+        let requested = item_count.count();
+        let available = self.item_count(item_id);
+        let free = other.remaining_space_for_item(item_id, item_manifest);
+
+        let proposed = requested.min(available);
+        let actual = proposed.min(free);
+
+        // Skip the expensive work if there's nothing to move
+        if actual > 0 {
+            let actual_count = ItemCount::new(item_id.clone(), actual);
+
+            // Unwraps are being used as assertions here: if this is panicking, this method is broken
+            self.remove_item_all_or_nothing(&actual_count).unwrap();
+            other
+                .add_item_all_or_nothing(&actual_count, item_manifest)
+                .unwrap();
+        }
+
+        if actual == requested {
+            Ok(())
+        } else {
+            Err(ItemTransferError {
+                items_remaining: available.saturating_sub(actual),
+                full_sink: proposed > free,
+                empty_source: requested > available,
+            })
         }
     }
 }
