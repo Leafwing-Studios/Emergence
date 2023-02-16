@@ -64,12 +64,19 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    let transfer_result = output_inventory.transfer_item(
+                    let _ = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
                         item_manifest,
                     );
-                    Goal::Wander
+
+                    // If our unit's all loaded, swap to delivering it
+                    if held_item.is_full() {
+                        Goal::DropOff(item_id.clone())
+                    // If we can carry more, try and grab more items
+                    } else {
+                        Goal::Pickup(item_id.clone())
+                    }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
                     Goal::Wander
@@ -81,12 +88,19 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    let transfer_result = held_item.transfer_item(
+                    let _ = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
-                    Goal::Wander
+
+                    // If our unit's unloaded, swap to wandering to find something else to do
+                    if held_item.is_full() {
+                        Goal::Wander
+                    // If we still have items, keep unloading
+                    } else {
+                        Goal::DropOff(item_id.clone())
+                    }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
                     Goal::Wander
