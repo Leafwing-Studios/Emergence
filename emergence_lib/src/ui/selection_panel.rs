@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    items::recipe::RecipeManifest,
     player_interaction::{organism_details::SelectionDetails, InteractionSystem},
     structures::crafting::CraftingState,
 };
@@ -140,6 +141,7 @@ fn update_hover_details(
             Without<IdText>,
         ),
     >,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = panel_query.single_mut();
     if selection_details.is_none() {
@@ -160,12 +162,14 @@ fn update_hover_details(
             *crafting_visibility = Visibility::VISIBLE;
             crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
             crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
-            crafting_text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe
-            {
-                format!("{recipe}")
-            } else {
-                "None".to_string()
-            };
+
+            crafting_text.sections[5].value =
+                if let Some(recipe_id) = &crafting_details.active_recipe {
+                    let recipe_details = recipe_manifest.get(recipe_id);
+                    format!("{recipe_id}: \n {recipe_details}")
+                } else {
+                    "None".to_string()
+                };
             crafting_text.sections[7].value = match crafting_details.state {
                 CraftingState::WaitingForInput => "Waiting for input".to_string(),
                 CraftingState::InProgress => {
