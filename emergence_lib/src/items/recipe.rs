@@ -127,6 +127,6 @@ mod tests {
             craft_time: Duration::from_secs(1),
         };
 
-        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00s")
+        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00 s")
     }
 }
