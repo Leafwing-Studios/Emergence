@@ -57,56 +57,47 @@ pub(super) fn pickup_and_drop_items(
 
     for (mut current_action, mut held_item) in unit_query.iter_mut() {
         if current_action.finished() {
-            let action = current_action.action().clone();
-            let mut should_idle = false;
-
-            if let UnitAction::PickUp {
+            let new_action: CurrentAction = if let UnitAction::PickUp {
                 item_id,
                 output_entity,
-            } = action
+            } = current_action.action()
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    let _ = output_inventory.transfer_item(
+                    let transfer_result = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
                         item_manifest,
                     );
-                    if output_inventory.is_empty() {
-                        should_idle = true;
-                    }
+
+                    CurrentAction::idle()
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    should_idle = true;
+                    CurrentAction::idle()
                 }
-            }
-
-            if let UnitAction::DropOff {
+            } else if let UnitAction::DropOff {
                 item_id,
                 input_entity,
-            } = action
+            } = current_action.action()
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(item_id.clone(), 1);
-                    // We're handling this by checking the inventory state below
-                    let _ = held_item.transfer_item(
+                    let transfer_result = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
-
-                    if held_item.is_empty() {
-                        should_idle = true;
-                    }
+                    CurrentAction::idle()
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    should_idle = true;
+                    CurrentAction::idle()
                 }
-            }
+            } else {
+                // Other actions are not handled in this system
+                return;
+            };
 
-            if should_idle {
-                *current_action = CurrentAction::idle();
-            }
+            *current_action = new_action;
         }
     }
 }
