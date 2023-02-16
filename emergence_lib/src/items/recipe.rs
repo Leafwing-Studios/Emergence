@@ -106,7 +106,7 @@ impl Display for Recipe {
 
         let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
 
-        write!(f, "[{input_str}] -> [{output_str}] | {duration_str}s")
+        write!(f, "[{input_str}] -> [{output_str}] | {duration_str} s")
     }
 }
 
@@ -127,6 +127,6 @@ mod tests {
             craft_time: Duration::from_secs(1),
         };
 
-        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00s")
+        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00 s")
     }
 }

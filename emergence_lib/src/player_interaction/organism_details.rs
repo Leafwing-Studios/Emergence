@@ -45,10 +45,20 @@ pub(crate) struct StructureDetails {
 }
 
 /// Detailed info about the selected organism.
-#[derive(Debug, Resource, Default, Deref)]
-pub(crate) struct SelectionDetails {
-    /// Structure-related information
-    pub(crate) structure: Option<StructureDetails>,
+#[derive(Debug, Resource, Default)]
+pub(crate) enum SelectionDetails {
+    /// A structure is selected
+    Structure(StructureDetails),
+    /// Nothing is selected
+    #[default]
+    None,
+}
+
+impl SelectionDetails {
+    /// Is this [`SelectionDetails::None`]?
+    pub(crate) fn is_none(&self) -> bool {
+        matches!(self, SelectionDetails::None)
+    }
 }
 
 /// Display detailed info on hover.
@@ -68,7 +78,7 @@ impl Plugin for DetailsPlugin {
 
 /// Data needed to populate [`StructureDetails`].
 #[derive(WorldQuery)]
-struct HoverDetailsQuery {
+struct StructureDetailsQuery {
     /// The type of structure
     structure_id: &'static StructureId,
     /// The location
@@ -87,8 +97,8 @@ struct HoverDetailsQuery {
 fn hover_details(
     cursor_pos: Res<CursorPos>,
     selected_tiles: Res<SelectedTiles>,
-    mut hover_details: ResMut<SelectionDetails>,
-    structure_query: Query<HoverDetailsQuery>,
+    mut selection_details: ResMut<SelectionDetails>,
+    structure_query: Query<StructureDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {
     // If only one tile is selected, use that.
@@ -102,7 +112,7 @@ fn hover_details(
         return;
     };
 
-    hover_details.structure = None;
+    *selection_details = SelectionDetails::None;
 
     if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
         let structure_details = structure_query.get(structure_entity).unwrap();
@@ -120,12 +130,12 @@ fn hover_details(
                 None
             };
 
-        hover_details.structure = Some(StructureDetails {
+        *selection_details = SelectionDetails::Structure(StructureDetails {
             tile_pos,
             structure_id: structure_details.structure_id.clone(),
             crafting_details,
         });
     } else {
-        hover_details.structure = None;
+        *selection_details = SelectionDetails::None;
     }
 }

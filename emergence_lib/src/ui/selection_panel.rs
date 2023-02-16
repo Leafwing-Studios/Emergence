@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    items::recipe::RecipeManifest,
     player_interaction::{organism_details::SelectionDetails, InteractionSystem},
     structures::crafting::CraftingState,
 };
@@ -118,7 +119,7 @@ fn populate_hover_details(
 
 /// Updates UI elements for hover details based on new information.
 fn update_hover_details(
-    hover_details: Res<SelectionDetails>,
+    selection_details: Res<SelectionDetails>,
     mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
     mut organism_query: Query<
@@ -140,38 +141,44 @@ fn update_hover_details(
             Without<IdText>,
         ),
     >,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = panel_query.single_mut();
-    if hover_details.structure.is_none() {
+    if selection_details.is_none() {
         *parent_visibility = Visibility::INVISIBLE;
         return;
     } else {
         *parent_visibility = Visibility::VISIBLE;
     }
 
-    let details = hover_details.structure.as_ref().unwrap();
-    position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
-    organism_query.single_mut().sections[1].value = format!("Variety: {}", details.structure_id.id);
+    if let SelectionDetails::Structure(details) = &*selection_details {
+        position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
+        organism_query.single_mut().sections[1].value =
+            format!("Variety: {}", details.structure_id.id);
 
-    let (mut crafting_text, mut crafting_visibility) = crafting_query.single_mut();
+        let (mut crafting_text, mut crafting_visibility) = crafting_query.single_mut();
 
-    if let Some(crafting_details) = &details.crafting_details {
-        *crafting_visibility = Visibility::VISIBLE;
-        crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
-        crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
-        crafting_text.sections[5].value = if let Some(recipe) = &crafting_details.active_recipe {
-            format!("{recipe}")
+        if let Some(crafting_details) = &details.crafting_details {
+            *crafting_visibility = Visibility::VISIBLE;
+            crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
+            crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
+
+            crafting_text.sections[5].value =
+                if let Some(recipe_id) = &crafting_details.active_recipe {
+                    let recipe_details = recipe_manifest.get(recipe_id);
+                    format!("{recipe_id}: \n {recipe_details}")
+                } else {
+                    "None".to_string()
+                };
+            crafting_text.sections[7].value = match crafting_details.state {
+                CraftingState::WaitingForInput => "Waiting for input".to_string(),
+                CraftingState::InProgress => {
+                    format!("Crafting ({:.2}s)", crafting_details.timer.remaining_secs())
+                }
+                CraftingState::Finished => "Waiting for space in output".to_string(),
+            };
         } else {
-            "None".to_string()
-        };
-        crafting_text.sections[7].value = match crafting_details.state {
-            CraftingState::WaitingForInput => "Waiting for input".to_string(),
-            CraftingState::InProgress => {
-                format!("Crafting ({:.2}s)", crafting_details.timer.remaining_secs())
-            }
-            CraftingState::Finished => "Waiting for space in output".to_string(),
-        };
-    } else {
-        *crafting_visibility = Visibility::INVISIBLE;
+            *crafting_visibility = Visibility::INVISIBLE;
+        }
     }
 }
