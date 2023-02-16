@@ -10,6 +10,7 @@ use rand::thread_rng;
 use crate::items::ItemId;
 use crate::organisms::units::UnitId;
 use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::structures::crafting::{InputInventory, OutputInventory};
 
 /// A unit's current goals.
 ///
@@ -41,6 +42,8 @@ impl Goal {
         &self,
         unit_tile_pos: TilePos,
         map_geometry: &MapGeometry,
+        input_inventory_query: &Query<&InputInventory>,
+        output_inventory_query: &Query<&OutputInventory>,
         rng: &mut ThreadRng,
     ) -> CurrentAction {
         match self {
@@ -53,8 +56,60 @@ impl Goal {
                     CurrentAction::idle()
                 }
             }
-            Goal::Pickup(_) => todo!(),
-            Goal::DropOff(_) => todo!(),
+            Goal::Pickup(item_id) => {
+                let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                for tile_pos in neighboring_tiles {
+                    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                        if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
+                            if output_inventory.item_count(item_id) > 0 {
+                                entities_with_desired_item.push(structure_entity);
+                            }
+                        }
+                    }
+                }
+
+                if let Some(output_entity) = entities_with_desired_item.choose(rng) {
+                    CurrentAction::pickup(output_entity, item_id)
+                } else {
+                    // TODO: walk towards destination more intelligently
+                    Goal::Wander.choose_action(
+                        unit_tile_pos,
+                        map_geometry,
+                        input_inventory_query,
+                        output_inventory_query,
+                        rng,
+                    )
+                }
+            }
+            Goal::DropOff(item_id) => {
+                let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                for tile_pos in neighboring_tiles {
+                    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                        if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
+                            if input_inventory.item_count(item_id) > 0 {
+                                entities_with_desired_item.push(structure_entity);
+                            }
+                        }
+                    }
+                }
+
+                if let Some(output_entity) = entities_with_desired_item.choose(rng) {
+                    CurrentAction::dropoff(output_entity, item_id)
+                } else {
+                    // TODO: walk towards destination more intelligently
+                    Goal::Wander.choose_action(
+                        unit_tile_pos,
+                        map_geometry,
+                        input_inventory_query,
+                        output_inventory_query,
+                        rng,
+                    )
+                }
+            }
             Goal::Work(_) => todo!(),
         }
     }
@@ -87,6 +142,8 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
     mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction), With<UnitId>>,
+    input_inventory_query: Query<&InputInventory>,
+    output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
 ) {
     let rng = &mut thread_rng();
@@ -94,7 +151,13 @@ pub(super) fn choose_actions(
 
     for (&unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
         if current_action.finished() {
-            *current_action = current_goal.choose_action(unit_tile_pos, map_geometry, rng);
+            *current_action = current_goal.choose_action(
+                unit_tile_pos,
+                map_geometry,
+                &input_inventory_query,
+                &output_inventory_query,
+                rng,
+            );
         }
     }
 }
