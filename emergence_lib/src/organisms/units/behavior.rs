@@ -118,7 +118,7 @@ impl Goal {
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(mut units_query: Query<&mut Goal>) {
     // TODO: pick goal intelligently based on local environment
-    let possible_goals = vec![Goal::Wander];
+    let possible_goals = vec![Goal::Wander, Goal::Pickup(ItemId::acacia_leaf())];
     let rng = &mut thread_rng();
 
     for mut goal in units_query.iter_mut() {
