@@ -20,17 +20,20 @@ pub(super) fn populate_units(
         let terrain_height = *map_geometry.height_index.get(tile_pos).unwrap();
         let scene_handle = unit_handles.scenes.get(unit_id).unwrap();
 
-        commands.entity(entity).insert(SceneBundle {
-            scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
-            ..default()
-        });
+        commands
+            .entity(entity)
+            .insert(SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
+                ..default()
+            })
+            .insert(unit_handles.picking_mesh.clone_weak());
     }
 }
 
 /// Shows the item that each unit is holding
 pub(super) fn display_held_item(unit_query: Query<&HeldItem, (With<UnitId>, Changed<HeldItem>)>) {
-    for held_item in unit_query.iter() {
-        info!("{held_item:?}");
+    for _held_item in unit_query.iter() {
+        // TODO: actually display this
     }
 }

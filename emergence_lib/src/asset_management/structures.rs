@@ -1,6 +1,8 @@
 //! Asset loading for structures
 
-use crate::structures::StructureId;
+use crate::{
+    asset_management::hexagonal_column, simulation::geometry::MapGeometry, structures::StructureId,
+};
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use super::Loadable;
@@ -12,10 +14,22 @@ pub(crate) struct StructureHandles {
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
     /// The material to be used for all ghosts
     pub(crate) ghost_material: Handle<StandardMaterial>,
+    /// The raycasting mesh used to select structures
+    pub(crate) picking_mesh: Handle<Mesh>,
 }
 
 impl FromWorld for StructureHandles {
     fn from_world(world: &mut World) -> Self {
+        /// The height of the picking box for a single structure.
+        ///
+        /// Hex tiles always have a diameter of 1.0.
+        const PICKING_HEIGHT: f32 = 1.0;
+
+        let map_geometry = world.resource::<MapGeometry>();
+        let picking_mesh_object = hexagonal_column(&map_geometry.layout, PICKING_HEIGHT);
+        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
+        let picking_mesh = mesh_assets.add(picking_mesh_object);
+
         let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
         let ghost_material = materials.add(StandardMaterial {
             base_color: Color::hsla(0., 0., 0.9, 0.7),
@@ -26,6 +40,7 @@ impl FromWorld for StructureHandles {
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
             ghost_material,
+            picking_mesh,
         };
 
         let asset_server = world.resource::<AssetServer>();

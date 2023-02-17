@@ -1,6 +1,7 @@
 //! Manages the game world's grid and data tied to that grid
 
 use bevy::{prelude::*, utils::HashMap};
+use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex, HexLayout};
 use rand::{prelude::IteratorRandom, rngs::ThreadRng};
@@ -25,6 +26,17 @@ use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 pub(crate) struct TilePos {
     /// The underlying hex coordinate
     pub(crate) hex: Hex,
+}
+
+impl Display for TilePos {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let x = self.hex.x;
+        let y = self.hex.y;
+        // In cubic hex coordinates, x+y+z = 0
+        let z = -x - y;
+
+        write!(f, "({x}, {y}, {z})")
+    }
 }
 
 impl TilePos {

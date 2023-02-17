@@ -27,9 +27,6 @@ enum UiStage {
 struct FiraSansFontFamily {
     /// The font to use for regular text.
     regular: Handle<Font>,
-
-    /// The font to use for bold text.
-    bold: Handle<Font>,
 }
 
 /// Struct to build the UI plugin
@@ -43,7 +40,6 @@ impl Plugin for UiPlugin {
 
         app.insert_resource(FiraSansFontFamily {
             regular: asset_server.load("fonts/FiraSans-Medium.ttf"),
-            bold: asset_server.load("fonts/FiraSans-Bold.ttf"),
         })
         .add_startup_stage_before(
             StartupStage::Startup,

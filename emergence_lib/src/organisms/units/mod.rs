@@ -2,6 +2,8 @@
 
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
+use bevy_mod_raycast::RaycastMesh;
+use core::fmt::Display;
 
 use self::{
     behavior::{CurrentAction, Goal},
@@ -10,7 +12,7 @@ use self::{
 
 use super::OrganismBundle;
 
-mod behavior;
+pub(crate) mod behavior;
 pub(crate) mod item_interaction;
 mod movement;
 
@@ -19,6 +21,12 @@ mod movement;
 pub(crate) struct UnitId {
     /// The unique identifier for this variety of unit.
     pub(crate) id: &'static str,
+}
+
+impl Display for UnitId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.id)
+    }
 }
 
 /// An organism that can move around freely.
@@ -36,6 +44,8 @@ pub(crate) struct UnitBundle {
     held_item: HeldItem,
     /// Organism data
     organism_bundle: OrganismBundle,
+    /// Makes units pickable
+    raycast_mesh: RaycastMesh<UnitId>,
 }
 
 impl UnitBundle {
@@ -48,6 +58,7 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: HeldItem::default(),
             organism_bundle: OrganismBundle::default(),
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

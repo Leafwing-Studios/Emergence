@@ -9,8 +9,10 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::prelude::ActionState;
 
+use crate::organisms::units::UnitId;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
+use crate::structures::StructureId;
 use crate::terrain::Terrain;
 
 use super::InteractionSystem;
@@ -50,7 +52,9 @@ fn setup(mut commands: Commands) {
         .insert(CameraSettings::default())
         .insert(CameraFocus::default())
         .insert(Facing::default())
-        .insert(RaycastSource::<Terrain>::new());
+        .insert(RaycastSource::<Terrain>::new())
+        .insert(RaycastSource::<StructureId>::new())
+        .insert(RaycastSource::<UnitId>::new());
 }
 
 /// The position that the camera is looking at.

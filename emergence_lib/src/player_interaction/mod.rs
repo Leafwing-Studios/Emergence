@@ -11,8 +11,8 @@ pub(crate) mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
 pub(crate) mod cursor;
+pub(crate) mod details;
 pub(crate) mod intent;
-pub(crate) mod organism_details;
 pub(crate) mod tile_selection;
 pub(crate) mod zoning;
 
@@ -28,7 +28,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
-            .add_plugin(organism_details::DetailsPlugin)
+            .add_plugin(details::DetailsPlugin)
             .add_plugin(tile_selection::TileSelectionPlugin)
             .add_plugin(clipboard::ClipboardPlugin)
             .add_plugin(zoning::ZoningPlugin);

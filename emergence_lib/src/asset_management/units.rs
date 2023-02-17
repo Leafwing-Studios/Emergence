@@ -1,21 +1,34 @@
 //! Asset loading for units
 
-use crate::organisms::units::UnitId;
+use crate::{organisms::units::UnitId, simulation::geometry::MapGeometry};
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
-use super::Loadable;
+use super::{hexagonal_column, Loadable};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct UnitHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<UnitId, Handle<Scene>>,
+    /// The raycasting mesh used to select units
+    pub(crate) picking_mesh: Handle<Mesh>,
 }
 
 impl FromWorld for UnitHandles {
     fn from_world(world: &mut World) -> Self {
+        /// The height of the picking box for a single unit.
+        ///
+        /// Hex tiles always have a diameter of 1.0.
+        const PICKING_HEIGHT: f32 = 1.0;
+
+        let map_geometry = world.resource::<MapGeometry>();
+        let picking_mesh_object = hexagonal_column(&map_geometry.layout, PICKING_HEIGHT);
+        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
+        let picking_mesh = mesh_assets.add(picking_mesh_object);
+
         let mut handles = UnitHandles {
             scenes: HashMap::default(),
+            picking_mesh,
         };
 
         let asset_server = world.resource::<AssetServer>();

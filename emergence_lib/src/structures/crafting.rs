@@ -1,6 +1,6 @@
 //! Everything needed to make structures able to craft things.
 
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 use bevy::{prelude::*, utils::HashMap};
 
@@ -22,6 +22,18 @@ pub(crate) enum CraftingState {
 
     /// The recipe has been crafted and the resources need to be claimed.
     Finished,
+}
+
+impl Display for CraftingState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            CraftingState::WaitingForInput => "Waiting for input",
+            CraftingState::InProgress => "In progress",
+            CraftingState::Finished => "Finished",
+        };
+
+        write!(f, "{str}")
+    }
 }
 
 /// The input inventory for a structure.
