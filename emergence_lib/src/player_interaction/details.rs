@@ -1,48 +1,15 @@
 //! Detailed info about a given organism.
 
-use bevy::{ecs::query::WorldQuery, prelude::*};
+use bevy::prelude::*;
+
+use self::structure::*;
 
 use crate::{
-    items::{inventory::Inventory, recipe::RecipeId},
     player_interaction::{cursor::CursorPos, InteractionSystem},
-    simulation::geometry::{MapGeometry, TilePos},
-    structures::{
-        crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
-        StructureId,
-    },
+    simulation::geometry::MapGeometry,
 };
 
 use super::tile_selection::SelectedTiles;
-
-/// The details about crafting processes.
-#[derive(Debug, Clone)]
-pub(crate) struct CraftingDetails {
-    /// The inventory for the input items.
-    pub(crate) input_inventory: Inventory,
-
-    /// The inventory for the output items.
-    pub(crate) output_inventory: Inventory,
-
-    /// The recipe that's currently being crafted, if any.
-    pub(crate) active_recipe: Option<RecipeId>,
-
-    /// The state of the ongoing crafting process.
-    pub(crate) state: CraftingState,
-
-    /// The time remaining to finish crafting.
-    pub(crate) timer: Timer,
-}
-
-/// Detailed info about a given entity.
-#[derive(Debug, Clone)]
-pub(crate) struct StructureDetails {
-    /// The tile position of this organism.
-    pub(crate) tile_pos: TilePos,
-    /// The type of structure, e.g. plant or fungus.
-    pub(crate) structure_id: StructureId,
-    /// If this organism is crafting something, the details about that.
-    pub(crate) crafting_details: Option<CraftingDetails>,
-}
 
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
@@ -74,23 +41,6 @@ impl Plugin for DetailsPlugin {
                 .after(InteractionSystem::SelectTiles),
         );
     }
-}
-
-/// Data needed to populate [`StructureDetails`].
-#[derive(WorldQuery)]
-struct StructureDetailsQuery {
-    /// The type of structure
-    structure_id: &'static StructureId,
-    /// The location
-    tile_pos: &'static TilePos,
-    /// Crafting-related components
-    crafting: Option<(
-        &'static InputInventory,
-        &'static OutputInventory,
-        &'static ActiveRecipe,
-        &'static CraftingState,
-        &'static CraftTimer,
-    )>,
 }
 
 /// Get details about the hovered entity.
@@ -137,5 +87,68 @@ fn hover_details(
         });
     } else {
         *selection_details = SelectionDetails::None;
+    }
+}
+
+mod structure {
+    use bevy::{
+        ecs::{prelude::*, query::WorldQuery},
+        time::Timer,
+    };
+
+    use crate::{
+        items::{inventory::Inventory, recipe::RecipeId},
+        simulation::geometry::TilePos,
+        structures::{
+            crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
+            StructureId,
+        },
+    };
+
+    /// Data needed to populate [`StructureDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct StructureDetailsQuery {
+        /// The type of structure
+        pub(super) structure_id: &'static StructureId,
+        /// The location
+        tile_pos: &'static TilePos,
+        /// Crafting-related components
+        pub(super) crafting: Option<(
+            &'static InputInventory,
+            &'static OutputInventory,
+            &'static ActiveRecipe,
+            &'static CraftingState,
+            &'static CraftTimer,
+        )>,
+    }
+
+    /// Detailed info about a given entity.
+    #[derive(Debug, Clone)]
+    pub(crate) struct StructureDetails {
+        /// The tile position of this organism.
+        pub(crate) tile_pos: TilePos,
+        /// The type of structure, e.g. plant or fungus.
+        pub(crate) structure_id: StructureId,
+        /// If this organism is crafting something, the details about that.
+        pub(crate) crafting_details: Option<CraftingDetails>,
+    }
+
+    /// The details about crafting processes.
+    #[derive(Debug, Clone)]
+    pub(crate) struct CraftingDetails {
+        /// The inventory for the input items.
+        pub(crate) input_inventory: Inventory,
+
+        /// The inventory for the output items.
+        pub(crate) output_inventory: Inventory,
+
+        /// The recipe that's currently being crafted, if any.
+        pub(crate) active_recipe: Option<RecipeId>,
+
+        /// The state of the ongoing crafting process.
+        pub(crate) state: CraftingState,
+
+        /// The time remaining to finish crafting.
+        pub(crate) timer: Timer,
     }
 }

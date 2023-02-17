@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     items::recipe::RecipeManifest,
-    player_interaction::{organism_details::SelectionDetails, InteractionSystem},
+    player_interaction::{details::SelectionDetails, InteractionSystem},
     structures::crafting::CraftingState,
 };
 
