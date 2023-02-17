@@ -179,6 +179,7 @@ mod structure {
 
 mod unit {
     use bevy::ecs::{prelude::*, query::WorldQuery};
+    use std::fmt::Display;
 
     use crate::{
         organisms::units::{
@@ -217,5 +218,26 @@ mod unit {
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,
+    }
+
+    impl Display for UnitDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let unit_id = &self.unit_id;
+            let tile_pos = &self.tile_pos;
+            let held_item = &self.held_item;
+            let goal = &self.goal;
+            let action = &self.action;
+
+            write!(
+                f,
+                "
+            Unit type: {unit_id:?}
+            Tile: {tile_pos:?}
+            Holding: {held_item:?}
+            Goal: {goal:?}
+            Action: {action:?}
+            "
+            )
+        }
     }
 }

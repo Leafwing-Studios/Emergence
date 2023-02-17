@@ -83,7 +83,7 @@ fn populate_hover_panel(
     let structure_details =
         populate_structure_details(&mut commands, &key_text_style, &value_text_style);
 
-    let unit_details = populate_unit_details(&mut commands, &key_text_style, &value_text_style);
+    let unit_details = populate_unit_details(&mut commands, &key_text_style);
 
     commands.entity(right_panel).add_child(hover_panel);
     commands
@@ -96,7 +96,7 @@ fn populate_hover_panel(
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
-    mut position_query: Query<&mut Text, With<PositionText>>,
+    mut position_query: Query<&mut Text, (With<PositionText>, Without<UnitDetails>)>,
     mut structure_details_query: Query<&mut Style, (With<StructureDetails>, Without<UnitDetails>)>,
     mut unit_details_query: Query<&mut Style, (With<UnitDetails>, Without<StructureDetails>)>,
     mut organism_query: Query<
@@ -106,6 +106,7 @@ fn update_hover_details(
             // Avoid conflicting queries
             Without<PositionText>,
             Without<HoverPanel>,
+            Without<UnitDetails>,
         ),
     >,
     mut crafting_query: Query<
@@ -116,8 +117,10 @@ fn update_hover_details(
             Without<PositionText>,
             Without<HoverPanel>,
             Without<IdText>,
+            Without<UnitDetails>,
         ),
     >,
+    mut unit_text_query: Query<&mut Text, With<UnitDetails>>,
     recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
@@ -163,6 +166,9 @@ fn update_hover_details(
             *parent_visibility = Visibility::VISIBLE;
             *unit_details_display = Display::Flex;
             *structure_details_display = Display::None;
+
+            let mut unit_text = unit_text_query.single_mut();
+            unit_text.sections[0].value = format!("{details}");
         }
         SelectionDetails::None => {
             *parent_visibility = Visibility::INVISIBLE;
@@ -186,7 +192,6 @@ fn populate_structure_details(
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
-                background_color: Color::rgba(1., 0., 0., 0.9).into(),
                 ..default()
             },
             StructureDetails,
@@ -239,20 +244,16 @@ fn populate_structure_details(
 /// Generates the [`UnitDetails`] node and its children.
 ///
 /// The returned [`Entity`] is for the root node.
-fn populate_unit_details(
-    commands: &mut Commands,
-    key_text_style: &TextStyle,
-    value_text_style: &TextStyle,
-) -> Entity {
+fn populate_unit_details(commands: &mut Commands, key_text_style: &TextStyle) -> Entity {
     commands
         .spawn((
-            NodeBundle {
+            TextBundle {
                 style: Style {
                     size: Size::new(Val::Percent(100.), Val::Percent(100.)),
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
-                background_color: Color::rgba(0., 1., 0., 0.9).into(),
+                text: Text::from_section("", key_text_style.clone()),
                 ..default()
             },
             UnitDetails,
