@@ -95,7 +95,7 @@ fn update_raycast_with_cursor(
     }
 }
 
-/// Records which tile is currently under the cursor, if any
+/// Updates the location of the cursor and what it is hovering over
 fn update_cursor_pos(
     mut cursor_pos: ResMut<CursorPos>,
     camera_query: Query<
