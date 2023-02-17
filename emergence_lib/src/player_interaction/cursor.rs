@@ -28,7 +28,7 @@ impl Plugin for CursorPlugin {
     }
 }
 
-/// The tile position of the mouse cursor, if it lies over the map.
+/// The position of the mouse cursor and what it is hovering over.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 pub(crate) struct CursorPos {
     /// The tile position that the cursor is over top of.
