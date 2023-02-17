@@ -53,13 +53,6 @@ pub(crate) enum SelectionDetails {
     None,
 }
 
-impl SelectionDetails {
-    /// Is this [`SelectionDetails::None`]?
-    pub(crate) fn is_none(&self) -> bool {
-        matches!(self, SelectionDetails::None)
-    }
-}
-
 /// Determine what should be selected
 fn set_selection(mut selection_type: ResMut<SelectionType>, cursor_pos: Res<CursorPos>) {
     // TODO: use a fancier, more intuitive / controllable strategy here
