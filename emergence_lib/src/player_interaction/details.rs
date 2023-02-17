@@ -34,9 +34,13 @@ impl Plugin for DetailsPlugin {
 /// The game entity currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 enum SelectionType {
+    /// A tile is selected
     Tile(TilePos),
+    /// A unit is selected
     Unit(Entity),
+    /// A structure is selected
     Structure(Entity),
+    /// Nothing is selected
     #[default]
     None,
 }
@@ -114,6 +118,7 @@ fn get_details(
     };
 }
 
+/// Details for structures
 mod structure {
     use bevy::{
         ecs::{prelude::*, query::WorldQuery},
@@ -218,6 +223,7 @@ Recipe ID: {recipe_id:?}
     }
 }
 
+/// Details for units
 mod unit {
     use bevy::ecs::{prelude::*, query::WorldQuery};
     use std::fmt::Display;
@@ -231,7 +237,7 @@ mod unit {
         simulation::geometry::TilePos,
     };
 
-    /// Data needed to populate [`StructureDetails`].
+    /// Data needed to populate [`UnitDetails`].
     #[derive(WorldQuery)]
     pub(super) struct UnitDetailsQuery {
         /// The type of unit

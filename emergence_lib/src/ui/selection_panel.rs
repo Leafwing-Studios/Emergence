@@ -103,7 +103,7 @@ fn update_hover_details(
             structure_text.sections[1].value =
                 if let Some(crafting_details) = &details.crafting_details {
                     if let Some(recipe_id) = &crafting_details.active_recipe {
-                        let recipe_info = recipe_manifest.get(&recipe_id);
+                        let recipe_info = recipe_manifest.get(recipe_id);
                         format!("\n{recipe_info}")
                     } else {
                         String::default()
