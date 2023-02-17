@@ -119,8 +119,6 @@ fn get_details(
         }
         SelectionType::None => SelectionDetails::None,
     };
-
-    info!("Selection details: {selection_details:?}")
 }
 
 mod structure {
