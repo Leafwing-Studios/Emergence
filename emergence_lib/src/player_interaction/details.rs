@@ -207,16 +207,20 @@ Tile: {tile_pos}"
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let input_inventory = &self.input_inventory;
             let output_inventory = &self.output_inventory;
-            let recipe_id = &self.active_recipe;
             let crafting_state = &self.state;
             let time_remaining = self.timer.remaining_secs();
             let total_duration = self.timer.duration().as_secs_f32();
+
+            let recipe_string = match &self.active_recipe {
+                Some(recipe_id) => format!("{recipe_id}"),
+                None => "None".to_string(),
+            };
 
             write!(
                 f,
                 "Input: {input_inventory}
 Output: {output_inventory}
-Recipe ID: {recipe_id:?}
+Recipe: {recipe_string}
 {crafting_state}: {time_remaining:.2} s / {total_duration:.2} s"
             )
         }
