@@ -166,7 +166,7 @@ mod structure {
 
             let basic_details = format!(
                 "Structure type: {structure_id}
-                Tile: {tile_pos}"
+Tile: {tile_pos}"
             );
 
             let crafting_details = if let Some(crafting) = &self.crafting_details {
@@ -210,10 +210,9 @@ mod structure {
             write!(
                 f,
                 "Input: {input_inventory}
-                Output: {output_inventory}
-                Recipe ID: {recipe_id:?}
-                {crafting_state}: {time_remaining:.2} s / {total_duration:.2} s
-                "
+Output: {output_inventory}
+Recipe ID: {recipe_id:?}
+{crafting_state}: {time_remaining:.2} s / {total_duration:.2} s"
             )
         }
     }
@@ -272,13 +271,11 @@ mod unit {
 
             write!(
                 f,
-                "
-            Unit type: {unit_id}
-            Tile: {tile_pos}
-            Holding: {held_item}
-            Goal: {goal}
-            Action: {action}
-            "
+                "Unit type: {unit_id}
+Tile: {tile_pos}
+Holding: {held_item}
+Goal: {goal}
+Action: {action}"
             )
         }
     }

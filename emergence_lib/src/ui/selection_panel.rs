@@ -104,7 +104,7 @@ fn update_hover_details(
                 if let Some(crafting_details) = &details.crafting_details {
                     if let Some(recipe_id) = &crafting_details.active_recipe {
                         let recipe_info = recipe_manifest.get(&recipe_id);
-                        format!("{recipe_info}")
+                        format!("\n{recipe_info}")
                     } else {
                         String::default()
                     }
@@ -114,8 +114,8 @@ fn update_hover_details(
         }
         SelectionDetails::Unit(details) => {
             *parent_visibility = Visibility::VISIBLE;
-            structure_style.display = Display::Flex;
-            unit_style.display = Display::None;
+            unit_style.display = Display::Flex;
+            structure_style.display = Display::None;
 
             unit_text.sections[0].value = format!("{details}");
         }
