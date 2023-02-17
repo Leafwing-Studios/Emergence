@@ -73,11 +73,14 @@ fn populate_structures(
 
         let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
 
-        commands.entity(entity).insert(SceneBundle {
-            scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, *terrain_height, pos.y),
-            ..default()
-        });
+        commands
+            .entity(entity)
+            .insert(SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_xyz(pos.x, *terrain_height, pos.y),
+                ..default()
+            })
+            .insert(structure_handles.picking_mesh.clone_weak());
     }
 }
 

@@ -1,16 +1,13 @@
 //! Asset loading for terrain
 
-use bevy::{
-    prelude::*,
-    render::{mesh::Indices, render_resource::PrimitiveTopology},
-    utils::HashMap,
-};
-use hexx::{Hex, HexLayout, MeshInfo};
+use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     enum_iter::IterableEnum, player_interaction::tile_selection::ObjectInteraction,
     simulation::geometry::MapGeometry, terrain::Terrain,
 };
+
+use super::hexagonal_column;
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
@@ -71,15 +68,4 @@ impl FromWorld for TerrainHandles {
             interaction_materials,
         }
     }
-}
-
-/// Constructs the mesh for a single hexagonal column
-fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, hex_height);
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
-    mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
-    mesh
 }

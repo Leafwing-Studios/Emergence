@@ -20,11 +20,14 @@ pub(super) fn populate_units(
         let terrain_height = *map_geometry.height_index.get(tile_pos).unwrap();
         let scene_handle = unit_handles.scenes.get(unit_id).unwrap();
 
-        commands.entity(entity).insert(SceneBundle {
-            scene: scene_handle.clone_weak(),
-            transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
-            ..default()
-        });
+        commands
+            .entity(entity)
+            .insert(SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
+                ..default()
+            })
+            .insert(unit_handles.picking_mesh.clone_weak());
     }
 }
 
