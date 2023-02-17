@@ -16,6 +16,8 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
+            .add_plugin(DefaultRaycastingPlugin::<StructureId>::default())
+            .add_plugin(DefaultRaycastingPlugin::<UnitId>::default())
             .add_system_to_stage(
                 CoreStage::First,
                 update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
