@@ -3,9 +3,11 @@
 use bevy::prelude::*;
 
 use self::structure::*;
+use self::terrain::*;
 use self::unit::*;
 
 use crate::player_interaction::{cursor::CursorPos, InteractionSystem};
+use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 
 /// Display detailed info on hover.
@@ -34,12 +36,12 @@ impl Plugin for DetailsPlugin {
 /// The game entity currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 enum SelectionType {
-    /// A tile is selected
-    Tile(TilePos),
-    /// A unit is selected
-    Unit(Entity),
     /// A structure is selected
     Structure(Entity),
+    /// A tile is selected
+    Terrain(TilePos),
+    /// A unit is selected
+    Unit(Entity),
     /// Nothing is selected
     #[default]
     None,
@@ -50,6 +52,8 @@ enum SelectionType {
 pub(crate) enum SelectionDetails {
     /// A structure is selected
     Structure(StructureDetails),
+    /// A tile is selected.
+    Terrain(TerrainDetails),
     /// A unit is selected
     Unit(UnitDetails),
     /// Nothing is selected
@@ -65,7 +69,7 @@ fn set_selection(mut selection_type: ResMut<SelectionType>, cursor_pos: Res<Curs
     } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
         SelectionType::Structure(structure_entity)
     } else if let Some(tile_pos) = cursor_pos.maybe_tile_pos() {
-        SelectionType::Tile(tile_pos)
+        SelectionType::Terrain(tile_pos)
     } else {
         SelectionType::None
     }
@@ -75,12 +79,21 @@ fn set_selection(mut selection_type: ResMut<SelectionType>, cursor_pos: Res<Curs
 fn get_details(
     selection_type: Res<SelectionType>,
     mut selection_details: ResMut<SelectionDetails>,
+    terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
+    map_geometry: Res<MapGeometry>,
 ) {
     *selection_details = match *selection_type {
-        // TODO: populate and display tile information
-        SelectionType::Tile(_tile_pos) => SelectionDetails::None,
+        SelectionType::Terrain(tile_pos) => {
+            let terrain_entity = map_geometry.terrain_index.get(&tile_pos).unwrap();
+            let terrain_data = terrain_query.get(*terrain_entity).unwrap();
+
+            SelectionDetails::Terrain(TerrainDetails {
+                terrain_type: *terrain_data.terrain_type,
+                tile_pos,
+            })
+        }
         SelectionType::Unit(unit_entity) => {
             let unit_query_item = unit_query.get(unit_entity).unwrap();
             SelectionDetails::Unit(UnitDetails {
@@ -222,6 +235,43 @@ Tile: {tile_pos}"
 Output: {output_inventory}
 Recipe: {recipe_string}
 {crafting_state}: {time_remaining:.2} s / {total_duration:.2} s"
+            )
+        }
+    }
+}
+
+/// Details for terrain
+mod terrain {
+    use bevy::ecs::{prelude::*, query::WorldQuery};
+    use std::fmt::Display;
+
+    use crate::{simulation::geometry::TilePos, terrain::Terrain};
+
+    /// Data needed to populate [`TerrainDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct TerrainDetailsQuery {
+        /// The type of terrain
+        pub(super) terrain_type: &'static Terrain,
+    }
+
+    /// Detailed info about a given unit.
+    #[derive(Debug)]
+    pub(crate) struct TerrainDetails {
+        /// The type of unit
+        pub(super) terrain_type: Terrain,
+        /// The location of the tile
+        pub(super) tile_pos: TilePos,
+    }
+
+    impl Display for TerrainDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let terrain_type = &self.terrain_type;
+            let tile_pos = &self.tile_pos;
+
+            write!(
+                f,
+                "Terrain type: {terrain_type}
+Tile: {tile_pos}"
             )
         }
     }

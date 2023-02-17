@@ -8,11 +8,12 @@ use crate as emergence_lib;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::TilePos;
 use bevy::ecs::component::Component;
+use derive_more::Display;
 
 use emergence_macros::IterableEnum;
 
 /// Available terrain types.
-#[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum)]
+#[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum, Debug, Display)]
 pub(crate) enum Terrain {
     /// Terrain with no distinguishing characteristics.
     Plain,

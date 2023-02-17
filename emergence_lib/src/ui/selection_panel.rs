@@ -24,11 +24,15 @@ impl Plugin for HoverDetailsPlugin {
 struct HoverPanel;
 
 /// The UI node that stores all structure details.
-#[derive(Component)]
+#[derive(Component, Default)]
 struct StructureDetails;
 
+/// The UI node that stores all terrain details.
+#[derive(Component, Default)]
+struct TerrainDetails;
+
 /// The UI node that stores all unit details.
-#[derive(Component)]
+#[derive(Component, Default)]
 struct UnitDetails;
 
 /// Estabilishes UI elements for hover details.
@@ -62,14 +66,15 @@ fn populate_hover_panel(
         ))
         .id();
 
-    let structure_details = populate_structure_details(&mut commands, &key_text_style);
-
-    let unit_details = populate_unit_details(&mut commands, &key_text_style);
+    let structure_details = populate_details::<StructureDetails>(&mut commands, &key_text_style);
+    let terrain_details = populate_details::<TerrainDetails>(&mut commands, &key_text_style);
+    let unit_details = populate_details::<UnitDetails>(&mut commands, &key_text_style);
 
     commands.entity(right_panel).add_child(hover_panel);
     commands
         .entity(hover_panel)
         .add_child(structure_details)
+        .add_child(terrain_details)
         .add_child(unit_details);
 }
 
@@ -79,22 +84,36 @@ fn update_hover_details(
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut structure_details_query: Query<
         (&mut Style, &mut Text),
-        (With<StructureDetails>, Without<UnitDetails>),
+        (
+            With<StructureDetails>,
+            Without<TerrainDetails>,
+            Without<UnitDetails>,
+        ),
     >,
     mut unit_details_query: Query<
         (&mut Style, &mut Text),
         (With<UnitDetails>, Without<StructureDetails>),
+    >,
+    mut terrain_details_query: Query<
+        (&mut Style, &mut Text),
+        (
+            With<TerrainDetails>,
+            Without<StructureDetails>,
+            Without<UnitDetails>,
+        ),
     >,
     recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
+    let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
 
     match &*selection_details {
         SelectionDetails::Structure(details) => {
             *parent_visibility = Visibility::VISIBLE;
             structure_style.display = Display::Flex;
+            terrain_style.display = Display::None;
             unit_style.display = Display::None;
 
             // Details
@@ -116,8 +135,17 @@ fn update_hover_details(
             *parent_visibility = Visibility::VISIBLE;
             unit_style.display = Display::Flex;
             structure_style.display = Display::None;
+            terrain_style.display = Display::None;
 
             unit_text.sections[0].value = format!("{details}");
+        }
+        SelectionDetails::Terrain(details) => {
+            *parent_visibility = Visibility::VISIBLE;
+            terrain_style.display = Display::Flex;
+            unit_style.display = Display::None;
+            structure_style.display = Display::None;
+
+            terrain_text.sections[0].value = format!("{details}");
         }
         SelectionDetails::None => {
             *parent_visibility = Visibility::INVISIBLE;
@@ -125,10 +153,13 @@ fn update_hover_details(
     };
 }
 
-/// Generates the [`StructureDetails`] node and its children.
+/// Generates the details node with the marker component `T` and its children.
 ///
 /// The returned [`Entity`] is for the root node.
-fn populate_structure_details(commands: &mut Commands, key_text_style: &TextStyle) -> Entity {
+fn populate_details<T: Component + Default>(
+    commands: &mut Commands,
+    key_text_style: &TextStyle,
+) -> Entity {
     commands
         .spawn((
             TextBundle {
@@ -143,27 +174,7 @@ fn populate_structure_details(commands: &mut Commands, key_text_style: &TextStyl
                 ]),
                 ..default()
             },
-            StructureDetails,
-        ))
-        .id()
-}
-
-/// Generates the [`UnitDetails`] node and its children.
-///
-/// The returned [`Entity`] is for the root node.
-fn populate_unit_details(commands: &mut Commands, key_text_style: &TextStyle) -> Entity {
-    commands
-        .spawn((
-            TextBundle {
-                style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
-                    flex_direction: FlexDirection::Column,
-                    ..default()
-                },
-                text: Text::from_section("", key_text_style.clone()),
-                ..default()
-            },
-            UnitDetails,
+            T::default(),
         ))
         .id()
 }
