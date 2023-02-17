@@ -163,7 +163,7 @@ pub(super) fn choose_actions(
 }
 
 /// An action that a unit can take.
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
 pub(super) enum UnitAction {
     /// Do nothing for now
     #[default]
@@ -186,7 +186,7 @@ pub(super) enum UnitAction {
     Move(TilePos),
 }
 
-#[derive(Component, Default, Debug)]
+#[derive(Component, Clone, Default, Debug)]
 /// The action a unit is undertaking.
 pub(crate) struct CurrentAction {
     /// The type of action being undertaken.

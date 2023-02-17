@@ -5,12 +5,40 @@ use bevy::prelude::*;
 use self::structure::*;
 use self::unit::*;
 
-use crate::{
-    player_interaction::{cursor::CursorPos, InteractionSystem},
-    simulation::geometry::MapGeometry,
-};
+use crate::player_interaction::{cursor::CursorPos, InteractionSystem};
+use crate::simulation::geometry::TilePos;
 
-use super::tile_selection::SelectedTiles;
+/// Display detailed info on hover.
+pub(super) struct DetailsPlugin;
+
+impl Plugin for DetailsPlugin {
+    fn build(&self, app: &mut App) {
+        info!("Building DetailsPlugin...");
+
+        app.init_resource::<SelectionDetails>()
+            .add_system(
+                set_selection
+                    .label(InteractionSystem::HoverDetails)
+                    .after(InteractionSystem::ComputeCursorPos)
+                    .before(get_details),
+            )
+            .add_system(
+                get_details
+                    .label(InteractionSystem::HoverDetails)
+                    .after(InteractionSystem::SelectTiles),
+            );
+    }
+}
+
+/// The game entity currently selected for inspection.
+#[derive(Resource, Debug, Default)]
+enum SelectionType {
+    Tile(TilePos),
+    Unit(Entity),
+    Structure(Entity),
+    #[default]
+    None,
+}
 
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
@@ -31,47 +59,46 @@ impl SelectionDetails {
     }
 }
 
-/// Display detailed info on hover.
-pub(super) struct DetailsPlugin;
-
-impl Plugin for DetailsPlugin {
-    fn build(&self, app: &mut App) {
-        info!("Building DetailsPlugin...");
-
-        app.init_resource::<SelectionDetails>().add_system(
-            hover_details
-                .label(InteractionSystem::HoverDetails)
-                .after(InteractionSystem::SelectTiles),
-        );
+/// Determine what should be selected
+fn set_selection(mut selection_type: ResMut<SelectionType>, cursor_pos: Res<CursorPos>) {
+    // TODO: use a fancier, more intuitive / controllable strategy here
+    *selection_type = if let Some(unit_entity) = cursor_pos.maybe_unit() {
+        SelectionType::Unit(unit_entity)
+    } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
+        SelectionType::Structure(structure_entity)
+    } else if let Some(tile_pos) = cursor_pos.maybe_tile_pos() {
+        SelectionType::Tile(tile_pos)
+    } else {
+        SelectionType::None
     }
 }
 
 /// Get details about the hovered entity.
-fn hover_details(
-    cursor_pos: Res<CursorPos>,
-    selected_tiles: Res<SelectedTiles>,
+fn get_details(
+    selection_type: Res<SelectionType>,
     mut selection_details: ResMut<SelectionDetails>,
+    unit_query: Query<UnitDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
-    map_geometry: Res<MapGeometry>,
 ) {
-    // If only one tile is selected, use that.
-    let tile_pos = if selected_tiles.selection().len() == 1 {
-        *selected_tiles.selection().iter().next().unwrap()
-    // Otherwise use the cursor
-    } else if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        cursor_pos
-    // If the cursor isn't over a tile, just return early
-    } else {
-        return;
-    };
+    *selection_details = match *selection_type {
+        // TODO: populate and display tile information
+        SelectionType::Tile(_tile_pos) => SelectionDetails::None,
+        SelectionType::Unit(unit_entity) => {
+            let unit_query_item = unit_query.get(unit_entity).unwrap();
+            SelectionDetails::Unit(UnitDetails {
+                unit_id: unit_query_item.unit_id.clone(),
+                tile_pos: *unit_query_item.tile_pos,
+                held_item: unit_query_item.held_item.clone(),
+                goal: unit_query_item.goal.clone(),
+                action: unit_query_item.action.clone(),
+            })
+        }
+        SelectionType::Structure(structure_entity) => {
+            let structure_query_item = structure_query.get(structure_entity).unwrap();
 
-    *selection_details = SelectionDetails::None;
-
-    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-        let structure_details = structure_query.get(structure_entity).unwrap();
-
-        let crafting_details =
-            if let Some((input, output, recipe, state, timer)) = structure_details.crafting {
+            let crafting_details = if let Some((input, output, recipe, state, timer)) =
+                structure_query_item.crafting
+            {
                 Some(CraftingDetails {
                     input_inventory: input.inventory.clone(),
                     output_inventory: output.inventory.clone(),
@@ -83,14 +110,14 @@ fn hover_details(
                 None
             };
 
-        *selection_details = SelectionDetails::Structure(StructureDetails {
-            tile_pos,
-            structure_id: structure_details.structure_id.clone(),
-            crafting_details,
-        });
-    } else {
-        *selection_details = SelectionDetails::None;
-    }
+            SelectionDetails::Structure(StructureDetails {
+                tile_pos: *structure_query_item.tile_pos,
+                structure_id: structure_query_item.structure_id.clone(),
+                crafting_details,
+            })
+        }
+        SelectionType::None => SelectionDetails::None,
+    };
 }
 
 mod structure {
@@ -113,6 +140,8 @@ mod structure {
     pub(super) struct StructureDetailsQuery {
         /// The type of structure
         pub(super) structure_id: &'static StructureId,
+        /// The tile position of this structure
+        pub(crate) tile_pos: &'static TilePos,
         /// Crafting-related components
         pub(super) crafting: Option<(
             &'static InputInventory,
@@ -126,7 +155,7 @@ mod structure {
     /// Detailed info about a given structure.
     #[derive(Debug)]
     pub(crate) struct StructureDetails {
-        /// The tile position of this organism.
+        /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
         pub(crate) structure_id: StructureId,

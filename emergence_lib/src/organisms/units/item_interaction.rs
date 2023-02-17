@@ -10,7 +10,7 @@ use crate::{
 use super::behavior::{CurrentAction, Goal, UnitAction};
 
 /// The item(s) that a unit is carrying.
-#[derive(Component, Debug, Deref, DerefMut)]
+#[derive(Component, Clone, Debug, Deref, DerefMut)]
 pub(crate) struct HeldItem {
     /// The internal representation.
     pub(crate) inventory: Inventory,
