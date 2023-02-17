@@ -109,13 +109,33 @@ fn update_hover_details(
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
     let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
 
-    match &*selection_details {
-        SelectionDetails::Structure(details) => {
+    match *selection_details {
+        SelectionDetails::Structure(_) => {
             *parent_visibility = Visibility::VISIBLE;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
+        }
+        SelectionDetails::Terrain(_) => {
+            *parent_visibility = Visibility::VISIBLE;
+            structure_style.display = Display::None;
+            terrain_style.display = Display::Flex;
+            unit_style.display = Display::None;
+        }
+        SelectionDetails::Unit(_) => {
+            *parent_visibility = Visibility::VISIBLE;
+            structure_style.display = Display::None;
+            terrain_style.display = Display::None;
+            unit_style.display = Display::Flex;
+        }
+        SelectionDetails::None => {
+            // Don't bother messing with Display here to avoid triggering a pointless relayout
+            *parent_visibility = Visibility::INVISIBLE;
+        }
+    }
 
+    match &*selection_details {
+        SelectionDetails::Structure(details) => {
             // Details
             structure_text.sections[0].value = format!("{details}");
             // Recipe info
@@ -132,24 +152,12 @@ fn update_hover_details(
                 }
         }
         SelectionDetails::Unit(details) => {
-            *parent_visibility = Visibility::VISIBLE;
-            unit_style.display = Display::Flex;
-            structure_style.display = Display::None;
-            terrain_style.display = Display::None;
-
             unit_text.sections[0].value = format!("{details}");
         }
         SelectionDetails::Terrain(details) => {
-            *parent_visibility = Visibility::VISIBLE;
-            terrain_style.display = Display::Flex;
-            unit_style.display = Display::None;
-            structure_style.display = Display::None;
-
             terrain_text.sections[0].value = format!("{details}");
         }
-        SelectionDetails::None => {
-            *parent_visibility = Visibility::INVISIBLE;
-        }
+        SelectionDetails::None => (),
     };
 }
 
