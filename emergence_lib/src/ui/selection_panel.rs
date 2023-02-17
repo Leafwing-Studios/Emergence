@@ -151,11 +151,11 @@ fn update_hover_details(
                     String::default()
                 }
         }
-        SelectionDetails::Unit(details) => {
-            unit_text.sections[0].value = format!("{details}");
-        }
         SelectionDetails::Terrain(details) => {
             terrain_text.sections[0].value = format!("{details}");
+        }
+        SelectionDetails::Unit(details) => {
+            unit_text.sections[0].value = format!("{details}");
         }
         SelectionDetails::None => (),
     };
