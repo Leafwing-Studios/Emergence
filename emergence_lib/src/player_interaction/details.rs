@@ -193,7 +193,7 @@ Tile: {tile_pos}"
                 String::default()
             };
 
-            write!(f, "{basic_details}{crafting_details}")
+            write!(f, "{basic_details}\n{crafting_details}")
         }
     }
 
