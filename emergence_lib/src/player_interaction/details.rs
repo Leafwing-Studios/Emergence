@@ -120,6 +120,8 @@ mod structure {
         time::Timer,
     };
 
+    use core::fmt::Display;
+
     use crate::{
         items::{inventory::Inventory, recipe::RecipeId},
         simulation::geometry::TilePos,
@@ -157,6 +159,26 @@ mod structure {
         pub(crate) crafting_details: Option<CraftingDetails>,
     }
 
+    impl Display for StructureDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let structure_id = &self.structure_id;
+            let tile_pos = &self.tile_pos;
+
+            let basic_details = format!(
+                "Structure type: {structure_id}
+                Tile: {tile_pos}"
+            );
+
+            let crafting_details = if let Some(crafting) = &self.crafting_details {
+                format!("{crafting}")
+            } else {
+                String::default()
+            };
+
+            write!(f, "{basic_details}{crafting_details}")
+        }
+    }
+
     /// The details about crafting processes.
     #[derive(Debug, Clone)]
     pub(crate) struct CraftingDetails {
@@ -174,6 +196,26 @@ mod structure {
 
         /// The time remaining to finish crafting.
         pub(crate) timer: Timer,
+    }
+
+    impl Display for CraftingDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let input_inventory = &self.input_inventory;
+            let output_inventory = &self.output_inventory;
+            let recipe_id = &self.active_recipe;
+            let crafting_state = &self.state;
+            let time_remaining = self.timer.remaining_secs();
+            let total_duration = self.timer.duration().as_secs_f32();
+
+            write!(
+                f,
+                "Input: {input_inventory}
+                Output: {output_inventory}
+                Recipe ID: {recipe_id:?}
+                {crafting_state}: {time_remaining:.2} s / {total_duration:.2} s
+                "
+            )
+        }
     }
 }
 
