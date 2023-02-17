@@ -15,7 +15,8 @@ impl Plugin for DetailsPlugin {
     fn build(&self, app: &mut App) {
         info!("Building DetailsPlugin...");
 
-        app.init_resource::<SelectionDetails>()
+        app.init_resource::<SelectionType>()
+            .init_resource::<SelectionDetails>()
             .add_system(
                 set_selection
                     .label(InteractionSystem::HoverDetails)
