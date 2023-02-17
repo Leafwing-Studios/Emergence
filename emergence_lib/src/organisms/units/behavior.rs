@@ -18,7 +18,7 @@ use crate::structures::crafting::{InputInventory, OutputInventory};
 /// Once a goal is complete, they will typically transition back into [`Goal::Wander`] and attempt to find something new to do.
 ///
 /// This component serves as a state machine.
-#[derive(Component, PartialEq, Eq, Clone, Default)]
+#[derive(Component, PartialEq, Eq, Clone, Default, Debug)]
 pub(crate) enum Goal {
     /// Attempting to find something useful to do
     ///
@@ -163,7 +163,7 @@ pub(super) fn choose_actions(
 }
 
 /// An action that a unit can take.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(super) enum UnitAction {
     /// Do nothing for now
     #[default]
@@ -186,9 +186,9 @@ pub(super) enum UnitAction {
     Move(TilePos),
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 /// The action a unit is undertaking.
-pub(super) struct CurrentAction {
+pub(crate) struct CurrentAction {
     /// The type of action being undertaken.
     action: UnitAction,
     /// The amount of time left to complete the action.

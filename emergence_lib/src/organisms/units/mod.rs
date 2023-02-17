@@ -10,7 +10,7 @@ use self::{
 
 use super::OrganismBundle;
 
-mod behavior;
+pub(crate) mod behavior;
 pub(crate) mod item_interaction;
 mod movement;
 

@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use self::structure::*;
+use self::unit::*;
 
 use crate::{
     player_interaction::{cursor::CursorPos, InteractionSystem},
@@ -16,6 +17,8 @@ use super::tile_selection::SelectedTiles;
 pub(crate) enum SelectionDetails {
     /// A structure is selected
     Structure(StructureDetails),
+    /// A unit is selected
+    Unit(UnitDetails),
     /// Nothing is selected
     #[default]
     None,
@@ -120,8 +123,8 @@ mod structure {
         )>,
     }
 
-    /// Detailed info about a given entity.
-    #[derive(Debug, Clone)]
+    /// Detailed info about a given structure.
+    #[derive(Debug)]
     pub(crate) struct StructureDetails {
         /// The tile position of this organism.
         pub(crate) tile_pos: TilePos,
@@ -148,5 +151,48 @@ mod structure {
 
         /// The time remaining to finish crafting.
         pub(crate) timer: Timer,
+    }
+}
+
+mod unit {
+    use bevy::ecs::{prelude::*, query::WorldQuery};
+
+    use crate::{
+        organisms::units::{
+            behavior::{CurrentAction, Goal},
+            item_interaction::HeldItem,
+            UnitId,
+        },
+        simulation::geometry::TilePos,
+    };
+
+    /// Data needed to populate [`StructureDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct UnitDetailsQuery {
+        /// The type of unit
+        pub(super) unit_id: &'static UnitId,
+        /// The current location
+        pub(super) tile_pos: &'static TilePos,
+        /// What's being carried
+        pub(super) held_item: &'static HeldItem,
+        /// What this unit is trying to acheive
+        pub(super) goal: &'static Goal,
+        /// What is currently being done
+        pub(super) action: &'static CurrentAction,
+    }
+
+    /// Detailed info about a given unit.
+    #[derive(Debug)]
+    pub(crate) struct UnitDetails {
+        /// The type of unit
+        pub(super) unit_id: UnitId,
+        /// The current location
+        pub(super) tile_pos: TilePos,
+        /// What's being carried
+        pub(super) held_item: HeldItem,
+        /// What this unit is trying to acheive
+        pub(super) goal: Goal,
+        /// What is currently being done
+        pub(super) action: CurrentAction,
     }
 }
