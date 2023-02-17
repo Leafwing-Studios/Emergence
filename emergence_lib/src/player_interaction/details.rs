@@ -231,11 +231,11 @@ mod unit {
             write!(
                 f,
                 "
-            Unit type: {unit_id:?}
-            Tile: {tile_pos:?}
-            Holding: {held_item:?}
-            Goal: {goal:?}
-            Action: {action:?}
+            Unit type: {unit_id}
+            Tile: {tile_pos}
+            Holding: {held_item}
+            Goal: {goal}
+            Action: {action}
             "
             )
         }

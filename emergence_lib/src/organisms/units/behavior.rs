@@ -3,6 +3,7 @@
 //! The AI model of Emergence.
 
 use bevy::prelude::*;
+use core::fmt::Display;
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -11,6 +12,7 @@ use crate::items::ItemId;
 use crate::organisms::units::UnitId;
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
+use crate::structures::StructureId;
 
 /// A unit's current goals.
 ///
@@ -33,7 +35,20 @@ pub(crate) enum Goal {
     DropOff(ItemId),
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
-    Work(ItemId),
+    Work(StructureId),
+}
+
+impl Display for Goal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string: String = match self {
+            Goal::Wander => "Wander".to_string(),
+            Goal::Pickup(item) => format!("Pickup {item}"),
+            Goal::DropOff(item) => format!("Dropoff {item}"),
+            Goal::Work(structure) => format!("Work at {structure}"),
+        };
+
+        write!(f, "{string}")
+    }
 }
 
 impl Goal {
@@ -186,6 +201,25 @@ pub(super) enum UnitAction {
     Move(TilePos),
 }
 
+impl Display for UnitAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string: String = match self {
+            UnitAction::Idle => "Idling".to_string(),
+            UnitAction::PickUp {
+                item_id,
+                output_entity,
+            } => format!("Picking up {item_id} from {output_entity:?}"),
+            UnitAction::DropOff {
+                item_id,
+                input_entity,
+            } => format!("Dropping off {item_id} at {input_entity:?}"),
+            UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
+        };
+
+        write!(f, "{string}")
+    }
+}
+
 #[derive(Component, Clone, Default, Debug)]
 /// The action a unit is undertaking.
 pub(crate) struct CurrentAction {
@@ -193,6 +227,15 @@ pub(crate) struct CurrentAction {
     action: UnitAction,
     /// The amount of time left to complete the action.
     timer: Timer,
+}
+
+impl Display for CurrentAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let action = &self.action;
+        let time_remaining = self.timer.remaining_secs();
+
+        write!(f, "{action} for the next {time_remaining:.2} s.")
+    }
 }
 
 impl CurrentAction {

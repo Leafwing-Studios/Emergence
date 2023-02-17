@@ -3,6 +3,7 @@
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
+use core::fmt::Display;
 
 use self::{
     behavior::{CurrentAction, Goal},
@@ -20,6 +21,12 @@ mod movement;
 pub(crate) struct UnitId {
     /// The unique identifier for this variety of unit.
     pub(crate) id: &'static str,
+}
+
+impl Display for UnitId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.id)
+    }
 }
 
 /// An organism that can move around freely.

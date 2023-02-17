@@ -6,6 +6,7 @@ use crate::{
     items::{inventory::Inventory, slot::ItemSlot, ItemCount, ItemId, ItemManifest},
     structures::crafting::{InputInventory, OutputInventory},
 };
+use core::fmt::Display;
 
 use super::behavior::{CurrentAction, Goal, UnitAction};
 
@@ -20,6 +21,18 @@ impl Default for HeldItem {
     fn default() -> Self {
         HeldItem {
             inventory: Inventory::new(1),
+        }
+    }
+}
+
+impl Display for HeldItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(slot) = self.item_slot() {
+            let item = slot.item_id();
+            let count = slot.count();
+            write!(f, "{count} {item}")
+        } else {
+            write!(f, "Empty")
         }
     }
 }
