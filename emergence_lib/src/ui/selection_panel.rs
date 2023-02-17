@@ -15,7 +15,7 @@ pub(super) struct HoverDetailsPlugin;
 
 impl Plugin for HoverDetailsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(UiStage::LayoutPopulation, populate_hover_details)
+        app.add_startup_system_to_stage(UiStage::LayoutPopulation, populate_hover_panel)
             .add_system(update_hover_details.after(InteractionSystem::HoverDetails));
     }
 }
@@ -37,7 +37,7 @@ struct IdText;
 struct CraftingText;
 
 /// Estabilishes UI elements for hover details.
-fn populate_hover_details(
+fn populate_hover_panel(
     mut commands: Commands,
     font_family: Res<FiraSansFontFamily>,
     parent_query: Query<Entity, With<RightPanel>>,
@@ -70,49 +70,14 @@ fn populate_hover_details(
             },
             HoverPanel,
         ))
-        .with_children(|parent| {
-            // Tile position
-            parent.spawn((
-                TextBundle::from_sections([
-                    TextSection::new("Position: ", key_text_style.clone()),
-                    TextSection::from_style(value_text_style.clone()),
-                ]),
-                PositionText,
-            ));
-
-            // Organism type
-            parent.spawn((
-                TextBundle {
-                    text: Text::from_sections([
-                        TextSection::new("Organism: ", key_text_style.clone()),
-                        TextSection::from_style(value_text_style.clone()),
-                    ]),
-                    visibility: Visibility::INVISIBLE,
-                    ..default()
-                },
-                IdText,
-            ));
-
-            // Crafting stuff
-            parent.spawn((
-                TextBundle {
-                    text: Text::from_sections([
-                        TextSection::new("Inputs: ", key_text_style.clone()),
-                        TextSection::from_style(value_text_style.clone()),
-                        TextSection::new("\nOutputs: ", key_text_style.clone()),
-                        TextSection::from_style(value_text_style.clone()),
-                        TextSection::new("\nActive recipe: ", key_text_style.clone()),
-                        TextSection::from_style(value_text_style.clone()),
-                        TextSection::new("\nStatus: ", key_text_style.clone()),
-                        TextSection::from_style(value_text_style.clone()),
-                    ]),
-                    visibility: Visibility::INVISIBLE,
-                    ..default()
-                },
-                CraftingText,
-            ));
-        })
         .id();
+
+    populate_structure_details(
+        &mut commands,
+        hover_panel,
+        &key_text_style,
+        &value_text_style,
+    );
 
     commands.entity(right_panel).add_child(hover_panel);
 }
@@ -144,41 +109,95 @@ fn update_hover_details(
     recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = panel_query.single_mut();
-    if selection_details.is_none() {
-        *parent_visibility = Visibility::INVISIBLE;
-        return;
-    } else {
-        *parent_visibility = Visibility::VISIBLE;
-    }
 
-    if let SelectionDetails::Structure(details) = &*selection_details {
-        position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
-        organism_query.single_mut().sections[1].value =
-            format!("Variety: {}", details.structure_id.id);
+    match &*selection_details {
+        SelectionDetails::Structure(details) => {
+            *parent_visibility = Visibility::VISIBLE;
 
-        let (mut crafting_text, mut crafting_visibility) = crafting_query.single_mut();
+            position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
+            organism_query.single_mut().sections[1].value =
+                format!("Variety: {}", details.structure_id.id);
 
-        if let Some(crafting_details) = &details.crafting_details {
-            *crafting_visibility = Visibility::VISIBLE;
-            crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
-            crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
+            let (mut crafting_text, mut crafting_visibility) = crafting_query.single_mut();
 
-            crafting_text.sections[5].value =
-                if let Some(recipe_id) = &crafting_details.active_recipe {
-                    let recipe_details = recipe_manifest.get(recipe_id);
-                    format!("{recipe_id}: \n {recipe_details}")
-                } else {
-                    "None".to_string()
+            if let Some(crafting_details) = &details.crafting_details {
+                *crafting_visibility = Visibility::VISIBLE;
+                crafting_text.sections[1].value = format!("{}", crafting_details.input_inventory);
+                crafting_text.sections[3].value = format!("{}", crafting_details.output_inventory);
+
+                crafting_text.sections[5].value =
+                    if let Some(recipe_id) = &crafting_details.active_recipe {
+                        let recipe_details = recipe_manifest.get(recipe_id);
+                        format!("{recipe_id}: \n {recipe_details}")
+                    } else {
+                        "None".to_string()
+                    };
+                crafting_text.sections[7].value = match crafting_details.state {
+                    CraftingState::WaitingForInput => "Waiting for input".to_string(),
+                    CraftingState::InProgress => {
+                        format!("Crafting ({:.2}s)", crafting_details.timer.remaining_secs())
+                    }
+                    CraftingState::Finished => "Waiting for space in output".to_string(),
                 };
-            crafting_text.sections[7].value = match crafting_details.state {
-                CraftingState::WaitingForInput => "Waiting for input".to_string(),
-                CraftingState::InProgress => {
-                    format!("Crafting ({:.2}s)", crafting_details.timer.remaining_secs())
-                }
-                CraftingState::Finished => "Waiting for space in output".to_string(),
-            };
-        } else {
-            *crafting_visibility = Visibility::INVISIBLE;
+            } else {
+                *crafting_visibility = Visibility::INVISIBLE;
+            }
         }
-    }
+        SelectionDetails::Unit(details) => {
+            *parent_visibility = Visibility::VISIBLE;
+        }
+        SelectionDetails::None => {
+            *parent_visibility = Visibility::INVISIBLE;
+        }
+    };
+}
+
+fn populate_structure_details(
+    commands: &mut Commands,
+    hover_panel: Entity,
+    key_text_style: &TextStyle,
+    value_text_style: &TextStyle,
+) {
+    commands.entity(hover_panel).with_children(|parent| {
+        // Tile position
+        parent.spawn((
+            TextBundle::from_sections([
+                TextSection::new("Position: ", key_text_style.clone()),
+                TextSection::from_style(value_text_style.clone()),
+            ]),
+            PositionText,
+        ));
+
+        // Organism type
+        parent.spawn((
+            TextBundle {
+                text: Text::from_sections([
+                    TextSection::new("Organism: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
+                ]),
+                visibility: Visibility::INVISIBLE,
+                ..default()
+            },
+            IdText,
+        ));
+
+        // Crafting stuff
+        parent.spawn((
+            TextBundle {
+                text: Text::from_sections([
+                    TextSection::new("Inputs: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
+                    TextSection::new("\nOutputs: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
+                    TextSection::new("\nActive recipe: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
+                    TextSection::new("\nStatus: ", key_text_style.clone()),
+                    TextSection::from_style(value_text_style.clone()),
+                ]),
+                visibility: Visibility::INVISIBLE,
+                ..default()
+            },
+            CraftingText,
+        ));
+    });
 }
