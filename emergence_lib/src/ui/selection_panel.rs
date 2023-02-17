@@ -24,6 +24,14 @@ impl Plugin for HoverDetailsPlugin {
 #[derive(Component)]
 struct HoverPanel;
 
+/// The UI node that stores all structure details.
+#[derive(Component)]
+struct StructureDetails;
+
+/// The UI node that stores all unit details.
+#[derive(Component)]
+struct UnitDetails;
+
 /// The text that displays the position of the hovered entity.
 #[derive(Component)]
 struct PositionText;
@@ -72,21 +80,25 @@ fn populate_hover_panel(
         ))
         .id();
 
-    populate_structure_details(
-        &mut commands,
-        hover_panel,
-        &key_text_style,
-        &value_text_style,
-    );
+    let structure_details =
+        populate_structure_details(&mut commands, &key_text_style, &value_text_style);
+
+    let unit_details = populate_unit_details(&mut commands, &key_text_style, &value_text_style);
 
     commands.entity(right_panel).add_child(hover_panel);
+    commands
+        .entity(hover_panel)
+        .add_child(structure_details)
+        .add_child(unit_details);
 }
 
 /// Updates UI elements for hover details based on new information.
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
-    mut panel_query: Query<&mut Visibility, With<HoverPanel>>,
+    mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
     mut position_query: Query<&mut Text, With<PositionText>>,
+    mut structure_details_query: Query<&mut Style, (With<StructureDetails>, Without<UnitDetails>)>,
+    mut unit_details_query: Query<&mut Style, (With<UnitDetails>, Without<StructureDetails>)>,
     mut organism_query: Query<
         &mut Text,
         (
@@ -108,11 +120,15 @@ fn update_hover_details(
     >,
     recipe_manifest: Res<RecipeManifest>,
 ) {
-    let mut parent_visibility = panel_query.single_mut();
+    let mut parent_visibility = hover_panel_query.single_mut();
+    let structure_details_display = &mut structure_details_query.single_mut().display;
+    let unit_details_display = &mut unit_details_query.single_mut().display;
 
     match &*selection_details {
         SelectionDetails::Structure(details) => {
             *parent_visibility = Visibility::VISIBLE;
+            *structure_details_display = Display::Flex;
+            *unit_details_display = Display::None;
 
             position_query.single_mut().sections[1].value = format!("{:?}", details.tile_pos);
             organism_query.single_mut().sections[1].value =
@@ -145,6 +161,8 @@ fn update_hover_details(
         }
         SelectionDetails::Unit(details) => {
             *parent_visibility = Visibility::VISIBLE;
+            *unit_details_display = Display::Flex;
+            *structure_details_display = Display::None;
         }
         SelectionDetails::None => {
             *parent_visibility = Visibility::INVISIBLE;
@@ -152,52 +170,92 @@ fn update_hover_details(
     };
 }
 
+/// Generates the [`StructureDetails`] node and its children.
+///
+/// The returned [`Entity`] is for the root node.
 fn populate_structure_details(
     commands: &mut Commands,
-    hover_panel: Entity,
     key_text_style: &TextStyle,
     value_text_style: &TextStyle,
-) {
-    commands.entity(hover_panel).with_children(|parent| {
-        // Tile position
-        parent.spawn((
-            TextBundle::from_sections([
-                TextSection::new("Position: ", key_text_style.clone()),
-                TextSection::from_style(value_text_style.clone()),
-            ]),
-            PositionText,
-        ));
-
-        // Organism type
-        parent.spawn((
-            TextBundle {
-                text: Text::from_sections([
-                    TextSection::new("Organism: ", key_text_style.clone()),
-                    TextSection::from_style(value_text_style.clone()),
-                ]),
-                visibility: Visibility::INVISIBLE,
+) -> Entity {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    flex_direction: FlexDirection::Column,
+                    ..default()
+                },
+                background_color: Color::rgba(1., 0., 0., 0.9).into(),
                 ..default()
             },
-            IdText,
-        ));
-
-        // Crafting stuff
-        parent.spawn((
-            TextBundle {
-                text: Text::from_sections([
-                    TextSection::new("Inputs: ", key_text_style.clone()),
-                    TextSection::from_style(value_text_style.clone()),
-                    TextSection::new("\nOutputs: ", key_text_style.clone()),
-                    TextSection::from_style(value_text_style.clone()),
-                    TextSection::new("\nActive recipe: ", key_text_style.clone()),
-                    TextSection::from_style(value_text_style.clone()),
-                    TextSection::new("\nStatus: ", key_text_style.clone()),
+            StructureDetails,
+        ))
+        .with_children(|parent| {
+            // Tile position
+            parent.spawn((
+                TextBundle::from_sections([
+                    TextSection::new("Position: ", key_text_style.clone()),
                     TextSection::from_style(value_text_style.clone()),
                 ]),
-                visibility: Visibility::INVISIBLE,
+                PositionText,
+            ));
+
+            // Organism type
+            parent.spawn((
+                TextBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Organism: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                    ]),
+                    visibility: Visibility::INVISIBLE,
+                    ..default()
+                },
+                IdText,
+            ));
+
+            // Crafting stuff
+            parent.spawn((
+                TextBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Inputs: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                        TextSection::new("\nOutputs: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                        TextSection::new("\nActive recipe: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                        TextSection::new("\nStatus: ", key_text_style.clone()),
+                        TextSection::from_style(value_text_style.clone()),
+                    ]),
+                    visibility: Visibility::INVISIBLE,
+                    ..default()
+                },
+                CraftingText,
+            ));
+        })
+        .id()
+}
+
+/// Generates the [`UnitDetails`] node and its children.
+///
+/// The returned [`Entity`] is for the root node.
+fn populate_unit_details(
+    commands: &mut Commands,
+    key_text_style: &TextStyle,
+    value_text_style: &TextStyle,
+) -> Entity {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    flex_direction: FlexDirection::Column,
+                    ..default()
+                },
+                background_color: Color::rgba(0., 1., 0., 0.9).into(),
                 ..default()
             },
-            CraftingText,
-        ));
-    });
+            UnitDetails,
+        ))
+        .id()
 }
