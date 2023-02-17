@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::player_interaction::{details::SelectionDetails, InteractionSystem};
+use crate::{
+    items::recipe::RecipeManifest,
+    player_interaction::{details::SelectionDetails, InteractionSystem},
+};
 
 use super::{FiraSansFontFamily, RightPanel, UiStage};
 
@@ -82,6 +85,7 @@ fn update_hover_details(
         (&mut Style, &mut Text),
         (With<UnitDetails>, Without<StructureDetails>),
     >,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
@@ -93,7 +97,20 @@ fn update_hover_details(
             structure_style.display = Display::Flex;
             unit_style.display = Display::None;
 
+            // Details
             structure_text.sections[0].value = format!("{details}");
+            // Recipe info
+            structure_text.sections[1].value =
+                if let Some(crafting_details) = &details.crafting_details {
+                    if let Some(recipe_id) = &crafting_details.active_recipe {
+                        let recipe_info = recipe_manifest.get(&recipe_id);
+                        format!("{recipe_info}")
+                    } else {
+                        String::default()
+                    }
+                } else {
+                    String::default()
+                }
         }
         SelectionDetails::Unit(details) => {
             *parent_visibility = Visibility::VISIBLE;
@@ -120,7 +137,10 @@ fn populate_structure_details(commands: &mut Commands, key_text_style: &TextStyl
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
-                text: Text::from_section("", key_text_style.clone()),
+                text: Text::from_sections([
+                    TextSection::new("", key_text_style.clone()),
+                    TextSection::new("", key_text_style.clone()),
+                ]),
                 ..default()
             },
             StructureDetails,
