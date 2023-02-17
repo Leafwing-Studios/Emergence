@@ -110,8 +110,6 @@ mod structure {
     pub(super) struct StructureDetailsQuery {
         /// The type of structure
         pub(super) structure_id: &'static StructureId,
-        /// The location
-        tile_pos: &'static TilePos,
         /// Crafting-related components
         pub(super) crafting: Option<(
             &'static InputInventory,
