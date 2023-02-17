@@ -2,6 +2,7 @@
 
 use crate::simulation::geometry::TilePos;
 use bevy::prelude::*;
+use bevy_mod_raycast::RaycastMesh;
 
 use self::{
     behavior::{CurrentAction, Goal},
@@ -36,6 +37,8 @@ pub(crate) struct UnitBundle {
     held_item: HeldItem,
     /// Organism data
     organism_bundle: OrganismBundle,
+    /// Makes units pickable
+    raycast_mesh: RaycastMesh<UnitId>,
 }
 
 impl UnitBundle {
@@ -48,6 +51,7 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: HeldItem::default(),
             organism_bundle: OrganismBundle::default(),
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

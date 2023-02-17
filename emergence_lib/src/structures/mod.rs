@@ -4,6 +4,7 @@
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use bevy::{prelude::*, utils::HashMap};
+use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
     asset_management::manifest::Manifest,
@@ -74,12 +75,14 @@ impl Default for StructureManifest {
 /// The data needed to build a structure
 #[derive(Bundle)]
 struct StructureBundle {
-    /// Data characterizing structures
+    /// Unique identifier of structure variety
     structure: StructureId,
     /// The direction this structure is facing
     facing: Facing,
     /// The location of this structure
     tile_pos: TilePos,
+    /// Makes structures pickable
+    raycast_mesh: RaycastMesh<StructureId>,
 }
 
 impl StructureBundle {
@@ -89,6 +92,7 @@ impl StructureBundle {
             structure: data.id,
             facing: data.facing,
             tile_pos,
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }
