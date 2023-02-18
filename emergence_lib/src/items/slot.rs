@@ -50,8 +50,8 @@ impl ItemSlot {
     }
 
     /// The unique identifier of the item in the slot.
-    pub(crate) fn item_id(&self) -> &ItemId {
-        &self.item_id
+    pub(crate) fn item_id(&self) -> ItemId {
+        self.item_id
     }
 
     /// The number of items in this slot.
@@ -80,8 +80,8 @@ impl ItemSlot {
     }
 
     /// Determine if this slot can hold items of the given type.
-    pub(crate) fn is_for_item(&self, item_id: &ItemId) -> bool {
-        self.item_id == *item_id
+    pub(crate) fn is_for_item(&self, item_id: ItemId) -> bool {
+        self.item_id == item_id
     }
 
     /// Try to add as many items to the inventory as possible, up to the given count.

@@ -45,7 +45,7 @@ impl HeldItem {
 
     /// The type of item that is being held, if any.
     #[allow(dead_code)]
-    pub(crate) fn item_id(&self) -> Option<&ItemId> {
+    pub(crate) fn item_id(&self) -> Option<ItemId> {
         let item_slot = self.item_slot()?;
         Some(item_slot.item_id())
     }

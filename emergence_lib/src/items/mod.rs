@@ -93,8 +93,8 @@ impl ItemCount {
     }
 
     /// The unique identifier of the item being counted.
-    pub fn item_id(&self) -> &ItemId {
-        &self.item_id
+    pub fn item_id(&self) -> ItemId {
+        self.item_id
     }
 
     /// The number of items.

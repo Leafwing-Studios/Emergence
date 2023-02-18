@@ -99,7 +99,7 @@ impl CraftingBundle {
         item_manifest: &ItemManifest,
     ) -> Self {
         if let Some(recipe_id) = starting_recipe {
-            let recipe = recipe_manifest.get(&recipe_id);
+            let recipe = recipe_manifest.get(recipe_id);
 
             Self {
                 input_inventory: InputInventory {
@@ -156,7 +156,7 @@ fn start_and_finish_crafting(
     for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
     {
         if let Some(recipe_id) = &active_recipe.0 {
-            let recipe = recipe_manifest.get(recipe_id);
+            let recipe = recipe_manifest.get(*recipe_id);
 
             // Try to finish the crafting by putting the output in the inventory
             if *craft_state == CraftingState::Finished

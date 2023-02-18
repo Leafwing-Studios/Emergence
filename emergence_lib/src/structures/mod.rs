@@ -25,7 +25,7 @@ pub(crate) type StructureManifest = Manifest<StructureId, StructureVariety>;
 
 impl StructureManifest {
     /// The color associated with this structure.
-    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
+    pub(crate) fn color(&self, structure_id: StructureId) -> Color {
         self.get(structure_id).color
     }
 }

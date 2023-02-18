@@ -79,7 +79,7 @@ impl Command for SpawnStructureCommand {
 
         let structure_entity =
             world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
-                let structure_details = structure_manifest.get(&self.data.id);
+                let structure_details = structure_manifest.get(self.data.id);
 
                 let structure_entity = world
                     .spawn(StructureBundle::new(self.tile_pos, self.data))

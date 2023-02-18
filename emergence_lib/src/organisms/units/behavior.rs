@@ -78,7 +78,7 @@ impl Goal {
                 for tile_pos in neighboring_tiles {
                     if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
                         if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
-                            if output_inventory.item_count(item_id) > 0 {
+                            if output_inventory.item_count(*item_id) > 0 {
                                 entities_with_desired_item.push(structure_entity);
                             }
                         }
@@ -105,7 +105,7 @@ impl Goal {
                 for tile_pos in neighboring_tiles {
                     if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
                         if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
-                            if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
                                 entities_with_desired_item.push(structure_entity);
                             }
                         }
