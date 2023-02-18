@@ -156,7 +156,7 @@ fn copy_selection(
                 if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
                     let (id, facing) = structure_query.get(*structure_entity).unwrap();
                     let clipboard_item = StructureData {
-                        id: id.clone(),
+                        id: *id,
                         facing: *facing,
                     };
 
@@ -169,7 +169,7 @@ fn copy_selection(
                     {
                         let (id, facing) = structure_query.get(*structure_entity).unwrap();
                         let clipboard_item = StructureData {
-                            id: id.clone(),
+                            id: *id,
                             facing: *facing,
                         };
 

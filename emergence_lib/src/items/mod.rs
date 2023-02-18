@@ -12,7 +12,7 @@ pub(crate) mod recipe;
 pub(crate) mod slot;
 
 /// The unique identifier of an item.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemId {
     /// The associated string.
     id: &'static str,
@@ -93,8 +93,8 @@ impl ItemCount {
     }
 
     /// The unique identifier of the item being counted.
-    pub fn item_id(&self) -> &ItemId {
-        &self.item_id
+    pub fn item_id(&self) -> ItemId {
+        self.item_id
     }
 
     /// The number of items.

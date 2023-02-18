@@ -118,10 +118,10 @@ fn spawn_hex_menu(
             for structure_id in structure_manifest.variants() {
                 // Just give up rather than panic if too many entities are found
                 if let Some(hex) = hexes.next() {
-                    arrangement.content_map.insert(hex, structure_id.clone());
+                    arrangement.content_map.insert(hex, structure_id);
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
-                            structure_id.clone(),
+                            structure_id,
                             hex,
                             &structure_manifest,
                             &arrangement.layout,
@@ -157,7 +157,7 @@ impl HexMenuIconBundle {
         structure_manifest: &StructureManifest,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_manifest.color(&structure_id);
+        let color = structure_manifest.color(structure_id);
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -250,7 +250,7 @@ fn handle_selection(
                 clipboard.set(Some(structure_data));
                 cleanup(commands, menu_query);
             } else {
-                for (icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                for (icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
                     if icon_entity == data.icon_entity {
                         *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
                     } else {
@@ -265,7 +265,7 @@ fn handle_selection(
             if complete {
                 cleanup(commands, menu_query);
             } else {
-                for (_icon_entity, structure_id, mut icon_color) in icon_query.iter_mut() {
+                for (_icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
                     *icon_color = BackgroundColor(structure_manifest.color(structure_id));
                 }
             }

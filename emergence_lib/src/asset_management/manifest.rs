@@ -17,7 +17,7 @@ use std::{
 #[derive(Debug, Resource, Serialize, Deserialize)]
 pub(crate) struct Manifest<Id, Data>
 where
-    Id: Debug + PartialEq + Eq + Hash,
+    Id: Debug + PartialEq + Eq + Hash + Copy,
     Data: Debug,
 {
     /// The internal mapping.
@@ -26,7 +26,7 @@ where
 
 impl<Id, Data> Manifest<Id, Data>
 where
-    Id: Debug + Display + PartialEq + Eq + Hash,
+    Id: Debug + Display + PartialEq + Eq + Hash + Copy,
     Data: Debug,
 {
     /// Create a new manifest with the given definitions.
@@ -40,16 +40,16 @@ where
     ///
     /// This function panics when the given ID does not exist in the manifest.
     /// We assume that all IDs are valid and the manifests are complete.
-    pub fn get(&self, id: &Id) -> &Data {
+    pub fn get(&self, id: Id) -> &Data {
         self.map
-            .get(id)
+            .get(&id)
             .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
     }
 
     /// The complete list of loaded options.
     ///
     /// The order is arbitrary.
-    pub fn variants(&self) -> impl IntoIterator<Item = &Id> {
-        self.map.keys()
+    pub fn variants(&self) -> impl IntoIterator<Item = Id> + '_ {
+        self.map.keys().copied()
     }
 }

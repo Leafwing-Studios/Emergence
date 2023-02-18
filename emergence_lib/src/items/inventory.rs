@@ -39,7 +39,7 @@ impl Inventory {
     }
 
     /// Determine how many items of the given type are in the inventory.
-    pub(crate) fn item_count(&self, item_id: &ItemId) -> usize {
+    pub(crate) fn item_count(&self, item_id: ItemId) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -73,7 +73,7 @@ impl Inventory {
     }
 
     /// The remaining space for the item in the slots that it already occupies.
-    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: &ItemId) -> usize {
+    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: ItemId) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -89,7 +89,7 @@ impl Inventory {
     /// The number of items of the given type that can still fit in the inventory.
     pub(crate) fn remaining_space_for_item(
         &self,
-        item_id: &ItemId,
+        item_id: ItemId,
         item_manifest: &ItemManifest,
     ) -> usize {
         // We can fill up the remaining space in the slots for this item...
@@ -122,7 +122,7 @@ impl Inventory {
     pub(crate) fn add_empty_slot(&mut self, item_id: ItemId, item_manifest: &ItemManifest) {
         let n_existing_slots = self.slots.len();
         let slot_to_use = n_existing_slots + 1;
-        let stack_size = item_manifest.get(&item_id).stack_size();
+        let stack_size = item_manifest.get(item_id).stack_size();
         let empty_stack = ItemSlot::new(item_id, stack_size);
 
         if slot_to_use >= self.max_slot_count {
@@ -168,7 +168,7 @@ impl Inventory {
         // Fill up the remaining free slots
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
-                item_count.item_id().clone(),
+                item_count.item_id(),
                 item_manifest.get(item_count.item_id()).stack_size,
             );
 
@@ -253,7 +253,7 @@ impl Inventory {
                 }
 
                 if excess > 0 {
-                    Some(ItemCount::new(item_count.item_id().clone(), excess))
+                    Some(ItemCount::new(item_count.item_id(), excess))
                 } else {
                     None
                 }
@@ -343,7 +343,7 @@ impl Inventory {
                     .saturating_sub(self.item_count(item_count.item_id()));
 
                 if missing > 0 {
-                    Some(ItemCount::new(item_count.item_id().clone(), missing))
+                    Some(ItemCount::new(item_count.item_id(), missing))
                 } else {
                     None
                 }
@@ -382,7 +382,7 @@ impl Inventory {
 
         // Skip the expensive work if there's nothing to move
         if actual > 0 {
-            let actual_count = ItemCount::new(item_id.clone(), actual);
+            let actual_count = ItemCount::new(item_id, actual);
 
             // Unwraps are being used as assertions here: if this is panicking, this method is broken
             self.remove_item_all_or_nothing(&actual_count).unwrap();
@@ -473,7 +473,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
+        assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
     }
 
     #[test]
@@ -580,7 +580,7 @@ mod tests {
         };
 
         assert_eq!(
-            inventory.remaining_space_for_item(&ItemId::acacia_leaf(), &item_manifest()),
+            inventory.remaining_space_for_item(ItemId::acacia_leaf(), &item_manifest()),
             15
         );
     }
@@ -607,8 +607,8 @@ mod tests {
                         .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 15), &item_manifest()),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
 
             #[test]
@@ -627,8 +627,8 @@ mod tests {
                         .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 20), &item_manifest()),
                     Err(AddOneItemError { excess_count: 5 })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
 
@@ -654,8 +654,8 @@ mod tests {
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
 
             #[test]
@@ -676,8 +676,8 @@ mod tests {
                     ),
                     Err(AddOneItemError { excess_count: 1 })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
 
@@ -706,8 +706,8 @@ mod tests {
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(&ItemId::test()), 10);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(ItemId::test()), 10);
             }
 
             #[test]
@@ -733,8 +733,8 @@ mod tests {
                         excess_counts: vec![ItemCount::new(ItemId::test(), 1)]
                     })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
     }
@@ -758,8 +758,8 @@ mod tests {
                     inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 15)),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
 
             #[test]
@@ -777,8 +777,8 @@ mod tests {
                     inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 20)),
                     Err(RemoveOneItemError { missing_count: 5 })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
 
@@ -801,8 +801,8 @@ mod tests {
                         .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 15)),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
 
             #[test]
@@ -821,8 +821,8 @@ mod tests {
                         .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 16)),
                     Err(RemoveOneItemError { missing_count: 1 })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
 
@@ -847,8 +847,8 @@ mod tests {
                     ]),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(&ItemId::test()), 0);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(ItemId::test()), 0);
             }
 
             #[test]
@@ -871,8 +871,8 @@ mod tests {
                         missing_counts: vec![ItemCount::new(ItemId::test(), 1)]
                     })
                 );
-                assert_eq!(inventory.item_count(&ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(&ItemId::test()), 3);
+                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
         }
     }

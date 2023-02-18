@@ -17,7 +17,7 @@ pub(crate) mod item_interaction;
 mod movement;
 
 /// The unique, string-based identifier of a unit.
-#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) struct UnitId {
     /// The unique identifier for this variety of unit.
     pub(crate) id: &'static str,

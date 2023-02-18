@@ -7,7 +7,7 @@ use crate::asset_management::manifest::Manifest;
 use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 
 /// The unique identifier of a recipe.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct RecipeId(&'static str);
 
 impl RecipeId {
@@ -74,7 +74,7 @@ impl Recipe {
     pub(crate) fn input_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
         let mut inventory = Inventory::new(self.inputs.len());
         for item_count in &self.inputs {
-            inventory.add_empty_slot(item_count.item_id.clone(), item_manifest);
+            inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
         inventory
     }
@@ -83,7 +83,7 @@ impl Recipe {
     pub(crate) fn output_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
         let mut inventory = Inventory::new(self.outputs.len());
         for item_count in &self.outputs {
-            inventory.add_empty_slot(item_count.item_id.clone(), item_manifest);
+            inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
         inventory
     }

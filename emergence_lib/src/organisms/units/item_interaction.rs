@@ -45,7 +45,7 @@ impl HeldItem {
 
     /// The type of item that is being held, if any.
     #[allow(dead_code)]
-    pub(crate) fn item_id(&self) -> Option<&ItemId> {
+    pub(crate) fn item_id(&self) -> Option<ItemId> {
         let item_slot = self.item_slot()?;
         Some(item_slot.item_id())
     }
@@ -78,7 +78,7 @@ pub(super) fn pickup_and_drop_items(
             } = current_action.action()
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
-                    let item_count = ItemCount::new(item_id.clone(), 1);
+                    let item_count = ItemCount::new(*item_id, 1);
                     let _ = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
@@ -87,10 +87,10 @@ pub(super) fn pickup_and_drop_items(
 
                     // If our unit's all loaded, swap to delivering it
                     if held_item.is_full() {
-                        Goal::DropOff(item_id.clone())
+                        Goal::DropOff(*item_id)
                     // If we can carry more, try and grab more items
                     } else {
-                        Goal::Pickup(item_id.clone())
+                        Goal::Pickup(*item_id)
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
@@ -102,7 +102,7 @@ pub(super) fn pickup_and_drop_items(
             } = current_action.action()
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
-                    let item_count = ItemCount::new(item_id.clone(), 1);
+                    let item_count = ItemCount::new(*item_id, 1);
                     let _ = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
@@ -114,7 +114,7 @@ pub(super) fn pickup_and_drop_items(
                         Goal::Wander
                     // If we still have items, keep unloading
                     } else {
-                        Goal::DropOff(item_id.clone())
+                        Goal::DropOff(*item_id)
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)

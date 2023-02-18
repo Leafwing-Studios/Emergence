@@ -97,7 +97,7 @@ fn get_details(
         SelectionType::Unit(unit_entity) => {
             let unit_query_item = unit_query.get(unit_entity).unwrap();
             SelectionDetails::Unit(UnitDetails {
-                unit_id: unit_query_item.unit_id.clone(),
+                unit_id: *unit_query_item.unit_id,
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -113,7 +113,7 @@ fn get_details(
                 Some(CraftingDetails {
                     input_inventory: input.inventory.clone(),
                     output_inventory: output.inventory.clone(),
-                    active_recipe: recipe.recipe_id().clone(),
+                    active_recipe: *recipe.recipe_id(),
                     state: state.clone(),
                     timer: timer.timer().clone(),
                 })
@@ -123,7 +123,7 @@ fn get_details(
 
             SelectionDetails::Structure(StructureDetails {
                 tile_pos: *structure_query_item.tile_pos,
-                structure_id: structure_query_item.structure_id.clone(),
+                structure_id: *structure_query_item.structure_id,
                 crafting_details,
             })
         }

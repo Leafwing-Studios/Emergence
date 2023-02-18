@@ -25,7 +25,7 @@ pub(crate) type StructureManifest = Manifest<StructureId, StructureVariety>;
 
 impl StructureManifest {
     /// The color associated with this structure.
-    pub(crate) fn color(&self, structure_id: &StructureId) -> Color {
+    pub(crate) fn color(&self, structure_id: StructureId) -> Color {
         self.get(structure_id).color
     }
 }
@@ -98,7 +98,7 @@ impl StructureBundle {
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub(crate) struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: &'static str,
