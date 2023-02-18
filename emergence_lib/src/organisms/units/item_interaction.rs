@@ -129,3 +129,10 @@ pub(super) fn pickup_and_drop_items(
         }
     }
 }
+
+/// Clears out any slots that no longer have items in them.
+pub(super) fn clear_empty_slots(mut query: Query<&mut HeldItem>) {
+    for mut held_item in query.iter_mut() {
+        held_item.clear_empty_slots()
+    }
+}
