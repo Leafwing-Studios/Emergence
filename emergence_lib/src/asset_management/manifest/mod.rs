@@ -10,7 +10,7 @@ use bevy::{
     reflect::TypeUuid,
     utils::{BoxedFuture, HashMap},
 };
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
@@ -33,9 +33,9 @@ where
         + Send
         + Sync
         + TypeUuid
-        + for<'d> Deserialize<'d>
+        + DeserializeOwned
         + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + for<'d> Deserialize<'d>,
+    Data: Debug + Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     /// The internal mapping.
     map: HashMap<Id, Data>,
@@ -51,9 +51,9 @@ where
         + Send
         + Sync
         + TypeUuid
-        + for<'d> Deserialize<'d>
+        + DeserializeOwned
         + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + for<'d> Deserialize<'d>,
+    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
 {
     /// Create a new manifest with the given definitions.
     pub fn new(map: HashMap<Id, Data>) -> Self {
@@ -90,9 +90,9 @@ where
         + Send
         + Sync
         + TypeUuid
-        + for<'d> Deserialize<'d>
+        + DeserializeOwned
         + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + for<'d> Deserialize<'d>,
+    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
 {
     // TODO: Find a better / safer way to generate this
     // Perhaps we need a combination of the ID and Data UUID
@@ -109,9 +109,9 @@ where
         + Send
         + Sync
         + TypeUuid
-        + Deserialize<'static>
+        + DeserializeOwned
         + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + Deserialize<'static>,
+    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
 {
     id: PhantomData<Id>,
     data: PhantomData<Data>,
@@ -127,9 +127,9 @@ where
         + Send
         + Sync
         + TypeUuid
-        + Deserialize<'static>
+        + DeserializeOwned
         + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + Deserialize<'static>,
+    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
 {
     fn load<'a>(
         &'a self,
@@ -137,14 +137,13 @@ where
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), bevy::asset::Error>> {
         Box::pin(async move {
-            let toml_str = String::from_utf8(Vec::from(bytes))?;
-            let manifest: Manifest<Id, Data> = toml::from_str(&toml_str)?;
+            let manifest: Manifest<Id, Data> = serde_json::from_slice(bytes)?;
             load_context.set_default_asset(LoadedAsset::new(manifest));
             Ok(())
         })
     }
 
     fn extensions(&self) -> &[&str] {
-        &["manifest.toml"]
+        &["manifest.json"]
     }
 }
