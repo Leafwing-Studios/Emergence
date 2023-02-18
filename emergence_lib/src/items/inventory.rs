@@ -98,6 +98,24 @@ impl Inventory {
             + self.free_slot_count() * item_manifest.get(item_id).stack_size()
     }
 
+    /// Clears any inventory stacks with 0 items in them.
+    ///
+    /// This is the standard behavior for units and storages, but not for crafting.
+    /// In those cases, the slots should persist with 0 items.
+    pub(crate) fn clear_empty_slots(&mut self) {
+        let mut slots_to_clear: Vec<usize> = Vec::with_capacity(self.max_slot_count);
+
+        for (i, slot) in self.slots.iter().enumerate() {
+            if slot.is_empty() {
+                slots_to_clear.push(i);
+            }
+        }
+
+        for i in slots_to_clear {
+            self.slots.remove(i);
+        }
+    }
+
     /// Try to add as many items to the inventory as possible, up to the given count.
     ///
     /// - If all items can fit in the slot, they are all added and `Ok` is returned.
@@ -236,7 +254,6 @@ impl Inventory {
     /// - Otherwise, all items that are included are removed and `Err` is returned.
     pub fn try_remove_item(&mut self, item_count: &ItemCount) -> Result<(), RemoveOneItemError> {
         let mut items_to_remove = item_count.count();
-        let mut has_to_clear_slots = false;
 
         for slot in self
             .slots
@@ -253,20 +270,8 @@ impl Inventory {
                     missing_count: excess_count,
                 }) => {
                     items_to_remove = excess_count;
-                    has_to_clear_slots = true;
                 }
             }
-        }
-
-        // If a slot now has 0 items remove it
-        // This makes space for other item types
-        if has_to_clear_slots {
-            self.slots = self
-                .slots
-                .iter()
-                .cloned()
-                .filter(|slot| !slot.is_empty())
-                .collect();
         }
 
         if items_to_remove > 0 {
