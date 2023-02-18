@@ -102,6 +102,8 @@ pub(crate) enum PlayerAction {
     RotateClipboardRight,
     /// Move the camera from side to side
     Pan,
+    /// Move the cursor around the screen
+    MoveCursor,
     /// Reveal less of the map by moving the camera closer
     ZoomIn,
     /// Reveal more of the map by pulling the camera away
@@ -133,6 +135,7 @@ impl PlayerAction {
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
             Pan => VirtualDPad::wasd().into(),
+            MoveCursor => VirtualDPad::arrow_keys().into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
             ZoomIn => KeyCode::Equals.into(),
             ZoomOut => KeyCode::Minus.into(),
@@ -164,7 +167,8 @@ impl PlayerAction {
             ClearClipboard => DPadDown.into(),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
-            Pan => DualAxis::right_stick().into(),
+            Pan => DualAxis::left_stick().into(),
+            MoveCursor => DualAxis::right_stick().into(),
             ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
             ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),

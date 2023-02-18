@@ -2,8 +2,9 @@
 //! available.
 use bevy::prelude::*;
 use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
+use leafwing_input_manager::prelude::ActionState;
 
-use super::InteractionSystem;
+use super::{InteractionSystem, PlayerAction};
 use crate::{
     simulation::geometry::TilePos, structures::StructureId, terrain::Terrain, units::UnitId,
 };
@@ -21,6 +22,7 @@ impl Plugin for CursorPlugin {
                 CoreStage::First,
                 update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
             )
+            .add_system_to_stage(CoreStage::PreUpdate, move_cursor_manually)
             .add_system(
                 update_cursor_pos
                     .label(InteractionSystem::ComputeCursorPos)
@@ -139,5 +141,34 @@ fn update_cursor_pos(
 
     if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);
+    }
+}
+
+/// Moves the cursor on the screen, based on gamepad or keyboard inputs
+fn move_cursor_manually(
+    actions: Res<ActionState<PlayerAction>>,
+    mut windows: ResMut<Windows>,
+    mut cursor_moved_events: EventWriter<CursorMoved>,
+) {
+    /// Controls the sensitivity of cursor movement
+    const CURSOR_SPEED: f32 = 2.0;
+
+    if let Some(primary_window) = windows.get_primary_mut() {
+        let maybe_cursor_pos = primary_window.cursor_position();
+
+        if let Some(old_cursor_pos) = maybe_cursor_pos {
+            if let Some(raw_delta) = actions.axis_pair(PlayerAction::MoveCursor) {
+                let delta = raw_delta.xy() * CURSOR_SPEED;
+
+                if delta != Vec2::ZERO {
+                    let new_cursor_pos = old_cursor_pos + delta;
+                    primary_window.set_cursor_position(new_cursor_pos);
+                    cursor_moved_events.send(CursorMoved {
+                        id: primary_window.id(),
+                        position: new_cursor_pos,
+                    });
+                }
+            }
+        }
     }
 }
