@@ -86,7 +86,7 @@ impl Goal {
                 }
 
                 if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::pickup(item_id.clone(), *output_entity)
+                    CurrentAction::pickup(*item_id, *output_entity)
                 } else {
                     // TODO: walk towards destination more intelligently
                     Goal::Wander.choose_action(
@@ -113,7 +113,7 @@ impl Goal {
                 }
 
                 if let Some(input_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::dropoff(item_id.clone(), *input_entity)
+                    CurrentAction::dropoff(*item_id, *input_entity)
                 } else {
                     // TODO: walk towards destination more intelligently
                     Goal::Wander.choose_action(

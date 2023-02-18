@@ -168,7 +168,7 @@ impl Inventory {
         // Fill up the remaining free slots
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
-                item_count.item_id().clone(),
+                *item_count.item_id(),
                 item_manifest.get(item_count.item_id()).stack_size,
             );
 
@@ -253,7 +253,7 @@ impl Inventory {
                 }
 
                 if excess > 0 {
-                    Some(ItemCount::new(item_count.item_id().clone(), excess))
+                    Some(ItemCount::new(*item_count.item_id(), excess))
                 } else {
                     None
                 }
@@ -343,7 +343,7 @@ impl Inventory {
                     .saturating_sub(self.item_count(item_count.item_id()));
 
                 if missing > 0 {
-                    Some(ItemCount::new(item_count.item_id().clone(), missing))
+                    Some(ItemCount::new(*item_count.item_id(), missing))
                 } else {
                     None
                 }
@@ -382,7 +382,7 @@ impl Inventory {
 
         // Skip the expensive work if there's nothing to move
         if actual > 0 {
-            let actual_count = ItemCount::new(item_id.clone(), actual);
+            let actual_count = ItemCount::new(*item_id, actual);
 
             // Unwraps are being used as assertions here: if this is panicking, this method is broken
             self.remove_item_all_or_nothing(&actual_count).unwrap();

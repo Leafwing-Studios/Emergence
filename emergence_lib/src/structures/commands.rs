@@ -98,7 +98,7 @@ impl Command for SpawnStructureCommand {
                             world
                                 .entity_mut(structure_entity)
                                 .insert(CraftingBundle::new(
-                                    structure_details.starting_recipe.clone(),
+                                    structure_details.starting_recipe,
                                     &recipe_manifest,
                                     &item_manifest,
                                 ));

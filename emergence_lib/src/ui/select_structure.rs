@@ -118,10 +118,10 @@ fn spawn_hex_menu(
             for structure_id in structure_manifest.variants() {
                 // Just give up rather than panic if too many entities are found
                 if let Some(hex) = hexes.next() {
-                    arrangement.content_map.insert(hex, structure_id.clone());
+                    arrangement.content_map.insert(hex, *structure_id);
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
-                            structure_id.clone(),
+                            *structure_id,
                             hex,
                             &structure_manifest,
                             &arrangement.layout,
