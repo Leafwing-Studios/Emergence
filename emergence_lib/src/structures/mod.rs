@@ -98,7 +98,7 @@ impl StructureBundle {
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub(crate) struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: &'static str,
