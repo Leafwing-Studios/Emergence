@@ -99,8 +99,8 @@ impl Command for SpawnStructureCommand {
                                 .entity_mut(structure_entity)
                                 .insert(CraftingBundle::new(
                                     structure_details.starting_recipe.clone(),
-                                    &*recipe_manifest,
-                                    &*item_manifest,
+                                    &recipe_manifest,
+                                    &item_manifest,
                                 ));
                         })
                     })
