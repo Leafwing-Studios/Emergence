@@ -17,6 +17,7 @@ pub mod simulation;
 pub mod structures;
 pub mod terrain;
 pub mod ui;
+pub mod units;
 
 /// Various app configurations, used for testing.
 ///

@@ -4,8 +4,8 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::units::UnitHandles,
-    organisms::units::{item_interaction::HeldItem, UnitId},
     simulation::geometry::{MapGeometry, TilePos},
+    units::{item_interaction::HeldItem, UnitId},
 };
 
 /// Adds rendering components to every spawned unit

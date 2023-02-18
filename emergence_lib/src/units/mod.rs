@@ -10,7 +10,7 @@ use self::{
     item_interaction::HeldItem,
 };
 
-use super::OrganismBundle;
+use crate::organisms::OrganismBundle;
 
 pub(crate) mod behavior;
 pub(crate) mod item_interaction;

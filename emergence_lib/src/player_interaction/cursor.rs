@@ -5,8 +5,7 @@ use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, Ra
 
 use super::InteractionSystem;
 use crate::{
-    organisms::units::UnitId, simulation::geometry::TilePos, structures::StructureId,
-    terrain::Terrain,
+    simulation::geometry::TilePos, structures::StructureId, terrain::Terrain, units::UnitId,
 };
 
 /// Controls raycasting and cursor aethetics.
