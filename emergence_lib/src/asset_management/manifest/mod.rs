@@ -11,7 +11,11 @@ use bevy::{
     utils::{BoxedFuture, HashMap},
 };
 use serde::{de::DeserializeOwned, Serialize};
-use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    marker::PhantomData,
+};
 
 type RawManifest<Data>
 where
@@ -27,18 +31,45 @@ where
     Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
     Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
+    /// Lookup table to obtain the ID, given the String identifier used in the assets.
+    str_to_id: HashMap<String, Id>,
+
+    /// Lookup table to obtain the String identifier used in the assets, given the ID.
+    id_to_str: HashMap<Id, String>,
+
     /// The internal mapping.
     map: HashMap<Id, Data>,
 }
 
 impl<Id, Data> Manifest<Id, Data>
 where
-    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Id: Display + PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
     Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
-    /// Create a new manifest with the given definitions.
-    pub fn new(map: HashMap<Id, Data>) -> Self {
-        Self { map }
+    pub fn from_raw(raw_manifest: RawManifest<Data>) -> Self {
+        let mut str_to_id = HashMap::<String, Id>::new();
+        let mut id_to_str = HashMap::<Id, String>::new();
+        let mut map = HashMap::<Id, Data>::new();
+
+        let mut id_counter = 0u32;
+
+        // Convert the string identifiers used in the manifest to u32s
+        for (str, data) in raw_manifest.drain() {
+            assert!(
+                !str_to_id.contains_key(&str),
+                "Duplicate identifier '{str}'"
+            );
+
+            str_to_id.insert(str.clone(), Id::from(id_counter));
+            id_to_str.insert(Id::from(id_counter), str);
+            map.insert(Id::from(id_counter), data);
+        }
+
+        Self {
+            str_to_id,
+            id_to_str,
+            map,
+        }
     }
 
     /// Get the data entry for the given ID.
@@ -82,7 +113,7 @@ where
 
 impl<Id, Data> AssetLoader for ManifestAssetLoader<Id, Data>
 where
-    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Id: Display + PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
     Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     fn load<'a>(
@@ -91,7 +122,8 @@ where
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), bevy::asset::Error>> {
         Box::pin(async move {
-            let manifest: RawManifest<Data> = serde_json::from_slice(bytes)?;
+            let raw_manifest: RawManifest<Data> = serde_json::from_slice(bytes)?;
+            let manifest = Manifest::<Id, Data>::from_raw(raw_manifest);
             load_context.set_default_asset(LoadedAsset::new(manifest));
             Ok(())
         })
