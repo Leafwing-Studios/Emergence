@@ -116,10 +116,33 @@ impl Inventory {
         }
     }
 
+    /// Adds an empty slot that is reserved for the provided `item_id`.
+    ///
+    /// This operation is infallible: if there are not enough slots available, the inventory size will be expanded.
+    pub(crate) fn add_empty_slot(&mut self, item_id: ItemId, item_manifest: &ItemManifest) {
+        let n_existing_slots = self.slots.len();
+        let slot_to_use = n_existing_slots + 1;
+        let stack_size = item_manifest.get(&item_id).stack_size();
+        let empty_stack = ItemSlot::new(item_id, stack_size);
+
+        if slot_to_use >= self.max_slot_count {
+            self.max_slot_count = slot_to_use;
+            self.slots.push(empty_stack);
+        } else {
+            self.slots[slot_to_use] = empty_stack
+        }
+    }
+
     /// Try to add as many items to the inventory as possible, up to the given count.
     ///
-    /// - If all items can fit in the slot, they are all added and `Ok` is returned.
+    /// Items can spill over, filling multiple inventory slots at once if the amount to add is greater than the stack size.
+    ///
+    /// - If all items can fit in the inventory, they are all added and `Ok` is returned.
     /// - Otherwise, all items that can fit are added and `Err` is returned.
+    ///
+    /// # Warning
+    ///
+    /// Adding 0 of an item will not create an empty slot. Instead, use [`Inventory::add_empty_slot`].
     pub(crate) fn try_add_item(
         &mut self,
         item_count: &ItemCount,
