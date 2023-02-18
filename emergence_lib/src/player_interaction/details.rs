@@ -231,10 +231,10 @@ Tile: {tile_pos}"
 
             write!(
                 f,
-                "Input: {input_inventory}
-Output: {output_inventory}
-Recipe: {recipe_string}
-{crafting_state}: {time_remaining:.2} s / {total_duration:.2} s"
+                "Recipe: {recipe_string}
+Input: {input_inventory}
+{crafting_state}: {time_remaining:.1} s / {total_duration:.1} s
+Output: {output_inventory}"
             )
         }
     }
