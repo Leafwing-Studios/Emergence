@@ -3,8 +3,9 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{prelude::*, reflect::TypeUuid, utils::HashMap};
 use bevy_mod_raycast::RaycastMesh;
+use serde::Deserialize;
 
 use crate::{
     asset_management::manifest::Manifest,
@@ -31,7 +32,8 @@ impl StructureManifest {
 }
 
 /// Information about a single [`StructureId`] variety of structure.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeUuid, Deserialize)]
+#[uuid = "a58bfc5a-3289-4351-b7be-ac8fdbe7ff8b"]
 pub(crate) struct StructureVariety {
     /// Is this structure alive?
     organism: bool,
@@ -98,7 +100,8 @@ impl StructureBundle {
 }
 
 /// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Clone, PartialEq, Eq, Hash, Debug, TypeUuid, Deserialize)]
+#[uuid = "a161ca1d-e024-4fe9-bedc-f4352d6d99c0"]
 pub(crate) struct StructureId {
     /// The unique identifier for this variety of structure.
     pub(crate) id: &'static str,

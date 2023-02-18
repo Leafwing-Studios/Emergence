@@ -2,12 +2,16 @@
 
 use std::{fmt::Display, time::Duration};
 
+use bevy::reflect::TypeUuid;
+use serde::Deserialize;
+
 use crate::asset_management::manifest::Manifest;
 
 use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 
 /// The unique identifier of a recipe.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, TypeUuid, Deserialize)]
+#[uuid = "2c3f382a-38f2-4e8f-ac0a-c8bbb83e7687"]
 pub struct RecipeId(&'static str);
 
 impl RecipeId {
@@ -29,7 +33,8 @@ impl Display for RecipeId {
 }
 
 /// A recipe to turn a set of items into different items.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeUuid, Deserialize)]
+#[uuid = "9b02b187-5d8b-4f58-a00f-107f43943db6"]
 pub(crate) struct Recipe {
     /// The inputs needed to craft the recipe.
     inputs: Vec<ItemCount>,

@@ -2,6 +2,7 @@
 
 use std::fmt::Display;
 
+use bevy::reflect::TypeUuid;
 use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Manifest;
@@ -12,7 +13,8 @@ pub(crate) mod recipe;
 pub(crate) mod slot;
 
 /// The unique identifier of an item.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, TypeUuid, Deserialize)]
+#[uuid = "4d6a971d-7b78-46c3-9a6f-3dd3a121c44a"]
 pub struct ItemId {
     /// The associated string.
     id: &'static str,
@@ -43,7 +45,8 @@ impl Display for ItemId {
 }
 
 /// The data associated with each item.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TypeUuid)]
+#[uuid = "a79799c5-75dc-4818-a3f7-bc6d5a35aec1"]
 pub struct ItemData {
     /// The number of items that can fit in a single item slot.
     stack_size: usize,
@@ -72,7 +75,7 @@ impl ItemData {
 pub(crate) type ItemManifest = Manifest<ItemId, ItemData>;
 
 /// A specific amount of a given item.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct ItemCount {
     /// The unique identifier of the item being counted.
     item_id: ItemId,
