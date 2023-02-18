@@ -110,7 +110,7 @@ pub(super) fn pickup_and_drop_items(
                     );
 
                     // If our unit's unloaded, swap to wandering to find something else to do
-                    if held_item.is_full() {
+                    if held_item.is_empty() {
                         Goal::Wander
                     // If we still have items, keep unloading
                     } else {
