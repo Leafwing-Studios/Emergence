@@ -2,8 +2,6 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
-use crate::units::UnitsPlugin;
-
 /// All of the standard components of an [`Organism`]
 #[derive(Bundle)]
 pub struct OrganismBundle {
@@ -25,7 +23,5 @@ pub struct Organism;
 pub struct OrganismPlugin;
 
 impl Plugin for OrganismPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(UnitsPlugin);
-    }
+    fn build(&self, _app: &mut App) {}
 }
