@@ -12,7 +12,7 @@ pub(crate) mod recipe;
 pub(crate) mod slot;
 
 /// The unique identifier of an item.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ItemId {
     /// The associated string.
     id: &'static str,
