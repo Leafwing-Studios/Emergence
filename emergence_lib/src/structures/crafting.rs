@@ -93,15 +93,20 @@ pub(crate) struct CraftingBundle {
 
 impl CraftingBundle {
     /// Create a new crafting bundle without an active recipe set.
-    pub(crate) fn new(starting_recipe: Option<RecipeId>) -> Self {
+    pub(crate) fn new(
+        starting_recipe: Option<RecipeId>,
+        recipe_manifest: &RecipeManifest,
+        item_manifest: &ItemManifest,
+    ) -> Self {
         if let Some(recipe_id) = starting_recipe {
+            let recipe = recipe_manifest.get(&recipe_id);
+
             Self {
-                // TODO: Don't hard-code these values
                 input_inventory: InputInventory {
-                    inventory: Inventory::new(0),
+                    inventory: recipe.input_inventory(item_manifest),
                 },
                 output_inventory: OutputInventory {
-                    inventory: Inventory::new(1),
+                    inventory: recipe.output_inventory(item_manifest),
                 },
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
@@ -109,7 +114,6 @@ impl CraftingBundle {
             }
         } else {
             Self {
-                // TODO: Don't hard-code these values
                 input_inventory: InputInventory {
                     inventory: Inventory::new(0),
                 },

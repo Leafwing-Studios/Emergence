@@ -6,6 +6,7 @@ use bevy::{
 };
 
 use crate::{
+    items::{recipe::RecipeManifest, ItemManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::StructureData,
     simulation::geometry::{MapGeometry, TilePos},
@@ -92,11 +93,17 @@ impl Command for SpawnStructureCommand {
                 };
 
                 if structure_details.crafts {
-                    world
-                        .entity_mut(structure_entity)
-                        .insert(CraftingBundle::new(
-                            structure_details.starting_recipe.clone(),
-                        ));
+                    world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
+                        world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
+                            world
+                                .entity_mut(structure_entity)
+                                .insert(CraftingBundle::new(
+                                    structure_details.starting_recipe.clone(),
+                                    &recipe_manifest,
+                                    &item_manifest,
+                                ));
+                        })
+                    })
                 };
 
                 structure_entity

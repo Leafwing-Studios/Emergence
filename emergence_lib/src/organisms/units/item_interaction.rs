@@ -109,8 +109,8 @@ pub(super) fn pickup_and_drop_items(
                         item_manifest,
                     );
 
-                    // If our unit's unloaded, swap to wandering to find something else to do
-                    if held_item.is_full() {
+                    // If our unit is unloaded, swap to wandering to find something else to do
+                    if held_item.is_empty() {
                         Goal::Wander
                     // If we still have items, keep unloading
                     } else {
@@ -127,5 +127,12 @@ pub(super) fn pickup_and_drop_items(
 
             *current_goal = new_goal;
         }
+    }
+}
+
+/// Clears out any slots that no longer have items in them.
+pub(super) fn clear_empty_slots(mut query: Query<&mut HeldItem>) {
+    for mut held_item in query.iter_mut() {
+        held_item.clear_empty_slots()
     }
 }

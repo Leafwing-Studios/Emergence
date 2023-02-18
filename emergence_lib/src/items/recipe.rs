@@ -4,7 +4,7 @@ use std::{fmt::Display, time::Duration};
 
 use crate::asset_management::manifest::Manifest;
 
-use super::{ItemCount, ItemId};
+use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 
 /// The unique identifier of a recipe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -55,26 +55,6 @@ impl Recipe {
         }
     }
 
-    // TODO: Remove this once we load recipes from asset files
-    /// An acacia plant producing leaves.
-    pub(crate) fn acacia_leaf_production() -> Self {
-        Recipe::new(
-            Vec::new(),
-            vec![ItemCount::one(ItemId::acacia_leaf())],
-            Duration::from_secs(10),
-        )
-    }
-
-    // TODO: Remove this once we load recipes from asset files
-    /// A leuco mushroom processing acacia leaves
-    pub(crate) fn leuco_chunk_production() -> Self {
-        Recipe::new(
-            vec![ItemCount::one(ItemId::acacia_leaf())],
-            vec![ItemCount::one(ItemId::leuco_chunk())],
-            Duration::from_secs(5),
-        )
-    }
-
     /// The inputs needed to craft the recipe.
     pub(crate) fn inputs(&self) -> &Vec<ItemCount> {
         &self.inputs
@@ -88,6 +68,45 @@ impl Recipe {
     /// The time needed to craft the recipe.
     pub(crate) fn craft_time(&self) -> &Duration {
         &self.craft_time
+    }
+
+    /// An inventory with empty slots for all of the inputs of this recipe.
+    pub(crate) fn input_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
+        let mut inventory = Inventory::new(self.inputs.len());
+        for item_count in &self.inputs {
+            inventory.add_empty_slot(item_count.item_id.clone(), item_manifest);
+        }
+        inventory
+    }
+
+    /// An inventory with empty slots for all of the outputs of this recipe.
+    pub(crate) fn output_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
+        let mut inventory = Inventory::new(self.outputs.len());
+        for item_count in &self.outputs {
+            inventory.add_empty_slot(item_count.item_id.clone(), item_manifest);
+        }
+        inventory
+    }
+}
+
+// TODO: Remove this once we load recipes from asset files
+impl Recipe {
+    /// An acacia plant producing leaves.
+    pub(crate) fn acacia_leaf_production() -> Self {
+        Recipe::new(
+            Vec::new(),
+            vec![ItemCount::one(ItemId::acacia_leaf())],
+            Duration::from_secs(10),
+        )
+    }
+
+    /// A leuco mushroom processing acacia leaves
+    pub(crate) fn leuco_chunk_production() -> Self {
+        Recipe::new(
+            vec![ItemCount::one(ItemId::acacia_leaf())],
+            vec![ItemCount::one(ItemId::leuco_chunk())],
+            Duration::from_secs(5),
+        )
     }
 }
 

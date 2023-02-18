@@ -98,10 +98,51 @@ impl Inventory {
             + self.free_slot_count() * item_manifest.get(item_id).stack_size()
     }
 
+    /// Clears any inventory stacks with 0 items in them.
+    ///
+    /// This is the standard behavior for units and storages, but not for crafting.
+    /// In those cases, the slots should persist with 0 items.
+    pub(crate) fn clear_empty_slots(&mut self) {
+        let mut slots_to_clear: Vec<usize> = Vec::with_capacity(self.max_slot_count);
+
+        for (i, slot) in self.slots.iter().enumerate() {
+            if slot.is_empty() {
+                slots_to_clear.push(i);
+            }
+        }
+
+        for i in slots_to_clear {
+            self.slots.remove(i);
+        }
+    }
+
+    /// Adds an empty slot that is reserved for the provided `item_id`.
+    ///
+    /// This operation is infallible: if there are not enough slots available, the inventory size will be expanded.
+    pub(crate) fn add_empty_slot(&mut self, item_id: ItemId, item_manifest: &ItemManifest) {
+        let n_existing_slots = self.slots.len();
+        let slot_to_use = n_existing_slots + 1;
+        let stack_size = item_manifest.get(&item_id).stack_size();
+        let empty_stack = ItemSlot::new(item_id, stack_size);
+
+        if slot_to_use >= self.max_slot_count {
+            self.max_slot_count = slot_to_use;
+            self.slots.push(empty_stack);
+        } else {
+            self.slots[slot_to_use] = empty_stack
+        }
+    }
+
     /// Try to add as many items to the inventory as possible, up to the given count.
     ///
-    /// - If all items can fit in the slot, they are all added and `Ok` is returned.
+    /// Items can spill over, filling multiple inventory slots at once if the amount to add is greater than the stack size.
+    ///
+    /// - If all items can fit in the inventory, they are all added and `Ok` is returned.
     /// - Otherwise, all items that can fit are added and `Err` is returned.
+    ///
+    /// # Warning
+    ///
+    /// Adding 0 of an item will not create an empty slot. Instead, use [`Inventory::add_empty_slot`].
     pub(crate) fn try_add_item(
         &mut self,
         item_count: &ItemCount,
@@ -236,7 +277,6 @@ impl Inventory {
     /// - Otherwise, all items that are included are removed and `Err` is returned.
     pub fn try_remove_item(&mut self, item_count: &ItemCount) -> Result<(), RemoveOneItemError> {
         let mut items_to_remove = item_count.count();
-        let mut has_to_clear_slots = false;
 
         for slot in self
             .slots
@@ -253,20 +293,8 @@ impl Inventory {
                     missing_count: excess_count,
                 }) => {
                     items_to_remove = excess_count;
-                    has_to_clear_slots = true;
                 }
             }
-        }
-
-        // If a slot now has 0 items remove it
-        // This makes space for other item types
-        if has_to_clear_slots {
-            self.slots = self
-                .slots
-                .iter()
-                .cloned()
-                .filter(|slot| !slot.is_empty())
-                .collect();
         }
 
         if items_to_remove > 0 {
