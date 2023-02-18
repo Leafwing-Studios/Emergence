@@ -7,22 +7,16 @@ use serde::Deserialize;
 
 use crate::asset_management::manifest::Manifest;
 
-use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
+use super::{inventory::Inventory, ItemCount, ItemManifest};
 
 /// The unique identifier of a recipe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, TypeUuid, Deserialize)]
 #[uuid = "2c3f382a-38f2-4e8f-ac0a-c8bbb83e7687"]
-pub struct RecipeId(&'static str);
+pub struct RecipeId(u32);
 
-impl RecipeId {
-    /// The ID of the recipe for the leaf production of acacia plants.
-    pub fn acacia_leaf_production() -> Self {
-        Self("acacia_leaf_production")
-    }
-
-    /// The ID of the recipe for mushroom production of leuco mushrooms.
-    pub fn leuco_chunk_production() -> Self {
-        Self("leuco_chunk_production")
+impl From<u32> for RecipeId {
+    fn from(value: u32) -> Self {
+        Self(value)
     }
 }
 
@@ -91,27 +85,6 @@ impl Recipe {
             inventory.add_empty_slot(item_count.item_id.clone(), item_manifest);
         }
         inventory
-    }
-}
-
-// TODO: Remove this once we load recipes from asset files
-impl Recipe {
-    /// An acacia plant producing leaves.
-    pub(crate) fn acacia_leaf_production() -> Self {
-        Recipe::new(
-            Vec::new(),
-            vec![ItemCount::one(ItemId::acacia_leaf())],
-            Duration::from_secs(10),
-        )
-    }
-
-    /// A leuco mushroom processing acacia leaves
-    pub(crate) fn leuco_chunk_production() -> Self {
-        Recipe::new(
-            vec![ItemCount::one(ItemId::acacia_leaf())],
-            vec![ItemCount::one(ItemId::leuco_chunk())],
-            Duration::from_secs(5),
-        )
     }
 }
 

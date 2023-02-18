@@ -2,12 +2,12 @@
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 
 use crate::items::{
     inventory::Inventory,
-    recipe::{Recipe, RecipeId, RecipeManifest},
-    ItemData, ItemId, ItemManifest,
+    recipe::{RecipeId, RecipeManifest},
+    ItemManifest,
 };
 
 /// The current state in the crafting progress.
@@ -188,25 +188,8 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: Load this from an asset file
-        let mut item_manifest = HashMap::new();
-        item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
-        item_manifest.insert(ItemId::leuco_chunk(), ItemData::leuco_chunk());
-
-        // TODO: Load this from an asset file
-        let mut recipe_manifest = HashMap::new();
-        recipe_manifest.insert(
-            RecipeId::acacia_leaf_production(),
-            Recipe::acacia_leaf_production(),
-        );
-        recipe_manifest.insert(
-            RecipeId::leuco_chunk_production(),
-            Recipe::leuco_chunk_production(),
-        );
-
-        app.insert_resource(ItemManifest::new(item_manifest))
-            .insert_resource(RecipeManifest::new(recipe_manifest))
-            .add_system(progress_crafting)
+        // FIXME: Load manifest assets
+        app.add_system(progress_crafting)
             .add_system(start_and_finish_crafting.after(progress_crafting));
     }
 }

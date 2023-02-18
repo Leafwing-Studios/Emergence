@@ -16,25 +16,13 @@ pub(crate) mod slot;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, TypeUuid, Deserialize)]
 #[uuid = "4d6a971d-7b78-46c3-9a6f-3dd3a121c44a"]
 pub struct ItemId {
-    /// The associated string.
-    id: &'static str,
+    /// The unique identifier for this variety of item.
+    id: u32,
 }
 
-impl ItemId {
-    /// The item ID of an Acacia leaf.
-    pub fn acacia_leaf() -> Self {
-        Self { id: "acacia_leaf" }
-    }
-
-    /// The item ID of a Leuco chunk.
-    pub fn leuco_chunk() -> Self {
-        Self { id: "leuco_chunk" }
-    }
-
-    /// An item ID solely used for testing.
-    #[cfg(test)]
-    pub fn test() -> Self {
-        Self { id: "test" }
+impl From<u32> for ItemId {
+    fn from(value: u32) -> Self {
+        Self { id: value }
     }
 }
 

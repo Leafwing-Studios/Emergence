@@ -11,13 +11,12 @@ use bevy::{
     utils::{BoxedFuture, HashMap},
 };
 use serde::{de::DeserializeOwned, Serialize};
-use std::{
-    fmt::{Debug, Display},
-    hash::Hash,
-    marker::PhantomData,
-};
+use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
-mod deserialize;
+type RawManifest<Data>
+where
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
+= HashMap<String, Data>;
 
 /// Write-once data definitions.
 ///
@@ -25,17 +24,8 @@ mod deserialize;
 #[derive(Debug, Resource, Serialize)]
 pub(crate) struct Manifest<Id, Data>
 where
-    Id: Debug
-        + Display
-        + PartialEq
-        + Eq
-        + Hash
-        + Send
-        + Sync
-        + TypeUuid
-        + DeserializeOwned
-        + 'static,
-    Data: Debug + Send + Sync + TypeUuid + 'static + DeserializeOwned,
+    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     /// The internal mapping.
     map: HashMap<Id, Data>,
@@ -43,17 +33,8 @@ where
 
 impl<Id, Data> Manifest<Id, Data>
 where
-    Id: Debug
-        + Display
-        + PartialEq
-        + Eq
-        + Hash
-        + Send
-        + Sync
-        + TypeUuid
-        + DeserializeOwned
-        + 'static,
-    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
+    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     /// Create a new manifest with the given definitions.
     pub fn new(map: HashMap<Id, Data>) -> Self {
@@ -82,17 +63,8 @@ where
 
 impl<Id, Data> TypeUuid for Manifest<Id, Data>
 where
-    Id: Debug
-        + Display
-        + PartialEq
-        + Eq
-        + Hash
-        + Send
-        + Sync
-        + TypeUuid
-        + DeserializeOwned
-        + 'static,
-    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
+    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     // TODO: Find a better / safer way to generate this
     // Perhaps we need a combination of the ID and Data UUID
@@ -101,17 +73,8 @@ where
 
 pub struct ManifestAssetLoader<Id, Data>
 where
-    Id: Debug
-        + Display
-        + PartialEq
-        + Eq
-        + Hash
-        + Send
-        + Sync
-        + TypeUuid
-        + DeserializeOwned
-        + 'static,
-    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
+    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     id: PhantomData<Id>,
     data: PhantomData<Data>,
@@ -119,17 +82,8 @@ where
 
 impl<Id, Data> AssetLoader for ManifestAssetLoader<Id, Data>
 where
-    Id: Debug
-        + Display
-        + PartialEq
-        + Eq
-        + Hash
-        + Send
-        + Sync
-        + TypeUuid
-        + DeserializeOwned
-        + 'static,
-    Data: Debug + Send + Sync + TypeUuid + DeserializeOwned + 'static,
+    Id: PartialEq + Eq + Hash + Send + Sync + TypeUuid + From<u32> + 'static,
+    Data: Send + Sync + TypeUuid + 'static + DeserializeOwned,
 {
     fn load<'a>(
         &'a self,
@@ -137,7 +91,7 @@ where
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), bevy::asset::Error>> {
         Box::pin(async move {
-            let manifest: Manifest<Id, Data> = serde_json::from_slice(bytes)?;
+            let manifest: RawManifest<Data> = serde_json::from_slice(bytes)?;
             load_context.set_default_asset(LoadedAsset::new(manifest));
             Ok(())
         })

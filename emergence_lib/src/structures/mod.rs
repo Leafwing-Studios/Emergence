@@ -3,7 +3,7 @@
 //! Typically, these will produce and transform resources (much like machines in other factory builders),
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
-use bevy::{prelude::*, reflect::TypeUuid, utils::HashMap};
+use bevy::{prelude::*, reflect::TypeUuid};
 use bevy_mod_raycast::RaycastMesh;
 use serde::Deserialize;
 
@@ -45,35 +45,6 @@ pub(crate) struct StructureVariety {
     color: Color,
 }
 
-impl Default for StructureManifest {
-    fn default() -> Self {
-        let mut map = HashMap::default();
-
-        // TODO: read these from files
-        map.insert(
-            StructureId { id: "leuco" },
-            StructureVariety {
-                organism: true,
-                crafts: true,
-                starting_recipe: Some(RecipeId::leuco_chunk_production()),
-                color: Color::ORANGE_RED,
-            },
-        );
-
-        map.insert(
-            StructureId { id: "acacia" },
-            StructureVariety {
-                organism: true,
-                crafts: true,
-                starting_recipe: Some(RecipeId::acacia_leaf_production()),
-                color: Color::GREEN,
-            },
-        );
-
-        StructureManifest::new(map)
-    }
-}
-
 /// The data needed to build a structure
 #[derive(Bundle)]
 struct StructureBundle {
@@ -104,7 +75,13 @@ impl StructureBundle {
 #[uuid = "a161ca1d-e024-4fe9-bedc-f4352d6d99c0"]
 pub(crate) struct StructureId {
     /// The unique identifier for this variety of structure.
-    pub(crate) id: &'static str,
+    pub(crate) id: u32,
+}
+
+impl From<u32> for StructureId {
+    fn from(value: u32) -> Self {
+        Self { id: value }
+    }
 }
 
 impl Display for StructureId {
@@ -118,7 +95,7 @@ pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(CraftingPlugin)
-            .init_resource::<StructureManifest>();
+        // FIXME: Load structure manifest
+        app.add_plugin(CraftingPlugin);
     }
 }
