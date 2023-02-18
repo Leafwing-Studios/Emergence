@@ -30,10 +30,11 @@ pub(crate) struct TilePos {
 
 impl Display for TilePos {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let x = self.hex.x;
-        let y = self.hex.y;
-        // In cubic hex coordinates, x+y+z = 0
-        let z = -x - y;
+        let cubic = self.to_array3();
+
+        let x = cubic[0];
+        let y = cubic[1];
+        let z = cubic[2];
 
         write!(f, "({x}, {y}, {z})")
     }
