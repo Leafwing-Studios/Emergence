@@ -1,6 +1,6 @@
 //! Asset loading for units
 
-use crate::{organisms::units::UnitId, simulation::geometry::MapGeometry};
+use crate::{simulation::geometry::MapGeometry, units::UnitId};
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use super::{hexagonal_column, Loadable};

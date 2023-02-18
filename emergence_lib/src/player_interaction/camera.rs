@@ -9,11 +9,11 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::organisms::units::UnitId;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::structures::StructureId;
 use crate::terrain::Terrain;
+use crate::units::UnitId;
 
 use super::InteractionSystem;
 use super::PlayerAction;

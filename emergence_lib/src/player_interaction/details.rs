@@ -283,12 +283,12 @@ mod unit {
     use std::fmt::Display;
 
     use crate::{
-        organisms::units::{
+        simulation::geometry::TilePos,
+        units::{
             behavior::{CurrentAction, Goal},
             item_interaction::HeldItem,
             UnitId,
         },
-        simulation::geometry::TilePos,
     };
 
     /// Data needed to populate [`UnitDetails`].

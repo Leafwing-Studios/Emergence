@@ -9,10 +9,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::items::ItemId;
-use crate::organisms::units::UnitId;
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
+use crate::units::UnitId;
 
 /// A unit's current goals.
 ///

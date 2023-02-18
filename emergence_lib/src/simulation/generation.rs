@@ -1,10 +1,10 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
-use crate::organisms::units::UnitBundle;
 use crate::player_interaction::clipboard::StructureData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
+use crate::units::UnitBundle;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;

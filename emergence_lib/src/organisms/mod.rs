@@ -2,9 +2,7 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 
-use self::units::UnitsPlugin;
-
-pub mod units;
+use crate::units::UnitsPlugin;
 
 /// All of the standard components of an [`Organism`]
 #[derive(Bundle)]
