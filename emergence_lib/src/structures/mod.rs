@@ -8,12 +8,12 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
     asset_management::manifest::Manifest,
-    items::recipe::RecipeId,
+    items::{inventory::Inventory, recipe::RecipeId, ItemCount, ItemId},
     player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
-use self::crafting::CraftingPlugin;
+use self::crafting::{CraftingPlugin, InputInventory};
 use std::fmt::Display;
 
 pub(crate) mod commands;
@@ -39,6 +39,8 @@ pub(crate) struct StructureVariety {
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
     starting_recipe: Option<RecipeId>,
+    /// The set of items needed to create a new copy of this structure
+    construction_materials: InputInventory,
     /// The color associated with this structure
     color: Color,
 }
@@ -47,6 +49,10 @@ impl Default for StructureManifest {
     fn default() -> Self {
         let mut map = HashMap::default();
 
+        let leuco_construction_materials = InputInventory {
+            inventory: Inventory::new_from_item(ItemCount::new(ItemId::leuco_chunk(), 1)),
+        };
+
         // TODO: read these from files
         map.insert(
             StructureId { id: "leuco" },
@@ -54,9 +60,14 @@ impl Default for StructureManifest {
                 organism: true,
                 crafts: true,
                 starting_recipe: Some(RecipeId::leuco_chunk_production()),
+                construction_materials: leuco_construction_materials,
                 color: Color::ORANGE_RED,
             },
         );
+
+        let acacia_construction_materials = InputInventory {
+            inventory: Inventory::new_from_item(ItemCount::new(ItemId::acacia_leaf(), 2)),
+        };
 
         map.insert(
             StructureId { id: "acacia" },
@@ -64,6 +75,7 @@ impl Default for StructureManifest {
                 organism: true,
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
+                construction_materials: acacia_construction_materials,
                 color: Color::GREEN,
             },
         );

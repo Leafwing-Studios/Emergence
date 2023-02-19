@@ -162,8 +162,18 @@ impl Command for SpawnGhostCommand {
             world.entity_mut(existing_ghost).despawn_recursive();
         }
 
+        let structure_manifest = world.resource::<StructureManifest>();
+        let variety_data = structure_manifest.get(self.data.id);
+        let construction_materials = variety_data.construction_materials.clone();
+
         // Spawn a ghost
-        let ghost_entity = world.spawn(GhostBundle::new(self.tile_pos, self.data)).id();
+        let ghost_entity = world
+            .spawn(GhostBundle::new(
+                self.tile_pos,
+                self.data,
+                construction_materials,
+            ))
+            .id();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry.ghost_index.insert(self.tile_pos, ghost_entity);

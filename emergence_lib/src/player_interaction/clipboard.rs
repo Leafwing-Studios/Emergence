@@ -55,7 +55,7 @@ impl Clipboard {
 }
 
 /// The data copied via the clipboard for a single structure.
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct StructureData {
     /// The identity of the structure.
     pub(crate) id: StructureId,
