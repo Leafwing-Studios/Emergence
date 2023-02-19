@@ -24,10 +24,12 @@ impl Plugin for GraphicsPlugin {
                     .with_system(terrain::populate_terrain)
                     .with_system(units::populate_units)
                     .with_system(units::display_held_item)
-                    .with_system(structures::populate_structures)
                     // We need to avoid attempting to insert bundles into entities that no longer exist
-                    .with_system(structures::mesh_ghosts.before(InteractionSystem::ManageGhosts)),
+                    .with_system(
+                        structures::populate_structures.before(InteractionSystem::ManagePreviews),
+                    ),
             )
-            .add_system_to_stage(CoreStage::PostUpdate, structures::change_ghost_material);
+            .add_system_to_stage(CoreStage::PostUpdate, structures::change_ghost_material)
+            .add_system_to_stage(CoreStage::PostUpdate, structures::change_preview_material);
     }
 }

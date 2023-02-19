@@ -29,7 +29,7 @@ impl Plugin for ZoningPlugin {
         )
         .add_system(
             act_on_zoning
-                .label(InteractionSystem::ManageGhosts)
+                .label(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
         );
     }

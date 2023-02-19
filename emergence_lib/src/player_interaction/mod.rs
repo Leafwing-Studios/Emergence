@@ -56,7 +56,7 @@ pub(crate) enum InteractionSystem {
     /// Use intent-spending abilities
     UseAbilities,
     /// Spawn and despawn ghosts
-    ManageGhosts,
+    ManagePreviews,
     /// Updates information about the hovered entities
     HoverDetails,
 }

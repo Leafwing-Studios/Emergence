@@ -30,7 +30,7 @@ impl Plugin for ClipboardPlugin {
             )
             .add_system(
                 display_selection
-                    .label(InteractionSystem::ManageGhosts)
+                    .label(InteractionSystem::ManagePreviews)
                     .after(InteractionSystem::SetClipboard),
             );
     }
