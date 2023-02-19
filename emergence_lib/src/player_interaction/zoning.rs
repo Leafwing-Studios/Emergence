@@ -115,8 +115,9 @@ fn act_on_zoning(
 ) {
     for (zoning, &tile_pos) in terrain_query.iter() {
         match zoning {
-            Zoning::Structure(item) => commands.spawn_structure(tile_pos, item.clone()),
-            Zoning::None => (), // Do nothing
+            Zoning::Structure(item) => commands.spawn_ghost(tile_pos, item.clone()),
+            Zoning::None => commands.despawn_ghost(tile_pos),
+            // TODO: this should also take delayed effect
             Zoning::Clear => commands.despawn_structure(tile_pos),
         };
     }
