@@ -40,7 +40,7 @@ impl FromWorld for StructureHandles {
         });
 
         let preview_material = materials.add(StandardMaterial {
-            base_color: Color::hsla(55., 0.7, 0.9, 0.7),
+            base_color: Color::hsla(55., 0.9, 0.7, 0.7),
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         });
