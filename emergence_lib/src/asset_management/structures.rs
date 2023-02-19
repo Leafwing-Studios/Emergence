@@ -1,7 +1,12 @@
 //! Asset loading for structures
 
 use crate::{
-    asset_management::hexagonal_column, simulation::geometry::MapGeometry, structures::StructureId,
+    asset_management::{
+        hexagonal_column,
+        palette::{GHOST_ALPHA, GHOST_COLOR, HOVER_HUE, HOVER_SATURATION, SELECTION_COLOR},
+    },
+    simulation::geometry::MapGeometry,
+    structures::StructureId,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
@@ -16,6 +21,10 @@ pub(crate) struct StructureHandles {
     pub(crate) ghost_material: Handle<StandardMaterial>,
     /// The material to be used for all previews
     pub(crate) preview_material: Handle<StandardMaterial>,
+    /// The material to be used for selected structures
+    pub(crate) selected_material: Handle<StandardMaterial>,
+    /// The material to be used for selected ghosts
+    pub(crate) selected_ghost_material: Handle<StandardMaterial>,
     /// The raycasting mesh used to select structures
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -33,14 +42,31 @@ impl FromWorld for StructureHandles {
         let picking_mesh = mesh_assets.add(picking_mesh_object);
 
         let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+
         let ghost_material = materials.add(StandardMaterial {
-            base_color: Color::hsla(0., 0., 0.9, 0.7),
+            base_color: GHOST_COLOR,
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         });
 
         let preview_material = materials.add(StandardMaterial {
-            base_color: Color::hsla(55., 0.9, 0.7, 0.7),
+            base_color: Color::Hsla {
+                hue: HOVER_HUE,
+                saturation: HOVER_SATURATION,
+                lightness: HOVER_SATURATION,
+                alpha: GHOST_ALPHA,
+            },
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        });
+
+        let selected_material = materials.add(StandardMaterial {
+            base_color: SELECTION_COLOR,
+            ..Default::default()
+        });
+
+        let selected_ghost_material = materials.add(StandardMaterial {
+            base_color: GHOST_COLOR,
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         });
@@ -49,6 +75,8 @@ impl FromWorld for StructureHandles {
             scenes: HashMap::default(),
             ghost_material,
             preview_material,
+            selected_material,
+            selected_ghost_material,
             picking_mesh,
         };
 

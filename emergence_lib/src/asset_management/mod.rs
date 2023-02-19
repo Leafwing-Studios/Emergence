@@ -22,6 +22,7 @@ use bevy::{
 use hexx::{Hex, HexLayout, MeshInfo};
 
 pub(crate) mod manifest;
+pub(crate) mod palette;
 pub(crate) mod structures;
 pub(crate) mod terrain;
 pub(crate) mod units;

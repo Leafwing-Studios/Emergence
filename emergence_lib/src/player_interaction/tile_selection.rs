@@ -112,10 +112,14 @@ pub(crate) enum ObjectInteraction {
 impl ObjectInteraction {
     /// The material used by objects that are being interacted with.
     pub(crate) fn material(&self) -> StandardMaterial {
+        use crate::asset_management::palette::{
+            HOVER_COLOR, SELECTION_AND_HOVER_COLOR, SELECTION_COLOR,
+        };
+
         let base_color = match self {
-            ObjectInteraction::Selected => Color::DARK_GREEN,
-            ObjectInteraction::Hovered => Color::YELLOW,
-            ObjectInteraction::HoveredAndSelected => Color::YELLOW_GREEN,
+            ObjectInteraction::Selected => SELECTION_COLOR,
+            ObjectInteraction::Hovered => HOVER_COLOR,
+            ObjectInteraction::HoveredAndSelected => SELECTION_AND_HOVER_COLOR,
         };
 
         StandardMaterial {
