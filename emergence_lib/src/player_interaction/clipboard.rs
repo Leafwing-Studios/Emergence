@@ -58,7 +58,7 @@ impl Clipboard {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct StructureData {
     /// The identity of the structure.
-    pub(crate) id: StructureId,
+    pub(crate) structure_id: StructureId,
     /// The orientation of the structure.
     pub(crate) facing: Facing,
 }
@@ -156,7 +156,7 @@ fn copy_selection(
                 if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
                     let (id, facing) = structure_query.get(*structure_entity).unwrap();
                     let clipboard_item = StructureData {
-                        id: *id,
+                        structure_id: *id,
                         facing: *facing,
                     };
 
@@ -169,7 +169,7 @@ fn copy_selection(
                     {
                         let (id, facing) = structure_query.get(*structure_entity).unwrap();
                         let clipboard_item = StructureData {
-                            id: *id,
+                            structure_id: *id,
                             facing: *facing,
                         };
 
@@ -219,7 +219,7 @@ fn display_selection(
             // Preview should exist
             if let Some(desired_clipboard_item) = desired_previews.get(tile_pos) {
                 // Preview's identity changed
-                if *existing_structure_id != desired_clipboard_item.id
+                if *existing_structure_id != desired_clipboard_item.structure_id
                     || *existing_facing != desired_clipboard_item.facing
                 {
                     commands.despawn_preview(*tile_pos);

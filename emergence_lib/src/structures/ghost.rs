@@ -42,7 +42,7 @@ impl GhostBundle {
         GhostBundle {
             ghost: Ghost,
             tile_pos,
-            structure_id: data.id,
+            structure_id: data.structure_id,
             facing: data.facing,
             construction_materials,
         }
@@ -72,7 +72,7 @@ impl PreviewBundle {
         PreviewBundle {
             preview: Preview,
             tile_pos,
-            structure_id: data.id,
+            structure_id: data.structure_id,
             facing: data.facing,
         }
     }

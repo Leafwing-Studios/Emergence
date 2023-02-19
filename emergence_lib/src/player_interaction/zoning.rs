@@ -4,8 +4,10 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    simulation::geometry::{MapGeometry, TilePos},
-    structures::commands::StructureCommandsExt,
+    simulation::geometry::{Facing, MapGeometry, TilePos},
+    structures::{
+        commands::StructureCommandsExt, crafting::InputInventory, ghost::Ghost, StructureId,
+    },
     terrain::Terrain,
 };
 
@@ -31,7 +33,8 @@ impl Plugin for ZoningPlugin {
             act_on_zoning
                 .label(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
-        );
+        )
+        .add_system(turn_ghosts_into_structures);
     }
 }
 
@@ -120,5 +123,24 @@ fn act_on_zoning(
             // TODO: this should also take delayed effect
             Zoning::Clear => commands.despawn_structure(tile_pos),
         };
+    }
+}
+
+/// Transforms ghosts into structures once all of their construction materials have been supplied.
+fn turn_ghosts_into_structures(
+    ghost_query: Query<(&InputInventory, &TilePos, &StructureId, &Facing), With<Ghost>>,
+    mut commands: Commands,
+) {
+    for (input_inventory, &tile_pos, &structure_id, &facing) in ghost_query.iter() {
+        if input_inventory.is_full() {
+            commands.despawn_ghost(tile_pos);
+            commands.spawn_structure(
+                tile_pos,
+                StructureData {
+                    structure_id,
+                    facing,
+                },
+            );
+        }
     }
 }

@@ -243,7 +243,7 @@ fn handle_selection(
         Ok(data) => {
             if data.complete {
                 let structure_data = StructureData {
-                    id: data.structure_id,
+                    structure_id: data.structure_id,
                     facing: Facing::default(),
                 };
 

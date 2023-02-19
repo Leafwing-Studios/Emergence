@@ -101,7 +101,7 @@ impl StructureBundle {
     /// Creates a new structure
     fn new(tile_pos: TilePos, data: StructureData) -> Self {
         StructureBundle {
-            structure: data.id,
+            structure: data.structure_id,
             facing: data.facing,
             tile_pos,
             raycast_mesh: RaycastMesh::default(),
