@@ -11,9 +11,8 @@ pub(crate) mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
 pub(crate) mod cursor;
-pub(crate) mod details;
 pub(crate) mod intent;
-pub(crate) mod tile_selection;
+pub(crate) mod selection;
 pub(crate) mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
@@ -28,8 +27,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
-            .add_plugin(details::DetailsPlugin)
-            .add_plugin(tile_selection::TileSelectionPlugin)
+            .add_plugin(selection::SelectionPlugin)
             .add_plugin(clipboard::ClipboardPlugin)
             .add_plugin(zoning::ZoningPlugin);
 

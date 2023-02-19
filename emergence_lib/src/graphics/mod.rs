@@ -29,7 +29,6 @@ impl Plugin for GraphicsPlugin {
                         structures::populate_structures.before(InteractionSystem::ManagePreviews),
                     ),
             )
-            .add_system_to_stage(CoreStage::PostUpdate, structures::change_ghost_material)
-            .add_system_to_stage(CoreStage::PostUpdate, structures::change_preview_material);
+            .add_system_to_stage(CoreStage::PostUpdate, structures::change_structure_material);
     }
 }

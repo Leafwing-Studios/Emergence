@@ -32,6 +32,17 @@ pub(crate) const GHOST_ALPHA: f32 = 0.7;
 /// The color used to tint ghosts
 pub(crate) const GHOST_COLOR: Color =
     Color::hsla(GHOST_HUE, GHOST_SATURATION, GHOST_LIGHTNESS, GHOST_ALPHA);
+/// The color used to tint selected ghosts
+pub(crate) const SELECTED_GHOST_COLOR: Color = Color::hsla(
+    SELECTION_HUE,
+    SELECTION_SATURATION,
+    SELECTION_LIGHTNESS,
+    GHOST_ALPHA,
+);
+
+/// The color used to tint previews
+pub(crate) const PREVIEW_COLOR: Color =
+    Color::hsla(HOVER_HUE, HOVER_SATURATION, HOVER_LIGHTNESS, GHOST_ALPHA);
 
 /// The color used to tint objects that are both selected and hovered.
 pub(crate) const SELECTION_AND_HOVER_COLOR: Color = Color::hsl(
