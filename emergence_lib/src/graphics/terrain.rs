@@ -1,3 +1,5 @@
+//! Graphics code for terrain.
+
 use bevy::prelude::*;
 
 use crate::{

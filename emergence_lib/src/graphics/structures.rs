@@ -1,3 +1,5 @@
+//! Graphics and animation code for structures.
+
 use bevy::prelude::*;
 
 use crate::{
