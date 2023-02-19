@@ -94,8 +94,6 @@ pub(crate) enum PlayerAction {
     ///
     /// If no structure is selected, any zoning will be removed.
     ClearZoning,
-    /// Removes all structures from the clipboard.
-    ClearClipboard,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
@@ -131,7 +129,6 @@ impl PlayerAction {
             Pipette => KeyCode::Q.into(),
             Zone => KeyCode::Space.into(),
             ClearZoning => KeyCode::Back.into(),
-            ClearClipboard => KeyCode::Escape.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
             Pan => VirtualDPad::wasd().into(),
@@ -164,7 +161,6 @@ impl PlayerAction {
             Pipette => West.into(),
             Zone => North.into(),
             ClearZoning => DPadUp.into(),
-            ClearClipboard => DPadDown.into(),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
             Pan => DualAxis::left_stick().into(),

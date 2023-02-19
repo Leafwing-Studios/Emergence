@@ -17,6 +17,9 @@ pub(super) struct ClipboardPlugin;
 impl Plugin for ClipboardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Clipboard>()
+            // We're running this before we select tiles to deliberately introduce a one-frame delay,
+            // ensuring that users need to double click to clear the clipboard as well.
+            .add_system(clear_clipboard.before(InteractionSystem::SelectTiles))
             .add_system(
                 copy_selection
                     .label(InteractionSystem::SetClipboard)
@@ -129,6 +132,17 @@ impl Clipboard {
     }
 }
 
+/// Clears the clipboard when the correct actions are pressed
+fn clear_clipboard(
+    mut clipboard: ResMut<Clipboard>,
+    selected_tiles: Res<SelectedTiles>,
+    actions: Res<ActionState<PlayerAction>>,
+) {
+    if selected_tiles.is_empty() && actions.just_pressed(PlayerAction::Deselect) {
+        clipboard.clear();
+    }
+}
+
 /// Copies the selected structure(s) to the clipboard, to be placed later.
 ///
 /// This system also handles the "pipette" functionality.
@@ -140,12 +154,6 @@ fn copy_selection(
     structure_query: Query<(&StructureId, &Facing), Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if actions.pressed(PlayerAction::ClearClipboard) {
-        clipboard.clear();
-        // Don't try to clear and set the clipboard on the same frame.
-        return;
-    }
-
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         if actions.just_pressed(PlayerAction::Pipette) {
             // We want to replace our selection, rather than add to it
