@@ -33,6 +33,15 @@ impl Inventory {
         }
     }
 
+    // FIXME: this doesn't properly respect max stack size
+    /// Creates an inventory from the provided [`ItemCount`].
+    pub(crate) fn new_from_item(item_count: ItemCount) -> Self {
+        Self {
+            slots: vec![ItemSlot::new(item_count.item_id, item_count.count)],
+            max_slot_count: 1,
+        }
+    }
+
     /// Returns an iterator over the items in the inventory and their count.
     pub(crate) fn iter(&self) -> impl Iterator<Item = &ItemSlot> {
         self.slots.iter()

@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, ghost::Ghost, StructureId},
+    structures::{commands::StructureCommandsExt, ghost::Preview, StructureId},
 };
 
 use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem, PlayerAction};
@@ -30,7 +30,7 @@ impl Plugin for ClipboardPlugin {
             )
             .add_system(
                 display_selection
-                    .label(InteractionSystem::ManageGhosts)
+                    .label(InteractionSystem::ManagePreviews)
                     .after(InteractionSystem::SetClipboard),
             );
     }
@@ -55,10 +55,10 @@ impl Clipboard {
 }
 
 /// The data copied via the clipboard for a single structure.
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct StructureData {
     /// The identity of the structure.
-    pub(crate) id: StructureId,
+    pub(crate) structure_id: StructureId,
     /// The orientation of the structure.
     pub(crate) facing: Facing,
 }
@@ -137,7 +137,7 @@ fn copy_selection(
     actions: Res<ActionState<PlayerAction>>,
     mut clipboard: ResMut<Clipboard>,
     selected_tiles: Res<SelectedTiles>,
-    structure_query: Query<(&StructureId, &Facing), Without<Ghost>>,
+    structure_query: Query<(&StructureId, &Facing), Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if actions.pressed(PlayerAction::ClearClipboard) {
@@ -156,7 +156,7 @@ fn copy_selection(
                 if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
                     let (id, facing) = structure_query.get(*structure_entity).unwrap();
                     let clipboard_item = StructureData {
-                        id: *id,
+                        structure_id: *id,
                         facing: *facing,
                     };
 
@@ -169,7 +169,7 @@ fn copy_selection(
                     {
                         let (id, facing) = structure_query.get(*structure_entity).unwrap();
                         let clipboard_item = StructureData {
-                            id: *id,
+                            structure_id: *id,
                             facing: *facing,
                         };
 
@@ -204,39 +204,39 @@ fn display_selection(
     clipboard: Res<Clipboard>,
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
-    ghost_query: Query<(&TilePos, &StructureId, &Facing), With<Ghost>>,
+    preview_query: Query<(&TilePos, &StructureId, &Facing), With<Preview>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        let mut desired_ghosts: HashMap<TilePos, StructureData> =
+        let mut desired_previews: HashMap<TilePos, StructureData> =
             HashMap::with_capacity(clipboard.capacity());
         for (&clipboard_pos, clipboard_item) in clipboard.iter() {
             let tile_pos = cursor_pos + clipboard_pos;
-            desired_ghosts.insert(tile_pos, clipboard_item.clone());
+            desired_previews.insert(tile_pos, clipboard_item.clone());
         }
 
-        // Handle ghosts that already exist
-        for (tile_pos, existing_structure_id, existing_facing) in ghost_query.iter() {
-            // Ghost should exist
-            if let Some(desired_clipboard_item) = desired_ghosts.get(tile_pos) {
-                // Ghost's identity changed
-                if *existing_structure_id != desired_clipboard_item.id
+        // Handle previews that already exist
+        for (tile_pos, existing_structure_id, existing_facing) in preview_query.iter() {
+            // Preview should exist
+            if let Some(desired_clipboard_item) = desired_previews.get(tile_pos) {
+                // Preview's identity changed
+                if *existing_structure_id != desired_clipboard_item.structure_id
                     || *existing_facing != desired_clipboard_item.facing
                 {
-                    commands.despawn_ghost(*tile_pos);
+                    commands.despawn_preview(*tile_pos);
                 } else {
                     // This ghost is still correct
-                    desired_ghosts.remove(tile_pos);
+                    desired_previews.remove(tile_pos);
                 }
 
-            // Ghost should no longer exist
+            // Preview should no longer exist
             } else {
-                commands.despawn_ghost(*tile_pos);
+                commands.despawn_preview(*tile_pos);
             }
         }
 
         // Handle any remaining new ghosts
-        for (&tile_pos, clipboard_item) in desired_ghosts.iter() {
-            commands.spawn_ghost(tile_pos, clipboard_item.clone());
+        for (&tile_pos, clipboard_item) in desired_previews.iter() {
+            commands.spawn_preview(tile_pos, clipboard_item.clone());
         }
     }
 }

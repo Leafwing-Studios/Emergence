@@ -37,7 +37,7 @@ impl Display for CraftingState {
 }
 
 /// The input inventory for a structure.
-#[derive(Component, Debug, Default, Deref, DerefMut)]
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
 pub(crate) struct InputInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,

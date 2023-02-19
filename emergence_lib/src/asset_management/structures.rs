@@ -14,6 +14,8 @@ pub(crate) struct StructureHandles {
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
     /// The material to be used for all ghosts
     pub(crate) ghost_material: Handle<StandardMaterial>,
+    /// The material to be used for all previews
+    pub(crate) preview_material: Handle<StandardMaterial>,
     /// The raycasting mesh used to select structures
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -37,9 +39,16 @@ impl FromWorld for StructureHandles {
             ..Default::default()
         });
 
+        let preview_material = materials.add(StandardMaterial {
+            base_color: Color::hsla(55., 0.9, 0.7, 0.7),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        });
+
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
             ghost_material,
+            preview_material,
             picking_mesh,
         };
 
