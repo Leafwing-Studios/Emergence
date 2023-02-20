@@ -717,22 +717,43 @@ fn set_selection(
                 )
             }
         }
-        SelectionState::DeselectSingle
-        | SelectionState::DeselectArea { .. }
-        | SelectionState::DeselectLine { .. } => match &mut *current_selection {
-            CurrentSelection::Terrain(ref mut selected_tiles) => {
-                if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    selected_tiles.remove_from_selection(
-                        hovered_tile,
-                        *selection_state,
-                        select_multiple,
-                        radius,
-                        map_geometry,
-                    );
+        SelectionState::DeselectSingle | SelectionState::DeselectArea { .. } => {
+            match &mut *current_selection {
+                CurrentSelection::Terrain(ref mut selected_tiles) => {
+                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                        selected_tiles.remove_from_selection(
+                            hovered_tile,
+                            *selection_state,
+                            select_multiple,
+                            radius,
+                            map_geometry,
+                        );
+                    }
                 }
+                _ => *current_selection = CurrentSelection::None,
             }
-            _ => *current_selection = CurrentSelection::None,
-        },
+        }
+        SelectionState::DeselectLine { .. } => {
+            match &mut *current_selection {
+                CurrentSelection::Terrain(ref mut selected_tiles) => {
+                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                        selected_tiles.remove_from_selection(
+                            hovered_tile,
+                            *selection_state,
+                            select_multiple,
+                            radius,
+                            map_geometry,
+                        );
+                    }
+                }
+                _ => *current_selection = CurrentSelection::None,
+            }
+
+            // Let players chain lines head to tail nicely
+            *selection_state = SelectionState::PreviewLine {
+                start: hovered_tile,
+            };
+        }
     }
 }
 
