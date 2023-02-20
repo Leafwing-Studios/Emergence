@@ -706,7 +706,7 @@ fn set_selection(
                     radius,
                     map_geometry,
                 )
-            } else {
+            } else if !same_tile_as_last_time {
                 current_selection.update_from_cursor_pos(
                     cursor_pos,
                     hovered_tile,
