@@ -14,7 +14,7 @@ use crate::{
 use super::{
     clipboard::{Clipboard, StructureData},
     cursor::CursorPos,
-    details::CurrentSelection,
+    selection::CurrentSelection,
     InteractionSystem, PlayerAction,
 };
 
