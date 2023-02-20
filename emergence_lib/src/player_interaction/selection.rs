@@ -81,16 +81,20 @@ impl SelectedTiles {
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
     fn draw_line(start: TilePos, end: TilePos, radius: u32) -> HashSet<TilePos> {
-        let line = start.line_to(end.hex);
-        let mut tiles = HashSet::<TilePos>::new();
+        if start == end {
+            HashSet::from_iter([start])
+        } else {
+            let line = start.line_to(end.hex);
+            let mut tiles = HashSet::<TilePos>::new();
 
-        for line_hex in line {
-            let hexagon = hexagon(line_hex, radius);
-            for hex in hexagon {
-                tiles.insert(TilePos { hex });
+            for line_hex in line {
+                let hexagon = hexagon(line_hex, radius);
+                for hex in hexagon {
+                    tiles.insert(TilePos { hex });
+                }
             }
+            tiles
         }
-        tiles
     }
 
     /// Clears the set of selected tiles.
