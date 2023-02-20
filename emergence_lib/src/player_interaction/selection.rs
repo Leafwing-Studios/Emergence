@@ -327,14 +327,16 @@ fn display_tile_interactions(
     materials: Res<TerrainHandles>,
 ) {
     if current_selection.is_changed() {
-        if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-            // PERF: We should probably avoid a linear scan over all tiles here
-            for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-                let hovered = hovered_tiles.contains(&tile_pos);
-                let selected = selected_tiles.selected.contains(&tile_pos);
+        // PERF: We should probably avoid a linear scan over all tiles here
+        for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
+            let hovered = hovered_tiles.contains(&tile_pos);
+            let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
+                selected_tiles.selected.contains(&tile_pos)
+            } else {
+                false
+            };
 
-                *material = materials.get_material(terrain, hovered, selected);
-            }
+            *material = materials.get_material(terrain, hovered, selected);
         }
     }
 }
