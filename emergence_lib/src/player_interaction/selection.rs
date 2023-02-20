@@ -165,12 +165,12 @@ impl SelectedTiles {
         map_geometry: &MapGeometry,
     ) -> HashSet<TilePos> {
         match selection_state.mode() {
-            SelectionMode::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
-            SelectionMode::Area => SelectedTiles::draw_hexagon(
+            SelectionShape::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
+            SelectionShape::Area => SelectedTiles::draw_hexagon(
                 selection_state.start().unwrap(),
                 selection_state.radius().unwrap(),
             ),
-            SelectionMode::Line => {
+            SelectionShape::Line => {
                 SelectedTiles::draw_line(selection_state.start().unwrap(), hovered_tile, radius)
             }
         }
@@ -198,8 +198,8 @@ impl HoveredTiles {
         radius: u32,
     ) {
         self.hovered = match selection_state.mode() {
-            SelectionMode::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
-            SelectionMode::Area => {
+            SelectionShape::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
+            SelectionShape::Area => {
                 let mut set = SelectedTiles::draw_ring(
                     selection_state.start().unwrap(),
                     selection_state.radius().unwrap(),
@@ -208,7 +208,7 @@ impl HoveredTiles {
                 set.insert(hovered_tile);
                 set
             }
-            SelectionMode::Line => {
+            SelectionShape::Line => {
                 SelectedTiles::draw_line(selection_state.start().unwrap(), hovered_tile, radius)
             }
         };
@@ -545,13 +545,18 @@ enum SelectionState {
     DeselectSingle,
 }
 
-enum SelectionMode {
+/// The shape of tiles to be selected.
+enum SelectionShape {
+    /// A regular hexagon
     Area,
+    /// A discretized line
     Line,
+    /// A single tile (or a large brush equivalent)
     Single,
 }
 
 impl SelectionState {
+    /// Determine what selection state should be used this frame based on player actions
     fn compute(&mut self, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
         use PlayerAction::*;
 
@@ -587,6 +592,7 @@ impl SelectionState {
         };
     }
 
+    /// The inital tile of the [`SelectionState`]
     fn start(&self) -> Option<TilePos> {
         match *self {
             SelectionState::PreviewLine { start } => Some(start),
@@ -601,6 +607,7 @@ impl SelectionState {
         }
     }
 
+    /// The radius of the [`SelectionState`]
     fn radius(&self) -> Option<u32> {
         match *self {
             SelectionState::PreviewLine { .. } => None,
@@ -615,17 +622,18 @@ impl SelectionState {
         }
     }
 
-    fn mode(&self) -> SelectionMode {
+    /// The [`SelectionMode`] of the [`SelectionState`].
+    fn mode(&self) -> SelectionShape {
         match *self {
-            SelectionState::PreviewLine { .. } => SelectionMode::Line,
-            SelectionState::SelectLine { .. } => SelectionMode::Line,
-            SelectionState::DeselectLine { .. } => SelectionMode::Line,
-            SelectionState::PreviewArea { .. } => SelectionMode::Area,
-            SelectionState::SelectArea { .. } => SelectionMode::Area,
-            SelectionState::DeselectArea { .. } => SelectionMode::Area,
-            SelectionState::PreviewSingle => SelectionMode::Single,
-            SelectionState::SelectSingle => SelectionMode::Single,
-            SelectionState::DeselectSingle => SelectionMode::Single,
+            SelectionState::PreviewLine { .. } => SelectionShape::Line,
+            SelectionState::SelectLine { .. } => SelectionShape::Line,
+            SelectionState::DeselectLine { .. } => SelectionShape::Line,
+            SelectionState::PreviewArea { .. } => SelectionShape::Area,
+            SelectionState::SelectArea { .. } => SelectionShape::Area,
+            SelectionState::DeselectArea { .. } => SelectionShape::Area,
+            SelectionState::PreviewSingle => SelectionShape::Single,
+            SelectionState::SelectSingle => SelectionShape::Single,
+            SelectionState::DeselectSingle => SelectionShape::Single,
         }
     }
 }
