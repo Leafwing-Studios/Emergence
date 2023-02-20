@@ -123,7 +123,11 @@ impl SelectedTiles {
     ) {
         let selection_region =
             self.compute_selection_region(hovered_tile, player_actions, selection_data);
-        self.selected = HashSet::from_iter(self.selected.union(&selection_region).copied());
+
+        self.selected = match player_actions.pressed(PlayerAction::Multiple) {
+            true => HashSet::from_iter(self.selected.union(&selection_region).copied()),
+            false => selection_region,
+        }
     }
 
     /// Handles all of the logic needed to remove tiles from the selection.
@@ -480,16 +484,6 @@ fn set_selection(
     let player_actions = &*player_actions;
     let cursor_pos = &*cursor_pos;
     let selection_data = &mut *selection_data;
-
-    if let CurrentSelection::Terrain(selected_tiles) = &mut *current_selection {
-        // Clear the existing selection unless we're using multi-select
-        if (player_actions.pressed(PlayerAction::Select)
-            || player_actions.pressed(PlayerAction::Deselect))
-            && player_actions.released(PlayerAction::Multiple)
-        {
-            selected_tiles.clear_selection()
-        }
-    }
 
     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
         if player_actions.just_pressed(PlayerAction::Line)
