@@ -118,12 +118,13 @@ impl SelectedTiles {
     fn add_to_selection(
         &mut self,
         hovered_tile: TilePos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        selection_state: SelectionState,
+        select_multiple: bool,
+        radius: u32,
     ) {
-        let selection_region = self.compute_selection_region(hovered_tile, actions, selection_data);
+        let selection_region = self.compute_selection_region(hovered_tile, selection_state, radius);
 
-        self.selected = match actions.pressed(PlayerAction::Multiple) {
+        self.selected = match select_multiple {
             true => HashSet::from_iter(self.selected.union(&selection_region).copied()),
             false => selection_region,
         }
@@ -133,17 +134,18 @@ impl SelectedTiles {
     fn remove_from_selection(
         &mut self,
         hovered_tile: TilePos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        selection_state: SelectionState,
+        select_multiple: bool,
+        radius: u32,
     ) {
-        if actions.released(PlayerAction::Multiple) {
-            self.clear_selection()
-        } else {
+        if select_multiple {
             let selection_region =
-                self.compute_selection_region(hovered_tile, actions, selection_data);
+                self.compute_selection_region(hovered_tile, selection_state, radius);
 
             self.selected =
                 HashSet::from_iter(self.selected.difference(&selection_region).copied());
+        } else {
+            self.clear_selection()
         }
     }
 
@@ -151,23 +153,18 @@ impl SelectedTiles {
     fn compute_selection_region(
         &self,
         hovered_tile: TilePos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        selection_state: SelectionState,
+        radius: u32,
     ) -> HashSet<TilePos> {
-        let start = match selection_data.start {
-            Some(tile_pos) => tile_pos,
-            None => hovered_tile,
-        };
-        let radius = if actions.pressed(PlayerAction::Area) {
-            hovered_tile.unsigned_distance_to(start.hex)
-        } else {
-            selection_data.radius
-        };
-
-        if actions.pressed(PlayerAction::Line) {
-            SelectedTiles::draw_line(start, hovered_tile, radius)
-        } else {
-            SelectedTiles::draw_hexagon(start, radius)
+        match selection_state.mode() {
+            SelectionMode::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
+            SelectionMode::Area => SelectedTiles::draw_hexagon(
+                selection_state.start().unwrap(),
+                selection_state.radius().unwrap(),
+            ),
+            SelectionMode::Line => {
+                SelectedTiles::draw_line(selection_state.start().unwrap(), hovered_tile, radius)
+            }
         }
     }
 }
@@ -184,25 +181,24 @@ impl HoveredTiles {
     pub(super) fn update(
         &mut self,
         hovered_tile: TilePos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        selection_state: SelectionState,
+        radius: u32,
     ) {
-        let start = match selection_data.start {
-            Some(tile_pos) => tile_pos,
-            None => hovered_tile,
+        self.hovered = match selection_state.mode() {
+            SelectionMode::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
+            SelectionMode::Area => {
+                let mut set = SelectedTiles::draw_ring(
+                    selection_state.start().unwrap(),
+                    selection_state.radius().unwrap(),
+                );
+                // Also show center of ring for clarity.
+                set.insert(hovered_tile);
+                set
+            }
+            SelectionMode::Line => {
+                SelectedTiles::draw_line(selection_state.start().unwrap(), hovered_tile, radius)
+            }
         };
-        let radius = if actions.pressed(PlayerAction::Area) {
-            hovered_tile.unsigned_distance_to(start.hex)
-        } else {
-            selection_data.radius
-        };
-
-        if actions.pressed(PlayerAction::Line) {
-            self.hovered = SelectedTiles::draw_line(start, hovered_tile, radius);
-        } else {
-            self.hovered = SelectedTiles::draw_ring(start, radius);
-            self.hovered.insert(start);
-        }
     }
 }
 
@@ -274,38 +270,11 @@ struct SelectionData {
     ///
     /// 0 selects 1 tile, 1 selects 7 tiles and so on.
     radius: u32,
-    /// The tile selected at the start of the action
-    start: Option<TilePos>,
-    /// The tiles selected at the start of this operation.
-    ///
-    /// Used to revert to the previous selection if an operation is cancelled.
-    initial_selection: SelectedTiles,
 }
 
 impl SelectionData {
-    /// The maximum radius of tiles that can be selected at once.
-    ///
-    /// This exists to avoid silly or performance degrading
-    const MAX_SIZE: u32 = 20;
-
-    /// Starts an action, caching the appropriate state.
-    pub(super) fn begin_action(
-        &mut self,
-        hovered_tile: TilePos,
-        current_selection: &CurrentSelection,
-    ) {
-        self.start = Some(hovered_tile);
-        self.initial_selection = match current_selection {
-            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
-            _ => SelectedTiles::default(),
-        };
-    }
-
-    /// Concludes an action, flushing any stored state.
-    pub(super) fn end_action(&mut self) {
-        self.start = None;
-        self.initial_selection = SelectedTiles::default();
-    }
+    /// The maximum reasanably allowable selection size
+    const MAX_SIZE: u32 = 10;
 }
 
 /// Sets the radius of "brush" used to select tiles.
@@ -366,24 +335,34 @@ impl CurrentSelection {
     fn update_from_cursor_pos(
         &mut self,
         cursor_pos: &CursorPos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        hovered_tile: TilePos,
+        selection_state: SelectionState,
+        select_multiple: bool,
+        radius: u32,
     ) {
         *self = if let Some(unit_entity) = cursor_pos.maybe_unit() {
             CurrentSelection::Unit(unit_entity)
         } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
             CurrentSelection::Structure(structure_entity)
-        } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+        } else {
             if let CurrentSelection::Terrain(existing_selection) = self {
-                existing_selection.add_to_selection(hovered_tile, actions, selection_data);
+                existing_selection.add_to_selection(
+                    hovered_tile,
+                    selection_state,
+                    select_multiple,
+                    radius,
+                );
                 CurrentSelection::Terrain(existing_selection.clone())
             } else {
                 let mut selected_tiles = SelectedTiles::default();
-                selected_tiles.add_to_selection(hovered_tile, actions, selection_data);
+                selected_tiles.add_to_selection(
+                    hovered_tile,
+                    selection_state,
+                    select_multiple,
+                    radius,
+                );
                 CurrentSelection::Terrain(selected_tiles)
             }
-        } else {
-            CurrentSelection::None
         }
     }
 
@@ -395,8 +374,9 @@ impl CurrentSelection {
     fn cycle_selection(
         &mut self,
         cursor_pos: &CursorPos,
-        actions: &ActionState<PlayerAction>,
-        selection_data: &SelectionData,
+        selection_state: SelectionState,
+        select_multiple: bool,
+        radius: u32,
     ) {
         *self = match self {
             CurrentSelection::None => {
@@ -406,7 +386,12 @@ impl CurrentSelection {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                     let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, actions, selection_data);
+                    selected_tiles.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
                     CurrentSelection::Terrain(selected_tiles)
                 } else {
                     CurrentSelection::None
@@ -415,7 +400,12 @@ impl CurrentSelection {
             CurrentSelection::Structure(_) => {
                 if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                     let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, actions, selection_data);
+                    selected_tiles.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
                     CurrentSelection::Terrain(selected_tiles)
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
@@ -431,7 +421,12 @@ impl CurrentSelection {
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    existing_selection.add_to_selection(hovered_tile, actions, selection_data);
+                    existing_selection.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
                     CurrentSelection::Terrain(existing_selection.clone())
                 } else {
                     CurrentSelection::None
@@ -442,7 +437,12 @@ impl CurrentSelection {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                     let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, actions, selection_data);
+                    selected_tiles.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
                     CurrentSelection::Terrain(selected_tiles)
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
@@ -466,6 +466,120 @@ impl CurrentSelection {
     }
 }
 
+#[derive(Default, Debug, Clone, Copy)]
+enum SelectionState {
+    PreviewLine {
+        start: TilePos,
+    },
+    SelectLine {
+        start: TilePos,
+    },
+    DeselectLine {
+        start: TilePos,
+    },
+    PreviewArea {
+        start: TilePos,
+        radius: u32,
+    },
+    SelectArea {
+        start: TilePos,
+        radius: u32,
+    },
+    DeselectArea {
+        start: TilePos,
+        radius: u32,
+    },
+    #[default]
+    PreviewSingle,
+    SelectSingle,
+    DeselectSingle,
+}
+
+enum SelectionMode {
+    Area,
+    Line,
+    Single,
+}
+
+impl SelectionState {
+    fn compute(&mut self, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
+        use PlayerAction::*;
+
+        let start = self.start().unwrap_or(hovered_tile);
+
+        *self = if actions.pressed(Line) {
+            if actions.just_released(Select) {
+                SelectionState::SelectLine { start }
+            } else if actions.just_released(Deselect) {
+                SelectionState::DeselectLine { start }
+            } else {
+                SelectionState::PreviewLine { start }
+            }
+        } else if actions.pressed(Area) {
+            let radius = hovered_tile.unsigned_distance_to(start.hex);
+
+            if actions.just_released(Select) {
+                SelectionState::SelectArea { start, radius }
+            } else if actions.just_released(Deselect) {
+                SelectionState::DeselectArea { start, radius }
+            } else {
+                SelectionState::PreviewArea { start, radius }
+            }
+        } else {
+            if actions.pressed(Select) {
+                SelectionState::SelectSingle
+            // Don't repeatedly trigger deselect to avoid
+            } else if actions.just_pressed(Deselect) {
+                SelectionState::DeselectSingle
+            } else {
+                SelectionState::PreviewSingle
+            }
+        };
+    }
+
+    fn start(&self) -> Option<TilePos> {
+        match *self {
+            SelectionState::PreviewLine { start } => Some(start),
+            SelectionState::SelectLine { start } => Some(start),
+            SelectionState::DeselectLine { start } => Some(start),
+            SelectionState::PreviewArea { start, .. } => Some(start),
+            SelectionState::SelectArea { start, .. } => Some(start),
+            SelectionState::DeselectArea { start, .. } => Some(start),
+            SelectionState::PreviewSingle => None,
+            SelectionState::SelectSingle => None,
+            SelectionState::DeselectSingle => None,
+        }
+    }
+
+    fn radius(&self) -> Option<u32> {
+        match *self {
+            SelectionState::PreviewLine { .. } => None,
+            SelectionState::SelectLine { .. } => None,
+            SelectionState::DeselectLine { .. } => None,
+            SelectionState::PreviewArea { radius, .. } => Some(radius),
+            SelectionState::SelectArea { radius, .. } => Some(radius),
+            SelectionState::DeselectArea { radius, .. } => Some(radius),
+            SelectionState::PreviewSingle => None,
+            SelectionState::SelectSingle => None,
+            SelectionState::DeselectSingle => None,
+        }
+    }
+
+    fn mode(&self) -> SelectionMode {
+        match *self {
+            SelectionState::PreviewLine { .. } => SelectionMode::Line,
+            SelectionState::SelectLine { .. } => SelectionMode::Line,
+            SelectionState::DeselectLine { .. } => SelectionMode::Line,
+            SelectionState::PreviewArea { .. } => SelectionMode::Area,
+            SelectionState::SelectArea { .. } => SelectionMode::Area,
+            SelectionState::DeselectArea { .. } => SelectionMode::Area,
+            SelectionState::PreviewSingle => SelectionMode::Single,
+            SelectionState::SelectSingle => SelectionMode::Single,
+            SelectionState::DeselectSingle => SelectionMode::Single,
+        }
+    }
+}
+
 /// Determine what should be selected based on player inputs.
 fn set_selection(
     mut current_selection: ResMut<CurrentSelection>,
@@ -473,73 +587,81 @@ fn set_selection(
     actions: Res<ActionState<PlayerAction>>,
     mut selection_data: ResMut<SelectionData>,
     mut hovered_tiles: ResMut<HoveredTiles>,
+    mut selection_state: Local<SelectionState>,
     mut last_tile_selected: Local<Option<TilePos>>,
 ) {
     // Cast to ordinary references for ease of use
     let actions = &*actions;
     let cursor_pos = &*cursor_pos;
     let selection_data = &mut *selection_data;
+    let hovered_tile = cursor_pos.maybe_tile_pos().unwrap_or_default();
+    let select_multiple = actions.pressed(PlayerAction::Multiple);
+    let radius = selection_data.radius;
 
-    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-        // Cache any necessary state for area selectors
-        if actions.just_pressed(PlayerAction::Line) || actions.just_pressed(PlayerAction::Area) {
-            selection_data.begin_action(hovered_tile, &current_selection);
-        // We're no longer in the middle of an area selection
-        } else if actions.released(PlayerAction::Line) && actions.released(PlayerAction::Area) {
-            selection_data.end_action();
+    // Compute how we should handle the selection based on the actions of the player
+    selection_state.compute(actions, hovered_tile);
+
+    // Update hovered tiles
+    hovered_tiles.update(hovered_tile, *selection_state, radius);
+
+    // Select and deselect tiles
+    match *selection_state {
+        // No need to do work here, hovered tiles are always computed
+        SelectionState::PreviewLine { .. }
+        | SelectionState::PreviewArea { .. }
+        | SelectionState::PreviewSingle => (),
+        SelectionState::SelectLine { .. } | SelectionState::SelectArea { .. } => current_selection
+            .update_from_cursor_pos(
+                cursor_pos,
+                hovered_tile,
+                *selection_state,
+                select_multiple,
+                radius,
+            ),
+        SelectionState::SelectSingle => {
+            // If we can compare them, do
+            let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
+                (*last_tile_selected, cursor_pos.maybe_tile_pos())
+            {
+                last_pos == current_pos
+            } else {
+                false
+            };
+            // Update the cache
+            *last_tile_selected = cursor_pos.maybe_tile_pos();
+
+            if same_tile_as_last_time {
+                current_selection.cycle_selection(
+                    cursor_pos,
+                    *selection_state,
+                    select_multiple,
+                    radius,
+                )
+            } else {
+                current_selection.update_from_cursor_pos(
+                    cursor_pos,
+                    hovered_tile,
+                    *selection_state,
+                    select_multiple,
+                    radius,
+                )
+            }
         }
-
-        // Set the collection of hovered tiles
-        hovered_tiles.update(hovered_tile, actions, selection_data);
-    }
-
-    // Finish area and line selections
-    if (actions.pressed(PlayerAction::Area) || actions.pressed(PlayerAction::Line))
-        && actions.just_released(PlayerAction::Select)
-    {
-        let mut selected_tiles = match &*current_selection {
-            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
-            _ => SelectedTiles::default(),
-        };
-        *current_selection = if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-            selected_tiles.add_to_selection(hovered_tile, actions, selection_data);
-            CurrentSelection::Terrain(selected_tiles)
-        } else {
-            CurrentSelection::None
-        };
-        selection_data.end_action();
-    // Single object selection
-    } else if actions.pressed(PlayerAction::Select) {
-        let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
-            (*last_tile_selected, cursor_pos.maybe_tile_pos())
-        {
-            last_pos == current_pos
-        } else {
-            false
-        };
-        // Update the cache
-        *last_tile_selected = cursor_pos.maybe_tile_pos();
-
-        if same_tile_as_last_time {
-            // Cycle through the options: unit -> structure -> terrain -> unit
-            // Fall back to self if nothing else is there, to debounce inputs a bit
-            // Don't cycle back to None, as users can just deselect instead.
-            current_selection.cycle_selection(cursor_pos, actions, selection_data)
-        } else {
-            current_selection.update_from_cursor_pos(cursor_pos, actions, selection_data)
-        }
-    // Deselection
-    } else if actions.just_released(PlayerAction::Deselect) {
-        *last_tile_selected = None;
-
-        match &mut *current_selection {
+        SelectionState::DeselectSingle
+        | SelectionState::DeselectArea { .. }
+        | SelectionState::DeselectLine { .. } => match &mut *current_selection {
             CurrentSelection::Terrain(ref mut selected_tiles) => {
                 if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    selected_tiles.remove_from_selection(hovered_tile, actions, selection_data);
+                    selected_tiles.remove_from_selection(
+                        hovered_tile,
+                        *selection_state,
+                        select_multiple,
+                        radius,
+                    );
                 }
             }
             _ => *current_selection = CurrentSelection::None,
-        }
+        },
     }
 }
 
