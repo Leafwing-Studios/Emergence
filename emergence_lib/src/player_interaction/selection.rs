@@ -610,14 +610,28 @@ fn set_selection(
         SelectionState::PreviewLine { .. }
         | SelectionState::PreviewArea { .. }
         | SelectionState::PreviewSingle => (),
-        SelectionState::SelectLine { .. } | SelectionState::SelectArea { .. } => current_selection
-            .update_from_cursor_pos(
+        SelectionState::SelectLine { .. } => {
+            current_selection.update_from_cursor_pos(
                 cursor_pos,
                 hovered_tile,
                 *selection_state,
                 select_multiple,
                 radius,
-            ),
+            );
+            // Let players chain lines head to tail nicely
+            *selection_state = SelectionState::PreviewLine {
+                start: hovered_tile,
+            };
+        }
+        SelectionState::SelectArea { .. } => {
+            current_selection.update_from_cursor_pos(
+                cursor_pos,
+                hovered_tile,
+                *selection_state,
+                select_multiple,
+                radius,
+            );
+        }
         SelectionState::SelectSingle => {
             // If we can compare them, do
             let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
