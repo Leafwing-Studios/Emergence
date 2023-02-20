@@ -38,7 +38,7 @@ impl Plugin for SelectionPlugin {
                     .label(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
-            .add_system(set_selection_radius)
+            .add_system(update_selection_radius)
             .add_system(
                 display_tile_interactions
                     .after(InteractionSystem::SelectTiles)
@@ -287,7 +287,7 @@ impl SelectionData {
 }
 
 /// Sets the radius of "brush" used to select tiles.
-fn set_selection_radius(
+fn update_selection_radius(
     mut selection_data: ResMut<SelectionData>,
     actions: Res<ActionState<PlayerAction>>,
 ) {
