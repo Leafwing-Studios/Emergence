@@ -328,6 +328,30 @@ pub(crate) enum CurrentSelection {
 }
 
 impl CurrentSelection {
+    /// Just select the terrain.
+    fn select_terrain(
+        &self,
+        hovered_tile: TilePos,
+        selection_state: SelectionState,
+        select_multiple: bool,
+        radius: u32,
+    ) -> Self {
+        if let CurrentSelection::Terrain(existing_selection) = self {
+            let mut existing_selection = existing_selection.clone();
+            existing_selection.add_to_selection(
+                hovered_tile,
+                selection_state,
+                select_multiple,
+                radius,
+            );
+            CurrentSelection::Terrain(existing_selection)
+        } else {
+            let mut selected_tiles = SelectedTiles::default();
+            selected_tiles.add_to_selection(hovered_tile, selection_state, select_multiple, radius);
+            CurrentSelection::Terrain(selected_tiles)
+        }
+    }
+
     /// Determines the selection based on the cursor information.
     ///
     /// This handles the simple case, when we're selecting a new tile.
@@ -341,48 +365,14 @@ impl CurrentSelection {
         radius: u32,
     ) {
         *self = if select_multiple {
-            if let CurrentSelection::Terrain(existing_selection) = self {
-                existing_selection.add_to_selection(
-                    hovered_tile,
-                    selection_state,
-                    select_multiple,
-                    radius,
-                );
-                CurrentSelection::Terrain(existing_selection.clone())
-            } else {
-                let mut selected_tiles = SelectedTiles::default();
-                selected_tiles.add_to_selection(
-                    hovered_tile,
-                    selection_state,
-                    select_multiple,
-                    radius,
-                );
-                CurrentSelection::Terrain(selected_tiles)
-            }
+            self.select_terrain(hovered_tile, selection_state, select_multiple, radius)
         } else {
             if let Some(unit_entity) = cursor_pos.maybe_unit() {
                 CurrentSelection::Unit(unit_entity)
             } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                 CurrentSelection::Structure(structure_entity)
             } else {
-                if let CurrentSelection::Terrain(existing_selection) = self {
-                    existing_selection.add_to_selection(
-                        hovered_tile,
-                        selection_state,
-                        select_multiple,
-                        radius,
-                    );
-                    CurrentSelection::Terrain(existing_selection.clone())
-                } else {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(
-                        hovered_tile,
-                        selection_state,
-                        select_multiple,
-                        radius,
-                    );
-                    CurrentSelection::Terrain(selected_tiles)
-                }
+                self.select_terrain(hovered_tile, selection_state, select_multiple, radius)
             }
         }
     }
