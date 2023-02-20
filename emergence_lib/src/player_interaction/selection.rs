@@ -485,23 +485,41 @@ fn set_selection(
     let cursor_pos = &*cursor_pos;
     let selection_data = &mut *selection_data;
 
+    let area = player_actions.pressed(PlayerAction::Area);
+    let line = player_actions.pressed(PlayerAction::Line);
+
     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+        // Cache any necessary state for area selectors
         if player_actions.just_pressed(PlayerAction::Line)
             || player_actions.just_pressed(PlayerAction::Area)
         {
-            // Cache any necessary state for terrain selection
             selection_data.begin_action(hovered_tile, &current_selection);
+        // We're no longer in the middle of an area selection
+        } else if player_actions.released(PlayerAction::Line)
+            && player_actions.released(PlayerAction::Area)
+        {
+            selection_data.end_action();
         }
 
         // Set the collection of hovered tiles
         hovered_tiles.update(hovered_tile, player_actions, selection_data);
     }
 
-    if player_actions.just_pressed(PlayerAction::Select) {
-        let force_tile_selection = player_actions.pressed(PlayerAction::Area)
-            || player_actions.pressed(PlayerAction::Multiple)
-            || player_actions.pressed(PlayerAction::Line);
-
+    // Finish area and line selections
+    if (area || line) && player_actions.just_released(PlayerAction::Select) {
+        let mut selected_tiles = match &*current_selection {
+            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
+            _ => SelectedTiles::default(),
+        };
+        *current_selection = if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+            selected_tiles.add_to_selection(hovered_tile, player_actions, selection_data);
+            CurrentSelection::Terrain(selected_tiles)
+        } else {
+            CurrentSelection::None
+        };
+        selection_data.end_action();
+    // Single object selection
+    } else if player_actions.pressed(PlayerAction::Select) {
         let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
             (*last_tile_selected, cursor_pos.maybe_tile_pos())
         {
@@ -512,29 +530,16 @@ fn set_selection(
         // Update the cache
         *last_tile_selected = cursor_pos.maybe_tile_pos();
 
-        if force_tile_selection {
-            let mut selected_tiles = match &*current_selection {
-                CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
-                _ => SelectedTiles::default(),
-            };
-
-            *current_selection = if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                selected_tiles.add_to_selection(hovered_tile, player_actions, selection_data);
-                CurrentSelection::Terrain(selected_tiles)
-            } else {
-                CurrentSelection::None
-            };
+        if same_tile_as_last_time {
+            // Cycle through the options: unit -> structure -> terrain -> unit
+            // Fall back to self if nothing else is there, to debounce inputs a bit
+            // Don't cycle back to None, as users can just deselect instead.
+            current_selection.cycle_selection(cursor_pos, player_actions, selection_data)
         } else {
-            if same_tile_as_last_time {
-                // Cycle through the options: unit -> structure -> terrain -> unit
-                // Fall back to self if nothing else is there, to debounce inputs a bit
-                // Don't cycle back to None, as users can just deselect instead.
-                current_selection.cycle_selection(cursor_pos, player_actions, selection_data)
-            } else {
-                current_selection.update_from_cursor_pos(cursor_pos, player_actions, selection_data)
-            }
+            current_selection.update_from_cursor_pos(cursor_pos, player_actions, selection_data)
         }
-    } else if player_actions.just_pressed(PlayerAction::Deselect) {
+    // Deselection
+    } else if player_actions.just_released(PlayerAction::Deselect) {
         *last_tile_selected = None;
 
         match &mut *current_selection {
@@ -549,12 +554,6 @@ fn set_selection(
             }
             _ => *current_selection = CurrentSelection::None,
         }
-    }
-
-    if player_actions.just_released(PlayerAction::Select)
-        || player_actions.just_released(PlayerAction::Deselect)
-    {
-        selection_data.end_action();
     }
 }
 
