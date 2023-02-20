@@ -7,7 +7,7 @@ pub(crate) const SELECTION_HUE: f32 = 100.;
 /// The saturation of selected objects
 pub(crate) const SELECTION_SATURATION: f32 = 0.5;
 /// The lightness of selected objects
-pub(crate) const SELECTION_LIGHTNESS: f32 = 100.;
+pub(crate) const SELECTION_LIGHTNESS: f32 = 0.6;
 /// The color used to tint selected objects.
 pub(crate) const SELECTION_COLOR: Color =
     Color::hsl(SELECTION_HUE, SELECTION_SATURATION, SELECTION_LIGHTNESS);
@@ -17,7 +17,7 @@ pub(crate) const HOVER_HUE: f32 = 55.;
 /// The saturation of selected objects
 pub(crate) const HOVER_SATURATION: f32 = 0.5;
 /// The lightness of selected objects
-pub(crate) const HOVER_LIGHTNESS: f32 = 100.;
+pub(crate) const HOVER_LIGHTNESS: f32 = 0.6;
 /// The color used to tint hovered objects.
 pub(crate) const HOVER_COLOR: Color = Color::hsl(HOVER_HUE, HOVER_SATURATION, HOVER_LIGHTNESS);
 
