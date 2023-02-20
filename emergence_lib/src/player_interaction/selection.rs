@@ -340,11 +340,7 @@ impl CurrentSelection {
         select_multiple: bool,
         radius: u32,
     ) {
-        *self = if let Some(unit_entity) = cursor_pos.maybe_unit() {
-            CurrentSelection::Unit(unit_entity)
-        } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-            CurrentSelection::Structure(structure_entity)
-        } else {
+        *self = if select_multiple {
             if let CurrentSelection::Terrain(existing_selection) = self {
                 existing_selection.add_to_selection(
                     hovered_tile,
@@ -362,6 +358,31 @@ impl CurrentSelection {
                     radius,
                 );
                 CurrentSelection::Terrain(selected_tiles)
+            }
+        } else {
+            if let Some(unit_entity) = cursor_pos.maybe_unit() {
+                CurrentSelection::Unit(unit_entity)
+            } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
+                CurrentSelection::Structure(structure_entity)
+            } else {
+                if let CurrentSelection::Terrain(existing_selection) = self {
+                    existing_selection.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
+                    CurrentSelection::Terrain(existing_selection.clone())
+                } else {
+                    let mut selected_tiles = SelectedTiles::default();
+                    selected_tiles.add_to_selection(
+                        hovered_tile,
+                        selection_state,
+                        select_multiple,
+                        radius,
+                    );
+                    CurrentSelection::Terrain(selected_tiles)
+                }
             }
         }
     }
@@ -644,7 +665,10 @@ fn set_selection(
             // Update the cache
             *last_tile_selected = cursor_pos.maybe_tile_pos();
 
-            if same_tile_as_last_time {
+            if same_tile_as_last_time
+                && !select_multiple
+                && actions.just_pressed(PlayerAction::Select)
+            {
                 current_selection.cycle_selection(
                     cursor_pos,
                     *selection_state,
