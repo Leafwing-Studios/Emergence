@@ -504,6 +504,10 @@ fn set_selection(
     }
 
     if player_actions.just_pressed(PlayerAction::Select) {
+        let force_tile_selection = player_actions.pressed(PlayerAction::Area)
+            || player_actions.pressed(PlayerAction::Multiple)
+            || player_actions.pressed(PlayerAction::Line);
+
         let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
             (*last_tile_selected, cursor_pos.maybe_tile_pos())
         {
@@ -514,13 +518,27 @@ fn set_selection(
         // Update the cache
         *last_tile_selected = cursor_pos.maybe_tile_pos();
 
-        if same_tile_as_last_time {
-            // Cycle through the options: unit -> structure -> terrain -> unit
-            // Fall back to self if nothing else is there, to debounce inputs a bit
-            // Don't cycle back to None, as users can just deselect instead.
-            current_selection.cycle_selection(cursor_pos, player_actions, selection_data)
+        if force_tile_selection {
+            let mut selected_tiles = match &*current_selection {
+                CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
+                _ => SelectedTiles::default(),
+            };
+
+            *current_selection = if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                selected_tiles.add_to_selection(hovered_tile, player_actions, selection_data);
+                CurrentSelection::Terrain(selected_tiles)
+            } else {
+                CurrentSelection::None
+            };
         } else {
-            current_selection.update_from_cursor_pos(cursor_pos, player_actions, selection_data)
+            if same_tile_as_last_time {
+                // Cycle through the options: unit -> structure -> terrain -> unit
+                // Fall back to self if nothing else is there, to debounce inputs a bit
+                // Don't cycle back to None, as users can just deselect instead.
+                current_selection.cycle_selection(cursor_pos, player_actions, selection_data)
+            } else {
+                current_selection.update_from_cursor_pos(cursor_pos, player_actions, selection_data)
+            }
         }
     } else if player_actions.just_pressed(PlayerAction::Deselect) {
         *last_tile_selected = None;
