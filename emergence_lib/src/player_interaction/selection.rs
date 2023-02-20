@@ -121,8 +121,10 @@ impl SelectedTiles {
         selection_state: SelectionState,
         select_multiple: bool,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) {
-        let selection_region = self.compute_selection_region(hovered_tile, selection_state, radius);
+        let selection_region =
+            self.compute_selection_region(hovered_tile, selection_state, radius, map_geometry);
 
         self.selected = match select_multiple {
             true => HashSet::from_iter(self.selected.union(&selection_region).copied()),
@@ -137,10 +139,11 @@ impl SelectedTiles {
         selection_state: SelectionState,
         select_multiple: bool,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) {
         if select_multiple {
             let selection_region =
-                self.compute_selection_region(hovered_tile, selection_state, radius);
+                self.compute_selection_region(hovered_tile, selection_state, radius, map_geometry);
 
             self.selected =
                 HashSet::from_iter(self.selected.difference(&selection_region).copied());
@@ -155,6 +158,7 @@ impl SelectedTiles {
         hovered_tile: TilePos,
         selection_state: SelectionState,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) -> HashSet<TilePos> {
         match selection_state.mode() {
             SelectionMode::Single => SelectedTiles::draw_hexagon(hovered_tile, radius),
@@ -166,6 +170,11 @@ impl SelectedTiles {
                 SelectedTiles::draw_line(selection_state.start().unwrap(), hovered_tile, radius)
             }
         }
+        // PERF: we could be faster about this by only collecting once
+        .into_iter()
+        // Ensure we don't try to operate off of the map
+        .filter(|tile_pos| map_geometry.terrain_index.contains_key(tile_pos))
+        .collect()
     }
 }
 
@@ -335,6 +344,7 @@ impl CurrentSelection {
         selection_state: SelectionState,
         select_multiple: bool,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) -> Self {
         if let CurrentSelection::Terrain(existing_selection) = self {
             let mut existing_selection = existing_selection.clone();
@@ -343,11 +353,18 @@ impl CurrentSelection {
                 selection_state,
                 select_multiple,
                 radius,
+                map_geometry,
             );
             CurrentSelection::Terrain(existing_selection)
         } else {
             let mut selected_tiles = SelectedTiles::default();
-            selected_tiles.add_to_selection(hovered_tile, selection_state, select_multiple, radius);
+            selected_tiles.add_to_selection(
+                hovered_tile,
+                selection_state,
+                select_multiple,
+                radius,
+                map_geometry,
+            );
             CurrentSelection::Terrain(selected_tiles)
         }
     }
@@ -363,16 +380,29 @@ impl CurrentSelection {
         selection_state: SelectionState,
         select_multiple: bool,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) {
         *self = if select_multiple {
-            self.select_terrain(hovered_tile, selection_state, select_multiple, radius)
+            self.select_terrain(
+                hovered_tile,
+                selection_state,
+                select_multiple,
+                radius,
+                map_geometry,
+            )
         } else {
             if let Some(unit_entity) = cursor_pos.maybe_unit() {
                 CurrentSelection::Unit(unit_entity)
             } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                 CurrentSelection::Structure(structure_entity)
             } else {
-                self.select_terrain(hovered_tile, selection_state, select_multiple, radius)
+                self.select_terrain(
+                    hovered_tile,
+                    selection_state,
+                    select_multiple,
+                    radius,
+                    map_geometry,
+                )
             }
         }
     }
@@ -388,6 +418,7 @@ impl CurrentSelection {
         selection_state: SelectionState,
         select_multiple: bool,
         radius: u32,
+        map_geometry: &MapGeometry,
     ) {
         *self = match self {
             CurrentSelection::None => {
@@ -402,6 +433,7 @@ impl CurrentSelection {
                         selection_state,
                         select_multiple,
                         radius,
+                        map_geometry,
                     );
                     CurrentSelection::Terrain(selected_tiles)
                 } else {
@@ -416,6 +448,7 @@ impl CurrentSelection {
                         selection_state,
                         select_multiple,
                         radius,
+                        map_geometry,
                     );
                     CurrentSelection::Terrain(selected_tiles)
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
@@ -437,6 +470,7 @@ impl CurrentSelection {
                         selection_state,
                         select_multiple,
                         radius,
+                        map_geometry,
                     );
                     CurrentSelection::Terrain(existing_selection.clone())
                 } else {
@@ -453,6 +487,7 @@ impl CurrentSelection {
                         selection_state,
                         select_multiple,
                         radius,
+                        map_geometry,
                     );
                     CurrentSelection::Terrain(selected_tiles)
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
@@ -600,11 +635,14 @@ fn set_selection(
     mut hovered_tiles: ResMut<HoveredTiles>,
     mut selection_state: Local<SelectionState>,
     mut last_tile_selected: Local<Option<TilePos>>,
+    map_geometry: Res<MapGeometry>,
 ) {
     // Cast to ordinary references for ease of use
     let actions = &*actions;
     let cursor_pos = &*cursor_pos;
     let selection_data = &mut *selection_data;
+    let map_geometry = &*map_geometry;
+
     let hovered_tile = cursor_pos.maybe_tile_pos().unwrap_or_default();
     let select_multiple = actions.pressed(PlayerAction::Multiple);
     let radius = selection_data.radius;
@@ -628,6 +666,7 @@ fn set_selection(
                 *selection_state,
                 select_multiple,
                 radius,
+                map_geometry,
             );
             // Let players chain lines head to tail nicely
             *selection_state = SelectionState::PreviewLine {
@@ -641,6 +680,7 @@ fn set_selection(
                 *selection_state,
                 select_multiple,
                 radius,
+                map_geometry,
             );
         }
         SelectionState::SelectSingle => {
@@ -664,6 +704,7 @@ fn set_selection(
                     *selection_state,
                     select_multiple,
                     radius,
+                    map_geometry,
                 )
             } else {
                 current_selection.update_from_cursor_pos(
@@ -672,6 +713,7 @@ fn set_selection(
                     *selection_state,
                     select_multiple,
                     radius,
+                    map_geometry,
                 )
             }
         }
@@ -685,6 +727,7 @@ fn set_selection(
                         *selection_state,
                         select_multiple,
                         radius,
+                        map_geometry,
                     );
                 }
             }
