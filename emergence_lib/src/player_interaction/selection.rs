@@ -307,7 +307,7 @@ fn display_tile_interactions(
     mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
     materials: Res<TerrainHandles>,
 ) {
-    if current_selection.is_changed() {
+    if current_selection.is_changed() || hovered_tiles.is_changed() {
         // PERF: We should probably avoid a linear scan over all tiles here
         for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
             let hovered = hovered_tiles.contains(&tile_pos);
