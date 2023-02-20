@@ -501,7 +501,7 @@ fn set_selection(
         hovered_tiles.update(hovered_tile, player_actions, selection_data);
     }
 
-    if player_actions.pressed(PlayerAction::Select) {
+    if player_actions.just_pressed(PlayerAction::Select) {
         let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
             (*last_tile_selected, cursor_pos.maybe_tile_pos())
         {
@@ -520,7 +520,7 @@ fn set_selection(
         } else {
             current_selection.update_from_cursor_pos(cursor_pos, player_actions, selection_data)
         }
-    } else if player_actions.pressed(PlayerAction::Deselect) {
+    } else if player_actions.just_pressed(PlayerAction::Deselect) {
         *last_tile_selected = None;
 
         match &mut *current_selection {
