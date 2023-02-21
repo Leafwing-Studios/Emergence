@@ -344,14 +344,12 @@ impl CurrentSelection {
     ) {
         *self = if selection_state.multiple {
             self.select_terrain(hovered_tile, selection_state, map_geometry)
+        } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
+            CurrentSelection::Unit(unit_entity)
+        } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
+            CurrentSelection::Structure(structure_entity)
         } else {
-            if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                CurrentSelection::Unit(unit_entity)
-            } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                CurrentSelection::Structure(structure_entity)
-            } else {
-                self.select_terrain(hovered_tile, selection_state, map_geometry)
-            }
+            self.select_terrain(hovered_tile, selection_state, map_geometry)
         }
     }
 
@@ -438,11 +436,16 @@ impl CurrentSelection {
     }
 }
 
+/// Tracks what should be done with the selection (and hovered tiles) this frame.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 struct SelectionState {
+    /// What is the shape of the selection?
     shape: SelectionShape,
+    /// What should be done to the selection?
     action: SelectionAction,
+    /// Should the selection be erased or modified?
     multiple: bool,
+    /// The selection size to use for non-Area selections
     brush_size: u32,
 }
 
@@ -465,9 +468,17 @@ enum SelectionShape {
     #[default]
     Single,
     /// A regular hexagon
-    Area { center: TilePos, radius: u32 },
+    Area {
+        /// The center of the hexagon
+        center: TilePos,
+        /// The distance to each corner of the hexagon, in tiles
+        radius: u32,
+    },
     /// A discretized line
-    Line { start: TilePos },
+    Line {
+        /// The start of the line
+        start: TilePos,
+    },
 }
 
 impl SelectionState {
