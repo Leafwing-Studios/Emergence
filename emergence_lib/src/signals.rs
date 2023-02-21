@@ -249,10 +249,12 @@ fn diffuse_signals(
 
     /// The fraction of signals in each cell that will move to each of 6 neighbors each frame.
     ///
+    /// Higher values will result in more spread out signals.
+    ///
     /// If no neighbor exists, total diffusion will be reduced correspondingly.
     /// As a result, this value *must* be below 1/6,
     /// and probably should be below 1/7 to avoid weirdness.
-    const DIFFUSION_FRACTION: f32 = 0.05;
+    const DIFFUSION_FRACTION: f32 = 0.1;
     // These are scratch space:
     // reset them each time diffusion is run
     pending_additions.clear();
@@ -296,11 +298,11 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     ///
     /// Higher values lead to faster decay.
     /// This must always be between 0 and 1.
-    const DIFFUSION_FRACTION: f32 = 0.2;
+    const DEGRADATION_FRACTION: f32 = 0.1;
 
     for signal_map in signals.maps.values_mut() {
         for signal_strength in signal_map.map.values_mut() {
-            *signal_strength = *signal_strength * (1. - DIFFUSION_FRACTION);
+            *signal_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
         }
     }
 }
