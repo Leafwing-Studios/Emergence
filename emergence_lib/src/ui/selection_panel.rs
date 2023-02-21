@@ -23,17 +23,21 @@ impl Plugin for HoverDetailsPlugin {
 #[derive(Component)]
 struct HoverPanel;
 
+/// The UI node that stores all ghost details.
+#[derive(Component, Default)]
+struct GhostDetailsMarker;
+
 /// The UI node that stores all structure details.
 #[derive(Component, Default)]
-struct StructureDetails;
+struct StructureDetailsMarker;
 
 /// The UI node that stores all terrain details.
 #[derive(Component, Default)]
-struct TerrainDetails;
+struct TerrainDetailsMarker;
 
 /// The UI node that stores all unit details.
 #[derive(Component, Default)]
-struct UnitDetails;
+struct UnitDetailsMarker;
 
 /// Estabilishes UI elements for hover details.
 fn populate_hover_panel(
@@ -66,13 +70,16 @@ fn populate_hover_panel(
         ))
         .id();
 
-    let structure_details = populate_details::<StructureDetails>(&mut commands, &key_text_style);
-    let terrain_details = populate_details::<TerrainDetails>(&mut commands, &key_text_style);
-    let unit_details = populate_details::<UnitDetails>(&mut commands, &key_text_style);
+    let ghost_details = populate_details::<GhostDetailsMarker>(&mut commands, &key_text_style);
+    let structure_details =
+        populate_details::<StructureDetailsMarker>(&mut commands, &key_text_style);
+    let terrain_details = populate_details::<TerrainDetailsMarker>(&mut commands, &key_text_style);
+    let unit_details = populate_details::<UnitDetailsMarker>(&mut commands, &key_text_style);
 
     commands.entity(right_panel).add_child(hover_panel);
     commands
         .entity(hover_panel)
+        .add_child(ghost_details)
         .add_child(structure_details)
         .add_child(terrain_details)
         .add_child(unit_details);
@@ -82,48 +89,75 @@ fn populate_hover_panel(
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
+    mut ghost_details_query: Query<
+        (&mut Style, &mut Text),
+        (
+            With<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<TerrainDetailsMarker>,
+            Without<UnitDetailsMarker>,
+        ),
+    >,
     mut structure_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<StructureDetails>,
-            Without<TerrainDetails>,
-            Without<UnitDetails>,
+            With<StructureDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<TerrainDetailsMarker>,
+            Without<UnitDetailsMarker>,
         ),
     >,
     mut unit_details_query: Query<
         (&mut Style, &mut Text),
-        (With<UnitDetails>, Without<StructureDetails>),
+        (
+            With<UnitDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<TerrainDetailsMarker>,
+        ),
     >,
     mut terrain_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<TerrainDetails>,
-            Without<StructureDetails>,
-            Without<UnitDetails>,
+            With<TerrainDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<UnitDetailsMarker>,
         ),
     >,
     recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
+    let (mut ghost_style, mut ghost_text) = ghost_details_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
     let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
 
     match *selection_details {
+        SelectionDetails::Ghost(_) => {
+            *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::Flex;
+            structure_style.display = Display::None;
+            terrain_style.display = Display::None;
+            unit_style.display = Display::None;
+        }
         SelectionDetails::Structure(_) => {
             *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::None;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Terrain(_) => {
             *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
         }
         SelectionDetails::Unit(_) => {
             *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::Flex;
@@ -135,6 +169,9 @@ fn update_hover_details(
     }
 
     match &*selection_details {
+        SelectionDetails::Ghost(details) => {
+            ghost_text.sections[0].value = format!("{details}");
+        }
         SelectionDetails::Structure(details) => {
             // Details
             structure_text.sections[0].value = format!("{details}");
