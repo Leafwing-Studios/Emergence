@@ -727,6 +727,7 @@ fn get_details(
     };
 }
 
+/// Details for ghosts
 mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
