@@ -40,7 +40,7 @@ pub(super) struct GhostBundle {
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
     /// Makes structures pickable
-    raycast_mesh: RaycastMesh<StructureId>,
+    raycast_mesh: RaycastMesh<Ghost>,
 }
 
 impl GhostBundle {
