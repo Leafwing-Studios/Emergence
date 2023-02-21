@@ -10,9 +10,7 @@ use hexx::shapes::hexagon;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::simulation::geometry::MapGeometry;
-use crate::{
-    asset_management::terrain::TerrainHandles, simulation::geometry::TilePos, terrain::Terrain,
-};
+use crate::simulation::geometry::TilePos;
 
 use crate as emergence_lib;
 
@@ -38,12 +36,7 @@ impl Plugin for SelectionPlugin {
                     .label(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
-            .add_system(update_selection_radius)
-            .add_system(
-                display_tile_interactions
-                    .after(InteractionSystem::SelectTiles)
-                    .after(InteractionSystem::ComputeCursorPos),
-            );
+            .add_system(update_selection_radius);
     }
 }
 
@@ -65,6 +58,11 @@ impl SelectedTiles {
     #[cfg(test)]
     fn remove_tile(&mut self, tile_pos: TilePos) {
         self.selected.remove(&tile_pos);
+    }
+
+    /// Is the given tile in the selection?
+    pub(crate) fn contains_tile(&self, tile_pos: TilePos) -> bool {
+        self.selected.contains(&tile_pos)
     }
 
     /// Draws a hollow hexagonal ring of tiles.
@@ -110,12 +108,6 @@ impl SelectedTiles {
     /// Are any tiles selected?
     pub(super) fn is_empty(&self) -> bool {
         self.selected.is_empty()
-    }
-
-    /// Is the given tile in the selection?
-    #[cfg(test)]
-    fn contains_tile(&self, tile_pos: TilePos) -> bool {
-        self.selected.contains(&tile_pos)
     }
 
     /// Handles all of the logic needed to add tiles to the selection.
@@ -178,14 +170,14 @@ impl SelectedTiles {
 
 /// The set of tiles that are being hovered
 #[derive(Resource, Debug, Default, Deref, DerefMut)]
-struct HoveredTiles {
+pub(crate) struct HoveredTiles {
     /// The set of tiles that are hovered over
     hovered: HashSet<TilePos>,
 }
 
 impl HoveredTiles {
     /// Updates the set of hovered actions based on the current cursor position and player inputs.
-    pub(super) fn update(&mut self, hovered_tile: TilePos, selection_state: SelectionState) {
+    fn update(&mut self, hovered_tile: TilePos, selection_state: SelectionState) {
         self.hovered = match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
@@ -273,28 +265,6 @@ fn update_selection_radius(
 
     if actions.just_pressed(PlayerAction::DecreaseSelectionRadius) {
         selection_state.brush_size = selection_state.brush_size.saturating_sub(1);
-    }
-}
-
-/// Shows which tiles are being hovered and selected.
-fn display_tile_interactions(
-    current_selection: Res<CurrentSelection>,
-    hovered_tiles: Res<HoveredTiles>,
-    mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
-    materials: Res<TerrainHandles>,
-) {
-    if current_selection.is_changed() || hovered_tiles.is_changed() {
-        // PERF: We should probably avoid a linear scan over all tiles here
-        for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
-            let hovered = hovered_tiles.contains(&tile_pos);
-            let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-                selected_tiles.selected.contains(&tile_pos)
-            } else {
-                false
-            };
-
-            *material = materials.get_material(terrain, hovered, selected);
-        }
     }
 }
 
