@@ -1,7 +1,9 @@
 //! Asset loading for structures
 
 use crate::{
-    asset_management::hexagonal_column, simulation::geometry::MapGeometry, structures::StructureId,
+    asset_management::hexagonal_column, enum_iter::IterableEnum,
+    player_interaction::selection::ObjectInteraction, simulation::geometry::MapGeometry,
+    structures::StructureId,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
@@ -12,10 +14,10 @@ use super::Loadable;
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
-    /// The material to be used for all ghosts
-    pub(crate) ghost_material: Handle<StandardMaterial>,
-    /// The material to be used for all previews
-    pub(crate) preview_material: Handle<StandardMaterial>,
+    /// The materials used for tiles when they are selected or otherwise interacted with
+    pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
+    /// The materials used for tiles when they are selected or otherwise interacted with
+    pub(crate) ghost_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
     /// The raycasting mesh used to select structures
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -32,23 +34,28 @@ impl FromWorld for StructureHandles {
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let picking_mesh = mesh_assets.add(picking_mesh_object);
 
-        let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-        let ghost_material = materials.add(StandardMaterial {
-            base_color: Color::hsla(0., 0., 0.9, 0.7),
-            alpha_mode: AlphaMode::Blend,
-            ..Default::default()
-        });
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
 
-        let preview_material = materials.add(StandardMaterial {
-            base_color: Color::hsla(55., 0.9, 0.7, 0.7),
-            alpha_mode: AlphaMode::Blend,
-            ..Default::default()
-        });
+        let mut interaction_materials = HashMap::new();
+        for variant in ObjectInteraction::variants() {
+            if let Some(material) = variant.material() {
+                let material_handle = material_assets.add(material);
+                interaction_materials.insert(variant, material_handle);
+            }
+        }
+
+        let mut ghost_materials = HashMap::new();
+        for variant in ObjectInteraction::variants() {
+            if let Some(material) = variant.ghost_material() {
+                let material_handle = material_assets.add(material);
+                ghost_materials.insert(variant, material_handle);
+            }
+        }
 
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
-            ghost_material,
-            preview_material,
+            interaction_materials,
+            ghost_materials,
             picking_mesh,
         };
 

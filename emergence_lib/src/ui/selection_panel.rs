@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     items::recipe::RecipeManifest,
-    player_interaction::{details::SelectionDetails, InteractionSystem},
+    player_interaction::{selection::SelectionDetails, InteractionSystem},
 };
 
 use super::{FiraSansFontFamily, RightPanel, UiStage};

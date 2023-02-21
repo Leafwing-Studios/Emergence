@@ -3,7 +3,7 @@
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
-    enum_iter::IterableEnum, player_interaction::tile_selection::ObjectInteraction,
+    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
     simulation::geometry::MapGeometry, terrain::Terrain,
 };
 
@@ -53,8 +53,10 @@ impl FromWorld for TerrainHandles {
 
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
-            let material_handle = material_assets.add(variant.material());
-            interaction_materials.insert(variant, material_handle);
+            if let Some(material) = variant.material() {
+                let material_handle = material_assets.add(material);
+                interaction_materials.insert(variant, material_handle);
+            }
         }
 
         let map_geometry = world.resource::<MapGeometry>();

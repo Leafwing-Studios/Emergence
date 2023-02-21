@@ -9,7 +9,7 @@ use crate::{
     structures::{commands::StructureCommandsExt, ghost::Preview, StructureId},
 };
 
-use super::{cursor::CursorPos, tile_selection::SelectedTiles, InteractionSystem, PlayerAction};
+use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;
@@ -135,10 +135,10 @@ impl Clipboard {
 /// Clears the clipboard when the correct actions are pressed
 fn clear_clipboard(
     mut clipboard: ResMut<Clipboard>,
-    selected_tiles: Res<SelectedTiles>,
+    current_selection: Res<CurrentSelection>,
     actions: Res<ActionState<PlayerAction>>,
 ) {
-    if selected_tiles.is_empty() && actions.just_pressed(PlayerAction::Deselect) {
+    if current_selection.is_empty() && actions.just_pressed(PlayerAction::Deselect) {
         clipboard.clear();
     }
 }
@@ -147,44 +147,66 @@ fn clear_clipboard(
 ///
 /// This system also handles the "pipette" functionality.
 fn copy_selection(
-    cursor: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
     mut clipboard: ResMut<Clipboard>,
-    selected_tiles: Res<SelectedTiles>,
-    structure_query: Query<(&StructureId, &Facing), Without<Preview>>,
+    cursor_pos: Res<CursorPos>,
+    current_selection: Res<CurrentSelection>,
+    structure_query: Query<(&TilePos, &StructureId, &Facing), Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
-        if actions.just_pressed(PlayerAction::Pipette) {
-            // We want to replace our selection, rather than add to it
-            clipboard.clear();
+    if actions.just_pressed(PlayerAction::Pipette) {
+        // We want to replace our selection, rather than add to it
+        clipboard.clear();
 
-            // If there is no selection, just grab whatever's under the cursor
-            if selected_tiles.is_empty() {
-                if let Some(structure_entity) = map_geometry.structure_index.get(&cursor_tile_pos) {
-                    let (id, facing) = structure_query.get(*structure_entity).unwrap();
-                    let clipboard_item = StructureData {
-                        structure_id: *id,
-                        facing: *facing,
-                    };
+        match &*current_selection {
+            CurrentSelection::Structure(structure_entity) => {
+                let (tile_pos, id, facing) = structure_query.get(*structure_entity).unwrap();
+                let clipboard_item = StructureData {
+                    structure_id: *id,
+                    facing: *facing,
+                };
 
-                    clipboard.insert(TilePos::default(), clipboard_item);
+                clipboard.insert(*tile_pos, clipboard_item);
+            }
+            CurrentSelection::Terrain(selected_tiles) => {
+                // If there is no selection, just grab whatever's under the cursor
+                if selected_tiles.is_empty() {
+                } else {
+                    for selected_tile_pos in selected_tiles.selection().iter() {
+                        if let Some(structure_entity) =
+                            map_geometry.structure_index.get(selected_tile_pos)
+                        {
+                            let (_tile_pos, id, facing) =
+                                structure_query.get(*structure_entity).unwrap();
+                            debug_assert_eq!(_tile_pos, selected_tile_pos);
+                            let clipboard_item = StructureData {
+                                structure_id: *id,
+                                facing: *facing,
+                            };
+
+                            clipboard.insert(*selected_tile_pos, clipboard_item);
+                        }
+                    }
+                    clipboard.normalize_positions();
                 }
-            } else {
-                for selected_tile_pos in selected_tiles.selection().iter() {
+            }
+            // Otherwise, just grab whatever's under the cursor
+            _ => {
+                if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
                     if let Some(structure_entity) =
-                        map_geometry.structure_index.get(selected_tile_pos)
+                        map_geometry.structure_index.get(&cursor_tile_pos)
                     {
-                        let (id, facing) = structure_query.get(*structure_entity).unwrap();
+                        let (_tile_pos, id, facing) =
+                            structure_query.get(*structure_entity).unwrap();
+                        debug_assert_eq!(*_tile_pos, cursor_tile_pos);
                         let clipboard_item = StructureData {
                             structure_id: *id,
                             facing: *facing,
                         };
 
-                        clipboard.insert(*selected_tile_pos, clipboard_item);
+                        clipboard.insert(TilePos::default(), clipboard_item);
                     }
                 }
-                clipboard.normalize_positions();
             }
         }
     }

@@ -4,11 +4,9 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::structures::StructureHandles,
+    player_interaction::selection::ObjectInteraction,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{
-        ghost::{Ghost, Preview},
-        StructureId,
-    },
+    structures::{ghost::Ghostly, StructureId},
 };
 
 /// Adds rendering components to every spawned structure, real or otherwise
@@ -35,33 +33,27 @@ pub(super) fn populate_structures(
     }
 }
 
-/// Modifies the material of any entities spawned due to a ghost structure.
-pub(super) fn change_ghost_material(
-    ghost_query: Query<Entity, With<Ghost>>,
+/// Modifies the material of any structures based on their interaction state.
+pub(super) fn change_structure_material(
+    root_structure_query: Query<(Entity, &ObjectInteraction, Option<&Ghostly>), With<StructureId>>,
     children: Query<&Children>,
     mut material_query: Query<&mut Handle<StandardMaterial>>,
     structure_handles: Res<StructureHandles>,
 ) {
-    for ghost_entity in ghost_query.iter() {
-        for child in children.iter_descendants(ghost_entity) {
+    for (root_entity, object_interaction, maybe_ghostly) in root_structure_query.iter() {
+        for child in children.iter_descendants(root_entity) {
             if let Ok(mut material) = material_query.get_mut(child) {
-                *material = structure_handles.ghost_material.clone_weak();
-            }
-        }
-    }
-}
+                let maybe_material_handle = match maybe_ghostly {
+                    Some(..) => structure_handles.ghost_materials.get(object_interaction),
+                    None => structure_handles
+                        .interaction_materials
+                        .get(object_interaction),
+                };
 
-/// Modifies the material of any entities spawned due to a ghost structure.
-pub(super) fn change_preview_material(
-    ghost_query: Query<Entity, With<Preview>>,
-    children: Query<&Children>,
-    mut material_query: Query<&mut Handle<StandardMaterial>>,
-    structure_handles: Res<StructureHandles>,
-) {
-    for ghost_entity in ghost_query.iter() {
-        for child in children.iter_descendants(ghost_entity) {
-            if let Ok(mut material) = material_query.get_mut(child) {
-                *material = structure_handles.preview_material.clone_weak();
+                // FIXME: how do we restore the materials back to their original form??
+                if let Some(new_handle) = maybe_material_handle {
+                    *material = new_handle.clone_weak();
+                }
             }
         }
     }
