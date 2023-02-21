@@ -640,10 +640,11 @@ fn get_details(
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
                 let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_data = terrain_query.get(*terrain_entity).unwrap();
+                let terrain_query_item = terrain_query.get(*terrain_entity).unwrap();
 
                 SelectionDetails::Terrain(TerrainDetails {
-                    terrain_type: *terrain_data.terrain_type,
+                    entity: terrain_query_item.entity,
+                    terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
                 })
             } else {
@@ -653,6 +654,7 @@ fn get_details(
         CurrentSelection::Unit(unit_entity) => {
             let unit_query_item = unit_query.get(*unit_entity).unwrap();
             SelectionDetails::Unit(UnitDetails {
+                entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
@@ -678,6 +680,7 @@ fn get_details(
             };
 
             SelectionDetails::Structure(StructureDetails {
+                entity: structure_query_item.entity,
                 tile_pos: *structure_query_item.tile_pos,
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
@@ -708,6 +711,8 @@ mod structure_details {
     /// Data needed to populate [`StructureDetails`].
     #[derive(WorldQuery)]
     pub(super) struct StructureDetailsQuery {
+        /// The root entity
+        pub(super) entity: Entity,
         /// The type of structure
         pub(super) structure_id: &'static StructureId,
         /// The tile position of this structure
@@ -725,6 +730,8 @@ mod structure_details {
     /// Detailed info about a given structure.
     #[derive(Debug)]
     pub(crate) struct StructureDetails {
+        /// The root entity
+        pub(super) entity: Entity,
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
@@ -735,11 +742,13 @@ mod structure_details {
 
     impl Display for StructureDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let entity = self.entity;
             let structure_id = &self.structure_id;
             let tile_pos = &self.tile_pos;
 
             let basic_details = format!(
-                "Structure type: {structure_id}
+                "Entity: {entity:?}
+Structure type: {structure_id}
 Tile: {tile_pos}"
             );
 
@@ -806,6 +815,8 @@ mod terrain_details {
     /// Data needed to populate [`TerrainDetails`].
     #[derive(WorldQuery)]
     pub(super) struct TerrainDetailsQuery {
+        /// The root entity
+        pub(super) entity: Entity,
         /// The type of terrain
         pub(super) terrain_type: &'static Terrain,
     }
@@ -813,7 +824,9 @@ mod terrain_details {
     /// Detailed info about a given unit.
     #[derive(Debug)]
     pub(crate) struct TerrainDetails {
-        /// The type of unit
+        /// The root entity
+        pub(super) entity: Entity,
+        /// The type of terrain
         pub(super) terrain_type: Terrain,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
@@ -821,12 +834,14 @@ mod terrain_details {
 
     impl Display for TerrainDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let entity = self.entity;
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
 
             write!(
                 f,
-                "Terrain type: {terrain_type}
+                "Entity: {entity:?}
+Terrain type: {terrain_type}
 Tile: {tile_pos}"
             )
         }
@@ -850,6 +865,8 @@ mod unit_details {
     /// Data needed to populate [`UnitDetails`].
     #[derive(WorldQuery)]
     pub(super) struct UnitDetailsQuery {
+        /// The root entity
+        pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: &'static UnitId,
         /// The current location
@@ -865,6 +882,8 @@ mod unit_details {
     /// Detailed info about a given unit.
     #[derive(Debug)]
     pub(crate) struct UnitDetails {
+        /// The root entity
+        pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: UnitId,
         /// The current location
@@ -879,6 +898,7 @@ mod unit_details {
 
     impl Display for UnitDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let entity = self.entity;
             let unit_id = &self.unit_id;
             let tile_pos = &self.tile_pos;
             let held_item = &self.held_item;
@@ -887,7 +907,8 @@ mod unit_details {
 
             write!(
                 f,
-                "Unit type: {unit_id}
+                "Entity: {entity:?}
+Unit type: {unit_id}
 Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
