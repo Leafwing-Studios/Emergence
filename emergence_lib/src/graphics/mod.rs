@@ -30,7 +30,7 @@ impl Plugin for GraphicsPlugin {
                         structures::populate_structures.before(InteractionSystem::ManagePreviews),
                     ),
             )
-            .add_system_to_stage(CoreStage::PostUpdate, structures::change_structure_material)
+            .add_system_to_stage(CoreStage::PostUpdate, selection::swap_structure_materials)
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
