@@ -8,6 +8,7 @@ use crate::{
     simulation::geometry::TilePos,
     structures::{ghost::Ghostly, StructureId},
     terrain::Terrain,
+    units::UnitId,
 };
 
 /// Shows which tiles are being hovered and selected.
@@ -81,6 +82,53 @@ pub(super) fn swap_structure_materials(
                     warn!("Selected structure could not be found!");
                     return;
                 };
+            for child in children.iter_descendants(current_entity) {
+                if let Ok(mut existing_material_handle) = material_query.get_mut(child) {
+                    *existing_material_handle = selected_material_handle.clone_weak();
+                }
+            }
+        }
+    }
+}
+
+/// Replaces the material of selected structures.
+// TODO: this should almost certainly use a better approach than messing with materials
+pub(super) fn swap_unit_materials(
+    current_selection: Res<CurrentSelection>,
+    mut previously_selected_unit: Local<Option<Entity>>,
+    unit_query: Query<&UnitId>,
+    children: Query<&Children>,
+    mut material_query: Query<&mut Handle<StandardMaterial>>,
+    structure_handles: Res<StructureHandles>,
+    mut commands: Commands,
+) {
+    if current_selection.is_changed() {
+        // Remove the selection effect
+        if let Some(previous_entity) = *previously_selected_unit {
+            if let Ok(unit_id) = unit_query.get(previous_entity) {
+                // Remove the old scene
+                commands.entity(previous_entity).despawn_descendants();
+
+                // Trigger a re-addition of the scene
+                commands
+                    .entity(previous_entity)
+                    .remove::<UnitId>()
+                    .insert(*unit_id);
+
+                // Clear the cache, as this has been handled
+                *previously_selected_unit = None;
+            }
+        }
+
+        if let CurrentSelection::Unit(current_entity) = *current_selection {
+            // Cache this, so we remember to reverse it
+            *previously_selected_unit = Some(current_entity);
+
+            let selected_material_handle = structure_handles
+                .interaction_materials
+                .get(&ObjectInteraction::Selected)
+                .unwrap();
+
             for child in children.iter_descendants(current_entity) {
                 if let Ok(mut existing_material_handle) = material_query.get_mut(child) {
                     *existing_material_handle = selected_material_handle.clone_weak();
