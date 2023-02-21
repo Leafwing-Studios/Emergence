@@ -4,10 +4,13 @@ use std::{fmt::Display, time::Duration};
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::items::{
-    inventory::Inventory,
-    recipe::{Recipe, RecipeId, RecipeManifest},
-    ItemData, ItemId, ItemManifest,
+use crate::{
+    items::{
+        inventory::Inventory,
+        recipe::{Recipe, RecipeId, RecipeManifest},
+        ItemData, ItemId, ItemManifest,
+    },
+    signals::Emitter,
 };
 
 /// The current state in the crafting progress.
@@ -73,7 +76,7 @@ impl CraftTimer {
 }
 
 /// All components needed to craft stuff.
-#[derive(Debug, Default, Bundle)]
+#[derive(Debug, Bundle)]
 pub(crate) struct CraftingBundle {
     /// The input inventory for the items needed for crafting.
     input_inventory: InputInventory,
@@ -89,6 +92,9 @@ pub(crate) struct CraftingBundle {
 
     /// The current state for the crafting process.
     craft_state: CraftingState,
+
+    /// Emits signals, drawing units towards this structure to ensure crafting flows smoothly
+    emitter: Emitter,
 }
 
 impl CraftingBundle {
@@ -111,6 +117,7 @@ impl CraftingBundle {
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::WaitingForInput,
+                emitter: Emitter::default(),
             }
         } else {
             Self {
@@ -123,6 +130,7 @@ impl CraftingBundle {
                 craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::WaitingForInput,
+                emitter: Emitter::default(),
             }
         }
     }

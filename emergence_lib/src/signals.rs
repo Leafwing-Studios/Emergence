@@ -145,6 +145,16 @@ pub(crate) struct SignalStrength(f32);
 impl SignalStrength {
     /// No signal is present.
     const ZERO: SignalStrength = SignalStrength(0.);
+
+    /// Creates a new [`SignalStrength`], ensuring that it has a minimum value of 0.
+    pub(crate) fn new(value: f32) -> Self {
+        SignalStrength(value.max(0.))
+    }
+
+    /// The underlying value
+    pub(crate) fn value(&self) -> f32 {
+        self.0
+    }
 }
 
 impl Add<SignalStrength> for SignalStrength {
@@ -174,10 +184,10 @@ impl Mul<f32> for SignalStrength {
 /// A game object that emits a signal.
 ///
 /// This can change over time, but only one signal may be emitted at once.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Default)]
 pub(crate) struct Emitter {
-    /// The type of signal being emitted.
-    pub(crate) signal_type: SignalType,
+    /// The type of signal being emitted, if any.
+    pub(crate) signal_type: Option<SignalType>,
     /// The rate at which the signal is emitted per tick
     pub(crate) signal_strength: SignalStrength,
 }
@@ -185,7 +195,9 @@ pub(crate) struct Emitter {
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &Emitter)>) {
     for (&tile_pos, emitter) in emitter_query.iter() {
-        signals.add_signal(emitter.signal_type, tile_pos, emitter.signal_strength);
+        if let Some(signal_type) = emitter.signal_type {
+            signals.add_signal(signal_type, tile_pos, emitter.signal_strength);
+        }
     }
 }
 
