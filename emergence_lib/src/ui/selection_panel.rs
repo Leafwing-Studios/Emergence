@@ -25,19 +25,19 @@ struct HoverPanel;
 
 /// The UI node that stores all ghost details.
 #[derive(Component, Default)]
-struct GhostDetails;
+struct GhostDetailsMarker;
 
 /// The UI node that stores all structure details.
 #[derive(Component, Default)]
-struct StructureDetails;
+struct StructureDetailsMarker;
 
 /// The UI node that stores all terrain details.
 #[derive(Component, Default)]
-struct TerrainDetails;
+struct TerrainDetailsMarker;
 
 /// The UI node that stores all unit details.
 #[derive(Component, Default)]
-struct UnitDetails;
+struct UnitDetailsMarker;
 
 /// Estabilishes UI elements for hover details.
 fn populate_hover_panel(
@@ -70,10 +70,11 @@ fn populate_hover_panel(
         ))
         .id();
 
-    let ghost_details = populate_details::<GhostDetails>(&mut commands, &key_text_style);
-    let structure_details = populate_details::<StructureDetails>(&mut commands, &key_text_style);
-    let terrain_details = populate_details::<TerrainDetails>(&mut commands, &key_text_style);
-    let unit_details = populate_details::<UnitDetails>(&mut commands, &key_text_style);
+    let ghost_details = populate_details::<GhostDetailsMarker>(&mut commands, &key_text_style);
+    let structure_details =
+        populate_details::<StructureDetailsMarker>(&mut commands, &key_text_style);
+    let terrain_details = populate_details::<TerrainDetailsMarker>(&mut commands, &key_text_style);
+    let unit_details = populate_details::<UnitDetailsMarker>(&mut commands, &key_text_style);
 
     commands.entity(right_panel).add_child(hover_panel);
     commands
@@ -91,37 +92,37 @@ fn update_hover_details(
     mut ghost_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<GhostDetails>,
-            Without<StructureDetails>,
-            Without<TerrainDetails>,
-            Without<UnitDetails>,
+            With<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<TerrainDetailsMarker>,
+            Without<UnitDetailsMarker>,
         ),
     >,
     mut structure_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<StructureDetails>,
-            Without<GhostDetails>,
-            Without<TerrainDetails>,
-            Without<UnitDetails>,
+            With<StructureDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<TerrainDetailsMarker>,
+            Without<UnitDetailsMarker>,
         ),
     >,
     mut unit_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<UnitDetails>,
-            Without<GhostDetails>,
-            Without<StructureDetails>,
-            Without<TerrainDetails>,
+            With<UnitDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<TerrainDetailsMarker>,
         ),
     >,
     mut terrain_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<TerrainDetails>,
-            Without<GhostDetails>,
-            Without<StructureDetails>,
-            Without<UnitDetails>,
+            With<TerrainDetailsMarker>,
+            Without<GhostDetailsMarker>,
+            Without<StructureDetailsMarker>,
+            Without<UnitDetailsMarker>,
         ),
     >,
     recipe_manifest: Res<RecipeManifest>,
