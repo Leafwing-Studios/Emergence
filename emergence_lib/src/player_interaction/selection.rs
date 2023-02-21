@@ -11,6 +11,7 @@ use hexx::shapes::hexagon;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::items::recipe::RecipeManifest;
+use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 
@@ -664,6 +665,7 @@ fn get_details(
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
     recipe_manifest: Res<RecipeManifest>,
+    signals: Res<Signals>,
 ) {
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
@@ -716,6 +718,7 @@ fn get_details(
                     entity: terrain_query_item.entity,
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
+                    signals: signals.all_signals_at_position(*tile_pos),
                 })
             } else {
                 SelectionDetails::None
@@ -912,7 +915,7 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
     use std::fmt::Display;
 
-    use crate::{simulation::geometry::TilePos, terrain::Terrain};
+    use crate::{signals::LocalSignals, simulation::geometry::TilePos, terrain::Terrain};
 
     /// Data needed to populate [`TerrainDetails`].
     #[derive(WorldQuery)]
@@ -932,6 +935,8 @@ mod terrain_details {
         pub(super) terrain_type: Terrain,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
+        /// The signals on this tile
+        pub(super) signals: LocalSignals,
     }
 
     impl Display for TerrainDetails {
@@ -939,12 +944,15 @@ mod terrain_details {
             let entity = self.entity;
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
+            let signals = &self.signals;
 
             write!(
                 f,
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
-Tile: {tile_pos}"
+Tile: {tile_pos}
+Signals:
+{signals}"
             )
         }
     }

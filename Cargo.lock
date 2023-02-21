@@ -1466,6 +1466,7 @@ dependencies = [
  "emergence_macros",
  "hexx",
  "indexmap",
+ "itertools",
  "leafwing-input-manager",
  "leafwing_abilities",
  "noisy_bevy",

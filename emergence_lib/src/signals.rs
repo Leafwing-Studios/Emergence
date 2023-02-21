@@ -4,7 +4,9 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use bevy::{prelude::*, utils::HashMap};
+use core::fmt::Display;
 use core::ops::{Add, Mul, Sub};
+use itertools::Itertools;
 
 use crate::{
     items::ItemId,
@@ -65,18 +67,18 @@ impl Signals {
     /// Returns the complete set of signals at the given `tile_pos`.
     ///
     /// This is useful for decision-making.
-    fn all_signals_at_position(&self, tile_pos: TilePos) -> HashMap<SignalType, SignalStrength> {
+    pub(crate) fn all_signals_at_position(&self, tile_pos: TilePos) -> LocalSignals {
         let mut all_signals = HashMap::new();
         for &signal_type in self.maps.keys() {
             let strength = self.get(signal_type, tile_pos);
             all_signals.insert(signal_type, strength);
         }
 
-        all_signals
+        LocalSignals { map: all_signals }
     }
 
     /// Returns the signal strength of the type `signal_type` in `tile_pos` and its 6 surrounding neighbors.
-    fn neighboring_signals(
+    pub(crate) fn neighboring_signals(
         &self,
         signal_type: SignalType,
         tile_pos: TilePos,
@@ -90,6 +92,28 @@ impl Signals {
         }
 
         signal_strength_map
+    }
+}
+
+/// All of the signals on a single tile.
+#[derive(Debug)]
+pub(crate) struct LocalSignals {
+    map: HashMap<SignalType, SignalStrength>,
+}
+
+impl Display for LocalSignals {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut string = String::default();
+
+        for signal_type in self.map.keys().sorted() {
+            let signal_strength = self.map.get(signal_type).unwrap().0;
+
+            let substring = format!("{signal_type}: {signal_strength:.2}\n");
+
+            string += &substring;
+        }
+
+        write!(f, "{string}")
     }
 }
 
@@ -124,7 +148,7 @@ impl SignalMap {
 }
 
 /// The variety of signal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) enum SignalType {
     /// Take this item away from here.
     Push(ItemId),
@@ -136,10 +160,23 @@ pub(crate) enum SignalType {
     Work(StructureId),
 }
 
+impl Display for SignalType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            SignalType::Push(item_id) => format!("Push({item_id})"),
+            SignalType::Pull(item_id) => format!("Pull({item_id})"),
+            SignalType::Contains(item_id) => format!("Contains{item_id})"),
+            SignalType::Work(structure_id) => format!("Work({structure_id})"),
+        };
+
+        write!(f, "{string}")
+    }
+}
+
 /// How strong a signal is.
 ///
 /// This has a minimum value of 0.
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub(crate) struct SignalStrength(f32);
 
 impl SignalStrength {

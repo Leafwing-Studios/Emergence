@@ -167,8 +167,6 @@ fn update_cursor_pos(
     if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);
     }
-
-    info!("{cursor_pos:?}");
 }
 
 /// Moves the cursor on the screen, based on gamepad or keyboard inputs
