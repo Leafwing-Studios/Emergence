@@ -13,6 +13,7 @@ pub mod graphics;
 pub mod items;
 pub mod organisms;
 pub mod player_interaction;
+pub mod signals;
 pub mod simulation;
 pub mod structures;
 pub mod terrain;
