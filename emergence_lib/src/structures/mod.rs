@@ -9,7 +9,7 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::{
     asset_management::manifest::Manifest,
     items::{inventory::Inventory, recipe::RecipeId, ItemCount, ItemId},
-    player_interaction::clipboard::StructureData,
+    player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -95,6 +95,8 @@ struct StructureBundle {
     tile_pos: TilePos,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<StructureId>,
+    /// How is this structure being interacted with
+    object_interaction: ObjectInteraction,
 }
 
 impl StructureBundle {
@@ -105,6 +107,7 @@ impl StructureBundle {
             facing: data.facing,
             tile_pos,
             raycast_mesh: RaycastMesh::default(),
+            object_interaction: ObjectInteraction::None,
         }
     }
 }
