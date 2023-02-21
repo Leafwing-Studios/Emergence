@@ -143,19 +143,21 @@ fn update_hover_details(
         }
         SelectionDetails::Structure(_) => {
             *parent_visibility = Visibility::VISIBLE;
-            structure_style.display = Display::Flex;
             ghost_style.display = Display::None;
+            structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Terrain(_) => {
             *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
         }
         SelectionDetails::Unit(_) => {
             *parent_visibility = Visibility::VISIBLE;
+            ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::Flex;
