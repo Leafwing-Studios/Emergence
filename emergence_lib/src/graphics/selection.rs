@@ -47,7 +47,15 @@ pub(super) fn swap_structure_materials(
     if current_selection.is_changed() {
         // Remove the selection effect
         if let Some(previous_entity) = *previously_selected_structure {
+            info!("A previously selected structure exists with the id {previous_entity:?}.");
+
             if let Ok((structure_id, _maybe_ghostly)) = structure_query.get(previous_entity) {
+                info!("Despawning altered material scene.");
+
+                for child in children.iter_descendants(previous_entity) {
+                    info!("Child to despawn: {child:?}");
+                }
+
                 // Remove the old scene
                 commands.entity(previous_entity).despawn_descendants();
 
@@ -63,6 +71,8 @@ pub(super) fn swap_structure_materials(
         }
 
         if let CurrentSelection::Structure(current_entity) = *current_selection {
+            info!("Currently selecting {current_entity:?}.");
+
             // Cache this, so we remember to reverse it
             *previously_selected_structure = Some(current_entity);
 
@@ -84,6 +94,7 @@ pub(super) fn swap_structure_materials(
                 };
             for child in children.iter_descendants(current_entity) {
                 if let Ok(mut existing_material_handle) = material_query.get_mut(child) {
+                    info!("Modifying child: {child:?}");
                     *existing_material_handle = selected_material_handle.clone_weak();
                 }
             }
@@ -130,7 +141,9 @@ pub(super) fn swap_unit_materials(
                 .unwrap();
 
             for child in children.iter_descendants(current_entity) {
+                info!("Child exists: {child:?}");
                 if let Ok(mut existing_material_handle) = material_query.get_mut(child) {
+                    info!("Modifying child: {child:?}");
                     *existing_material_handle = selected_material_handle.clone_weak();
                 }
             }
