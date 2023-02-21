@@ -10,6 +10,7 @@ use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
 use leafwing_input_manager::prelude::ActionState;
 
+use crate::items::recipe::RecipeManifest;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 
@@ -662,6 +663,7 @@ fn get_details(
     terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
@@ -676,13 +678,20 @@ fn get_details(
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity).unwrap();
 
-            let crafting_details = if let Some((input, output, recipe, state, timer)) =
+            let crafting_details = if let Some((input, output, active_recipe, state, timer)) =
                 structure_query_item.crafting
             {
+                let maybe_recipe_id = *active_recipe.recipe_id();
+                let recipe = if let Some(recipe_id) = maybe_recipe_id {
+                    Some(recipe_manifest.get(recipe_id).clone())
+                } else {
+                    None
+                };
+
                 Some(CraftingDetails {
                     input_inventory: input.inventory.clone(),
                     output_inventory: output.inventory.clone(),
-                    active_recipe: *recipe.recipe_id(),
+                    recipe: recipe,
                     state: state.clone(),
                     timer: timer.timer().clone(),
                 })
@@ -793,7 +802,7 @@ mod structure_details {
     use core::fmt::Display;
 
     use crate::{
-        items::{inventory::Inventory, recipe::RecipeId},
+        items::{inventory::Inventory, recipe::Recipe},
         simulation::geometry::TilePos,
         structures::{
             crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
@@ -864,8 +873,8 @@ Tile: {tile_pos}"
         /// The inventory for the output items.
         pub(crate) output_inventory: Inventory,
 
-        /// The recipe that's currently being crafted, if any.
-        pub(crate) active_recipe: Option<RecipeId>,
+        /// The recipe used, if any.
+        pub(crate) recipe: Option<Recipe>,
 
         /// The state of the ongoing crafting process.
         pub(crate) state: CraftingState,
@@ -882,8 +891,8 @@ Tile: {tile_pos}"
             let time_remaining = self.timer.remaining_secs();
             let total_duration = self.timer.duration().as_secs_f32();
 
-            let recipe_string = match &self.active_recipe {
-                Some(recipe_id) => format!("{recipe_id}"),
+            let recipe_string = match &self.recipe {
+                Some(recipe) => format!("{recipe}"),
                 None => "None".to_string(),
             };
 

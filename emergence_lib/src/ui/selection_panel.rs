@@ -2,10 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    items::recipe::RecipeManifest,
-    player_interaction::{selection::SelectionDetails, InteractionSystem},
-};
+use crate::player_interaction::{selection::SelectionDetails, InteractionSystem};
 
 use super::{FiraSansFontFamily, RightPanel, UiStage};
 
@@ -125,7 +122,6 @@ fn update_hover_details(
             Without<UnitDetailsMarker>,
         ),
     >,
-    recipe_manifest: Res<RecipeManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
     let (mut ghost_style, mut ghost_text) = ghost_details_query.single_mut();
@@ -173,20 +169,7 @@ fn update_hover_details(
             ghost_text.sections[0].value = format!("{details}");
         }
         SelectionDetails::Structure(details) => {
-            // Details
             structure_text.sections[0].value = format!("{details}");
-            // Recipe info
-            structure_text.sections[1].value =
-                if let Some(crafting_details) = &details.crafting_details {
-                    if let Some(recipe_id) = &crafting_details.active_recipe {
-                        let recipe_info = recipe_manifest.get(*recipe_id);
-                        format!("\n{recipe_info}")
-                    } else {
-                        String::default()
-                    }
-                } else {
-                    String::default()
-                }
         }
         SelectionDetails::Terrain(details) => {
             terrain_text.sections[0].value = format!("{details}");
@@ -213,10 +196,7 @@ fn populate_details<T: Component + Default>(
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
-                text: Text::from_sections([
-                    TextSection::new("", key_text_style.clone()),
-                    TextSection::new("", key_text_style.clone()),
-                ]),
+                text: Text::from_section("", key_text_style.clone()),
                 ..default()
             },
             T::default(),
