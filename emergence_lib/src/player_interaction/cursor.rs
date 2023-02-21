@@ -6,7 +6,10 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    simulation::geometry::TilePos, structures::StructureId, terrain::Terrain, units::UnitId,
+    simulation::geometry::TilePos,
+    structures::{ghost::Ghost, StructureId},
+    terrain::Terrain,
+    units::UnitId,
 };
 
 /// Controls raycasting and cursor aethetics.
@@ -44,6 +47,8 @@ pub(crate) struct CursorPos {
     hovered_unit: Option<Entity>,
     /// The first structure hit by a cursor raycast, if any.
     hovered_structure: Option<Entity>,
+    /// The first ghost hit by a cursor raycast, if any.
+    hovered_ghost: Option<Entity>,
 }
 
 impl CursorPos {
@@ -68,6 +73,11 @@ impl CursorPos {
     pub(crate) fn maybe_structure(&self) -> Option<Entity> {
         self.hovered_structure
     }
+
+    /// The hovered ghost, if available.
+    pub(crate) fn maybe_ghost(&self) -> Option<Entity> {
+        self.hovered_ghost
+    }
 }
 
 /// Updates the raycast with the cursor position
@@ -81,6 +91,7 @@ fn update_raycast_with_cursor(
             &mut RaycastSource<Terrain>,
             &mut RaycastSource<StructureId>,
             &mut RaycastSource<UnitId>,
+            &mut RaycastSource<Ghost>,
         ),
         With<Camera>,
     >,
@@ -91,10 +102,13 @@ fn update_raycast_with_cursor(
         None => return,
     };
 
-    for (mut terrain_raycast, mut structure_raycast, mut unit_raycast) in query.iter_mut() {
+    for (mut terrain_raycast, mut structure_raycast, mut unit_raycast, mut ghost_raycast) in
+        query.iter_mut()
+    {
         terrain_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
         structure_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
         unit_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
+        ghost_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
     }
 }
 
@@ -106,15 +120,17 @@ fn update_cursor_pos(
             &mut RaycastSource<Terrain>,
             &mut RaycastSource<StructureId>,
             &mut RaycastSource<UnitId>,
+            &mut RaycastSource<Ghost>,
         ),
         With<Camera>,
     >,
     terrain_query: Query<&TilePos, With<Terrain>>,
     structure_query: Query<Entity, With<StructureId>>,
     unit_query: Query<Entity, With<UnitId>>,
+    ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let (terrain_raycast, structure_raycast, unit_raycast) = camera_query.single();
+    let (terrain_raycast, structure_raycast, unit_raycast, ghost_raycast) = camera_query.single();
 
     cursor_pos.tile_pos = if let Some((terrain_entity, _intersection_data)) =
         terrain_raycast.get_nearest_intersection()
@@ -138,6 +154,14 @@ fn update_cursor_pos(
         } else {
             None
         };
+
+    cursor_pos.hovered_ghost = if let Some((ghost_entity, _intersection_data)) =
+        ghost_raycast.get_nearest_intersection()
+    {
+        ghost_query.get(ghost_entity).ok()
+    } else {
+        None
+    };
 
     if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);

@@ -5,6 +5,7 @@
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
 use bevy::prelude::*;
+use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
     player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
@@ -38,6 +39,8 @@ pub(super) struct GhostBundle {
     construction_materials: InputInventory,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
+    /// Makes structures pickable
+    raycast_mesh: RaycastMesh<StructureId>,
 }
 
 impl GhostBundle {
@@ -55,6 +58,7 @@ impl GhostBundle {
             facing: data.facing,
             construction_materials,
             object_interaction: ObjectInteraction::None,
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

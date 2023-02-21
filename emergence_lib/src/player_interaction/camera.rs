@@ -11,6 +11,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
+use crate::structures::ghost::Ghost;
 use crate::structures::StructureId;
 use crate::terrain::Terrain;
 use crate::units::UnitId;
@@ -54,7 +55,8 @@ fn setup(mut commands: Commands) {
         .insert(Facing::default())
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<StructureId>::new())
-        .insert(RaycastSource::<UnitId>::new());
+        .insert(RaycastSource::<UnitId>::new())
+        .insert(RaycastSource::<Ghost>::new());
 }
 
 /// The position that the camera is looking at.
