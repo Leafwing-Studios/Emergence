@@ -7,6 +7,7 @@ use crate::{asset_management::AssetState, player_interaction::InteractionSystem}
 use self::lighting::LightingPlugin;
 
 mod lighting;
+mod selection;
 mod structures;
 mod terrain;
 mod units;
@@ -30,10 +31,6 @@ impl Plugin for GraphicsPlugin {
                     ),
             )
             .add_system_to_stage(CoreStage::PostUpdate, structures::change_structure_material)
-            .add_system(
-                terrain::display_tile_interactions
-                    .after(InteractionSystem::SelectTiles)
-                    .after(InteractionSystem::ComputeCursorPos),
-            );
+            .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
