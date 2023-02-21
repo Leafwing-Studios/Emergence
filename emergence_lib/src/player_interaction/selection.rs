@@ -1,5 +1,6 @@
 //! Tiles can be selected, serving as a building block for clipboard, inspection and zoning operations.
 
+use self::ghost_details::*;
 use self::structure_details::*;
 use self::terrain_details::*;
 use self::unit_details::*;
@@ -267,6 +268,8 @@ fn update_selection_radius(
 /// The game object(s) currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 pub(crate) enum CurrentSelection {
+    /// A ghost is selected
+    Ghost(Entity),
     /// A structure is selected
     Structure(Entity),
     /// One or more tile is selected
@@ -321,7 +324,7 @@ impl CurrentSelection {
 
     /// Cycles through game objects on the same tile.
     ///
-    /// The order is units -> structures -> terrain -> units.
+    /// The order is units -> ghosts -> structures -> terrain -> units.
     /// If a higher priority option is missing, later options in the chain are searched.
     /// If none of the options can be found, the selection is cleared completely.
     fn cycle_selection(
@@ -334,12 +337,29 @@ impl CurrentSelection {
             CurrentSelection::None => {
                 if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
+                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
+                    CurrentSelection::Ghost(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                     let mut selected_tiles = SelectedTiles::default();
                     selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
                     CurrentSelection::Terrain(selected_tiles)
+                } else {
+                    CurrentSelection::None
+                }
+            }
+            CurrentSelection::Ghost(_) => {
+                if let Some(structure_entity) = cursor_pos.maybe_structure() {
+                    CurrentSelection::Structure(structure_entity)
+                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    let mut selected_tiles = SelectedTiles::default();
+                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
+                    CurrentSelection::Terrain(selected_tiles)
+                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
+                    CurrentSelection::Unit(unit_entity)
+                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
+                    CurrentSelection::Ghost(ghost_entity)
                 } else {
                     CurrentSelection::None
                 }
@@ -351,6 +371,8 @@ impl CurrentSelection {
                     CurrentSelection::Terrain(selected_tiles)
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
+                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
+                    CurrentSelection::Ghost(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else {
@@ -360,6 +382,8 @@ impl CurrentSelection {
             CurrentSelection::Terrain(existing_selection) => {
                 if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
+                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
+                    CurrentSelection::Ghost(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
@@ -374,7 +398,9 @@ impl CurrentSelection {
                 }
             }
             CurrentSelection::Unit(_) => {
-                if let Some(structure_entity) = cursor_pos.maybe_structure() {
+                if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
+                    CurrentSelection::Ghost(ghost_entity)
+                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                     let mut selected_tiles = SelectedTiles::default();
@@ -394,10 +420,9 @@ impl CurrentSelection {
     /// Is anything currently selected?
     pub(crate) fn is_empty(&self) -> bool {
         match self {
-            CurrentSelection::Structure(_) => false,
-            CurrentSelection::Terrain(selected_tiles) => selected_tiles.is_empty(),
-            CurrentSelection::Unit(_) => false,
             CurrentSelection::None => true,
+            CurrentSelection::Terrain(selected_tiles) => selected_tiles.is_empty(),
+            _ => false,
         }
     }
 }
@@ -615,6 +640,8 @@ fn set_selection(
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
 pub(crate) enum SelectionDetails {
+    /// A ghost is selected
+    Ghost(GhostDetails),
     /// A structure is selected
     Structure(StructureDetails),
     /// A tile is selected.
@@ -630,36 +657,20 @@ pub(crate) enum SelectionDetails {
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
+    ghost_query: Query<GhostDetailsQuery>,
+    structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
-    structure_query: Query<StructureDetailsQuery>,
     map_geometry: Res<MapGeometry>,
 ) {
     *selection_details = match &*selection_type {
-        CurrentSelection::Terrain(selected_tiles) => {
-            // FIXME: display info about multiple tiles correctly
-            if let Some(tile_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_query_item = terrain_query.get(*terrain_entity).unwrap();
-
-                SelectionDetails::Terrain(TerrainDetails {
-                    entity: terrain_query_item.entity,
-                    terrain_type: *terrain_query_item.terrain_type,
-                    tile_pos: *tile_pos,
-                })
-            } else {
-                SelectionDetails::None
-            }
-        }
-        CurrentSelection::Unit(unit_entity) => {
-            let unit_query_item = unit_query.get(*unit_entity).unwrap();
-            SelectionDetails::Unit(UnitDetails {
-                entity: unit_query_item.entity,
-                unit_id: *unit_query_item.unit_id,
-                tile_pos: *unit_query_item.tile_pos,
-                held_item: unit_query_item.held_item.clone(),
-                goal: unit_query_item.goal.clone(),
-                action: unit_query_item.action.clone(),
+        CurrentSelection::Ghost(ghost_entity) => {
+            let ghost_query_item = ghost_query.get(*ghost_entity).unwrap();
+            SelectionDetails::Ghost(GhostDetails {
+                entity: *ghost_entity,
+                tile_pos: *ghost_query_item.tile_pos,
+                structure_id: *ghost_query_item.structure_id,
+                input_inventory: ghost_query_item.input_inventory.clone(),
             })
         }
         CurrentSelection::Structure(structure_entity) => {
@@ -686,8 +697,89 @@ fn get_details(
                 crafting_details,
             })
         }
+        CurrentSelection::Terrain(selected_tiles) => {
+            // FIXME: display info about multiple tiles correctly
+            if let Some(tile_pos) = selected_tiles.selection().iter().next() {
+                let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
+                let terrain_query_item = terrain_query.get(*terrain_entity).unwrap();
+
+                SelectionDetails::Terrain(TerrainDetails {
+                    entity: terrain_query_item.entity,
+                    terrain_type: *terrain_query_item.terrain_type,
+                    tile_pos: *tile_pos,
+                })
+            } else {
+                SelectionDetails::None
+            }
+        }
+        CurrentSelection::Unit(unit_entity) => {
+            let unit_query_item = unit_query.get(*unit_entity).unwrap();
+            SelectionDetails::Unit(UnitDetails {
+                entity: unit_query_item.entity,
+                unit_id: *unit_query_item.unit_id,
+                tile_pos: *unit_query_item.tile_pos,
+                held_item: unit_query_item.held_item.clone(),
+                goal: unit_query_item.goal.clone(),
+                action: unit_query_item.action.clone(),
+            })
+        }
         CurrentSelection::None => SelectionDetails::None,
     };
+}
+
+mod ghost_details {
+    use bevy::ecs::{prelude::*, query::WorldQuery};
+
+    use core::fmt::Display;
+
+    use crate::{
+        simulation::geometry::TilePos,
+        structures::{crafting::InputInventory, StructureId},
+    };
+
+    /// Data needed to populate [`StructureDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct GhostDetailsQuery {
+        /// The root entity
+        pub(super) entity: Entity,
+        /// The type of structure
+        pub(super) structure_id: &'static StructureId,
+        /// The tile position of this ghost
+        pub(crate) tile_pos: &'static TilePos,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: &'static InputInventory,
+    }
+
+    /// Detailed info about a given ghost.
+    #[derive(Debug)]
+    pub(crate) struct GhostDetails {
+        /// The root entity
+        pub(super) entity: Entity,
+        /// The tile position of this structure
+        pub(crate) tile_pos: TilePos,
+        /// The type of structure, e.g. plant or fungus.
+        pub(crate) structure_id: StructureId,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: InputInventory,
+    }
+
+    impl Display for GhostDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let entity = self.entity;
+            let structure_id = &self.structure_id;
+            let tile_pos = &self.tile_pos;
+            let input_inventory = &*self.input_inventory;
+
+            let string = format!(
+                "Entity: {entity:?}
+Structure type: {structure_id}
+Tile: {tile_pos}
+Construction materials: {input_inventory}"
+            );
+
+            write!(f, "{string}")
+        }
+    }
 }
 
 /// Details for structures
