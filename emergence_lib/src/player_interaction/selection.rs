@@ -772,7 +772,7 @@ mod ghost_details {
 
             let string = format!(
                 "Entity: {entity:?}
-Structure type: {structure_id}
+Ghost structure type: {structure_id}
 Tile: {tile_pos}
 Construction materials: {input_inventory}"
             );
