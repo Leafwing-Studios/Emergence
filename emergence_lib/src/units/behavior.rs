@@ -267,7 +267,7 @@ impl CurrentAction {
     pub(super) fn move_to(target_tile: TilePos) -> Self {
         CurrentAction {
             action: UnitAction::Move(target_tile),
-            timer: Timer::from_seconds(0.3, TimerMode::Once),
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }
 
@@ -286,7 +286,7 @@ impl CurrentAction {
                 item_id,
                 output_entity,
             },
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }
 
@@ -297,7 +297,7 @@ impl CurrentAction {
                 item_id,
                 input_entity,
             },
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
+            timer: Timer::from_seconds(0.3, TimerMode::Once),
         }
     }
 }
