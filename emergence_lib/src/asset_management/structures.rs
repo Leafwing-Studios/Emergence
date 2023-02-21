@@ -14,10 +14,6 @@ use super::Loadable;
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
-    /// The materials used for tiles when they are selected or otherwise interacted with
-    pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
-    /// The materials used for tiles when they are selected or otherwise interacted with
-    pub(crate) ghost_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
     /// The raycasting mesh used to select structures
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -54,8 +50,6 @@ impl FromWorld for StructureHandles {
 
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
-            interaction_materials,
-            ghost_materials,
             picking_mesh,
         };
 

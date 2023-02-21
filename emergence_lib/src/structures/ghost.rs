@@ -7,7 +7,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
+    player_interaction::clipboard::StructureData,
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -36,8 +36,6 @@ pub(super) struct GhostBundle {
     facing: Facing,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
-    /// How is this structure being interacted with
-    object_interaction: ObjectInteraction,
 }
 
 impl GhostBundle {
@@ -54,7 +52,6 @@ impl GhostBundle {
             structure_id: data.structure_id,
             facing: data.facing,
             construction_materials,
-            object_interaction: ObjectInteraction::None,
         }
     }
 }
@@ -76,8 +73,6 @@ pub(super) struct PreviewBundle {
     structure_id: StructureId,
     /// The direction the preview is facing
     facing: Facing,
-    /// How is this structure being interacted with
-    object_interaction: ObjectInteraction,
 }
 
 impl PreviewBundle {
@@ -89,7 +84,6 @@ impl PreviewBundle {
             tile_pos,
             structure_id: data.structure_id,
             facing: data.facing,
-            object_interaction: ObjectInteraction::Hovered,
         }
     }
 }
