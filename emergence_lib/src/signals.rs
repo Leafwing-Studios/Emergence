@@ -116,7 +116,7 @@ impl SignalMap {
 
     /// Subtracts the `signal_strength` to the signal at `tile_pos`.
     ///
-    /// The value is capped a minimum of [`SignalStrength::ZERO].
+    /// The value is capped a minimum of [`SignalStrength::ZERO`].
     fn subtract_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
         let existing = self.get(tile_pos);
         self.map.insert(tile_pos, existing - signal_strength);
