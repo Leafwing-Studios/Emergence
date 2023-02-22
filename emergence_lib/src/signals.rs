@@ -335,7 +335,7 @@ fn diffuse_signals(
         for (&occupied_tile, original_strength) in original_map.map.iter() {
             let amount_to_send_to_each_neighbor = *original_strength * DIFFUSION_FRACTION;
 
-            for neighboring_tile in occupied_tile.neighbors(map_geometry) {
+            for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
                 removal_map.add_signal(occupied_tile, amount_to_send_to_each_neighbor);
                 addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
             }
