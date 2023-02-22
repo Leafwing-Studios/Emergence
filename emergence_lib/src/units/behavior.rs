@@ -327,7 +327,9 @@ impl CurrentAction {
 /// When this reaches its max value, the unit will abandon its goal and drop anything its holding.
 #[derive(Component, Clone, Debug)]
 pub(crate) struct Impatience {
+    //// The current impatience for this unit
     current: u8,
+    /// The maximum impatience for this unit
     max: u8,
 }
 
