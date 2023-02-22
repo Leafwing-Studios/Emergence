@@ -94,15 +94,15 @@ impl Signals {
 
         let neighboring_signals = match goal {
             Goal::Wander => return None,
-            Goal::Pickup(item_id) | Goal::DropOff(item_id) => {
-                let pull_signals =
-                    self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
+            Goal::Pickup(item_id) => {
+                let push_signals =
+                    self.neighboring_signals(SignalType::Push(*item_id), tile_pos, map_geometry);
                 let contains_signals = self.neighboring_signals(
                     SignalType::Contains(*item_id),
                     tile_pos,
                     map_geometry,
                 );
-                let mut total_signals = pull_signals;
+                let mut total_signals = push_signals;
 
                 for (tile_pos, signal_strength) in contains_signals {
                     if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
@@ -113,6 +113,9 @@ impl Signals {
                 }
 
                 total_signals
+            }
+            Goal::DropOff(item_id) => {
+                self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry)
             }
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
