@@ -1,7 +1,7 @@
 //! The clipboard stores selected structures, to later be placed via zoning.
 
 use bevy::{prelude::*, utils::HashMap};
-use hexx::Hex;
+use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -76,18 +76,8 @@ impl Clipboard {
             return;
         }
 
-        let mut x_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.x));
-        let mut y_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.y));
-
-        x_vec.sort_unstable();
-        y_vec.sort_unstable();
-
-        let mid = self.len() / 2;
         let center = TilePos {
-            hex: Hex {
-                x: x_vec[mid],
-                y: y_vec[mid],
-            },
+            hex: self.keys().map(|tile_pos| tile_pos.hex).center(),
         };
 
         let mut new_map = HashMap::with_capacity(self.capacity());
@@ -167,10 +157,26 @@ fn copy_selection(
                 };
 
                 clipboard.insert(*tile_pos, clipboard_item);
+                clipboard.normalize_positions();
             }
             CurrentSelection::Terrain(selected_tiles) => {
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_tiles.is_empty() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                        if let Some(structure_entity) =
+                            map_geometry.structure_index.get(&hovered_tile)
+                        {
+                            let (_tile_pos, id, facing) =
+                                structure_query.get(*structure_entity).unwrap();
+
+                            let clipboard_item = StructureData {
+                                structure_id: *id,
+                                facing: *facing,
+                            };
+
+                            clipboard.insert(TilePos::default(), clipboard_item);
+                        }
+                    }
                 } else {
                     for selected_tile_pos in selected_tiles.selection().iter() {
                         if let Some(structure_entity) =
@@ -191,7 +197,7 @@ fn copy_selection(
                 }
             }
             // Otherwise, just grab whatever's under the cursor
-            _ => {
+            CurrentSelection::None | CurrentSelection::Unit(_) | CurrentSelection::Ghost(_) => {
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
                     if let Some(structure_entity) =
                         map_geometry.structure_index.get(&cursor_tile_pos)
