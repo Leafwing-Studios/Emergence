@@ -796,7 +796,7 @@ mod ghost_details {
 Ghost structure type: {structure_id}
 Tile: {tile_pos}
 Construction materials: {input_inventory}
-Neglect: {neglect}"
+Neglect: {neglect:.2}"
             );
 
             write!(f, "{string}")
@@ -920,7 +920,7 @@ Tile: {tile_pos}"
 Input: {input_inventory}
 {crafting_state}: {time_remaining:.1} s / {total_duration:.1} s
 Output: {output_inventory}
-Neglect: {neglect}"
+Neglect: {neglect:.2}"
             )
         }
     }
