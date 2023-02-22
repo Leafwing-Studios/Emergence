@@ -45,7 +45,7 @@ impl TryFrom<SignalType> for Goal {
     // At least for now, this conversion should never fail.
     type Error = ();
 
-    fn try_from(value: SignalType) -> Result<Self, Self::Error> {
+    fn try_from(value: SignalType) -> Result<Goal, Self::Error> {
         match value {
             // Go grab the item, so you can later take it away
             SignalType::Push(item_id) => Ok(Goal::Pickup(item_id)),
@@ -111,6 +111,7 @@ pub(super) fn choose_actions(
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
+    signals: Res<Signals>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -139,8 +140,12 @@ pub(super) fn choose_actions(
                     if let Some(output_entity) = entities_with_desired_item.choose(rng) {
                         CurrentAction::pickup(*item_id, *output_entity)
                     } else {
-                        // TODO: walk towards destination more intelligently
-                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry)
+                        {
+                            CurrentAction::move_to(upstream)
+                        } else {
+                            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        }
                     }
                 }
                 Goal::DropOff(item_id) => {
@@ -172,8 +177,12 @@ pub(super) fn choose_actions(
                     if let Some(input_entity) = entities_with_desired_item.choose(rng) {
                         CurrentAction::dropoff(*item_id, *input_entity)
                     } else {
-                        // TODO: walk towards destination more intelligently
-                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry)
+                        {
+                            CurrentAction::move_to(upstream)
+                        } else {
+                            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        }
                     }
                 }
                 Goal::Work(_) => todo!(),

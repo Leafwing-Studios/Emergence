@@ -8,6 +8,7 @@ use core::fmt::Display;
 use core::ops::{Add, Mul, Sub};
 use itertools::Itertools;
 
+use crate::units::behavior::Goal;
 use crate::{
     items::ItemId,
     simulation::geometry::{MapGeometry, TilePos},
@@ -77,8 +78,65 @@ impl Signals {
         LocalSignals { map: all_signals }
     }
 
+    /// Returns the adjacent, empty tile position that contains the highest sum signal strength that can be used to meet the provided `goal`.
+    ///
+    /// If no suitable tile exists, [`None`] will be returned instead.
+    pub(crate) fn upstream(
+        &self,
+        tile_pos: TilePos,
+        goal: &Goal,
+        map_geometry: &MapGeometry,
+    ) -> Option<TilePos> {
+        let possible_tiles = tile_pos.empty_neighbors(map_geometry);
+
+        let mut best_choice = None;
+        let mut best_score = SignalStrength::ZERO;
+
+        let neighboring_signals = match goal {
+            Goal::Wander => return None,
+            Goal::Pickup(item_id) | Goal::DropOff(item_id) => {
+                let pull_signals =
+                    self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
+                let contains_signals = self.neighboring_signals(
+                    SignalType::Contains(*item_id),
+                    tile_pos,
+                    map_geometry,
+                );
+                let mut total_signals = pull_signals;
+
+                for (tile_pos, signal_strength) in contains_signals {
+                    if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                        *existing_signal_strength = *existing_signal_strength + signal_strength;
+                    } else {
+                        total_signals.insert(tile_pos, signal_strength);
+                    }
+                }
+
+                total_signals
+            }
+            Goal::Work(structure_id) => {
+                self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
+            }
+        };
+
+        for possible_tile in possible_tiles {
+            if let Some(&current_score) = neighboring_signals.get(&possible_tile) {
+                if current_score > best_score {
+                    best_score = current_score;
+                    best_choice = Some(possible_tile);
+                }
+            }
+        }
+
+        if let Some(chosen_tile_pos) = best_choice {
+            Some(chosen_tile_pos)
+        } else {
+            None
+        }
+    }
+
     /// Returns the signal strength of the type `signal_type` in `tile_pos` and its 6 surrounding neighbors.
-    pub(crate) fn neighboring_signals(
+    fn neighboring_signals(
         &self,
         signal_type: SignalType,
         tile_pos: TilePos,
@@ -193,7 +251,7 @@ pub(crate) struct SignalStrength(f32);
 
 impl SignalStrength {
     /// No signal is present.
-    const ZERO: SignalStrength = SignalStrength(0.);
+    pub(crate) const ZERO: SignalStrength = SignalStrength(0.);
 
     /// Creates a new [`SignalStrength`], ensuring that it has a minimum value of 0.
     pub(crate) fn new(value: f32) -> Self {
