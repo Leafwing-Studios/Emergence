@@ -1,7 +1,7 @@
 //! The clipboard stores selected structures, to later be placed via zoning.
 
 use bevy::{prelude::*, utils::HashMap};
-use hexx::Hex;
+use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -76,18 +76,8 @@ impl Clipboard {
             return;
         }
 
-        let mut x_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.x));
-        let mut y_vec = Vec::from_iter(self.keys().map(|tile_pos| tile_pos.y));
-
-        x_vec.sort_unstable();
-        y_vec.sort_unstable();
-
-        let mid = self.len() / 2;
         let center = TilePos {
-            hex: Hex {
-                x: x_vec[mid],
-                y: y_vec[mid],
-            },
+            hex: self.keys().map(|tile_pos| tile_pos.hex).center(),
         };
 
         let mut new_map = HashMap::with_capacity(self.capacity());
