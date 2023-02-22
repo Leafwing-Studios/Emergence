@@ -189,7 +189,7 @@ fn translate_camera(
 
         focus.translation += oriented_translation;
 
-        let nearest_tile_pos = TilePos::from_world_pos(focus.translation, &*map_geometry);
+        let nearest_tile_pos = TilePos::from_world_pos(focus.translation, &map_geometry);
         focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
     }
 
