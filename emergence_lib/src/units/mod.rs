@@ -108,6 +108,9 @@ impl Plugin for UnitsPlugin {
                     .label(UnitSystem::ChooseNewAction)
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
+            )
+            .add_system(
+                behavior::clear_goal_when_impatience_full.after(UnitSystem::ChooseNewAction),
             );
     }
 }

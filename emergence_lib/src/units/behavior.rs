@@ -71,10 +71,13 @@ impl Display for Goal {
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals: Res<Signals>) {
+pub(super) fn choose_goal(
+    mut units_query: Query<(&TilePos, &mut Goal, &mut Impatience)>,
+    signals: Res<Signals>,
+) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience) in units_query.iter_mut() {
         // By default, goals are reset to wandering when completed.
         // Pick a new goal when wandering.
         // If anything fails, just keep wandering for now.
@@ -90,6 +93,7 @@ pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals
                 if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
                     let selected_signal_type = *selected_signal.0;
                     *goal = selected_signal_type.try_into().unwrap();
+                    impatience.current = 0;
                 }
             }
         }
@@ -107,7 +111,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Goal, &mut Impatience, &mut CurrentAction), With<UnitId>>,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -116,7 +120,7 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, goal, mut current_action) in units_query.iter_mut() {
+    for (&unit_tile_pos, goal, mut impatience, mut current_action) in units_query.iter_mut() {
         if current_action.finished() {
             *current_action = match goal {
                 Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
@@ -144,6 +148,7 @@ pub(super) fn choose_actions(
                     {
                         CurrentAction::move_to(upstream)
                     } else {
+                        impatience.tick_up();
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
@@ -180,6 +185,7 @@ pub(super) fn choose_actions(
                     {
                         CurrentAction::move_to(upstream)
                     } else {
+                        impatience.tick_up();
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
@@ -341,5 +347,17 @@ impl Impatience {
     /// Increase this unit's impatience by 1.
     pub(crate) fn tick_up(&mut self) {
         self.current += 1;
+    }
+}
+
+/// Clears the current goal and drops any held item when impatience has been exceeded
+pub(super) fn clear_goal_when_impatience_full(
+    mut unit_query: Query<(&mut Goal, &mut Impatience), Changed<Impatience>>,
+) {
+    for (mut goal, mut impatience) in unit_query.iter_mut() {
+        if impatience.current > impatience.max {
+            impatience.current = 0;
+            *goal = Goal::Wander
+        }
     }
 }
