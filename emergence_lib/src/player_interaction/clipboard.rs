@@ -157,6 +157,7 @@ fn copy_selection(
                 };
 
                 clipboard.insert(*tile_pos, clipboard_item);
+                clipboard.normalize_positions();
             }
             CurrentSelection::Terrain(selected_tiles) => {
                 // If there is no selection, just grab whatever's under the cursor
