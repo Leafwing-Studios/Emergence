@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
+    inventory::InventoryState,
     ItemId,
 };
 
@@ -46,6 +47,17 @@ impl ItemSlot {
             item_id,
             max_item_count,
             count,
+        }
+    }
+
+    /// How full is this item slot?
+    pub(crate) fn state(&self) -> InventoryState {
+        if self.is_empty() {
+            InventoryState::Empty
+        } else if self.is_full() {
+            InventoryState::Full
+        } else {
+            InventoryState::Partial
         }
     }
 

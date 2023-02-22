@@ -6,7 +6,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     items::{
-        inventory::Inventory,
+        inventory::{Inventory, InventoryState},
         recipe::{Recipe, RecipeId, RecipeManifest},
         ItemData, ItemId, ItemManifest,
     },
@@ -193,9 +193,19 @@ fn start_and_finish_crafting(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+    use InventoryState::*;
+
+    /// The rate at which neglect rises and falls for crafting structures.
+    ///
+    /// Should be positive
+    const NEGLECT_RATE: f32 = 0.05;
+    /// The minimum neglect that a crafting structure can have.
+    ///
+    /// This ensures that buildings are not neglected forever after being satisfied for a while.
+    const MIN_NEGLECT: f32 = 0.05;
+
     for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
         // Reset and recompute all signals
-        // TODO: may eventually want to just reset crafting signals
         emitter.signals.clear();
 
         for item_slot in input_inventory.iter() {
@@ -217,6 +227,22 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 emitter.signals.push((signal_type, signal_strength));
             }
         }
+
+        let input_inventory_state = input_inventory.state();
+        let output_inventory_state = output_inventory.state();
+
+        let delta_neglect = match (input_inventory_state, output_inventory_state) {
+            // Needs more inputs
+            (Empty, _) => NEGLECT_RATE,
+            // Working happily
+            (Partial, Empty | Partial) => -NEGLECT_RATE,
+            // Outputs should be removed
+            (_, Full) => NEGLECT_RATE,
+            // Waiting to craft
+            (Full, Empty | Partial) => -NEGLECT_RATE,
+        };
+
+        emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
     }
 }
 

@@ -109,3 +109,15 @@ impl PreviewBundle {
         }
     }
 }
+
+/// Ghosts that are ignored will slowly become more important to build.
+pub(super) fn increase_ghost_neglect(mut ghost_query: Query<&mut Emitter, With<Ghost>>) {
+    /// The rate at which neglect grows for each cycle
+    ///
+    /// Should be positive.
+    const NEGLECT_RATE: f32 = 0.05;
+
+    for mut emitter in ghost_query.iter_mut() {
+        emitter.neglect_multiplier += NEGLECT_RATE;
+    }
+}

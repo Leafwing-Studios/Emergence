@@ -676,28 +676,31 @@ fn get_details(
                 tile_pos: *ghost_query_item.tile_pos,
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
+                neglect: ghost_query_item.emitter.neglect_multiplier,
             })
         }
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity).unwrap();
 
-            let crafting_details = if let Some((input, output, active_recipe, state, timer)) =
-                structure_query_item.crafting
-            {
-                let maybe_recipe_id = *active_recipe.recipe_id();
-                let recipe =
-                    maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
+            let crafting_details =
+                if let Some((input, output, active_recipe, state, timer, emitter)) =
+                    structure_query_item.crafting
+                {
+                    let maybe_recipe_id = *active_recipe.recipe_id();
+                    let recipe =
+                        maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
-                Some(CraftingDetails {
-                    input_inventory: input.inventory.clone(),
-                    output_inventory: output.inventory.clone(),
-                    recipe,
-                    state: state.clone(),
-                    timer: timer.timer().clone(),
-                })
-            } else {
-                None
-            };
+                    Some(CraftingDetails {
+                        input_inventory: input.inventory.clone(),
+                        output_inventory: output.inventory.clone(),
+                        recipe,
+                        state: state.clone(),
+                        timer: timer.timer().clone(),
+                        neglect: emitter.neglect_multiplier,
+                    })
+                } else {
+                    None
+                };
 
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
@@ -745,6 +748,7 @@ mod ghost_details {
     use core::fmt::Display;
 
     use crate::{
+        signals::Emitter,
         simulation::geometry::TilePos,
         structures::{crafting::InputInventory, StructureId},
     };
@@ -760,6 +764,8 @@ mod ghost_details {
         pub(crate) tile_pos: &'static TilePos,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: &'static InputInventory,
+        /// The signal emitter
+        pub(super) emitter: &'static Emitter,
     }
 
     /// Detailed info about a given ghost.
@@ -773,6 +779,8 @@ mod ghost_details {
         pub(crate) structure_id: StructureId,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: InputInventory,
+        /// The neglect multiplier of this ghost
+        pub(super) neglect: f32,
     }
 
     impl Display for GhostDetails {
@@ -781,12 +789,14 @@ mod ghost_details {
             let structure_id = &self.structure_id;
             let tile_pos = &self.tile_pos;
             let input_inventory = &*self.input_inventory;
+            let neglect = self.neglect;
 
             let string = format!(
                 "Entity: {entity:?}
 Ghost structure type: {structure_id}
 Tile: {tile_pos}
-Construction materials: {input_inventory}"
+Construction materials: {input_inventory}
+Neglect: {neglect:.2}"
             );
 
             write!(f, "{string}")
@@ -805,6 +815,7 @@ mod structure_details {
 
     use crate::{
         items::{inventory::Inventory, recipe::Recipe},
+        signals::Emitter,
         simulation::geometry::TilePos,
         structures::{
             crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
@@ -828,6 +839,7 @@ mod structure_details {
             &'static ActiveRecipe,
             &'static CraftingState,
             &'static CraftTimer,
+            &'static Emitter,
         )>,
     }
 
@@ -883,6 +895,9 @@ Tile: {tile_pos}"
 
         /// The time remaining to finish crafting.
         pub(crate) timer: Timer,
+
+        /// The neglect multiplier of the structure
+        pub(crate) neglect: f32,
     }
 
     impl Display for CraftingDetails {
@@ -892,6 +907,7 @@ Tile: {tile_pos}"
             let crafting_state = &self.state;
             let time_remaining = self.timer.remaining_secs();
             let total_duration = self.timer.duration().as_secs_f32();
+            let neglect = self.neglect;
 
             let recipe_string = match &self.recipe {
                 Some(recipe) => format!("{recipe}"),
@@ -903,7 +919,8 @@ Tile: {tile_pos}"
                 "Recipe: {recipe_string}
 Input: {input_inventory}
 {crafting_state}: {time_remaining:.1} s / {total_duration:.1} s
-Output: {output_inventory}"
+Output: {output_inventory}
+Neglect: {neglect:.2}"
             )
         }
     }
