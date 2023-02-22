@@ -341,7 +341,10 @@ impl Display for Impatience {
 
 impl Default for Impatience {
     fn default() -> Self {
-        Impatience { current: 0, max: 5 }
+        Impatience {
+            current: 0,
+            max: 10,
+        }
     }
 }
 

@@ -177,7 +177,7 @@ impl Display for LocalSignals {
         for signal_type in self.map.keys().sorted() {
             let signal_strength = self.map.get(signal_type).unwrap().0;
 
-            let substring = format!("{signal_type}: {signal_strength:.2}\n");
+            let substring = format!("{signal_type}: {signal_strength:.3}\n");
 
             string += &substring;
         }
@@ -369,7 +369,12 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     const DEGRADATION_FRACTION: f32 = 0.1;
 
     /// The value below which decayed signals are eliminated completely
-    const EPSILON_STRENGTH: SignalStrength = SignalStrength(0.0001);
+    ///
+    /// Increasing this value will:
+    ///  - increase computational costs
+    ///  - increase the range at which tasks can be detected
+    ///  - increase the amount of time units will wait around for more production
+    const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-5);
 
     for signal_map in signals.maps.values_mut() {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
