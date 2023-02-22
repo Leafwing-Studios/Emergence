@@ -368,9 +368,24 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     /// This must always be between 0 and 1.
     const DEGRADATION_FRACTION: f32 = 0.1;
 
+    /// The value below which decayed signals are eliminated completely
+    const EPSILON_STRENGTH: SignalStrength = SignalStrength(0.0001);
+
     for signal_map in signals.maps.values_mut() {
-        for signal_strength in signal_map.map.values_mut() {
-            *signal_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
+        let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
+
+        for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
+            let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
+
+            if new_strength > EPSILON_STRENGTH {
+                *signal_strength = new_strength;
+            } else {
+                tiles_to_clear.push(*tile_pos);
+            }
+        }
+
+        for tile_to_clear in tiles_to_clear {
+            signal_map.map.remove(&tile_to_clear);
         }
     }
 }
