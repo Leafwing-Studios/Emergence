@@ -8,7 +8,7 @@ use crate::{
 };
 use core::fmt::Display;
 
-use super::behavior::{CurrentAction, Goal, UnitAction};
+use super::behavior::{CurrentAction, Goal, Impatience, UnitAction};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Clone, Debug, Deref, DerefMut)]
@@ -63,14 +63,14 @@ impl HeldItem {
 
 /// A system which performs the transfer of items between units and structures.
 pub(super) fn pickup_and_drop_items(
-    mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem)>,
+    mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem, &mut Impatience)>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
     item_manifest: Res<ItemManifest>,
 ) {
     let item_manifest = &*item_manifest;
 
-    for (current_action, mut current_goal, mut held_item) in unit_query.iter_mut() {
+    for (current_action, mut current_goal, mut held_item, mut impatience) in unit_query.iter_mut() {
         if current_action.finished() {
             let new_goal: Goal = if let UnitAction::PickUp {
                 item_id,
@@ -79,11 +79,15 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(*item_id, 1);
-                    let _ = output_inventory.transfer_item(
+                    let transfer_result = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
                         item_manifest,
                     );
+
+                    if transfer_result.is_err() {
+                        impatience.tick_up();
+                    }
 
                     // If our unit's all loaded, swap to delivering it
                     if held_item.is_full() {
@@ -103,11 +107,15 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(*item_id, 1);
-                    let _ = held_item.transfer_item(
+                    let transfer_result = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
+
+                    if transfer_result.is_err() {
+                        impatience.tick_up();
+                    }
 
                     // If our unit is unloaded, swap to wandering to find something else to do
                     if held_item.is_empty() {
