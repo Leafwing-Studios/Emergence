@@ -46,6 +46,8 @@ pub(crate) enum Zoning {
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
+    // Tracked at: https://github.com/Leafwing-Studios/Emergence/issues/241
+    #[allow(dead_code)]
     KeepClear,
 }
 
@@ -91,7 +93,7 @@ fn set_zoning(
         if actions.pressed(PlayerAction::ClearZoning) {
             for terrain_entity in relevant_terrain_entities {
                 let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                *zoning = Zoning::KeepClear;
+                *zoning = Zoning::None;
             }
 
             // Don't try to clear and zone in the same frame
@@ -104,7 +106,7 @@ fn set_zoning(
                 // Clear zoning
                 for terrain_entity in relevant_terrain_entities {
                     let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                    *zoning = Zoning::KeepClear;
+                    *zoning = Zoning::None;
                 }
             // Zone using the single selected structure
             } else if clipboard.len() == 1 {
