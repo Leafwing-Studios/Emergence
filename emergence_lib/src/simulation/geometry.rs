@@ -50,6 +50,7 @@ impl TilePos {
     /// Returns the world position (in [`Transform`] units) associated with this tile.
     ///
     /// The `y` value returned corresponds to the top of the tile column at this location.
+    #[must_use]
     pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex);
         let y = *map_geometry.height_index.get(&self).unwrap();
@@ -58,6 +59,18 @@ impl TilePos {
             x: xz.x,
             y,
             z: xz.y,
+        }
+    }
+
+    /// Returns the nearest tile position to the provided [`WorldPos`].
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
+        TilePos {
+            hex: map_geometry.layout.world_pos_to_hex(Vec2 {
+                x: world_pos.x,
+                y: world_pos.z,
+            }),
         }
     }
 
