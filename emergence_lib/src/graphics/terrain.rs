@@ -16,7 +16,7 @@ pub(super) fn populate_terrain(
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, tile_pos, terrain) in new_terrain.iter() {
-        let world_pos = tile_pos.into_world_pos(&*map_geometry);
+        let world_pos = tile_pos.into_world_pos(&map_geometry);
 
         commands.entity(terrain_entity).insert(PbrBundle {
             mesh: handles.mesh.clone_weak(),

@@ -22,7 +22,7 @@ pub(super) fn populate_units(
             .entity(entity)
             .insert(SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(&*map_geometry)),
+                transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
                 ..default()
             })
             .insert(unit_handles.picking_mesh.clone_weak());

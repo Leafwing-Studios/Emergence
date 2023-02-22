@@ -62,7 +62,9 @@ impl TilePos {
         }
     }
 
-    /// Returns the nearest tile position to the provided [`WorldPos`].
+    /// Returns the nearest tile position to the provided `world_pos`
+    ///
+    /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
     #[must_use]
     #[allow(dead_code)]
     pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
