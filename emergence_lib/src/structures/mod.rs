@@ -13,7 +13,10 @@ use crate::{
     simulation::geometry::{Facing, TilePos},
 };
 
-use self::crafting::{CraftingPlugin, InputInventory};
+use self::{
+    crafting::{CraftingPlugin, InputInventory},
+    ghost::increase_ghost_neglect,
+};
 use std::fmt::Display;
 
 pub(crate) mod commands;
@@ -131,6 +134,7 @@ pub(super) struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin)
-            .init_resource::<StructureManifest>();
+            .init_resource::<StructureManifest>()
+            .add_system(increase_ghost_neglect);
     }
 }
