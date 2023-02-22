@@ -36,6 +36,11 @@ pub(crate) enum InventoryState {
 }
 
 impl InventoryState {
+    /// Combines `self` with `other`, yielding a new [`InventoryState`].
+    ///
+    /// Empty + Empty = Empty
+    /// Full + Full = Full
+    /// Otherwise, Partial
     fn combine(&self, other: InventoryState) -> Self {
         use InventoryState::*;
         match (self, other) {
