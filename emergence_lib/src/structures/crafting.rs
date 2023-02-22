@@ -6,7 +6,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     items::{
-        inventory::Inventory,
+        inventory::{Inventory, InventoryState},
         recipe::{Recipe, RecipeId, RecipeManifest},
         ItemData, ItemId, ItemManifest,
     },
@@ -193,6 +193,8 @@ fn start_and_finish_crafting(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+    use InventoryState::*;
+
     /// The rate at which neglect rises and falls for crafting structures.
     ///
     /// Should be positive
@@ -204,20 +206,29 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
 
     for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
         // Reset and recompute all signals
-        // TODO: may eventually want to just reset crafting signals
         emitter.signals.clear();
+
+        let input_inventory_state = input_inventory.state();
+        let output_inventory_state = output_inventory.state();
+
+        let delta_neglect = match (input_inventory_state, output_inventory_state) {
+            // Needs more inputs
+            (Empty, _) => NEGLECT_RATE,
+            // Working happily
+            (Partial, Empty | Partial) => -NEGLECT_RATE,
+            // Outputs should be removed
+            (_, Full) => NEGLECT_RATE,
+            // Waiting to craft
+            (Full, Empty | Partial) => -NEGLECT_RATE,
+        };
+
+        emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
 
         for item_slot in input_inventory.iter() {
             if !item_slot.is_full() {
                 let signal_type = SignalType::Pull(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
-                if item_slot.is_empty() {
-                    emitter.neglect_multiplier += NEGLECT_RATE;
-                } else {
-                    emitter.neglect_multiplier =
-                        (emitter.neglect_multiplier - NEGLECT_RATE).max(MIN_NEGLECT);
-                }
             }
         }
 
@@ -226,15 +237,10 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 let signal_type = SignalType::Push(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
-
-                emitter.neglect_multiplier += NEGLECT_RATE;
             } else if !item_slot.is_empty() {
                 let signal_type = SignalType::Contains(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
-            } else {
-                emitter.neglect_multiplier =
-                    (emitter.neglect_multiplier - NEGLECT_RATE).max(MIN_NEGLECT);
             }
         }
     }

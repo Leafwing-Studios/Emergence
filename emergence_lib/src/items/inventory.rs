@@ -23,6 +23,29 @@ pub(crate) struct Inventory {
     max_slot_count: usize,
 }
 
+/// The fullness of an inventory
+#[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
+pub(crate) enum InventoryState {
+    /// Fully empty.
+    Empty,
+    /// Neither empty nor full.
+    #[default]
+    Partial,
+    /// Completely full.
+    Full,
+}
+
+impl InventoryState {
+    fn combine(&self, other: InventoryState) -> Self {
+        use InventoryState::*;
+        match (self, other) {
+            (Empty, Empty) => Empty,
+            (Full, Full) => Full,
+            _ => Partial,
+        }
+    }
+}
+
 #[allow(dead_code)]
 impl Inventory {
     /// Create an empty inventory with the given amount of slots.
@@ -45,6 +68,26 @@ impl Inventory {
     /// Returns an iterator over the items in the inventory and their count.
     pub(crate) fn iter(&self) -> impl Iterator<Item = &ItemSlot> {
         self.slots.iter()
+    }
+
+    /// How full is this inventory?
+    pub(crate) fn state(&self) -> InventoryState {
+        let mut inventory_state: Option<InventoryState> = None;
+
+        for item_slot in self.iter() {
+            let slot_state = item_slot.state();
+            inventory_state = match inventory_state {
+                Some(previous_state) => Some(previous_state.combine(slot_state)),
+                None => Some(slot_state),
+            };
+
+            // Partially filled inventories are always partially filled.
+            if matches!(inventory_state.unwrap(), InventoryState::Partial) {
+                return InventoryState::Partial;
+            }
+        }
+
+        inventory_state.unwrap_or_default()
     }
 
     /// Determine how many items of the given type are in the inventory.
