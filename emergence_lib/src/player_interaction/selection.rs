@@ -8,6 +8,7 @@ use self::unit_details::*;
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
+use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::items::recipe::RecipeManifest;
@@ -66,6 +67,13 @@ impl SelectedTiles {
     /// Is the given tile in the selection?
     pub(crate) fn contains_tile(&self, tile_pos: TilePos) -> bool {
         self.selected.contains(&tile_pos)
+    }
+
+    /// Computes the center of the selection
+    pub(crate) fn center(&self) -> TilePos {
+        TilePos {
+            hex: self.selected.iter().map(|tile_pos| tile_pos.hex).center(),
+        }
     }
 
     /// Draws a hollow hexagonal ring of tiles.

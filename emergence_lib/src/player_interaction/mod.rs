@@ -96,6 +96,8 @@ pub(crate) enum PlayerAction {
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
     RotateClipboardRight,
+    /// Snaps the camera to the selected object
+    SnapToSelection,
     /// Move the camera from side to side
     Pan,
     /// Move the cursor around the screen
@@ -129,6 +131,7 @@ impl PlayerAction {
             ClearZoning => KeyCode::Back.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
+            SnapToSelection => KeyCode::Return.into(),
             Pan => VirtualDPad::wasd().into(),
             MoveCursor => VirtualDPad::arrow_keys().into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
@@ -161,6 +164,7 @@ impl PlayerAction {
             ClearZoning => DPadUp.into(),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
+            SnapToSelection => GamepadButtonType::LeftThumb.into(),
             Pan => DualAxis::left_stick().into(),
             MoveCursor => DualAxis::right_stick().into(),
             ZoomIn => UserInput::chord([camera_modifier, DPadUp]),

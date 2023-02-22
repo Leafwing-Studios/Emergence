@@ -16,15 +16,13 @@ pub(super) fn populate_units(
     map_geometry: Res<MapGeometry>,
 ) {
     for (entity, tile_pos, unit_id) in new_units.iter() {
-        let pos = map_geometry.layout.hex_to_world_pos(tile_pos.hex);
-        let terrain_height = *map_geometry.height_index.get(tile_pos).unwrap();
         let scene_handle = unit_handles.scenes.get(unit_id).unwrap();
 
         commands
             .entity(entity)
             .insert(SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_xyz(pos.x, terrain_height, pos.y),
+                transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
                 ..default()
             })
             .insert(unit_handles.picking_mesh.clone_weak());

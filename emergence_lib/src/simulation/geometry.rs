@@ -47,6 +47,35 @@ impl TilePos {
         TilePos { hex: Hex { x, y } }
     }
 
+    /// Returns the world position (in [`Transform`] units) associated with this tile.
+    ///
+    /// The `y` value returned corresponds to the top of the tile column at this location.
+    #[must_use]
+    pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
+        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
+        let y = *map_geometry.height_index.get(&self).unwrap();
+
+        Vec3 {
+            x: xz.x,
+            y,
+            z: xz.y,
+        }
+    }
+
+    /// Returns the nearest tile position to the provided `world_pos`
+    ///
+    /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
+        TilePos {
+            hex: map_geometry.layout.world_pos_to_hex(Vec2 {
+                x: world_pos.x,
+                y: world_pos.z,
+            }),
+        }
+    }
+
     /// Choose a random adjacent tile without structures.
     ///
     /// It must be free of structures and on the map.
