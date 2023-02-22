@@ -748,7 +748,7 @@ mod ghost_details {
         structures::{crafting::InputInventory, StructureId},
     };
 
-    /// Data needed to populate [`StructureDetails`].
+    /// Data needed to populate [`GhostDetails`].
     #[derive(WorldQuery)]
     pub(super) struct GhostDetailsQuery {
         /// The root entity
