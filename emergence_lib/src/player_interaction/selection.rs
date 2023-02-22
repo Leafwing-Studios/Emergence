@@ -285,6 +285,7 @@ pub(crate) enum CurrentSelection {
 
 impl CurrentSelection {
     /// Just select the terrain.
+    #[must_use]
     fn select_terrain(
         &self,
         hovered_tile: TilePos,
@@ -557,24 +558,16 @@ fn set_selection(
         // No need to do work here, hovered tiles are always computed
         (SelectionAction::Preview, _) => (),
         (SelectionAction::Select, SelectionShape::Line { .. }) => {
-            current_selection.update_from_cursor_pos(
-                cursor_pos,
-                hovered_tile,
-                *selection_state,
-                map_geometry,
-            );
+            *current_selection =
+                current_selection.select_terrain(hovered_tile, *selection_state, map_geometry);
             // Let players chain lines head to tail nicely
             selection_state.shape = SelectionShape::Line {
                 start: hovered_tile,
             };
         }
         (SelectionAction::Select, SelectionShape::Area { .. }) => {
-            current_selection.update_from_cursor_pos(
-                cursor_pos,
-                hovered_tile,
-                *selection_state,
-                map_geometry,
-            );
+            *current_selection =
+                current_selection.select_terrain(hovered_tile, *selection_state, map_geometry);
         }
         (SelectionAction::Select, SelectionShape::Single) => {
             // If we can compare them, do
