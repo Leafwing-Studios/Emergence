@@ -731,6 +731,7 @@ fn get_details(
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
+                impatience: unit_query_item.impatience.clone(),
             })
         }
         CurrentSelection::None => SelectionDetails::None,
@@ -964,7 +965,7 @@ mod unit_details {
     use crate::{
         simulation::geometry::TilePos,
         units::{
-            behavior::{CurrentAction, Goal},
+            behavior::{CurrentAction, Goal, Impatience},
             item_interaction::HeldItem,
             UnitId,
         },
@@ -985,6 +986,8 @@ mod unit_details {
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
+        /// How frustrated is this unit
+        pub(super) impatience: &'static Impatience,
     }
 
     /// Detailed info about a given unit.
@@ -1002,6 +1005,8 @@ mod unit_details {
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,
+        /// How frustrated is this unit
+        pub(super) impatience: Impatience,
     }
 
     impl Display for UnitDetails {
@@ -1012,6 +1017,7 @@ mod unit_details {
             let held_item = &self.held_item;
             let goal = &self.goal;
             let action = &self.action;
+            let impatience = &self.impatience;
 
             write!(
                 f,
@@ -1020,7 +1026,8 @@ Unit type: {unit_id}
 Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
-Action: {action}"
+Action: {action}
+Impatience: {impatience}"
             )
         }
     }

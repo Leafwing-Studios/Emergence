@@ -313,3 +313,33 @@ impl CurrentAction {
         }
     }
 }
+
+/// How many times this unit has failed to make progress towards its goal.
+///
+/// When this reaches its max value, the unit will abandon its goal and drop anything its holding.
+#[derive(Component, Clone, Debug)]
+pub(crate) struct Impatience {
+    current: u8,
+    max: u8,
+}
+
+impl Display for Impatience {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let current = self.current;
+        let max = self.max;
+        write!(f, "{current}/{max}")
+    }
+}
+
+impl Default for Impatience {
+    fn default() -> Self {
+        Impatience { current: 0, max: 5 }
+    }
+}
+
+impl Impatience {
+    /// Increase this unit's impatience by 1.
+    pub(crate) fn tick_up(&mut self) {
+        self.current += 1;
+    }
+}
