@@ -161,6 +161,19 @@ impl MapGeometry {
         let heights = hex_iter.map(|hex| *self.height_index.get(&TilePos { hex }).unwrap_or(&0.));
         heights.sum::<f32>() / n as f32
     }
+
+    /// Gets the ghost or structure [`Entity`] at the provided `tile_pos`, if any.
+    ///
+    /// Ghosts will take priority over structures.
+    pub(crate) fn get_ghost_or_structure(&self, tile_pos: TilePos) -> Option<Entity> {
+        if let Some(&ghost_entity) = self.ghost_index.get(&tile_pos) {
+            Some(ghost_entity)
+        } else if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+            Some(structure_entity)
+        } else {
+            None
+        }
+    }
 }
 
 impl MapGeometry {
