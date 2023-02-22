@@ -131,11 +131,7 @@ impl Signals {
             }
         }
 
-        if let Some(chosen_tile_pos) = best_choice {
-            Some(chosen_tile_pos)
-        } else {
-            None
-        }
+        best_choice
     }
 
     /// Returns the signal strength of the type `signal_type` in `tile_pos` and its 6 surrounding neighbors.
@@ -159,6 +155,7 @@ impl Signals {
 /// All of the signals on a single tile.
 #[derive(Debug)]
 pub(crate) struct LocalSignals {
+    /// Internal data storage
     map: HashMap<SignalType, SignalStrength>,
 }
 

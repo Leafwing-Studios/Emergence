@@ -656,6 +656,7 @@ pub(crate) enum SelectionDetails {
 }
 
 /// Get details about the hovered entity.
+#[allow(clippy::too_many_arguments)]
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
@@ -684,16 +685,13 @@ fn get_details(
                 structure_query_item.crafting
             {
                 let maybe_recipe_id = *active_recipe.recipe_id();
-                let recipe = if let Some(recipe_id) = maybe_recipe_id {
-                    Some(recipe_manifest.get(recipe_id).clone())
-                } else {
-                    None
-                };
+                let recipe =
+                    maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
                 Some(CraftingDetails {
                     input_inventory: input.inventory.clone(),
                     output_inventory: output.inventory.clone(),
-                    recipe: recipe,
+                    recipe,
                     state: state.clone(),
                     timer: timer.timer().clone(),
                 })
