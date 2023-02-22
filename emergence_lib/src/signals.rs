@@ -155,7 +155,7 @@ pub(crate) enum SignalType {
     /// Bring me an item of this type.
     Pull(ItemId),
     /// Has an item of this type, in case you were looking.
-    Contains(StructureId),
+    Contains(ItemId),
     /// Perform work at this type of structure.
     Work(StructureId),
 }
@@ -165,7 +165,7 @@ impl Display for SignalType {
         let string = match self {
             SignalType::Push(item_id) => format!("Push({item_id})"),
             SignalType::Pull(item_id) => format!("Pull({item_id})"),
-            SignalType::Contains(item_id) => format!("Contains{item_id})"),
+            SignalType::Contains(item_id) => format!("Contains({item_id})"),
             SignalType::Work(structure_id) => format!("Work({structure_id})"),
         };
 
