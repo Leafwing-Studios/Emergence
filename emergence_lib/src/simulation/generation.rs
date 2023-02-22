@@ -35,14 +35,14 @@ pub struct GenerationConfig {
 
 impl GenerationConfig {
     /// The number of tiles from the center of the map to the edge
-    const MAP_RADIUS: u32 = 5;
+    const MAP_RADIUS: u32 = 20;
 
     /// The number of ants in the default generation config
-    const N_ANT: usize = 1;
+    const N_ANT: usize = 5;
     /// The number of plants in the default generation config
-    const N_PLANT: usize = 1;
+    const N_PLANT: usize = 12;
     /// The number of fungi in the default generation config
-    const N_FUNGI: usize = 1;
+    const N_FUNGI: usize = 2;
 
     /// The choice weight for plain terrain in default generation config
     const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;

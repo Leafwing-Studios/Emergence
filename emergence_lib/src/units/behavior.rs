@@ -139,7 +139,8 @@ pub(super) fn choose_actions(
 
                     if let Some(output_entity) = entities_with_desired_item.choose(rng) {
                         CurrentAction::pickup(*item_id, *output_entity)
-                    } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry)
+                    } else if let Some(upstream) =
+                        signals.upstream(unit_tile_pos, goal, map_geometry)
                     {
                         CurrentAction::move_to(upstream)
                     } else {
@@ -174,7 +175,8 @@ pub(super) fn choose_actions(
 
                     if let Some(input_entity) = entities_with_desired_item.choose(rng) {
                         CurrentAction::dropoff(*item_id, *input_entity)
-                    } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry)
+                    } else if let Some(upstream) =
+                        signals.upstream(unit_tile_pos, goal, map_geometry)
                     {
                         CurrentAction::move_to(upstream)
                     } else {
