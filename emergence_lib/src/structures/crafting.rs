@@ -193,6 +193,11 @@ fn start_and_finish_crafting(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+    /// The rate at which neglect rises and falls for crafting structures.
+    ///
+    /// Should be just above 1.0.
+    const NEGLECT_RATE: f32 = 1.01;
+
     for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
         // Reset and recompute all signals
         // TODO: may eventually want to just reset crafting signals
@@ -203,6 +208,11 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 let signal_type = SignalType::Pull(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
+                if item_slot.is_empty() {
+                    emitter.neglect_multiplier *= NEGLECT_RATE;
+                } else {
+                    emitter.neglect_multiplier /= NEGLECT_RATE;
+                }
             }
         }
 
@@ -211,10 +221,14 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 let signal_type = SignalType::Push(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
+
+                emitter.neglect_multiplier *= NEGLECT_RATE;
             } else if !item_slot.is_empty() {
                 let signal_type = SignalType::Contains(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
+            } else {
+                emitter.neglect_multiplier /= NEGLECT_RATE;
             }
         }
     }
