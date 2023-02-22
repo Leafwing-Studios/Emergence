@@ -16,6 +16,7 @@ use crate::structures::StructureId;
 use crate::terrain::Terrain;
 use crate::units::UnitId;
 
+use super::selection::CurrentSelection;
 use super::InteractionSystem;
 use super::PlayerAction;
 
@@ -146,6 +147,7 @@ fn translate_camera(
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
+    selection: Res<CurrentSelection>,
 ) {
     let (mut focus, facing, settings) = camera_query.single_mut();
 
@@ -179,6 +181,21 @@ fn translate_camera(
         let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
         focus.translation += oriented_translation;
+    }
+
+    // Snap to selected object
+    if actions.pressed(PlayerAction::SnapToSelection) {
+        let tile_to_snap_to = match &*selection {
+            CurrentSelection::Ghost(ghost_entity) => todo!(),
+            CurrentSelection::Structure(structure_entity) => todo!(),
+            CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
+            CurrentSelection::Unit(unit_entity) => todo!(),
+            CurrentSelection::None => None,
+        };
+
+        if let Some(target) = tile_to_snap_to {
+            focus.translation = target.into_world_pos(&*map_geometry);
+        }
     }
 }
 
