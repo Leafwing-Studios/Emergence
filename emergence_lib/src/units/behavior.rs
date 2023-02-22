@@ -70,95 +70,6 @@ impl Display for Goal {
     }
 }
 
-impl Goal {
-    /// Choose an action based on the goal and the information about the environment.
-    fn choose_action(
-        &self,
-        unit_tile_pos: TilePos,
-        map_geometry: &MapGeometry,
-        input_inventory_query: &Query<&InputInventory>,
-        output_inventory_query: &Query<&OutputInventory>,
-        rng: &mut ThreadRng,
-    ) -> CurrentAction {
-        match self {
-            Goal::Wander => {
-                if let Some(random_neighbor) =
-                    unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
-                {
-                    CurrentAction::move_to(random_neighbor)
-                } else {
-                    CurrentAction::idle()
-                }
-            }
-            Goal::Pickup(item_id) => {
-                let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
-                let mut entities_with_desired_item: Vec<Entity> = Vec::new();
-
-                for tile_pos in neighboring_tiles {
-                    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                        if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
-                            if output_inventory.item_count(*item_id) > 0 {
-                                entities_with_desired_item.push(structure_entity);
-                            }
-                        }
-                    }
-                }
-
-                if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::pickup(*item_id, *output_entity)
-                } else {
-                    // TODO: walk towards destination more intelligently
-                    Goal::Wander.choose_action(
-                        unit_tile_pos,
-                        map_geometry,
-                        input_inventory_query,
-                        output_inventory_query,
-                        rng,
-                    )
-                }
-            }
-            Goal::DropOff(item_id) => {
-                let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
-                let mut entities_with_desired_item: Vec<Entity> = Vec::new();
-
-                for tile_pos in neighboring_tiles {
-                    // Ghosts
-                    if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
-                        if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
-                            if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
-                                entities_with_desired_item.push(ghost_entity);
-                            }
-                        }
-                    }
-
-                    // Structures
-                    if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                        if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
-                            if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
-                                entities_with_desired_item.push(structure_entity);
-                            }
-                        }
-                    }
-                }
-
-                if let Some(input_entity) = entities_with_desired_item.choose(rng) {
-                    CurrentAction::dropoff(*item_id, *input_entity)
-                } else {
-                    // TODO: walk towards destination more intelligently
-                    Goal::Wander.choose_action(
-                        unit_tile_pos,
-                        map_geometry,
-                        input_inventory_query,
-                        output_inventory_query,
-                        rng,
-                    )
-                }
-            }
-            Goal::Work(_) => todo!(),
-        }
-    }
-}
-
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals: Res<Signals>) {
     let rng = &mut thread_rng();
@@ -204,15 +115,69 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, current_goal, mut current_action) in units_query.iter_mut() {
+    for (&unit_tile_pos, goal, mut current_action) in units_query.iter_mut() {
         if current_action.finished() {
-            *current_action = current_goal.choose_action(
-                unit_tile_pos,
-                map_geometry,
-                &input_inventory_query,
-                &output_inventory_query,
-                rng,
-            );
+            *current_action = match goal {
+                Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
+                Goal::Pickup(item_id) => {
+                    let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                    let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                    for tile_pos in neighboring_tiles {
+                        if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos)
+                        {
+                            if let Ok(output_inventory) =
+                                output_inventory_query.get(structure_entity)
+                            {
+                                if output_inventory.item_count(*item_id) > 0 {
+                                    entities_with_desired_item.push(structure_entity);
+                                }
+                            }
+                        }
+                    }
+
+                    if let Some(output_entity) = entities_with_desired_item.choose(rng) {
+                        CurrentAction::pickup(*item_id, *output_entity)
+                    } else {
+                        // TODO: walk towards destination more intelligently
+                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                    }
+                }
+                Goal::DropOff(item_id) => {
+                    let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                    let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                    for tile_pos in neighboring_tiles {
+                        // Ghosts
+                        if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+                            if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
+                                if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
+                                    entities_with_desired_item.push(ghost_entity);
+                                }
+                            }
+                        }
+
+                        // Structures
+                        if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos)
+                        {
+                            if let Ok(input_inventory) = input_inventory_query.get(structure_entity)
+                            {
+                                if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
+                                    entities_with_desired_item.push(structure_entity);
+                                }
+                            }
+                        }
+                    }
+
+                    if let Some(input_entity) = entities_with_desired_item.choose(rng) {
+                        CurrentAction::dropoff(*item_id, *input_entity)
+                    } else {
+                        // TODO: walk towards destination more intelligently
+                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                    }
+                }
+                Goal::Work(_) => todo!(),
+            }
         }
     }
 }
@@ -287,6 +252,20 @@ impl CurrentAction {
     /// Have we waited long enough to perform this action?
     pub(super) fn finished(&self) -> bool {
         self.timer.finished()
+    }
+
+    /// Wander to an adjacent tile, chosen randomly
+    fn wander(
+        unit_tile_pos: TilePos,
+        rng: &mut ThreadRng,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        if let Some(random_neighbor) = unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
+        {
+            CurrentAction::move_to(random_neighbor)
+        } else {
+            CurrentAction::idle()
+        }
     }
 
     /// Move to the adjacent tile
