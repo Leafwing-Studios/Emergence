@@ -208,22 +208,6 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
         // Reset and recompute all signals
         emitter.signals.clear();
 
-        let input_inventory_state = input_inventory.state();
-        let output_inventory_state = output_inventory.state();
-
-        let delta_neglect = match (input_inventory_state, output_inventory_state) {
-            // Needs more inputs
-            (Empty, _) => NEGLECT_RATE,
-            // Working happily
-            (Partial, Empty | Partial) => -NEGLECT_RATE,
-            // Outputs should be removed
-            (_, Full) => NEGLECT_RATE,
-            // Waiting to craft
-            (Full, Empty | Partial) => -NEGLECT_RATE,
-        };
-
-        emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
-
         for item_slot in input_inventory.iter() {
             if !item_slot.is_full() {
                 let signal_type = SignalType::Pull(item_slot.item_id());
@@ -243,6 +227,22 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 emitter.signals.push((signal_type, signal_strength));
             }
         }
+
+        let input_inventory_state = input_inventory.state();
+        let output_inventory_state = output_inventory.state();
+
+        let delta_neglect = match (input_inventory_state, output_inventory_state) {
+            // Needs more inputs
+            (Empty, _) => NEGLECT_RATE,
+            // Working happily
+            (Partial, Empty | Partial) => -NEGLECT_RATE,
+            // Outputs should be removed
+            (_, Full) => NEGLECT_RATE,
+            // Waiting to craft
+            (Full, Empty | Partial) => -NEGLECT_RATE,
+        };
+
+        emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
     }
 }
 
