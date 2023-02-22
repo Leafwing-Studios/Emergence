@@ -162,6 +162,21 @@ fn copy_selection(
             CurrentSelection::Terrain(selected_tiles) => {
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_tiles.is_empty() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                        if let Some(structure_entity) =
+                            map_geometry.structure_index.get(&hovered_tile)
+                        {
+                            let (_tile_pos, id, facing) =
+                                structure_query.get(*structure_entity).unwrap();
+
+                            let clipboard_item = StructureData {
+                                structure_id: *id,
+                                facing: *facing,
+                            };
+
+                            clipboard.insert(TilePos::default(), clipboard_item);
+                        }
+                    }
                 } else {
                     for selected_tile_pos in selected_tiles.selection().iter() {
                         if let Some(structure_entity) =
@@ -182,7 +197,7 @@ fn copy_selection(
                 }
             }
             // Otherwise, just grab whatever's under the cursor
-            _ => {
+            CurrentSelection::None | CurrentSelection::Unit(_) | CurrentSelection::Ghost(_) => {
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
                     if let Some(structure_entity) =
                         map_geometry.structure_index.get(&cursor_tile_pos)
