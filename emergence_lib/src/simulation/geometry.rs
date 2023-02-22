@@ -48,6 +48,8 @@ impl TilePos {
     }
 
     /// Returns the world position (in [`Transform`] units) associated with this tile.
+    ///
+    /// The `y` value returned corresponds to the top of the tile column at this location.
     pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex);
         let y = *map_geometry.height_index.get(&self).unwrap();
