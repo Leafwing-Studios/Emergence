@@ -629,7 +629,6 @@ fn set_selection(
             }
 
             // Let players chain lines head to tail nicely
-            // Let players chain lines head to tail nicely
             selection_state.shape = SelectionShape::Line {
                 start: hovered_tile,
             };
