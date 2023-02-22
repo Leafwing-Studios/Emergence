@@ -70,12 +70,11 @@ fn set_zoning(
                 selected_tiles
             }
             CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
-            CurrentSelection::None => {
+            CurrentSelection::None | CurrentSelection::Unit(_) => {
                 let mut selected_tiles = SelectedTiles::default();
                 selected_tiles.add_tile(cursor_tile_pos);
                 selected_tiles
             }
-            _ => return,
         };
 
         let relevant_terrain_entities: Vec<Entity> = if selected_tiles.is_empty() {
