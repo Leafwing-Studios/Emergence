@@ -110,6 +110,10 @@ struct CameraSettings {
     ///
     /// Should always be between 0 (unmoving) and 1 (instant).
     rotational_interpolation: f32,
+    /// How many tiles away from the focus should the camera take into consideration when computing the correct height?
+    ///
+    /// Increasing this value will result in a "smoother ride" over the hills and valleys of the map.
+    float_radius: u32,
 }
 
 impl Default for CameraSettings {
@@ -121,6 +125,7 @@ impl Default for CameraSettings {
             max_zoom: 100.,
             linear_interpolation: 0.2,
             rotational_interpolation: 0.1,
+            float_radius: 3,
         }
     }
 }
@@ -183,6 +188,9 @@ fn translate_camera(
         let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
         focus.translation += oriented_translation;
+
+        let nearest_tile_pos = TilePos::from_world_pos(focus.translation, &*map_geometry);
+        focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
     }
 
     // Snap to selected object

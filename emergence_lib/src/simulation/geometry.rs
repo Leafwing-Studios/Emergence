@@ -3,7 +3,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
-use hexx::{Direction, Hex, HexLayout};
+use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -151,6 +151,15 @@ impl MapGeometry {
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
+    }
+
+    /// Returns the average height of tiles around `tile_pos` within `radius`
+    pub(crate) fn average_height(&self, tile_pos: TilePos, radius: u32) -> f32 {
+        let hex_iter = hexagon(tile_pos.hex, radius);
+        let n = hex_iter.count();
+        let hex_iter = hexagon(tile_pos.hex, radius);
+        let heights = hex_iter.map(|hex| *self.height_index.get(&TilePos { hex }).unwrap_or(&0.));
+        heights.sum::<f32>() / n as f32
     }
 }
 
