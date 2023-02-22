@@ -53,8 +53,13 @@ impl GhostBundle {
         data: StructureData,
         construction_materials: InputInventory,
     ) -> Self {
-        let item_slot = construction_materials.iter().next().unwrap();
-        let item_id = item_slot.item_id();
+        // Emit signals to cause workers to bring the correct item to this ghost
+        let mut emitter = Emitter::default();
+        for item_slot in construction_materials.iter() {
+            let signal_type = SignalType::Pull(item_slot.item_id());
+            let signal_strength = SignalStrength::new(10.);
+            emitter.signals.push((signal_type, signal_strength))
+        }
 
         GhostBundle {
             ghost: Ghost,
@@ -65,10 +70,7 @@ impl GhostBundle {
             construction_materials,
             object_interaction: ObjectInteraction::None,
             raycast_mesh: RaycastMesh::default(),
-            emitter: Emitter {
-                signal_type: Some(SignalType::Pull(item_id)),
-                signal_strength: SignalStrength::new(10.),
-            },
+            emitter,
         }
     }
 }

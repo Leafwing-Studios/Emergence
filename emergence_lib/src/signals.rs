@@ -218,22 +218,20 @@ impl Mul<f32> for SignalStrength {
     }
 }
 
-/// A game object that emits a signal.
+/// The component that causes a game object to emit a signal.
 ///
-/// This can change over time, but only one signal may be emitted at once.
-#[derive(Component, Debug, Default)]
+/// This can change over time, and multiple signals may be emitted at once.
+#[derive(Component, Debug, Default, Clone)]
 pub(crate) struct Emitter {
-    /// The type of signal being emitted, if any.
-    pub(crate) signal_type: Option<SignalType>,
-    /// The rate at which the signal is emitted per tick
-    pub(crate) signal_strength: SignalStrength,
+    /// The list of signals to emit at a provided
+    pub(crate) signals: Vec<(SignalType, SignalStrength)>,
 }
 
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &Emitter)>) {
     for (&tile_pos, emitter) in emitter_query.iter() {
-        if let Some(signal_type) = emitter.signal_type {
-            signals.add_signal(signal_type, tile_pos, emitter.signal_strength);
+        for (signal_type, signal_strength) in &emitter.signals {
+            signals.add_signal(*signal_type, tile_pos, *signal_strength);
         }
     }
 }
