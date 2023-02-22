@@ -17,6 +17,8 @@ use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
 
+use super::item_interaction::HeldItem;
+
 /// A unit's current goals.
 ///
 /// Units will be fully concentrated on any task other than [`Goal::Wander`] until it is complete (or overridden).
@@ -351,12 +353,13 @@ impl Impatience {
 }
 
 /// Clears the current goal and drops any held item when impatience has been exceeded
-pub(super) fn clear_goal_when_impatience_full(
-    mut unit_query: Query<(&mut Goal, &mut Impatience), Changed<Impatience>>,
+pub(super) fn handle_full_impatience(
+    mut unit_query: Query<(&mut Goal, &mut Impatience, &mut HeldItem), Changed<Impatience>>,
 ) {
-    for (mut goal, mut impatience) in unit_query.iter_mut() {
+    for (mut goal, mut impatience, mut held_item) in unit_query.iter_mut() {
         if impatience.current > impatience.max {
             impatience.current = 0;
+            *held_item = HeldItem::default();
             *goal = Goal::Wander
         }
     }

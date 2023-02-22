@@ -109,8 +109,6 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
-            .add_system(
-                behavior::clear_goal_when_impatience_full.after(UnitSystem::ChooseNewAction),
-            );
+            .add_system(behavior::handle_full_impatience.after(UnitSystem::ChooseNewAction));
     }
 }
