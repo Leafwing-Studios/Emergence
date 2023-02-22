@@ -17,6 +17,8 @@ use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
 
+use super::item_interaction::HeldItem;
+
 /// A unit's current goals.
 ///
 /// Units will be fully concentrated on any task other than [`Goal::Wander`] until it is complete (or overridden).
@@ -71,10 +73,13 @@ impl Display for Goal {
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals: Res<Signals>) {
+pub(super) fn choose_goal(
+    mut units_query: Query<(&TilePos, &mut Goal, &mut Impatience)>,
+    signals: Res<Signals>,
+) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience) in units_query.iter_mut() {
         // By default, goals are reset to wandering when completed.
         // Pick a new goal when wandering.
         // If anything fails, just keep wandering for now.
@@ -90,6 +95,7 @@ pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals
                 if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
                     let selected_signal_type = *selected_signal.0;
                     *goal = selected_signal_type.try_into().unwrap();
+                    impatience.current = 0;
                 }
             }
         }
@@ -107,7 +113,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Goal, &mut Impatience, &mut CurrentAction), With<UnitId>>,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -116,7 +122,7 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, goal, mut current_action) in units_query.iter_mut() {
+    for (&unit_tile_pos, goal, mut impatience, mut current_action) in units_query.iter_mut() {
         if current_action.finished() {
             *current_action = match goal {
                 Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
@@ -144,6 +150,7 @@ pub(super) fn choose_actions(
                     {
                         CurrentAction::move_to(upstream)
                     } else {
+                        impatience.tick_up();
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
@@ -180,6 +187,7 @@ pub(super) fn choose_actions(
                     {
                         CurrentAction::move_to(upstream)
                     } else {
+                        impatience.tick_up();
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
@@ -310,6 +318,54 @@ impl CurrentAction {
                 input_entity,
             },
             timer: Timer::from_seconds(0.2, TimerMode::Once),
+        }
+    }
+}
+
+/// How many times this unit has failed to make progress towards its goal.
+///
+/// When this reaches its max value, the unit will abandon its goal and drop anything its holding.
+#[derive(Component, Clone, Debug)]
+pub(crate) struct Impatience {
+    /// The current impatience for this unit
+    current: u8,
+    /// The maximum impatience for this unit
+    max: u8,
+}
+
+impl Display for Impatience {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let current = self.current;
+        let max = self.max;
+        write!(f, "{current}/{max}")
+    }
+}
+
+impl Default for Impatience {
+    fn default() -> Self {
+        Impatience {
+            current: 0,
+            max: 10,
+        }
+    }
+}
+
+impl Impatience {
+    /// Increase this unit's impatience by 1.
+    pub(crate) fn tick_up(&mut self) {
+        self.current += 1;
+    }
+}
+
+/// Clears the current goal and drops any held item when impatience has been exceeded
+pub(super) fn handle_full_impatience(
+    mut unit_query: Query<(&mut Goal, &mut Impatience, &mut HeldItem), Changed<Impatience>>,
+) {
+    for (mut goal, mut impatience, mut held_item) in unit_query.iter_mut() {
+        if impatience.current > impatience.max {
+            impatience.current = 0;
+            *held_item = HeldItem::default();
+            *goal = Goal::Wander
         }
     }
 }
