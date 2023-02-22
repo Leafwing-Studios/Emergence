@@ -487,22 +487,16 @@ impl SelectionState {
     fn compute(&mut self, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
         use PlayerAction::*;
 
-        if actions.pressed(Line) {
+        self.multiple = actions.pressed(PlayerAction::Multiple);
+
+        self.shape = if actions.pressed(Line) {
             let start = if let SelectionShape::Line { start } = self.shape {
                 start
             } else {
                 hovered_tile
             };
 
-            self.shape = SelectionShape::Line { start };
-
-            self.action = if actions.just_released(Select) {
-                SelectionAction::Select
-            } else if actions.just_released(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Line { start }
         } else if actions.pressed(Area) {
             let center = if let SelectionShape::Area { center, .. } = self.shape {
                 center
@@ -511,29 +505,33 @@ impl SelectionState {
             };
             let radius = hovered_tile.unsigned_distance_to(center.hex);
 
-            self.shape = SelectionShape::Area { center, radius };
-
-            self.action = if actions.just_released(Select) {
-                SelectionAction::Select
-            } else if actions.just_released(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Area { center, radius }
         } else {
-            self.shape = SelectionShape::Single;
-
-            self.action = if actions.pressed(Select) {
-                SelectionAction::Select
-            // Don't repeatedly trigger deselect to avoid
-            } else if actions.just_pressed(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Single
         };
 
-        self.multiple = actions.pressed(PlayerAction::Multiple);
+        self.action = match self.shape {
+            SelectionShape::Single => {
+                if actions.pressed(Select) {
+                    SelectionAction::Select
+                // Don't repeatedly trigger deselect to avoid accidentally clearing selection
+                } else if actions.just_pressed(Deselect) {
+                    SelectionAction::Deselect
+                } else {
+                    SelectionAction::Preview
+                }
+            }
+            SelectionShape::Area { .. } | SelectionShape::Line { .. } => {
+                // Trigger on just released in order to enable a drag-and-preview effect
+                if actions.just_released(Select) {
+                    SelectionAction::Select
+                } else if actions.just_released(Deselect) {
+                    SelectionAction::Deselect
+                } else {
+                    SelectionAction::Preview
+                }
+            }
+        };
     }
 }
 
