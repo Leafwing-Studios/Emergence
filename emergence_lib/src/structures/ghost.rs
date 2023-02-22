@@ -9,6 +9,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
     player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -41,6 +42,8 @@ pub(super) struct GhostBundle {
     object_interaction: ObjectInteraction,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<Ghost>,
+    /// Emits signals, drawing units towards this ghost to build it
+    emitter: Emitter,
 }
 
 impl GhostBundle {
@@ -50,6 +53,14 @@ impl GhostBundle {
         data: StructureData,
         construction_materials: InputInventory,
     ) -> Self {
+        // Emit signals to cause workers to bring the correct item to this ghost
+        let mut emitter = Emitter::default();
+        for item_slot in construction_materials.iter() {
+            let signal_type = SignalType::Pull(item_slot.item_id());
+            let signal_strength = SignalStrength::new(10.);
+            emitter.signals.push((signal_type, signal_strength))
+        }
+
         GhostBundle {
             ghost: Ghost,
             ghostly: Ghostly,
@@ -59,6 +70,7 @@ impl GhostBundle {
             construction_materials,
             object_interaction: ObjectInteraction::None,
             raycast_mesh: RaycastMesh::default(),
+            emitter,
         }
     }
 }

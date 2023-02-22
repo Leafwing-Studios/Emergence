@@ -38,11 +38,11 @@ impl GenerationConfig {
     const MAP_RADIUS: u32 = 20;
 
     /// The number of ants in the default generation config
-    const N_ANT: usize = 40;
+    const N_ANT: usize = 5;
     /// The number of plants in the default generation config
-    const N_PLANT: usize = 100;
+    const N_PLANT: usize = 12;
     /// The number of fungi in the default generation config
-    const N_FUNGI: usize = 50;
+    const N_FUNGI: usize = 2;
 
     /// The choice weight for plain terrain in default generation config
     const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;

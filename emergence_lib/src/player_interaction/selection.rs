@@ -10,6 +10,8 @@ use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
 use leafwing_input_manager::prelude::ActionState;
 
+use crate::items::recipe::RecipeManifest;
+use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 
@@ -654,6 +656,7 @@ pub(crate) enum SelectionDetails {
 }
 
 /// Get details about the hovered entity.
+#[allow(clippy::too_many_arguments)]
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
@@ -662,6 +665,8 @@ fn get_details(
     terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
+    recipe_manifest: Res<RecipeManifest>,
+    signals: Res<Signals>,
 ) {
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
@@ -676,13 +681,17 @@ fn get_details(
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity).unwrap();
 
-            let crafting_details = if let Some((input, output, recipe, state, timer)) =
+            let crafting_details = if let Some((input, output, active_recipe, state, timer)) =
                 structure_query_item.crafting
             {
+                let maybe_recipe_id = *active_recipe.recipe_id();
+                let recipe =
+                    maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
+
                 Some(CraftingDetails {
                     input_inventory: input.inventory.clone(),
                     output_inventory: output.inventory.clone(),
-                    active_recipe: *recipe.recipe_id(),
+                    recipe,
                     state: state.clone(),
                     timer: timer.timer().clone(),
                 })
@@ -707,6 +716,7 @@ fn get_details(
                     entity: terrain_query_item.entity,
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
+                    signals: signals.all_signals_at_position(*tile_pos),
                 })
             } else {
                 SelectionDetails::None
@@ -738,7 +748,7 @@ mod ghost_details {
         structures::{crafting::InputInventory, StructureId},
     };
 
-    /// Data needed to populate [`StructureDetails`].
+    /// Data needed to populate [`GhostDetails`].
     #[derive(WorldQuery)]
     pub(super) struct GhostDetailsQuery {
         /// The root entity
@@ -793,7 +803,7 @@ mod structure_details {
     use core::fmt::Display;
 
     use crate::{
-        items::{inventory::Inventory, recipe::RecipeId},
+        items::{inventory::Inventory, recipe::Recipe},
         simulation::geometry::TilePos,
         structures::{
             crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
@@ -864,8 +874,8 @@ Tile: {tile_pos}"
         /// The inventory for the output items.
         pub(crate) output_inventory: Inventory,
 
-        /// The recipe that's currently being crafted, if any.
-        pub(crate) active_recipe: Option<RecipeId>,
+        /// The recipe used, if any.
+        pub(crate) recipe: Option<Recipe>,
 
         /// The state of the ongoing crafting process.
         pub(crate) state: CraftingState,
@@ -882,8 +892,8 @@ Tile: {tile_pos}"
             let time_remaining = self.timer.remaining_secs();
             let total_duration = self.timer.duration().as_secs_f32();
 
-            let recipe_string = match &self.active_recipe {
-                Some(recipe_id) => format!("{recipe_id}"),
+            let recipe_string = match &self.recipe {
+                Some(recipe) => format!("{recipe}"),
                 None => "None".to_string(),
             };
 
@@ -903,7 +913,7 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
     use std::fmt::Display;
 
-    use crate::{simulation::geometry::TilePos, terrain::Terrain};
+    use crate::{signals::LocalSignals, simulation::geometry::TilePos, terrain::Terrain};
 
     /// Data needed to populate [`TerrainDetails`].
     #[derive(WorldQuery)]
@@ -923,6 +933,8 @@ mod terrain_details {
         pub(super) terrain_type: Terrain,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
+        /// The signals on this tile
+        pub(super) signals: LocalSignals,
     }
 
     impl Display for TerrainDetails {
@@ -930,12 +942,15 @@ mod terrain_details {
             let entity = self.entity;
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
+            let signals = &self.signals;
 
             write!(
                 f,
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
-Tile: {tile_pos}"
+Tile: {tile_pos}
+Signals:
+{signals}"
             )
         }
     }

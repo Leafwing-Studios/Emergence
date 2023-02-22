@@ -4,10 +4,13 @@ use std::{fmt::Display, time::Duration};
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::items::{
-    inventory::Inventory,
-    recipe::{Recipe, RecipeId, RecipeManifest},
-    ItemData, ItemId, ItemManifest,
+use crate::{
+    items::{
+        inventory::Inventory,
+        recipe::{Recipe, RecipeId, RecipeManifest},
+        ItemData, ItemId, ItemManifest,
+    },
+    signals::{Emitter, SignalStrength, SignalType},
 };
 
 /// The current state in the crafting progress.
@@ -73,7 +76,7 @@ impl CraftTimer {
 }
 
 /// All components needed to craft stuff.
-#[derive(Debug, Default, Bundle)]
+#[derive(Debug, Bundle)]
 pub(crate) struct CraftingBundle {
     /// The input inventory for the items needed for crafting.
     input_inventory: InputInventory,
@@ -89,6 +92,9 @@ pub(crate) struct CraftingBundle {
 
     /// The current state for the crafting process.
     craft_state: CraftingState,
+
+    /// Emits signals, drawing units towards this structure to ensure crafting flows smoothly
+    emitter: Emitter,
 }
 
 impl CraftingBundle {
@@ -111,6 +117,7 @@ impl CraftingBundle {
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::WaitingForInput,
+                emitter: Emitter::default(),
             }
         } else {
             Self {
@@ -123,6 +130,7 @@ impl CraftingBundle {
                 craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::WaitingForInput,
+                emitter: Emitter::default(),
             }
         }
     }
@@ -183,6 +191,35 @@ fn start_and_finish_crafting(
     }
 }
 
+/// Causes crafting structures to emit signals based on the items they have and need.
+fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+    for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
+        // Reset and recompute all signals
+        // TODO: may eventually want to just reset crafting signals
+        emitter.signals.clear();
+
+        for item_slot in input_inventory.iter() {
+            if !item_slot.is_full() {
+                let signal_type = SignalType::Pull(item_slot.item_id());
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength));
+            }
+        }
+
+        for item_slot in output_inventory.iter() {
+            if item_slot.is_full() {
+                let signal_type = SignalType::Push(item_slot.item_id());
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength));
+            } else if !item_slot.is_empty() {
+                let signal_type = SignalType::Contains(item_slot.item_id());
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength));
+            }
+        }
+    }
+}
+
 /// Add crafting capabilities to structures.
 pub(crate) struct CraftingPlugin;
 
@@ -207,6 +244,7 @@ impl Plugin for CraftingPlugin {
         app.insert_resource(ItemManifest::new(item_manifest))
             .insert_resource(RecipeManifest::new(recipe_manifest))
             .add_system(progress_crafting)
-            .add_system(start_and_finish_crafting.after(progress_crafting));
+            .add_system(start_and_finish_crafting.after(progress_crafting))
+            .add_system(set_emitter.after(start_and_finish_crafting));
     }
 }
