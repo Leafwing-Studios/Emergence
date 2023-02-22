@@ -101,6 +101,17 @@ pub(crate) struct LocalSignals {
     map: HashMap<SignalType, SignalStrength>,
 }
 
+impl LocalSignals {
+    /// Returns the set of signals that might be used to pick a goal
+    pub(crate) fn goal_relevant_signals(
+        &self,
+    ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
+        self.map.iter().filter(|(signal_type, _signal_strength)| {
+            !matches!(**signal_type, SignalType::Contains(_))
+        })
+    }
+}
+
 impl Display for LocalSignals {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = String::default();
@@ -157,6 +168,7 @@ pub(crate) enum SignalType {
     /// Has an item of this type, in case you were looking.
     Contains(ItemId),
     /// Perform work at this type of structure.
+    #[allow(dead_code)]
     Work(StructureId),
 }
 

@@ -4,11 +4,14 @@
 
 use bevy::prelude::*;
 use core::fmt::Display;
+use rand::distributions::WeightedIndex;
+use rand::prelude::Distribution;
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::items::ItemId;
+use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
@@ -36,6 +39,22 @@ pub(crate) enum Goal {
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
     Work(StructureId),
+}
+
+impl TryFrom<SignalType> for Goal {
+    // At least for now, this conversion should never fail.
+    type Error = ();
+
+    fn try_from(value: SignalType) -> Result<Self, Self::Error> {
+        match value {
+            // Go grab the item, so you can later take it away
+            SignalType::Push(item_id) => Ok(Goal::Pickup(item_id)),
+            // Go grab the item, so you can bring it to me
+            SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
+            SignalType::Contains(_) => Err(()),
+            SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
+        }
+    }
 }
 
 impl Display for Goal {
@@ -141,20 +160,27 @@ impl Goal {
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<&mut Goal>) {
-    // TODO: pick goal intelligently based on local environment
-    let possible_goals = vec![
-        Goal::Wander,
-        Goal::Pickup(ItemId::acacia_leaf()),
-        Goal::Pickup(ItemId::leuco_chunk()),
-    ];
+pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals: Res<Signals>) {
     let rng = &mut thread_rng();
 
-    for mut goal in units_query.iter_mut() {
+    for (&tile_pos, mut goal) in units_query.iter_mut() {
         // By default, goals are reset to wandering when completed.
         // Pick a new goal when wandering.
+        // If anything fails, just keep wandering for now.
         if let Goal::Wander = *goal {
-            *goal = possible_goals.choose(rng).unwrap().clone();
+            let current_signals = signals.all_signals_at_position(tile_pos);
+            let mut goal_relevant_signals = current_signals.goal_relevant_signals();
+            if let Ok(goal_weights) = WeightedIndex::new(
+                goal_relevant_signals
+                    .clone()
+                    .map(|(_type, strength)| strength.value()),
+            ) {
+                let selected_goal_index = goal_weights.sample(rng);
+                if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
+                    let selected_signal_type = *selected_signal.0;
+                    *goal = selected_signal_type.try_into().unwrap();
+                }
+            }
         }
     }
 }
