@@ -195,8 +195,12 @@ fn start_and_finish_crafting(
 fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
     /// The rate at which neglect rises and falls for crafting structures.
     ///
-    /// Should be just above 1.0.
-    const NEGLECT_RATE: f32 = 1.01;
+    /// Should be positive
+    const NEGLECT_RATE: f32 = 0.05;
+    /// The minimum neglect that a crafting structure can have.
+    ///
+    /// This ensures that buildings are not neglected forever after being satisfied for a while.
+    const MIN_NEGLECT: f32 = 0.05;
 
     for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
         // Reset and recompute all signals
@@ -209,9 +213,10 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
                 if item_slot.is_empty() {
-                    emitter.neglect_multiplier *= NEGLECT_RATE;
+                    emitter.neglect_multiplier += NEGLECT_RATE;
                 } else {
-                    emitter.neglect_multiplier /= NEGLECT_RATE;
+                    emitter.neglect_multiplier =
+                        (emitter.neglect_multiplier - NEGLECT_RATE).max(MIN_NEGLECT);
                 }
             }
         }
@@ -222,13 +227,14 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
 
-                emitter.neglect_multiplier *= NEGLECT_RATE;
+                emitter.neglect_multiplier += NEGLECT_RATE;
             } else if !item_slot.is_empty() {
                 let signal_type = SignalType::Contains(item_slot.item_id());
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
             } else {
-                emitter.neglect_multiplier /= NEGLECT_RATE;
+                emitter.neglect_multiplier =
+                    (emitter.neglect_multiplier - NEGLECT_RATE).max(MIN_NEGLECT);
             }
         }
     }
