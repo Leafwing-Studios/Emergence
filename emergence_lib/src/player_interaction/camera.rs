@@ -11,6 +11,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
+use crate::simulation::geometry::TilePos;
 use crate::structures::ghost::Ghost;
 use crate::structures::StructureId;
 use crate::terrain::Terrain;
@@ -148,6 +149,7 @@ fn translate_camera(
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
     selection: Res<CurrentSelection>,
+    tile_pos_query: Query<&TilePos>,
 ) {
     let (mut focus, facing, settings) = camera_query.single_mut();
 
@@ -186,10 +188,10 @@ fn translate_camera(
     // Snap to selected object
     if actions.pressed(PlayerAction::SnapToSelection) {
         let tile_to_snap_to = match &*selection {
-            CurrentSelection::Ghost(ghost_entity) => todo!(),
-            CurrentSelection::Structure(structure_entity) => todo!(),
+            CurrentSelection::Ghost(entity)
+            | CurrentSelection::Unit(entity)
+            | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
             CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
-            CurrentSelection::Unit(unit_entity) => todo!(),
             CurrentSelection::None => None,
         };
 
