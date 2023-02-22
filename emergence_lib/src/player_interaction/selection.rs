@@ -53,8 +53,7 @@ pub(crate) struct SelectedTiles {
 
 impl SelectedTiles {
     /// Selects a single tile
-    #[cfg(test)]
-    fn add_tile(&mut self, tile_pos: TilePos) {
+    pub(super) fn add_tile(&mut self, tile_pos: TilePos) {
         self.selected.insert(tile_pos);
     }
 

@@ -149,8 +149,8 @@ fn copy_selection(
         clipboard.clear();
 
         match &*current_selection {
-            CurrentSelection::Structure(structure_entity) => {
-                let (tile_pos, id, facing) = structure_query.get(*structure_entity).unwrap();
+            CurrentSelection::Structure(entity) | CurrentSelection::Ghost(entity) => {
+                let (tile_pos, id, facing) = structure_query.get(*entity).unwrap();
                 let clipboard_item = StructureData {
                     structure_id: *id,
                     facing: *facing,
@@ -163,11 +163,8 @@ fn copy_selection(
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_tiles.is_empty() {
                     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                        if let Some(structure_entity) =
-                            map_geometry.structure_index.get(&hovered_tile)
-                        {
-                            let (_tile_pos, id, facing) =
-                                structure_query.get(*structure_entity).unwrap();
+                        if let Some(entity) = map_geometry.get_ghost_or_structure(hovered_tile) {
+                            let (_tile_pos, id, facing) = structure_query.get(entity).unwrap();
 
                             let clipboard_item = StructureData {
                                 structure_id: *id,
@@ -178,26 +175,24 @@ fn copy_selection(
                         }
                     }
                 } else {
-                    for selected_tile_pos in selected_tiles.selection().iter() {
-                        if let Some(structure_entity) =
-                            map_geometry.structure_index.get(selected_tile_pos)
+                    for &selected_tile_pos in selected_tiles.selection().iter() {
+                        if let Some(entity) = map_geometry.get_ghost_or_structure(selected_tile_pos)
                         {
-                            let (_tile_pos, id, facing) =
-                                structure_query.get(*structure_entity).unwrap();
+                            let (&_tile_pos, id, facing) = structure_query.get(entity).unwrap();
                             debug_assert_eq!(_tile_pos, selected_tile_pos);
                             let clipboard_item = StructureData {
                                 structure_id: *id,
                                 facing: *facing,
                             };
 
-                            clipboard.insert(*selected_tile_pos, clipboard_item);
+                            clipboard.insert(selected_tile_pos, clipboard_item);
                         }
                     }
                     clipboard.normalize_positions();
                 }
             }
             // Otherwise, just grab whatever's under the cursor
-            CurrentSelection::None | CurrentSelection::Unit(_) | CurrentSelection::Ghost(_) => {
+            CurrentSelection::None | CurrentSelection::Unit(_) => {
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
                     if let Some(structure_entity) =
                         map_geometry.structure_index.get(&cursor_tile_pos)

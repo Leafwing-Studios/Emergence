@@ -14,7 +14,7 @@ use crate::{
 use super::{
     clipboard::{Clipboard, StructureData},
     cursor::CursorPos,
-    selection::CurrentSelection,
+    selection::{CurrentSelection, SelectedTiles},
     InteractionSystem, PlayerAction,
 };
 
@@ -58,54 +58,68 @@ fn set_zoning(
     clipboard: Res<Clipboard>,
     mut terrain_query: Query<&mut Zoning, With<Terrain>>,
     current_selection: Res<CurrentSelection>,
+    tile_pos_query: Query<&TilePos>,
     map_geometry: Res<MapGeometry>,
 ) {
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
-        if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-            let relevant_terrain_entities: Vec<Entity> = if selected_tiles.is_empty() {
-                vec![*map_geometry.terrain_index.get(&cursor_tile_pos).unwrap()]
-            } else {
+        let selected_tiles = match &*current_selection {
+            CurrentSelection::Ghost(entity) | CurrentSelection::Structure(entity) => {
+                let selection_tile_pos = *tile_pos_query.get(*entity).unwrap();
+                let mut selected_tiles = SelectedTiles::default();
+                selected_tiles.add_tile(selection_tile_pos);
                 selected_tiles
-                    .selection()
-                    .iter()
-                    .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
-                    .collect()
-            };
+            }
+            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
+            CurrentSelection::None | CurrentSelection::Unit(_) => {
+                let mut selected_tiles = SelectedTiles::default();
+                selected_tiles.add_tile(cursor_tile_pos);
+                selected_tiles
+            }
+        };
 
-            // Explicitly clear the selection
-            if actions.pressed(PlayerAction::ClearZoning) {
+        let relevant_terrain_entities: Vec<Entity> = if selected_tiles.is_empty() {
+            vec![*map_geometry.terrain_index.get(&cursor_tile_pos).unwrap()]
+        } else {
+            selected_tiles
+                .selection()
+                .iter()
+                .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
+                .collect()
+        };
+
+        // Explicitly clear the selection
+        if actions.pressed(PlayerAction::ClearZoning) {
+            for terrain_entity in relevant_terrain_entities {
+                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                *zoning = Zoning::Clear;
+            }
+
+            // Don't try to clear and zone in the same frame
+            return;
+        }
+
+        // Apply zoning
+        if actions.pressed(PlayerAction::Zone) {
+            if clipboard.is_empty() {
+                // Clear zoning
                 for terrain_entity in relevant_terrain_entities {
                     let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                     *zoning = Zoning::Clear;
                 }
-
-                // Don't try to clear and zone in the same frame
-                return;
-            }
-
-            // Apply zoning
-            if actions.pressed(PlayerAction::Zone) {
-                if clipboard.is_empty() {
-                    // Clear zoning
-                    for terrain_entity in relevant_terrain_entities {
-                        let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                        *zoning = Zoning::Clear;
-                    }
-                // Zone using the single selected structure
-                } else if clipboard.len() == 1 {
-                    let clipboard_item = clipboard.values().next().unwrap();
-                    for terrain_entity in relevant_terrain_entities {
+            // Zone using the single selected structure
+            } else if clipboard.len() == 1 {
+                let clipboard_item = clipboard.values().next().unwrap();
+                for terrain_entity in relevant_terrain_entities {
+                    let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                    *zoning = Zoning::Structure(clipboard_item.clone());
+                }
+            // Paste the selection
+            } else {
+                for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
+                    // Avoid trying to operate on terrain that doesn't exist
+                    if let Some(&terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
                         let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                         *zoning = Zoning::Structure(clipboard_item.clone());
-                    }
-                // Paste the selection
-                } else {
-                    for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
-                        // Avoid trying to operate on terrain that doesn't exist
-                        if let Some(&terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
-                            let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                            *zoning = Zoning::Structure(clipboard_item.clone());
-                        }
                     }
                 }
             }
