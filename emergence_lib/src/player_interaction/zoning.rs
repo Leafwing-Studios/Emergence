@@ -46,7 +46,7 @@ pub(crate) enum Zoning {
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
-    Clear,
+    KeepClear,
 }
 
 /// Applies zoning to an area, causing structures to be created (or removed) there.
@@ -91,7 +91,7 @@ fn set_zoning(
         if actions.pressed(PlayerAction::ClearZoning) {
             for terrain_entity in relevant_terrain_entities {
                 let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                *zoning = Zoning::Clear;
+                *zoning = Zoning::KeepClear;
             }
 
             // Don't try to clear and zone in the same frame
@@ -104,7 +104,7 @@ fn set_zoning(
                 // Clear zoning
                 for terrain_entity in relevant_terrain_entities {
                     let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                    *zoning = Zoning::Clear;
+                    *zoning = Zoning::KeepClear;
                 }
             // Zone using the single selected structure
             } else if clipboard.len() == 1 {
@@ -137,7 +137,7 @@ fn act_on_zoning(
             Zoning::Structure(item) => commands.spawn_ghost(tile_pos, item.clone()),
             Zoning::None => commands.despawn_ghost(tile_pos),
             // TODO: this should also take delayed effect
-            Zoning::Clear => commands.despawn_structure(tile_pos),
+            Zoning::KeepClear => commands.despawn_structure(tile_pos),
         };
     }
 }
