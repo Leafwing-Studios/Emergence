@@ -125,33 +125,15 @@ pub(super) fn choose_actions(
         if current_action.finished() {
             *current_action = match goal {
                 Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
-                Goal::Pickup(item_id) => {
-                    let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
-                    let mut entities_with_desired_item: Vec<Entity> = Vec::new();
-
-                    for tile_pos in neighboring_tiles {
-                        if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos)
-                        {
-                            if let Ok(output_inventory) =
-                                output_inventory_query.get(structure_entity)
-                            {
-                                if output_inventory.item_count(*item_id) > 0 {
-                                    entities_with_desired_item.push(structure_entity);
-                                }
-                            }
-                        }
-                    }
-
-                    if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                        CurrentAction::pickup(*item_id, *output_entity)
-                    } else if let Some(upstream) =
-                        signals.upstream(unit_tile_pos, goal, map_geometry)
-                    {
-                        CurrentAction::move_to(upstream)
-                    } else {
-                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
-                    }
-                }
+                Goal::Pickup(item_id) => CurrentAction::find_item(
+                    *item_id,
+                    unit_tile_pos,
+                    goal,
+                    &output_inventory_query,
+                    &signals,
+                    rng,
+                    map_geometry,
+                ),
                 Goal::DropOff(item_id) => {
                     let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
                     let mut entities_with_desired_item: Vec<Entity> = Vec::new();
@@ -196,32 +178,15 @@ pub(super) fn choose_actions(
                             CurrentAction::abandon()
                         }
                     } else {
-                        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
-                        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
-
-                        for tile_pos in neighboring_tiles {
-                            if let Some(&structure_entity) =
-                                map_geometry.structure_index.get(&tile_pos)
-                            {
-                                if let Ok(output_inventory) =
-                                    output_inventory_query.get(structure_entity)
-                                {
-                                    if output_inventory.item_count(*item_id) > 0 {
-                                        entities_with_desired_item.push(structure_entity);
-                                    }
-                                }
-                            }
-                        }
-
-                        if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-                            CurrentAction::pickup(*item_id, *output_entity)
-                        } else if let Some(upstream) =
-                            signals.upstream(unit_tile_pos, goal, map_geometry)
-                        {
-                            CurrentAction::move_to(upstream)
-                        } else {
-                            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
-                        }
+                        CurrentAction::find_item(
+                            *item_id,
+                            unit_tile_pos,
+                            goal,
+                            &output_inventory_query,
+                            &signals,
+                            rng,
+                            map_geometry,
+                        )
                     }
                 }
                 Goal::Work(_) => todo!(),
@@ -306,6 +271,38 @@ impl CurrentAction {
     /// Have we waited long enough to perform this action?
     pub(super) fn finished(&self) -> bool {
         self.timer.finished()
+    }
+
+    /// Takes the next step to attempt to find the provided `item_id`.
+    fn find_item(
+        item_id: ItemId,
+        unit_tile_pos: TilePos,
+        goal: &Goal,
+        output_inventory_query: &Query<&OutputInventory>,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+        for tile_pos in neighboring_tiles {
+            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
+                    if output_inventory.item_count(item_id) > 0 {
+                        entities_with_desired_item.push(structure_entity);
+                    }
+                }
+            }
+        }
+
+        if let Some(output_entity) = entities_with_desired_item.choose(rng) {
+            CurrentAction::pickup(item_id, *output_entity)
+        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+            CurrentAction::move_to(upstream)
+        } else {
+            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+        }
     }
 
     /// Wander to an adjacent tile, chosen randomly
