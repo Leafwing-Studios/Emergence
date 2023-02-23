@@ -224,14 +224,17 @@ fn set_camera_inclination(
 
 /// Pan and zoom the camera
 fn translate_camera(
-    mut camera_query: Query<(&mut CameraFocus, &Facing, &mut CameraSettings), With<Camera3d>>,
+    mut camera_query: Query<
+        (&Transform, &mut CameraFocus, &Facing, &mut CameraSettings),
+        With<Camera3d>,
+    >,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
     selection: Res<CurrentSelection>,
     tile_pos_query: Query<&TilePos>,
 ) {
-    let (mut focus, facing, mut settings) = camera_query.single_mut();
+    let (transform, mut focus, facing, mut settings) = camera_query.single_mut();
 
     // Zoom
     let delta_zoom = match (
@@ -268,7 +271,7 @@ fn translate_camera(
 
         focus.translation += oriented_translation;
 
-        let nearest_tile_pos = TilePos::from_world_pos(focus.translation, &map_geometry);
+        let nearest_tile_pos = TilePos::from_world_pos(transform.translation, &map_geometry);
         focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
     } else {
         settings.pan_speed.reset_speed();
