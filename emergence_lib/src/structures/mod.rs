@@ -66,7 +66,7 @@ impl Default for StructureManifest {
             StructureId { id: "leuco" },
             StructureVariety {
                 organism: Some(OrganismVariety {
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-2.)),
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
                 starting_recipe: Some(RecipeId::leuco_chunk_production()),
@@ -83,7 +83,7 @@ impl Default for StructureManifest {
             StructureId { id: "acacia" },
             StructureVariety {
                 organism: Some(OrganismVariety {
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-3.)),
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
