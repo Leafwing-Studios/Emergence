@@ -1,3 +1,5 @@
+//! Logic and data types for energy.
+
 use bevy::prelude::*;
 use core::fmt::Display;
 use core::ops::{Div, Mul};

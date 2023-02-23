@@ -236,8 +236,8 @@ impl Display for UnitAction {
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
             UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
-            UnitAction::Eat => format!("Eating"),
-            UnitAction::Abandon => format!("Abandoning held object."),
+            UnitAction::Eat => "Eating".to_string(),
+            UnitAction::Abandon => "Abandoning held object.".to_string(),
         };
 
         write!(f, "{string}")
