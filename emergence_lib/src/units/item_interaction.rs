@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    items::{inventory::Inventory, slot::ItemSlot, ItemCount, ItemManifest},
+    items::{inventory::Inventory, slot::ItemSlot, ItemCount, ItemId, ItemManifest},
     structures::crafting::{InputInventory, OutputInventory},
 };
 use core::fmt::Display;
@@ -41,6 +41,12 @@ impl HeldItem {
     /// The item and quantity held, if any.
     pub(crate) fn item_slot(&self) -> Option<&ItemSlot> {
         self.inventory.iter().next()
+    }
+
+    /// The type of item held.
+    pub(crate) fn item_id(&self) -> Option<ItemId> {
+        let item_slot = self.item_slot()?;
+        Some(item_slot.item_id())
     }
 }
 

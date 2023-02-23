@@ -17,6 +17,8 @@ use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
 
+use super::item_interaction::HeldItem;
+
 /// A unit's current goals.
 ///
 /// Units will be fully concentrated on any task other than [`Goal::Wander`] until it is complete (or overridden).
@@ -110,7 +112,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction, &HeldItem), With<UnitId>>,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -119,7 +121,7 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, goal, mut current_action) in units_query.iter_mut() {
+    for (&unit_tile_pos, goal, mut current_action, held_item) in units_query.iter_mut() {
         if current_action.finished() {
             *current_action = match goal {
                 Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
@@ -186,7 +188,42 @@ pub(super) fn choose_actions(
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
-                Goal::Eat(_) => todo!(),
+                Goal::Eat(item_id) => {
+                    if let Some(held_item) = held_item.item_id() {
+                        if held_item == *item_id {
+                            CurrentAction::eat()
+                        } else {
+                            CurrentAction::abandon()
+                        }
+                    } else {
+                        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                        for tile_pos in neighboring_tiles {
+                            if let Some(&structure_entity) =
+                                map_geometry.structure_index.get(&tile_pos)
+                            {
+                                if let Ok(output_inventory) =
+                                    output_inventory_query.get(structure_entity)
+                                {
+                                    if output_inventory.item_count(*item_id) > 0 {
+                                        entities_with_desired_item.push(structure_entity);
+                                    }
+                                }
+                            }
+                        }
+
+                        if let Some(output_entity) = entities_with_desired_item.choose(rng) {
+                            CurrentAction::pickup(*item_id, *output_entity)
+                        } else if let Some(upstream) =
+                            signals.upstream(unit_tile_pos, goal, map_geometry)
+                        {
+                            CurrentAction::move_to(upstream)
+                        } else {
+                            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        }
+                    }
+                }
                 Goal::Work(_) => todo!(),
             }
         }
@@ -215,6 +252,10 @@ pub(super) enum UnitAction {
     },
     /// Move to the tile position
     Move(TilePos),
+    /// Eats one of the currently held object
+    Eat,
+    /// Abandon whatever you are currently holding
+    Abandon,
 }
 
 impl Display for UnitAction {
@@ -230,6 +271,8 @@ impl Display for UnitAction {
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
             UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
+            UnitAction::Eat => format!("Eating"),
+            UnitAction::Abandon => format!("Abandoning held object."),
         };
 
         write!(f, "{string}")
@@ -314,6 +357,22 @@ impl CurrentAction {
                 input_entity,
             },
             timer: Timer::from_seconds(0.2, TimerMode::Once),
+        }
+    }
+
+    /// Eats one of the currently held item.
+    pub(super) fn eat() -> Self {
+        CurrentAction {
+            action: UnitAction::Eat,
+            timer: Timer::from_seconds(0.5, TimerMode::Once),
+        }
+    }
+
+    /// Eats one of the currently held item.
+    pub(super) fn abandon() -> Self {
+        CurrentAction {
+            action: UnitAction::Abandon,
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
         }
     }
 }

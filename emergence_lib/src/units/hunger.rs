@@ -21,7 +21,7 @@ pub(crate) struct Diet {
 
 impl Diet {
     /// Creates a new [`Diet`] component.
-    pub fn new(item: ItemId, energy: Energy) -> Self {
+    pub(crate) fn new(item: ItemId, energy: Energy) -> Self {
         Diet { item, energy }
     }
 }
