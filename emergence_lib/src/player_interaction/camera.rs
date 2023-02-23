@@ -304,6 +304,11 @@ fn move_camera_to_goal(
     mut intermediate_planar_angle: Local<f32>,
     time: Res<Time>,
 ) {
+    /// Differences in target angle below this amount are ignored.
+    ///
+    /// This reduces camera jitter.
+    const ROTATION_EPSILON: f32 = 1e-3;
+
     let (mut transform, facing, focus, mut settings) = query.single_mut();
 
     // Always begin due "south" of the focus.
@@ -326,18 +331,22 @@ fn move_camera_to_goal(
     let signed_rotation =
         (final_planar_angle - *intermediate_planar_angle + PI).rem_euclid(TAU) - PI;
 
-    // Compute the correct rotation
-    let max_rotation = settings.rotation_speed.delta(time.delta());
-
-    // Make sure not to overshoot
-    let actual_signed_distance = if signed_rotation > 0. {
-        signed_rotation.min(max_rotation)
+    if signed_rotation.abs() < ROTATION_EPSILON {
+        *intermediate_planar_angle = final_planar_angle;
     } else {
-        signed_rotation.max(-max_rotation)
-    };
+        // Compute the correct rotation
+        let max_rotation = settings.rotation_speed.delta(time.delta());
 
-    // Actually mutate the intermediate angle
-    *intermediate_planar_angle += actual_signed_distance;
+        // Make sure not to overshoot
+        let actual_signed_distance = if signed_rotation > 0. {
+            signed_rotation.min(max_rotation)
+        } else {
+            signed_rotation.max(-max_rotation)
+        };
+
+        // Actually mutate the intermediate angle
+        *intermediate_planar_angle += actual_signed_distance;
+    }
 
     // Rotate left and right
     new_transform.translate_around(
