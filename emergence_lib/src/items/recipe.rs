@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, time::Duration};
 
-use crate::asset_management::manifest::Manifest;
+use crate::{asset_management::manifest::Manifest, organisms::energy::Energy};
 
 use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 
@@ -39,6 +39,11 @@ pub(crate) struct Recipe {
 
     /// The time needed to craft the recipe.
     craft_time: Duration,
+
+    /// The amount of [`Energy`] produced by making this recipe, if any.
+    ///
+    /// This is only relevant to living structures.
+    energy: Option<Energy>,
 }
 
 impl Recipe {
@@ -47,11 +52,13 @@ impl Recipe {
         inputs: Vec<ItemCount>,
         outputs: Vec<ItemCount>,
         craft_time: Duration,
+        energy: Option<Energy>,
     ) -> Self {
         Self {
             inputs,
             outputs,
             craft_time,
+            energy,
         }
     }
 
@@ -87,6 +94,11 @@ impl Recipe {
         }
         inventory
     }
+
+    /// The amount of energy produced by crafting the recipe, if any.
+    pub(crate) fn energy(&self) -> &Option<Energy> {
+        &self.energy
+    }
 }
 
 // TODO: Remove this once we load recipes from asset files
@@ -97,6 +109,7 @@ impl Recipe {
             Vec::new(),
             vec![ItemCount::one(ItemId::acacia_leaf())],
             Duration::from_secs(10),
+            Some(Energy(20.)),
         )
     }
 
@@ -106,6 +119,7 @@ impl Recipe {
             vec![ItemCount::one(ItemId::acacia_leaf())],
             vec![ItemCount::one(ItemId::leuco_chunk())],
             Duration::from_secs(5),
+            Some(Energy(40.)),
         )
     }
 }
@@ -144,6 +158,7 @@ mod tests {
             inputs: Vec::new(),
             outputs: vec![ItemCount::one(ItemId::acacia_leaf())],
             craft_time: Duration::from_secs(1),
+            energy: Some(Energy(20.)),
         };
 
         assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00 s")

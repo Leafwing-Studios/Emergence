@@ -3,6 +3,7 @@
 use std::{fmt::Display, time::Duration};
 
 use bevy::{prelude::*, utils::HashMap};
+use leafwing_abilities::prelude::Pool;
 
 use crate::{
     items::{
@@ -10,6 +11,7 @@ use crate::{
         recipe::{Recipe, RecipeId, RecipeManifest},
         ItemData, ItemId, ItemManifest,
     },
+    organisms::energy::EnergyPool,
     signals::{Emitter, SignalStrength, SignalType},
 };
 
@@ -153,15 +155,23 @@ fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut Cr
 fn start_and_finish_crafting(
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
-    mut query: Query<(
+    mut structure_query: Query<(
         &ActiveRecipe,
         &mut CraftTimer,
         &mut InputInventory,
         &mut OutputInventory,
         &mut CraftingState,
+        Option<&mut EnergyPool>,
     )>,
 ) {
-    for (active_recipe, mut craft_timer, mut input, mut output, mut craft_state) in query.iter_mut()
+    for (
+        active_recipe,
+        mut craft_timer,
+        mut input,
+        mut output,
+        mut craft_state,
+        maybe_energy_pool,
+    ) in structure_query.iter_mut()
     {
         if let Some(recipe_id) = &active_recipe.0 {
             let recipe = recipe_manifest.get(*recipe_id);
@@ -180,6 +190,14 @@ fn start_and_finish_crafting(
             if *craft_state == CraftingState::WaitingForInput
                 && input.remove_items_all_or_nothing(recipe.inputs()).is_ok()
             {
+                if let Some(mut energy_pool) = maybe_energy_pool {
+                    if let Some(recipe_energy) = recipe.energy() {
+                        let proposed = energy_pool.current() + *recipe_energy;
+
+                        energy_pool.set_current(proposed);
+                    }
+                }
+
                 // Set the timer to the recipe time
                 craft_timer.0.set_duration(*recipe.craft_time());
                 craft_timer.0.reset();
@@ -192,6 +210,7 @@ fn start_and_finish_crafting(
 }
 
 /// Causes crafting structures to emit signals based on the items they have and need.
+// TODO: change neglect based on inventory fullness and structure energy level
 fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
     use InventoryState::*;
 

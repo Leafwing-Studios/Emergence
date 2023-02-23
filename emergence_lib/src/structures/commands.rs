@@ -108,10 +108,10 @@ impl Command for SpawnStructureCommand {
                     .id();
 
                 // PERF: this could be done in a single archetype move with more branching
-                if structure_details.organism {
+                if let Some(organism_details) = &structure_details.organism {
                     world
                         .entity_mut(structure_entity)
-                        .insert(OrganismBundle::default());
+                        .insert(OrganismBundle::new(organism_details.energy_pool.clone()));
                 };
 
                 if structure_details.crafts {

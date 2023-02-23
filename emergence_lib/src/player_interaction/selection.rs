@@ -1,10 +1,12 @@
 //! Tiles can be selected, serving as a building block for clipboard, inspection and zoning operations.
 
 use self::ghost_details::*;
+use self::organism_details::*;
 use self::structure_details::*;
 use self::terrain_details::*;
 use self::unit_details::*;
 
+use bevy::ecs::query::QueryEntityError;
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
@@ -37,6 +39,7 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(
                 get_details
+                    .pipe(clear_details_on_error)
                     .label(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
@@ -658,16 +661,17 @@ fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
     ghost_query: Query<GhostDetailsQuery>,
+    organism_query: Query<OrganismDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
     recipe_manifest: Res<RecipeManifest>,
     signals: Res<Signals>,
-) {
+) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
-            let ghost_query_item = ghost_query.get(*ghost_entity).unwrap();
+            let ghost_query_item = ghost_query.get(*ghost_entity)?;
             SelectionDetails::Ghost(GhostDetails {
                 entity: *ghost_entity,
                 tile_pos: *ghost_query_item.tile_pos,
@@ -677,7 +681,7 @@ fn get_details(
             })
         }
         CurrentSelection::Structure(structure_entity) => {
-            let structure_query_item = structure_query.get(*structure_entity).unwrap();
+            let structure_query_item = structure_query.get(*structure_entity)?;
 
             let crafting_details =
                 if let Some((input, output, active_recipe, state, timer, emitter)) =
@@ -699,18 +703,25 @@ fn get_details(
                     None
                 };
 
+            // Not all structures are organisms
+            let maybe_organism_details = organism_query
+                .get(*structure_entity)
+                .ok()
+                .map(|item| item.into());
+
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
                 tile_pos: *structure_query_item.tile_pos,
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
+                maybe_organism_details,
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
                 let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_query_item = terrain_query.get(*terrain_entity).unwrap();
+                let terrain_query_item = terrain_query.get(*terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_query_item.entity,
@@ -723,7 +734,10 @@ fn get_details(
             }
         }
         CurrentSelection::Unit(unit_entity) => {
-            let unit_query_item = unit_query.get(*unit_entity).unwrap();
+            let unit_query_item = unit_query.get(*unit_entity)?;
+            // All units are organisms
+            let organism_details = organism_query.get(*unit_entity)?.into();
+
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
@@ -731,11 +745,25 @@ fn get_details(
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
-                impatience: unit_query_item.impatience.clone(),
+                organism_details,
             })
         }
         CurrentSelection::None => SelectionDetails::None,
     };
+
+    Ok(())
+}
+
+/// If something went wrong in [`get_details`], clear the selection.
+pub(crate) fn clear_details_on_error(
+    In(result): In<Result<(), QueryEntityError>>,
+    mut current_selection: ResMut<CurrentSelection>,
+    mut selection_details: ResMut<SelectionDetails>,
+) {
+    if result.is_err() {
+        *current_selection = CurrentSelection::None;
+        *selection_details = SelectionDetails::None;
+    }
 }
 
 /// Details for ghosts
@@ -801,6 +829,46 @@ Neglect: {neglect:.2}"
     }
 }
 
+/// Details for organisms
+mod organism_details {
+    use bevy::ecs::prelude::*;
+    use bevy::ecs::query::WorldQuery;
+
+    use crate::organisms::energy::EnergyPool;
+    use core::fmt::Display;
+
+    /// Data needed to populate [`OrganismDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct OrganismDetailsQuery {
+        /// The current and max energy
+        pub(super) energy_pool: &'static EnergyPool,
+    }
+
+    /// Detailed info about a given organism.
+    #[derive(Debug)]
+    pub(crate) struct OrganismDetails {
+        /// The current and max energy
+        pub(super) energy_pool: EnergyPool,
+    }
+
+    impl From<OrganismDetailsQueryItem<'_>> for OrganismDetails {
+        fn from(item: OrganismDetailsQueryItem) -> Self {
+            OrganismDetails {
+                energy_pool: item.energy_pool.clone(),
+            }
+        }
+    }
+
+    impl Display for OrganismDetails {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let energy_pool = &self.energy_pool;
+            let string = format!("Energy: {energy_pool}");
+
+            write!(f, "{string}")
+        }
+    }
+}
+
 /// Details for structures
 mod structure_details {
     use bevy::{
@@ -810,6 +878,7 @@ mod structure_details {
 
     use core::fmt::Display;
 
+    use super::organism_details::OrganismDetails;
     use crate::{
         items::{inventory::Inventory, recipe::Recipe},
         signals::Emitter,
@@ -851,6 +920,8 @@ mod structure_details {
         pub(crate) structure_id: StructureId,
         /// If this organism is crafting something, the details about that.
         pub(crate) crafting_details: Option<CraftingDetails>,
+        /// Details about this organism, if it is one.
+        pub(crate) maybe_organism_details: Option<OrganismDetails>,
     }
 
     impl Display for StructureDetails {
@@ -870,8 +941,12 @@ Tile: {tile_pos}"
             } else {
                 String::default()
             };
-
-            write!(f, "{basic_details}\n{crafting_details}")
+            let organism_details = if let Some(crafting) = &self.maybe_organism_details {
+                format!("{crafting}")
+            } else {
+                String::default()
+            };
+            write!(f, "{basic_details}\n{crafting_details}\n{organism_details}")
         }
     }
 
@@ -979,11 +1054,13 @@ mod unit_details {
     use crate::{
         simulation::geometry::TilePos,
         units::{
-            behavior::{CurrentAction, Goal, Impatience},
+            behavior::{CurrentAction, Goal},
             item_interaction::HeldItem,
             UnitId,
         },
     };
+
+    use super::organism_details::OrganismDetails;
 
     /// Data needed to populate [`UnitDetails`].
     #[derive(WorldQuery)]
@@ -1000,8 +1077,6 @@ mod unit_details {
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
-        /// How frustrated is this unit
-        pub(super) impatience: &'static Impatience,
     }
 
     /// Detailed info about a given unit.
@@ -1019,8 +1094,8 @@ mod unit_details {
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,
-        /// How frustrated is this unit
-        pub(super) impatience: Impatience,
+        /// Details about this organism, if it is one.
+        pub(crate) organism_details: OrganismDetails,
     }
 
     impl Display for UnitDetails {
@@ -1031,7 +1106,7 @@ mod unit_details {
             let held_item = &self.held_item;
             let goal = &self.goal;
             let action = &self.action;
-            let impatience = &self.impatience;
+            let organism_details = &self.organism_details;
 
             write!(
                 f,
@@ -1041,7 +1116,7 @@ Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
 Action: {action}
-Impatience: {impatience}"
+{organism_details}"
             )
         }
     }

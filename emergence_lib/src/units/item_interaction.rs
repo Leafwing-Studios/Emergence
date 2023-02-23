@@ -8,7 +8,7 @@ use crate::{
 };
 use core::fmt::Display;
 
-use super::behavior::{CurrentAction, Goal, Impatience, UnitAction};
+use super::behavior::{CurrentAction, Goal, UnitAction};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Clone, Debug, Deref, DerefMut)]
@@ -43,54 +43,39 @@ impl HeldItem {
         self.inventory.iter().next()
     }
 
-    /// The type of item that is being held, if any.
-    #[allow(dead_code)]
+    /// The type of item held.
     pub(crate) fn item_id(&self) -> Option<ItemId> {
         let item_slot = self.item_slot()?;
         Some(item_slot.item_id())
-    }
-
-    /// The number of items of a single type being held.
-    #[allow(dead_code)]
-    pub(crate) fn count(&self) -> usize {
-        if let Some(item_slot) = self.item_slot() {
-            item_slot.count()
-        } else {
-            0
-        }
     }
 }
 
 /// A system which performs the transfer of items between units and structures.
 pub(super) fn pickup_and_drop_items(
-    mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem, &mut Impatience)>,
+    mut unit_query: Query<(&CurrentAction, &mut Goal, &mut HeldItem)>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
     item_manifest: Res<ItemManifest>,
 ) {
     let item_manifest = &*item_manifest;
 
-    for (current_action, mut current_goal, mut held_item, mut impatience) in unit_query.iter_mut() {
+    for (current_action, mut current_goal, mut held_item) in unit_query.iter_mut() {
         if current_action.finished() {
-            let new_goal: Goal = if let UnitAction::PickUp {
+            if let UnitAction::PickUp {
                 item_id,
                 output_entity,
             } = current_action.action()
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
                     let item_count = ItemCount::new(*item_id, 1);
-                    let transfer_result = output_inventory.transfer_item(
+                    let _transfer_result = output_inventory.transfer_item(
                         &item_count,
                         &mut held_item.inventory,
                         item_manifest,
                     );
 
-                    if transfer_result.is_err() {
-                        impatience.tick_up();
-                    }
-
                     // If our unit's all loaded, swap to delivering it
-                    if held_item.is_full() {
+                    *current_goal = if held_item.is_full() {
                         Goal::DropOff(*item_id)
                     // If we can carry more, try and grab more items
                     } else {
@@ -98,7 +83,7 @@ pub(super) fn pickup_and_drop_items(
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    Goal::Wander
+                    *current_goal = Goal::Wander
                 }
             } else if let UnitAction::DropOff {
                 item_id,
@@ -107,18 +92,14 @@ pub(super) fn pickup_and_drop_items(
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
                     let item_count = ItemCount::new(*item_id, 1);
-                    let transfer_result = held_item.transfer_item(
+                    let _transfer_result = held_item.transfer_item(
                         &item_count,
                         &mut input_inventory.inventory,
                         item_manifest,
                     );
 
-                    if transfer_result.is_err() {
-                        impatience.tick_up();
-                    }
-
                     // If our unit is unloaded, swap to wandering to find something else to do
-                    if held_item.is_empty() {
+                    *current_goal = if held_item.is_empty() {
                         Goal::Wander
                     // If we still have items, keep unloading
                     } else {
@@ -126,14 +107,15 @@ pub(super) fn pickup_and_drop_items(
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    Goal::Wander
+                    *current_goal = Goal::Wander
                 }
+            } else if let UnitAction::Abandon = current_action.action() {
+                // TODO: actually put these dropped items somewhere
+                *held_item = HeldItem::default();
             } else {
                 // Other actions are not handled in this system
                 return;
             };
-
-            *current_goal = new_goal;
         }
     }
 }

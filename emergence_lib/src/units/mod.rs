@@ -1,18 +1,20 @@
 //! Units are organisms that can move freely.
 
-use crate::simulation::geometry::TilePos;
+use crate::{organisms::energy::EnergyPool, simulation::geometry::TilePos};
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use core::fmt::Display;
 
 use self::{
-    behavior::{CurrentAction, Goal, Impatience},
+    behavior::{CurrentAction, Goal},
+    hunger::Diet,
     item_interaction::HeldItem,
 };
 
 use crate::organisms::OrganismBundle;
 
 pub(crate) mod behavior;
+pub(crate) mod hunger;
 pub(crate) mod item_interaction;
 mod movement;
 
@@ -40,10 +42,10 @@ pub(crate) struct UnitBundle {
     current_goal: Goal,
     /// What is the unit currently doing.
     current_action: CurrentAction,
-    /// How frustrated is this unit, causing it to give up its current goal?
-    impatience: Impatience,
     /// What is the unit currently holding, if anything?
     held_item: HeldItem,
+    /// What does this unit need to eat?
+    diet: Diet,
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
@@ -52,16 +54,21 @@ pub(crate) struct UnitBundle {
 
 impl UnitBundle {
     /// Initializes a new unit
-    pub(crate) fn new(id: &'static str, tile_pos: TilePos) -> Self {
+    // TODO: use a UnitManifest
+    pub(crate) fn new(
+        id: &'static str,
+        tile_pos: TilePos,
+        energy_pool: EnergyPool,
+        diet: Diet,
+    ) -> Self {
         UnitBundle {
             id: UnitId { id },
             tile_pos,
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
-            // TODO: This should be initialized from the unit manifest
-            impatience: Impatience::default(),
             held_item: HeldItem::default(),
-            organism_bundle: OrganismBundle::default(),
+            diet,
+            organism_bundle: OrganismBundle::new(energy_pool),
             raycast_mesh: RaycastMesh::default(),
         }
     }
@@ -109,6 +116,11 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
-            .add_system(behavior::handle_full_impatience.after(UnitSystem::ChooseNewAction));
+            .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction))
+            .add_system(
+                hunger::eat_held_items
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::AdvanceTimers),
+            );
     }
 }
