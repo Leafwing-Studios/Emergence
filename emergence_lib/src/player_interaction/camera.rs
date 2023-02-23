@@ -322,9 +322,7 @@ fn move_camera_to_goal(
     let (mut transform, facing, focus, mut settings) = query.single_mut();
 
     // Determine our goal
-    // Normalize both angles
     let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
-    *intermediate_planar_angle = *intermediate_planar_angle % TAU;
 
     // Compute the shortest distance between them
     // Formula from https://stackoverflow.com/a/7869457
