@@ -136,6 +136,9 @@ impl Default for CameraSettings {
     }
 }
 
+/// Contains the [`Speed`] struct.
+///
+/// Lives in a dedicated module to enforce privacy.
 mod speed {
     use bevy::utils::Duration;
 
@@ -154,6 +157,11 @@ mod speed {
     }
 
     impl Speed {
+        /// Creates a new [`Speed`]
+        ///
+        /// # Panics
+        ///
+        /// Improper parameters will panic on construction.
         pub(super) fn new(min: f32, acceleration: f32, max: f32) -> Self {
             assert!(min > 0.);
             assert!(acceleration > 0.);
@@ -310,7 +318,7 @@ fn rotate_camera(
     }
 }
 
-// Move the camera around a central point, constantly looking at it and maintaining a fixed distance.
+/// Move the camera around a central point, constantly looking at it and maintaining a fixed distance.
 fn move_camera_to_goal(
     mut query: Query<(&mut Transform, &Facing, &CameraFocus, &mut CameraSettings), With<Camera3d>>,
     map_geometry: Res<MapGeometry>,
