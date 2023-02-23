@@ -52,17 +52,19 @@ pub(super) fn eat_held_items(
     mut unit_query: Query<(&CurrentAction, &mut HeldItem, &Diet, &mut EnergyPool)>,
 ) {
     for (current_action, mut held_item, diet, mut energy_pool) in unit_query.iter_mut() {
-        if let UnitAction::Eat = current_action.action() {
-            let item_count = ItemCount::new(diet.item, 1);
-            let consumption_result = held_item.remove_item_all_or_nothing(&item_count);
+        if current_action.finished() {
+            if let UnitAction::Eat = current_action.action() {
+                let item_count = ItemCount::new(diet.item, 1);
+                let consumption_result = held_item.remove_item_all_or_nothing(&item_count);
 
-            match consumption_result {
-                Ok(_) => {
-                    let proposed = energy_pool.current() + diet.energy;
-                    energy_pool.set_current(proposed);
-                }
-                Err(error) => {
-                    error!("{error:?}: unit tried to eat the wrong thing!")
+                match consumption_result {
+                    Ok(_) => {
+                        let proposed = energy_pool.current() + diet.energy;
+                        energy_pool.set_current(proposed);
+                    }
+                    Err(error) => {
+                        error!("{error:?}: unit tried to eat the wrong thing!")
+                    }
                 }
             }
         }

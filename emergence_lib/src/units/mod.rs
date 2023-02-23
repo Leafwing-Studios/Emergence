@@ -120,7 +120,7 @@ impl Plugin for UnitsPlugin {
             .add_system(
                 hunger::eat_held_items
                     .label(UnitSystem::Act)
-                    .after(UnitSystem::ChooseNewAction),
+                    .after(UnitSystem::AdvanceTimers),
             );
     }
 }
