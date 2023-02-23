@@ -94,7 +94,7 @@ impl Signals {
 
         let neighboring_signals = match goal {
             Goal::Wander => return None,
-            Goal::Pickup(item_id) => {
+            Goal::Pickup(item_id) | Goal::Eat(item_id) => {
                 let push_signals =
                     self.neighboring_signals(SignalType::Push(*item_id), tile_pos, map_geometry);
                 let contains_signals = self.neighboring_signals(

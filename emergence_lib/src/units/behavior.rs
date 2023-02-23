@@ -11,14 +11,11 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::items::ItemId;
-use crate::organisms::energy::EnergyPool;
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
-
-use super::item_interaction::HeldItem;
 
 /// A unit's current goals.
 ///
@@ -42,6 +39,8 @@ pub(crate) enum Goal {
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
     Work(StructureId),
+    /// Attempt to feed self
+    Eat(ItemId),
 }
 
 impl TryFrom<SignalType> for Goal {
@@ -67,6 +66,7 @@ impl Display for Goal {
             Goal::Pickup(item) => format!("Pickup {item}"),
             Goal::DropOff(item) => format!("Dropoff {item}"),
             Goal::Work(structure) => format!("Work at {structure}"),
+            Goal::Eat(item) => format!("Eat {item}"),
         };
 
         write!(f, "{string}")
@@ -186,6 +186,7 @@ pub(super) fn choose_actions(
                         CurrentAction::wander(unit_tile_pos, rng, map_geometry)
                     }
                 }
+                Goal::Eat(_) => todo!(),
                 Goal::Work(_) => todo!(),
             }
         }
@@ -313,16 +314,6 @@ impl CurrentAction {
                 input_entity,
             },
             timer: Timer::from_seconds(0.2, TimerMode::Once),
-        }
-    }
-}
-
-/// Clears the current goal and drops any held item when energy gets low
-pub(super) fn check_for_hunger(mut unit_query: Query<(&mut Goal, &EnergyPool, &mut HeldItem)>) {
-    for (mut goal, energy_pool, mut held_item) in unit_query.iter_mut() {
-        if energy_pool.should_warn() {
-            *held_item = HeldItem::default();
-            *goal = Goal::Wander
         }
     }
 }

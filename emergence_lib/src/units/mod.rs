@@ -7,12 +7,14 @@ use core::fmt::Display;
 
 use self::{
     behavior::{CurrentAction, Goal},
+    hunger::Diet,
     item_interaction::HeldItem,
 };
 
 use crate::organisms::OrganismBundle;
 
 pub(crate) mod behavior;
+pub(crate) mod hunger;
 pub(crate) mod item_interaction;
 mod movement;
 
@@ -42,6 +44,8 @@ pub(crate) struct UnitBundle {
     current_action: CurrentAction,
     /// What is the unit currently holding, if anything?
     held_item: HeldItem,
+    /// What does this unit need to eat?
+    diet: Diet,
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
@@ -50,13 +54,20 @@ pub(crate) struct UnitBundle {
 
 impl UnitBundle {
     /// Initializes a new unit
-    pub(crate) fn new(id: &'static str, tile_pos: TilePos, energy_pool: EnergyPool) -> Self {
+    // TODO: use a UnitManifest
+    pub(crate) fn new(
+        id: &'static str,
+        tile_pos: TilePos,
+        energy_pool: EnergyPool,
+        diet: Diet,
+    ) -> Self {
         UnitBundle {
             id: UnitId { id },
             tile_pos,
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
             held_item: HeldItem::default(),
+            diet,
             organism_bundle: OrganismBundle::new(energy_pool),
             raycast_mesh: RaycastMesh::default(),
         }
@@ -105,6 +116,6 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
-            .add_system(behavior::check_for_hunger.after(UnitSystem::ChooseNewAction));
+            .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction));
     }
 }

@@ -1,10 +1,12 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
+use crate::items::ItemId;
 use crate::organisms::energy::{Energy, EnergyPool};
 use crate::player_interaction::clipboard::StructureData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
+use crate::units::hunger::Diet;
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -207,6 +209,7 @@ fn generate_organisms(
                     "ant",
                     ant_position,
                     EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    Diet::new(ItemId::leuco_chunk(), Energy(50.)),
                 )
             }),
     );
