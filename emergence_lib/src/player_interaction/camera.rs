@@ -3,6 +3,7 @@
 //! This RTS-style camera can zoom, pan and rotate.
 
 use std::f32::consts::PI;
+use std::f32::consts::TAU;
 
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
@@ -29,15 +30,11 @@ pub(super) struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::Startup, setup)
-            .add_system(
-                rotate_camera
-                    .label(InteractionSystem::MoveCamera)
-                    // We rely on the updated focus information from this system
-                    .after(translate_camera),
-            )
             .add_system(set_camera_inclination.before(translate_camera))
             .add_system(mousewheel_zoom.before(translate_camera))
-            .add_system(translate_camera.label(InteractionSystem::MoveCamera));
+            .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
+            .add_system(translate_camera.before(InteractionSystem::MoveCamera))
+            .add_system(move_camera_to_goal.label(InteractionSystem::MoveCamera));
     }
 }
 
@@ -88,6 +85,10 @@ struct CameraSettings {
     zoom_speed: Speed,
     /// Controls the rate that the camera can moves from side to side.
     pan_speed: Speed,
+    /// Controls how fast the camera rotates around the vertical axis.
+    ///
+    /// Units are in radians per second.
+    rotation_speed: Speed,
     /// The minimum distance that the camera can be from its focus.
     ///
     /// Should always be positive, and less than `max_zoom`.
@@ -96,14 +97,6 @@ struct CameraSettings {
     ///
     /// Should always be positive, and less than `max_zoom`.
     max_zoom: f32,
-    /// The linear interpolation coefficient for camera movement.
-    ///
-    /// Should always be between 0 (unmoving) and 1 (instant).
-    linear_interpolation: f32,
-    /// The spherical linear interpolation coefficient for camera rotation.
-    ///
-    /// Should always be between 0 (unmoving) and 1 (instant).
-    rotational_interpolation: f32,
     /// How many tiles away from the focus should the camera take into consideration when computing the correct height?
     ///
     /// Increasing this value will result in a "smoother ride" over the hills and valleys of the map.
@@ -123,10 +116,9 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: Speed::new(50., 100.0, 200.0),
             pan_speed: Speed::new(100., 100.0, 150.0),
+            rotation_speed: Speed::new(0.3, 3.0, 5.0),
             min_zoom: 7.,
             max_zoom: 100.,
-            linear_interpolation: 0.2,
-            rotational_interpolation: 0.1,
             float_radius: 3,
             inclination: 0.7 * PI / 2.,
             inclination_speed: 1.,
@@ -290,11 +282,10 @@ fn translate_camera(
 
 /// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<(&mut Transform, &mut Facing, &CameraFocus, &CameraSettings), With<Camera3d>>,
+    mut query: Query<&mut Facing, With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
-    map_geometry: Res<MapGeometry>,
 ) {
-    let (mut transform, mut facing, focus, settings) = query.single_mut();
+    let mut facing = query.single_mut();
 
     // Set facing
     if actions.just_pressed(PlayerAction::RotateCameraLeft) {
@@ -304,8 +295,16 @@ fn rotate_camera(
     if actions.just_pressed(PlayerAction::RotateCameraRight) {
         facing.rotate_right();
     }
+}
 
-    // Goal: move the camera around a central point
+// Move the camera around a central point, constantly looking at it and maintaining a fixed distance.
+fn move_camera_to_goal(
+    mut query: Query<(&mut Transform, &Facing, &CameraFocus, &mut CameraSettings), With<Camera3d>>,
+    map_geometry: Res<MapGeometry>,
+    mut intermediate_planar_angle: Local<f32>,
+    time: Res<Time>,
+) {
+    let (mut transform, facing, focus, mut settings) = query.single_mut();
 
     // Always begin due "south" of the focus.
     let mut new_transform =
@@ -317,19 +316,38 @@ fn rotate_camera(
         Quat::from_axis_angle(Vec3::NEG_Z, settings.inclination),
     );
 
-    // Rotate around on the xz plane
-    let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
-    new_transform.translate_around(focus.translation, Quat::from_rotation_y(planar_angle));
+    // Determine our goal
+    // Normalize both angles
+    let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation) % TAU;
+    *intermediate_planar_angle = *intermediate_planar_angle % TAU;
 
-    // Look at that central point
+    // Compute the shortest distance between them
+    // Formula from https://stackoverflow.com/a/7869457
+    let signed_rotation =
+        (final_planar_angle - *intermediate_planar_angle + PI).rem_euclid(TAU) - PI;
+
+    // Compute the correct rotation
+    let max_rotation = settings.rotation_speed.delta(time.delta());
+
+    // Make sure not to overshoot
+    let actual_signed_distance = if signed_rotation > 0. {
+        signed_rotation.min(max_rotation)
+    } else {
+        signed_rotation.max(-max_rotation)
+    };
+
+    // Actually mutate the intermediate angle
+    *intermediate_planar_angle += actual_signed_distance;
+
+    // Rotate left and right
+    new_transform.translate_around(
+        focus.translation,
+        Quat::from_rotation_y(*intermediate_planar_angle),
+    );
+
+    // Look at the focus
     new_transform.look_at(focus.translation, Vec3::Y);
 
     // Replace the previous transform
-    // Use lerping to smooth the transition
-    transform.translation = transform
-        .translation
-        .lerp(new_transform.translation, settings.linear_interpolation);
-    transform.rotation = transform
-        .rotation
-        .slerp(new_transform.rotation, settings.rotational_interpolation)
+    *transform = new_transform;
 }
