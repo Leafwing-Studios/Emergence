@@ -17,6 +17,8 @@ use crate::structures::StructureId;
 use crate::terrain::Terrain;
 use crate::units::UnitId;
 
+use self::speed::Speed;
+
 use super::selection::CurrentSelection;
 use super::InteractionSystem;
 use super::PlayerAction;
@@ -82,14 +84,10 @@ impl Default for CameraFocus {
 /// Configure how the camera moves and feels.
 #[derive(Component)]
 struct CameraSettings {
-    /// Scaling factor for how fast the camera zooms in and out.
-    ///
-    /// Should always be positive.
-    zoom_max_speed: f32,
-    /// Scaling factor for how fast the camera moves from side to side.
-    ///
-    /// Should always be positive.
-    pan_max_speed: f32,
+    /// Controls how fast the camera zooms in and out.
+    zoom_speed: Speed,
+    /// Controls the rate that the camera can moves from side to side.
+    pan_speed: Speed,
     /// The minimum distance that the camera can be from its focus.
     ///
     /// Should always be positive, and less than `max_zoom`.
@@ -123,8 +121,8 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_max_speed: 100.,
-            pan_max_speed: 1.,
+            zoom_speed: Speed::new(50., 100.0, 200.0),
+            pan_speed: Speed::new(100., 100.0, 150.0),
             min_zoom: 7.,
             max_zoom: 100.,
             linear_interpolation: 0.2,
@@ -132,6 +130,56 @@ impl Default for CameraSettings {
             float_radius: 3,
             inclination: 0.7 * PI / 2.,
             inclination_speed: 1.,
+        }
+    }
+}
+
+mod speed {
+    use bevy::utils::Duration;
+
+    /// Controls the rate of camera movement.
+    ///
+    /// Minimum speed is greater than
+    pub(super) struct Speed {
+        /// The minimum speed, in units per second
+        min: f32,
+        /// The current speed, in units per second
+        current_speed: f32,
+        /// The rate at which speed change, in units per second squared
+        acceleration: f32,
+        /// The maximum speed, in units per second
+        max: f32,
+    }
+
+    impl Speed {
+        pub(super) fn new(min: f32, acceleration: f32, max: f32) -> Self {
+            assert!(min > 0.);
+            assert!(acceleration > 0.);
+            assert!(max > 0.);
+
+            assert!(min <= max);
+
+            Speed {
+                min,
+                current_speed: min,
+                acceleration,
+                max,
+            }
+        }
+
+        /// The amount that has changed in the elapsed `delta_time`.
+        pub(super) fn delta(&mut self, delta_time: Duration) -> f32 {
+            let delta_v = self.acceleration * delta_time.as_secs_f32();
+
+            let proposed = self.current_speed + delta_v;
+            self.current_speed = proposed.clamp(self.min, self.max);
+
+            self.current_speed * delta_time.as_secs_f32()
+        }
+
+        /// Resets the current speed to the minimum value
+        pub(super) fn reset_speed(&mut self) {
+            self.current_speed = self.min;
         }
     }
 }
@@ -174,24 +222,27 @@ fn set_camera_inclination(
 
 /// Pan and zoom the camera
 fn translate_camera(
-    mut camera_query: Query<(&mut CameraFocus, &Facing, &CameraSettings), With<Camera3d>>,
+    mut camera_query: Query<(&mut CameraFocus, &Facing, &mut CameraSettings), With<Camera3d>>,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
     selection: Res<CurrentSelection>,
     tile_pos_query: Query<&TilePos>,
 ) {
-    let (mut focus, facing, settings) = camera_query.single_mut();
+    let (mut focus, facing, mut settings) = camera_query.single_mut();
 
     // Zoom
-    let mut delta_zoom = 0.;
-    if actions.pressed(PlayerAction::ZoomIn) {
-        delta_zoom -= time.delta_seconds() * settings.zoom_max_speed;
-    }
-
-    if actions.pressed(PlayerAction::ZoomOut) {
-        delta_zoom += time.delta_seconds() * settings.zoom_max_speed;
-    }
+    let delta_zoom = match (
+        actions.pressed(PlayerAction::ZoomIn),
+        actions.pressed(PlayerAction::ZoomOut),
+    ) {
+        (true, false) => -settings.zoom_speed.delta(time.delta()),
+        (false, true) => settings.zoom_speed.delta(time.delta()),
+        _ => {
+            settings.zoom_speed.reset_speed();
+            0.0
+        }
+    };
 
     // Zoom in / out on whatever we're looking at
     focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
@@ -200,7 +251,8 @@ fn translate_camera(
     if actions.pressed(PlayerAction::Pan) {
         let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
-        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_max_speed * focus.zoom;
+        let scaled_xy =
+            base_xy * time.delta_seconds() * settings.pan_speed.delta(time.delta()) * focus.zoom;
         // Plane is XZ, but gamepads are XY
         let unoriented_translation = Vec3 {
             x: scaled_xy.y,
@@ -216,6 +268,8 @@ fn translate_camera(
 
         let nearest_tile_pos = TilePos::from_world_pos(focus.translation, &map_geometry);
         focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
+    } else {
+        settings.pan_speed.reset_speed();
     }
 
     // Snap to selected object
