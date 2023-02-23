@@ -125,49 +125,68 @@ pub(super) fn choose_actions(
         if current_action.finished() {
             *current_action = match goal {
                 Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
-                Goal::Pickup(item_id) => CurrentAction::find_item(
-                    *item_id,
-                    unit_tile_pos,
-                    goal,
-                    &output_inventory_query,
-                    &signals,
-                    rng,
-                    map_geometry,
-                ),
-                Goal::DropOff(item_id) => {
-                    let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
-                    let mut entities_with_desired_item: Vec<Entity> = Vec::new();
-
-                    for tile_pos in neighboring_tiles {
-                        // Ghosts
-                        if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
-                            if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
-                                if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
-                                    entities_with_desired_item.push(ghost_entity);
-                                }
-                            }
-                        }
-
-                        // Structures
-                        if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos)
-                        {
-                            if let Ok(input_inventory) = input_inventory_query.get(structure_entity)
-                            {
-                                if input_inventory.remaining_reserved_space_for_item(*item_id) > 0 {
-                                    entities_with_desired_item.push(structure_entity);
-                                }
-                            }
-                        }
-                    }
-
-                    if let Some(input_entity) = entities_with_desired_item.choose(rng) {
-                        CurrentAction::dropoff(*item_id, *input_entity)
-                    } else if let Some(upstream) =
-                        signals.upstream(unit_tile_pos, goal, map_geometry)
-                    {
-                        CurrentAction::move_to(upstream)
+                Goal::Pickup(item_id) => {
+                    let maybe_item = held_item.item_id();
+                    if maybe_item.is_some() && maybe_item.unwrap() != *item_id {
+                        CurrentAction::abandon()
                     } else {
-                        CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        CurrentAction::find_item(
+                            *item_id,
+                            unit_tile_pos,
+                            goal,
+                            &output_inventory_query,
+                            &signals,
+                            rng,
+                            map_geometry,
+                        )
+                    }
+                }
+                Goal::DropOff(item_id) => {
+                    let maybe_item = held_item.item_id();
+                    if maybe_item.is_some() && maybe_item.unwrap() != *item_id {
+                        CurrentAction::abandon()
+                    } else {
+                        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+                        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+
+                        for tile_pos in neighboring_tiles {
+                            // Ghosts
+                            if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+                                if let Ok(input_inventory) = input_inventory_query.get(ghost_entity)
+                                {
+                                    if input_inventory.remaining_reserved_space_for_item(*item_id)
+                                        > 0
+                                    {
+                                        entities_with_desired_item.push(ghost_entity);
+                                    }
+                                }
+                            }
+
+                            // Structures
+                            if let Some(&structure_entity) =
+                                map_geometry.structure_index.get(&tile_pos)
+                            {
+                                if let Ok(input_inventory) =
+                                    input_inventory_query.get(structure_entity)
+                                {
+                                    if input_inventory.remaining_reserved_space_for_item(*item_id)
+                                        > 0
+                                    {
+                                        entities_with_desired_item.push(structure_entity);
+                                    }
+                                }
+                            }
+                        }
+
+                        if let Some(input_entity) = entities_with_desired_item.choose(rng) {
+                            CurrentAction::dropoff(*item_id, *input_entity)
+                        } else if let Some(upstream) =
+                            signals.upstream(unit_tile_pos, goal, map_geometry)
+                        {
+                            CurrentAction::move_to(upstream)
+                        } else {
+                            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+                        }
                     }
                 }
                 Goal::Eat(item_id) => {
