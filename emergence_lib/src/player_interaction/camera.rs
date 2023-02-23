@@ -33,6 +33,7 @@ impl Plugin for CameraPlugin {
                     // We rely on the updated focus information from this system
                     .after(translate_camera),
             )
+            .add_system(set_camera_inclination.before(translate_camera))
             .add_system(mousewheel_zoom.before(translate_camera))
             .add_system(translate_camera.label(InteractionSystem::MoveCamera));
     }
@@ -42,11 +43,6 @@ impl Plugin for CameraPlugin {
 ///
 /// Should be between the default values of [`CameraSettings`] `min_zoom` and `max_zoom`.
 const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
-
-/// The angle in radians that the camera forms with the ground.
-///
-/// This value should be between 0 (horizontal) and PI / 2 (vertical).
-const CAMERA_ANGLE: f32 = 0.7 * PI / 2.;
 
 /// Spawns a [`Camera3dBundle`] and associated camera components.
 fn setup(mut commands: Commands) {
@@ -114,6 +110,14 @@ struct CameraSettings {
     ///
     /// Increasing this value will result in a "smoother ride" over the hills and valleys of the map.
     float_radius: u32,
+    /// The angle in radians that the camera forms with the ground.
+    ///
+    /// This value should be between 0 (horizontal) and PI / 2 (vertical).
+    inclination: f32,
+    /// The rate in radians per second that the inclination changes.
+    ///
+    /// This value should be positive.
+    inclination_speed: f32,
 }
 
 impl Default for CameraSettings {
@@ -126,6 +130,8 @@ impl Default for CameraSettings {
             linear_interpolation: 0.2,
             rotational_interpolation: 0.1,
             float_radius: 3,
+            inclination: 0.7 * PI / 2.,
+            inclination_speed: 1.,
         }
     }
 }
@@ -145,6 +151,25 @@ fn mousewheel_zoom(
         }
     }
     mouse_wheel_events.clear();
+}
+
+/// Sets the inclination of the camera
+fn set_camera_inclination(
+    mut camera_query: Query<&mut CameraSettings, With<Camera3d>>,
+    actions: Res<ActionState<PlayerAction>>,
+    time: Res<Time>,
+) {
+    let mut settings = camera_query.single_mut();
+
+    let delta = if actions.pressed(PlayerAction::TiltCameraUp) {
+        settings.inclination_speed * time.delta_seconds()
+    } else if actions.pressed(PlayerAction::TiltCameraDown) {
+        -settings.inclination_speed * time.delta_seconds()
+    } else {
+        return;
+    };
+    // Cannot actually use PI/2., as this results in a singular matrix which causes look_at to fail in weird ways
+    settings.inclination = (settings.inclination + delta).clamp(0.0, PI / 2. - 1e-6);
 }
 
 /// Pan and zoom the camera
@@ -235,7 +260,7 @@ fn rotate_camera(
     // Tilt up
     new_transform.translate_around(
         focus.translation,
-        Quat::from_axis_angle(Vec3::NEG_Z, CAMERA_ANGLE),
+        Quat::from_axis_angle(Vec3::NEG_Z, settings.inclination),
     );
 
     // Rotate around on the xz plane

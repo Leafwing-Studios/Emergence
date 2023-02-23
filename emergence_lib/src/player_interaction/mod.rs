@@ -106,6 +106,10 @@ pub(crate) enum PlayerAction {
     ZoomIn,
     /// Reveal more of the map by pulling the camera away
     ZoomOut,
+    /// Tilts the camera up, towards vertical
+    TiltCameraUp,
+    /// Tilts the camera down, towards horizontal
+    TiltCameraDown,
     /// Rotates the camera counterclockwise
     RotateCameraLeft,
     /// Rotates the camera clockwise
@@ -137,6 +141,9 @@ impl PlayerAction {
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
             ZoomIn => KeyCode::Equals.into(),
             ZoomOut => KeyCode::Minus.into(),
+            // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
+            TiltCameraUp => UserInput::modified(Modifier::Alt, KeyCode::Equals),
+            TiltCameraDown => UserInput::modified(Modifier::Alt, KeyCode::Minus),
             RotateCameraLeft => KeyCode::Z.into(),
             RotateCameraRight => KeyCode::C.into(),
         }
@@ -169,6 +176,8 @@ impl PlayerAction {
             MoveCursor => DualAxis::right_stick().into(),
             ZoomIn => UserInput::chord([camera_modifier, DPadUp]),
             ZoomOut => UserInput::chord([camera_modifier, DPadDown]),
+            TiltCameraUp => UserInput::chord([RightTrigger, DPadDown]),
+            TiltCameraDown => UserInput::chord([RightTrigger, DPadDown]),
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
             RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
         }
