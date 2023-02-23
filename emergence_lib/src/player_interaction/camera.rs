@@ -89,11 +89,11 @@ struct CameraSettings {
     /// Scaling factor for how fast the camera zooms in and out.
     ///
     /// Should always be positive.
-    zoom_speed: f32,
+    zoom_max_speed: f32,
     /// Scaling factor for how fast the camera moves from side to side.
     ///
     /// Should always be positive.
-    pan_speed: f32,
+    pan_max_speed: f32,
     /// The minimum distance that the camera can be from its focus.
     ///
     /// Should always be positive, and less than `max_zoom`.
@@ -119,8 +119,8 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: 50.,
-            pan_speed: 1.,
+            zoom_max_speed: 100.,
+            pan_max_speed: 1.,
             min_zoom: 7.,
             max_zoom: 100.,
             linear_interpolation: 0.2,
@@ -161,11 +161,11 @@ fn translate_camera(
     // Zoom
     let mut delta_zoom = 0.;
     if actions.pressed(PlayerAction::ZoomIn) {
-        delta_zoom -= time.delta_seconds() * settings.zoom_speed;
+        delta_zoom -= time.delta_seconds() * settings.zoom_max_speed;
     }
 
     if actions.pressed(PlayerAction::ZoomOut) {
-        delta_zoom += time.delta_seconds() * settings.zoom_speed;
+        delta_zoom += time.delta_seconds() * settings.zoom_max_speed;
     }
 
     // Zoom in / out on whatever we're looking at
@@ -175,7 +175,7 @@ fn translate_camera(
     if actions.pressed(PlayerAction::Pan) {
         let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
-        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_speed * focus.zoom;
+        let scaled_xy = base_xy * time.delta_seconds() * settings.pan_max_speed * focus.zoom;
         // Plane is XZ, but gamepads are XY
         let unoriented_translation = Vec3 {
             x: scaled_xy.y,
