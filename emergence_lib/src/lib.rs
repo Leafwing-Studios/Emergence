@@ -6,8 +6,6 @@
 // Often exceeded by queries
 #![allow(clippy::type_complexity)]
 
-use bevy::prelude::In;
-
 pub mod asset_management;
 pub mod curves;
 pub mod enum_iter;
@@ -55,7 +53,3 @@ pub mod testing {
         app
     }
 }
-
-/// A very lazy system pipe adaptor for handling errors
-// TODO: replace me with Bevy 0.10 equivalent.
-pub(crate) fn ignore_errors<T>(In(_input): In<T>) {}

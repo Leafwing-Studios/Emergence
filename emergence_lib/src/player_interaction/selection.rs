@@ -13,7 +13,6 @@ use hexx::shapes::hexagon;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::ignore_errors;
 use crate::items::recipe::RecipeManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
@@ -40,7 +39,7 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(
                 get_details
-                    .pipe(ignore_errors)
+                    .pipe(clear_details_on_error)
                     .label(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
@@ -754,6 +753,18 @@ fn get_details(
     };
 
     Ok(())
+}
+
+/// If something went wrong in [`get_details`], clear the selection.
+pub(crate) fn clear_details_on_error(
+    In(result): In<Result<(), QueryEntityError>>,
+    mut current_selection: ResMut<CurrentSelection>,
+    mut selection_details: ResMut<SelectionDetails>,
+) {
+    if result.is_err() {
+        *current_selection = CurrentSelection::None;
+        *selection_details = SelectionDetails::None;
+    }
 }
 
 /// Details for ghosts
