@@ -116,6 +116,11 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
-            .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction));
+            .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction))
+            .add_system(
+                hunger::eat_held_items
+                    .label(UnitSystem::Act)
+                    .after(UnitSystem::ChooseNewAction),
+            );
     }
 }

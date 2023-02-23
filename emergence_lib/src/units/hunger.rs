@@ -39,13 +39,15 @@ impl Display for Diet {
 /// Swaps the goal to [`Goal::Eat`] when energy is low
 pub(super) fn check_for_hunger(mut unit_query: Query<(&mut Goal, &EnergyPool, &Diet)>) {
     for (mut goal, energy_pool, diet) in unit_query.iter_mut() {
-        if energy_pool.should_warn() {
+        if energy_pool.is_hungry() {
             *goal = Goal::Eat(diet.item);
+        } else if energy_pool.is_satiated() {
+            *goal = Goal::Wander
         }
     }
 }
 
-/// Swaps the goal to [`Goal::Eat`] when energy is low
+/// Causes units to consume what they're holding for energy
 pub(super) fn eat_held_items(
     mut unit_query: Query<(&CurrentAction, &mut HeldItem, &Diet, &mut EnergyPool)>,
 ) {

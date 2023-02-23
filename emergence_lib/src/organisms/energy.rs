@@ -19,8 +19,10 @@ pub(crate) struct EnergyPool {
     max: Energy,
     /// The threshold at which desperate action is taken to gain more energy.
     warning_threshold: Energy,
+    /// The threshold at which no more action is taken to gain energy.
+    satiation_threshold: Energy,
     /// The amount of life regenerated per second.
-    pub regen_per_second: Energy,
+    pub(crate) regen_per_second: Energy,
 }
 
 impl EnergyPool {
@@ -30,8 +32,13 @@ impl EnergyPool {
     }
 
     /// Is this organism close to running out of energy?
-    pub(crate) fn should_warn(&self) -> bool {
+    pub(crate) fn is_hungry(&self) -> bool {
         self.current <= self.warning_threshold
+    }
+
+    /// Is this organism close to running out of energy?
+    pub(crate) fn is_satiated(&self) -> bool {
+        self.current >= self.satiation_threshold
     }
 }
 
@@ -85,10 +92,12 @@ impl Pool for EnergyPool {
         // TODO: don't hard code this.
         // Blocked on: https://github.com/Leafwing-Studios/leafwing_abilities/issues/18
         let warning_threshold = 0.25 * max;
+        let satiation_threshold = 0.75 * max;
 
         EnergyPool {
             current,
             warning_threshold,
+            satiation_threshold,
             max,
             regen_per_second,
         }
