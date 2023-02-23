@@ -1,5 +1,6 @@
 //! Generating starting terrain and organisms
 use crate::enum_iter::IterableEnum;
+use crate::organisms::energy::{Energy, EnergyPool};
 use crate::player_interaction::clipboard::StructureData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
@@ -12,6 +13,7 @@ use bevy::math::vec2;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
+use leafwing_abilities::prelude::Pool;
 use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -199,7 +201,14 @@ fn generate_organisms(
     commands.spawn_batch(
         ant_positions
             .into_iter()
-            .map(|ant_position| UnitBundle::new("ant", ant_position)),
+            // TODO: use a UnitManifest
+            .map(|ant_position| {
+                UnitBundle::new(
+                    "ant",
+                    ant_position,
+                    EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                )
+            }),
     );
 
     // Plant

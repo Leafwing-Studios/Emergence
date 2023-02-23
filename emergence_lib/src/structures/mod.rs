@@ -5,10 +5,15 @@
 
 use bevy::{prelude::*, utils::HashMap};
 use bevy_mod_raycast::RaycastMesh;
+use leafwing_abilities::prelude::Pool;
 
 use crate::{
     asset_management::manifest::Manifest,
     items::{inventory::Inventory, recipe::RecipeId, ItemCount, ItemId},
+    organisms::{
+        energy::{Energy, EnergyPool},
+        OrganismVariety,
+    },
     player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
     simulation::geometry::{Facing, TilePos},
 };
@@ -36,8 +41,8 @@ impl StructureManifest {
 /// Information about a single [`StructureId`] variety of structure.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureVariety {
-    /// Is this structure alive?
-    organism: bool,
+    /// Data needed for living structures
+    organism: Option<OrganismVariety>,
     /// Can this structure make things?
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
@@ -60,7 +65,9 @@ impl Default for StructureManifest {
         map.insert(
             StructureId { id: "leuco" },
             StructureVariety {
-                organism: true,
+                organism: Some(OrganismVariety {
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-5.)),
+                }),
                 crafts: true,
                 starting_recipe: Some(RecipeId::leuco_chunk_production()),
                 construction_materials: leuco_construction_materials,
@@ -75,7 +82,9 @@ impl Default for StructureManifest {
         map.insert(
             StructureId { id: "acacia" },
             StructureVariety {
-                organism: true,
+                organism: Some(OrganismVariety {
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-10.)),
+                }),
                 crafts: true,
                 starting_recipe: Some(RecipeId::acacia_leaf_production()),
                 construction_materials: acacia_construction_materials,

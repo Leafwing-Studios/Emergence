@@ -1,6 +1,6 @@
 //! Units are organisms that can move freely.
 
-use crate::simulation::geometry::TilePos;
+use crate::{organisms::energy::EnergyPool, simulation::geometry::TilePos};
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use core::fmt::Display;
@@ -52,7 +52,7 @@ pub(crate) struct UnitBundle {
 
 impl UnitBundle {
     /// Initializes a new unit
-    pub(crate) fn new(id: &'static str, tile_pos: TilePos) -> Self {
+    pub(crate) fn new(id: &'static str, tile_pos: TilePos, energy_pool: EnergyPool) -> Self {
         UnitBundle {
             id: UnitId { id },
             tile_pos,
@@ -61,7 +61,7 @@ impl UnitBundle {
             // TODO: This should be initialized from the unit manifest
             impatience: Impatience::default(),
             held_item: HeldItem::default(),
-            organism_bundle: OrganismBundle::default(),
+            organism_bundle: OrganismBundle::new(energy_pool),
             raycast_mesh: RaycastMesh::default(),
         }
     }
