@@ -46,7 +46,7 @@ const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 /// The angle in radians that the camera forms with the ground.
 ///
 /// This value should be between 0 (horizontal) and PI / 2 (vertical).
-const CAMERA_ANGLE: f32 = PI / 4.;
+const CAMERA_ANGLE: f32 = 0.7 * PI / 2.;
 
 /// Spawns a [`Camera3dBundle`] and associated camera components.
 fn setup(mut commands: Commands) {
