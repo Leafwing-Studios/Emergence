@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
@@ -34,11 +35,23 @@ impl EnergyPool {
     }
 }
 
+impl Display for EnergyPool {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}", self.current, self.max)
+    }
+}
+
 /// A quantity of energy, used to modify a [`EnergyPool`].
 ///
 /// Organisms produce energy by crafting recipes.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default, Add, Sub, AddAssign, SubAssign)]
 pub(crate) struct Energy(pub f32);
+
+impl Display for Energy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.1}", self.0)
+    }
+}
 
 impl Mul<f32> for Energy {
     type Output = Energy;
