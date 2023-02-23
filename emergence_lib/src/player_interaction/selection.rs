@@ -120,7 +120,7 @@ impl SelectedTiles {
     fn add_to_selection(
         &mut self,
         hovered_tile: TilePos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
         let selection_region =
@@ -136,7 +136,7 @@ impl SelectedTiles {
     fn remove_from_selection(
         &mut self,
         hovered_tile: TilePos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
         if selection_state.multiple {
@@ -154,7 +154,7 @@ impl SelectedTiles {
     fn compute_selection_region(
         &self,
         hovered_tile: TilePos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) -> HashSet<TilePos> {
         match selection_state.shape {
@@ -183,7 +183,7 @@ pub(crate) struct HoveredTiles {
 
 impl HoveredTiles {
     /// Updates the set of hovered actions based on the current cursor position and player inputs.
-    fn update(&mut self, hovered_tile: TilePos, selection_state: SelectionState) {
+    fn update(&mut self, hovered_tile: TilePos, selection_state: &SelectionState) {
         self.hovered = match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
@@ -296,7 +296,7 @@ impl CurrentSelection {
     fn select_terrain(
         &self,
         hovered_tile: TilePos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) -> Self {
         if let CurrentSelection::Terrain(existing_selection) = self {
@@ -318,7 +318,7 @@ impl CurrentSelection {
         &mut self,
         cursor_pos: &CursorPos,
         hovered_tile: TilePos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
         *self = if selection_state.multiple {
@@ -340,7 +340,7 @@ impl CurrentSelection {
     fn cycle_selection(
         &mut self,
         cursor_pos: &CursorPos,
-        selection_state: SelectionState,
+        selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
         *self = match self {
@@ -438,7 +438,7 @@ impl CurrentSelection {
 }
 
 /// Tracks what should be done with the selection (and hovered tiles) this frame.
-#[derive(Resource, Default, Debug, Clone, Copy)]
+#[derive(Resource, Default, Debug)]
 struct SelectionState {
     /// What is the shape of the selection?
     shape: SelectionShape,
@@ -487,22 +487,16 @@ impl SelectionState {
     fn compute(&mut self, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
         use PlayerAction::*;
 
-        if actions.pressed(Line) {
+        self.multiple = actions.pressed(PlayerAction::Multiple);
+
+        self.shape = if actions.pressed(Line) {
             let start = if let SelectionShape::Line { start } = self.shape {
                 start
             } else {
                 hovered_tile
             };
 
-            self.shape = SelectionShape::Line { start };
-
-            self.action = if actions.just_released(Select) {
-                SelectionAction::Select
-            } else if actions.just_released(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Line { start }
         } else if actions.pressed(Area) {
             let center = if let SelectionShape::Area { center, .. } = self.shape {
                 center
@@ -511,29 +505,33 @@ impl SelectionState {
             };
             let radius = hovered_tile.unsigned_distance_to(center.hex);
 
-            self.shape = SelectionShape::Area { center, radius };
-
-            self.action = if actions.just_released(Select) {
-                SelectionAction::Select
-            } else if actions.just_released(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Area { center, radius }
         } else {
-            self.shape = SelectionShape::Single;
-
-            self.action = if actions.pressed(Select) {
-                SelectionAction::Select
-            // Don't repeatedly trigger deselect to avoid
-            } else if actions.just_pressed(Deselect) {
-                SelectionAction::Deselect
-            } else {
-                SelectionAction::Preview
-            }
+            SelectionShape::Single
         };
 
-        self.multiple = actions.pressed(PlayerAction::Multiple);
+        self.action = match self.shape {
+            SelectionShape::Single => {
+                if actions.pressed(Select) {
+                    SelectionAction::Select
+                // Don't repeatedly trigger deselect to avoid accidentally clearing selection
+                } else if actions.just_pressed(Deselect) {
+                    SelectionAction::Deselect
+                } else {
+                    SelectionAction::Preview
+                }
+            }
+            SelectionShape::Area { .. } | SelectionShape::Line { .. } => {
+                // Trigger on just released in order to enable a drag-and-preview effect
+                if actions.just_released(Select) {
+                    SelectionAction::Select
+                } else if actions.just_released(Deselect) {
+                    SelectionAction::Deselect
+                } else {
+                    SelectionAction::Preview
+                }
+            }
+        };
     }
 }
 
@@ -558,7 +556,7 @@ fn set_selection(
     selection_state.compute(actions, hovered_tile);
 
     // Update hovered tiles
-    hovered_tiles.update(hovered_tile, *selection_state);
+    hovered_tiles.update(hovered_tile, &selection_state);
 
     // Select and deselect tiles
     match (selection_state.action, selection_state.shape) {
@@ -566,7 +564,7 @@ fn set_selection(
         (SelectionAction::Preview, _) => (),
         (SelectionAction::Select, SelectionShape::Line { .. }) => {
             *current_selection =
-                current_selection.select_terrain(hovered_tile, *selection_state, map_geometry);
+                current_selection.select_terrain(hovered_tile, &selection_state, map_geometry);
             // Let players chain lines head to tail nicely
             selection_state.shape = SelectionShape::Line {
                 start: hovered_tile,
@@ -574,7 +572,7 @@ fn set_selection(
         }
         (SelectionAction::Select, SelectionShape::Area { .. }) => {
             *current_selection =
-                current_selection.select_terrain(hovered_tile, *selection_state, map_geometry);
+                current_selection.select_terrain(hovered_tile, &selection_state, map_geometry);
         }
         (SelectionAction::Select, SelectionShape::Single) => {
             // If we can compare them, do
@@ -592,12 +590,12 @@ fn set_selection(
                 && !selection_state.multiple
                 && actions.just_pressed(PlayerAction::Select)
             {
-                current_selection.cycle_selection(cursor_pos, *selection_state, map_geometry)
+                current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {
                 current_selection.update_from_cursor_pos(
                     cursor_pos,
                     hovered_tile,
-                    *selection_state,
+                    &selection_state,
                     map_geometry,
                 )
             }
@@ -608,7 +606,7 @@ fn set_selection(
                     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
-                            *selection_state,
+                            &selection_state,
                             map_geometry,
                         );
                     }
@@ -622,7 +620,7 @@ fn set_selection(
                     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
-                            *selection_state,
+                            &selection_state,
                             map_geometry,
                         );
                     }
@@ -630,7 +628,6 @@ fn set_selection(
                 _ => *current_selection = CurrentSelection::None,
             }
 
-            // Let players chain lines head to tail nicely
             // Let players chain lines head to tail nicely
             selection_state.shape = SelectionShape::Line {
                 start: hovered_tile,
