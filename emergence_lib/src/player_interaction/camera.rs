@@ -29,7 +29,7 @@ pub(super) struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::Startup, setup)
+        app.add_startup_system_to_stage(StartupStage::Startup, setup_camera)
             .add_system(set_camera_inclination.before(translate_camera))
             .add_system(mousewheel_zoom.before(translate_camera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
@@ -44,11 +44,21 @@ impl Plugin for CameraPlugin {
 const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 
 /// Spawns a [`Camera3dBundle`] and associated camera components.
-fn setup(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
+    let focus = CameraFocus::default();
+    let settings = CameraSettings::default();
+    let facing = Facing::default();
+    let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
+
+    let transform = compute_camera_transform(&focus, planar_angle, settings.inclination);
+
     commands
-        .spawn(Camera3dBundle::default())
-        .insert(CameraSettings::default())
-        .insert(CameraFocus::default())
+        .spawn(Camera3dBundle {
+            transform,
+            ..Default::default()
+        })
+        .insert(settings)
+        .insert(focus)
         .insert(Facing::default())
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<StructureId>::new())
@@ -311,19 +321,9 @@ fn move_camera_to_goal(
 
     let (mut transform, facing, focus, mut settings) = query.single_mut();
 
-    // Always begin due "south" of the focus.
-    let mut new_transform =
-        Transform::from_translation(focus.translation + Vec3::NEG_X * focus.zoom);
-
-    // Tilt up
-    new_transform.translate_around(
-        focus.translation,
-        Quat::from_axis_angle(Vec3::NEG_Z, settings.inclination),
-    );
-
     // Determine our goal
     // Normalize both angles
-    let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation) % TAU;
+    let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
     *intermediate_planar_angle = *intermediate_planar_angle % TAU;
 
     // Compute the shortest distance between them
@@ -348,15 +348,26 @@ fn move_camera_to_goal(
         *intermediate_planar_angle += actual_signed_distance;
     }
 
-    // Rotate left and right
-    new_transform.translate_around(
+    // Replace the previous transform
+    *transform = compute_camera_transform(focus, *intermediate_planar_angle, settings.inclination);
+}
+
+/// Computes the camera transform such that it is looking at `focus`
+fn compute_camera_transform(focus: &CameraFocus, planar_angle: f32, inclination: f32) -> Transform {
+    // Always begin due "south" of the focus.
+    let mut transform = Transform::from_translation(focus.translation + Vec3::NEG_X * focus.zoom);
+
+    // Tilt up
+    transform.translate_around(
         focus.translation,
-        Quat::from_rotation_y(*intermediate_planar_angle),
+        Quat::from_axis_angle(Vec3::NEG_Z, inclination),
     );
 
-    // Look at the focus
-    new_transform.look_at(focus.translation, Vec3::Y);
+    // Rotate left and right
+    transform.translate_around(focus.translation, Quat::from_rotation_y(planar_angle));
 
-    // Replace the previous transform
-    *transform = new_transform;
+    // Look at the focus
+    transform.look_at(focus.translation, Vec3::Y);
+
+    transform
 }
