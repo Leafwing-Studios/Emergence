@@ -1,7 +1,12 @@
-use bevy::prelude::{Component, Resource};
+use bevy::prelude::*;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+
+use crate::{
+    simulation::geometry::TilePos,
+    structures::{commands::StructureCommandsExt, StructureId},
+};
 
 /// The amount of energy available to an organism.
 /// If they run out, they die.
@@ -106,5 +111,20 @@ impl Pool for EnergyPool {
 
     fn set_regen_per_second(&mut self, new_regen_per_second: Self::Quantity) {
         self.regen_per_second = new_regen_per_second;
+    }
+}
+
+/// Despawns organisms when they run out of energy
+pub(super) fn kill_organisms_when_out_of_energy(
+    organism_query: Query<(Entity, &EnergyPool, &TilePos, Option<&StructureId>)>,
+    mut commands: Commands,
+) {
+    for (entity, energy_pool, tile_pos, maybe_structure) in organism_query.iter() {
+        if energy_pool.is_empty() {
+            match maybe_structure {
+                Some(_) => commands.despawn_structure(*tile_pos),
+                None => commands.entity(entity).despawn_recursive(),
+            }
+        }
     }
 }
