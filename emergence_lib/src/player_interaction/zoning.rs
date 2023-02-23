@@ -66,9 +66,10 @@ fn set_zoning(
     if let Some(cursor_tile_pos) = cursor.maybe_tile_pos() {
         let selected_tiles = match &*current_selection {
             CurrentSelection::Ghost(entity) | CurrentSelection::Structure(entity) => {
-                let selection_tile_pos = *tile_pos_query.get(*entity).unwrap();
                 let mut selected_tiles = SelectedTiles::default();
-                selected_tiles.add_tile(selection_tile_pos);
+                if let Ok(selection_tile_pos) = tile_pos_query.get(*entity) {
+                    selected_tiles.add_tile(*selection_tile_pos);
+                }
                 selected_tiles
             }
             CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),

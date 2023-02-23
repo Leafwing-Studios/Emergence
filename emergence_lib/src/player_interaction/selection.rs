@@ -6,12 +6,14 @@ use self::structure_details::*;
 use self::terrain_details::*;
 use self::unit_details::*;
 
+use bevy::ecs::query::QueryEntityError;
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
+use crate::ignore_errors;
 use crate::items::recipe::RecipeManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
@@ -38,6 +40,7 @@ impl Plugin for SelectionPlugin {
             )
             .add_system(
                 get_details
+                    .pipe(ignore_errors)
                     .label(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
@@ -666,10 +669,10 @@ fn get_details(
     map_geometry: Res<MapGeometry>,
     recipe_manifest: Res<RecipeManifest>,
     signals: Res<Signals>,
-) {
+) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
-            let ghost_query_item = ghost_query.get(*ghost_entity).unwrap();
+            let ghost_query_item = ghost_query.get(*ghost_entity)?;
             SelectionDetails::Ghost(GhostDetails {
                 entity: *ghost_entity,
                 tile_pos: *ghost_query_item.tile_pos,
@@ -679,7 +682,7 @@ fn get_details(
             })
         }
         CurrentSelection::Structure(structure_entity) => {
-            let structure_query_item = structure_query.get(*structure_entity).unwrap();
+            let structure_query_item = structure_query.get(*structure_entity)?;
 
             let crafting_details =
                 if let Some((input, output, active_recipe, state, timer, emitter)) =
@@ -719,7 +722,7 @@ fn get_details(
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
                 let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_query_item = terrain_query.get(*terrain_entity).unwrap();
+                let terrain_query_item = terrain_query.get(*terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_query_item.entity,
@@ -732,9 +735,9 @@ fn get_details(
             }
         }
         CurrentSelection::Unit(unit_entity) => {
-            let unit_query_item = unit_query.get(*unit_entity).unwrap();
+            let unit_query_item = unit_query.get(*unit_entity)?;
             // All units are organisms
-            let organism_details = organism_query.get(*unit_entity).unwrap().into();
+            let organism_details = organism_query.get(*unit_entity)?.into();
 
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
@@ -749,6 +752,8 @@ fn get_details(
         }
         CurrentSelection::None => SelectionDetails::None,
     };
+
+    Ok(())
 }
 
 /// Details for ghosts
@@ -1045,7 +1050,7 @@ mod unit_details {
         },
     };
 
-    use super::organism_details::{self, OrganismDetails};
+    use super::organism_details::OrganismDetails;
 
     /// Data needed to populate [`UnitDetails`].
     #[derive(WorldQuery)]
