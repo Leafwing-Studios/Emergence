@@ -299,11 +299,11 @@ fn rotate_camera(
 
     // Set facing
     if actions.just_pressed(PlayerAction::RotateCameraLeft) {
-        facing.rotate_left();
+        facing.rotate_right();
     }
 
     if actions.just_pressed(PlayerAction::RotateCameraRight) {
-        facing.rotate_right();
+        facing.rotate_left();
     }
 }
 
