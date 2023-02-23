@@ -61,7 +61,7 @@ pub(super) fn pickup_and_drop_items(
 
     for (current_action, mut current_goal, mut held_item) in unit_query.iter_mut() {
         if current_action.finished() {
-            let new_goal: Goal = if let UnitAction::PickUp {
+            if let UnitAction::PickUp {
                 item_id,
                 output_entity,
             } = current_action.action()
@@ -75,7 +75,7 @@ pub(super) fn pickup_and_drop_items(
                     );
 
                     // If our unit's all loaded, swap to delivering it
-                    if held_item.is_full() {
+                    *current_goal = if held_item.is_full() {
                         Goal::DropOff(*item_id)
                     // If we can carry more, try and grab more items
                     } else {
@@ -83,7 +83,7 @@ pub(super) fn pickup_and_drop_items(
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    Goal::Wander
+                    *current_goal = Goal::Wander
                 }
             } else if let UnitAction::DropOff {
                 item_id,
@@ -99,7 +99,7 @@ pub(super) fn pickup_and_drop_items(
                     );
 
                     // If our unit is unloaded, swap to wandering to find something else to do
-                    if held_item.is_empty() {
+                    *current_goal = if held_item.is_empty() {
                         Goal::Wander
                     // If we still have items, keep unloading
                     } else {
@@ -107,14 +107,15 @@ pub(super) fn pickup_and_drop_items(
                     }
                 } else {
                     // Something has gone wrong (like the structure was despawned)
-                    Goal::Wander
+                    *current_goal = Goal::Wander
                 }
+            } else if let UnitAction::Abandon = current_action.action() {
+                // TODO: actually put these dropped items somewhere
+                *held_item = HeldItem::default();
             } else {
                 // Other actions are not handled in this system
                 return;
             };
-
-            *current_goal = new_goal;
         }
     }
 }
