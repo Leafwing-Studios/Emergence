@@ -6,7 +6,7 @@ use bevy_mod_raycast::RaycastMesh;
 use core::fmt::Display;
 
 use self::{
-    behavior::{CurrentAction, Goal, Impatience},
+    behavior::{CurrentAction, Goal},
     item_interaction::HeldItem,
 };
 
@@ -40,8 +40,6 @@ pub(crate) struct UnitBundle {
     current_goal: Goal,
     /// What is the unit currently doing.
     current_action: CurrentAction,
-    /// How frustrated is this unit, causing it to give up its current goal?
-    impatience: Impatience,
     /// What is the unit currently holding, if anything?
     held_item: HeldItem,
     /// Organism data
@@ -58,8 +56,6 @@ impl UnitBundle {
             tile_pos,
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
-            // TODO: This should be initialized from the unit manifest
-            impatience: Impatience::default(),
             held_item: HeldItem::default(),
             organism_bundle: OrganismBundle::new(energy_pool),
             raycast_mesh: RaycastMesh::default(),
@@ -109,6 +105,6 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
-            .add_system(behavior::handle_full_impatience.after(UnitSystem::ChooseNewAction));
+            .add_system(behavior::check_for_hunger.after(UnitSystem::ChooseNewAction));
     }
 }

@@ -745,7 +745,6 @@ fn get_details(
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
-                impatience: unit_query_item.impatience.clone(),
                 organism_details,
             })
         }
@@ -1055,7 +1054,7 @@ mod unit_details {
     use crate::{
         simulation::geometry::TilePos,
         units::{
-            behavior::{CurrentAction, Goal, Impatience},
+            behavior::{CurrentAction, Goal},
             item_interaction::HeldItem,
             UnitId,
         },
@@ -1078,8 +1077,6 @@ mod unit_details {
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
-        /// How frustrated is this unit
-        pub(super) impatience: &'static Impatience,
     }
 
     /// Detailed info about a given unit.
@@ -1097,8 +1094,6 @@ mod unit_details {
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,
-        /// How frustrated is this unit
-        pub(super) impatience: Impatience,
         /// Details about this organism, if it is one.
         pub(crate) organism_details: OrganismDetails,
     }
@@ -1111,7 +1106,6 @@ mod unit_details {
             let held_item = &self.held_item;
             let goal = &self.goal;
             let action = &self.action;
-            let impatience = &self.impatience;
             let organism_details = &self.organism_details;
 
             write!(
@@ -1122,7 +1116,6 @@ Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
 Action: {action}
-Impatience: {impatience}
 {organism_details}"
             )
         }
