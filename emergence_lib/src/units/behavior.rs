@@ -245,7 +245,7 @@ impl Display for CurrentAction {
         let action = &self.action;
         let time_remaining = self.timer.remaining_secs();
 
-        write!(f, "{action} for the next {time_remaining:.2} s.")
+        write!(f, "{action}\nRemaining: {time_remaining:.2} s.")
     }
 }
 
