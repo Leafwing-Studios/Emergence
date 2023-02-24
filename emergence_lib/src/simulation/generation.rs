@@ -41,7 +41,7 @@ pub struct GenerationConfig {
 
 impl GenerationConfig {
     /// The number of tiles from the center of the map to the edge
-    const MAP_RADIUS: u32 = 20;
+    const MAP_RADIUS: u32 = 10;
 
     /// The number of ants in the default generation config
     const N_ANT: usize = 5;
