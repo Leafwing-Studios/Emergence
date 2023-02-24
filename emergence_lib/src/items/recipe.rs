@@ -114,7 +114,7 @@ impl Recipe {
         Recipe::new(
             Vec::new(),
             vec![ItemCount::one(ItemId::acacia_leaf())],
-            Duration::from_secs(10),
+            Duration::from_secs(3),
             Some(Energy(20.)),
         )
     }
@@ -124,7 +124,7 @@ impl Recipe {
         Recipe::new(
             vec![ItemCount::one(ItemId::acacia_leaf())],
             vec![ItemCount::one(ItemId::leuco_chunk())],
-            Duration::from_secs(5),
+            Duration::from_secs(2),
             Some(Energy(40.)),
         )
     }
