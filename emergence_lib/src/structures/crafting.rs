@@ -169,7 +169,11 @@ fn progress_crafting(
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
                     match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
-                        Ok(()) => CraftingState::InProgress,
+                        Ok(()) => {
+                            crafter.timer.set_duration(recipe.craft_time());
+                            crafter.timer.reset();
+                            CraftingState::InProgress
+                        }
                         Err(_) => CraftingState::NeedsInput,
                     }
                 } else {

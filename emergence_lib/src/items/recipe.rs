@@ -73,8 +73,8 @@ impl Recipe {
     }
 
     /// The time needed to craft the recipe.
-    pub(crate) fn craft_time(&self) -> &Duration {
-        &self.craft_time
+    pub(crate) fn craft_time(&self) -> Duration {
+        self.craft_time
     }
 
     /// An inventory with empty slots for all of the inputs of this recipe.
