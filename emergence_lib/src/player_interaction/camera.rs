@@ -30,8 +30,8 @@ pub(super) struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::Startup, setup_camera)
-            .add_system(mousewheel_zoom.before(modify_field_of_view))
-            .add_system(modify_field_of_view)
+            .add_system(mousewheel_zoom.before(zoom))
+            .add_system(zoom)
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
@@ -130,11 +130,11 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: Speed::new(1., 1.0, 2.0),
+            zoom_speed: Speed::new(100., 100.0, 200.0),
             pan_speed: Speed::new(100., 100.0, 150.0),
             rotation_speed: Speed::new(0.3, 3.0, 5.0),
-            min_zoom: 0.2,
-            max_zoom: 1.,
+            min_zoom: 5.,
+            max_zoom: 500.,
             float_radius: 3,
             inclination: 0.5 * PI / 2.,
             inclination_speed: 1.,
@@ -236,13 +236,13 @@ fn set_camera_inclination(
     settings.inclination = (settings.inclination + delta).clamp(0.0, PI / 2. - 1e-6);
 }
 
-/// Modify the camera's field of view
-fn modify_field_of_view(
-    mut camera_query: Query<(&mut Projection, &mut CameraSettings), With<Camera3d>>,
+/// Zooms the camera in and out
+fn zoom(
+    mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
     time: Res<Time>,
 ) {
-    let (mut projection, mut settings) = camera_query.single_mut();
+    let (mut focus, mut settings) = camera_query.single_mut();
 
     let delta_zoom = match (
         actions.pressed(PlayerAction::ZoomIn),
@@ -257,10 +257,7 @@ fn modify_field_of_view(
     };
 
     // Zoom in / out on whatever we're looking at
-    // FIXME: this should probably just be handled by using the `PerspectiveProjection` component directly on our camera
-    if let Projection::Perspective(projection) = &mut *projection {
-        projection.fov = (projection.fov + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
-    }
+    focus.distance = (focus.distance + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
 }
 
 /// Pan the camera
