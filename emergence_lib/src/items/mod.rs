@@ -18,6 +18,7 @@ pub struct ItemId {
     id: &'static str,
 }
 
+// TODO: these should be loaded from file
 impl ItemId {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
@@ -27,6 +28,11 @@ impl ItemId {
     /// The item ID of a Leuco chunk.
     pub fn leuco_chunk() -> Self {
         Self { id: "leuco_chunk" }
+    }
+
+    /// The item ID of an ant egg.
+    pub fn ant_egg() -> Self {
+        Self { id: "ant_egg" }
     }
 
     /// An item ID solely used for testing.
@@ -64,6 +70,12 @@ impl ItemData {
     // TODO: Remove this once we can load item data from asset files
     /// A piece of a leuco mushroom.
     pub fn leuco_chunk() -> Self {
+        Self { stack_size: 5 }
+    }
+
+    // TODO: Remove this once we can load item data from asset files
+    /// An egg that will hatch into a grown ant.
+    pub fn ant_egg() -> Self {
         Self { stack_size: 5 }
     }
 }

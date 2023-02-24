@@ -92,6 +92,17 @@ impl Default for StructureManifest {
             },
         );
 
+        map.insert(
+            StructureId { id: "ant_hive" },
+            StructureVariety {
+                organism: None,
+                crafts: true,
+                starting_recipe: Some(RecipeId::ant_egg_production()),
+                construction_materials: InputInventory::default(),
+                color: Color::BEIGE,
+            },
+        );
+
         StructureManifest::new(map)
     }
 }
