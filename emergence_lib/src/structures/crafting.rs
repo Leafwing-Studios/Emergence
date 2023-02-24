@@ -145,14 +145,21 @@ impl CraftingBundle {
     }
 }
 
+/// Data needed for [`progress_crafting`].
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 struct CraftingQuery {
+    /// The recipe of the crafter
     active_recipe: &'static ActiveRecipe,
+    /// The time remaining to complete the recipe
     timer: &'static mut CraftTimer,
+    /// The status of crafting
     state: &'static mut CraftingState,
+    /// The inputs
     input: &'static mut InputInventory,
+    /// The outputs
     output: &'static mut OutputInventory,
+    /// Is this an organism?
     maybe_organism: Option<&'static Organism>,
 }
 
