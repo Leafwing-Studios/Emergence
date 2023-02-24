@@ -374,17 +374,15 @@ impl Inventory {
                     items_to_remove = 0;
                     break;
                 }
-                Err(RemoveOneItemError {
-                    missing_count: excess_count,
-                }) => {
-                    items_to_remove = excess_count;
+                Err(RemoveOneItemError { missing_count }) => {
+                    items_to_remove = missing_count.count();
                 }
             }
         }
 
         if items_to_remove > 0 {
             Err(RemoveOneItemError {
-                missing_count: items_to_remove,
+                missing_count: ItemCount::new(item_count.item_id(), items_to_remove),
             })
         } else {
             Ok(())
@@ -403,7 +401,7 @@ impl Inventory {
 
         if cur_count < item_count.count() {
             Err(RemoveOneItemError {
-                missing_count: item_count.count() - cur_count,
+                missing_count: ItemCount::new(item_count.item_id(), item_count.count() - cur_count),
             })
         } else {
             // If this unwrap panics the removal or the item counting must be wrong
@@ -867,7 +865,9 @@ mod tests {
 
                 assert_eq!(
                     inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 20)),
-                    Err(RemoveOneItemError { missing_count: 5 })
+                    Err(RemoveOneItemError {
+                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                    })
                 );
                 assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
                 assert_eq!(inventory.item_count(ItemId::test()), 3);
@@ -911,7 +911,9 @@ mod tests {
                 assert_eq!(
                     inventory
                         .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 16)),
-                    Err(RemoveOneItemError { missing_count: 1 })
+                    Err(RemoveOneItemError {
+                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 1)
+                    })
                 );
                 assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
                 assert_eq!(inventory.item_count(ItemId::test()), 3);
