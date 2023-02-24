@@ -10,6 +10,7 @@ use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub struct RecipeId(&'static str);
 
+// TODO: these should be read from disc
 impl RecipeId {
     /// The ID of the recipe for the leaf production of acacia plants.
     pub fn acacia_leaf_production() -> Self {
@@ -19,6 +20,11 @@ impl RecipeId {
     /// The ID of the recipe for mushroom production of leuco mushrooms.
     pub fn leuco_chunk_production() -> Self {
         Self("leuco_chunk_production")
+    }
+
+    /// The ID of the recipe for mushroom production of leuco mushrooms.
+    pub fn ant_egg_production() -> Self {
+        Self("ant_egg_production")
     }
 }
 
@@ -120,6 +126,16 @@ impl Recipe {
             vec![ItemCount::one(ItemId::leuco_chunk())],
             Duration::from_secs(5),
             Some(Energy(40.)),
+        )
+    }
+
+    /// An ant hive producing eggs.
+    pub(crate) fn ant_egg_production() -> Self {
+        Recipe::new(
+            vec![ItemCount::one(ItemId::leuco_chunk())],
+            vec![ItemCount::one(ItemId::ant_egg())],
+            Duration::from_secs(5),
+            None,
         )
     }
 }
