@@ -52,10 +52,15 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
     let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
 
     let transform = compute_camera_transform(&focus, planar_angle, settings.inclination);
+    let projection = Projection::Perspective(PerspectiveProjection {
+        fov: 0.2,
+        ..Default::default()
+    });
 
     commands
         .spawn(Camera3dBundle {
             transform,
+            projection,
             ..Default::default()
         })
         .insert(settings)
@@ -128,8 +133,8 @@ impl Default for CameraSettings {
             zoom_speed: Speed::new(1., 1.0, 2.0),
             pan_speed: Speed::new(100., 100.0, 150.0),
             rotation_speed: Speed::new(0.3, 3.0, 5.0),
-            min_zoom: 0.,
-            max_zoom: 100.,
+            min_zoom: 0.2,
+            max_zoom: 1.,
             float_radius: 3,
             inclination: 0.7 * PI / 2.,
             inclination_speed: 1.,
