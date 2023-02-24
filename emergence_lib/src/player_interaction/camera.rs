@@ -130,9 +130,9 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: Speed::new(100., 100.0, 200.0),
-            pan_speed: Speed::new(100., 100.0, 150.0),
-            rotation_speed: Speed::new(0.3, 3.0, 5.0),
+            zoom_speed: Speed::new(400., 300.0, 1000.0),
+            pan_speed: Speed::new(50., 100.0, 150.0),
+            rotation_speed: Speed::new(1.0, 3.0, 5.0),
             min_zoom: 5.,
             max_zoom: 500.,
             float_radius: 3,
