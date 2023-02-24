@@ -30,8 +30,9 @@ pub(super) struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::Startup, setup_camera)
-            .add_system(set_camera_inclination.before(translate_camera))
-            .add_system(mousewheel_zoom.before(translate_camera))
+            .add_system(mousewheel_zoom.before(modify_field_of_view))
+            .add_system(modify_field_of_view)
+            .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
             .add_system(move_camera_to_goal.label(InteractionSystem::MoveCamera));
@@ -75,15 +76,15 @@ struct CameraFocus {
     ///
     /// This should be the top of the column at the center of the screen.
     translation: Vec3,
-    /// The distance from the focus to the camera.
-    zoom: f32,
+    /// The distance from the camera to the target
+    distance: f32,
 }
 
 impl Default for CameraFocus {
     fn default() -> Self {
         CameraFocus {
             translation: Vec3::ZERO,
-            zoom: STARTING_DISTANCE_FROM_ORIGIN,
+            distance: STARTING_DISTANCE_FROM_ORIGIN,
         }
     }
 }
@@ -124,10 +125,10 @@ struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
-            zoom_speed: Speed::new(50., 100.0, 200.0),
+            zoom_speed: Speed::new(1., 1.0, 2.0),
             pan_speed: Speed::new(100., 100.0, 150.0),
             rotation_speed: Speed::new(0.3, 3.0, 5.0),
-            min_zoom: 7.,
+            min_zoom: 0.,
             max_zoom: 100.,
             float_radius: 3,
             inclination: 0.7 * PI / 2.,
@@ -230,21 +231,14 @@ fn set_camera_inclination(
     settings.inclination = (settings.inclination + delta).clamp(0.0, PI / 2. - 1e-6);
 }
 
-/// Pan and zoom the camera
-fn translate_camera(
-    mut camera_query: Query<
-        (&Transform, &mut CameraFocus, &Facing, &mut CameraSettings),
-        With<Camera3d>,
-    >,
-    time: Res<Time>,
+/// Modify the camera's field of view
+fn modify_field_of_view(
+    mut camera_query: Query<(&mut Projection, &mut CameraSettings), With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
-    map_geometry: Res<MapGeometry>,
-    selection: Res<CurrentSelection>,
-    tile_pos_query: Query<&TilePos>,
+    time: Res<Time>,
 ) {
-    let (transform, mut focus, facing, mut settings) = camera_query.single_mut();
+    let (mut projection, mut settings) = camera_query.single_mut();
 
-    // Zoom
     let delta_zoom = match (
         actions.pressed(PlayerAction::ZoomIn),
         actions.pressed(PlayerAction::ZoomOut),
@@ -258,14 +252,35 @@ fn translate_camera(
     };
 
     // Zoom in / out on whatever we're looking at
-    focus.zoom = (focus.zoom + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
+    // FIXME: this should probably just be handled by using the `PerspectiveProjection` component directly on our camera
+    if let Projection::Perspective(projection) = &mut *projection {
+        projection.fov = (projection.fov + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
+        info!(projection.fov);
+    }
+}
+
+/// Pan the camera
+fn translate_camera(
+    mut camera_query: Query<
+        (&Transform, &mut CameraFocus, &Facing, &mut CameraSettings),
+        With<Camera3d>,
+    >,
+    time: Res<Time>,
+    actions: Res<ActionState<PlayerAction>>,
+    map_geometry: Res<MapGeometry>,
+    selection: Res<CurrentSelection>,
+    tile_pos_query: Query<&TilePos>,
+) {
+    let (transform, mut focus, facing, mut settings) = camera_query.single_mut();
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
         let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
-        let scaled_xy =
-            base_xy * time.delta_seconds() * settings.pan_speed.delta(time.delta()) * focus.zoom;
+        let scaled_xy = base_xy
+            * time.delta_seconds()
+            * settings.pan_speed.delta(time.delta())
+            * focus.distance;
         // Plane is XZ, but gamepads are XY
         let unoriented_translation = Vec3 {
             x: scaled_xy.y,
@@ -364,7 +379,8 @@ fn move_camera_to_goal(
 /// Computes the camera transform such that it is looking at `focus`
 fn compute_camera_transform(focus: &CameraFocus, planar_angle: f32, inclination: f32) -> Transform {
     // Always begin due "south" of the focus.
-    let mut transform = Transform::from_translation(focus.translation + Vec3::NEG_X * focus.zoom);
+    let mut transform =
+        Transform::from_translation(focus.translation + Vec3::NEG_X * focus.distance);
 
     // Tilt up
     transform.translate_around(
