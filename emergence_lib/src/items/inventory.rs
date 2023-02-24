@@ -457,16 +457,11 @@ impl Inventory {
         let item_id = item_count.item_id();
 
         let requested = item_count.count();
-        dbg!(requested);
         let available = self.item_count(item_id);
-        dbg!(available);
         let free = other.remaining_space_for_item(item_id, item_manifest);
-        dbg!(free);
 
         let proposed = requested.min(available);
-        dbg!(proposed);
         let actual = proposed.min(free);
-        dbg!(actual);
 
         // Skip the expensive work if there's nothing to move
         if actual > 0 {
