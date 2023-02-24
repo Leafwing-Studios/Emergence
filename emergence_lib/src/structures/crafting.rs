@@ -11,7 +11,7 @@ use crate::{
         recipe::{Recipe, RecipeId, RecipeManifest},
         ItemData, ItemId, ItemManifest,
     },
-    organisms::energy::EnergyPool,
+    organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
 };
 
@@ -27,6 +27,8 @@ pub(crate) enum CraftingState {
     FullAndBlocked,
     /// The recipe is complete.
     RecipeComplete,
+    /// The output is full but production is continuing.
+    Overproduction,
     /// No recipe is set
     NoRecipe,
 }
@@ -38,6 +40,7 @@ impl Display for CraftingState {
             CraftingState::InProgress => "In progress",
             CraftingState::RecipeComplete => "Recipe complete",
             CraftingState::FullAndBlocked => "Blocked",
+            CraftingState::Overproduction => "Overproduction",
             CraftingState::NoRecipe => "No recipe set",
         };
 
@@ -150,6 +153,7 @@ struct CraftingQuery {
     state: &'static mut CraftingState,
     input: &'static mut InputInventory,
     output: &'static mut OutputInventory,
+    maybe_organism: Option<&'static Organism>,
 }
 
 /// Progress the state of recipes that are being crafted.
@@ -165,7 +169,7 @@ fn progress_crafting(
                 Some(_) => CraftingState::NeedsInput,
                 None => CraftingState::NoRecipe,
             },
-            CraftingState::NeedsInput => {
+            CraftingState::NeedsInput | CraftingState::Overproduction => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
                     match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
@@ -192,12 +196,24 @@ fn progress_crafting(
             CraftingState::RecipeComplete => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    match crafter
-                        .output
-                        .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
-                    {
-                        Ok(()) => CraftingState::NeedsInput,
-                        Err(_) => CraftingState::FullAndBlocked,
+                    match crafter.maybe_organism {
+                        Some(_) => {
+                            match crafter
+                                .output
+                                .try_add_items(recipe.outputs(), &item_manifest)
+                            {
+                                Ok(_) => CraftingState::NeedsInput,
+                                // TODO: handle the waste products somehow
+                                Err(_) => CraftingState::Overproduction,
+                            }
+                        }
+                        None => match crafter
+                            .output
+                            .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
+                        {
+                            Ok(()) => CraftingState::NeedsInput,
+                            Err(_) => CraftingState::FullAndBlocked,
+                        },
                     }
                 } else {
                     CraftingState::NoRecipe

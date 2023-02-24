@@ -218,7 +218,7 @@ impl Inventory {
                     items_to_add = 0;
                     break;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count,
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
             }
         }
 
@@ -233,7 +233,7 @@ impl Inventory {
                 Ok(_) => {
                     items_to_add = 0;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count,
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
             }
 
             self.slots.push(new_slot);
@@ -244,7 +244,7 @@ impl Inventory {
 
         if items_to_add > 0 {
             Err(AddOneItemError {
-                excess_count: items_to_add,
+                excess_count: ItemCount::new(item_count.item_id(), items_to_add),
             })
         } else {
             Ok(())
@@ -264,7 +264,10 @@ impl Inventory {
 
         if remaining_space < item_count.count() {
             Err(AddOneItemError {
-                excess_count: item_count.count() - remaining_space,
+                excess_count: ItemCount::new(
+                    item_count.item_id(),
+                    item_count.count() - remaining_space,
+                ),
             })
         } else {
             // If this unwrap panics the remaining space calculation must be wrong
@@ -325,6 +328,31 @@ impl Inventory {
             Ok(())
         } else {
             Err(AddManyItemsError { excess_counts })
+        }
+    }
+
+    /// Adds as many items as possible, overflowing the rest if they cannot be added
+    pub fn try_add_items(
+        &mut self,
+        item_counts: &[ItemCount],
+        item_manifest: &ItemManifest,
+    ) -> Result<(), AddManyItemsError> {
+        let mut overflow: Vec<ItemCount> = Vec::new();
+
+        for item_count in item_counts {
+            if let Err(AddOneItemError { excess_count }) =
+                self.try_add_item(item_count, item_manifest)
+            {
+                overflow.push(excess_count);
+            }
+        }
+
+        if overflow.is_empty() {
+            Ok(())
+        } else {
+            Err(AddManyItemsError {
+                excess_counts: overflow,
+            })
         }
     }
 
@@ -682,7 +710,12 @@ mod tests {
                 assert_eq!(
                     inventory
                         .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 20), &item_manifest()),
-                    Err(AddOneItemError { excess_count: 5 })
+                    Err(AddOneItemError {
+                        excess_count: ItemCount {
+                            item_id: ItemId::acacia_leaf(),
+                            count: 5
+                        }
+                    })
                 );
                 assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
                 assert_eq!(inventory.item_count(ItemId::test()), 3);
@@ -731,7 +764,9 @@ mod tests {
                         &ItemCount::new(ItemId::acacia_leaf(), 16),
                         &item_manifest()
                     ),
-                    Err(AddOneItemError { excess_count: 1 })
+                    Err(AddOneItemError {
+                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 1)
+                    })
                 );
                 assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
                 assert_eq!(inventory.item_count(ItemId::test()), 3);

@@ -6,7 +6,7 @@ use super::ItemCount;
 #[derive(Debug, PartialEq, Eq)]
 pub struct AddOneItemError {
     /// The number of items that exceed the capacity.
-    pub excess_count: usize,
+    pub excess_count: ItemCount,
 }
 
 /// Failed to add items to an inventory.
