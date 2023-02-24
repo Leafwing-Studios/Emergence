@@ -31,11 +31,12 @@ pub struct RemoveManyItemsError {
 }
 
 /// Failed to completely transfer items from one inventory to another.
+#[derive(Debug, PartialEq, Eq)]
 pub struct ItemTransferError {
     /// The number and type of items remaining in the input that could not be transferred.
-    pub items_remaining: usize,
-    /// Did this fail because the input inventory was full?
-    pub full_sink: bool,
-    /// Did this fail because the output inventory was empty?
+    pub items_remaining: ItemCount,
+    /// Did this fail because the input inventory of the destination was full?
+    pub full_destination: bool,
+    /// Did this fail because the output inventory of the source was empty?
     pub empty_source: bool,
 }
