@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
         recipe::{Recipe, RecipeId, RecipeManifest},
         ItemData, ItemId, ItemManifest,
     },
-    organisms::energy::EnergyPool,
+    organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
 };
 
@@ -20,21 +20,28 @@ use crate::{
 pub(crate) enum CraftingState {
     /// There are resources missing for the recipe.
     #[default]
-    WaitingForInput,
-
+    NeedsInput,
     /// The resource cost has been paid and the recipe is being crafted.
     InProgress,
-
-    /// The recipe has been crafted and the resources need to be claimed.
-    Finished,
+    /// Resources need to be claimed before more crafting can continue.
+    FullAndBlocked,
+    /// The recipe is complete.
+    RecipeComplete,
+    /// The output is full but production is continuing.
+    Overproduction,
+    /// No recipe is set
+    NoRecipe,
 }
 
 impl Display for CraftingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            CraftingState::WaitingForInput => "Waiting for input",
+            CraftingState::NeedsInput => "Waiting for input",
             CraftingState::InProgress => "In progress",
-            CraftingState::Finished => "Finished",
+            CraftingState::RecipeComplete => "Recipe complete",
+            CraftingState::FullAndBlocked => "Blocked",
+            CraftingState::Overproduction => "Overproduction",
+            CraftingState::NoRecipe => "No recipe set",
         };
 
         write!(f, "{str}")
@@ -67,7 +74,7 @@ impl ActiveRecipe {
 }
 
 /// The time remaining until the recipe has been crafted.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Deref, DerefMut)]
 pub(crate) struct CraftTimer(Timer);
 
 impl CraftTimer {
@@ -118,7 +125,7 @@ impl CraftingBundle {
                 },
                 craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
-                craft_state: CraftingState::WaitingForInput,
+                craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
             }
         } else {
@@ -131,79 +138,118 @@ impl CraftingBundle {
                 },
                 craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
-                craft_state: CraftingState::WaitingForInput,
+                craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
             }
         }
     }
 }
 
-/// Make progress of all recipes that are being crafted.
-fn progress_crafting(time: Res<Time>, mut query: Query<(&mut CraftTimer, &mut CraftingState)>) {
-    for (mut craft_timer, mut craft_state) in query.iter_mut() {
-        if *craft_state == CraftingState::InProgress {
-            craft_timer.0.tick(time.delta());
+/// Data needed for [`progress_crafting`].
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+struct CraftingQuery {
+    /// The recipe of the crafter
+    active_recipe: &'static ActiveRecipe,
+    /// The time remaining to complete the recipe
+    timer: &'static mut CraftTimer,
+    /// The status of crafting
+    state: &'static mut CraftingState,
+    /// The inputs
+    input: &'static mut InputInventory,
+    /// The outputs
+    output: &'static mut OutputInventory,
+    /// Is this an organism?
+    maybe_organism: Option<&'static Organism>,
+}
 
-            if craft_timer.0.finished() {
-                *craft_state = CraftingState::Finished;
+/// Progress the state of recipes that are being crafted.
+fn progress_crafting(
+    time: Res<Time>,
+    recipe_manifest: Res<RecipeManifest>,
+    item_manifest: Res<ItemManifest>,
+    mut crafting_query: Query<CraftingQuery>,
+) {
+    for mut crafter in crafting_query.iter_mut() {
+        *crafter.state = match *crafter.state {
+            CraftingState::NoRecipe => match crafter.active_recipe.recipe_id() {
+                Some(_) => CraftingState::NeedsInput,
+                None => CraftingState::NoRecipe,
+            },
+            CraftingState::NeedsInput | CraftingState::Overproduction => {
+                if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
+                    let recipe = recipe_manifest.get(*recipe_id);
+                    match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
+                        Ok(()) => {
+                            crafter.timer.set_duration(recipe.craft_time());
+                            crafter.timer.reset();
+                            CraftingState::InProgress
+                        }
+                        Err(_) => CraftingState::NeedsInput,
+                    }
+                } else {
+                    CraftingState::NoRecipe
+                }
             }
-        }
+            CraftingState::InProgress => {
+                crafter.timer.tick(time.delta());
+
+                if crafter.timer.finished() {
+                    CraftingState::RecipeComplete
+                } else {
+                    CraftingState::InProgress
+                }
+            }
+            CraftingState::RecipeComplete => {
+                if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
+                    let recipe = recipe_manifest.get(*recipe_id);
+                    match crafter.maybe_organism {
+                        Some(_) => {
+                            match crafter
+                                .output
+                                .try_add_items(recipe.outputs(), &item_manifest)
+                            {
+                                Ok(_) => CraftingState::NeedsInput,
+                                // TODO: handle the waste products somehow
+                                Err(_) => CraftingState::Overproduction,
+                            }
+                        }
+                        None => match crafter
+                            .output
+                            .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
+                        {
+                            Ok(()) => CraftingState::NeedsInput,
+                            Err(_) => CraftingState::FullAndBlocked,
+                        },
+                    }
+                } else {
+                    CraftingState::NoRecipe
+                }
+            }
+            CraftingState::FullAndBlocked => {
+                let mut item_slots = crafter.output.iter();
+                match item_slots.any(|slot| slot.is_full()) {
+                    true => CraftingState::FullAndBlocked,
+                    false => CraftingState::NeedsInput,
+                }
+            }
+        };
     }
 }
 
-/// Finish the crafting process once the timer ticked down and start the crafting of the next recipe.
-fn start_and_finish_crafting(
+/// Sessile organisms gain energy when they finish crafting recipes.
+fn gain_energy_when_crafting_completes(
+    mut sessile_query: Query<(&mut EnergyPool, &CraftingState, &ActiveRecipe)>,
     recipe_manifest: Res<RecipeManifest>,
-    item_manifest: Res<ItemManifest>,
-    mut structure_query: Query<(
-        &ActiveRecipe,
-        &mut CraftTimer,
-        &mut InputInventory,
-        &mut OutputInventory,
-        &mut CraftingState,
-        Option<&mut EnergyPool>,
-    )>,
 ) {
-    for (
-        active_recipe,
-        mut craft_timer,
-        mut input,
-        mut output,
-        mut craft_state,
-        maybe_energy_pool,
-    ) in structure_query.iter_mut()
-    {
-        if let Some(recipe_id) = &active_recipe.0 {
-            let recipe = recipe_manifest.get(*recipe_id);
-
-            // Try to finish the crafting by putting the output in the inventory
-            if *craft_state == CraftingState::Finished
-                && output
-                    .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
-                    .is_ok()
-            {
-                // The next item can be crafted
-                *craft_state = CraftingState::WaitingForInput;
-            }
-
-            // Try to craft the next item by consuming the input and restarting the timer
-            if *craft_state == CraftingState::WaitingForInput
-                && input.remove_items_all_or_nothing(recipe.inputs()).is_ok()
-            {
-                if let Some(mut energy_pool) = maybe_energy_pool {
-                    if let Some(recipe_energy) = recipe.energy() {
-                        let proposed = energy_pool.current() + *recipe_energy;
-
-                        energy_pool.set_current(proposed);
-                    }
+    for (mut energy_pool, crafting_state, active_recipe) in sessile_query.iter_mut() {
+        if matches!(crafting_state, CraftingState::RecipeComplete) {
+            if let Some(recipe_id) = active_recipe.recipe_id() {
+                let recipe = recipe_manifest.get(*recipe_id);
+                if let Some(energy) = recipe.energy() {
+                    let proposed = energy_pool.current() + *energy;
+                    energy_pool.set_current(proposed);
                 }
-
-                // Set the timer to the recipe time
-                craft_timer.0.set_duration(*recipe.craft_time());
-                craft_timer.0.reset();
-
-                // Start crafting
-                *craft_state = CraftingState::InProgress;
             }
         }
     }
@@ -289,7 +335,7 @@ impl Plugin for CraftingPlugin {
         app.insert_resource(ItemManifest::new(item_manifest))
             .insert_resource(RecipeManifest::new(recipe_manifest))
             .add_system(progress_crafting)
-            .add_system(start_and_finish_crafting.after(progress_crafting))
-            .add_system(set_emitter.after(start_and_finish_crafting));
+            .add_system(gain_energy_when_crafting_completes.after(progress_crafting))
+            .add_system(set_emitter.after(progress_crafting));
     }
 }

@@ -5,7 +5,7 @@ use std::fmt::Display;
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
     inventory::InventoryState,
-    ItemId,
+    ItemCount, ItemId,
 };
 
 /// Multiple items of the same type.
@@ -107,7 +107,7 @@ impl ItemSlot {
             self.count = self.max_item_count;
 
             Err(AddOneItemError {
-                excess_count: new_count - self.max_item_count,
+                excess_count: ItemCount::new(self.item_id, new_count - self.max_item_count),
             })
         } else {
             self.count = new_count;
@@ -122,7 +122,10 @@ impl ItemSlot {
     pub(crate) fn add_all_or_nothing(&mut self, count: usize) -> Result<(), AddOneItemError> {
         if self.remaining_space() < count {
             Err(AddOneItemError {
-                excess_count: count - (self.max_item_count - self.count),
+                excess_count: ItemCount::new(
+                    self.item_id(),
+                    count - (self.max_item_count - self.count),
+                ),
             })
         } else {
             self.count += count;
@@ -136,12 +139,10 @@ impl ItemSlot {
     /// - Otherwise, all items that are included are removed and `Err` is returned.
     pub(crate) fn remove_until_empty(&mut self, count: usize) -> Result<(), RemoveOneItemError> {
         if count > self.count {
-            let excess_count = count - self.count;
+            let missing_count = ItemCount::new(self.item_id(), count - self.count);
             self.count = 0;
 
-            Err(RemoveOneItemError {
-                missing_count: excess_count,
-            })
+            Err(RemoveOneItemError { missing_count })
         } else {
             self.count -= count;
             Ok(())
@@ -154,9 +155,8 @@ impl ItemSlot {
     /// - If there are not enough items, _no_ item is removed and `Err` is returned.
     pub(crate) fn remove_all_or_nothing(&mut self, count: usize) -> Result<(), RemoveOneItemError> {
         if count > self.count {
-            Err(RemoveOneItemError {
-                missing_count: count - self.count,
-            })
+            let missing_count = ItemCount::new(self.item_id(), count - self.count);
+            Err(RemoveOneItemError { missing_count })
         } else {
             self.count -= count;
             Ok(())
@@ -288,7 +288,9 @@ mod tests {
 
                 assert_eq!(
                     item_slot.add_until_full(10),
-                    Err(AddOneItemError { excess_count: 5 })
+                    Err(AddOneItemError {
+                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                    })
                 );
                 assert_eq!(item_slot.count(), 10);
             }
@@ -319,7 +321,9 @@ mod tests {
 
                 assert_eq!(
                     item_slot.add_all_or_nothing(10),
-                    Err(AddOneItemError { excess_count: 5 })
+                    Err(AddOneItemError {
+                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                    })
                 );
                 assert_eq!(item_slot.count(), 5);
             }
@@ -352,7 +356,9 @@ mod tests {
 
                 assert_eq!(
                     item_slot.remove_until_empty(10),
-                    Err(RemoveOneItemError { missing_count: 5 })
+                    Err(RemoveOneItemError {
+                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                    })
                 );
                 assert_eq!(item_slot.count(), 0);
             }
@@ -383,7 +389,9 @@ mod tests {
 
                 assert_eq!(
                     item_slot.remove_all_or_nothing(10),
-                    Err(RemoveOneItemError { missing_count: 5 })
+                    Err(RemoveOneItemError {
+                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                    })
                 );
                 assert_eq!(item_slot.count(), 5);
             }
