@@ -136,7 +136,7 @@ impl Default for CameraSettings {
             min_zoom: 0.2,
             max_zoom: 1.,
             float_radius: 3,
-            inclination: 0.7 * PI / 2.,
+            inclination: 0.5 * PI / 2.,
             inclination_speed: 1.,
         }
     }
@@ -260,7 +260,6 @@ fn modify_field_of_view(
     // FIXME: this should probably just be handled by using the `PerspectiveProjection` component directly on our camera
     if let Projection::Perspective(projection) = &mut *projection {
         projection.fov = (projection.fov + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
-        info!(projection.fov);
     }
 }
 
