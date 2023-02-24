@@ -320,6 +320,7 @@ impl Plugin for CraftingPlugin {
         let mut item_manifest = HashMap::new();
         item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
         item_manifest.insert(ItemId::leuco_chunk(), ItemData::leuco_chunk());
+        item_manifest.insert(ItemId::ant_egg(), ItemData::ant_egg());
 
         // TODO: Load this from an asset file
         let mut recipe_manifest = HashMap::new();

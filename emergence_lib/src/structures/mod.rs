@@ -93,7 +93,7 @@ impl Default for StructureManifest {
         );
 
         map.insert(
-            StructureId { id: "ant-hive" },
+            StructureId { id: "ant_hive" },
             StructureVariety {
                 organism: None,
                 crafts: true,

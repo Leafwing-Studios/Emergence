@@ -72,6 +72,12 @@ impl ItemData {
     pub fn leuco_chunk() -> Self {
         Self { stack_size: 5 }
     }
+
+    // TODO: Remove this once we can load item data from asset files
+    /// An egg that will hatch into a grown ant.
+    pub fn ant_egg() -> Self {
+        Self { stack_size: 5 }
+    }
 }
 
 /// The data definitions for all items.

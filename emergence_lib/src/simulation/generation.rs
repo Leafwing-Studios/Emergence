@@ -33,6 +33,8 @@ pub struct GenerationConfig {
     n_plant: usize,
     /// Initial number of fungi.
     n_fungi: usize,
+    /// Initial number of ant hives.
+    n_hive: usize,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Terrain, f32>,
 }
@@ -47,6 +49,8 @@ impl GenerationConfig {
     const N_PLANT: usize = 12;
     /// The number of fungi in the default generation config
     const N_FUNGI: usize = 2;
+    /// The number of ant hives in the default generation config
+    const N_HIVE: usize = 1;
 
     /// The choice weight for plain terrain in default generation config
     const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
@@ -68,6 +72,7 @@ impl Default for GenerationConfig {
             n_ant: GenerationConfig::N_ANT,
             n_plant: GenerationConfig::N_PLANT,
             n_fungi: GenerationConfig::N_FUNGI,
+            n_hive: GenerationConfig::N_HIVE,
             terrain_weights,
         }
     }
@@ -184,8 +189,9 @@ fn generate_organisms(
     let n_ant = config.n_ant;
     let n_plant = config.n_plant;
     let n_fungi = config.n_fungi;
+    let n_hive = config.n_hive;
 
-    let n_entities = n_ant + n_plant + n_fungi;
+    let n_entities = n_ant + n_plant + n_fungi + n_hive;
     assert!(n_entities <= tile_query.iter().len());
 
     let mut entity_positions: Vec<TilePos> = {
@@ -230,6 +236,17 @@ fn generate_organisms(
     for position in fungus_positions {
         let item = StructureData {
             structure_id: StructureId { id: "leuco" },
+            facing: Facing::default(),
+        };
+
+        commands.spawn_structure(position, item);
+    }
+
+    // Hives
+    let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
+    for position in hive_positions {
+        let item = StructureData {
+            structure_id: StructureId { id: "ant_hive" },
             facing: Facing::default(),
         };
 
