@@ -478,8 +478,11 @@ impl Inventory {
             Ok(())
         } else {
             Err(ItemTransferError {
-                items_remaining: available.saturating_sub(actual),
-                full_sink: proposed > free,
+                items_remaining: ItemCount::new(
+                    item_count.item_id(),
+                    available.saturating_sub(actual),
+                ),
+                full_destination: proposed > free,
                 empty_source: requested > available,
             })
         }
@@ -515,6 +518,34 @@ mod tests {
         item_manifest.insert(ItemId::test(), ItemData { stack_size: 10 });
 
         ItemManifest::new(item_manifest)
+    }
+
+    fn full_inventory() -> Inventory {
+        Inventory {
+            max_slot_count: 1,
+            slots: vec![ItemSlot::new_with_count(ItemId::test(), 10, 10)],
+        }
+    }
+
+    fn partial_inventory() -> Inventory {
+        Inventory {
+            max_slot_count: 1,
+            slots: vec![ItemSlot::new_with_count(ItemId::test(), 10, 7)],
+        }
+    }
+
+    fn empty_inventory() -> Inventory {
+        Inventory {
+            max_slot_count: 1,
+            slots: vec![],
+        }
+    }
+
+    fn transfer_count() -> ItemCount {
+        ItemCount {
+            item_id: ItemId::test(),
+            count: 10,
+        }
     }
 
     mod display {
@@ -968,6 +999,91 @@ mod tests {
                 assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
                 assert_eq!(inventory.item_count(ItemId::test()), 3);
             }
+        }
+    }
+
+    mod transfer_item {
+        use super::*;
+
+        #[test]
+        fn item_should_transfer_when_source_full() {
+            let mut source = full_inventory();
+            let mut destination = empty_inventory();
+
+            let result =
+                source.transfer_item(&transfer_count(), &mut destination, &item_manifest());
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn item_should_not_transfer_when_source_empty() {
+            let mut source = empty_inventory();
+            let mut destination = empty_inventory();
+
+            let result =
+                source.transfer_item(&transfer_count(), &mut destination, &item_manifest());
+            assert_eq!(
+                result,
+                Err(ItemTransferError {
+                    items_remaining: ItemCount::new(ItemId::test(), 0),
+                    full_destination: false,
+                    empty_source: true
+                })
+            );
+        }
+
+        #[test]
+        fn item_should_not_transfer_when_destination_full() {
+            let mut source = full_inventory();
+            let mut destination = full_inventory();
+
+            let result =
+                source.transfer_item(&transfer_count(), &mut destination, &item_manifest());
+            assert_eq!(
+                result,
+                Err(ItemTransferError {
+                    items_remaining: transfer_count(),
+                    full_destination: true,
+                    empty_source: false
+                })
+            );
+        }
+
+        #[test]
+        fn not_enough_items() {
+            let mut source = partial_inventory();
+            let mut destination = empty_inventory();
+
+            let result =
+                source.transfer_item(&transfer_count(), &mut destination, &item_manifest());
+            assert_eq!(
+                result,
+                Err(ItemTransferError {
+                    items_remaining: ItemCount::new(ItemId::test(), 0),
+                    full_destination: false,
+                    empty_source: true
+                })
+            );
+        }
+
+        #[test]
+        fn not_enough_space() {
+            let mut source = full_inventory();
+            let mut destination = partial_inventory();
+
+            let result =
+                source.transfer_item(&transfer_count(), &mut destination, &item_manifest());
+            assert_eq!(
+                result,
+                Err(ItemTransferError {
+                    items_remaining: ItemCount {
+                        item_id: ItemId::test(),
+                        count: 7
+                    },
+                    full_destination: true,
+                    empty_source: false
+                })
+            );
         }
     }
 }

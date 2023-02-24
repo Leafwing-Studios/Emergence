@@ -67,6 +67,7 @@ pub(super) fn pickup_and_drop_items(
             } = current_action.action()
             {
                 if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
+                    // Transfer one item at a time
                     let item_count = ItemCount::new(*item_id, 1);
                     let _transfer_result = output_inventory.transfer_item(
                         &item_count,
@@ -91,6 +92,7 @@ pub(super) fn pickup_and_drop_items(
             } = current_action.action()
             {
                 if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
+                    // Transfer one item at a time
                     let item_count = ItemCount::new(*item_id, 1);
                     let _transfer_result = held_item.transfer_item(
                         &item_count,
