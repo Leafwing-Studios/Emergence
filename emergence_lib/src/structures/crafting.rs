@@ -4,6 +4,7 @@ use std::{fmt::Display, time::Duration};
 
 use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
 use leafwing_abilities::prelude::Pool;
+use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
     items::{
@@ -55,11 +56,31 @@ pub(crate) struct InputInventory {
     pub(crate) inventory: Inventory,
 }
 
+impl InputInventory {
+    /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
+    #[must_use]
+    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
+        for item_slot in self.iter_mut() {}
+
+        self
+    }
+}
+
 /// The output inventory for a structure.
 #[derive(Component, Debug, Default, Deref, DerefMut)]
 pub(crate) struct OutputInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,
+}
+
+impl OutputInventory {
+    /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
+    #[must_use]
+    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
+        for item_slot in self.iter_mut() {}
+
+        self
+    }
 }
 
 /// The recipe that is currently being crafted, if any.
@@ -74,13 +95,22 @@ impl ActiveRecipe {
 }
 
 /// The time remaining until the recipe has been crafted.
-#[derive(Component, Debug, Default, Deref, DerefMut)]
+#[derive(Component, Debug, Default, Deref, DerefMut, Clone)]
 pub(crate) struct CraftTimer(Timer);
 
 impl CraftTimer {
-    /// The timer indicating how much longer the crafting process will take.
-    pub(crate) fn timer(&self) -> &Timer {
-        &self.0
+    /// Generates a new timer from the provided duration
+    pub(crate) fn new(duration: Duration) -> Self {
+        CraftTimer(Timer::new(duration, TimerMode::Once))
+    }
+
+    /// Randomizes this timer so that crafting is partially complete.
+    #[must_use]
+    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
+        let distribution = Uniform::new(Duration::ZERO, self.duration());
+        let elapsed = distribution.sample(rng);
+        self.set_elapsed(elapsed);
+        self
     }
 }
 
@@ -107,7 +137,7 @@ pub(crate) struct CraftingBundle {
 }
 
 impl CraftingBundle {
-    /// Create a new crafting bundle without an active recipe set.
+    /// Create a new crafting bundle with empty inventories.
     pub(crate) fn new(
         starting_recipe: Option<RecipeId>,
         recipe_manifest: &RecipeManifest,
@@ -117,13 +147,9 @@ impl CraftingBundle {
             let recipe = recipe_manifest.get(recipe_id);
 
             Self {
-                input_inventory: InputInventory {
-                    inventory: recipe.input_inventory(item_manifest),
-                },
-                output_inventory: OutputInventory {
-                    inventory: recipe.output_inventory(item_manifest),
-                },
-                craft_timer: CraftTimer(Timer::new(Duration::default(), TimerMode::Once)),
+                input_inventory: recipe.input_inventory(item_manifest),
+                output_inventory: recipe.output_inventory(item_manifest),
+                craft_timer: recipe.craft_timer(),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
@@ -141,6 +167,33 @@ impl CraftingBundle {
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
             }
+        }
+    }
+
+    /// Generates a new crafting bundle that is at a random point in its cycle.
+    pub(crate) fn randomized(
+        starting_recipe: Option<RecipeId>,
+        recipe_manifest: &RecipeManifest,
+        item_manifest: &ItemManifest,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        if let Some(recipe_id) = starting_recipe {
+            let recipe = recipe_manifest.get(recipe_id);
+
+            let input_inventory = recipe.input_inventory(item_manifest).randomize(rng);
+            let output_inventory = recipe.output_inventory(item_manifest).randomize(rng);
+            let craft_timer = recipe.craft_timer().randomize(rng);
+
+            Self {
+                input_inventory,
+                output_inventory,
+                craft_timer,
+                active_recipe: ActiveRecipe(Some(recipe_id)),
+                craft_state: CraftingState::NeedsInput,
+                emitter: Emitter::default(),
+            }
+        } else {
+            CraftingBundle::new(starting_recipe, recipe_manifest, item_manifest)
         }
     }
 }

@@ -696,7 +696,7 @@ fn get_details(
                         output_inventory: output.inventory.clone(),
                         recipe,
                         state: state.clone(),
-                        timer: timer.timer().clone(),
+                        timer: timer.clone(),
                         neglect: emitter.neglect_multiplier,
                     })
                 } else {
@@ -871,10 +871,7 @@ mod organism_details {
 
 /// Details for structures
 mod structure_details {
-    use bevy::{
-        ecs::{prelude::*, query::WorldQuery},
-        time::Timer,
-    };
+    use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use core::fmt::Display;
 
@@ -966,7 +963,7 @@ Tile: {tile_pos}"
         pub(crate) state: CraftingState,
 
         /// The time remaining to finish crafting.
-        pub(crate) timer: Timer,
+        pub(crate) timer: CraftTimer,
 
         /// The neglect multiplier of the structure
         pub(crate) neglect: f32,

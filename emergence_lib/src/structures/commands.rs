@@ -5,7 +5,7 @@ use bevy::{
     prelude::{Commands, DespawnRecursiveExt, Mut, World},
 };
 use hexx::Direction;
-use rand::{rngs::ThreadRng, seq::SliceRandom};
+use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     items::{recipe::RecipeManifest, ItemManifest},
@@ -158,11 +158,15 @@ impl Command for SpawnStructureCommand {
                                     &recipe_manifest,
                                     &item_manifest,
                                 ),
-                                true => CraftingBundle::new(
-                                    structure_details.starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                ),
+                                true => {
+                                    let rng = &mut thread_rng();
+                                    CraftingBundle::randomized(
+                                        structure_details.starting_recipe,
+                                        &recipe_manifest,
+                                        &item_manifest,
+                                        rng,
+                                    )
+                                }
                             };
 
                             world.entity_mut(structure_entity).insert(crafting_bundle);

@@ -2,7 +2,11 @@
 
 use std::{fmt::Display, time::Duration};
 
-use crate::{asset_management::manifest::Manifest, organisms::energy::Energy};
+use crate::{
+    asset_management::manifest::Manifest,
+    organisms::energy::Energy,
+    structures::crafting::{CraftTimer, InputInventory, OutputInventory},
+};
 
 use super::{inventory::Inventory, ItemCount, ItemId, ItemManifest};
 
@@ -83,22 +87,27 @@ impl Recipe {
         self.craft_time
     }
 
+    /// The timer used in this recipe.
+    pub(crate) fn craft_timer(&self) -> CraftTimer {
+        CraftTimer::new(self.craft_time)
+    }
+
     /// An inventory with empty slots for all of the inputs of this recipe.
-    pub(crate) fn input_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
+    pub(crate) fn input_inventory(&self, item_manifest: &ItemManifest) -> InputInventory {
         let mut inventory = Inventory::new(self.inputs.len());
         for item_count in &self.inputs {
             inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
-        inventory
+        InputInventory { inventory }
     }
 
     /// An inventory with empty slots for all of the outputs of this recipe.
-    pub(crate) fn output_inventory(&self, item_manifest: &ItemManifest) -> Inventory {
+    pub(crate) fn output_inventory(&self, item_manifest: &ItemManifest) -> OutputInventory {
         let mut inventory = Inventory::new(self.outputs.len());
         for item_count in &self.outputs {
             inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
-        inventory
+        OutputInventory { inventory }
     }
 
     /// The amount of energy produced by crafting the recipe, if any.
