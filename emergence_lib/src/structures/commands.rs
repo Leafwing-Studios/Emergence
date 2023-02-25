@@ -4,12 +4,14 @@ use bevy::{
     ecs::system::Command,
     prelude::{Commands, DespawnRecursiveExt, Mut, World},
 };
+use hexx::Direction;
+use rand::{rngs::ThreadRng, seq::SliceRandom};
 
 use crate::{
     items::{recipe::RecipeManifest, ItemManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::StructureData,
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 
 use super::{
@@ -20,10 +22,21 @@ use super::{
 
 /// An extension trait for [`Commands`] for working with structures.
 pub(crate) trait StructureCommandsExt {
-    /// Spawns a structure with data defined by `data` at `tile_pos`.
+    /// Spawns a structure defined by `data` at `tile_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
     fn spawn_structure(&mut self, tile_pos: TilePos, data: StructureData);
+
+    /// Spawns a structure with randomized `data` at `tile_pos`.
+    ///
+    /// Some fields of data will be randomized.
+    /// This is intended to be used for world generation.
+    fn spawn_randomized_structure(
+        &mut self,
+        tile_pos: TilePos,
+        data: StructureData,
+        rng: &mut ThreadRng,
+    );
 
     /// Despawns any structure at the provided `tile_pos`.
     ///
@@ -53,6 +66,19 @@ pub(crate) trait StructureCommandsExt {
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(&mut self, tile_pos: TilePos, data: StructureData) {
+        self.add(SpawnStructureCommand { tile_pos, data });
+    }
+
+    fn spawn_randomized_structure(
+        &mut self,
+        tile_pos: TilePos,
+        mut data: StructureData,
+        rng: &mut ThreadRng,
+    ) {
+        let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
+
+        data.facing = Facing { direction };
+
         self.add(SpawnStructureCommand { tile_pos, data });
     }
 
