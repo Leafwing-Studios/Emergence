@@ -66,7 +66,11 @@ pub(crate) trait StructureCommandsExt {
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(&mut self, tile_pos: TilePos, data: StructureData) {
-        self.add(SpawnStructureCommand { tile_pos, data });
+        self.add(SpawnStructureCommand {
+            tile_pos,
+            data,
+            randomized: false,
+        });
     }
 
     fn spawn_randomized_structure(
@@ -76,10 +80,13 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         rng: &mut ThreadRng,
     ) {
         let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
-
         data.facing = Facing { direction };
 
-        self.add(SpawnStructureCommand { tile_pos, data });
+        self.add(SpawnStructureCommand {
+            tile_pos,
+            data,
+            randomized: true,
+        });
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
@@ -109,6 +116,8 @@ struct SpawnStructureCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: StructureData,
+    /// Should the generated structure be randomized
+    randomized: bool,
 }
 
 impl Command for SpawnStructureCommand {
@@ -143,13 +152,20 @@ impl Command for SpawnStructureCommand {
                 if structure_details.crafts {
                     world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
                         world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
-                            world
-                                .entity_mut(structure_entity)
-                                .insert(CraftingBundle::new(
+                            let crafting_bundle = match self.randomized {
+                                false => CraftingBundle::new(
                                     structure_details.starting_recipe,
                                     &recipe_manifest,
                                     &item_manifest,
-                                ));
+                                ),
+                                true => CraftingBundle::new(
+                                    structure_details.starting_recipe,
+                                    &recipe_manifest,
+                                    &item_manifest,
+                                ),
+                            };
+
+                            world.entity_mut(structure_entity).insert(crafting_bundle);
                         })
                     })
                 };
