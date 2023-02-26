@@ -35,7 +35,7 @@ impl Plugin for SelectionPlugin {
                 set_selection
                     .label(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos)
-                    .before(get_details),
+                    .before(InteractionSystem::HoverDetails),
             )
             .add_system(
                 get_details
