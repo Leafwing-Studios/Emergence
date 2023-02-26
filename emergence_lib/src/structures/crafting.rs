@@ -58,11 +58,10 @@ pub(crate) struct InputInventory {
 
 impl InputInventory {
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
-    #[must_use]
-    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
-        for item_slot in self.iter_mut() {}
-
-        self
+    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
+        for item_slot in self.iter_mut() {
+            item_slot.randomize(rng);
+        }
     }
 }
 
@@ -75,11 +74,10 @@ pub(crate) struct OutputInventory {
 
 impl OutputInventory {
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
-    #[must_use]
-    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
-        for item_slot in self.iter_mut() {}
-
-        self
+    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
+        for item_slot in self.iter_mut() {
+            item_slot.randomize(rng);
+        }
     }
 }
 
@@ -105,12 +103,10 @@ impl CraftTimer {
     }
 
     /// Randomizes this timer so that crafting is partially complete.
-    #[must_use]
-    pub(super) fn randomize(self, rng: &mut ThreadRng) -> Self {
+    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
         let distribution = Uniform::new(Duration::ZERO, self.duration());
         let elapsed = distribution.sample(rng);
         self.set_elapsed(elapsed);
-        self
     }
 }
 
@@ -180,9 +176,12 @@ impl CraftingBundle {
         if let Some(recipe_id) = starting_recipe {
             let recipe = recipe_manifest.get(recipe_id);
 
-            let input_inventory = recipe.input_inventory(item_manifest).randomize(rng);
-            let output_inventory = recipe.output_inventory(item_manifest).randomize(rng);
-            let craft_timer = recipe.craft_timer().randomize(rng);
+            let mut input_inventory = recipe.input_inventory(item_manifest);
+            input_inventory.randomize(rng);
+            let mut output_inventory = recipe.output_inventory(item_manifest);
+            output_inventory.randomize(rng);
+            let mut craft_timer = recipe.craft_timer();
+            craft_timer.randomize(rng);
 
             Self {
                 input_inventory,

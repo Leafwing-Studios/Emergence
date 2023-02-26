@@ -75,6 +75,11 @@ impl Inventory {
         self.slots.iter()
     }
 
+    /// Returns a mutable iterator over the contained item slots.
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut ItemSlot> {
+        self.slots.iter_mut()
+    }
+
     /// How full is this inventory?
     pub(crate) fn state(&self) -> InventoryState {
         let mut inventory_state: Option<InventoryState> = None;
