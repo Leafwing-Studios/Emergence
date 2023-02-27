@@ -160,7 +160,10 @@ pub(super) fn handle_actions(
                         }
                     }
                 }
-                UnitAction::Spin { rotation_direction } => todo!(),
+                UnitAction::Spin { rotation_direction } => match rotation_direction {
+                    RotationDirection::Left => unit.facing.rotate_left(),
+                    RotationDirection::Right => unit.facing.rotate_right(),
+                },
                 UnitAction::Move(target_tile) => {
                     let direction = unit.tile_pos.direction_to(**target_tile);
                     let angle = direction.angle(&map_geometry.layout.orientation);
@@ -213,6 +216,7 @@ pub(super) struct ActionDataQuery {
     tile_pos: &'static mut TilePos,
     diet: &'static Diet,
     energy_pool: &'static mut EnergyPool,
+    facing: &'static mut Facing,
 }
 
 /// An action that a unit can take.
