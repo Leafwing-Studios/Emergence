@@ -29,6 +29,16 @@ impl Diet {
     pub(crate) fn new(item: ItemId, energy: Energy) -> Self {
         Diet { item, energy }
     }
+
+    /// The type of item that this unit must consume.
+    pub(crate) fn item(&self) -> ItemId {
+        self.item
+    }
+
+    /// The amount of [`Energy`] gained when a single item of the correct type is consumed.
+    pub(crate) fn energy(&self) -> Energy {
+        self.energy
+    }
 }
 
 impl Display for Diet {
@@ -44,30 +54,6 @@ pub(super) fn check_for_hunger(mut unit_query: Query<(&mut Goal, &EnergyPool, &D
             *goal = Goal::Eat(diet.item);
         } else if energy_pool.is_satiated() {
             *goal = Goal::Wander
-        }
-    }
-}
-
-/// Causes units to consume what they're holding for energy
-pub(super) fn eat_held_items(
-    mut unit_query: Query<(&CurrentAction, &mut HeldItem, &Diet, &mut EnergyPool)>,
-) {
-    for (current_action, mut held_item, diet, mut energy_pool) in unit_query.iter_mut() {
-        if current_action.finished() {
-            if let UnitAction::Eat = current_action.action() {
-                let item_count = ItemCount::new(diet.item, 1);
-                let consumption_result = held_item.remove_item_all_or_nothing(&item_count);
-
-                match consumption_result {
-                    Ok(_) => {
-                        let proposed = energy_pool.current() + diet.energy;
-                        energy_pool.set_current(proposed);
-                    }
-                    Err(error) => {
-                        error!("{error:?}: unit tried to eat the wrong thing!")
-                    }
-                }
-            }
         }
     }
 }

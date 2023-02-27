@@ -2,16 +2,18 @@
 
 use bevy::{ecs::query::WorldQuery, prelude::*};
 use core::fmt::Display;
+use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    items::ItemId,
+    items::{ItemCount, ItemId},
+    organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::crafting::{InputInventory, OutputInventory},
 };
 
-use super::{goals::Goal, item_interaction::HeldItem, UnitId};
+use super::{goals::Goal, hunger::Diet, item_interaction::HeldItem, UnitId};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
@@ -136,7 +138,20 @@ pub(super) fn handle_actions(
 
                     *unit.tile_pos = *target_tile;
                 }
-                UnitAction::Eat => todo!(),
+                UnitAction::Eat => {
+                    let item_count = ItemCount::new(unit.diet.item(), 1);
+                    let consumption_result = unit.held_item.remove_item_all_or_nothing(&item_count);
+
+                    match consumption_result {
+                        Ok(_) => {
+                            let proposed = unit.energy_pool.current() + unit.diet.energy();
+                            unit.energy_pool.set_current(proposed);
+                        }
+                        Err(error) => {
+                            error!("{error:?}: unit tried to eat the wrong thing!")
+                        }
+                    }
+                }
                 UnitAction::Abandon => todo!(),
             }
         }
@@ -147,9 +162,12 @@ pub(super) fn handle_actions(
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
+    current_action: &'static CurrentAction,
+    held_item: &'static mut HeldItem,
     transform: &'static mut Transform,
     tile_pos: &'static mut TilePos,
-    current_action: &'static CurrentAction,
+    diet: &'static Diet,
+    energy_pool: &'static mut EnergyPool,
 }
 
 /// An action that a unit can take.
