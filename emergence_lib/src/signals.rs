@@ -144,7 +144,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in tile_pos.neighbors(map_geometry) {
+        for neighbor in tile_pos.all_neighbors(map_geometry) {
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 

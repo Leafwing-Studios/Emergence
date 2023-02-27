@@ -4,7 +4,7 @@ use bevy::{prelude::*, utils::HashMap};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
-use rand::{prelude::IteratorRandom, rngs::ThreadRng};
+use rand::{rngs::ThreadRng, Rng};
 
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
@@ -76,27 +76,20 @@ impl TilePos {
         }
     }
 
-    /// Choose a random adjacent tile without structures.
-    ///
-    /// It must be free of structures and on the map.
-    /// Returns [`None`] if no viable options exist.
-    pub(crate) fn choose_random_empty_neighbor(
-        &self,
-        rng: &mut ThreadRng,
-        map_geometry: &MapGeometry,
-    ) -> Option<TilePos> {
-        let empty_neighbors = self.empty_neighbors(map_geometry);
-
-        empty_neighbors.into_iter().choose(rng)
+    /// Returns the [`TilePos`] in the provided `direction` from `self`.
+    pub(crate) fn neighbor(&self, direction: Direction) -> Self {
+        TilePos {
+            hex: self.hex.neighbor(direction),
+        }
     }
 
     /// All adjacent tiles that are on the map.
-    pub(crate) fn neighbors(
+    pub(crate) fn all_neighbors(
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
         // PERF: this can be done without any allocations
-        let all_hexes = self.all_neighbors();
+        let all_hexes = self.hex.all_neighbors();
         let mut neighbors = Vec::new();
 
         for &hex in all_hexes.iter() {
@@ -114,7 +107,7 @@ impl TilePos {
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.neighbors(map_geometry);
+        let neighbors = self.all_neighbors(map_geometry);
         // PERF: this can be done without allocations
         let empty_neighbors: Vec<TilePos> = neighbors
             .into_iter()
@@ -151,6 +144,13 @@ impl MapGeometry {
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
+    }
+
+    /// Is the provided `tile_pos` passable?
+    ///
+    /// Tiles that are not part of the map will return `false`
+    pub(crate) fn is_passable(&self, tile_pos: TilePos) -> bool {
+        self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
     }
 
     /// Returns the average height of tiles around `tile_pos` within `radius`
@@ -244,6 +244,15 @@ pub(crate) enum RotationDirection {
     Left,
     /// Clockwise
     Right,
+}
+
+impl RotationDirection {
+    pub(crate) fn random(rng: &mut ThreadRng) -> Self {
+        match rng.gen::<bool>() {
+            true => RotationDirection::Left,
+            false => RotationDirection::Right,
+        }
+    }
 }
 
 /// Rotates objects so they are facing the correct direction.

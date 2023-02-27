@@ -112,7 +112,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction, &HeldItem), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction, &HeldItem, &Facing), With<UnitId>>,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -121,10 +121,16 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, goal, mut current_action, held_item) in units_query.iter_mut() {
-        if current_action.finished() {
-            *current_action = match goal {
-                Goal::Wander => CurrentAction::wander(unit_tile_pos, rng, map_geometry),
+    for (&unit_tile_pos, goal, mut action, held_item, facing) in units_query.iter_mut() {
+        if action.finished() {
+            *action = match goal {
+                // Alternate between spinning and moving forward.
+                Goal::Wander => match action.action() {
+                    UnitAction::Spin { .. } => {
+                        CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
+                    }
+                    _ => CurrentAction::random_spin(rng),
+                },
                 Goal::Pickup(item_id) => {
                     let maybe_item = held_item.item_id();
                     if maybe_item.is_some() && maybe_item.unwrap() != *item_id {
@@ -275,7 +281,7 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
         let mut entities_with_desired_item: Vec<Entity> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -293,7 +299,7 @@ impl CurrentAction {
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
             CurrentAction::move_to(upstream)
         } else {
-            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+            CurrentAction::idle()
         }
     }
 
@@ -307,7 +313,7 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
         let mut entities_with_desired_item: Vec<Entity> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -335,22 +341,23 @@ impl CurrentAction {
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
             CurrentAction::move_to(upstream)
         } else {
-            CurrentAction::wander(unit_tile_pos, rng, map_geometry)
+            CurrentAction::idle()
         }
     }
 
-    /// Wander to an adjacent tile, chosen randomly
-    fn wander(
-        unit_tile_pos: TilePos,
-        rng: &mut ThreadRng,
-        map_geometry: &MapGeometry,
-    ) -> CurrentAction {
-        if let Some(random_neighbor) = unit_tile_pos.choose_random_empty_neighbor(rng, map_geometry)
-        {
-            CurrentAction::move_to(random_neighbor)
-        } else {
-            CurrentAction::idle()
+    /// Spins 60 degrees left or right.
+    pub(super) fn spin(rotation_direction: RotationDirection) -> Self {
+        CurrentAction {
+            action: UnitAction::Spin { rotation_direction },
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
         }
+    }
+
+    /// Spins 60 degrees in a random direction
+    pub(super) fn random_spin(rng: &mut ThreadRng) -> Self {
+        let rotation_direction = RotationDirection::random(rng);
+
+        CurrentAction::spin(rotation_direction)
     }
 
     /// Spin to face the selected direction
@@ -371,9 +378,24 @@ impl CurrentAction {
             RotationDirection::Right
         };
 
-        CurrentAction {
-            action: UnitAction::Spin { rotation_direction },
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
+        CurrentAction::spin(rotation_direction)
+    }
+
+    /// Move toward the tile this unit is facing if able
+    pub(super) fn move_forward(
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        let target_tile = unit_tile_pos.neighbor(facing.direction);
+
+        if map_geometry.is_passable(target_tile) {
+            CurrentAction {
+                action: UnitAction::Move(target_tile),
+                timer: Timer::from_seconds(0.5, TimerMode::Once),
+            }
+        } else {
+            CurrentAction::idle()
         }
     }
 
