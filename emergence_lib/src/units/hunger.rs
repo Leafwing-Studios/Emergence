@@ -52,7 +52,7 @@ pub(super) fn check_for_hunger(mut unit_query: Query<(&mut Goal, &EnergyPool, &D
     for (mut goal, energy_pool, diet) in unit_query.iter_mut() {
         if energy_pool.is_hungry() {
             *goal = Goal::Eat(diet.item);
-        } else if energy_pool.is_satiated() {
+        } else if matches!(*goal, Goal::Eat(..)) && energy_pool.is_satiated() {
             *goal = Goal::Wander
         }
     }
