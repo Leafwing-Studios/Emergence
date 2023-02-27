@@ -106,24 +106,38 @@ pub(super) fn handle_actions(
     map_geometry: Res<MapGeometry>,
 ) {
     for mut unit in unit_query.iter_mut() {
-        if let UnitAction::Move(target_tile) = unit.current_action.action() {
-            if unit.current_action.finished() {
-                let direction = unit.tile_pos.direction_to(**target_tile);
-                let angle = direction.angle(&map_geometry.layout.orientation);
+        if unit.current_action.finished() {
+            match unit.current_action.action() {
+                UnitAction::Idle => (),
+                UnitAction::PickUp {
+                    item_id,
+                    output_entity,
+                } => todo!(),
+                UnitAction::DropOff {
+                    item_id,
+                    input_entity,
+                } => todo!(),
+                UnitAction::Spin { rotation_direction } => todo!(),
+                UnitAction::Move(target_tile) => {
+                    let direction = unit.tile_pos.direction_to(**target_tile);
+                    let angle = direction.angle(&map_geometry.layout.orientation);
 
-                unit.transform.rotation = Quat::from_axis_angle(Vec3::Y, angle);
+                    unit.transform.rotation = Quat::from_axis_angle(Vec3::Y, angle);
 
-                let pos = map_geometry.layout.hex_to_world_pos(target_tile.hex);
-                let terrain_height = *map_geometry.height_index.get(target_tile).unwrap();
+                    let pos = map_geometry.layout.hex_to_world_pos(target_tile.hex);
+                    let terrain_height = *map_geometry.height_index.get(target_tile).unwrap();
 
-                unit.transform.translation = Vec3 {
-                    x: pos.x,
-                    // Bevy is y-up
-                    y: terrain_height,
-                    z: pos.y,
-                };
+                    unit.transform.translation = Vec3 {
+                        x: pos.x,
+                        // Bevy is y-up
+                        y: terrain_height,
+                        z: pos.y,
+                    };
 
-                *unit.tile_pos = *target_tile;
+                    *unit.tile_pos = *target_tile;
+                }
+                UnitAction::Eat => todo!(),
+                UnitAction::Abandon => todo!(),
             }
         }
     }
