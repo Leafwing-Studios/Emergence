@@ -26,7 +26,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Goal, &mut CurrentAction, &HeldItem, &Facing), With<UnitId>>,
+    mut units_query: Query<(&TilePos, &Facing, &Goal, &mut CurrentAction, &HeldItem), With<UnitId>>,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -35,7 +35,7 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, goal, mut action, held_item, facing) in units_query.iter_mut() {
+    for (&unit_tile_pos, facing, goal, mut action, held_item) in units_query.iter_mut() {
         if action.finished() {
             *action = match goal {
                 // Alternate between spinning and moving forward.
@@ -53,6 +53,7 @@ pub(super) fn choose_actions(
                         CurrentAction::find_item(
                             *item_id,
                             unit_tile_pos,
+                            facing,
                             goal,
                             &output_inventory_query,
                             &signals,
@@ -69,6 +70,7 @@ pub(super) fn choose_actions(
                         CurrentAction::find_receptacle(
                             *item_id,
                             unit_tile_pos,
+                            facing,
                             goal,
                             &input_inventory_query,
                             &signals,
@@ -88,6 +90,7 @@ pub(super) fn choose_actions(
                         CurrentAction::find_item(
                             *item_id,
                             unit_tile_pos,
+                            facing,
                             goal,
                             &output_inventory_query,
                             &signals,
@@ -164,23 +167,12 @@ pub(super) fn handle_actions(
                     RotationDirection::Left => unit.facing.rotate_left(),
                     RotationDirection::Right => unit.facing.rotate_right(),
                 },
-                UnitAction::Move(target_tile) => {
-                    let direction = unit.tile_pos.direction_to(**target_tile);
-                    let angle = direction.angle(&map_geometry.layout.orientation);
+                UnitAction::MoveForward => {
+                    let direction = unit.facing.direction;
+                    let target_tile = unit.tile_pos.neighbor(direction);
 
-                    unit.transform.rotation = Quat::from_axis_angle(Vec3::Y, angle);
-
-                    let pos = map_geometry.layout.hex_to_world_pos(target_tile.hex);
-                    let terrain_height = *map_geometry.height_index.get(target_tile).unwrap();
-
-                    unit.transform.translation = Vec3 {
-                        x: pos.x,
-                        // Bevy is y-up
-                        y: terrain_height,
-                        z: pos.y,
-                    };
-
-                    *unit.tile_pos = *target_tile;
+                    *unit.tile_pos = target_tile;
+                    unit.transform.translation = target_tile.into_world_pos(&*map_geometry);
                 }
                 UnitAction::Eat => {
                     let item_count = ItemCount::new(unit.diet.item(), 1);
@@ -243,8 +235,8 @@ pub(super) enum UnitAction {
     Spin {
         rotation_direction: RotationDirection,
     },
-    /// Move to the tile position
-    Move(TilePos),
+    /// Move one tile forward, as determined by the unit's [`Facing`].
+    MoveForward,
     /// Eats one of the currently held object
     Eat,
     /// Abandon whatever you are currently holding
@@ -264,9 +256,9 @@ impl Display for UnitAction {
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
             UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
-            UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
+            UnitAction::MoveForward => format!("Moving forward"),
             UnitAction::Eat => "Eating".to_string(),
-            UnitAction::Abandon => "Abandoning held object.".to_string(),
+            UnitAction::Abandon => "Abandoning held object".to_string(),
         };
 
         write!(f, "{string}")
@@ -306,6 +298,7 @@ impl CurrentAction {
     fn find_item(
         item_id: ItemId,
         unit_tile_pos: TilePos,
+        facing: &Facing,
         goal: &Goal,
         output_inventory_query: &Query<&OutputInventory>,
         signals: &Signals,
@@ -328,7 +321,7 @@ impl CurrentAction {
         if let Some(output_entity) = entities_with_desired_item.choose(rng) {
             CurrentAction::pickup(item_id, *output_entity)
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
-            CurrentAction::move_to(upstream)
+            CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
         } else {
             CurrentAction::idle()
         }
@@ -338,6 +331,7 @@ impl CurrentAction {
     fn find_receptacle(
         item_id: ItemId,
         unit_tile_pos: TilePos,
+        facing: &Facing,
         goal: &Goal,
         input_inventory_query: &Query<&InputInventory>,
         signals: &Signals,
@@ -370,7 +364,7 @@ impl CurrentAction {
         if let Some(input_entity) = entities_with_desired_item.choose(rng) {
             CurrentAction::dropoff(item_id, *input_entity)
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
-            CurrentAction::move_to(upstream)
+            CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
         } else {
             CurrentAction::idle()
         }
@@ -391,27 +385,6 @@ impl CurrentAction {
         CurrentAction::spin(rotation_direction)
     }
 
-    /// Spin to face the selected direction
-    pub(super) fn spin_towards(current_facing: Facing, desired_facing: Facing) -> Self {
-        assert!(current_facing != desired_facing);
-
-        let mut rotations_needed = 0;
-        let mut working_direction = desired_facing.direction;
-
-        while working_direction != current_facing.direction {
-            working_direction = working_direction.left();
-            rotations_needed += 1;
-        }
-
-        let rotation_direction = if rotations_needed <= 3 {
-            RotationDirection::Left
-        } else {
-            RotationDirection::Right
-        };
-
-        CurrentAction::spin(rotation_direction)
-    }
-
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
         unit_tile_pos: TilePos,
@@ -422,7 +395,7 @@ impl CurrentAction {
 
         if map_geometry.is_passable(target_tile) {
             CurrentAction {
-                action: UnitAction::Move(target_tile),
+                action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(0.5, TimerMode::Once),
             }
         } else {
@@ -430,11 +403,35 @@ impl CurrentAction {
         }
     }
 
-    /// Move to the adjacent tile
-    pub(super) fn move_to(target_tile: TilePos) -> Self {
-        CurrentAction {
-            action: UnitAction::Move(target_tile),
-            timer: Timer::from_seconds(0.5, TimerMode::Once),
+    /// Attempt to move toward the `target_tile_pos`.
+    pub(super) fn move_or_spin(
+        unit_tile_pos: TilePos,
+        target_tile_pos: TilePos,
+        facing: &Facing,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);
+
+        if required_direction == facing.direction {
+            CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
+        } else {
+            let mut working_direction_left = facing.direction;
+            let mut working_direction_right = facing.direction;
+
+            // Let's race!
+            // Left gets an arbitrary unfair advantage though.
+            // PERF: this could use a lookup table instead, and would probably be faster
+            loop {
+                working_direction_left = working_direction_left.left();
+                if working_direction_left == required_direction {
+                    return CurrentAction::spin(RotationDirection::Left);
+                }
+
+                working_direction_right = working_direction_right.right();
+                if working_direction_right == required_direction {
+                    return CurrentAction::spin(RotationDirection::Right);
+                }
+            }
         }
     }
 
