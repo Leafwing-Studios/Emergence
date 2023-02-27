@@ -1,6 +1,9 @@
 //! Units are organisms that can move freely.
 
-use crate::{organisms::energy::EnergyPool, simulation::geometry::TilePos};
+use crate::{
+    organisms::energy::EnergyPool,
+    simulation::geometry::{Facing, TilePos},
+};
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use core::fmt::Display;
@@ -34,6 +37,8 @@ pub(crate) struct UnitBundle {
     id: UnitId,
     /// The tile the unit is above.
     tile_pos: TilePos,
+    /// The direction that the unit is facing.
+    facing: Facing,
     /// What is the unit working towards.
     current_goal: Goal,
     /// What is the unit currently doing.
@@ -60,6 +65,7 @@ impl UnitBundle {
         UnitBundle {
             id: UnitId { id },
             tile_pos,
+            facing: Facing::default(),
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
             held_item: HeldItem::default(),
