@@ -395,6 +395,27 @@ impl CurrentAction {
         }
     }
 
+    /// Rotate to face the `required_direction`.
+    fn spin_towards(facing: &Facing, required_direction: hexx::Direction) -> Self {
+        let mut working_direction_left = facing.direction;
+        let mut working_direction_right = facing.direction;
+
+        // Let's race!
+        // Left gets an arbitrary unfair advantage though.
+        // PERF: this could use a lookup table instead, and would probably be faster
+        loop {
+            working_direction_left = working_direction_left.left();
+            if working_direction_left == required_direction {
+                return CurrentAction::spin(RotationDirection::Left);
+            }
+
+            working_direction_right = working_direction_right.right();
+            if working_direction_right == required_direction {
+                return CurrentAction::spin(RotationDirection::Right);
+            }
+        }
+    }
+
     /// Spins 60 degrees in a random direction
     pub(super) fn random_spin(rng: &mut ThreadRng) -> Self {
         let rotation_direction = RotationDirection::random(rng);
@@ -432,23 +453,7 @@ impl CurrentAction {
         if required_direction == facing.direction {
             CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
         } else {
-            let mut working_direction_left = facing.direction;
-            let mut working_direction_right = facing.direction;
-
-            // Let's race!
-            // Left gets an arbitrary unfair advantage though.
-            // PERF: this could use a lookup table instead, and would probably be faster
-            loop {
-                working_direction_left = working_direction_left.left();
-                if working_direction_left == required_direction {
-                    return CurrentAction::spin(RotationDirection::Left);
-                }
-
-                working_direction_right = working_direction_right.right();
-                if working_direction_right == required_direction {
-                    return CurrentAction::spin(RotationDirection::Right);
-                }
-            }
+            CurrentAction::spin_towards(facing, required_direction)
         }
     }
 
