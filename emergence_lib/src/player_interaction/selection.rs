@@ -1050,11 +1050,7 @@ mod unit_details {
 
     use crate::{
         simulation::geometry::TilePos,
-        units::{
-            behavior::{CurrentAction, Goal},
-            item_interaction::HeldItem,
-            UnitId,
-        },
+        units::{actions::CurrentAction, goals::Goal, item_interaction::HeldItem, UnitId},
     };
 
     use super::organism_details::OrganismDetails;
