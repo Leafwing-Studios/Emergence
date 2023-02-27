@@ -172,7 +172,7 @@ pub(super) fn handle_actions(
                     let target_tile = unit.tile_pos.neighbor(direction);
 
                     *unit.tile_pos = target_tile;
-                    unit.transform.translation = target_tile.into_world_pos(&*map_geometry);
+                    unit.transform.translation = target_tile.into_world_pos(&map_geometry);
                 }
                 UnitAction::Eat => {
                     let item_count = ItemCount::new(unit.diet.item(), 1);
@@ -201,13 +201,21 @@ pub(super) fn handle_actions(
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
+    /// The unit's goal
     goal: &'static mut Goal,
+    /// The unit's action
     action: &'static CurrentAction,
+    /// What the unit is holding
     held_item: &'static mut HeldItem,
+    /// The unit's spatial position for rendering
     transform: &'static mut Transform,
+    /// The tile that the unit is on
     tile_pos: &'static mut TilePos,
+    /// What the unit eats
     diet: &'static Diet,
+    /// How much energy the unit has
     energy_pool: &'static mut EnergyPool,
+    /// The direction this unit is facing
     facing: &'static mut Facing,
 }
 
@@ -233,6 +241,7 @@ pub(super) enum UnitAction {
     },
     /// Spin left or right.
     Spin {
+        /// The direction to turn in.
         rotation_direction: RotationDirection,
     },
     /// Move one tile forward, as determined by the unit's [`Facing`].
@@ -256,7 +265,7 @@ impl Display for UnitAction {
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
             UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
-            UnitAction::MoveForward => format!("Moving forward"),
+            UnitAction::MoveForward => "Moving forward".to_string(),
             UnitAction::Eat => "Eating".to_string(),
             UnitAction::Abandon => "Abandoning held object".to_string(),
         };
@@ -301,6 +310,7 @@ impl CurrentAction {
     }
 
     /// Attempt to locate a source of the provided `item_id`.
+    #[allow(clippy::too_many_arguments)]
     fn find_item(
         item_id: ItemId,
         unit_tile_pos: TilePos,
@@ -334,6 +344,7 @@ impl CurrentAction {
     }
 
     /// Attempt to located a place to put an item of type `item_id`.
+    #[allow(clippy::too_many_arguments)]
     fn find_receptacle(
         item_id: ItemId,
         unit_tile_pos: TilePos,

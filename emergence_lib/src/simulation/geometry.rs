@@ -247,6 +247,7 @@ pub(crate) enum RotationDirection {
 }
 
 impl RotationDirection {
+    /// Picks a direction to rotate in at random
     pub(crate) fn random(rng: &mut ThreadRng) -> Self {
         match rng.gen::<bool>() {
             true => RotationDirection::Left,
