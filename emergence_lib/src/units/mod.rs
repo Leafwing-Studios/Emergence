@@ -13,7 +13,6 @@ pub(crate) mod actions;
 pub(crate) mod goals;
 pub(crate) mod hunger;
 pub(crate) mod item_interaction;
-mod movement;
 
 /// The unique, string-based identifier of a unit.
 #[derive(Component, Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
@@ -92,7 +91,7 @@ impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(actions::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
-                movement::move_units
+                actions::handle_actions
                     .label(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
             )

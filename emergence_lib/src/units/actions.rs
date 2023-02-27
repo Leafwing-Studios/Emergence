@@ -1,6 +1,6 @@
 //! What are units currently doing?
 
-use bevy::prelude::*;
+use bevy::{ecs::query::WorldQuery, prelude::*};
 use core::fmt::Display;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
@@ -98,6 +98,44 @@ pub(super) fn choose_actions(
             }
         }
     }
+}
+
+/// Exhaustively handles each planned action
+pub(super) fn handle_actions(
+    mut unit_query: Query<ActionDataQuery>,
+    map_geometry: Res<MapGeometry>,
+) {
+    for mut unit in unit_query.iter_mut() {
+        if let UnitAction::Move(target_tile) = unit.current_action.action() {
+            if unit.current_action.finished() {
+                let direction = unit.tile_pos.direction_to(**target_tile);
+                let angle = direction.angle(&map_geometry.layout.orientation);
+
+                unit.transform.rotation = Quat::from_axis_angle(Vec3::Y, angle);
+
+                let pos = map_geometry.layout.hex_to_world_pos(target_tile.hex);
+                let terrain_height = *map_geometry.height_index.get(target_tile).unwrap();
+
+                unit.transform.translation = Vec3 {
+                    x: pos.x,
+                    // Bevy is y-up
+                    y: terrain_height,
+                    z: pos.y,
+                };
+
+                *unit.tile_pos = *target_tile;
+            }
+        }
+    }
+}
+
+/// All of the data needed to handle unit actions correctly
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+pub(super) struct ActionDataQuery {
+    transform: &'static mut Transform,
+    tile_pos: &'static mut TilePos,
+    current_action: &'static CurrentAction,
 }
 
 /// An action that a unit can take.
