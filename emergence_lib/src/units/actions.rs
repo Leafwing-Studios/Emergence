@@ -6,7 +6,7 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    items::{ItemCount, ItemId},
+    items::{ItemCount, ItemId, ItemManifest},
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
@@ -105,8 +105,13 @@ pub(super) fn choose_actions(
 /// Exhaustively handles each planned action
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
+    mut input_query: Query<&mut InputInventory>,
+    mut output_query: Query<&mut OutputInventory>,
     map_geometry: Res<MapGeometry>,
+    item_manifest: Res<ItemManifest>,
 ) {
+    let item_manifest = &*item_manifest;
+
     for mut unit in unit_query.iter_mut() {
         if unit.current_action.finished() {
             match unit.current_action.action() {
@@ -114,11 +119,47 @@ pub(super) fn handle_actions(
                 UnitAction::PickUp {
                     item_id,
                     output_entity,
-                } => todo!(),
+                } => {
+                    if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
+                        // Transfer one item at a time
+                        let item_count = ItemCount::new(*item_id, 1);
+                        let _transfer_result = output_inventory.transfer_item(
+                            &item_count,
+                            &mut unit.held_item.inventory,
+                            item_manifest,
+                        );
+
+                        // If our unit's all loaded, swap to delivering it
+                        *unit.goal = if unit.held_item.is_full() {
+                            Goal::DropOff(*item_id)
+                        // If we can carry more, try and grab more items
+                        } else {
+                            Goal::Pickup(*item_id)
+                        }
+                    }
+                }
                 UnitAction::DropOff {
                     item_id,
                     input_entity,
-                } => todo!(),
+                } => {
+                    if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
+                        // Transfer one item at a time
+                        let item_count = ItemCount::new(*item_id, 1);
+                        let _transfer_result = unit.held_item.transfer_item(
+                            &item_count,
+                            &mut input_inventory.inventory,
+                            item_manifest,
+                        );
+
+                        // If our unit is unloaded, swap to wandering to find something else to do
+                        *unit.goal = if unit.held_item.is_empty() {
+                            Goal::Wander
+                        // If we still have items, keep unloading
+                        } else {
+                            Goal::DropOff(*item_id)
+                        }
+                    }
+                }
                 UnitAction::Spin { rotation_direction } => todo!(),
                 UnitAction::Move(target_tile) => {
                     let direction = unit.tile_pos.direction_to(**target_tile);
@@ -152,7 +193,10 @@ pub(super) fn handle_actions(
                         }
                     }
                 }
-                UnitAction::Abandon => todo!(),
+                UnitAction::Abandon => {
+                    // TODO: actually put these dropped items somewhere
+                    *unit.held_item = HeldItem::default();
+                }
             }
         }
     }
@@ -162,6 +206,7 @@ pub(super) fn handle_actions(
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
+    goal: &'static mut Goal,
     current_action: &'static CurrentAction,
     held_item: &'static mut HeldItem,
     transform: &'static mut Transform,

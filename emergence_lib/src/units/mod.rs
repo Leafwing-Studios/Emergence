@@ -96,11 +96,6 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::AdvanceTimers),
             )
             .add_system(
-                item_interaction::pickup_and_drop_items
-                    .label(UnitSystem::Act)
-                    .after(UnitSystem::AdvanceTimers),
-            )
-            .add_system(
                 item_interaction::clear_empty_slots
                     .label(UnitSystem::Cleanup)
                     .after(UnitSystem::Act),
