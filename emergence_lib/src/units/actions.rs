@@ -116,8 +116,8 @@ pub(super) fn handle_actions(
     let item_manifest = &*item_manifest;
 
     for mut unit in unit_query.iter_mut() {
-        if unit.current_action.finished() {
-            match unit.current_action.action() {
+        if unit.action.finished() {
+            match unit.action.action() {
                 UnitAction::Idle => (),
                 UnitAction::PickUp {
                     item_id,
@@ -202,7 +202,7 @@ pub(super) fn handle_actions(
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
     goal: &'static mut Goal,
-    current_action: &'static CurrentAction,
+    action: &'static CurrentAction,
     held_item: &'static mut HeldItem,
     transform: &'static mut Transform,
     tile_pos: &'static mut TilePos,
