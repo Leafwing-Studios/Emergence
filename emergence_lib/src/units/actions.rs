@@ -322,20 +322,26 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
-        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+        let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
                 if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
                     if output_inventory.item_count(item_id) > 0 {
-                        entities_with_desired_item.push(structure_entity);
+                        sources.push((structure_entity, tile_pos));
                     }
                 }
             }
         }
 
-        if let Some(output_entity) = entities_with_desired_item.choose(rng) {
-            CurrentAction::pickup(item_id, *output_entity)
+        if let Some((output_entity, output_tile_pos)) = sources.choose(rng) {
+            CurrentAction::pickup(
+                item_id,
+                *output_entity,
+                facing,
+                unit_tile_pos,
+                *output_tile_pos,
+            )
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
             CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
         } else {
@@ -356,14 +362,14 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
-        let mut entities_with_desired_item: Vec<Entity> = Vec::new();
+        let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
             // Ghosts
             if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
                 if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
                     if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        entities_with_desired_item.push(ghost_entity);
+                        receptacles.push((ghost_entity, tile_pos));
                     }
                 }
             }
@@ -372,14 +378,20 @@ impl CurrentAction {
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
                 if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
                     if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        entities_with_desired_item.push(structure_entity);
+                        receptacles.push((structure_entity, tile_pos));
                     }
                 }
             }
         }
 
-        if let Some(input_entity) = entities_with_desired_item.choose(rng) {
-            CurrentAction::dropoff(item_id, *input_entity)
+        if let Some((input_entity, input_tile_pos)) = receptacles.choose(rng) {
+            CurrentAction::dropoff(
+                item_id,
+                *input_entity,
+                facing,
+                unit_tile_pos,
+                *input_tile_pos,
+            )
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
             CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
         } else {
@@ -392,6 +404,27 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Spin { rotation_direction },
             timer: Timer::from_seconds(0.1, TimerMode::Once),
+        }
+    }
+
+    /// Rotate to face the `required_direction`.
+    fn spin_towards(facing: &Facing, required_direction: hexx::Direction) -> Self {
+        let mut working_direction_left = facing.direction;
+        let mut working_direction_right = facing.direction;
+
+        // Let's race!
+        // Left gets an arbitrary unfair advantage though.
+        // PERF: this could use a lookup table instead, and would probably be faster
+        loop {
+            working_direction_left = working_direction_left.left();
+            if working_direction_left == required_direction {
+                return CurrentAction::spin(RotationDirection::Left);
+            }
+
+            working_direction_right = working_direction_right.right();
+            if working_direction_right == required_direction {
+                return CurrentAction::spin(RotationDirection::Right);
+            }
         }
     }
 
@@ -432,23 +465,7 @@ impl CurrentAction {
         if required_direction == facing.direction {
             CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
         } else {
-            let mut working_direction_left = facing.direction;
-            let mut working_direction_right = facing.direction;
-
-            // Let's race!
-            // Left gets an arbitrary unfair advantage though.
-            // PERF: this could use a lookup table instead, and would probably be faster
-            loop {
-                working_direction_left = working_direction_left.left();
-                if working_direction_left == required_direction {
-                    return CurrentAction::spin(RotationDirection::Left);
-                }
-
-                working_direction_right = working_direction_right.right();
-                if working_direction_right == required_direction {
-                    return CurrentAction::spin(RotationDirection::Right);
-                }
-            }
+            CurrentAction::spin_towards(facing, required_direction)
         }
     }
 
@@ -461,24 +478,48 @@ impl CurrentAction {
     }
 
     /// Picks up the `item_id` at the `output_entity`.
-    pub(super) fn pickup(item_id: ItemId, output_entity: Entity) -> Self {
-        CurrentAction {
-            action: UnitAction::PickUp {
-                item_id,
-                output_entity,
-            },
-            timer: Timer::from_seconds(0.5, TimerMode::Once),
+    pub(super) fn pickup(
+        item_id: ItemId,
+        output_entity: Entity,
+        facing: &Facing,
+        unit_tile_pos: TilePos,
+        output_tile_pos: TilePos,
+    ) -> Self {
+        let required_direction = unit_tile_pos.direction_to(output_tile_pos.hex);
+
+        if required_direction == facing.direction {
+            CurrentAction {
+                action: UnitAction::PickUp {
+                    item_id,
+                    output_entity,
+                },
+                timer: Timer::from_seconds(0.5, TimerMode::Once),
+            }
+        } else {
+            CurrentAction::spin_towards(facing, required_direction)
         }
     }
 
     /// Drops off the `item_id` at the `input_entity`.
-    pub(super) fn dropoff(item_id: ItemId, input_entity: Entity) -> Self {
-        CurrentAction {
-            action: UnitAction::DropOff {
-                item_id,
-                input_entity,
-            },
-            timer: Timer::from_seconds(0.2, TimerMode::Once),
+    pub(super) fn dropoff(
+        item_id: ItemId,
+        input_entity: Entity,
+        facing: &Facing,
+        unit_tile_pos: TilePos,
+        input_tile_pos: TilePos,
+    ) -> Self {
+        let required_direction = unit_tile_pos.direction_to(input_tile_pos.hex);
+
+        if required_direction == facing.direction {
+            CurrentAction {
+                action: UnitAction::DropOff {
+                    item_id,
+                    input_entity,
+                },
+                timer: Timer::from_seconds(0.2, TimerMode::Once),
+            }
+        } else {
+            CurrentAction::spin_towards(facing, required_direction)
         }
     }
 
