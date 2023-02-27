@@ -12,7 +12,7 @@ use rand::thread_rng;
 
 use crate::items::ItemId;
 use crate::signals::{SignalType, Signals};
-use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
@@ -203,7 +203,9 @@ pub(super) enum UnitAction {
         input_entity: Entity,
     },
     /// Spin left or right.
-    Spin { desired_facing: Facing },
+    Spin {
+        rotation_direction: RotationDirection,
+    },
     /// Move to the tile position
     Move(TilePos),
     /// Eats one of the currently held object
@@ -224,7 +226,7 @@ impl Display for UnitAction {
                 item_id,
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
-            UnitAction::Spin { desired_facing } => format!("Spinning towards {desired_facing}"),
+            UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
             UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
             UnitAction::Eat => "Eating".to_string(),
             UnitAction::Abandon => "Abandoning held object.".to_string(),
@@ -348,6 +350,30 @@ impl CurrentAction {
             CurrentAction::move_to(random_neighbor)
         } else {
             CurrentAction::idle()
+        }
+    }
+
+    /// Spin to face the selected direction
+    pub(super) fn spin_towards(current_facing: Facing, desired_facing: Facing) -> Self {
+        assert!(current_facing != desired_facing);
+
+        let mut rotations_needed = 0;
+        let mut working_direction = desired_facing.direction;
+
+        while working_direction != current_facing.direction {
+            working_direction = working_direction.left();
+            rotations_needed += 1;
+        }
+
+        let rotation_direction = if rotations_needed <= 3 {
+            RotationDirection::Left
+        } else {
+            RotationDirection::Right
+        };
+
+        CurrentAction {
+            action: UnitAction::Spin { rotation_direction },
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
         }
     }
 

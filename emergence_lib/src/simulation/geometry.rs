@@ -2,7 +2,7 @@
 
 use bevy::{prelude::*, utils::HashMap};
 use core::fmt::Display;
-use derive_more::{Add, AddAssign, Sub, SubAssign};
+use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 
@@ -235,6 +235,15 @@ impl Display for Facing {
 
         write!(f, "{str}")
     }
+}
+
+/// The direction of a [`Facing`] rotation
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
+pub(crate) enum RotationDirection {
+    /// Counterclockwise
+    Left,
+    /// Clockwise
+    Right,
 }
 
 /// Rotates objects so they are facing the correct direction.
