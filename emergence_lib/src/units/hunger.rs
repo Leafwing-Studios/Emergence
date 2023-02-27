@@ -10,7 +10,8 @@ use crate::{
 };
 
 use super::{
-    behavior::{CurrentAction, Goal, UnitAction},
+    actions::{CurrentAction, UnitAction},
+    goals::Goal,
     item_interaction::HeldItem,
 };
 

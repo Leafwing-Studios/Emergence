@@ -5,15 +5,12 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use core::fmt::Display;
 
-use self::{
-    behavior::{CurrentAction, Goal},
-    hunger::Diet,
-    item_interaction::HeldItem,
-};
+use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::HeldItem};
 
 use crate::organisms::OrganismBundle;
 
-pub(crate) mod behavior;
+pub(crate) mod actions;
+pub(crate) mod goals;
 pub(crate) mod hunger;
 pub(crate) mod item_interaction;
 mod movement;
@@ -93,7 +90,7 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(behavior::advance_action_timer.label(UnitSystem::AdvanceTimers))
+        app.add_system(actions::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
                 movement::move_units
                     .label(UnitSystem::Act)
@@ -109,9 +106,9 @@ impl Plugin for UnitsPlugin {
                     .label(UnitSystem::Cleanup)
                     .after(UnitSystem::Act),
             )
-            .add_system(behavior::choose_goal.label(UnitSystem::ChooseGoal))
+            .add_system(goals::choose_goal.label(UnitSystem::ChooseGoal))
             .add_system(
-                behavior::choose_actions
+                actions::choose_actions
                     .label(UnitSystem::ChooseNewAction)
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),

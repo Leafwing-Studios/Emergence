@@ -5,7 +5,8 @@ use bevy::prelude::*;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 
-use super::behavior::{CurrentAction, UnitAction};
+use super::actions::CurrentAction;
+use super::actions::UnitAction;
 use super::UnitId;
 
 /// Moves units between tiles based on their [`CurrentAction`].

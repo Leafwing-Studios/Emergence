@@ -8,7 +8,7 @@ use core::fmt::Display;
 use core::ops::{Add, Mul, Sub};
 use itertools::Itertools;
 
-use crate::units::behavior::Goal;
+use crate::units::goals::Goal;
 use crate::{
     items::ItemId,
     simulation::geometry::{MapGeometry, TilePos},

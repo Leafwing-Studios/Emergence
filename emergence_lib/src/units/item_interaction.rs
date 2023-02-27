@@ -8,7 +8,10 @@ use crate::{
 };
 use core::fmt::Display;
 
-use super::behavior::{CurrentAction, Goal, UnitAction};
+use super::{
+    actions::{CurrentAction, UnitAction},
+    goals::Goal,
+};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Clone, Debug, Deref, DerefMut)]
