@@ -12,7 +12,7 @@ use rand::thread_rng;
 
 use crate::items::ItemId;
 use crate::signals::{SignalType, Signals};
-use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
 use crate::structures::crafting::{InputInventory, OutputInventory};
 use crate::structures::StructureId;
 use crate::units::UnitId;
@@ -202,6 +202,8 @@ pub(super) enum UnitAction {
         /// The entity to drop it off at, which must have an [`InputInventory`] component.
         input_entity: Entity,
     },
+    /// Spin left or right.
+    Spin { desired_facing: Facing },
     /// Move to the tile position
     Move(TilePos),
     /// Eats one of the currently held object
@@ -222,6 +224,7 @@ impl Display for UnitAction {
                 item_id,
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
+            UnitAction::Spin { desired_facing } => format!("Spinning towards {desired_facing}"),
             UnitAction::Move(tile_pos) => format!("Moving to {tile_pos}"),
             UnitAction::Eat => "Eating".to_string(),
             UnitAction::Abandon => "Abandoning held object.".to_string(),

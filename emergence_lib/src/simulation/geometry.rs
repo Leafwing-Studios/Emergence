@@ -222,6 +222,21 @@ impl Default for Facing {
     }
 }
 
+impl Display for Facing {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self.direction {
+            Direction::TopRight => "Top-right",
+            Direction::Top => "Top",
+            Direction::TopLeft => "Top-left",
+            Direction::BottomLeft => "Bottom-left",
+            Direction::Bottom => "Bottom",
+            Direction::BottomRight => "Bottom-right",
+        };
+
+        write!(f, "{str}")
+    }
+}
+
 /// Rotates objects so they are facing the correct direction.
 pub(super) fn sync_rotation_to_facing(
     // Camera requires different logic, it rotates "around" a central point
