@@ -2,6 +2,8 @@
 
 use std::fmt::Display;
 
+use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
     inventory::InventoryState,
@@ -161,6 +163,14 @@ impl ItemSlot {
             self.count -= count;
             Ok(())
         }
+    }
+
+    /// Randomizes the quantity of items in this slot, return `self`.
+    ///
+    /// The new value will be chosen uniformly between 0 and `max_item_count`.
+    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
+        let distribution = Uniform::new(0, self.max_item_count);
+        self.count = distribution.sample(rng);
     }
 }
 

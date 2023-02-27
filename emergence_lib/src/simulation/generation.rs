@@ -194,10 +194,10 @@ fn generate_organisms(
     let n_entities = n_ant + n_plant + n_fungi + n_hive;
     assert!(n_entities <= tile_query.iter().len());
 
+    let mut rng = &mut thread_rng();
     let mut entity_positions: Vec<TilePos> = {
         let possible_positions: Vec<TilePos> = tile_query.iter().copied().collect();
 
-        let mut rng = &mut thread_rng();
         possible_positions
             .choose_multiple(&mut rng, n_entities)
             .cloned()
@@ -228,7 +228,7 @@ fn generate_organisms(
             facing: Facing::default(),
         };
 
-        commands.spawn_structure(position, item);
+        commands.spawn_randomized_structure(position, item, rng);
     }
 
     // Fungi
@@ -239,7 +239,7 @@ fn generate_organisms(
             facing: Facing::default(),
         };
 
-        commands.spawn_structure(position, item);
+        commands.spawn_randomized_structure(position, item, rng);
     }
 
     // Hives
@@ -250,6 +250,6 @@ fn generate_organisms(
             facing: Facing::default(),
         };
 
-        commands.spawn_structure(position, item);
+        commands.spawn_randomized_structure(position, item, rng);
     }
 }
