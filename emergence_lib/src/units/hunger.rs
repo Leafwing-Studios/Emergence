@@ -2,18 +2,13 @@
 
 use bevy::prelude::*;
 use core::fmt::Display;
-use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    items::{ItemCount, ItemId},
+    items::ItemId,
     organisms::energy::{Energy, EnergyPool},
 };
 
-use super::{
-    actions::{CurrentAction, UnitAction},
-    goals::Goal,
-    item_interaction::HeldItem,
-};
+use super::goals::Goal;
 
 /// The item(s) that a unit must consume to gain [`Energy`].
 #[derive(Component, Clone, Debug)]
