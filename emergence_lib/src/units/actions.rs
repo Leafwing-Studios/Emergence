@@ -265,13 +265,19 @@ impl Display for UnitAction {
     }
 }
 
-#[derive(Component, Clone, Default, Debug)]
+#[derive(Component, Clone, Debug)]
 /// The action a unit is undertaking.
 pub(crate) struct CurrentAction {
     /// The type of action being undertaken.
     action: UnitAction,
     /// The amount of time left to complete the action.
     timer: Timer,
+}
+
+impl Default for CurrentAction {
+    fn default() -> Self {
+        CurrentAction::idle()
+    }
 }
 
 impl Display for CurrentAction {
