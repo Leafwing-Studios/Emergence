@@ -1,6 +1,6 @@
 //! The clipboard stores selected structures, to later be placed via zoning.
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
 use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
@@ -134,6 +134,23 @@ fn clear_clipboard(
     }
 }
 
+/// Data needed for [`copy_selection`] to populate [`ClipboardData`].
+#[derive(WorldQuery)]
+struct ClipboardQuery {
+    tile_pos: &'static TilePos,
+    structure_id: &'static Id<Structure>,
+    facing: &'static Facing,
+}
+
+impl From<ClipboardQueryItem<'_>> for ClipboardData {
+    fn from(value: ClipboardQueryItem) -> ClipboardData {
+        ClipboardData {
+            structure_id: *value.structure_id,
+            facing: *value.facing,
+        }
+    }
+}
+
 /// Copies the selected structure(s) to the clipboard, to be placed later.
 ///
 /// This system also handles the "pipette" functionality.
@@ -142,7 +159,7 @@ fn copy_selection(
     mut clipboard: ResMut<Clipboard>,
     cursor_pos: Res<CursorPos>,
     current_selection: Res<CurrentSelection>,
-    structure_query: Query<(&TilePos, &Id<Structure>, &Facing), Without<Preview>>,
+    structure_query: Query<ClipboardQuery, Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if actions.just_pressed(PlayerAction::Pipette) {
@@ -151,13 +168,10 @@ fn copy_selection(
 
         match &*current_selection {
             CurrentSelection::Structure(entity) | CurrentSelection::Ghost(entity) => {
-                let (tile_pos, id, facing) = structure_query.get(*entity).unwrap();
-                let clipboard_item = ClipboardData {
-                    structure_id: *id,
-                    facing: *facing,
-                };
-
-                clipboard.insert(*tile_pos, clipboard_item);
+                let query_item = structure_query.get(*entity).unwrap();
+                let tile_pos = query_item.tile_pos;
+                let clipboard_data = query_item.into();
+                clipboard.insert(*tile_pos, clipboard_data);
                 clipboard.normalize_positions();
             }
             CurrentSelection::Terrain(selected_tiles) => {
@@ -165,28 +179,16 @@ fn copy_selection(
                 if selected_tiles.is_empty() {
                     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
                         if let Some(entity) = map_geometry.get_ghost_or_structure(hovered_tile) {
-                            let (_tile_pos, id, facing) = structure_query.get(entity).unwrap();
-
-                            let clipboard_item = ClipboardData {
-                                structure_id: *id,
-                                facing: *facing,
-                            };
-
-                            clipboard.insert(TilePos::default(), clipboard_item);
+                            let clipboard_data = structure_query.get(entity).unwrap().into();
+                            clipboard.insert(TilePos::default(), clipboard_data);
                         }
                     }
                 } else {
                     for &selected_tile_pos in selected_tiles.selection().iter() {
                         if let Some(entity) = map_geometry.get_ghost_or_structure(selected_tile_pos)
                         {
-                            let (&_tile_pos, id, facing) = structure_query.get(entity).unwrap();
-                            debug_assert_eq!(_tile_pos, selected_tile_pos);
-                            let clipboard_item = ClipboardData {
-                                structure_id: *id,
-                                facing: *facing,
-                            };
-
-                            clipboard.insert(selected_tile_pos, clipboard_item);
+                            let clipboard_data = structure_query.get(entity).unwrap().into();
+                            clipboard.insert(selected_tile_pos, clipboard_data);
                         }
                     }
                     clipboard.normalize_positions();
@@ -198,15 +200,8 @@ fn copy_selection(
                     if let Some(structure_entity) =
                         map_geometry.structure_index.get(&cursor_tile_pos)
                     {
-                        let (_tile_pos, id, facing) =
-                            structure_query.get(*structure_entity).unwrap();
-                        debug_assert_eq!(*_tile_pos, cursor_tile_pos);
-                        let clipboard_item = ClipboardData {
-                            structure_id: *id,
-                            facing: *facing,
-                        };
-
-                        clipboard.insert(TilePos::default(), clipboard_item);
+                        let clipboard_data = structure_query.get(*structure_entity).unwrap().into();
+                        clipboard.insert(TilePos::default(), clipboard_data);
                     }
                 }
             }
@@ -241,18 +236,18 @@ fn display_selection(
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
         let mut desired_previews: HashMap<TilePos, ClipboardData> =
             HashMap::with_capacity(clipboard.capacity());
-        for (&clipboard_pos, clipboard_item) in clipboard.iter() {
+        for (&clipboard_pos, clipboard_data) in clipboard.iter() {
             let tile_pos = cursor_pos + clipboard_pos;
-            desired_previews.insert(tile_pos, clipboard_item.clone());
+            desired_previews.insert(tile_pos, clipboard_data.clone());
         }
 
         // Handle previews that already exist
         for (tile_pos, existing_structure_id, existing_facing) in preview_query.iter() {
             // Preview should exist
-            if let Some(desired_clipboard_item) = desired_previews.get(tile_pos) {
+            if let Some(desired_clipboard_data) = desired_previews.get(tile_pos) {
                 // Preview's identity changed
-                if *existing_structure_id != desired_clipboard_item.structure_id
-                    || *existing_facing != desired_clipboard_item.facing
+                if *existing_structure_id != desired_clipboard_data.structure_id
+                    || *existing_facing != desired_clipboard_data.facing
                 {
                     commands.despawn_preview(*tile_pos);
                 } else {
@@ -267,8 +262,8 @@ fn display_selection(
         }
 
         // Handle any remaining new ghosts
-        for (&tile_pos, clipboard_item) in desired_previews.iter() {
-            commands.spawn_preview(tile_pos, clipboard_item.clone());
+        for (&tile_pos, clipboard_data) in desired_previews.iter() {
+            commands.spawn_preview(tile_pos, clipboard_data.clone());
         }
     }
 }
