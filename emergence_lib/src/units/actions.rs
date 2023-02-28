@@ -14,7 +14,7 @@ use crate::{
     structures::crafting::{InputInventory, OutputInventory},
 };
 
-use super::{goals::Goal, hunger::Diet, item_interaction::HeldItem};
+use super::{goals::Goal, hunger::Diet, item_interaction::UnitInventory};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
@@ -28,7 +28,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
     mut units_query: Query<
-        (&TilePos, &Facing, &Goal, &mut CurrentAction, &HeldItem),
+        (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
         With<Id<Unit>>,
     >,
     input_inventory_query: Query<&InputInventory>,
@@ -39,7 +39,7 @@ pub(super) fn choose_actions(
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, facing, goal, mut action, held_item) in units_query.iter_mut() {
+    for (&unit_tile_pos, facing, goal, mut action, unit_inventory) in units_query.iter_mut() {
         if action.finished() {
             *action = match goal {
                 // Alternate between spinning and moving forward.
@@ -50,8 +50,7 @@ pub(super) fn choose_actions(
                     _ => CurrentAction::random_spin(rng),
                 },
                 Goal::Pickup(item_id) => {
-                    let maybe_item = held_item.item_id();
-                    if maybe_item.is_some() && maybe_item.unwrap() != *item_id {
+                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
                         CurrentAction::abandon()
                     } else {
                         CurrentAction::find_item(
@@ -67,8 +66,7 @@ pub(super) fn choose_actions(
                     }
                 }
                 Goal::DropOff(item_id) => {
-                    let maybe_item = held_item.item_id();
-                    if maybe_item.is_some() && maybe_item.unwrap() != *item_id {
+                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
                         CurrentAction::abandon()
                     } else {
                         CurrentAction::find_receptacle(
@@ -84,7 +82,7 @@ pub(super) fn choose_actions(
                     }
                 }
                 Goal::Eat(item_id) => {
-                    if let Some(held_item) = held_item.item_id() {
+                    if let Some(held_item) = unit_inventory.held_item {
                         if held_item == *item_id {
                             CurrentAction::eat()
                         } else {
@@ -128,20 +126,23 @@ pub(super) fn handle_actions(
                     output_entity,
                 } => {
                     if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
-                        // Transfer one item at a time
-                        let item_count = ItemCount::new(*item_id, 1);
-                        let _transfer_result = output_inventory.transfer_item(
-                            &item_count,
-                            &mut unit.held_item.inventory,
-                            item_manifest,
-                        );
+                        *unit.goal = match unit.unit_inventory.held_item {
+                            // We shouldn't be holding anything yet, but if we are get rid of it
+                            Some(held_item_id) => Goal::DropOff(held_item_id),
+                            None => {
+                                let item_count = ItemCount::new(*item_id, 1);
+                                let transfer_result =
+                                    output_inventory.remove_item_all_or_nothing(&item_count);
 
-                        // If our unit's all loaded, swap to delivering it
-                        *unit.goal = if unit.held_item.is_full() {
-                            Goal::DropOff(*item_id)
-                        // If we can carry more, try and grab more items
-                        } else {
-                            Goal::Pickup(*item_id)
+                                // If our unit's all loaded, swap to delivering it
+                                match transfer_result {
+                                    Ok(()) => {
+                                        unit.unit_inventory.held_item = Some(*item_id);
+                                        Goal::DropOff(*item_id)
+                                    }
+                                    Err(..) => Goal::Pickup(*item_id),
+                                }
+                            }
                         }
                     }
                 }
@@ -150,20 +151,28 @@ pub(super) fn handle_actions(
                     input_entity,
                 } => {
                     if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
-                        // Transfer one item at a time
-                        let item_count = ItemCount::new(*item_id, 1);
-                        let _transfer_result = unit.held_item.transfer_item(
-                            &item_count,
-                            &mut input_inventory.inventory,
-                            item_manifest,
-                        );
+                        *unit.goal = match unit.unit_inventory.held_item {
+                            // We should be holding something, if we're not find something else to do
+                            None => Goal::Wander,
+                            Some(held_item_id) => {
+                                if held_item_id == *item_id {
+                                    let item_count = ItemCount::new(held_item_id, 1);
+                                    let transfer_result = input_inventory
+                                        .add_item_all_or_nothing(&item_count, item_manifest);
 
-                        // If our unit is unloaded, swap to wandering to find something else to do
-                        *unit.goal = if unit.held_item.is_empty() {
-                            Goal::Wander
-                        // If we still have items, keep unloading
-                        } else {
-                            Goal::DropOff(*item_id)
+                                    // If our unit is unloaded, swap to wandering to find something else to do
+                                    match transfer_result {
+                                        Ok(()) => {
+                                            unit.unit_inventory.held_item = None;
+                                            Goal::Wander
+                                        }
+                                        Err(..) => Goal::DropOff(held_item_id),
+                                    }
+                                } else {
+                                    // Somehow we're holding the wrong thing
+                                    Goal::DropOff(held_item_id)
+                                }
+                            }
                         }
                     }
                 }
@@ -179,19 +188,18 @@ pub(super) fn handle_actions(
                     unit.transform.translation = target_tile.into_world_pos(&map_geometry);
                 }
                 UnitAction::Eat => {
-                    let item_count = ItemCount::new(unit.diet.item(), 1);
-                    if unit
-                        .held_item
-                        .remove_item_all_or_nothing(&item_count)
-                        .is_ok()
-                    {
-                        let proposed = unit.energy_pool.current() + unit.diet.energy();
-                        unit.energy_pool.set_current(proposed);
+                    if let Some(held_item) = unit.unit_inventory.held_item {
+                        if held_item == unit.diet.item() {
+                            let proposed = unit.energy_pool.current() + unit.diet.energy();
+                            unit.energy_pool.set_current(proposed);
+                        }
                     }
+
+                    unit.unit_inventory.held_item = None;
                 }
                 UnitAction::Abandon => {
                     // TODO: actually put these dropped items somewhere
-                    *unit.held_item = HeldItem::default();
+                    unit.unit_inventory.held_item = None;
                 }
             }
         }
@@ -207,7 +215,7 @@ pub(super) struct ActionDataQuery {
     /// The unit's action
     action: &'static CurrentAction,
     /// What the unit is holding
-    held_item: &'static mut HeldItem,
+    unit_inventory: &'static mut UnitInventory,
     /// The unit's spatial position for rendering
     transform: &'static mut Transform,
     /// The tile that the unit is on

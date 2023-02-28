@@ -1052,7 +1052,7 @@ mod unit_details {
     use crate::{
         asset_management::manifest::{Id, Unit},
         simulation::geometry::TilePos,
-        units::{actions::CurrentAction, goals::Goal, item_interaction::HeldItem},
+        units::{actions::CurrentAction, goals::Goal, item_interaction::UnitInventory},
     };
 
     use super::organism_details::OrganismDetails;
@@ -1067,7 +1067,7 @@ mod unit_details {
         /// The current location
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried
-        pub(super) held_item: &'static HeldItem,
+        pub(super) held_item: &'static UnitInventory,
         /// What this unit is trying to acheive
         pub(super) goal: &'static Goal,
         /// What is currently being done
@@ -1084,7 +1084,7 @@ mod unit_details {
         /// The current location
         pub(super) tile_pos: TilePos,
         /// What's being carried
-        pub(super) held_item: HeldItem,
+        pub(super) held_item: UnitInventory,
         /// What this unit is trying to acheive
         pub(super) goal: Goal,
         /// What is currently being done
