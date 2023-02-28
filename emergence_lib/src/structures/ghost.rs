@@ -107,11 +107,18 @@ pub(super) struct PreviewBundle {
     facing: Facing,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
+    /// The child scene that contains the gltF model used
+    scene_bundle: SceneBundle,
 }
 
 impl PreviewBundle {
     /// Creates a new [`PreviewBundle`].
-    pub(super) fn new(tile_pos: TilePos, data: StructureData) -> Self {
+    pub(super) fn new(
+        tile_pos: TilePos,
+        data: StructureData,
+        scene_handle: Handle<Scene>,
+        world_pos: Vec3,
+    ) -> Self {
         PreviewBundle {
             preview: Preview,
             ghostly: Ghostly,
@@ -119,6 +126,11 @@ impl PreviewBundle {
             structure_id: data.structure_id,
             facing: data.facing,
             object_interaction: ObjectInteraction::Hovered,
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
         }
     }
 }
