@@ -13,7 +13,7 @@ use hexx::shapes::hexagon;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::items::recipe::RecipeManifest;
+use crate::asset_management::manifest::RecipeManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -773,9 +773,10 @@ mod ghost_details {
     use core::fmt::Display;
 
     use crate::{
+        asset_management::manifest::{Id, Structure},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::{crafting::InputInventory, StructureId},
+        structures::crafting::InputInventory,
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -784,7 +785,7 @@ mod ghost_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of structure
-        pub(super) structure_id: &'static StructureId,
+        pub(super) structure_id: &'static Id<Structure>,
         /// The tile position of this ghost
         pub(crate) tile_pos: &'static TilePos,
         /// The inputs that must be added to construct this ghost
@@ -801,7 +802,7 @@ mod ghost_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_id: StructureId,
+        pub(crate) structure_id: Id<Structure>,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: InputInventory,
         /// The neglect multiplier of this ghost
@@ -877,12 +878,12 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        items::{inventory::Inventory, recipe::Recipe},
+        asset_management::manifest::{Id, Structure},
+        items::{inventory::Inventory, recipe::RecipeData},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::{
-            crafting::{ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory},
-            StructureId,
+        structures::crafting::{
+            ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
         },
     };
 
@@ -892,7 +893,7 @@ mod structure_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of structure
-        pub(super) structure_id: &'static StructureId,
+        pub(super) structure_id: &'static Id<Structure>,
         /// The tile position of this structure
         pub(crate) tile_pos: &'static TilePos,
         /// Crafting-related components
@@ -914,7 +915,7 @@ mod structure_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_id: StructureId,
+        pub(crate) structure_id: Id<Structure>,
         /// If this organism is crafting something, the details about that.
         pub(crate) crafting_details: Option<CraftingDetails>,
         /// Details about this organism, if it is one.
@@ -957,7 +958,7 @@ Tile: {tile_pos}"
         pub(crate) output_inventory: Inventory,
 
         /// The recipe used, if any.
-        pub(crate) recipe: Option<Recipe>,
+        pub(crate) recipe: Option<RecipeData>,
 
         /// The state of the ongoing crafting process.
         pub(crate) state: CraftingState,
@@ -1049,8 +1050,9 @@ mod unit_details {
     use std::fmt::Display;
 
     use crate::{
+        asset_management::manifest::{Id, Unit},
         simulation::geometry::TilePos,
-        units::{actions::CurrentAction, goals::Goal, item_interaction::HeldItem, UnitId},
+        units::{actions::CurrentAction, goals::Goal, item_interaction::HeldItem},
     };
 
     use super::organism_details::OrganismDetails;
@@ -1061,7 +1063,7 @@ mod unit_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of unit
-        pub(super) unit_id: &'static UnitId,
+        pub(super) unit_id: &'static Id<Unit>,
         /// The current location
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried
@@ -1078,7 +1080,7 @@ mod unit_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of unit
-        pub(super) unit_id: UnitId,
+        pub(super) unit_id: Id<Unit>,
         /// The current location
         pub(super) tile_pos: TilePos,
         /// What's being carried

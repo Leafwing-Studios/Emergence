@@ -1,15 +1,15 @@
 //! Generating starting terrain and organisms
+use crate::asset_management::manifest::Id;
 use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
 use crate::enum_iter::IterableEnum;
-use crate::items::ItemId;
 use crate::organisms::energy::{Energy, EnergyPool};
-use crate::player_interaction::clipboard::StructureData;
+use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, TilePos};
-use crate::structures::{commands::StructureCommandsExt, StructureId};
+use crate::structures::commands::StructureCommandsExt;
 use crate::terrain::{Terrain, TerrainBundle};
 use crate::units::hunger::Diet;
-use crate::units::{UnitBundle, UnitId};
+use crate::units::UnitBundle;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
@@ -220,10 +220,10 @@ fn generate_organisms(
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
     for ant_position in ant_positions {
         commands.spawn(UnitBundle::new(
-            UnitId::ant(),
+            Id::ant(),
             ant_position,
             EnergyPool::new_full(Energy(100.), Energy(-1.)),
-            Diet::new(ItemId::leuco_chunk(), Energy(50.)),
+            Diet::new(Id::leuco_chunk(), Energy(50.)),
             &unit_handles,
             &map_geometry,
         ));
@@ -232,8 +232,8 @@ fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let item = StructureData {
-            structure_id: StructureId { id: "acacia" },
+        let item = ClipboardData {
+            structure_id: Id::new("acacia"),
             facing: Facing::default(),
         };
 
@@ -243,8 +243,8 @@ fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let item = StructureData {
-            structure_id: StructureId { id: "leuco" },
+        let item = ClipboardData {
+            structure_id: Id::new("leuco"),
             facing: Facing::default(),
         };
 
@@ -254,8 +254,8 @@ fn generate_organisms(
     // Hives
     let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
     for position in hive_positions {
-        let item = StructureData {
-            structure_id: StructureId { id: "ant_hive" },
+        let item = ClipboardData {
+            structure_id: Id::new("ant_hive"),
             facing: Facing::default(),
         };
 

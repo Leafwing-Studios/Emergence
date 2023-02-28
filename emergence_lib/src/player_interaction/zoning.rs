@@ -4,15 +4,14 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
+    asset_management::manifest::{Id, Structure},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{
-        commands::StructureCommandsExt, crafting::InputInventory, ghost::Ghost, StructureId,
-    },
+    structures::{commands::StructureCommandsExt, crafting::InputInventory, ghost::Ghost},
     terrain::Terrain,
 };
 
 use super::{
-    clipboard::{Clipboard, StructureData},
+    clipboard::{Clipboard, ClipboardData},
     cursor::CursorPos,
     selection::{CurrentSelection, SelectedTiles},
     InteractionSystem, PlayerAction,
@@ -42,7 +41,7 @@ impl Plugin for ZoningPlugin {
 #[derive(Component, PartialEq, Eq, Clone, Debug)]
 pub(crate) enum Zoning {
     /// The provided structure should be built on this tile.
-    Structure(StructureData),
+    Structure(ClipboardData),
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
@@ -147,7 +146,7 @@ fn act_on_zoning(
 
 /// Transforms ghosts into structures once all of their construction materials have been supplied.
 fn turn_ghosts_into_structures(
-    ghost_query: Query<(&InputInventory, &TilePos, &StructureId, &Facing), With<Ghost>>,
+    ghost_query: Query<(&InputInventory, &TilePos, &Id<Structure>, &Facing), With<Ghost>>,
     mut commands: Commands,
 ) {
     for (input_inventory, &tile_pos, &structure_id, &facing) in ghost_query.iter() {
@@ -155,7 +154,7 @@ fn turn_ghosts_into_structures(
             commands.despawn_ghost(tile_pos);
             commands.spawn_structure(
                 tile_pos,
-                StructureData {
+                ClipboardData {
                     structure_id,
                     facing,
                 },

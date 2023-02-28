@@ -4,18 +4,19 @@
 //! Other systems should look up the data contained here,
 //! in order to populate the properties of in-game entities.
 
+pub(crate) use self::emergence_markers::*;
 pub(crate) use self::identifier::*;
 
 use bevy::{prelude::*, utils::HashMap};
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 /// Write-once data definitions.
 ///
 /// These are intended to be created a single time, via [`Manifest::new`].
-#[derive(Debug, Resource, Serialize, Deserialize)]
+#[derive(Debug, Resource)]
 pub(crate) struct Manifest<T, Data>
 where
+    T: 'static,
     Data: Debug,
 {
     /// The internal mapping.
@@ -51,7 +52,9 @@ where
     }
 }
 
+/// Code for a generic identifier type
 mod identifier {
+    use bevy::prelude::Component;
     use serde::{Deserialize, Serialize};
     use std::{
         fmt::{Debug, Display},
@@ -63,7 +66,9 @@ mod identifier {
     ///
     /// This is tiny [`Copy`] type, used to quickly and uniquely identify game objects.
     /// Unlike enum variants, these can be read from disk and constructred at runtime.
-    #[derive(Debug, PartialOrd, Ord, Serialize, Deserialize)]
+    ///
+    /// It can be stored as a component to identify the variety of game object used.
+    #[derive(Component, Serialize, Deserialize)]
     pub(crate) struct Id<T> {
         str: &'static str,
         _phantom: PhantomData<T>,
@@ -79,6 +84,12 @@ mod identifier {
         }
     }
 
+    impl<T> Debug for Id<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("Id").field("str", &self.str).finish()
+        }
+    }
+
     impl<T> PartialEq for Id<T> {
         fn eq(&self, other: &Self) -> bool {
             self.str == other.str
@@ -86,6 +97,18 @@ mod identifier {
     }
 
     impl<T> Eq for Id<T> {}
+
+    impl<T> PartialOrd for Id<T> {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            self.str.partial_cmp(other.str)
+        }
+    }
+
+    impl<T> Ord for Id<T> {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            self.str.cmp(other.str)
+        }
+    }
 
     impl<T> Hash for Id<T> {
         fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -109,4 +132,33 @@ mod identifier {
             write!(f, "{}", self.str)
         }
     }
+}
+
+/// Code for Emergence-specific marker types
+mod emergence_markers {
+    use crate::{
+        items::{recipe::RecipeData, ItemData},
+        structures::StructureData,
+    };
+
+    use super::Manifest;
+
+    /// The marker type for [`Id<Recipe>`].
+    pub(crate) struct Recipe;
+
+    /// Stores the read-only definitions for all recipes.
+    pub(crate) type RecipeManifest = Manifest<Recipe, RecipeData>;
+
+    /// The marker type for [`Id<Unit>`].
+    pub(crate) struct Unit;
+
+    /// The marker type for [`Id<Structure>`].
+    pub(crate) struct Structure;
+    /// Stores the read-only definitions for all recipes.
+    pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
+
+    /// The marker type for [`Id<Item>`].
+    pub(crate) struct Item;
+    /// Stores the read-only definitions for all recipes.
+    pub(crate) type ItemManifest = Manifest<Item, ItemData>;
 }

@@ -1,13 +1,15 @@
 //! Units are organisms that can move freely.
 
 use crate::{
-    asset_management::units::UnitHandles,
+    asset_management::{
+        manifest::{Id, Unit},
+        units::UnitHandles,
+    },
     organisms::energy::EnergyPool,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
-use core::fmt::Display;
 
 use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::HeldItem};
 
@@ -19,29 +21,11 @@ pub(crate) mod hunger;
 pub(crate) mod item_interaction;
 mod reproduction;
 
-/// The unique, string-based identifier of a unit.
-#[derive(Component, Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-pub(crate) struct UnitId {
-    /// The unique identifier for this variety of unit.
-    str: &'static str,
-}
-
-impl UnitId {
-    /// Constructs a new ID from a string
-    pub(crate) fn new(str: &'static str) -> Self {
-        UnitId { str }
-    }
-
+impl Id<Unit> {
     // TODO: read these from disk
     /// The id of an ant
     pub(crate) fn ant() -> Self {
-        UnitId { str: "ant" }
-    }
-}
-
-impl Display for UnitId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.str)
+        Self::new("ant")
     }
 }
 
@@ -49,7 +33,7 @@ impl Display for UnitId {
 #[derive(Bundle)]
 pub(crate) struct UnitBundle {
     /// Marker component.
-    unit_id: UnitId,
+    unit_id: Id<Unit>,
     /// The tile the unit is above.
     tile_pos: TilePos,
     /// The direction that the unit is facing.
@@ -65,7 +49,7 @@ pub(crate) struct UnitBundle {
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
-    raycast_mesh: RaycastMesh<UnitId>,
+    raycast_mesh: RaycastMesh<Id<Unit>>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
     /// The child scene that contains the gltF model used
@@ -76,7 +60,7 @@ impl UnitBundle {
     /// Initializes a new unit
     // TODO: use a UnitManifest
     pub(crate) fn new(
-        unit_id: UnitId,
+        unit_id: Id<Unit>,
         tile_pos: TilePos,
         energy_pool: EnergyPool,
         diet: Diet,

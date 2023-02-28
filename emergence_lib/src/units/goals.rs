@@ -6,10 +6,9 @@ use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::thread_rng;
 
-use crate::items::ItemId;
+use crate::asset_management::manifest::{Id, Item, Structure};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
-use crate::structures::StructureId;
 
 /// A unit's current goals.
 ///
@@ -26,15 +25,15 @@ pub(crate) enum Goal {
     Wander,
     /// Attempting to pick up an object
     #[allow(dead_code)]
-    Pickup(ItemId),
+    Pickup(Id<Item>),
     /// Attempting to drop off an object
     #[allow(dead_code)]
-    DropOff(ItemId),
+    DropOff(Id<Item>),
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
-    Work(StructureId),
+    Work(Id<Structure>),
     /// Attempt to feed self
-    Eat(ItemId),
+    Eat(Id<Item>),
 }
 
 impl TryFrom<SignalType> for Goal {

@@ -5,8 +5,9 @@ use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
+    asset_management::manifest::{Id, Structure},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, ghost::Preview, StructureId},
+    structures::{commands::StructureCommandsExt, ghost::Preview},
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -43,12 +44,12 @@ impl Plugin for ClipboardPlugin {
 #[derive(Default, Resource, Debug, Deref, DerefMut)]
 pub(crate) struct Clipboard {
     /// The internal map of structures.
-    contents: HashMap<TilePos, StructureData>,
+    contents: HashMap<TilePos, ClipboardData>,
 }
 
 impl Clipboard {
     /// Sets the contents of the clipboard to a single structure (or clears it if [`None`] is provided).
-    pub(crate) fn set(&mut self, maybe_structure: Option<StructureData>) {
+    pub(crate) fn set(&mut self, maybe_structure: Option<ClipboardData>) {
         self.contents.clear();
 
         if let Some(structure) = maybe_structure {
@@ -59,9 +60,9 @@ impl Clipboard {
 
 /// The data copied via the clipboard for a single structure.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub(crate) struct StructureData {
+pub(crate) struct ClipboardData {
     /// The identity of the structure.
-    pub(crate) structure_id: StructureId,
+    pub(crate) structure_id: Id<Structure>,
     /// The orientation of the structure.
     pub(crate) facing: Facing,
 }
@@ -94,7 +95,7 @@ impl Clipboard {
     /// Apply a tile-position shift to the items on the clipboard.
     ///
     /// Used to place items in the correct location relative to the cursor.
-    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, StructureData)> {
+    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardData)> {
         self.iter()
             .map(|(k, v)| ((*k + origin), v.clone()))
             .collect()
@@ -141,7 +142,7 @@ fn copy_selection(
     mut clipboard: ResMut<Clipboard>,
     cursor_pos: Res<CursorPos>,
     current_selection: Res<CurrentSelection>,
-    structure_query: Query<(&TilePos, &StructureId, &Facing), Without<Preview>>,
+    structure_query: Query<(&TilePos, &Id<Structure>, &Facing), Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
     if actions.just_pressed(PlayerAction::Pipette) {
@@ -151,7 +152,7 @@ fn copy_selection(
         match &*current_selection {
             CurrentSelection::Structure(entity) | CurrentSelection::Ghost(entity) => {
                 let (tile_pos, id, facing) = structure_query.get(*entity).unwrap();
-                let clipboard_item = StructureData {
+                let clipboard_item = ClipboardData {
                     structure_id: *id,
                     facing: *facing,
                 };
@@ -166,7 +167,7 @@ fn copy_selection(
                         if let Some(entity) = map_geometry.get_ghost_or_structure(hovered_tile) {
                             let (_tile_pos, id, facing) = structure_query.get(entity).unwrap();
 
-                            let clipboard_item = StructureData {
+                            let clipboard_item = ClipboardData {
                                 structure_id: *id,
                                 facing: *facing,
                             };
@@ -180,7 +181,7 @@ fn copy_selection(
                         {
                             let (&_tile_pos, id, facing) = structure_query.get(entity).unwrap();
                             debug_assert_eq!(_tile_pos, selected_tile_pos);
-                            let clipboard_item = StructureData {
+                            let clipboard_item = ClipboardData {
                                 structure_id: *id,
                                 facing: *facing,
                             };
@@ -200,7 +201,7 @@ fn copy_selection(
                         let (_tile_pos, id, facing) =
                             structure_query.get(*structure_entity).unwrap();
                         debug_assert_eq!(*_tile_pos, cursor_tile_pos);
-                        let clipboard_item = StructureData {
+                        let clipboard_item = ClipboardData {
                             structure_id: *id,
                             facing: *facing,
                         };
@@ -235,10 +236,10 @@ fn display_selection(
     clipboard: Res<Clipboard>,
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
-    preview_query: Query<(&TilePos, &StructureId, &Facing), With<Preview>>,
+    preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        let mut desired_previews: HashMap<TilePos, StructureData> =
+        let mut desired_previews: HashMap<TilePos, ClipboardData> =
             HashMap::with_capacity(clipboard.capacity());
         for (&clipboard_pos, clipboard_item) in clipboard.iter() {
             let tile_pos = cursor_pos + clipboard_pos;

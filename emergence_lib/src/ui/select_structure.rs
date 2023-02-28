@@ -5,13 +5,13 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
+    asset_management::manifest::{Id, Structure, StructureManifest},
     player_interaction::{
-        clipboard::{Clipboard, StructureData},
+        clipboard::{Clipboard, ClipboardData},
         cursor::CursorPos,
         PlayerAction,
     },
     simulation::geometry::Facing,
-    structures::{StructureId, StructureManifest},
 };
 
 /// Hex menu and selection modifying logic.
@@ -46,7 +46,7 @@ struct HexMenuArrangement {
     /// A simple mapping from position to contents.
     ///
     /// If entries are missing, the action will be cancelled if released there.
-    content_map: HashMap<Hex, StructureId>,
+    content_map: HashMap<Hex, Id<Structure>>,
     /// The collection of menu icon entities at each hex coordinate
     icon_map: HashMap<Hex, Entity>,
     /// The geometry of the hex grid
@@ -60,7 +60,7 @@ impl HexMenuArrangement {
     }
 
     /// Fetches the element under the cursor.
-    fn get_item(&self, cursor_pos: Vec2) -> Option<StructureId> {
+    fn get_item(&self, cursor_pos: Vec2) -> Option<Id<Structure>> {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
@@ -76,7 +76,7 @@ impl HexMenuArrangement {
 #[derive(Debug, PartialEq, Eq)]
 struct HexMenuData {
     /// The type of structure to place.
-    structure_id: StructureId,
+    structure_id: Id<Structure>,
     /// The entity corresponding to the [`HexMenuIconBundle`].
     icon_entity: Entity,
     /// Is the action complete?
@@ -145,19 +145,19 @@ struct HexMenuIconBundle {
     hex_menu: HexMenu,
     /// Small image of structure
     image_bundle: ImageBundle,
-    /// The corresponding `StructureId`
-    structure_id: StructureId,
+    /// The corresponding `Id<Structure>`
+    structure_id: Id<Structure>,
 }
 
 impl HexMenuIconBundle {
     /// Create a new icon with the appropriate positioning and appearance.
     fn new(
-        structure_id: StructureId,
+        structure_id: Id<Structure>,
         hex: Hex,
         structure_manifest: &StructureManifest,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_manifest.color(structure_id);
+        let color = structure_manifest.get(structure_id).color;
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -226,7 +226,7 @@ fn handle_selection(
     In(result): In<Result<HexMenuData, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
-    mut icon_query: Query<(Entity, &StructureId, &mut BackgroundColor), With<HexMenu>>,
+    mut icon_query: Query<(Entity, &Id<Structure>, &mut BackgroundColor), With<HexMenu>>,
     structure_manifest: Res<StructureManifest>,
     commands: Commands,
 ) {
@@ -242,7 +242,7 @@ fn handle_selection(
     match result {
         Ok(data) => {
             if data.complete {
-                let structure_data = StructureData {
+                let structure_data = ClipboardData {
                     structure_id: data.structure_id,
                     facing: Facing::default(),
                 };
@@ -254,7 +254,7 @@ fn handle_selection(
                     if icon_entity == data.icon_entity {
                         *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
                     } else {
-                        *icon_color = BackgroundColor(structure_manifest.color(structure_id));
+                        *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
                     }
                 }
             }
@@ -266,7 +266,7 @@ fn handle_selection(
                 cleanup(commands, menu_query);
             } else {
                 for (_icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
-                    *icon_color = BackgroundColor(structure_manifest.color(structure_id));
+                    *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
                 }
             }
         }

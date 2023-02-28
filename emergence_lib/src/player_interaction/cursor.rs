@@ -6,10 +6,10 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
+    asset_management::manifest::{Id, Structure, Unit},
     simulation::geometry::TilePos,
-    structures::{ghost::Ghost, StructureId},
+    structures::ghost::Ghost,
     terrain::Terrain,
-    units::UnitId,
 };
 
 /// Controls raycasting and cursor aethetics.
@@ -19,8 +19,8 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
-            .add_plugin(DefaultRaycastingPlugin::<StructureId>::default())
-            .add_plugin(DefaultRaycastingPlugin::<UnitId>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Id<Structure>>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Id<Unit>>::default())
             .add_plugin(DefaultRaycastingPlugin::<Ghost>::default())
             .add_system_to_stage(
                 CoreStage::First,
@@ -90,8 +90,8 @@ fn update_raycast_with_cursor(
     mut query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<StructureId>,
-            &mut RaycastSource<UnitId>,
+            &mut RaycastSource<Id<Structure>>,
+            &mut RaycastSource<Id<Unit>>,
             &mut RaycastSource<Ghost>,
         ),
         With<Camera>,
@@ -119,15 +119,15 @@ fn update_cursor_pos(
     camera_query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<StructureId>,
-            &mut RaycastSource<UnitId>,
+            &mut RaycastSource<Id<Structure>>,
+            &mut RaycastSource<Id<Unit>>,
             &mut RaycastSource<Ghost>,
         ),
         With<Camera>,
     >,
     terrain_query: Query<&TilePos, With<Terrain>>,
-    structure_query: Query<Entity, With<StructureId>>,
-    unit_query: Query<Entity, With<UnitId>>,
+    structure_query: Query<Entity, With<Id<Structure>>>,
+    unit_query: Query<Entity, With<Id<Unit>>>,
     ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {

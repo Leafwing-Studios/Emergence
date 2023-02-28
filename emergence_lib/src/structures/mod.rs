@@ -8,13 +8,13 @@ use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::manifest::Manifest,
-    items::{inventory::Inventory, recipe::RecipeId, ItemCount, ItemId},
+    asset_management::manifest::{Id, Recipe, Structure, StructureManifest},
+    items::{inventory::Inventory, ItemCount},
     organisms::{
         energy::{Energy, EnergyPool},
         OrganismVariety,
     },
-    player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
+    player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
     simulation::geometry::{Facing, TilePos},
 };
 
@@ -22,35 +22,24 @@ use self::{
     crafting::{CraftingPlugin, InputInventory},
     ghost::increase_ghost_neglect,
 };
-use std::fmt::Display;
 
 pub(crate) mod commands;
 pub(crate) mod crafting;
 pub(crate) mod ghost;
 
-/// The data definitions for all structures.
-pub(crate) type StructureManifest = Manifest<StructureId, StructureVariety>;
-
-impl StructureManifest {
-    /// The color associated with this structure.
-    pub(crate) fn color(&self, structure_id: StructureId) -> Color {
-        self.get(structure_id).color
-    }
-}
-
-/// Information about a single [`StructureId`] variety of structure.
+/// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
-pub(crate) struct StructureVariety {
+pub(crate) struct StructureData {
     /// Data needed for living structures
     organism: Option<OrganismVariety>,
     /// Can this structure make things?
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
-    starting_recipe: Option<RecipeId>,
+    starting_recipe: Option<Id<Recipe>>,
     /// The set of items needed to create a new copy of this structure
     construction_materials: InputInventory,
     /// The color associated with this structure
-    color: Color,
+    pub(crate) color: Color,
 }
 
 impl Default for StructureManifest {
@@ -58,57 +47,57 @@ impl Default for StructureManifest {
         let mut map = HashMap::default();
 
         let leuco_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(ItemId::leuco_chunk(), 1)),
+            inventory: Inventory::new_from_item(ItemCount::new(Id::leuco_chunk(), 1)),
         };
 
         // TODO: read these from files
         map.insert(
-            StructureId { id: "leuco" },
-            StructureVariety {
+            Id::new("leuco"),
+            StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: Some(RecipeId::leuco_chunk_production()),
+                starting_recipe: Some(Id::leuco_chunk_production()),
                 construction_materials: leuco_construction_materials,
                 color: Color::ORANGE_RED,
             },
         );
 
         let acacia_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(ItemId::acacia_leaf(), 2)),
+            inventory: Inventory::new_from_item(ItemCount::new(Id::acacia_leaf(), 2)),
         };
 
         map.insert(
-            StructureId { id: "acacia" },
-            StructureVariety {
+            Id::new("acacia"),
+            StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: Some(RecipeId::acacia_leaf_production()),
+                starting_recipe: Some(Id::acacia_leaf_production()),
                 construction_materials: acacia_construction_materials,
                 color: Color::GREEN,
             },
         );
 
         map.insert(
-            StructureId { id: "ant_hive" },
-            StructureVariety {
+            Id::new("ant_hive"),
+            StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: Some(RecipeId::ant_egg_production()),
+                starting_recipe: Some(Id::ant_egg_production()),
                 construction_materials: InputInventory::default(),
                 color: Color::BEIGE,
             },
         );
 
         map.insert(
-            StructureId { id: "hatchery" },
-            StructureVariety {
+            Id::new("hatchery"),
+            StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: Some(RecipeId::hatch_ants()),
+                starting_recipe: Some(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 color: Color::BLUE,
             },
@@ -122,13 +111,13 @@ impl Default for StructureManifest {
 #[derive(Bundle)]
 struct StructureBundle {
     /// Unique identifier of structure variety
-    structure: StructureId,
+    structure: Id<Structure>,
     /// The direction this structure is facing
     facing: Facing,
     /// The location of this structure
     tile_pos: TilePos,
     /// Makes structures pickable
-    raycast_mesh: RaycastMesh<StructureId>,
+    raycast_mesh: RaycastMesh<Id<Structure>>,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
     /// The mesh used for raycasting
@@ -141,7 +130,7 @@ impl StructureBundle {
     /// Creates a new structure
     fn new(
         tile_pos: TilePos,
-        data: StructureData,
+        data: ClipboardData,
         picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
         world_pos: Vec3,
@@ -159,19 +148,6 @@ impl StructureBundle {
                 ..default()
             },
         }
-    }
-}
-
-/// Structures are static buildings that take up one or more tile
-#[derive(Component, Clone, Copy, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-pub(crate) struct StructureId {
-    /// The unique identifier for this variety of structure.
-    pub(crate) id: &'static str,
-}
-
-impl Display for StructureId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
     }
 }
 

@@ -129,7 +129,7 @@ pub(crate) struct MapGeometry {
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::Terrain) entity is stored at each tile position
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
-    /// Which [`StructureId`](crate::structures::StructureId) entity is stored at each tile position
+    /// Which [`Id<Structure>`](crate::structures::Id<Structure>) entity is stored at each tile position
     pub(crate) structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::ghost::Ghost) entity is stored at each tile position
     pub(crate) ghost_index: HashMap<TilePos, Entity>,
