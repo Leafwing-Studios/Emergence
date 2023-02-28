@@ -8,12 +8,9 @@ use core::fmt::Display;
 use core::ops::{Add, Mul, Sub};
 use itertools::Itertools;
 
+use crate::asset_management::manifest::{Id, Item, Structure};
+use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::units::goals::Goal;
-use crate::{
-    items::ItemId,
-    simulation::geometry::{MapGeometry, TilePos},
-    structures::StructureId,
-};
 
 /// The resources and systems need to work with signals
 pub(crate) struct SignalsPlugin;
@@ -220,14 +217,14 @@ impl SignalMap {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) enum SignalType {
     /// Take this item away from here.
-    Push(ItemId),
+    Push(Id<Item>),
     /// Bring me an item of this type.
-    Pull(ItemId),
+    Pull(Id<Item>),
     /// Has an item of this type, in case you were looking.
-    Contains(ItemId),
+    Contains(Id<Item>),
     /// Perform work at this type of structure.
     #[allow(dead_code)]
-    Work(StructureId),
+    Work(Id<Structure>),
 }
 
 impl Display for SignalType {

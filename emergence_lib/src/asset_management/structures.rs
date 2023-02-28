@@ -3,17 +3,19 @@
 use crate::{
     asset_management::hexagonal_column, enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction, simulation::geometry::MapGeometry,
-    structures::StructureId,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
-use super::Loadable;
+use super::{
+    manifest::{Id, Structure},
+    Loadable,
+};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
-    pub(crate) scenes: HashMap<StructureId, Handle<Scene>>,
+    pub(crate) scenes: HashMap<Id<Structure>, Handle<Scene>>,
     /// The materials used for tiles when they are selected or otherwise interacted with
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
     /// The materials used for tiles when they are selected or otherwise interacted with
@@ -65,7 +67,7 @@ impl FromWorld for StructureHandles {
         let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery"];
 
         for id in structure_names {
-            let structure_id = StructureId { id };
+            let structure_id = Id::new(id);
             let structure_path = format!("structures/{id}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);

@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::items::{inventory::Inventory, slot::ItemSlot, ItemId};
+use crate::{
+    asset_management::manifest::{Id, Item},
+    items::{inventory::Inventory, slot::ItemSlot},
+};
 use core::fmt::Display;
 
 /// The item(s) that a unit is carrying.
@@ -39,7 +42,7 @@ impl HeldItem {
     }
 
     /// The type of item held.
-    pub(crate) fn item_id(&self) -> Option<ItemId> {
+    pub(crate) fn item_id(&self) -> Option<Id<Item>> {
         let item_slot = self.item_slot()?;
         Some(item_slot.item_id())
     }

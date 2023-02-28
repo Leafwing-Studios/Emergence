@@ -4,17 +4,19 @@ use std::fmt::Display;
 
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
+use crate::asset_management::manifest::{Id, Item};
+
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
     inventory::InventoryState,
-    ItemCount, ItemId,
+    ItemCount,
 };
 
 /// Multiple items of the same type.
 #[derive(Debug, Clone)]
 pub(crate) struct ItemSlot {
     /// The unique identifier of the item that occupies the slot.
-    item_id: ItemId,
+    item_id: Id<Item>,
 
     /// The maximum number of items that fit in the slot.
     max_item_count: usize,
@@ -28,7 +30,7 @@ pub(crate) struct ItemSlot {
 #[allow(dead_code)]
 impl ItemSlot {
     /// Create an empty slot for the given item.
-    pub(crate) fn new(item_id: ItemId, max_item_count: usize) -> Self {
+    pub(crate) fn new(item_id: Id<Item>, max_item_count: usize) -> Self {
         Self {
             item_id,
             max_item_count,
@@ -42,7 +44,7 @@ impl ItemSlot {
     ///
     /// It must be `count <= max_item_count` or this function will panic.
     #[cfg(test)]
-    pub(crate) fn new_with_count(item_id: ItemId, max_item_count: usize, count: usize) -> Self {
+    pub(crate) fn new_with_count(item_id: Id<Item>, max_item_count: usize, count: usize) -> Self {
         assert!(count <= max_item_count);
 
         Self {
@@ -64,7 +66,7 @@ impl ItemSlot {
     }
 
     /// The unique identifier of the item in the slot.
-    pub(crate) fn item_id(&self) -> ItemId {
+    pub(crate) fn item_id(&self) -> Id<Item> {
         self.item_id
     }
 
@@ -94,7 +96,7 @@ impl ItemSlot {
     }
 
     /// Determine if this slot can hold items of the given type.
-    pub(crate) fn is_for_item(&self, item_id: ItemId) -> bool {
+    pub(crate) fn is_for_item(&self, item_id: Id<Item>) -> bool {
         self.item_id == item_id
     }
 
@@ -190,7 +192,7 @@ mod tests {
 
     #[test]
     fn should_display_item_type_count_and_capacity_for_empty_slot() {
-        let item_slot = ItemSlot::new(ItemId::acacia_leaf(), 10);
+        let item_slot = ItemSlot::new(Id::acacia_leaf(), 10);
 
         assert_eq!(format!("{item_slot}"), "acacia_leaf (0/10)".to_string());
     }
@@ -198,7 +200,7 @@ mod tests {
     #[test]
     fn should_display_item_type_count_and_capacity_for_filled_slot() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 6,
         };
@@ -209,7 +211,7 @@ mod tests {
     #[test]
     fn should_be_empty_when_count_is_0() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 0,
         };
@@ -220,7 +222,7 @@ mod tests {
     #[test]
     fn should_not_be_empty_when_count_is_1() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 1,
         };
@@ -231,7 +233,7 @@ mod tests {
     #[test]
     fn should_be_full_when_count_is_capacity() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 10,
         };
@@ -242,7 +244,7 @@ mod tests {
     #[test]
     fn should_not_be_full_when_count_is_less_than_capacity() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 9,
         };
@@ -253,7 +255,7 @@ mod tests {
     #[test]
     fn should_calculate_remaining_space_for_empty_slot() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 0,
         };
@@ -264,7 +266,7 @@ mod tests {
     #[test]
     fn should_calculate_remaining_space_for_half_full_slot() {
         let item_slot = ItemSlot {
-            item_id: ItemId::acacia_leaf(),
+            item_id: Id::acacia_leaf(),
             max_item_count: 10,
             count: 5,
         };
@@ -279,7 +281,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_fit() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 0,
                 };
@@ -291,7 +293,7 @@ mod tests {
             #[test]
             fn should_fill_up_when_not_all_fit() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 5,
                 };
@@ -299,7 +301,7 @@ mod tests {
                 assert_eq!(
                     item_slot.add_until_full(10),
                     Err(AddOneItemError {
-                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                        excess_count: ItemCount::new(Id::acacia_leaf(), 5)
                     })
                 );
                 assert_eq!(item_slot.count(), 10);
@@ -312,7 +314,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_fit() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 0,
                 };
@@ -324,7 +326,7 @@ mod tests {
             #[test]
             fn should_not_add_anything_if_not_all_fit() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 5,
                 };
@@ -332,7 +334,7 @@ mod tests {
                 assert_eq!(
                     item_slot.add_all_or_nothing(10),
                     Err(AddOneItemError {
-                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                        excess_count: ItemCount::new(Id::acacia_leaf(), 5)
                     })
                 );
                 assert_eq!(item_slot.count(), 5);
@@ -347,7 +349,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_exist() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 10,
                 };
@@ -359,7 +361,7 @@ mod tests {
             #[test]
             fn should_empty_if_not_all_exist() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 5,
                 };
@@ -367,7 +369,7 @@ mod tests {
                 assert_eq!(
                     item_slot.remove_until_empty(10),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                        missing_count: ItemCount::new(Id::acacia_leaf(), 5)
                     })
                 );
                 assert_eq!(item_slot.count(), 0);
@@ -380,7 +382,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_exist() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 10,
                 };
@@ -392,7 +394,7 @@ mod tests {
             #[test]
             fn should_not_remove_anything_if_not_all_exist() {
                 let mut item_slot = ItemSlot {
-                    item_id: ItemId::acacia_leaf(),
+                    item_id: Id::acacia_leaf(),
                     max_item_count: 10,
                     count: 5,
                 };
@@ -400,7 +402,7 @@ mod tests {
                 assert_eq!(
                     item_slot.remove_all_or_nothing(10),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                        missing_count: ItemCount::new(Id::acacia_leaf(), 5)
                     })
                 );
                 assert_eq!(item_slot.count(), 5);

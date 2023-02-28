@@ -6,10 +6,8 @@ use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 
-use crate::{
-    simulation::geometry::TilePos,
-    structures::{commands::StructureCommandsExt, StructureId},
-};
+use crate::asset_management::manifest::{Id, Structure};
+use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
 
 /// The amount of energy available to an organism.
 /// If they run out, they die.
@@ -140,7 +138,7 @@ impl Pool for EnergyPool {
 
 /// Despawns organisms when they run out of energy
 pub(super) fn kill_organisms_when_out_of_energy(
-    organism_query: Query<(Entity, &EnergyPool, &TilePos, Option<&StructureId>)>,
+    organism_query: Query<(Entity, &EnergyPool, &TilePos, Option<&Id<Structure>>)>,
     mut commands: Commands,
 ) {
     for (entity, energy_pool, tile_pos, maybe_structure) in organism_query.iter() {

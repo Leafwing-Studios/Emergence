@@ -10,13 +10,14 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::prelude::ActionState;
 
+use crate::asset_management::manifest::Id;
+use crate::asset_management::manifest::Structure;
+use crate::asset_management::manifest::Unit;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::ghost::Ghost;
-use crate::structures::StructureId;
 use crate::terrain::Terrain;
-use crate::units::UnitId;
 
 use self::speed::Speed;
 
@@ -67,8 +68,8 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
         .insert(focus)
         .insert(Facing::default())
         .insert(RaycastSource::<Terrain>::new())
-        .insert(RaycastSource::<StructureId>::new())
-        .insert(RaycastSource::<UnitId>::new())
+        .insert(RaycastSource::<Id<Structure>>::new())
+        .insert(RaycastSource::<Id<Unit>>::new())
         .insert(RaycastSource::<Ghost>::new());
 }
 

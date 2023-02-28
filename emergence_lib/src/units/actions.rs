@@ -6,14 +6,15 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    items::{ItemCount, ItemId, ItemManifest},
+    asset_management::manifest::{Id, Item, ItemManifest, Unit},
+    items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::crafting::{InputInventory, OutputInventory},
 };
 
-use super::{goals::Goal, hunger::Diet, item_interaction::HeldItem, UnitId};
+use super::{goals::Goal, hunger::Diet, item_interaction::HeldItem};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
@@ -26,7 +27,10 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
-    mut units_query: Query<(&TilePos, &Facing, &Goal, &mut CurrentAction, &HeldItem), With<UnitId>>,
+    mut units_query: Query<
+        (&TilePos, &Facing, &Goal, &mut CurrentAction, &HeldItem),
+        With<Id<Unit>>,
+    >,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
@@ -225,14 +229,14 @@ pub(super) enum UnitAction {
     /// Pick up the `item_id` from the `output_entity.
     PickUp {
         /// The item to pickup.
-        item_id: ItemId,
+        item_id: Id<Item>,
         /// The entity to grab it from, which must have an [`OutputInventory`] component.
         output_entity: Entity,
     },
     /// Drops off the `item_id` at the `output_entity.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
-        item_id: ItemId,
+        item_id: Id<Item>,
         /// The entity to drop it off at, which must have an [`InputInventory`] component.
         input_entity: Entity,
     },
@@ -309,7 +313,7 @@ impl CurrentAction {
     /// Attempt to locate a source of the provided `item_id`.
     #[allow(clippy::too_many_arguments)]
     fn find_item(
-        item_id: ItemId,
+        item_id: Id<Item>,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
@@ -349,7 +353,7 @@ impl CurrentAction {
     /// Attempt to located a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
     fn find_receptacle(
-        item_id: ItemId,
+        item_id: Id<Item>,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
@@ -476,7 +480,7 @@ impl CurrentAction {
 
     /// Picks up the `item_id` at the `output_entity`.
     pub(super) fn pickup(
-        item_id: ItemId,
+        item_id: Id<Item>,
         output_entity: Entity,
         facing: &Facing,
         unit_tile_pos: TilePos,
@@ -499,7 +503,7 @@ impl CurrentAction {
 
     /// Drops off the `item_id` at the `input_entity`.
     pub(super) fn dropoff(
-        item_id: ItemId,
+        item_id: Id<Item>,
         input_entity: Entity,
         facing: &Facing,
         unit_tile_pos: TilePos,

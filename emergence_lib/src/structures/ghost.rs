@@ -8,12 +8,13 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
-    player_interaction::{clipboard::StructureData, selection::ObjectInteraction},
+    asset_management::manifest::{Id, Structure},
+    player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
 
-use super::{crafting::InputInventory, StructureId};
+use super::crafting::InputInventory;
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
 #[derive(Component, Clone, Copy, Debug)]
@@ -33,7 +34,7 @@ pub(super) struct GhostBundle {
     /// The location of the ghost
     tile_pos: TilePos,
     /// The variety of structure
-    structure_id: StructureId,
+    structure_id: Id<Structure>,
     /// The direction the ghost is facing
     facing: Facing,
     /// The items required to actually seed this item
@@ -54,7 +55,7 @@ impl GhostBundle {
     /// Creates a new [`GhostBundle`].
     pub(super) fn new(
         tile_pos: TilePos,
-        data: StructureData,
+        data: ClipboardData,
         construction_materials: InputInventory,
         picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
@@ -102,7 +103,7 @@ pub(super) struct PreviewBundle {
     /// The location of the preview
     tile_pos: TilePos,
     /// The variety of structure
-    structure_id: StructureId,
+    structure_id: Id<Structure>,
     /// The direction the preview is facing
     facing: Facing,
     /// How is this structure being interacted with
@@ -115,7 +116,7 @@ impl PreviewBundle {
     /// Creates a new [`PreviewBundle`].
     pub(super) fn new(
         tile_pos: TilePos,
-        data: StructureData,
+        data: ClipboardData,
         scene_handle: Handle<Scene>,
         world_pos: Vec3,
     ) -> Self {

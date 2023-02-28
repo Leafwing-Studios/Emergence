@@ -6,14 +6,13 @@ use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 
 use crate::{
-    asset_management::units::UnitHandles,
-    items::{recipe::RecipeId, ItemId},
+    asset_management::{manifest::Id, units::UnitHandles},
     organisms::energy::{Energy, EnergyPool},
     simulation::geometry::{MapGeometry, TilePos},
     structures::crafting::{ActiveRecipe, CraftingState},
 };
 
-use super::{hunger::Diet, UnitBundle, UnitId};
+use super::{hunger::Diet, UnitBundle};
 
 /// Spawn ants when eggs have hatched
 pub(super) fn hatch_ant_eggs(
@@ -27,17 +26,17 @@ pub(super) fn hatch_ant_eggs(
     // PERF: I don't like the linear time polling here. This really feels like it should be push-based with one-shot system callbacks on the recipe.
     for (tile_pos, crafting_state, active_recipe) in structure_query.iter() {
         if let Some(recipe_id) = active_recipe.recipe_id() {
-            if *recipe_id == RecipeId::hatch_ants()
+            if *recipe_id == Id::hatch_ants()
                 && matches!(crafting_state, CraftingState::RecipeComplete)
             {
                 let empty_neighbors = tile_pos.empty_neighbors(&map_geometry);
                 if let Some(pos_to_spawn) = empty_neighbors.into_iter().choose(rng) {
                     // TODO: use a unit manifest instead
                     commands.spawn(UnitBundle::new(
-                        UnitId::ant(),
+                        Id::ant(),
                         pos_to_spawn,
                         EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                        Diet::new(ItemId::leuco_chunk(), Energy(50.)),
+                        Diet::new(Id::leuco_chunk(), Energy(50.)),
                         &unit_handles,
                         &map_geometry,
                     ));

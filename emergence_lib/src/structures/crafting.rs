@@ -7,10 +7,11 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
+    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest},
     items::{
         inventory::{Inventory, InventoryState},
-        recipe::{Recipe, RecipeId, RecipeManifest},
-        ItemData, ItemId, ItemManifest,
+        recipe::RecipeData,
+        ItemData,
     },
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -83,11 +84,11 @@ impl OutputInventory {
 
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default)]
-pub(crate) struct ActiveRecipe(Option<RecipeId>);
+pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {
     /// The ID of the currently active recipe, if one has been selected.
-    pub(crate) fn recipe_id(&self) -> &Option<RecipeId> {
+    pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
     }
 }
@@ -135,7 +136,7 @@ pub(crate) struct CraftingBundle {
 impl CraftingBundle {
     /// Create a new crafting bundle with empty inventories.
     pub(crate) fn new(
-        starting_recipe: Option<RecipeId>,
+        starting_recipe: Option<Id<Recipe>>,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
     ) -> Self {
@@ -168,7 +169,7 @@ impl CraftingBundle {
 
     /// Generates a new crafting bundle that is at a random point in its cycle.
     pub(crate) fn randomized(
-        starting_recipe: Option<RecipeId>,
+        starting_recipe: Option<Id<Recipe>>,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
         rng: &mut ThreadRng,
@@ -370,22 +371,22 @@ impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
         // TODO: Load this from an asset file
         let mut item_manifest = HashMap::new();
-        item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
-        item_manifest.insert(ItemId::leuco_chunk(), ItemData::leuco_chunk());
-        item_manifest.insert(ItemId::ant_egg(), ItemData::ant_egg());
+        item_manifest.insert(Id::acacia_leaf(), ItemData::acacia_leaf());
+        item_manifest.insert(Id::leuco_chunk(), ItemData::leuco_chunk());
+        item_manifest.insert(Id::ant_egg(), ItemData::ant_egg());
 
         // TODO: Load this from an asset file
         let mut recipe_manifest = HashMap::new();
         recipe_manifest.insert(
-            RecipeId::acacia_leaf_production(),
-            Recipe::acacia_leaf_production(),
+            Id::acacia_leaf_production(),
+            RecipeData::acacia_leaf_production(),
         );
         recipe_manifest.insert(
-            RecipeId::leuco_chunk_production(),
-            Recipe::leuco_chunk_production(),
+            Id::leuco_chunk_production(),
+            RecipeData::leuco_chunk_production(),
         );
-        recipe_manifest.insert(RecipeId::ant_egg_production(), Recipe::ant_egg_production());
-        recipe_manifest.insert(RecipeId::hatch_ants(), Recipe::hatch_ants());
+        recipe_manifest.insert(Id::ant_egg_production(), RecipeData::ant_egg_production());
+        recipe_manifest.insert(Id::hatch_ants(), RecipeData::hatch_ants());
 
         app.insert_resource(ItemManifest::new(item_manifest))
             .insert_resource(RecipeManifest::new(recipe_manifest))

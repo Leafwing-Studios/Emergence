@@ -3,14 +3,20 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::structures::StructureHandles,
+    asset_management::{
+        manifest::{Id, Structure},
+        structures::StructureHandles,
+    },
     player_interaction::selection::ObjectInteraction,
-    structures::{ghost::Ghostly, StructureId},
+    structures::ghost::Ghostly,
 };
 
 /// Modifies the material of any structures based on their interaction state.
 pub(super) fn change_structure_material(
-    root_structure_query: Query<(Entity, &ObjectInteraction, Option<&Ghostly>), With<StructureId>>,
+    root_structure_query: Query<
+        (Entity, &ObjectInteraction, Option<&Ghostly>),
+        With<Id<Structure>>,
+    >,
     children: Query<&Children>,
     mut material_query: Query<&mut Handle<StandardMaterial>>,
     structure_handles: Res<StructureHandles>,

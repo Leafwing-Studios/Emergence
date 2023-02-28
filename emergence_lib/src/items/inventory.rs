@@ -2,13 +2,15 @@
 
 use std::fmt::Display;
 
+use crate::asset_management::manifest::{Id, Item, ItemManifest};
+
 use super::{
     errors::{
         AddManyItemsError, AddOneItemError, ItemTransferError, RemoveManyItemsError,
         RemoveOneItemError,
     },
     slot::ItemSlot,
-    ItemCount, ItemId, ItemManifest,
+    ItemCount,
 };
 
 /// An inventory to store multiple types of items.
@@ -101,7 +103,7 @@ impl Inventory {
     }
 
     /// Determine how many items of the given type are in the inventory.
-    pub(crate) fn item_count(&self, item_id: ItemId) -> usize {
+    pub(crate) fn item_count(&self, item_id: Id<Item>) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -135,7 +137,7 @@ impl Inventory {
     }
 
     /// The remaining space for the item in the slots that it already occupies.
-    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: ItemId) -> usize {
+    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: Id<Item>) -> usize {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -151,7 +153,7 @@ impl Inventory {
     /// The number of items of the given type that can still fit in the inventory.
     pub(crate) fn remaining_space_for_item(
         &self,
-        item_id: ItemId,
+        item_id: Id<Item>,
         item_manifest: &ItemManifest,
     ) -> usize {
         // We can fill up the remaining space in the slots for this item...
@@ -181,7 +183,7 @@ impl Inventory {
     /// Adds an empty slot that is reserved for the provided `item_id`.
     ///
     /// This operation is infallible: if there are not enough slots available, the inventory size will be expanded.
-    pub(crate) fn add_empty_slot(&mut self, item_id: ItemId, item_manifest: &ItemManifest) {
+    pub(crate) fn add_empty_slot(&mut self, item_id: Id<Item>, item_manifest: &ItemManifest) {
         let n_existing_slots = self.slots.len();
         let slot_to_use = n_existing_slots + 1;
         let stack_size = item_manifest.get(item_id).stack_size();
@@ -514,13 +516,13 @@ mod tests {
     use bevy::utils::HashMap;
 
     use super::*;
-    use crate::items::{ItemData, ItemId};
+    use crate::items::ItemData;
 
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut item_manifest = HashMap::new();
-        item_manifest.insert(ItemId::acacia_leaf(), ItemData::acacia_leaf());
-        item_manifest.insert(ItemId::test(), ItemData { stack_size: 10 });
+        item_manifest.insert(Id::acacia_leaf(), ItemData::acacia_leaf());
+        item_manifest.insert(Id::test(), ItemData { stack_size: 10 });
 
         ItemManifest::new(item_manifest)
     }
@@ -528,14 +530,14 @@ mod tests {
     fn full_inventory() -> Inventory {
         Inventory {
             max_slot_count: 1,
-            slots: vec![ItemSlot::new_with_count(ItemId::test(), 10, 10)],
+            slots: vec![ItemSlot::new_with_count(Id::test(), 10, 10)],
         }
     }
 
     fn partial_inventory() -> Inventory {
         Inventory {
             max_slot_count: 1,
-            slots: vec![ItemSlot::new_with_count(ItemId::test(), 10, 7)],
+            slots: vec![ItemSlot::new_with_count(Id::test(), 10, 7)],
         }
     }
 
@@ -548,7 +550,7 @@ mod tests {
 
     fn transfer_count() -> ItemCount {
         ItemCount {
-            item_id: ItemId::test(),
+            item_id: Id::test(),
             count: 10,
         }
     }
@@ -574,7 +576,7 @@ mod tests {
         fn should_display_with_filled_slot() {
             let inventory = Inventory {
                 max_slot_count: 1,
-                slots: vec![ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5)],
+                slots: vec![ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5)],
             };
 
             assert_eq!(format!("{inventory}"), "[acacia_leaf (5/10)]".to_string());
@@ -586,13 +588,13 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
-        assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
+        assert_eq!(inventory.item_count(Id::acacia_leaf()), 15);
     }
 
     #[test]
@@ -600,13 +602,13 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
-        assert!(inventory.has_count_of_item(&ItemCount::new(ItemId::acacia_leaf(), 15)));
+        assert!(inventory.has_count_of_item(&ItemCount::new(Id::acacia_leaf(), 15)));
     }
 
     #[test]
@@ -614,13 +616,13 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
-        assert!(!inventory.has_count_of_item(&ItemCount::new(ItemId::acacia_leaf(), 16)));
+        assert!(!inventory.has_count_of_item(&ItemCount::new(Id::acacia_leaf(), 16)));
     }
 
     #[test]
@@ -635,9 +637,9 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
@@ -649,10 +651,10 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
             ],
         };
 
@@ -664,9 +666,9 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
@@ -678,9 +680,9 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
@@ -692,14 +694,14 @@ mod tests {
         let inventory = Inventory {
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                ItemSlot::new_with_count(Id::test(), 10, 3),
             ],
         };
 
         assert_eq!(
-            inventory.remaining_space_for_item(ItemId::acacia_leaf(), &item_manifest()),
+            inventory.remaining_space_for_item(Id::acacia_leaf(), &item_manifest()),
             15
         );
     }
@@ -715,19 +717,19 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory
-                        .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 15), &item_manifest()),
+                        .try_add_item(&ItemCount::new(Id::acacia_leaf(), 15), &item_manifest()),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
 
             #[test]
@@ -735,24 +737,24 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory
-                        .try_add_item(&ItemCount::new(ItemId::acacia_leaf(), 20), &item_manifest()),
+                        .try_add_item(&ItemCount::new(Id::acacia_leaf(), 20), &item_manifest()),
                     Err(AddOneItemError {
                         excess_count: ItemCount {
-                            item_id: ItemId::acacia_leaf(),
+                            item_id: Id::acacia_leaf(),
                             count: 5
                         }
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
 
@@ -765,21 +767,21 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_item_all_or_nothing(
-                        &ItemCount::new(ItemId::acacia_leaf(), 15),
+                        &ItemCount::new(Id::acacia_leaf(), 15),
                         &item_manifest()
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
 
             #[test]
@@ -787,23 +789,23 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_item_all_or_nothing(
-                        &ItemCount::new(ItemId::acacia_leaf(), 16),
+                        &ItemCount::new(Id::acacia_leaf(), 16),
                         &item_manifest()
                     ),
                     Err(AddOneItemError {
-                        excess_count: ItemCount::new(ItemId::acacia_leaf(), 1)
+                        excess_count: ItemCount::new(Id::acacia_leaf(), 1)
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
 
@@ -816,24 +818,24 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_items_all_or_nothing(
                         &[
-                            ItemCount::new(ItemId::acacia_leaf(), 15),
-                            ItemCount::new(ItemId::test(), 7)
+                            ItemCount::new(Id::acacia_leaf(), 15),
+                            ItemCount::new(Id::test(), 7)
                         ],
                         &item_manifest()
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 30);
-                assert_eq!(inventory.item_count(ItemId::test()), 10);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 30);
+                assert_eq!(inventory.item_count(Id::test()), 10);
             }
 
             #[test]
@@ -841,26 +843,26 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_items_all_or_nothing(
                         &[
-                            ItemCount::new(ItemId::acacia_leaf(), 15),
-                            ItemCount::new(ItemId::test(), 8)
+                            ItemCount::new(Id::acacia_leaf(), 15),
+                            ItemCount::new(Id::test(), 8)
                         ],
                         &item_manifest()
                     ),
                     Err(AddManyItemsError {
-                        excess_counts: vec![ItemCount::new(ItemId::test(), 1)]
+                        excess_counts: vec![ItemCount::new(Id::test(), 1)]
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
     }
@@ -874,18 +876,18 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 15)),
+                    inventory.try_remove_item(&ItemCount::new(Id::acacia_leaf(), 15)),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
 
             #[test]
@@ -893,20 +895,20 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory.try_remove_item(&ItemCount::new(ItemId::acacia_leaf(), 20)),
+                    inventory.try_remove_item(&ItemCount::new(Id::acacia_leaf(), 20)),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 5)
+                        missing_count: ItemCount::new(Id::acacia_leaf(), 5)
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
 
@@ -918,19 +920,18 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory
-                        .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 15)),
+                    inventory.remove_item_all_or_nothing(&ItemCount::new(Id::acacia_leaf(), 15)),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
 
             #[test]
@@ -938,21 +939,20 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory
-                        .remove_item_all_or_nothing(&ItemCount::new(ItemId::acacia_leaf(), 16)),
+                    inventory.remove_item_all_or_nothing(&ItemCount::new(Id::acacia_leaf(), 16)),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(ItemId::acacia_leaf(), 1)
+                        missing_count: ItemCount::new(Id::acacia_leaf(), 1)
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
 
@@ -964,21 +964,21 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_items_all_or_nothing(&[
-                        ItemCount::new(ItemId::acacia_leaf(), 15),
-                        ItemCount::new(ItemId::test(), 3)
+                        ItemCount::new(Id::acacia_leaf(), 15),
+                        ItemCount::new(Id::test(), 3)
                     ]),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 0);
-                assert_eq!(inventory.item_count(ItemId::test()), 0);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 0);
+                assert_eq!(inventory.item_count(Id::test()), 0);
             }
 
             #[test]
@@ -986,23 +986,23 @@ mod tests {
                 let mut inventory = Inventory {
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 10),
-                        ItemSlot::new_with_count(ItemId::acacia_leaf(), 10, 5),
-                        ItemSlot::new_with_count(ItemId::test(), 10, 3),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 10),
+                        ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5),
+                        ItemSlot::new_with_count(Id::test(), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_items_all_or_nothing(&[
-                        ItemCount::new(ItemId::acacia_leaf(), 15),
-                        ItemCount::new(ItemId::test(), 4)
+                        ItemCount::new(Id::acacia_leaf(), 15),
+                        ItemCount::new(Id::test(), 4)
                     ]),
                     Err(RemoveManyItemsError {
-                        missing_counts: vec![ItemCount::new(ItemId::test(), 1)]
+                        missing_counts: vec![ItemCount::new(Id::test(), 1)]
                     })
                 );
-                assert_eq!(inventory.item_count(ItemId::acacia_leaf()), 15);
-                assert_eq!(inventory.item_count(ItemId::test()), 3);
+                assert_eq!(inventory.item_count(Id::acacia_leaf()), 15);
+                assert_eq!(inventory.item_count(Id::test()), 3);
             }
         }
     }
@@ -1030,7 +1030,7 @@ mod tests {
             assert_eq!(
                 result,
                 Err(ItemTransferError {
-                    items_remaining: ItemCount::new(ItemId::test(), 0),
+                    items_remaining: ItemCount::new(Id::test(), 0),
                     full_destination: false,
                     empty_source: true
                 })
@@ -1064,7 +1064,7 @@ mod tests {
             assert_eq!(
                 result,
                 Err(ItemTransferError {
-                    items_remaining: ItemCount::new(ItemId::test(), 0),
+                    items_remaining: ItemCount::new(Id::test(), 0),
                     full_destination: false,
                     empty_source: true
                 })
@@ -1082,7 +1082,7 @@ mod tests {
                 result,
                 Err(ItemTransferError {
                     items_remaining: ItemCount {
-                        item_id: ItemId::test(),
+                        item_id: Id::test(),
                         count: 7
                     },
                     full_destination: true,

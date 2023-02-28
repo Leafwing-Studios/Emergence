@@ -1,15 +1,19 @@
 //! Asset loading for units
 
-use crate::{simulation::geometry::MapGeometry, units::UnitId};
+use crate::simulation::geometry::MapGeometry;
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
-use super::{hexagonal_column, Loadable};
+use super::{
+    hexagonal_column,
+    manifest::{Id, Unit},
+    Loadable,
+};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct UnitHandles {
     /// The scene for each type of structure
-    pub(crate) scenes: HashMap<UnitId, Handle<Scene>>,
+    pub(crate) scenes: HashMap<Id<Unit>, Handle<Scene>>,
     /// The raycasting mesh used to select units
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -37,7 +41,7 @@ impl FromWorld for UnitHandles {
         let unit_names = vec!["ant"];
 
         for str in unit_names {
-            let structure_id = UnitId::new(str);
+            let structure_id = Id::new(str);
             let structure_path = format!("units/{str}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);

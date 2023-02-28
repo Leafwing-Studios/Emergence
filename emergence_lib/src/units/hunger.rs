@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use core::fmt::Display;
 
 use crate::{
-    items::ItemId,
+    asset_management::manifest::{Id, Item},
     organisms::energy::{Energy, EnergyPool},
 };
 
@@ -14,19 +14,19 @@ use super::goals::Goal;
 #[derive(Component, Clone, Debug)]
 pub(crate) struct Diet {
     /// The item that must be eaten
-    item: ItemId,
+    item: Id<Item>,
     /// The amount of energy restored per item destroyed
     energy: Energy,
 }
 
 impl Diet {
     /// Creates a new [`Diet`] component.
-    pub(crate) fn new(item: ItemId, energy: Energy) -> Self {
+    pub(crate) fn new(item: Id<Item>, energy: Energy) -> Self {
         Diet { item, energy }
     }
 
     /// The type of item that this unit must consume.
-    pub(crate) fn item(&self) -> ItemId {
+    pub(crate) fn item(&self) -> Id<Item> {
         self.item
     }
 

@@ -8,10 +8,12 @@ use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::structures::StructureHandles,
-    items::{recipe::RecipeManifest, ItemManifest},
+    asset_management::{
+        manifest::{ItemManifest, RecipeManifest},
+        structures::StructureHandles,
+    },
     organisms::OrganismBundle,
-    player_interaction::clipboard::StructureData,
+    player_interaction::clipboard::ClipboardData,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 
@@ -26,7 +28,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a structure defined by `data` at `tile_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
-    fn spawn_structure(&mut self, tile_pos: TilePos, data: StructureData);
+    fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Spawns a structure with randomized `data` at `tile_pos`.
     ///
@@ -35,7 +37,7 @@ pub(crate) trait StructureCommandsExt {
     fn spawn_randomized_structure(
         &mut self,
         tile_pos: TilePos,
-        data: StructureData,
+        data: ClipboardData,
         rng: &mut ThreadRng,
     );
 
@@ -47,7 +49,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a ghost with data defined by `data` at `tile_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: StructureData);
+    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Despawns any ghost at the provided `tile_pos`.
     ///
@@ -57,7 +59,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: StructureData);
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Despawns any preview at the provided `tile_pos`.
     ///
@@ -66,7 +68,7 @@ pub(crate) trait StructureCommandsExt {
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
-    fn spawn_structure(&mut self, tile_pos: TilePos, data: StructureData) {
+    fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnStructureCommand {
             tile_pos,
             data,
@@ -77,7 +79,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_randomized_structure(
         &mut self,
         tile_pos: TilePos,
-        mut data: StructureData,
+        mut data: ClipboardData,
         rng: &mut ThreadRng,
     ) {
         let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
@@ -94,7 +96,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnStructureCommand { tile_pos });
     }
 
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: StructureData) {
+    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnGhostCommand { tile_pos, data });
     }
 
@@ -102,7 +104,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: StructureData) {
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnPreviewCommand { tile_pos, data });
     }
 
@@ -116,7 +118,7 @@ struct SpawnStructureCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
-    data: StructureData,
+    data: ClipboardData,
     /// Should the generated structure be randomized
     randomized: bool,
 }
@@ -228,7 +230,7 @@ struct SpawnGhostCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
-    data: StructureData,
+    data: ClipboardData,
 }
 
 impl Command for SpawnGhostCommand {
@@ -307,7 +309,7 @@ struct SpawnPreviewCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
-    data: StructureData,
+    data: ClipboardData,
 }
 
 impl Command for SpawnPreviewCommand {
