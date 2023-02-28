@@ -11,6 +11,7 @@ fn minimal_app_can_update() {
 }
 
 #[test]
+#[ignore = "Cannot end-to-end test game without a GPU."]
 fn simulation_app_can_update() {
     let mut app = simulation_app(GenerationConfig::default());
 
