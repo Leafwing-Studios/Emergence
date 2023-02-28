@@ -34,11 +34,11 @@ impl FromWorld for UnitHandles {
         let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
-        let structure_names = vec!["ant"];
+        let unit_names = vec!["ant"];
 
-        for id in structure_names {
-            let structure_id = UnitId { id };
-            let structure_path = format!("units/{id}.gltf#Scene0");
+        for str in unit_names {
+            let structure_id = UnitId::new(str);
+            let structure_path = format!("units/{str}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);
         }

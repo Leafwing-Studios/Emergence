@@ -21,7 +21,6 @@ impl Plugin for GraphicsPlugin {
         app.add_plugin(LightingPlugin)
             .add_system_set(
                 SystemSet::on_update(AssetState::Ready)
-                    .with_system(units::populate_units)
                     .with_system(units::display_held_item)
                     // We need to avoid attempting to insert bundles into entities that no longer exist
                     .with_system(
