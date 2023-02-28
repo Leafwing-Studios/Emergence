@@ -5,30 +5,8 @@ use bevy::prelude::*;
 use crate::{
     asset_management::structures::StructureHandles,
     player_interaction::selection::ObjectInteraction,
-    simulation::geometry::{MapGeometry, TilePos},
     structures::{ghost::Ghostly, StructureId},
 };
-
-/// Adds rendering components to every spawned structure, real or otherwise
-pub(super) fn populate_structures(
-    new_structures: Query<(Entity, &TilePos, &StructureId), Added<StructureId>>,
-    mut commands: Commands,
-    structure_handles: Res<StructureHandles>,
-    map_geometry: Res<MapGeometry>,
-) {
-    for (entity, tile_pos, structure_id) in new_structures.iter() {
-        let scene_handle = structure_handles.scenes.get(structure_id).unwrap();
-
-        commands
-            .entity(entity)
-            .insert(SceneBundle {
-                scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
-                ..default()
-            })
-            .insert(structure_handles.picking_mesh.clone_weak());
-    }
-}
 
 /// Modifies the material of any structures based on their interaction state.
 pub(super) fn change_structure_material(

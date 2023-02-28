@@ -42,6 +42,10 @@ pub(super) struct GhostBundle {
     object_interaction: ObjectInteraction,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<Ghost>,
+    /// The mesh used for raycasting
+    picking_mesh: Handle<Mesh>,
+    /// The child scene that contains the gltF model used
+    scene_bundle: SceneBundle,
     /// Emits signals, drawing units towards this ghost to build it
     emitter: Emitter,
 }
@@ -52,6 +56,9 @@ impl GhostBundle {
         tile_pos: TilePos,
         data: StructureData,
         construction_materials: InputInventory,
+        picking_mesh: Handle<Mesh>,
+        scene_handle: Handle<Scene>,
+        world_pos: Vec3,
     ) -> Self {
         // Emit signals to cause workers to bring the correct item to this ghost
         let mut emitter = Emitter::default();
@@ -70,6 +77,12 @@ impl GhostBundle {
             construction_materials,
             object_interaction: ObjectInteraction::None,
             raycast_mesh: RaycastMesh::default(),
+            picking_mesh,
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
             emitter,
         }
     }
