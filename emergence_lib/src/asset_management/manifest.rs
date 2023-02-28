@@ -70,7 +70,9 @@ mod identifier {
     /// It can be stored as a component to identify the variety of game object used.
     #[derive(Component, Serialize, Deserialize)]
     pub(crate) struct Id<T> {
+        /// The internal string
         str: &'static str,
+        /// Marker to make the compiler happy
         _phantom: PhantomData<T>,
     }
 
@@ -119,7 +121,7 @@ mod identifier {
     impl<T> Clone for Id<T> {
         fn clone(&self) -> Self {
             Self {
-                str: self.str.clone(),
+                str: self.str,
                 _phantom: PhantomData,
             }
         }
@@ -143,21 +145,21 @@ mod emergence_markers {
 
     use super::Manifest;
 
-    /// The marker type for [`Id<Recipe>`].
+    /// The marker type for [`Id<Recipe>`](super::Id).
     pub(crate) struct Recipe;
 
     /// Stores the read-only definitions for all recipes.
     pub(crate) type RecipeManifest = Manifest<Recipe, RecipeData>;
 
-    /// The marker type for [`Id<Unit>`].
+    /// The marker type for [`Id<Unit>`](super::Id).
     pub(crate) struct Unit;
 
-    /// The marker type for [`Id<Structure>`].
+    /// The marker type for [`Id<Structure>`](super::Id).
     pub(crate) struct Structure;
     /// Stores the read-only definitions for all recipes.
     pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
-    /// The marker type for [`Id<Item>`].
+    /// The marker type for [`Id<Item>`](super::Id).
     pub(crate) struct Item;
     /// Stores the read-only definitions for all recipes.
     pub(crate) type ItemManifest = Manifest<Item, ItemData>;
