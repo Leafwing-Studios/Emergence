@@ -312,23 +312,38 @@ struct SpawnPreviewCommand {
 
 impl Command for SpawnPreviewCommand {
     fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.tile_pos) {
+        if !map_geometry.is_valid(self.tile_pos) {
             return;
         }
 
+        // Compute the world position
+        let world_pos = self.tile_pos.into_world_pos(&*map_geometry);
+
         // Remove any existing previews
-        let maybe_existing_preview = geometry.preview_index.remove(&self.tile_pos);
+        let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
 
         if let Some(existing_preview) = maybe_existing_preview {
             world.entity_mut(existing_preview).despawn_recursive();
         }
 
+        let structure_handles = world.resource::<StructureHandles>();
+        let scene_handle = structure_handles
+            .scenes
+            .get(&self.data.structure_id)
+            .unwrap()
+            .clone_weak();
+
         // Spawn a preview
         let preview_entity = world
-            .spawn(PreviewBundle::new(self.tile_pos, self.data))
+            .spawn(PreviewBundle::new(
+                self.tile_pos,
+                self.data,
+                scene_handle,
+                world_pos,
+            ))
             .id();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
