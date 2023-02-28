@@ -14,7 +14,7 @@ use crate::{
     structures::crafting::{InputInventory, OutputInventory},
 };
 
-use super::{goals::Goal, hunger::Diet, item_interaction::HeldItem};
+use super::{goals::Goal, hunger::Diet, item_interaction::UnitInventory};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
@@ -28,7 +28,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
     mut units_query: Query<
-        (&TilePos, &Facing, &Goal, &mut CurrentAction, &HeldItem),
+        (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
         With<Id<Unit>>,
     >,
     input_inventory_query: Query<&InputInventory>,
@@ -191,7 +191,7 @@ pub(super) fn handle_actions(
                 }
                 UnitAction::Abandon => {
                     // TODO: actually put these dropped items somewhere
-                    *unit.held_item = HeldItem::default();
+                    *unit.held_item = UnitInventory::default();
                 }
             }
         }
@@ -207,7 +207,7 @@ pub(super) struct ActionDataQuery {
     /// The unit's action
     action: &'static CurrentAction,
     /// What the unit is holding
-    held_item: &'static mut HeldItem,
+    held_item: &'static mut UnitInventory,
     /// The unit's spatial position for rendering
     transform: &'static mut Transform,
     /// The tile that the unit is on

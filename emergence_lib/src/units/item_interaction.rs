@@ -10,20 +10,20 @@ use core::fmt::Display;
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Clone, Debug, Deref, DerefMut)]
-pub(crate) struct HeldItem {
+pub(crate) struct UnitInventory {
     /// The internal representation.
     pub(crate) inventory: Inventory,
 }
 
-impl Default for HeldItem {
+impl Default for UnitInventory {
     fn default() -> Self {
-        HeldItem {
+        UnitInventory {
             inventory: Inventory::new(1),
         }
     }
 }
 
-impl Display for HeldItem {
+impl Display for UnitInventory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(slot) = self.item_slot() {
             let item = slot.item_id();
@@ -35,7 +35,7 @@ impl Display for HeldItem {
     }
 }
 
-impl HeldItem {
+impl UnitInventory {
     /// The item and quantity held, if any.
     pub(crate) fn item_slot(&self) -> Option<&ItemSlot> {
         self.inventory.iter().next()
@@ -49,7 +49,7 @@ impl HeldItem {
 }
 
 /// Clears out any slots that no longer have items in them.
-pub(super) fn clear_empty_slots(mut query: Query<&mut HeldItem>) {
+pub(super) fn clear_empty_slots(mut query: Query<&mut UnitInventory>) {
     for mut held_item in query.iter_mut() {
         held_item.clear_empty_slots()
     }

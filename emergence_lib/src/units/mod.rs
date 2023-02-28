@@ -12,7 +12,7 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
-use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::HeldItem};
+use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::UnitInventory};
 
 use crate::organisms::OrganismBundle;
 
@@ -70,7 +70,7 @@ pub(crate) struct UnitBundle {
     /// What is the unit currently doing.
     current_action: CurrentAction,
     /// What is the unit currently holding, if anything?
-    held_item: HeldItem,
+    held_item: UnitInventory,
     /// What does this unit need to eat?
     diet: Diet,
     /// Organism data
@@ -101,7 +101,7 @@ impl UnitBundle {
             facing: Facing::default(),
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
-            held_item: HeldItem::default(),
+            held_item: UnitInventory::default(),
             diet: unit_data.diet,
             organism_bundle: OrganismBundle::new(unit_data.energy_pool),
             raycast_mesh: RaycastMesh::default(),
