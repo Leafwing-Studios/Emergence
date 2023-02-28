@@ -2,14 +2,15 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Unit},
+        manifest::{Id, Unit, UnitManifest},
         units::UnitHandles,
     },
-    organisms::energy::EnergyPool,
+    organisms::energy::{Energy, EnergyPool},
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_mod_raycast::RaycastMesh;
+use leafwing_abilities::prelude::Pool;
 
 use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::HeldItem};
 
@@ -20,6 +21,32 @@ pub(crate) mod goals;
 pub(crate) mod hunger;
 pub(crate) mod item_interaction;
 mod reproduction;
+
+/// The data associated with each variety of unit
+#[derive(Debug, Clone)]
+pub(crate) struct UnitData {
+    /// The energy pool of this unit
+    energy_pool: EnergyPool,
+    /// What this unit type needs to eat
+    diet: Diet,
+}
+
+impl Default for UnitManifest {
+    fn default() -> Self {
+        let mut map = HashMap::new();
+
+        // TODO: load this from disk
+        map.insert(
+            Id::new("ant"),
+            UnitData {
+                energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                diet: Diet::new(Id::leuco_chunk(), Energy(50.)),
+            },
+        );
+
+        UnitManifest::new(map)
+    }
+}
 
 impl Id<Unit> {
     // TODO: read these from disk
@@ -62,8 +89,7 @@ impl UnitBundle {
     pub(crate) fn new(
         unit_id: Id<Unit>,
         tile_pos: TilePos,
-        energy_pool: EnergyPool,
-        diet: Diet,
+        unit_data: UnitData,
         unit_handles: &UnitHandles,
         map_geometry: &MapGeometry,
     ) -> Self {
@@ -76,8 +102,8 @@ impl UnitBundle {
             current_goal: Goal::default(),
             current_action: CurrentAction::default(),
             held_item: HeldItem::default(),
-            diet,
-            organism_bundle: OrganismBundle::new(energy_pool),
+            diet: unit_data.diet,
+            organism_bundle: OrganismBundle::new(unit_data.energy_pool),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
@@ -108,7 +134,8 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(actions::advance_action_timer.label(UnitSystem::AdvanceTimers))
+        app.init_resource::<UnitManifest>()
+            .add_system(actions::advance_action_timer.label(UnitSystem::AdvanceTimers))
             .add_system(
                 actions::handle_actions
                     .label(UnitSystem::Act)

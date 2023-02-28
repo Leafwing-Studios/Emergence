@@ -1,14 +1,12 @@
 //! Generating starting terrain and organisms
-use crate::asset_management::manifest::Id;
+use crate::asset_management::manifest::{Id, UnitManifest};
 use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
 use crate::enum_iter::IterableEnum;
-use crate::organisms::energy::{Energy, EnergyPool};
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::terrain::{Terrain, TerrainBundle};
-use crate::units::hunger::Diet;
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -17,7 +15,6 @@ use bevy::math::vec2;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
-use leafwing_abilities::prelude::Pool;
 use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -195,6 +192,7 @@ fn generate_organisms(
     config: Res<GenerationConfig>,
     tile_query: Query<&TilePos, With<Terrain>>,
     unit_handles: Res<UnitHandles>,
+    unit_manifest: Res<UnitManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
@@ -222,8 +220,7 @@ fn generate_organisms(
         commands.spawn(UnitBundle::new(
             Id::ant(),
             ant_position,
-            EnergyPool::new_full(Energy(100.), Energy(-1.)),
-            Diet::new(Id::leuco_chunk(), Energy(50.)),
+            unit_manifest.get(Id::new("ant")).clone(),
             &unit_handles,
             &map_geometry,
         ));
