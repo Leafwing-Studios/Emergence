@@ -17,6 +17,7 @@ pub(crate) mod actions;
 pub(crate) mod goals;
 pub(crate) mod hunger;
 pub(crate) mod item_interaction;
+mod reproduction;
 
 /// The unique, string-based identifier of a unit.
 #[derive(Component, Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
@@ -141,6 +142,7 @@ impl Plugin for UnitsPlugin {
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
+            .add_system(reproduction::hatch_ant_eggs)
             .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction));
     }
 }
