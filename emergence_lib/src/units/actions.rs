@@ -176,16 +176,13 @@ pub(super) fn handle_actions(
                 }
                 UnitAction::Eat => {
                     let item_count = ItemCount::new(unit.diet.item(), 1);
-                    let consumption_result = unit.held_item.remove_item_all_or_nothing(&item_count);
-
-                    match consumption_result {
-                        Ok(_) => {
-                            let proposed = unit.energy_pool.current() + unit.diet.energy();
-                            unit.energy_pool.set_current(proposed);
-                        }
-                        Err(error) => {
-                            error!("{error:?}: unit tried to eat the wrong thing!")
-                        }
+                    if unit
+                        .held_item
+                        .remove_item_all_or_nothing(&item_count)
+                        .is_ok()
+                    {
+                        let proposed = unit.energy_pool.current() + unit.diet.energy();
+                        unit.energy_pool.set_current(proposed);
                     }
                 }
                 UnitAction::Abandon => {
