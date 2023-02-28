@@ -320,7 +320,7 @@ impl Command for SpawnPreviewCommand {
         }
 
         // Compute the world position
-        let world_pos = self.tile_pos.into_world_pos(&*map_geometry);
+        let world_pos = self.tile_pos.into_world_pos(&map_geometry);
 
         // Remove any existing previews
         let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
