@@ -137,8 +137,11 @@ fn clear_clipboard(
 /// Data needed for [`copy_selection`] to populate [`ClipboardData`].
 #[derive(WorldQuery)]
 struct ClipboardQuery {
+    /// The position of the structure
     tile_pos: &'static TilePos,
+    /// The type of the structure
     structure_id: &'static Id<Structure>,
+    /// The direction the structure is facing
     facing: &'static Facing,
 }
 
