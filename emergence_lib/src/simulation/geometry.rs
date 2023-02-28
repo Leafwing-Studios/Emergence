@@ -157,9 +157,8 @@ impl MapGeometry {
     /// Returns the average height of tiles around `tile_pos` within `radius`
     pub(crate) fn average_height(&self, tile_pos: TilePos, radius: u32) -> f32 {
         let hex_iter = hexagon(tile_pos.hex, radius);
-        let n = hex_iter.count();
-        let hex_iter = hexagon(tile_pos.hex, radius);
         let heights = hex_iter.map(|hex| *self.height_index.get(&TilePos { hex }).unwrap_or(&0.));
+        let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
     }
 
