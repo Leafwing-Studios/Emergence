@@ -122,8 +122,6 @@ pub(crate) enum UnitSystem {
     AdvanceTimers,
     /// Carry out the chosen action
     Act,
-    /// Perform any necessary cleanup
-    Cleanup,
     /// Pick a higher level goal to pursue
     ChooseGoal,
     /// Pick an action that will get the agent closer to the goal being pursued
@@ -140,11 +138,6 @@ impl Plugin for UnitsPlugin {
                 actions::handle_actions
                     .label(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
-            )
-            .add_system(
-                item_interaction::clear_empty_slots
-                    .label(UnitSystem::Cleanup)
-                    .after(UnitSystem::Act),
             )
             .add_system(goals::choose_goal.label(UnitSystem::ChooseGoal))
             .add_system(
