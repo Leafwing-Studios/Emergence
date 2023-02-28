@@ -65,7 +65,7 @@ impl TerrainBundle {
         handles: &TerrainHandles,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let world_pos = tile_pos.into_world_pos(&map_geometry);
+        let world_pos = tile_pos.into_world_pos(map_geometry);
 
         let pbr_bundle = PbrBundle {
             mesh: handles.mesh.clone_weak(),
