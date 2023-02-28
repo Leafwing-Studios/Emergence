@@ -26,9 +26,14 @@ impl RecipeId {
         Self("leuco_chunk_production")
     }
 
-    /// The ID of the recipe for mushroom production of leuco mushrooms.
+    /// The ID of the recipe to make more ant eggs from leuco mushrooms.
     pub fn ant_egg_production() -> Self {
         Self("ant_egg_production")
+    }
+
+    /// The ID of the recipe to hatch ant eggs into adult ants.
+    pub fn hatch_ants() -> Self {
+        Self("hatch_ants")
     }
 }
 
@@ -144,6 +149,16 @@ impl Recipe {
             vec![ItemCount::one(ItemId::leuco_chunk())],
             vec![ItemCount::one(ItemId::ant_egg())],
             Duration::from_secs(5),
+            None,
+        )
+    }
+
+    /// An ant hive producing eggs.
+    pub(crate) fn hatch_ants() -> Self {
+        Recipe::new(
+            vec![ItemCount::one(ItemId::ant_egg())],
+            vec![],
+            Duration::from_secs(2),
             None,
         )
     }
