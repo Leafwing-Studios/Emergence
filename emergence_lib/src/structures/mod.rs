@@ -110,7 +110,7 @@ impl Default for StructureManifest {
                 crafts: true,
                 starting_recipe: Some(RecipeId::hatch_ants()),
                 construction_materials: InputInventory::default(),
-                color: Color::BEIGE,
+                color: Color::BLUE,
             },
         );
 
