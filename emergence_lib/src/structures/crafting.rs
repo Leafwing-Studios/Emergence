@@ -385,6 +385,7 @@ impl Plugin for CraftingPlugin {
             Recipe::leuco_chunk_production(),
         );
         recipe_manifest.insert(RecipeId::ant_egg_production(), Recipe::ant_egg_production());
+        recipe_manifest.insert(RecipeId::hatch_ants(), Recipe::hatch_ants());
 
         app.insert_resource(ItemManifest::new(item_manifest))
             .insert_resource(RecipeManifest::new(recipe_manifest))

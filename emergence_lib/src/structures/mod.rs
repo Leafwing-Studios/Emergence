@@ -103,6 +103,17 @@ impl Default for StructureManifest {
             },
         );
 
+        map.insert(
+            StructureId { id: "hatchery" },
+            StructureVariety {
+                organism: None,
+                crafts: true,
+                starting_recipe: Some(RecipeId::hatch_ants()),
+                construction_materials: InputInventory::default(),
+                color: Color::BLUE,
+            },
+        );
+
         StructureManifest::new(map)
     }
 }
