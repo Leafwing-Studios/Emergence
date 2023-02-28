@@ -1,24 +1,26 @@
 //! Making more units
 
 use bevy::prelude::*;
-use leafwing_abilities::prelude::Pool;
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 
 use crate::{
-    asset_management::{manifest::Id, units::UnitHandles},
-    organisms::energy::{Energy, EnergyPool},
+    asset_management::{
+        manifest::{Id, UnitManifest},
+        units::UnitHandles,
+    },
     simulation::geometry::{MapGeometry, TilePos},
     structures::crafting::{ActiveRecipe, CraftingState},
 };
 
-use super::{hunger::Diet, UnitBundle};
+use super::UnitBundle;
 
 /// Spawn ants when eggs have hatched
 pub(super) fn hatch_ant_eggs(
     structure_query: Query<(&TilePos, &CraftingState, &ActiveRecipe)>,
     map_geometry: Res<MapGeometry>,
     unit_handles: Res<UnitHandles>,
+    unit_manifest: Res<UnitManifest>,
     mut commands: Commands,
 ) {
     let rng = &mut thread_rng();
@@ -35,8 +37,7 @@ pub(super) fn hatch_ant_eggs(
                     commands.spawn(UnitBundle::new(
                         Id::ant(),
                         pos_to_spawn,
-                        EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                        Diet::new(Id::leuco_chunk(), Energy(50.)),
+                        unit_manifest.get(Id::new("ant")).clone(),
                         &unit_handles,
                         &map_geometry,
                     ));
