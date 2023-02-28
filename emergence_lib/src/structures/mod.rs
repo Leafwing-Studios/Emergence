@@ -120,17 +120,33 @@ struct StructureBundle {
     raycast_mesh: RaycastMesh<StructureId>,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
+    /// The mesh used for raycasting
+    picking_mesh: Handle<Mesh>,
+    /// The child scene that contains the gltF model used
+    scene_bundle: SceneBundle,
 }
 
 impl StructureBundle {
     /// Creates a new structure
-    fn new(tile_pos: TilePos, data: StructureData) -> Self {
+    fn new(
+        tile_pos: TilePos,
+        data: StructureData,
+        picking_mesh: Handle<Mesh>,
+        scene_handle: Handle<Scene>,
+        world_pos: Vec3,
+    ) -> Self {
         StructureBundle {
             structure: data.structure_id,
             facing: data.facing,
             tile_pos,
             raycast_mesh: RaycastMesh::default(),
             object_interaction: ObjectInteraction::None,
+            picking_mesh,
+            scene_bundle: SceneBundle {
+                scene: scene_handle,
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
         }
     }
 }

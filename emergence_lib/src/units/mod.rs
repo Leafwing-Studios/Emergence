@@ -1,8 +1,9 @@
 //! Units are organisms that can move freely.
 
 use crate::{
+    asset_management::units::UnitHandles,
     organisms::energy::EnergyPool,
-    simulation::geometry::{Facing, TilePos},
+    simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
@@ -21,12 +22,25 @@ pub(crate) mod item_interaction;
 #[derive(Component, Copy, Clone, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 pub(crate) struct UnitId {
     /// The unique identifier for this variety of unit.
-    pub(crate) id: &'static str,
+    str: &'static str,
+}
+
+impl UnitId {
+    /// Constructs a new ID from a string
+    pub(crate) fn new(str: &'static str) -> Self {
+        UnitId { str }
+    }
+
+    // TODO: read these from disk
+    /// The id of an ant
+    pub(crate) fn ant() -> Self {
+        UnitId { str: "ant" }
+    }
 }
 
 impl Display for UnitId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
+        write!(f, "{}", self.str)
     }
 }
 
@@ -34,7 +48,7 @@ impl Display for UnitId {
 #[derive(Bundle)]
 pub(crate) struct UnitBundle {
     /// Marker component.
-    id: UnitId,
+    unit_id: UnitId,
     /// The tile the unit is above.
     tile_pos: TilePos,
     /// The direction that the unit is facing.
@@ -51,19 +65,27 @@ pub(crate) struct UnitBundle {
     organism_bundle: OrganismBundle,
     /// Makes units pickable
     raycast_mesh: RaycastMesh<UnitId>,
+    /// The mesh used for raycasting
+    mesh: Handle<Mesh>,
+    /// The child scene that contains the gltF model used
+    scene_bundle: SceneBundle,
 }
 
 impl UnitBundle {
     /// Initializes a new unit
     // TODO: use a UnitManifest
     pub(crate) fn new(
-        id: &'static str,
+        unit_id: UnitId,
         tile_pos: TilePos,
         energy_pool: EnergyPool,
         diet: Diet,
+        unit_handles: &UnitHandles,
+        map_geometry: &MapGeometry,
     ) -> Self {
+        let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
+
         UnitBundle {
-            id: UnitId { id },
+            unit_id,
             tile_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
@@ -72,6 +94,12 @@ impl UnitBundle {
             diet,
             organism_bundle: OrganismBundle::new(energy_pool),
             raycast_mesh: RaycastMesh::default(),
+            mesh: unit_handles.picking_mesh.clone_weak(),
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                ..default()
+            },
         }
     }
 }

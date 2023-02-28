@@ -9,7 +9,6 @@ use self::lighting::LightingPlugin;
 mod lighting;
 mod selection;
 mod structures;
-mod terrain;
 mod units;
 
 /// Adds all logic required to render the game.
@@ -21,14 +20,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_system_set(
-                SystemSet::on_update(AssetState::Ready)
-                    .with_system(terrain::populate_terrain)
-                    .with_system(units::populate_units)
-                    .with_system(units::display_held_item)
-                    // We need to avoid attempting to insert bundles into entities that no longer exist
-                    .with_system(
-                        structures::populate_structures.before(InteractionSystem::ManagePreviews),
-                    ),
+                SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
             )
             .add_system_to_stage(CoreStage::PostUpdate, structures::change_structure_material)
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));

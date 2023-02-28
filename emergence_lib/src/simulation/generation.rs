@@ -1,4 +1,6 @@
 //! Generating starting terrain and organisms
+use crate::asset_management::terrain::TerrainHandles;
+use crate::asset_management::units::UnitHandles;
 use crate::enum_iter::IterableEnum;
 use crate::items::ItemId;
 use crate::organisms::energy::{Energy, EnergyPool};
@@ -7,7 +9,7 @@ use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::{commands::StructureCommandsExt, StructureId};
 use crate::terrain::{Terrain, TerrainBundle};
 use crate::units::hunger::Diet;
-use crate::units::UnitBundle;
+use crate::units::{UnitBundle, UnitId};
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
@@ -142,6 +144,7 @@ const SEED: f32 = 2378.0;
 pub(crate) fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
+    handles: Res<TerrainHandles>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating terrain...");
@@ -167,13 +170,20 @@ pub(crate) fn generate_terrain(
                 // Height is stepped, and should always be a multiple of 1.0
                 .round();
 
+        // Store the height, so it can be used below
+        map_geometry.height_index.insert(tile_pos, hex_height);
+
         // Spawn the terrain entity
         let terrain_entity = commands
-            .spawn(TerrainBundle::new(terrain_type, tile_pos))
+            .spawn(TerrainBundle::new(
+                terrain_type,
+                tile_pos,
+                &handles,
+                &map_geometry,
+            ))
             .id();
 
-        // Update the index
-        map_geometry.height_index.insert(tile_pos, hex_height);
+        // Update the index of what terrain is where
         map_geometry.terrain_index.insert(tile_pos, terrain_entity);
     }
 }
@@ -184,6 +194,8 @@ fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
     tile_query: Query<&TilePos, With<Terrain>>,
+    unit_handles: Res<UnitHandles>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
     let n_ant = config.n_ant;
@@ -206,19 +218,16 @@ fn generate_organisms(
 
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    commands.spawn_batch(
-        ant_positions
-            .into_iter()
-            // TODO: use a UnitManifest
-            .map(|ant_position| {
-                UnitBundle::new(
-                    "ant",
-                    ant_position,
-                    EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                    Diet::new(ItemId::leuco_chunk(), Energy(50.)),
-                )
-            }),
-    );
+    for ant_position in ant_positions {
+        commands.spawn(UnitBundle::new(
+            UnitId::ant(),
+            ant_position,
+            EnergyPool::new_full(Energy(100.), Energy(-1.)),
+            Diet::new(ItemId::leuco_chunk(), Energy(50.)),
+            &unit_handles,
+            &map_geometry,
+        ));
+    }
 
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);

@@ -8,6 +8,7 @@ use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
+    asset_management::structures::StructureHandles,
     items::{recipe::RecipeManifest, ItemManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::StructureData,
@@ -134,48 +135,64 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        let structure_entity =
-            world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
-                let structure_details = structure_manifest.get(self.data.structure_id);
+        let structure_variety = world
+            .resource::<StructureManifest>()
+            .get(self.data.structure_id)
+            .clone();
 
-                let structure_entity = world
-                    .spawn(StructureBundle::new(self.tile_pos, self.data))
-                    .id();
+        let structure_handles = world.resource::<StructureHandles>();
 
-                // PERF: this could be done in a single archetype move with more branching
-                if let Some(organism_details) = &structure_details.organism {
-                    world
-                        .entity_mut(structure_entity)
-                        .insert(OrganismBundle::new(organism_details.energy_pool.clone()));
-                };
+        let picking_mesh = structure_handles.picking_mesh.clone_weak();
+        let scene_handle = structure_handles
+            .scenes
+            .get(&self.data.structure_id)
+            .unwrap()
+            .clone_weak();
+        let world_pos = self
+            .tile_pos
+            .into_world_pos(world.resource::<MapGeometry>());
 
-                if structure_details.crafts {
-                    world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
-                        world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
-                            let crafting_bundle = match self.randomized {
-                                false => CraftingBundle::new(
-                                    structure_details.starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                ),
-                                true => {
-                                    let rng = &mut thread_rng();
-                                    CraftingBundle::randomized(
-                                        structure_details.starting_recipe,
-                                        &recipe_manifest,
-                                        &item_manifest,
-                                        rng,
-                                    )
-                                }
-                            };
+        let structure_entity = world
+            .spawn(StructureBundle::new(
+                self.tile_pos,
+                self.data,
+                picking_mesh,
+                scene_handle,
+                world_pos,
+            ))
+            .id();
 
-                            world.entity_mut(structure_entity).insert(crafting_bundle);
-                        })
-                    })
-                };
+        // PERF: these operations could be done in a single archetype move with more branching
+        if let Some(organism_details) = &structure_variety.organism {
+            world
+                .entity_mut(structure_entity)
+                .insert(OrganismBundle::new(organism_details.energy_pool.clone()));
+        };
 
-                structure_entity
-            });
+        if structure_variety.crafts {
+            world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
+                world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
+                    let crafting_bundle = match self.randomized {
+                        false => CraftingBundle::new(
+                            structure_variety.starting_recipe,
+                            &recipe_manifest,
+                            &item_manifest,
+                        ),
+                        true => {
+                            let rng = &mut thread_rng();
+                            CraftingBundle::randomized(
+                                structure_variety.starting_recipe,
+                                &recipe_manifest,
+                                &item_manifest,
+                                rng,
+                            )
+                        }
+                    };
+
+                    world.entity_mut(structure_entity).insert(crafting_bundle);
+                })
+            })
+        };
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry
@@ -235,11 +252,26 @@ impl Command for SpawnGhostCommand {
         let construction_materials = variety_data.construction_materials.clone();
 
         // Spawn a ghost
+        let structure_handles = world.resource::<StructureHandles>();
+
+        let picking_mesh = structure_handles.picking_mesh.clone_weak();
+        let scene_handle = structure_handles
+            .scenes
+            .get(&self.data.structure_id)
+            .unwrap()
+            .clone_weak();
+        let world_pos = self
+            .tile_pos
+            .into_world_pos(world.resource::<MapGeometry>());
+
         let ghost_entity = world
             .spawn(GhostBundle::new(
                 self.tile_pos,
                 self.data,
                 construction_materials,
+                picking_mesh,
+                scene_handle,
+                world_pos,
             ))
             .id();
 
