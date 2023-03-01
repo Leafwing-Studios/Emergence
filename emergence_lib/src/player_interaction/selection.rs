@@ -678,6 +678,7 @@ fn get_details(
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
                 neglect: ghost_query_item.emitter.neglect_multiplier,
+                active_recipe: ghost_query_item.active_recipe.clone(),
             })
         }
         CurrentSelection::Structure(structure_entity) => {
@@ -776,7 +777,7 @@ mod ghost_details {
         asset_management::manifest::{Id, Structure},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::crafting::InputInventory,
+        structures::crafting::{ActiveRecipe, InputInventory},
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -792,6 +793,8 @@ mod ghost_details {
         pub(super) input_inventory: &'static InputInventory,
         /// The signal emitter
         pub(super) emitter: &'static Emitter,
+        /// The recipe that will be crafted when the structure is first built
+        pub(super) active_recipe: &'static ActiveRecipe,
     }
 
     /// Detailed info about a given ghost.
@@ -807,6 +810,8 @@ mod ghost_details {
         pub(super) input_inventory: InputInventory,
         /// The neglect multiplier of this ghost
         pub(super) neglect: f32,
+        /// The recipe that will be crafted when the structure is first built
+        pub(super) active_recipe: ActiveRecipe,
     }
 
     impl Display for GhostDetails {
@@ -816,11 +821,13 @@ mod ghost_details {
             let tile_pos = &self.tile_pos;
             let input_inventory = &*self.input_inventory;
             let neglect = self.neglect;
+            let recipe = &self.active_recipe;
 
             let string = format!(
                 "Entity: {entity:?}
+                Tile: {tile_pos}
 Ghost structure type: {structure_id}
-Tile: {tile_pos}
+Recipe: {recipe}
 Construction materials: {input_inventory}
 Neglect: {neglect:.2}"
             );

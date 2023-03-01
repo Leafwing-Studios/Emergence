@@ -86,6 +86,17 @@ impl OutputInventory {
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
+impl Display for ActiveRecipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self.0 {
+            Some(recipe_id) => format!("{recipe_id}"),
+            None => "None".to_string(),
+        };
+
+        write!(f, "{string}")
+    }
+}
+
 impl ActiveRecipe {
     /// Creates a new [`ActiveRecipe`], set to `recipe_id`
     pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
