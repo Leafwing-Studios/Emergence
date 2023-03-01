@@ -81,7 +81,7 @@ impl Loadable for StructureHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (structure, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
-            info!("{structure:?}'s scene is {scene_load_state:?}");
+            info!("{structure}'s scene is {scene_load_state:?}");
 
             if scene_load_state != LoadState::Loaded {
                 return scene_load_state;

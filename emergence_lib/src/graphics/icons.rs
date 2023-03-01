@@ -57,6 +57,8 @@ pub(super) fn generate_icons(
 
     for (structure_id, scene) in structure_handles.scenes.iter() {
         if !structure_handles.icons.contains_key(structure_id) {
+            info!("Drawing icon for {structure_id}");
+
             // Spawn the scene to draw
             let scene_root = commands
                 .spawn((
