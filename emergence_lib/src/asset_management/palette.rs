@@ -13,7 +13,7 @@ pub(crate) const SELECTION_COLOR: Color =
     Color::hsl(SELECTION_HUE, SELECTION_SATURATION, SELECTION_LIGHTNESS);
 
 /// The hue used to indicate that an action is forbidden.
-pub(crate) const FORBIDDEN_HUE: f32 = 10.;
+pub(crate) const FORBIDDEN_HUE: f32 = 0.;
 
 /// The hue of selected objects
 pub(crate) const HOVER_HUE: f32 = 55.;
