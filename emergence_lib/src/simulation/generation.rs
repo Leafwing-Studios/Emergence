@@ -1,5 +1,5 @@
 //! Generating starting terrain and organisms
-use crate::asset_management::manifest::{Id, UnitManifest};
+use crate::asset_management::manifest::{Id, StructureManifest, UnitManifest};
 use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
 use crate::enum_iter::IterableEnum;
@@ -193,6 +193,7 @@ fn generate_organisms(
     tile_query: Query<&TilePos, With<Terrain>>,
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
+    structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
@@ -229,9 +230,15 @@ fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
+        let structure_id = Id::new("acacia");
+
         let item = ClipboardData {
-            structure_id: Id::new("acacia"),
+            structure_id,
             facing: Facing::default(),
+            active_recipe: structure_manifest
+                .get(structure_id)
+                .starting_recipe()
+                .clone(),
         };
 
         commands.spawn_randomized_structure(position, item, rng);
@@ -240,9 +247,15 @@ fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
+        let structure_id = Id::new("leuco");
+
         let item = ClipboardData {
-            structure_id: Id::new("leuco"),
+            structure_id,
             facing: Facing::default(),
+            active_recipe: structure_manifest
+                .get(structure_id)
+                .starting_recipe()
+                .clone(),
         };
 
         commands.spawn_randomized_structure(position, item, rng);
@@ -251,9 +264,15 @@ fn generate_organisms(
     // Hives
     let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
     for position in hive_positions {
+        let structure_id = Id::new("ant_hive");
+
         let item = ClipboardData {
-            structure_id: Id::new("ant_hive"),
+            structure_id,
             facing: Facing::default(),
+            active_recipe: structure_manifest
+                .get(structure_id)
+                .starting_recipe()
+                .clone(),
         };
 
         commands.spawn_randomized_structure(position, item, rng);

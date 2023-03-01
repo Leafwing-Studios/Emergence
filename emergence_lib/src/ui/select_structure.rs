@@ -245,6 +245,10 @@ fn handle_selection(
                 let structure_data = ClipboardData {
                     structure_id: data.structure_id,
                     facing: Facing::default(),
+                    active_recipe: structure_manifest
+                        .get(data.structure_id)
+                        .starting_recipe()
+                        .clone(),
                 };
 
                 clipboard.set(Some(structure_data));

@@ -6,7 +6,11 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::{Id, Structure},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, crafting::InputInventory, ghost::Ghost},
+    structures::{
+        commands::StructureCommandsExt,
+        crafting::{ActiveRecipe, InputInventory},
+        ghost::Ghost,
+    },
     terrain::Terrain,
 };
 
@@ -146,10 +150,19 @@ fn act_on_zoning(
 
 /// Transforms ghosts into structures once all of their construction materials have been supplied.
 fn turn_ghosts_into_structures(
-    ghost_query: Query<(&InputInventory, &TilePos, &Id<Structure>, &Facing), With<Ghost>>,
+    ghost_query: Query<
+        (
+            &InputInventory,
+            &TilePos,
+            &Id<Structure>,
+            &Facing,
+            &ActiveRecipe,
+        ),
+        With<Ghost>,
+    >,
     mut commands: Commands,
 ) {
-    for (input_inventory, &tile_pos, &structure_id, &facing) in ghost_query.iter() {
+    for (input_inventory, &tile_pos, &structure_id, &facing, active_recipe) in ghost_query.iter() {
         if input_inventory.is_full() {
             commands.despawn_ghost(tile_pos);
             commands.spawn_structure(
@@ -157,6 +170,7 @@ fn turn_ghosts_into_structures(
                 ClipboardData {
                     structure_id,
                     facing,
+                    active_recipe: active_recipe.clone(),
                 },
             );
         }

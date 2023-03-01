@@ -14,7 +14,7 @@ use crate::{
     simulation::geometry::{Facing, TilePos},
 };
 
-use super::crafting::InputInventory;
+use super::crafting::{ActiveRecipe, InputInventory};
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
 #[derive(Component, Clone, Copy, Debug)]
@@ -39,6 +39,8 @@ pub(super) struct GhostBundle {
     facing: Facing,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
+    /// What should the structure craft when it is first built?
+    active_recipe: ActiveRecipe,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
     /// Makes structures pickable
@@ -76,6 +78,7 @@ impl GhostBundle {
             structure_id: data.structure_id,
             facing: data.facing,
             construction_materials,
+            active_recipe: data.active_recipe,
             object_interaction: ObjectInteraction::None,
             raycast_mesh: RaycastMesh::default(),
             picking_mesh,

@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::{Id, Structure},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, ghost::Preview},
+    structures::{commands::StructureCommandsExt, crafting::ActiveRecipe, ghost::Preview},
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -65,6 +65,8 @@ pub(crate) struct ClipboardData {
     pub(crate) structure_id: Id<Structure>,
     /// The orientation of the structure.
     pub(crate) facing: Facing,
+    /// The recipe that this structure makes, if any
+    pub(crate) active_recipe: ActiveRecipe,
 }
 
 impl Clipboard {
@@ -143,13 +145,21 @@ struct ClipboardQuery {
     structure_id: &'static Id<Structure>,
     /// The direction the structure is facing
     facing: &'static Facing,
+    /// The recipe that the structure is crafting, if any
+    active_recipe: Option<&'static ActiveRecipe>,
 }
 
 impl From<ClipboardQueryItem<'_>> for ClipboardData {
     fn from(value: ClipboardQueryItem) -> ClipboardData {
+        let active_recipe = match value.active_recipe {
+            Some(recipe) => recipe.clone(),
+            None => ActiveRecipe::default(),
+        };
+
         ClipboardData {
             structure_id: *value.structure_id,
             facing: *value.facing,
+            active_recipe,
         }
     }
 }
