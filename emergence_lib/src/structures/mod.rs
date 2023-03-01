@@ -43,7 +43,7 @@ pub(crate) struct StructureData {
     /// The set of items needed to create a new copy of this structure
     construction_materials: InputInventory,
     /// The set of terrain types that this structure can be built on
-    allowed_terrain_types: HashSet<Terrain>,
+    pub(crate) allowed_terrain_types: HashSet<Terrain>,
     /// The color associated with this structure
     pub(crate) color: Color,
 }
@@ -52,6 +52,11 @@ impl StructureData {
     /// Returns the starting recipe of the structure
     pub fn starting_recipe(&self) -> &ActiveRecipe {
         &self.starting_recipe
+    }
+
+    /// Returns the set of terrain types that this structure can be built on
+    pub fn allowed_terrain_types(&self) -> &HashSet<Terrain> {
+        &self.allowed_terrain_types
     }
 }
 
