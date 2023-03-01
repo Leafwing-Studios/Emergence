@@ -9,6 +9,7 @@ use crate::{
         manifest::{Id, Structure, StructureManifest},
         structures::StructureHandles,
     },
+    graphics::icons::ICON_SIZE,
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
         cursor::CursorPos,
@@ -16,6 +17,9 @@ use crate::{
     },
     simulation::geometry::Facing,
 };
+
+/// The diameter of hexes used in this menu.
+const HEX_SIZE: f32 = ICON_SIZE;
 
 /// Hex menu and selection modifying logic.
 pub(super) struct SelectStructurePlugin;
@@ -94,9 +98,6 @@ fn spawn_hex_menu(
     structure_manifest: Res<StructureManifest>,
     structure_handles: Res<StructureHandles>,
 ) {
-    /// The size of the hexes used in this menu.
-    const HEX_SIZE: f32 = 64.0;
-
     if actions.just_pressed(PlayerAction::SelectStructure) {
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
             let mut arrangement = HexMenuArrangement {

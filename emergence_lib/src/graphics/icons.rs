@@ -16,12 +16,9 @@ use crate::asset_management::structures::StructureHandles;
 
 /// The render layer used to draw icons.
 const ICON_LAYER: RenderLayers = RenderLayers::layer(1);
-const ICON_SIZE: Extent3d = Extent3d {
-    width: 512,
-    height: 512,
-    // The default value
-    depth_or_array_layers: 1,
-};
+
+/// The base width of all icons.
+pub(crate) const ICON_SIZE: f32 = 64.0;
 
 pub(super) fn spawn_icon_camera(mut commands: Commands) {
     commands.spawn((
@@ -56,6 +53,14 @@ pub(super) fn generate_icons(
     mut image_assets: ResMut<Assets<Image>>,
     mut commands: Commands,
 ) {
+    /// The extents of the image to render to
+    const ICON_IMAGE_EXTENTS: Extent3d = Extent3d {
+        width: ICON_SIZE as u32,
+        height: ICON_SIZE as u32,
+        // The default value
+        depth_or_array_layers: 1,
+    };
+
     // Despawn any old icon scene
     if let Some(scene_root) = *maybe_scene_root {
         commands.entity(scene_root).despawn_recursive();
@@ -75,7 +80,7 @@ pub(super) fn generate_icons(
             let mut image = Image {
                 texture_descriptor: TextureDescriptor {
                     label: None,
-                    size: ICON_SIZE,
+                    size: ICON_IMAGE_EXTENTS,
                     dimension: TextureDimension::D2,
                     format: TextureFormat::Bgra8UnormSrgb,
                     mip_level_count: 1,
@@ -88,7 +93,7 @@ pub(super) fn generate_icons(
             };
 
             // Fill it with zeros
-            image.resize(ICON_SIZE);
+            image.resize(ICON_IMAGE_EXTENTS);
 
             // Spawn the scene to draw
             let scene_root = commands

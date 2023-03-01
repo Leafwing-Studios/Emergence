@@ -6,7 +6,7 @@ use crate::{asset_management::AssetState, player_interaction::InteractionSystem}
 
 use self::{icons::spawn_icon_camera, lighting::LightingPlugin};
 
-mod icons;
+pub(crate) mod icons;
 mod lighting;
 mod selection;
 mod structures;
