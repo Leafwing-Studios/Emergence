@@ -25,8 +25,20 @@ pub(crate) enum Terrain {
 }
 
 impl Terrain {
+    /// The walking speed multiplier associated with this terrain type.
+    ///
+    /// These values should always be strictly positive.
+    /// Higher values make units walk faster.
+    pub(crate) const fn walking_speed(&self) -> f32 {
+        match self {
+            Terrain::Plain => 1.0,
+            Terrain::Rocky => 2.0,
+            Terrain::Muddy => 0.5,
+        }
+    }
+
     /// The rendering material associated with this terrain type.
-    pub fn material(&self) -> StandardMaterial {
+    pub(crate) fn material(&self) -> StandardMaterial {
         let base_color = match self {
             Terrain::Plain => Color::BEIGE,
             Terrain::Rocky => Color::GRAY,

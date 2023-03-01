@@ -12,6 +12,7 @@ use crate::{
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::crafting::{InputInventory, OutputInventory},
+    terrain::Terrain,
 };
 
 use super::{goals::Goal, hunger::Diet, item_interaction::UnitInventory};
@@ -35,6 +36,7 @@ pub(super) fn choose_actions(
     output_inventory_query: Query<&OutputInventory>,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
+    terrain_query: Query<&Terrain>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -44,9 +46,12 @@ pub(super) fn choose_actions(
             *action = match goal {
                 // Alternate between spinning and moving forward.
                 Goal::Wander => match action.action() {
-                    UnitAction::Spin { .. } => {
-                        CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
-                    }
+                    UnitAction::Spin { .. } => CurrentAction::move_forward(
+                        unit_tile_pos,
+                        facing,
+                        map_geometry,
+                        &terrain_query,
+                    ),
                     _ => CurrentAction::random_spin(rng),
                 },
                 Goal::Pickup(item_id) => {
@@ -61,6 +66,7 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &signals,
                             rng,
+                            &terrain_query,
                             map_geometry,
                         )
                     }
@@ -77,6 +83,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &signals,
                             rng,
+                            &terrain_query,
                             map_geometry,
                         )
                     }
@@ -97,6 +104,7 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &signals,
                             rng,
+                            &terrain_query,
                             map_geometry,
                         )
                     }
@@ -328,6 +336,7 @@ impl CurrentAction {
         output_inventory_query: &Query<&OutputInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
+        terrain_query: &Query<&Terrain>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -352,7 +361,13 @@ impl CurrentAction {
                 *output_tile_pos,
             )
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
-            CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
+            CurrentAction::move_or_spin(
+                unit_tile_pos,
+                upstream,
+                facing,
+                terrain_query,
+                map_geometry,
+            )
         } else {
             CurrentAction::idle()
         }
@@ -368,6 +383,7 @@ impl CurrentAction {
         input_inventory_query: &Query<&InputInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
+        terrain_query: &Query<&Terrain>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -402,7 +418,13 @@ impl CurrentAction {
                 *input_tile_pos,
             )
         } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
-            CurrentAction::move_or_spin(unit_tile_pos, upstream, facing, map_geometry)
+            CurrentAction::move_or_spin(
+                unit_tile_pos,
+                upstream,
+                facing,
+                terrain_query,
+                map_geometry,
+            )
         } else {
             CurrentAction::idle()
         }
@@ -449,13 +471,20 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
+        terrain_query: &Query<&Terrain>,
     ) -> Self {
+        /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
+        const BASE_WALKING_DURATION: f32 = 0.5;
+
         let target_tile = unit_tile_pos.neighbor(facing.direction);
+        let entity_standing_on = *map_geometry.terrain_index.get(&unit_tile_pos).unwrap();
+        let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
+        let walking_duration = BASE_WALKING_DURATION / terrain_standing_on.walking_speed();
 
         if map_geometry.is_passable(target_tile) {
             CurrentAction {
                 action: UnitAction::MoveForward,
-                timer: Timer::from_seconds(0.5, TimerMode::Once),
+                timer: Timer::from_seconds(walking_duration, TimerMode::Once),
             }
         } else {
             CurrentAction::idle()
@@ -467,12 +496,13 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         target_tile_pos: TilePos,
         facing: &Facing,
+        terrain_query: &Query<&Terrain>,
         map_geometry: &MapGeometry,
     ) -> Self {
         let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
-            CurrentAction::move_forward(unit_tile_pos, facing, map_geometry)
+            CurrentAction::move_forward(unit_tile_pos, facing, map_geometry, terrain_query)
         } else {
             CurrentAction::spin_towards(facing, required_direction)
         }
