@@ -8,7 +8,7 @@ use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::manifest::{Id, Recipe, Structure, StructureManifest},
+    asset_management::manifest::{Id, Structure, StructureManifest},
     items::{inventory::Inventory, ItemCount},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -19,7 +19,7 @@ use crate::{
 };
 
 use self::{
-    crafting::{CraftingPlugin, InputInventory},
+    crafting::{ActiveRecipe, CraftingPlugin, InputInventory},
     ghost::increase_ghost_neglect,
 };
 
@@ -35,11 +35,18 @@ pub(crate) struct StructureData {
     /// Can this structure make things?
     crafts: bool,
     /// Does this structure start with a recipe pre-selected?
-    starting_recipe: Option<Id<Recipe>>,
+    starting_recipe: ActiveRecipe,
     /// The set of items needed to create a new copy of this structure
     construction_materials: InputInventory,
     /// The color associated with this structure
     pub(crate) color: Color,
+}
+
+impl StructureData {
+    /// Returns the starting recipe of the structure
+    pub fn starting_recipe(&self) -> &ActiveRecipe {
+        &self.starting_recipe
+    }
 }
 
 impl Default for StructureManifest {
@@ -58,7 +65,7 @@ impl Default for StructureManifest {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: Some(Id::leuco_chunk_production()),
+                starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
                 construction_materials: leuco_construction_materials,
                 color: Color::ORANGE_RED,
             },
@@ -75,7 +82,7 @@ impl Default for StructureManifest {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: Some(Id::acacia_leaf_production()),
+                starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
                 construction_materials: acacia_construction_materials,
                 color: Color::GREEN,
             },
@@ -86,7 +93,7 @@ impl Default for StructureManifest {
             StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: Some(Id::ant_egg_production()),
+                starting_recipe: ActiveRecipe::new(Id::ant_egg_production()),
                 construction_materials: InputInventory::default(),
                 color: Color::BEIGE,
             },
@@ -97,7 +104,7 @@ impl Default for StructureManifest {
             StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: Some(Id::hatch_ants()),
+                starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 color: Color::BLUE,
             },

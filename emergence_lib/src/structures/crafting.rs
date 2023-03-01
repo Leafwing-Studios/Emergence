@@ -83,10 +83,26 @@ impl OutputInventory {
 }
 
 /// The recipe that is currently being crafted, if any.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
+impl Display for ActiveRecipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self.0 {
+            Some(recipe_id) => format!("{recipe_id}"),
+            None => "None".to_string(),
+        };
+
+        write!(f, "{string}")
+    }
+}
+
 impl ActiveRecipe {
+    /// Creates a new [`ActiveRecipe`], set to `recipe_id`
+    pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
+        ActiveRecipe(Some(recipe_id))
+    }
+
     /// The ID of the currently active recipe, if one has been selected.
     pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
@@ -136,11 +152,11 @@ pub(crate) struct CraftingBundle {
 impl CraftingBundle {
     /// Create a new crafting bundle with empty inventories.
     pub(crate) fn new(
-        starting_recipe: Option<Id<Recipe>>,
+        starting_recipe: ActiveRecipe,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
     ) -> Self {
-        if let Some(recipe_id) = starting_recipe {
+        if let Some(recipe_id) = starting_recipe.0 {
             let recipe = recipe_manifest.get(recipe_id);
 
             Self {
@@ -169,12 +185,12 @@ impl CraftingBundle {
 
     /// Generates a new crafting bundle that is at a random point in its cycle.
     pub(crate) fn randomized(
-        starting_recipe: Option<Id<Recipe>>,
+        starting_recipe: ActiveRecipe,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
         rng: &mut ThreadRng,
     ) -> Self {
-        if let Some(recipe_id) = starting_recipe {
+        if let Some(recipe_id) = starting_recipe.0 {
             let recipe = recipe_manifest.get(recipe_id);
 
             let mut input_inventory = recipe.input_inventory(item_manifest);
