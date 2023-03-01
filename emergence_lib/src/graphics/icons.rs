@@ -3,20 +3,32 @@
 use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
     prelude::*,
-    render::{camera::RenderTarget, view::RenderLayers},
+    render::{
+        camera::RenderTarget,
+        render_resource::{
+            Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+        },
+        view::RenderLayers,
+    },
 };
 
 use crate::asset_management::structures::StructureHandles;
 
 /// The render layer used to draw icons.
 const ICON_LAYER: RenderLayers = RenderLayers::layer(1);
+const ICON_SIZE: Extent3d = Extent3d {
+    width: 512,
+    height: 512,
+    // The default value
+    depth_or_array_layers: 1,
+};
 
 pub(super) fn spawn_icon_camera(mut commands: Commands) {
     commands.spawn((
         Camera3dBundle {
             camera_3d: Camera3d {
                 // Set a white background
-                clear_color: ClearColorConfig::Custom(Color::WHITE),
+                clear_color: ClearColorConfig::Custom(Color::PINK),
                 ..default()
             },
             camera: Camera {
@@ -59,6 +71,25 @@ pub(super) fn generate_icons(
         if !structure_handles.icons.contains_key(structure_id) {
             info!("Drawing icon for {structure_id}");
 
+            // Create the image to write to
+            let mut image = Image {
+                texture_descriptor: TextureDescriptor {
+                    label: None,
+                    size: ICON_SIZE,
+                    dimension: TextureDimension::D2,
+                    format: TextureFormat::Bgra8UnormSrgb,
+                    mip_level_count: 1,
+                    sample_count: 1,
+                    usage: TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::COPY_DST
+                        | TextureUsages::RENDER_ATTACHMENT,
+                },
+                ..default()
+            };
+
+            // Fill it with zeros
+            image.resize(ICON_SIZE);
+
             // Spawn the scene to draw
             let scene_root = commands
                 .spawn((
@@ -73,7 +104,7 @@ pub(super) fn generate_icons(
             *maybe_scene_root = Some(scene_root);
 
             // Set the camera to draw to the correct image
-            let image_handle = image_assets.add(Image::default());
+            let image_handle = image_assets.add(image);
             icon_camera.target = RenderTarget::Image(image_handle.clone_weak());
             maybe_icon_structure_id = Some(*structure_id);
             maybe_new_icon = Some(image_handle);
