@@ -5,9 +5,10 @@ use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure},
+    asset_management::manifest::{Id, Structure, StructureManifest},
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, crafting::ActiveRecipe, ghost::Preview},
+    terrain::Terrain,
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -245,6 +246,9 @@ fn display_selection(
     cursor_pos: Res<CursorPos>,
     mut commands: Commands,
     preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
+    structure_manifest: Res<StructureManifest>,
+    map_geometry: Res<MapGeometry>,
+    terrain_query: Query<&Terrain>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
         let mut desired_previews: HashMap<TilePos, ClipboardData> =
@@ -276,7 +280,14 @@ fn display_selection(
 
         // Handle any remaining new ghosts
         for (&tile_pos, clipboard_data) in desired_previews.iter() {
-            commands.spawn_preview(tile_pos, clipboard_data.clone());
+            let allowed_terrain_types = structure_manifest
+                .get(clipboard_data.structure_id)
+                .allowed_terrain_types();
+            if let Some(terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
+                let terrain_type = terrain_query.get(*terrain_entity).unwrap();
+                let forbidden = !allowed_terrain_types.contains(terrain_type);
+                commands.spawn_preview(tile_pos, clipboard_data.clone(), forbidden);
+            }
         }
     }
 }

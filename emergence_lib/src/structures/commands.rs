@@ -12,6 +12,7 @@ use crate::{
         manifest::{ItemManifest, RecipeManifest},
         structures::StructureHandles,
     },
+    graphics::InheritedMaterial,
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     simulation::geometry::{Facing, MapGeometry, TilePos},
@@ -19,7 +20,7 @@ use crate::{
 
 use super::{
     crafting::CraftingBundle,
-    ghost::{GhostBundle, PreviewBundle},
+    ghost::{GhostBundle, GhostKind, PreviewBundle},
     StructureBundle, StructureManifest,
 };
 
@@ -59,7 +60,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool);
 
     /// Despawns any preview at the provided `tile_pos`.
     ///
@@ -104,8 +105,12 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnPreviewCommand { tile_pos, data });
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool) {
+        self.add(SpawnPreviewCommand {
+            tile_pos,
+            data,
+            forbidden,
+        });
     }
 
     fn despawn_preview(&mut self, tile_pos: TilePos) {
@@ -262,6 +267,12 @@ impl Command for SpawnGhostCommand {
             .get(&self.data.structure_id)
             .unwrap()
             .clone_weak();
+        let ghostly_handle = structure_handles
+            .ghost_materials
+            .get(&GhostKind::Ghost)
+            .unwrap();
+        let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
+
         let world_pos = self
             .tile_pos
             .into_world_pos(world.resource::<MapGeometry>());
@@ -273,6 +284,7 @@ impl Command for SpawnGhostCommand {
                 construction_materials,
                 picking_mesh,
                 scene_handle,
+                inherited_material,
                 world_pos,
             ))
             .id();
@@ -310,6 +322,8 @@ struct SpawnPreviewCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
+    /// Is this structure allowed to be built here?
+    forbidden: bool,
 }
 
 impl Command for SpawnPreviewCommand {
@@ -338,12 +352,21 @@ impl Command for SpawnPreviewCommand {
             .unwrap()
             .clone_weak();
 
+        let ghost_kind = match self.forbidden {
+            true => GhostKind::ForbiddenPreview,
+            false => GhostKind::Preview,
+        };
+
+        let preview_handle = structure_handles.ghost_materials.get(&ghost_kind).unwrap();
+        let inherited_material = InheritedMaterial(preview_handle.clone_weak());
+
         // Spawn a preview
         let preview_entity = world
             .spawn(PreviewBundle::new(
                 self.tile_pos,
                 self.data,
                 scene_handle,
+                inherited_material,
                 world_pos,
             ))
             .id();

@@ -12,6 +12,9 @@ pub(crate) const SELECTION_LIGHTNESS: f32 = 0.6;
 pub(crate) const SELECTION_COLOR: Color =
     Color::hsl(SELECTION_HUE, SELECTION_SATURATION, SELECTION_LIGHTNESS);
 
+/// The hue used to indicate that an action is forbidden.
+pub(crate) const FORBIDDEN_HUE: f32 = 10.;
+
 /// The hue of selected objects
 pub(crate) const HOVER_HUE: f32 = 55.;
 /// The saturation of selected objects
@@ -43,6 +46,13 @@ pub(crate) const SELECTED_GHOST_COLOR: Color = Color::hsla(
 /// The color used to tint previews
 pub(crate) const PREVIEW_COLOR: Color =
     Color::hsla(HOVER_HUE, HOVER_SATURATION, HOVER_LIGHTNESS, GHOST_ALPHA);
+/// The color used to tint previews that cannot be built
+pub(crate) const FORBIDDEN_PREVIEW_COLOR: Color = Color::hsla(
+    FORBIDDEN_HUE,
+    HOVER_SATURATION,
+    HOVER_LIGHTNESS,
+    GHOST_ALPHA,
+);
 
 /// The color used to tint objects that are both selected and hovered.
 pub(crate) const SELECTION_AND_HOVER_COLOR: Color = Color::hsl(
