@@ -5,7 +5,10 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::{
+        manifest::{Id, Structure, StructureManifest},
+        structures::StructureHandles,
+    },
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
         cursor::CursorPos,
@@ -89,6 +92,7 @@ fn spawn_hex_menu(
     actions: Res<ActionState<PlayerAction>>,
     cursor_pos: Res<CursorPos>,
     structure_manifest: Res<StructureManifest>,
+    structure_handles: Res<StructureHandles>,
 ) {
     /// The size of the hexes used in this menu.
     const HEX_SIZE: f32 = 64.0;
@@ -123,7 +127,7 @@ fn spawn_hex_menu(
                         .spawn(HexMenuIconBundle::new(
                             structure_id,
                             hex,
-                            &structure_manifest,
+                            &structure_handles,
                             &arrangement.layout,
                         ))
                         .id();
@@ -154,19 +158,23 @@ impl HexMenuIconBundle {
     fn new(
         structure_id: Id<Structure>,
         hex: Hex,
-        structure_manifest: &StructureManifest,
+        structure_handles: &StructureHandles,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_manifest.get(structure_id).color;
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
             y: layout.hex_size.y / 2.,
         };
         let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
+        let icon_image = structure_handles
+            .icons
+            .get(&structure_id)
+            .map(|ref_handle| ref_handle.clone_weak())
+            .unwrap_or_default();
 
         let image_bundle = ImageBundle {
-            background_color: BackgroundColor(color),
+            image: UiImage(icon_image),
             style: Style {
                 position: UiRect {
                     left: Val::Px(screen_pos.x),
@@ -254,11 +262,11 @@ fn handle_selection(
                 clipboard.set(Some(structure_data));
                 cleanup(commands, menu_query);
             } else {
-                for (icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
+                for (icon_entity, _structure_id, mut background_color) in icon_query.iter_mut() {
                     if icon_entity == data.icon_entity {
-                        *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
+                        *background_color = BackgroundColor(Color::ANTIQUE_WHITE);
                     } else {
-                        *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
+                        *background_color = BackgroundColor(Color::NONE);
                     }
                 }
             }
@@ -269,8 +277,8 @@ fn handle_selection(
             if complete {
                 cleanup(commands, menu_query);
             } else {
-                for (_icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
-                    *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
+                for (.., mut background_color) in icon_query.iter_mut() {
+                    *background_color = BackgroundColor(Color::NONE);
                 }
             }
         }

@@ -12,11 +12,16 @@ use super::{
     Loadable,
 };
 
+// TODO: discover this from the file directory
+const STRUCTURE_NAMES: [&'static str; 4] = ["acacia", "leuco", "ant_hive", "hatchery"];
+
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<Id<Structure>, Handle<Scene>>,
+    /// The icon for each type of structure, as displayed in menus
+    pub(crate) icons: HashMap<Id<Structure>, Handle<Image>>,
     /// The materials used for tiles when they are selected or otherwise interacted with
     pub(crate) ghost_materials: HashMap<GhostKind, Handle<StandardMaterial>>,
     /// The raycasting mesh used to select structures
@@ -53,16 +58,15 @@ impl FromWorld for StructureHandles {
 
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
+            icons: HashMap::default(),
             ghost_materials,
             picking_mesh,
         };
 
         let asset_server = world.resource::<AssetServer>();
 
-        // TODO: discover this from the file directory
-        let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery"];
-
-        for id in structure_names {
+        for id in STRUCTURE_NAMES {
+            // Populate scenes
             let structure_id = Id::new(id);
             let structure_path = format!("structures/{id}.gltf#Scene0");
             let scene = asset_server.load(structure_path);

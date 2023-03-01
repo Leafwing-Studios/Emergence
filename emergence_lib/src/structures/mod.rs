@@ -44,8 +44,6 @@ pub(crate) struct StructureData {
     construction_materials: InputInventory,
     /// The set of terrain types that this structure can be built on
     pub(crate) allowed_terrain_types: HashSet<Terrain>,
-    /// The color associated with this structure
-    pub(crate) color: Color,
 }
 
 impl StructureData {
@@ -79,7 +77,6 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
                 construction_materials: leuco_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
-                color: Color::ORANGE_RED,
             },
         );
 
@@ -97,7 +94,6 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
                 construction_materials: acacia_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
-                color: Color::GREEN,
             },
         );
 
@@ -113,7 +109,6 @@ impl Default for StructureManifest {
                     Terrain::Muddy,
                     Terrain::Rocky,
                 ]),
-                color: Color::BEIGE,
             },
         );
 
@@ -125,7 +120,6 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Rocky]),
-                color: Color::BLUE,
             },
         );
 
