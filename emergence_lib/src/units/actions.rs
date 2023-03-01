@@ -365,7 +365,7 @@ impl CurrentAction {
                 unit_tile_pos,
                 upstream,
                 facing,
-                &terrain_query,
+                terrain_query,
                 map_geometry,
             )
         } else {
