@@ -4,8 +4,9 @@ use bevy::prelude::*;
 
 use crate::{asset_management::AssetState, player_interaction::InteractionSystem};
 
-use self::lighting::LightingPlugin;
+use self::{icons::spawn_icon_camera, lighting::LightingPlugin};
 
+mod icons;
 mod lighting;
 mod selection;
 mod structures;
@@ -19,8 +20,11 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
+            .add_startup_system(spawn_icon_camera)
             .add_system_set(
-                SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
+                SystemSet::on_update(AssetState::Ready)
+                    .with_system(units::display_held_item)
+                    .with_system(icons::generate_icons),
             )
             .add_system_to_stage(CoreStage::PostUpdate, inherit_materials)
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
