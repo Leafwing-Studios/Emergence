@@ -243,23 +243,6 @@ impl ObjectInteraction {
             ..Default::default()
         })
     }
-
-    /// The material used by ghosts and previews, based on their interaction
-    pub(crate) fn ghost_material(&self) -> Option<StandardMaterial> {
-        use crate::asset_management::palette::{GHOST_COLOR, PREVIEW_COLOR, SELECTED_GHOST_COLOR};
-
-        let maybe_color = match self {
-            ObjectInteraction::Selected => Some(SELECTED_GHOST_COLOR),
-            ObjectInteraction::Hovered => Some(PREVIEW_COLOR),
-            ObjectInteraction::HoveredAndSelected => None,
-            ObjectInteraction::None => Some(GHOST_COLOR),
-        };
-
-        maybe_color.map(|base_color| StandardMaterial {
-            base_color,
-            ..Default::default()
-        })
-    }
 }
 
 /// Sets the radius of "brush" used to select tiles.

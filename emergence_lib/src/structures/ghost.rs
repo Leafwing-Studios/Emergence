@@ -4,12 +4,14 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
+use emergence_macros::IterableEnum;
 
 use crate::{
     asset_management::manifest::{Id, Structure},
-    player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
+    player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
@@ -29,8 +31,6 @@ pub(crate) struct Ghostly;
 pub(super) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
-    /// Render this entity in a translucent style
-    ghostly: Ghostly,
     /// The location of the ghost
     tile_pos: TilePos,
     /// The variety of structure
@@ -41,12 +41,12 @@ pub(super) struct GhostBundle {
     construction_materials: InputInventory,
     /// What should the structure craft when it is first built?
     active_recipe: ActiveRecipe,
-    /// How is this structure being interacted with
-    object_interaction: ObjectInteraction,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<Ghost>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
+    /// The material to be used by all children in the scene
+    inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
     scene_bundle: SceneBundle,
     /// Emits signals, drawing units towards this ghost to build it
@@ -61,6 +61,7 @@ impl GhostBundle {
         construction_materials: InputInventory,
         picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
         world_pos: Vec3,
     ) -> Self {
         // Emit signals to cause workers to bring the correct item to this ghost
@@ -73,21 +74,54 @@ impl GhostBundle {
 
         GhostBundle {
             ghost: Ghost,
-            ghostly: Ghostly,
             tile_pos,
             structure_id: data.structure_id,
             facing: data.facing,
             construction_materials,
             active_recipe: data.active_recipe,
-            object_interaction: ObjectInteraction::None,
             raycast_mesh: RaycastMesh::default(),
             picking_mesh,
+            inherited_material,
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
                 transform: Transform::from_translation(world_pos),
                 ..default()
             },
             emitter,
+        }
+    }
+}
+
+/// The variety of ghostly structure.
+#[derive(IterableEnum, Debug, PartialEq, Eq, Hash)]
+pub(crate) enum GhostKind {
+    /// A structure that is going to be built.
+    Ghost,
+    /// A ghost, but currently selected
+    SelectedGhost,
+    /// A structure that players are holding in their clipboard and planning to place
+    Preview,
+    /// A preview that cannot be built in its current location
+    ForbiddenPreview,
+}
+
+impl GhostKind {
+    /// The material associated with each ghostly structure.
+    pub(crate) fn material(&self) -> StandardMaterial {
+        use crate::asset_management::palette::{
+            FORBIDDEN_PREVIEW_COLOR, GHOST_COLOR, PREVIEW_COLOR, SELECTED_GHOST_COLOR,
+        };
+
+        let base_color = match self {
+            GhostKind::Ghost => GHOST_COLOR,
+            GhostKind::SelectedGhost => SELECTED_GHOST_COLOR,
+            GhostKind::Preview => PREVIEW_COLOR,
+            GhostKind::ForbiddenPreview => FORBIDDEN_PREVIEW_COLOR,
+        };
+
+        StandardMaterial {
+            base_color,
+            ..Default::default()
         }
     }
 }
@@ -101,16 +135,14 @@ pub(crate) struct Preview;
 pub(super) struct PreviewBundle {
     /// Marker component
     preview: Preview,
-    /// Render this entity in a translucent style
-    ghostly: Ghostly,
     /// The location of the preview
     tile_pos: TilePos,
     /// The variety of structure
     structure_id: Id<Structure>,
     /// The direction the preview is facing
     facing: Facing,
-    /// How is this structure being interacted with
-    object_interaction: ObjectInteraction,
+    /// The material to be used by all children in the scene
+    inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
     scene_bundle: SceneBundle,
 }
@@ -121,15 +153,15 @@ impl PreviewBundle {
         tile_pos: TilePos,
         data: ClipboardData,
         scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
         world_pos: Vec3,
     ) -> Self {
         PreviewBundle {
             preview: Preview,
-            ghostly: Ghostly,
             tile_pos,
             structure_id: data.structure_id,
             facing: data.facing,
-            object_interaction: ObjectInteraction::Hovered,
+            inherited_material,
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
                 transform: Transform::from_translation(world_pos),

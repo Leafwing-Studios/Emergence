@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure},
+    asset_management::manifest::{Id, Structure, StructureManifest},
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
@@ -33,7 +33,7 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::SetClipboard),
         )
         .add_system(
-            act_on_zoning
+            generate_ghosts_from_zoning
                 .label(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
         )
@@ -133,14 +133,25 @@ fn set_zoning(
     }
 }
 
-/// Spawn and despawn structures based on their zoning.
-fn act_on_zoning(
-    terrain_query: Query<(&Zoning, &TilePos), (With<Terrain>, Changed<Zoning>)>,
+/// Spawn and despawn ghosts based on zoning.
+fn generate_ghosts_from_zoning(
+    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain), Changed<Zoning>>,
+    structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
 ) {
-    for (zoning, &tile_pos) in terrain_query.iter() {
-        match zoning {
-            Zoning::Structure(item) => commands.spawn_ghost(tile_pos, item.clone()),
+    for (mut zoning, &tile_pos, terrain) in terrain_query.iter_mut() {
+        // Reborrowing here would trigger change detection, causing this system to constantly check
+        match zoning.bypass_change_detection() {
+            Zoning::Structure(clipboard_data) => {
+                let structure_data = structure_manifest.get(clipboard_data.structure_id);
+                if structure_data.allowed_terrain_types().contains(terrain) {
+                    commands.spawn_ghost(tile_pos, clipboard_data.clone())
+                } else {
+                    *zoning = Zoning::None;
+                    // We bypassed change detection above, so need to manually trigger it here.
+                    zoning.set_changed();
+                }
+            }
             Zoning::None => commands.despawn_ghost(tile_pos),
             // TODO: this should also take delayed effect
             Zoning::KeepClear => commands.despawn_structure(tile_pos),

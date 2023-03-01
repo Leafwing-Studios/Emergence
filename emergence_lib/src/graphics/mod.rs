@@ -22,7 +22,26 @@ impl Plugin for GraphicsPlugin {
             .add_system_set(
                 SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
             )
-            .add_system_to_stage(CoreStage::PostUpdate, structures::change_structure_material)
+            .add_system_to_stage(CoreStage::PostUpdate, inherit_materials)
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
+    }
+}
+
+/// A material that will be inherited by all children in the scene.
+#[derive(Component, Debug, Deref)]
+pub(crate) struct InheritedMaterial(pub(crate) Handle<StandardMaterial>);
+
+/// Applies [`InheritedMaterial`] to all child entities recursively.
+pub(super) fn inherit_materials(
+    root_structure_query: Query<(Entity, &InheritedMaterial)>,
+    children: Query<&Children>,
+    mut material_query: Query<&mut Handle<StandardMaterial>>,
+) {
+    for (root_entity, inherited_material) in root_structure_query.iter() {
+        for child in children.iter_descendants(root_entity) {
+            if let Ok(mut child_material) = material_query.get_mut(child) {
+                *child_material = inherited_material.clone_weak();
+            }
+        }
     }
 }
