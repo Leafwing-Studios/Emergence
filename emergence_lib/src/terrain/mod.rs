@@ -28,7 +28,8 @@ impl Terrain {
     /// The walking speed multiplier associated with this terrain type.
     ///
     /// These values should always be strictly positive.
-    pub(crate) fn walking_speed(self) -> f32 {
+    /// Higher values make units walk faster.
+    pub(crate) const fn walking_speed(&self) -> f32 {
         match self {
             Terrain::Plain => 1.0,
             Terrain::Rocky => 2.0,
