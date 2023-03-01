@@ -60,3 +60,6 @@ pub(crate) const SELECTION_AND_HOVER_COLOR: Color = Color::hsl(
     (SELECTION_SATURATION + HOVER_SATURATION) / 2.,
     (SELECTION_LIGHTNESS + HOVER_LIGHTNESS) / 2.,
 );
+
+/// The tint used to de-emphasize UI elements that are not selected.
+pub(crate) const UNSELECTED_UI_COLOR: Color = Color::hsl(0., 0., 0.7);

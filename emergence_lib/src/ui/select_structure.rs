@@ -7,6 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::{
         manifest::{Id, Structure, StructureManifest},
+        palette::UNSELECTED_UI_COLOR,
         structures::StructureHandles,
     },
     graphics::icons::ICON_SIZE,
@@ -265,9 +266,9 @@ fn handle_selection(
             } else {
                 for (icon_entity, _structure_id, mut background_color) in icon_query.iter_mut() {
                     if icon_entity == data.icon_entity {
-                        *background_color = BackgroundColor(Color::ANTIQUE_WHITE);
+                        *background_color = BackgroundColor(Color::WHITE);
                     } else {
-                        *background_color = BackgroundColor(Color::NONE);
+                        *background_color = BackgroundColor(UNSELECTED_UI_COLOR);
                     }
                 }
             }
@@ -279,7 +280,7 @@ fn handle_selection(
                 cleanup(commands, menu_query);
             } else {
                 for (.., mut background_color) in icon_query.iter_mut() {
-                    *background_color = BackgroundColor(Color::NONE);
+                    *background_color = BackgroundColor(UNSELECTED_UI_COLOR);
                 }
             }
         }
