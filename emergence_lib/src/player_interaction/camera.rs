@@ -5,6 +5,7 @@
 use std::f32::consts::PI;
 use std::f32::consts::TAU;
 
+use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
@@ -33,6 +34,7 @@ impl Plugin for CameraPlugin {
         app.add_startup_system_to_stage(StartupStage::Startup, setup_camera)
             .add_system(mousewheel_zoom.before(zoom))
             .add_system(zoom)
+            .add_system(drag_camera.before(set_camera_inclination))
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
@@ -216,6 +218,25 @@ fn mousewheel_zoom(
         }
     }
     mouse_wheel_events.clear();
+}
+
+/// Use middle-mouse + drag to tilt the camera up and down
+fn drag_camera(
+    mut actions: ResMut<ActionState<PlayerAction>>,
+    mut mouse_motion_events: EventReader<MouseMotion>,
+) {
+    /// Controls the deadzone for camera dragging
+    const DRAG_THRESHOLD: f32 = 0.01;
+
+    if actions.pressed(PlayerAction::DragCamera) {
+        for event in mouse_motion_events.iter() {
+            match event.delta.y {
+                y if y > DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraUp),
+                y if y < -DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraDown),
+                _ => (),
+            }
+        }
+    }
 }
 
 /// Sets the inclination of the camera
