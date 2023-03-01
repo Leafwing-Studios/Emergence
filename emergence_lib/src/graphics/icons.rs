@@ -46,7 +46,7 @@ pub(super) fn generate_icons(
 ) {
     // Despawn any old icon scene
     if let Some(scene_root) = *maybe_scene_root {
-        commands.entity(scene_root).despawn();
+        commands.entity(scene_root).despawn_recursive();
         *maybe_scene_root = None;
     }
 
