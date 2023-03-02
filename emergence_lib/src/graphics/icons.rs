@@ -12,7 +12,7 @@ use bevy::{
     },
 };
 
-use crate::asset_management::structures::StructureHandles;
+use crate::asset_management::{structures::StructureHandles, AssetState};
 
 /// The render layer used to draw icons.
 const ICON_LAYER: RenderLayers = RenderLayers::layer(1);
@@ -52,7 +52,15 @@ pub(super) fn generate_icons(
     mut maybe_scene_root: Local<Option<Entity>>,
     mut image_assets: ResMut<Assets<Image>>,
     mut commands: Commands,
+    asset_state: Res<State<AssetState>>,
 ) {
+    // TODO: use a real run condition post stageless
+    // It's awful to try and manage this before that because states are bound to a single stage lol
+    if *asset_state.current() != AssetState::Ready {
+        info!("Assets are not yet loaded");
+        return;
+    }
+
     /// The extents of the image to render to
     const ICON_IMAGE_EXTENTS: Extent3d = Extent3d {
         width: ICON_SIZE as u32,

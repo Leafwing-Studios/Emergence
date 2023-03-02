@@ -22,11 +22,10 @@ impl Plugin for GraphicsPlugin {
         app.add_plugin(LightingPlugin)
             .add_startup_system(spawn_icon_camera)
             .add_system_set(
-                SystemSet::on_update(AssetState::Ready)
-                    .with_system(units::display_held_item)
-                    .with_system(icons::generate_icons),
+                SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
             )
             .add_system_to_stage(CoreStage::PostUpdate, inherit_materials)
+            .add_system_to_stage(CoreStage::Last, icons::generate_icons)
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }
