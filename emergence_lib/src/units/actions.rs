@@ -11,7 +11,7 @@ use crate::{
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
-    structures::crafting::{InputInventory, OutputInventory},
+    structures::crafting::{CraftingState, InputInventory, OutputInventory},
     terrain::Terrain,
 };
 
@@ -34,6 +34,7 @@ pub(super) fn choose_actions(
     >,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
+    workplace_query: Query<(&CraftingState, &Id<Structure>)>,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Terrain>,
@@ -447,7 +448,7 @@ impl CurrentAction {
         structure_id: Id<Structure>,
         unit_tile_pos: TilePos,
         facing: &Facing,
-        workplace_query: &Query<(&Workplace, &Id<Structure>)>,
+        workplace_query: &Query<(&CraftingState, &Id<Structure>)>,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Terrain>,

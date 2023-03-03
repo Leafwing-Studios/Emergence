@@ -18,13 +18,18 @@ use crate::{
 };
 
 /// The current state in the crafting progress.
-#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Default, Clone, PartialEq)]
 pub(crate) enum CraftingState {
     /// There are resources missing for the recipe.
     #[default]
     NeedsInput,
     /// The resource cost has been paid and the recipe is being crafted.
-    InProgress,
+    InProgress {
+        progress: Duration,
+        required: Duration,
+        work_required: bool,
+        worker_present: bool,
+    },
     /// Resources need to be claimed before more crafting can continue.
     FullAndBlocked,
     /// The recipe is complete.
@@ -38,12 +43,36 @@ pub(crate) enum CraftingState {
 impl Display for CraftingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            CraftingState::NeedsInput => "Waiting for input",
-            CraftingState::InProgress => "In progress",
-            CraftingState::RecipeComplete => "Recipe complete",
-            CraftingState::FullAndBlocked => "Blocked",
-            CraftingState::Overproduction => "Overproduction",
-            CraftingState::NoRecipe => "No recipe set",
+            CraftingState::NeedsInput => "Waiting for input".to_string(),
+            CraftingState::InProgress {
+                progress,
+                required,
+                work_required,
+                worker_present,
+            } => {
+                let progress_in_seconds = progress.as_secs_f32();
+                let required_in_seconds = required.as_secs_f32();
+                match (work_required, worker_present) {
+                    (true, true) => {
+                        format!("Work in progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                    (true, false) => {
+                        format!(
+                            "Worker needed ({progress_in_seconds:.1} / {required_in_seconds:.1})"
+                        )
+                    }
+                    (false, true) => {
+                        format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                    (false, false) => {
+                        format!("Unecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                }
+            }
+            CraftingState::RecipeComplete => "Recipe complete".to_string(),
+            CraftingState::FullAndBlocked => "Blocked".to_string(),
+            CraftingState::Overproduction => "Overproduction".to_string(),
+            CraftingState::NoRecipe => "No recipe set".to_string(),
         };
 
         write!(f, "{str}")
@@ -120,11 +149,7 @@ impl CraftTimer {
     }
 
     /// Randomizes this timer so that crafting is partially complete.
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
-        let distribution = Uniform::new(Duration::ZERO, self.duration());
-        let elapsed = distribution.sample(rng);
-        self.set_elapsed(elapsed);
-    }
+    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {}
 }
 
 /// All components needed to craft stuff.
@@ -252,7 +277,12 @@ fn progress_crafting(
                         Ok(()) => {
                             crafter.timer.set_duration(recipe.craft_time());
                             crafter.timer.reset();
-                            CraftingState::InProgress
+                            CraftingState::InProgress {
+                                progress: Duration::ZERO,
+                                required: recipe.craft_time(),
+                                work_required: recipe.work_required(),
+                                worker_present: false,
+                            }
                         }
                         Err(_) => CraftingState::NeedsInput,
                     }
@@ -260,13 +290,27 @@ fn progress_crafting(
                     CraftingState::NoRecipe
                 }
             }
-            CraftingState::InProgress => {
-                crafter.timer.tick(time.delta());
+            CraftingState::InProgress {
+                progress,
+                required,
+                work_required,
+                worker_present,
+            } => {
+                let mut updated_progress = progress;
 
-                if crafter.timer.finished() {
+                if !work_required || work_required && worker_present {
+                    updated_progress += time.delta();
+                }
+
+                if updated_progress >= required {
                     CraftingState::RecipeComplete
                 } else {
-                    CraftingState::InProgress
+                    CraftingState::InProgress {
+                        progress: updated_progress,
+                        required,
+                        work_required,
+                        worker_present,
+                    }
                 }
             }
             CraftingState::RecipeComplete => {
