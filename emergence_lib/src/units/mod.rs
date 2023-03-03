@@ -12,13 +12,17 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
-use self::{actions::CurrentAction, goals::Goal, hunger::Diet, item_interaction::UnitInventory};
+use self::{
+    actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
+    item_interaction::UnitInventory,
+};
 
 use crate::organisms::OrganismBundle;
 
 pub(crate) mod actions;
 pub(crate) mod goals;
 pub(crate) mod hunger;
+pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 mod reproduction;
 
@@ -29,6 +33,8 @@ pub(crate) struct UnitData {
     energy_pool: EnergyPool,
     /// What this unit type needs to eat
     diet: Diet,
+    /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
+    max_impatience: u8,
 }
 
 impl Default for UnitManifest {
@@ -41,6 +47,7 @@ impl Default for UnitManifest {
             UnitData {
                 energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 diet: Diet::new(Id::leuco_chunk(), Energy(50.)),
+                max_impatience: 10,
             },
         );
 
@@ -67,6 +74,10 @@ pub(crate) struct UnitBundle {
     facing: Facing,
     /// What is the unit working towards.
     current_goal: Goal,
+    /// How frustrated this unit is.
+    ///
+    /// When full, the current goal will be abandoned.
+    impatience: ImpatiencePool,
     /// What is the unit currently doing.
     current_action: CurrentAction,
     /// What is the unit currently holding, if anything?
@@ -100,6 +111,7 @@ impl UnitBundle {
             tile_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
+            impatience: ImpatiencePool::new(unit_data.max_impatience),
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             diet: unit_data.diet,

@@ -15,7 +15,9 @@ use crate::{
     terrain::Terrain,
 };
 
-use super::{goals::Goal, hunger::Diet, item_interaction::UnitInventory};
+use super::{
+    goals::Goal, hunger::Diet, impatience::ImpatiencePool, item_interaction::UnitInventory,
+};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
@@ -139,7 +141,9 @@ pub(super) fn handle_actions(
     for mut unit in unit_query.iter_mut() {
         if unit.action.finished() {
             match unit.action.action() {
-                UnitAction::Idle => (),
+                UnitAction::Idle => {
+                    unit.impatience.increment();
+                }
                 UnitAction::PickUp {
                     item_id,
                     output_entity,
@@ -262,6 +266,8 @@ pub(super) struct ActionDataQuery {
     diet: &'static Diet,
     /// How much energy the unit has
     energy_pool: &'static mut EnergyPool,
+    /// How frustrated this unit is about not being able to progress towards its goal
+    impatience: &'static mut ImpatiencePool,
     /// The direction this unit is facing
     facing: &'static mut Facing,
 }
