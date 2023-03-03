@@ -30,9 +30,13 @@ pub(crate) enum CraftingState {
     NeedsInput,
     /// The resource cost has been paid and the recipe is being crafted.
     InProgress {
+        /// How far through the recipe are we?
         progress: Duration,
+        /// How long does this recipe take to complete in full?
         required: Duration,
+        /// Does this recipe require work to be done?
         work_required: bool,
+        /// Is a unit currently working on this recipe?
         worker_present: bool,
     },
     /// Resources need to be claimed before more crafting can continue.
@@ -283,7 +287,7 @@ fn progress_crafting(
             } => {
                 let mut updated_progress = progress;
 
-                if !work_required || work_required && worker_present {
+                if !work_required || worker_present {
                     updated_progress += time.delta();
                 }
 
@@ -444,6 +448,7 @@ fn set_emitter(
 /// A query about the [`CraftingState`] of a structure that might need work done.
 #[derive(SystemParam)]
 pub(crate) struct WorkplaceQuery<'w, 's> {
+    /// The contained query type.
     query: Query<'w, 's, (&'static CraftingState, &'static Id<Structure>)>,
 }
 

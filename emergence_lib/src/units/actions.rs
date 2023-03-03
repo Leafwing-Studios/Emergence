@@ -115,7 +115,7 @@ pub(super) fn choose_actions(
                     unit_tile_pos,
                     facing,
                     &workplace_query,
-                    &*signals,
+                    &signals,
                     rng,
                     &terrain_query,
                     map_geometry,
@@ -287,7 +287,10 @@ pub(super) enum UnitAction {
         input_entity: Entity,
     },
     /// Perform work at the provided `structure_entity`
-    Work { structure_entity: Entity },
+    Work {
+        /// The structure to work at.
+        structure_entity: Entity,
+    },
     /// Spin left or right.
     Spin {
         /// The direction to turn in.
@@ -464,6 +467,7 @@ impl CurrentAction {
     }
 
     /// Attempt to find a structure of type `structure_id` to perform work
+    #[allow(clippy::too_many_arguments)]
     fn find_workplace(
         structure_id: Id<Structure>,
         unit_tile_pos: TilePos,
