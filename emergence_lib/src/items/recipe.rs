@@ -5,7 +5,7 @@ use std::{fmt::Display, time::Duration};
 use crate::{
     asset_management::manifest::{Id, ItemManifest, Recipe},
     organisms::energy::Energy,
-    structures::crafting::{CraftTimer, InputInventory, OutputInventory},
+    structures::crafting::{InputInventory, OutputInventory},
 };
 
 use super::{inventory::Inventory, ItemCount};
@@ -90,11 +90,6 @@ impl RecipeData {
     /// Is work from units needed to advance this recipe?
     pub(crate) fn work_required(&self) -> bool {
         self.work_required
-    }
-
-    /// The timer used in this recipe.
-    pub(crate) fn craft_timer(&self) -> CraftTimer {
-        CraftTimer::new(self.craft_time)
     }
 
     /// An inventory with empty slots for all of the inputs of this recipe.

@@ -138,20 +138,6 @@ impl ActiveRecipe {
     }
 }
 
-/// The time remaining until the recipe has been crafted.
-#[derive(Component, Debug, Default, Deref, DerefMut, Clone)]
-pub(crate) struct CraftTimer(Timer);
-
-impl CraftTimer {
-    /// Generates a new timer from the provided duration
-    pub(crate) fn new(duration: Duration) -> Self {
-        CraftTimer(Timer::new(duration, TimerMode::Once))
-    }
-
-    /// Randomizes this timer so that crafting is partially complete.
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {}
-}
-
 /// All components needed to craft stuff.
 #[derive(Debug, Bundle)]
 pub(crate) struct CraftingBundle {
@@ -163,9 +149,6 @@ pub(crate) struct CraftingBundle {
 
     /// The recipe that is currently being crafted.
     active_recipe: ActiveRecipe,
-
-    /// The "cooldown" for crafting.
-    craft_timer: CraftTimer,
 
     /// The current state for the crafting process.
     craft_state: CraftingState,
@@ -187,7 +170,6 @@ impl CraftingBundle {
             Self {
                 input_inventory: recipe.input_inventory(item_manifest),
                 output_inventory: recipe.output_inventory(item_manifest),
-                craft_timer: recipe.craft_timer(),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
@@ -200,7 +182,6 @@ impl CraftingBundle {
                 output_inventory: OutputInventory {
                     inventory: Inventory::new(1),
                 },
-                craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
@@ -222,15 +203,20 @@ impl CraftingBundle {
             input_inventory.randomize(rng);
             let mut output_inventory = recipe.output_inventory(item_manifest);
             output_inventory.randomize(rng);
-            let mut craft_timer = recipe.craft_timer();
-            craft_timer.randomize(rng);
+
+            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time());
+            let progress = distribution.sample(rng);
 
             Self {
                 input_inventory,
                 output_inventory,
-                craft_timer,
                 active_recipe: ActiveRecipe(Some(recipe_id)),
-                craft_state: CraftingState::NeedsInput,
+                craft_state: CraftingState::InProgress {
+                    progress,
+                    required: recipe.craft_time(),
+                    work_required: recipe.work_required(),
+                    worker_present: false,
+                },
                 emitter: Emitter::default(),
             }
         } else {
@@ -245,8 +231,6 @@ impl CraftingBundle {
 struct CraftingQuery {
     /// The recipe of the crafter
     active_recipe: &'static ActiveRecipe,
-    /// The time remaining to complete the recipe
-    timer: &'static mut CraftTimer,
     /// The status of crafting
     state: &'static mut CraftingState,
     /// The inputs
@@ -274,16 +258,12 @@ fn progress_crafting(
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
                     match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
-                        Ok(()) => {
-                            crafter.timer.set_duration(recipe.craft_time());
-                            crafter.timer.reset();
-                            CraftingState::InProgress {
-                                progress: Duration::ZERO,
-                                required: recipe.craft_time(),
-                                work_required: recipe.work_required(),
-                                worker_present: false,
-                            }
-                        }
+                        Ok(()) => CraftingState::InProgress {
+                            progress: Duration::ZERO,
+                            required: recipe.craft_time(),
+                            work_required: recipe.work_required(),
+                            worker_present: false,
+                        },
                         Err(_) => CraftingState::NeedsInput,
                     }
                 } else {
