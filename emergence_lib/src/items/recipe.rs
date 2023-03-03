@@ -156,7 +156,7 @@ impl RecipeData {
         RecipeData::new(
             vec![ItemCount::one(Id::ant_egg())],
             vec![],
-            Duration::from_secs(2),
+            Duration::from_secs(10),
             true,
             None,
         )
