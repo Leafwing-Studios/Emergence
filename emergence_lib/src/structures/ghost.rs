@@ -203,7 +203,6 @@ pub(super) fn ghost_signals(
             match *crafting_state {
                 CraftingState::NeedsInput => {
                     // Emit signals to cause workers to bring the correct item to this ghost
-                    let mut emitter = Emitter::default();
                     for item_slot in input_inventory.iter() {
                         let signal_type = SignalType::Pull(item_slot.item_id());
                         let signal_strength = SignalStrength::new(10.);
