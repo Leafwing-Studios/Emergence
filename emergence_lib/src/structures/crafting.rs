@@ -2,12 +2,16 @@
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
+use bevy::{
+    ecs::{query::WorldQuery, system::SystemParam},
+    prelude::*,
+    utils::HashMap,
+};
 use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest},
+    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest, Structure},
     items::{
         inventory::{Inventory, InventoryState},
         recipe::RecipeData,
@@ -15,6 +19,7 @@ use crate::{
     },
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
+    simulation::geometry::{MapGeometry, TilePos},
 };
 
 /// The current state in the crafting progress.
@@ -401,6 +406,48 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
         };
 
         emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
+    }
+}
+
+/// A query about the [`CraftingState`] of a structure that might need work done.
+#[derive(SystemParam)]
+pub(crate) struct WorkplaceQuery<'w, 's> {
+    query: Query<'w, 's, (&'static CraftingState, &'static Id<Structure>)>,
+}
+
+impl<'w, 's> WorkplaceQuery<'w, 's> {
+    /// Is there a structure of type `structure_id` at `structure_pos` that needs work done by a unit?
+    ///
+    /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
+    pub(crate) fn needs_work(
+        &self,
+        structure_pos: TilePos,
+        structure_id: Id<Structure>,
+        map_geometry: &MapGeometry,
+    ) -> Option<Entity> {
+        let entity = *map_geometry.structure_index.get(&structure_pos)?;
+
+        let (found_crafting_state, found_structure_id) = self.query.get(entity).ok()?;
+
+        if *found_structure_id != structure_id {
+            return None;
+        }
+
+        if let CraftingState::InProgress {
+            progress: _,
+            required: _,
+            work_required,
+            worker_present: _,
+        } = found_crafting_state
+        {
+            if *work_required {
+                Some(entity)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 

@@ -11,7 +11,7 @@ use crate::{
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
-    structures::crafting::{CraftingState, InputInventory, OutputInventory},
+    structures::crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
     terrain::Terrain,
 };
 
@@ -34,7 +34,7 @@ pub(super) fn choose_actions(
     >,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
-    workplace_query: Query<(&CraftingState, &Id<Structure>)>,
+    workplace_query: WorkplaceQuery,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Terrain>,
@@ -212,7 +212,7 @@ pub(super) fn handle_actions(
                             progress,
                             required,
                             work_required,
-                            worker_present,
+                            worker_present: _,
                         } = *crafting_state
                         {
                             *crafting_state = CraftingState::InProgress {
@@ -467,13 +467,13 @@ impl CurrentAction {
         structure_id: Id<Structure>,
         unit_tile_pos: TilePos,
         facing: &Facing,
-        workplace_query: &Query<(&CraftingState, &Id<Structure>)>,
+        workplace_query: &WorkplaceQuery,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Terrain>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let ahead = unit_tile_pos.ahead(facing);
+        let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
             CurrentAction::work(workplace)
         } else {
