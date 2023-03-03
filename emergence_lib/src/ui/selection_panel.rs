@@ -54,7 +54,7 @@ fn populate_hover_panel(
         .spawn((
             NodeBundle {
                 style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Px(200.)),
+                    size: Size::new(Val::Percent(100.), Val::Px(500.)),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(10.)),
                     ..default()

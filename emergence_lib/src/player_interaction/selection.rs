@@ -660,6 +660,7 @@ fn get_details(
                 tile_pos: *ghost_query_item.tile_pos,
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
+                crafting_state: ghost_query_item.crafting_state.clone(),
                 neglect: ghost_query_item.emitter.neglect_multiplier,
                 active_recipe: ghost_query_item.active_recipe.clone(),
             })
@@ -758,7 +759,7 @@ mod ghost_details {
         asset_management::manifest::{Id, Structure},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::crafting::{ActiveRecipe, InputInventory},
+        structures::crafting::{ActiveRecipe, CraftingState, InputInventory},
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -772,6 +773,8 @@ mod ghost_details {
         pub(crate) tile_pos: &'static TilePos,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: &'static InputInventory,
+        /// The ghost's progress through construction
+        pub(crate) crafting_state: &'static CraftingState,
         /// The signal emitter
         pub(super) emitter: &'static Emitter,
         /// The recipe that will be crafted when the structure is first built
@@ -789,6 +792,8 @@ mod ghost_details {
         pub(crate) structure_id: Id<Structure>,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: InputInventory,
+        /// The ghost's progress through construction
+        pub(super) crafting_state: CraftingState,
         /// The neglect multiplier of this ghost
         pub(super) neglect: f32,
         /// The recipe that will be crafted when the structure is first built
@@ -801,6 +806,7 @@ mod ghost_details {
             let structure_id = &self.structure_id;
             let tile_pos = &self.tile_pos;
             let input_inventory = &*self.input_inventory;
+            let crafting_state = &self.crafting_state;
             let neglect = self.neglect;
             let recipe = &self.active_recipe;
 
@@ -810,6 +816,7 @@ mod ghost_details {
 Ghost structure type: {structure_id}
 Recipe: {recipe}
 Construction materials: {input_inventory}
+{crafting_state}
 Neglect: {neglect:.2}"
             );
 

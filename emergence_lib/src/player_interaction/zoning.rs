@@ -4,13 +4,9 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
-    simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{
-        commands::StructureCommandsExt,
-        crafting::{ActiveRecipe, InputInventory},
-        ghost::Ghost,
-    },
+    asset_management::manifest::StructureManifest,
+    simulation::geometry::{MapGeometry, TilePos},
+    structures::commands::StructureCommandsExt,
     terrain::Terrain,
 };
 
@@ -36,8 +32,7 @@ impl Plugin for ZoningPlugin {
             generate_ghosts_from_zoning
                 .label(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
-        )
-        .add_system(turn_ghosts_into_structures);
+        );
     }
 }
 
@@ -156,34 +151,5 @@ fn generate_ghosts_from_zoning(
             // TODO: this should also take delayed effect
             Zoning::KeepClear => commands.despawn_structure(tile_pos),
         };
-    }
-}
-
-/// Transforms ghosts into structures once all of their construction materials have been supplied.
-fn turn_ghosts_into_structures(
-    ghost_query: Query<
-        (
-            &InputInventory,
-            &TilePos,
-            &Id<Structure>,
-            &Facing,
-            &ActiveRecipe,
-        ),
-        With<Ghost>,
-    >,
-    mut commands: Commands,
-) {
-    for (input_inventory, &tile_pos, &structure_id, &facing, active_recipe) in ghost_query.iter() {
-        if input_inventory.is_full() {
-            commands.despawn_ghost(tile_pos);
-            commands.spawn_structure(
-                tile_pos,
-                ClipboardData {
-                    structure_id,
-                    facing,
-                    active_recipe: active_recipe.clone(),
-                },
-            );
-        }
     }
 }

@@ -255,8 +255,6 @@ impl Command for SpawnGhostCommand {
         }
 
         let structure_manifest = world.resource::<StructureManifest>();
-        let variety_data = structure_manifest.get(self.data.structure_id);
-        let construction_materials = variety_data.construction_materials.clone();
 
         // Spawn a ghost
         let structure_handles = world.resource::<StructureHandles>();
@@ -281,7 +279,7 @@ impl Command for SpawnGhostCommand {
             .spawn(GhostBundle::new(
                 self.tile_pos,
                 self.data,
-                construction_materials,
+                structure_manifest,
                 picking_mesh,
                 scene_handle,
                 inherited_material,
