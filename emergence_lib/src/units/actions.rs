@@ -109,7 +109,16 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::Work(structure_id) => CurrentAction::find_workplace(structure_id),
+                Goal::Work(structure_id) => CurrentAction::find_workplace(
+                    *structure_id,
+                    unit_tile_pos,
+                    facing,
+                    workplace_query,
+                    &*signals,
+                    rng,
+                    &terrain_query,
+                    map_geometry,
+                ),
             }
         }
     }
@@ -283,6 +292,7 @@ impl Display for UnitAction {
                 item_id,
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
+            UnitAction::Work { structure_entity } => format!("Working at {structure_entity:?}"),
             UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
             UnitAction::MoveForward => "Moving forward".to_string(),
             UnitAction::Eat => "Eating".to_string(),
