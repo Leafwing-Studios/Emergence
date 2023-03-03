@@ -1,3 +1,6 @@
+//! Tracks impatience (frustration) of units,
+//! causing them to give up impossible tasks.
+
 use bevy::prelude::*;
 use core::fmt::Display;
 
