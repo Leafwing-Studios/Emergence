@@ -355,7 +355,15 @@ fn gain_energy_when_crafting_completes(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 // TODO: change neglect based on inventory fullness and structure energy level
-fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+fn set_emitter(
+    mut crafting_query: Query<(
+        &mut Emitter,
+        &InputInventory,
+        &OutputInventory,
+        &CraftingState,
+        &Id<Structure>,
+    )>,
+) {
     use InventoryState::*;
 
     /// The rate at which neglect rises and falls for crafting structures.
@@ -367,10 +375,28 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
     /// This ensures that buildings are not neglected forever after being satisfied for a while.
     const MIN_NEGLECT: f32 = 0.05;
 
-    for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
+    for (mut emitter, input_inventory, output_inventory, crafting_state, &structure_id) in
+        crafting_query.iter_mut()
+    {
         // Reset and recompute all signals
         emitter.signals.clear();
 
+        let input_inventory_state = input_inventory.state();
+        let output_inventory_state = output_inventory.state();
+
+        // Compute the change in neglect
+        let mut delta_neglect = match (input_inventory_state, output_inventory_state) {
+            // Needs more inputs
+            (Empty, _) => NEGLECT_RATE,
+            // Working happily
+            (Partial, Empty | Partial) => -NEGLECT_RATE,
+            // Outputs should be removed
+            (_, Full) => NEGLECT_RATE,
+            // Waiting to craft
+            (Full, Empty | Partial) => -NEGLECT_RATE,
+        };
+
+        // Input signals
         for item_slot in input_inventory.iter() {
             if !item_slot.is_full() {
                 let signal_type = SignalType::Pull(item_slot.item_id());
@@ -379,6 +405,7 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
             }
         }
 
+        // Output signals
         for item_slot in output_inventory.iter() {
             if item_slot.is_full() {
                 let signal_type = SignalType::Push(item_slot.item_id());
@@ -391,19 +418,24 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
             }
         }
 
-        let input_inventory_state = input_inventory.state();
-        let output_inventory_state = output_inventory.state();
+        // Work signals
+        if let CraftingState::InProgress {
+            progress: _,
+            required: _,
+            work_required,
+            worker_present,
+        } = crafting_state
+        {
+            if work_required & !worker_present {
+                let signal_strength = SignalStrength::new(100.);
+                emitter
+                    .signals
+                    .push((SignalType::Work(structure_id), signal_strength));
 
-        let delta_neglect = match (input_inventory_state, output_inventory_state) {
-            // Needs more inputs
-            (Empty, _) => NEGLECT_RATE,
-            // Working happily
-            (Partial, Empty | Partial) => -NEGLECT_RATE,
-            // Outputs should be removed
-            (_, Full) => NEGLECT_RATE,
-            // Waiting to craft
-            (Full, Empty | Partial) => -NEGLECT_RATE,
-        };
+                // If a building needs workers, it's always neglected
+                delta_neglect = NEGLECT_RATE;
+            }
+        }
 
         emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
     }

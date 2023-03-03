@@ -219,6 +219,7 @@ pub(super) fn handle_actions(
                                 progress,
                                 required,
                                 work_required,
+                                // FIXME: this will stay true indefinitely
                                 worker_present: true,
                             }
                         }
