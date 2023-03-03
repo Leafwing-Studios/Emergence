@@ -728,6 +728,7 @@ fn get_details(
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
+                impatience_pool: unit_query_item.impatience_pool.clone(),
                 organism_details,
             })
         }
@@ -999,7 +1000,7 @@ mod terrain_details {
         pub(super) terrain_type: &'static Terrain,
     }
 
-    /// Detailed info about a given unit.
+    /// Detailed info about a given piece of terrain.
     #[derive(Debug)]
     pub(crate) struct TerrainDetails {
         /// The root entity
@@ -1039,7 +1040,10 @@ mod unit_details {
     use crate::{
         asset_management::manifest::{Id, Unit},
         simulation::geometry::TilePos,
-        units::{actions::CurrentAction, goals::Goal, item_interaction::UnitInventory},
+        units::{
+            actions::CurrentAction, goals::Goal, impatience::ImpatiencePool,
+            item_interaction::UnitInventory,
+        },
     };
 
     use super::organism_details::OrganismDetails;
@@ -1059,6 +1063,8 @@ mod unit_details {
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
+        /// How frustrated the unit is
+        pub(super) impatience_pool: &'static ImpatiencePool,
     }
 
     /// Detailed info about a given unit.
@@ -1078,6 +1084,8 @@ mod unit_details {
         pub(super) action: CurrentAction,
         /// Details about this organism, if it is one.
         pub(crate) organism_details: OrganismDetails,
+        /// How frustrated the unit is
+        pub(super) impatience_pool: ImpatiencePool,
     }
 
     impl Display for UnitDetails {
@@ -1088,6 +1096,7 @@ mod unit_details {
             let held_item = &self.held_item;
             let goal = &self.goal;
             let action = &self.action;
+            let impatience_pool = &self.impatience_pool;
             let organism_details = &self.organism_details;
 
             write!(
@@ -1098,6 +1107,7 @@ Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
 Action: {action}
+Impatience: {impatience_pool}
 {organism_details}"
             )
         }
