@@ -114,7 +114,7 @@ pub(super) fn choose_actions(
                     *structure_id,
                     unit_tile_pos,
                     facing,
-                    workplace_query,
+                    &workplace_query,
                     &*signals,
                     rng,
                     &terrain_query,
@@ -130,6 +130,7 @@ pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
+    mut workplace_query: Query<&mut CraftingState>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -204,6 +205,24 @@ pub(super) fn handle_actions(
 
                     *unit.tile_pos = target_tile;
                     unit.transform.translation = target_tile.into_world_pos(&map_geometry);
+                }
+                UnitAction::Work { structure_entity } => {
+                    if let Ok(mut crafting_state) = workplace_query.get_mut(*structure_entity) {
+                        if let CraftingState::InProgress {
+                            progress,
+                            required,
+                            work_required,
+                            worker_present,
+                        } = *crafting_state
+                        {
+                            *crafting_state = CraftingState::InProgress {
+                                progress,
+                                required,
+                                work_required,
+                                worker_present: true,
+                            }
+                        }
+                    }
                 }
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
