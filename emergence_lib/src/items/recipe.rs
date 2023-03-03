@@ -5,7 +5,7 @@ use std::{fmt::Display, time::Duration};
 use crate::{
     asset_management::manifest::{Id, ItemManifest, Recipe},
     organisms::energy::Energy,
-    structures::crafting::{CraftTimer, InputInventory, OutputInventory},
+    structures::crafting::{InputInventory, OutputInventory},
 };
 
 use super::{inventory::Inventory, ItemCount};
@@ -45,6 +45,9 @@ pub(crate) struct RecipeData {
     /// The time needed to craft the recipe.
     craft_time: Duration,
 
+    /// Is work by units needed to advance this recipe?
+    work_required: bool,
+
     /// The amount of [`Energy`] produced by making this recipe, if any.
     ///
     /// This is only relevant to living structures.
@@ -57,12 +60,14 @@ impl RecipeData {
         inputs: Vec<ItemCount>,
         outputs: Vec<ItemCount>,
         craft_time: Duration,
+        work_required: bool,
         energy: Option<Energy>,
     ) -> Self {
         Self {
             inputs,
             outputs,
             craft_time,
+            work_required,
             energy,
         }
     }
@@ -82,9 +87,9 @@ impl RecipeData {
         self.craft_time
     }
 
-    /// The timer used in this recipe.
-    pub(crate) fn craft_timer(&self) -> CraftTimer {
-        CraftTimer::new(self.craft_time)
+    /// Is work from units needed to advance this recipe?
+    pub(crate) fn work_required(&self) -> bool {
+        self.work_required
     }
 
     /// An inventory with empty slots for all of the inputs of this recipe.
@@ -119,6 +124,7 @@ impl RecipeData {
             Vec::new(),
             vec![ItemCount::one(Id::acacia_leaf())],
             Duration::from_secs(3),
+            false,
             Some(Energy(20.)),
         )
     }
@@ -129,6 +135,7 @@ impl RecipeData {
             vec![ItemCount::one(Id::acacia_leaf())],
             vec![ItemCount::one(Id::leuco_chunk())],
             Duration::from_secs(2),
+            false,
             Some(Energy(40.)),
         )
     }
@@ -139,6 +146,7 @@ impl RecipeData {
             vec![ItemCount::one(Id::leuco_chunk())],
             vec![ItemCount::one(Id::ant_egg())],
             Duration::from_secs(5),
+            false,
             None,
         )
     }
@@ -148,7 +156,8 @@ impl RecipeData {
         RecipeData::new(
             vec![ItemCount::one(Id::ant_egg())],
             vec![],
-            Duration::from_secs(2),
+            Duration::from_secs(10),
+            true,
             None,
         )
     }
@@ -184,6 +193,7 @@ mod tests {
             inputs: Vec::new(),
             outputs: vec![ItemCount::one(Id::acacia_leaf())],
             craft_time: Duration::from_secs(1),
+            work_required: false,
             energy: Some(Energy(20.)),
         };
 

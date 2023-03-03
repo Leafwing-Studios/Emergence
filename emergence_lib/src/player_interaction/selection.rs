@@ -667,25 +667,23 @@ fn get_details(
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity)?;
 
-            let crafting_details =
-                if let Some((input, output, active_recipe, state, timer, emitter)) =
-                    structure_query_item.crafting
-                {
-                    let maybe_recipe_id = *active_recipe.recipe_id();
-                    let recipe =
-                        maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
+            let crafting_details = if let Some((input, output, active_recipe, state, emitter)) =
+                structure_query_item.crafting
+            {
+                let maybe_recipe_id = *active_recipe.recipe_id();
+                let recipe =
+                    maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
-                    Some(CraftingDetails {
-                        input_inventory: input.inventory.clone(),
-                        output_inventory: output.inventory.clone(),
-                        recipe,
-                        state: state.clone(),
-                        timer: timer.clone(),
-                        neglect: emitter.neglect_multiplier,
-                    })
-                } else {
-                    None
-                };
+                Some(CraftingDetails {
+                    input_inventory: input.inventory.clone(),
+                    output_inventory: output.inventory.clone(),
+                    recipe,
+                    state: state.clone(),
+                    neglect: emitter.neglect_multiplier,
+                })
+            } else {
+                None
+            };
 
             // Not all structures are organisms
             let maybe_organism_details = organism_query
@@ -872,9 +870,7 @@ mod structure_details {
         items::{inventory::Inventory, recipe::RecipeData},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::crafting::{
-            ActiveRecipe, CraftTimer, CraftingState, InputInventory, OutputInventory,
-        },
+        structures::crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -892,7 +888,6 @@ mod structure_details {
             &'static OutputInventory,
             &'static ActiveRecipe,
             &'static CraftingState,
-            &'static CraftTimer,
             &'static Emitter,
         )>,
     }
@@ -953,9 +948,6 @@ Tile: {tile_pos}"
         /// The state of the ongoing crafting process.
         pub(crate) state: CraftingState,
 
-        /// The time remaining to finish crafting.
-        pub(crate) timer: CraftTimer,
-
         /// The neglect multiplier of the structure
         pub(crate) neglect: f32,
     }
@@ -965,8 +957,6 @@ Tile: {tile_pos}"
             let input_inventory = &self.input_inventory;
             let output_inventory = &self.output_inventory;
             let crafting_state = &self.state;
-            let time_remaining = self.timer.remaining_secs();
-            let total_duration = self.timer.duration().as_secs_f32();
             let neglect = self.neglect;
 
             let recipe_string = match &self.recipe {
@@ -978,7 +968,7 @@ Tile: {tile_pos}"
                 f,
                 "Recipe: {recipe_string}
 Input: {input_inventory}
-{crafting_state}: {time_remaining:.1} s / {total_duration:.1} s
+{crafting_state}
 Output: {output_inventory}
 Neglect: {neglect:.2}"
             )

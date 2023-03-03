@@ -6,12 +6,12 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Unit},
+    asset_management::manifest::{Id, Item, ItemManifest, Structure, Unit},
     items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
-    structures::crafting::{InputInventory, OutputInventory},
+    structures::crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
     terrain::Terrain,
 };
 
@@ -34,6 +34,7 @@ pub(super) fn choose_actions(
     >,
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
+    workplace_query: WorkplaceQuery,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Terrain>,
@@ -109,7 +110,16 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::Work(_) => todo!(),
+                Goal::Work(structure_id) => CurrentAction::find_workplace(
+                    *structure_id,
+                    unit_tile_pos,
+                    facing,
+                    &workplace_query,
+                    &signals,
+                    rng,
+                    &terrain_query,
+                    map_geometry,
+                ),
             }
         }
     }
@@ -120,6 +130,7 @@ pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
+    mut workplace_query: Query<&mut CraftingState>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -195,6 +206,25 @@ pub(super) fn handle_actions(
                     *unit.tile_pos = target_tile;
                     unit.transform.translation = target_tile.into_world_pos(&map_geometry);
                 }
+                UnitAction::Work { structure_entity } => {
+                    if let Ok(mut crafting_state) = workplace_query.get_mut(*structure_entity) {
+                        if let CraftingState::InProgress {
+                            progress,
+                            required,
+                            work_required,
+                            worker_present: _,
+                        } = *crafting_state
+                        {
+                            *crafting_state = CraftingState::InProgress {
+                                progress,
+                                required,
+                                work_required,
+                                // FIXME: this will stay true indefinitely
+                                worker_present: true,
+                            }
+                        }
+                    }
+                }
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
                         if held_item == unit.diet.item() {
@@ -249,12 +279,17 @@ pub(super) enum UnitAction {
         /// The entity to grab it from, which must have an [`OutputInventory`] component.
         output_entity: Entity,
     },
-    /// Drops off the `item_id` at the `output_entity.
+    /// Drops off the `item_id` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
         item_id: Id<Item>,
         /// The entity to drop it off at, which must have an [`InputInventory`] component.
         input_entity: Entity,
+    },
+    /// Perform work at the provided `structure_entity`
+    Work {
+        /// The structure to work at.
+        structure_entity: Entity,
     },
     /// Spin left or right.
     Spin {
@@ -281,6 +316,7 @@ impl Display for UnitAction {
                 item_id,
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
+            UnitAction::Work { structure_entity } => format!("Working at {structure_entity:?}"),
             UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
             UnitAction::MoveForward => "Moving forward".to_string(),
             UnitAction::Eat => "Eating".to_string(),
@@ -373,7 +409,7 @@ impl CurrentAction {
         }
     }
 
-    /// Attempt to located a place to put an item of type `item_id`.
+    /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
     fn find_receptacle(
         item_id: Id<Item>,
@@ -427,6 +463,57 @@ impl CurrentAction {
             )
         } else {
             CurrentAction::idle()
+        }
+    }
+
+    /// Attempt to find a structure of type `structure_id` to perform work
+    #[allow(clippy::too_many_arguments)]
+    fn find_workplace(
+        structure_id: Id<Structure>,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        workplace_query: &WorkplaceQuery,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        terrain_query: &Query<&Terrain>,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let ahead = unit_tile_pos.neighbor(facing.direction);
+        if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
+            CurrentAction::work(workplace)
+        } else {
+            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
+
+            for neighbor in neighboring_tiles {
+                if let Some(workplace) =
+                    workplace_query.needs_work(neighbor, structure_id, map_geometry)
+                {
+                    workplaces.push((workplace, neighbor));
+                }
+            }
+
+            if let Some(chosen_workplace) = workplaces.choose(rng) {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    chosen_workplace.1,
+                    facing,
+                    terrain_query,
+                    map_geometry,
+                )
+            } else if let Some(upstream) =
+                signals.upstream(unit_tile_pos, &Goal::Work(structure_id), map_geometry)
+            {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    upstream,
+                    facing,
+                    terrain_query,
+                    map_geometry,
+                )
+            } else {
+                CurrentAction::idle()
+            }
         }
     }
 
@@ -567,6 +654,14 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Eat,
             timer: Timer::from_seconds(0.5, TimerMode::Once),
+        }
+    }
+
+    /// Work at the specified structure
+    pub(super) fn work(structure_entity: Entity) -> Self {
+        CurrentAction {
+            action: UnitAction::Work { structure_entity },
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }
 

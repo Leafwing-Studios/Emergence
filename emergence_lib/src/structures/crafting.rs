@@ -2,12 +2,16 @@
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
+use bevy::{
+    ecs::{query::WorldQuery, system::SystemParam},
+    prelude::*,
+    utils::HashMap,
+};
 use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest},
+    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest, Structure},
     items::{
         inventory::{Inventory, InventoryState},
         recipe::RecipeData,
@@ -15,16 +19,26 @@ use crate::{
     },
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
+    simulation::geometry::{MapGeometry, TilePos},
 };
 
 /// The current state in the crafting progress.
-#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Default, Clone, PartialEq)]
 pub(crate) enum CraftingState {
     /// There are resources missing for the recipe.
     #[default]
     NeedsInput,
     /// The resource cost has been paid and the recipe is being crafted.
-    InProgress,
+    InProgress {
+        /// How far through the recipe are we?
+        progress: Duration,
+        /// How long does this recipe take to complete in full?
+        required: Duration,
+        /// Does this recipe require work to be done?
+        work_required: bool,
+        /// Is a unit currently working on this recipe?
+        worker_present: bool,
+    },
     /// Resources need to be claimed before more crafting can continue.
     FullAndBlocked,
     /// The recipe is complete.
@@ -38,12 +52,36 @@ pub(crate) enum CraftingState {
 impl Display for CraftingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            CraftingState::NeedsInput => "Waiting for input",
-            CraftingState::InProgress => "In progress",
-            CraftingState::RecipeComplete => "Recipe complete",
-            CraftingState::FullAndBlocked => "Blocked",
-            CraftingState::Overproduction => "Overproduction",
-            CraftingState::NoRecipe => "No recipe set",
+            CraftingState::NeedsInput => "Waiting for input".to_string(),
+            CraftingState::InProgress {
+                progress,
+                required,
+                work_required,
+                worker_present,
+            } => {
+                let progress_in_seconds = progress.as_secs_f32();
+                let required_in_seconds = required.as_secs_f32();
+                match (work_required, worker_present) {
+                    (true, true) => {
+                        format!("Work in progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                    (true, false) => {
+                        format!(
+                            "Worker needed ({progress_in_seconds:.1} / {required_in_seconds:.1})"
+                        )
+                    }
+                    (false, true) => {
+                        format!("Unecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                    (false, false) => {
+                        format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                    }
+                }
+            }
+            CraftingState::RecipeComplete => "Recipe complete".to_string(),
+            CraftingState::FullAndBlocked => "Blocked".to_string(),
+            CraftingState::Overproduction => "Overproduction".to_string(),
+            CraftingState::NoRecipe => "No recipe set".to_string(),
         };
 
         write!(f, "{str}")
@@ -109,24 +147,6 @@ impl ActiveRecipe {
     }
 }
 
-/// The time remaining until the recipe has been crafted.
-#[derive(Component, Debug, Default, Deref, DerefMut, Clone)]
-pub(crate) struct CraftTimer(Timer);
-
-impl CraftTimer {
-    /// Generates a new timer from the provided duration
-    pub(crate) fn new(duration: Duration) -> Self {
-        CraftTimer(Timer::new(duration, TimerMode::Once))
-    }
-
-    /// Randomizes this timer so that crafting is partially complete.
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
-        let distribution = Uniform::new(Duration::ZERO, self.duration());
-        let elapsed = distribution.sample(rng);
-        self.set_elapsed(elapsed);
-    }
-}
-
 /// All components needed to craft stuff.
 #[derive(Debug, Bundle)]
 pub(crate) struct CraftingBundle {
@@ -138,9 +158,6 @@ pub(crate) struct CraftingBundle {
 
     /// The recipe that is currently being crafted.
     active_recipe: ActiveRecipe,
-
-    /// The "cooldown" for crafting.
-    craft_timer: CraftTimer,
 
     /// The current state for the crafting process.
     craft_state: CraftingState,
@@ -162,7 +179,6 @@ impl CraftingBundle {
             Self {
                 input_inventory: recipe.input_inventory(item_manifest),
                 output_inventory: recipe.output_inventory(item_manifest),
-                craft_timer: recipe.craft_timer(),
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
@@ -175,7 +191,6 @@ impl CraftingBundle {
                 output_inventory: OutputInventory {
                     inventory: Inventory::new(1),
                 },
-                craft_timer: CraftTimer(Timer::new(Duration::ZERO, TimerMode::Once)),
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
@@ -197,15 +212,20 @@ impl CraftingBundle {
             input_inventory.randomize(rng);
             let mut output_inventory = recipe.output_inventory(item_manifest);
             output_inventory.randomize(rng);
-            let mut craft_timer = recipe.craft_timer();
-            craft_timer.randomize(rng);
+
+            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time());
+            let progress = distribution.sample(rng);
 
             Self {
                 input_inventory,
                 output_inventory,
-                craft_timer,
                 active_recipe: ActiveRecipe(Some(recipe_id)),
-                craft_state: CraftingState::NeedsInput,
+                craft_state: CraftingState::InProgress {
+                    progress,
+                    required: recipe.craft_time(),
+                    work_required: recipe.work_required(),
+                    worker_present: false,
+                },
                 emitter: Emitter::default(),
             }
         } else {
@@ -220,8 +240,6 @@ impl CraftingBundle {
 struct CraftingQuery {
     /// The recipe of the crafter
     active_recipe: &'static ActiveRecipe,
-    /// The time remaining to complete the recipe
-    timer: &'static mut CraftTimer,
     /// The status of crafting
     state: &'static mut CraftingState,
     /// The inputs
@@ -249,24 +267,39 @@ fn progress_crafting(
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
                     match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
-                        Ok(()) => {
-                            crafter.timer.set_duration(recipe.craft_time());
-                            crafter.timer.reset();
-                            CraftingState::InProgress
-                        }
+                        Ok(()) => CraftingState::InProgress {
+                            progress: Duration::ZERO,
+                            required: recipe.craft_time(),
+                            work_required: recipe.work_required(),
+                            worker_present: false,
+                        },
                         Err(_) => CraftingState::NeedsInput,
                     }
                 } else {
                     CraftingState::NoRecipe
                 }
             }
-            CraftingState::InProgress => {
-                crafter.timer.tick(time.delta());
+            CraftingState::InProgress {
+                progress,
+                required,
+                work_required,
+                worker_present,
+            } => {
+                let mut updated_progress = progress;
 
-                if crafter.timer.finished() {
+                if !work_required || worker_present {
+                    updated_progress += time.delta();
+                }
+
+                if updated_progress >= required {
                     CraftingState::RecipeComplete
                 } else {
-                    CraftingState::InProgress
+                    CraftingState::InProgress {
+                        progress: updated_progress,
+                        required,
+                        work_required,
+                        worker_present,
+                    }
                 }
             }
             CraftingState::RecipeComplete => {
@@ -326,7 +359,15 @@ fn gain_energy_when_crafting_completes(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 // TODO: change neglect based on inventory fullness and structure energy level
-fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &OutputInventory)>) {
+fn set_emitter(
+    mut crafting_query: Query<(
+        &mut Emitter,
+        &InputInventory,
+        &OutputInventory,
+        &CraftingState,
+        &Id<Structure>,
+    )>,
+) {
     use InventoryState::*;
 
     /// The rate at which neglect rises and falls for crafting structures.
@@ -338,10 +379,28 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
     /// This ensures that buildings are not neglected forever after being satisfied for a while.
     const MIN_NEGLECT: f32 = 0.05;
 
-    for (mut emitter, input_inventory, output_inventory) in crafting_query.iter_mut() {
+    for (mut emitter, input_inventory, output_inventory, crafting_state, &structure_id) in
+        crafting_query.iter_mut()
+    {
         // Reset and recompute all signals
         emitter.signals.clear();
 
+        let input_inventory_state = input_inventory.state();
+        let output_inventory_state = output_inventory.state();
+
+        // Compute the change in neglect
+        let mut delta_neglect = match (input_inventory_state, output_inventory_state) {
+            // Needs more inputs
+            (Empty, _) => NEGLECT_RATE,
+            // Working happily
+            (Partial, Empty | Partial) => -NEGLECT_RATE,
+            // Outputs should be removed
+            (_, Full) => NEGLECT_RATE,
+            // Waiting to craft
+            (Full, Empty | Partial) => -NEGLECT_RATE,
+        };
+
+        // Input signals
         for item_slot in input_inventory.iter() {
             if !item_slot.is_full() {
                 let signal_type = SignalType::Pull(item_slot.item_id());
@@ -350,6 +409,7 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
             }
         }
 
+        // Output signals
         for item_slot in output_inventory.iter() {
             if item_slot.is_full() {
                 let signal_type = SignalType::Push(item_slot.item_id());
@@ -362,21 +422,69 @@ fn set_emitter(mut crafting_query: Query<(&mut Emitter, &InputInventory, &Output
             }
         }
 
-        let input_inventory_state = input_inventory.state();
-        let output_inventory_state = output_inventory.state();
+        // Work signals
+        if let CraftingState::InProgress {
+            progress: _,
+            required: _,
+            work_required,
+            worker_present,
+        } = crafting_state
+        {
+            if work_required & !worker_present {
+                let signal_strength = SignalStrength::new(100.);
+                emitter
+                    .signals
+                    .push((SignalType::Work(structure_id), signal_strength));
 
-        let delta_neglect = match (input_inventory_state, output_inventory_state) {
-            // Needs more inputs
-            (Empty, _) => NEGLECT_RATE,
-            // Working happily
-            (Partial, Empty | Partial) => -NEGLECT_RATE,
-            // Outputs should be removed
-            (_, Full) => NEGLECT_RATE,
-            // Waiting to craft
-            (Full, Empty | Partial) => -NEGLECT_RATE,
-        };
+                // If a building needs workers, it's always neglected
+                delta_neglect = NEGLECT_RATE;
+            }
+        }
 
         emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
+    }
+}
+
+/// A query about the [`CraftingState`] of a structure that might need work done.
+#[derive(SystemParam)]
+pub(crate) struct WorkplaceQuery<'w, 's> {
+    /// The contained query type.
+    query: Query<'w, 's, (&'static CraftingState, &'static Id<Structure>)>,
+}
+
+impl<'w, 's> WorkplaceQuery<'w, 's> {
+    /// Is there a structure of type `structure_id` at `structure_pos` that needs work done by a unit?
+    ///
+    /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
+    pub(crate) fn needs_work(
+        &self,
+        structure_pos: TilePos,
+        structure_id: Id<Structure>,
+        map_geometry: &MapGeometry,
+    ) -> Option<Entity> {
+        let entity = *map_geometry.structure_index.get(&structure_pos)?;
+
+        let (found_crafting_state, found_structure_id) = self.query.get(entity).ok()?;
+
+        if *found_structure_id != structure_id {
+            return None;
+        }
+
+        if let CraftingState::InProgress {
+            progress: _,
+            required: _,
+            work_required,
+            worker_present: _,
+        } = found_crafting_state
+        {
+            if *work_required {
+                Some(entity)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
