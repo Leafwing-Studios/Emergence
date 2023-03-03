@@ -10,6 +10,8 @@ use crate::asset_management::manifest::{Id, Item, Structure};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 
+use super::impatience::ImpatiencePool;
+
 /// A unit's current goals.
 ///
 /// Units will be fully concentrated on any task other than [`Goal::Wander`] until it is complete (or overridden).
@@ -67,10 +69,18 @@ impl Display for Goal {
 }
 
 /// Choose this unit's new goal if needed
-pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals: Res<Signals>) {
+pub(super) fn choose_goal(
+    mut units_query: Query<(&TilePos, &mut Goal, &mut ImpatiencePool)>,
+    signals: Res<Signals>,
+) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience_pool) in units_query.iter_mut() {
+        // If we're out of patience, give up and choose a new goal
+        if impatience_pool.is_full() {
+            *goal = Goal::Wander;
+        }
+
         // By default, goals are reset to wandering when completed.
         // Pick a new goal when wandering.
         // If anything fails, just keep wandering for now.
@@ -86,6 +96,8 @@ pub(super) fn choose_goal(mut units_query: Query<(&TilePos, &mut Goal)>, signals
                 if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
                     let selected_signal_type = *selected_signal.0;
                     *goal = selected_signal_type.try_into().unwrap();
+                    // Reset impatience when we choose a new goal
+                    impatience_pool.reset();
                 }
             }
         }
