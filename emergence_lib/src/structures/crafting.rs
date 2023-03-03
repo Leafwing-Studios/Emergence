@@ -462,7 +462,12 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
         structure_id: Id<Structure>,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
-        let entity = *map_geometry.structure_index.get(&structure_pos)?;
+        // Prioritize ghosts over structures to allow for replacing structures by building
+        let entity = if let Some(ghost_entity) = map_geometry.ghost_index.get(&structure_pos) {
+            *ghost_entity
+        } else {
+            *map_geometry.structure_index.get(&structure_pos)?
+        };
 
         let (found_crafting_state, found_structure_id) = self.query.get(entity).ok()?;
 
