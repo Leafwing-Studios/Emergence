@@ -24,7 +24,7 @@ use crate::{
 
 use self::{
     crafting::{ActiveRecipe, CraftingPlugin, InputInventory},
-    ghost::increase_ghost_neglect,
+    ghost::{ghost_lifecyle, ghost_signals},
 };
 
 pub(crate) mod commands;
@@ -43,7 +43,7 @@ pub(crate) struct StructureData {
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
-    required_work: Duration,
+    build_duration: Duration,
     /// The set of items needed to create a new copy of this structure
     construction_materials: InputInventory,
     /// The set of terrain types that this structure can be built on
@@ -81,7 +81,7 @@ impl Default for StructureManifest {
                 }),
                 crafts: true,
                 starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
-                required_work: Duration::from_secs(5),
+                build_duration: Duration::from_secs(5),
                 construction_materials: leuco_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
                 color: Color::ORANGE_RED,
@@ -100,7 +100,7 @@ impl Default for StructureManifest {
                 }),
                 crafts: true,
                 starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
-                required_work: Duration::ZERO,
+                build_duration: Duration::ZERO,
                 construction_materials: acacia_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
                 color: Color::GREEN,
@@ -114,7 +114,7 @@ impl Default for StructureManifest {
                 crafts: true,
                 starting_recipe: ActiveRecipe::new(Id::ant_egg_production()),
                 construction_materials: InputInventory::default(),
-                required_work: Duration::from_secs(10),
+                build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
                     Terrain::Plain,
                     Terrain::Muddy,
@@ -131,7 +131,7 @@ impl Default for StructureManifest {
                 crafts: true,
                 starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
-                required_work: Duration::from_secs(5),
+                build_duration: Duration::from_secs(5),
                 allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Rocky]),
                 color: Color::BLUE,
             },
@@ -192,6 +192,7 @@ impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin)
             .init_resource::<StructureManifest>()
-            .add_system(increase_ghost_neglect);
+            .add_system(ghost_signals)
+            .add_system(ghost_lifecyle);
     }
 }
