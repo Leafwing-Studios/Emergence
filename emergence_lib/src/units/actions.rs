@@ -249,13 +249,15 @@ pub(super) enum UnitAction {
         /// The entity to grab it from, which must have an [`OutputInventory`] component.
         output_entity: Entity,
     },
-    /// Drops off the `item_id` at the `output_entity.
+    /// Drops off the `item_id` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
         item_id: Id<Item>,
         /// The entity to drop it off at, which must have an [`InputInventory`] component.
         input_entity: Entity,
     },
+    /// Perform work at the provided `structure_entity`
+    Work { structure_entity: Entity },
     /// Spin left or right.
     Spin {
         /// The direction to turn in.
@@ -617,6 +619,14 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Eat,
             timer: Timer::from_seconds(0.5, TimerMode::Once),
+        }
+    }
+
+    /// Work at the specified structure
+    pub(super) fn work(structure_entity: Entity) -> Self {
+        CurrentAction {
+            action: UnitAction::Work { structure_entity },
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }
 
