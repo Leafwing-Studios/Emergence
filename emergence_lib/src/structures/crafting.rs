@@ -67,10 +67,10 @@ impl Display for CraftingState {
                         )
                     }
                     (false, true) => {
-                        format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                        format!("Unecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
                     }
                     (false, false) => {
-                        format!("Unecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                        format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
                     }
                 }
             }
