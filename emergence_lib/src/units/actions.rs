@@ -6,7 +6,7 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Unit},
+    asset_management::manifest::{Id, Item, ItemManifest, Structure, Unit},
     items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
@@ -109,7 +109,7 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::Work(_) => todo!(),
+                Goal::Work(structure_id) => CurrentAction::find_workplace(structure_id),
             }
         }
     }
@@ -373,7 +373,7 @@ impl CurrentAction {
         }
     }
 
-    /// Attempt to located a place to put an item of type `item_id`.
+    /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
     fn find_receptacle(
         item_id: Id<Item>,
@@ -427,6 +427,56 @@ impl CurrentAction {
             )
         } else {
             CurrentAction::idle()
+        }
+    }
+
+    /// Attempt to find a structure of type `structure_id` to perform work
+    fn find_workplace(
+        structure_id: Id<Structure>,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        workplace_query: &Query<(&Workplace, &Id<Structure>)>,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        terrain_query: &Query<&Terrain>,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let ahead = unit_tile_pos.ahead(facing);
+        if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
+            CurrentAction::work(workplace)
+        } else {
+            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
+
+            for neighbor in neighboring_tiles {
+                if let Some(workplace) =
+                    workplace_query.needs_work(neighbor, structure_id, map_geometry)
+                {
+                    workplaces.push((workplace, neighbor));
+                }
+            }
+
+            if let Some(chosen_workplace) = workplaces.choose(rng) {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    chosen_workplace.1,
+                    facing,
+                    terrain_query,
+                    map_geometry,
+                )
+            } else if let Some(upstream) =
+                signals.upstream(unit_tile_pos, &Goal::Work(structure_id), map_geometry)
+            {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    upstream,
+                    facing,
+                    terrain_query,
+                    map_geometry,
+                )
+            } else {
+                CurrentAction::idle()
+            }
         }
     }
 
