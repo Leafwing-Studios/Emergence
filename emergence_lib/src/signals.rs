@@ -288,18 +288,10 @@ impl Mul<f32> for SignalStrength {
 /// The component that causes a game object to emit a signal.
 ///
 /// This can change over time, and multiple signals may be emitted at once.
-#[derive(Component, Debug, Clone)]
+#[derive(Default, Component, Debug, Clone)]
 pub(crate) struct Emitter {
     /// The list of signals to emit at a provided
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
-}
-
-impl Default for Emitter {
-    fn default() -> Self {
-        Emitter {
-            signals: Vec::new(),
-        }
-    }
 }
 
 /// Emits signals from [`Emitter`] sources.
