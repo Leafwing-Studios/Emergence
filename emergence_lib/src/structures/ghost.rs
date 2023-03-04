@@ -189,16 +189,8 @@ pub(super) fn ghost_signals(
         With<Ghost>,
     >,
 ) {
-    /// The rate at which neglect grows for each cycle
-    ///
-    /// Should be positive.
-    const NEGLECT_RATE: f32 = 0.05;
-
     // Ghosts that are ignored will slowly become more important to build.
     for (&structure_id, mut emitter, crafting_state, input_inventory) in ghost_query.iter_mut() {
-        // Always increase neglect over time
-        emitter.neglect_multiplier += NEGLECT_RATE;
-
         if crafting_state.is_changed() {
             match *crafting_state {
                 CraftingState::NeedsInput => {

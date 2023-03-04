@@ -12,11 +12,7 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
     asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest, Structure},
-    items::{
-        inventory::{Inventory, InventoryState},
-        recipe::RecipeData,
-        ItemData,
-    },
+    items::{inventory::Inventory, recipe::RecipeData, ItemData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
@@ -368,37 +364,11 @@ fn set_emitter(
         &Id<Structure>,
     )>,
 ) {
-    use InventoryState::*;
-
-    /// The rate at which neglect rises and falls for crafting structures.
-    ///
-    /// Should be positive
-    const NEGLECT_RATE: f32 = 0.05;
-    /// The minimum neglect that a crafting structure can have.
-    ///
-    /// This ensures that buildings are not neglected forever after being satisfied for a while.
-    const MIN_NEGLECT: f32 = 0.05;
-
     for (mut emitter, input_inventory, output_inventory, crafting_state, &structure_id) in
         crafting_query.iter_mut()
     {
         // Reset and recompute all signals
         emitter.signals.clear();
-
-        let input_inventory_state = input_inventory.state();
-        let output_inventory_state = output_inventory.state();
-
-        // Compute the change in neglect
-        let mut delta_neglect = match (input_inventory_state, output_inventory_state) {
-            // Needs more inputs
-            (Empty, _) => NEGLECT_RATE,
-            // Working happily
-            (Partial, Empty | Partial) => -NEGLECT_RATE,
-            // Outputs should be removed
-            (_, Full) => NEGLECT_RATE,
-            // Waiting to craft
-            (Full, Empty | Partial) => -NEGLECT_RATE,
-        };
 
         // Input signals
         for item_slot in input_inventory.iter() {
@@ -435,13 +405,8 @@ fn set_emitter(
                 emitter
                     .signals
                     .push((SignalType::Work(structure_id), signal_strength));
-
-                // If a building needs workers, it's always neglected
-                delta_neglect = NEGLECT_RATE;
             }
         }
-
-        emitter.neglect_multiplier = (emitter.neglect_multiplier + delta_neglect).max(MIN_NEGLECT);
     }
 }
 

@@ -288,34 +288,17 @@ impl Mul<f32> for SignalStrength {
 /// The component that causes a game object to emit a signal.
 ///
 /// This can change over time, and multiple signals may be emitted at once.
-#[derive(Component, Debug, Clone)]
+#[derive(Default, Component, Debug, Clone)]
 pub(crate) struct Emitter {
     /// The list of signals to emit at a provided
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
-    /// A multiplier on any signals emitted.
-    ///
-    /// Increases over time as needs are ignored.
-    pub(crate) neglect_multiplier: f32,
-}
-
-impl Default for Emitter {
-    fn default() -> Self {
-        Emitter {
-            signals: Vec::new(),
-            neglect_multiplier: 1.,
-        }
-    }
 }
 
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &Emitter)>) {
     for (&tile_pos, emitter) in emitter_query.iter() {
         for (signal_type, signal_strength) in &emitter.signals {
-            signals.add_signal(
-                *signal_type,
-                tile_pos,
-                *signal_strength * emitter.neglect_multiplier,
-            );
+            signals.add_signal(*signal_type, tile_pos, *signal_strength);
         }
     }
 }
