@@ -128,7 +128,15 @@ impl Signals {
             }
         }
 
-        best_choice
+        if let Some(best_tile_pos) = best_choice {
+            if best_tile_pos == tile_pos {
+                None
+            } else {
+                best_choice
+            }
+        } else {
+            None
+        }
     }
 
     /// Returns the signal strength of the type `signal_type` in `tile_pos` and its 6 surrounding neighbors.
