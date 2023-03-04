@@ -363,7 +363,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     ///
     /// Higher values lead to faster decay.
     /// This must always be between 0 and 1.
-    const DEGRADATION_FRACTION: f32 = 0.1;
+    const DEGRADATION_FRACTION: f32 = 0.001;
 
     /// The value below which decayed signals are eliminated completely
     ///
@@ -371,7 +371,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     ///  - increase computational costs
     ///  - increase the range at which tasks can be detected
     ///  - increase the amount of time units will wait around for more production
-    const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-5);
+    const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
 
     for signal_map in signals.maps.values_mut() {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
