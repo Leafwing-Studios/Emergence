@@ -361,9 +361,9 @@ fn diffuse_signals(
 fn degrade_signals(mut signals: ResMut<Signals>) {
     /// The fraction of signal that will decay at each step.
     ///
-    /// Higher values lead to faster decay.
+    /// Higher values lead to faster decay and improved signal responsiveness.
     /// This must always be between 0 and 1.
-    const DEGRADATION_FRACTION: f32 = 0.001;
+    const DEGRADATION_FRACTION: f32 = 0.01;
 
     /// The value below which decayed signals are eliminated completely
     ///
