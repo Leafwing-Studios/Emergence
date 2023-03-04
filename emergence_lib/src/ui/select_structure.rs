@@ -115,7 +115,12 @@ fn spawn_hex_menu(
             let mut hexes =
                 Hex::ZERO.custom_spiral_range(1..range, hexx::Direction::BottomRight, true);
 
-            for structure_id in structure_manifest.variants() {
+            let mut variants: Vec<Id<Structure>> =
+                Vec::from_iter(structure_manifest.variants().into_iter());
+            // We want a stable order so muscle memory works effectively
+            variants.sort();
+
+            for structure_id in variants {
                 // Just give up rather than panic if too many entities are found
                 if let Some(hex) = hexes.next() {
                     arrangement.content_map.insert(hex, structure_id);
