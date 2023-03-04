@@ -211,6 +211,10 @@ pub(super) fn handle_actions(
                     unit.transform.translation = target_tile.into_world_pos(&map_geometry);
                 }
                 UnitAction::Work { structure_entity } => {
+                    // If something went wrong, give up on this goal
+                    // This temporary variable is just to avoid horribly complex nesting
+                    let mut success = false;
+
                     if let Ok(mut crafting_state) = workplace_query.get_mut(*structure_entity) {
                         if let CraftingState::InProgress {
                             progress,
@@ -219,14 +223,21 @@ pub(super) fn handle_actions(
                             worker_present: _,
                         } = *crafting_state
                         {
-                            *crafting_state = CraftingState::InProgress {
-                                progress,
-                                required,
-                                work_required,
-                                // FIXME: this will stay true indefinitely
-                                worker_present: true,
+                            if work_required {
+                                *crafting_state = CraftingState::InProgress {
+                                    progress,
+                                    required,
+                                    work_required,
+                                    // FIXME: this will stay true indefinitely
+                                    worker_present: true,
+                                };
+                                success = true;
                             }
                         }
+                    }
+
+                    if !success {
+                        *unit.goal = Goal::Wander;
                     }
                 }
                 UnitAction::Eat => {
