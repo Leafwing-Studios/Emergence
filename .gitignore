@@ -16,3 +16,5 @@ rust-toolchain.toml
 
 # Ignore local .cargo
 .cargo/
+
+*.blend1
