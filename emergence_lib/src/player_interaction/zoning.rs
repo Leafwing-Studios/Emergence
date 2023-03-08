@@ -24,13 +24,13 @@ impl Plugin for ZoningPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(
             set_zoning
-                .label(InteractionSystem::ApplyZoning)
+                .in_set(InteractionSystem::ApplyZoning)
                 .after(InteractionSystem::SelectTiles)
                 .after(InteractionSystem::SetClipboard),
         )
         .add_system(
             generate_ghosts_from_zoning
-                .label(InteractionSystem::ManagePreviews)
+                .in_set(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
         );
     }

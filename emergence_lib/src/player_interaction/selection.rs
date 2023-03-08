@@ -33,14 +33,14 @@ impl Plugin for SelectionPlugin {
             .init_resource::<HoveredTiles>()
             .add_system(
                 set_selection
-                    .label(InteractionSystem::SelectTiles)
+                    .in_set(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos)
                     .before(InteractionSystem::HoverDetails),
             )
             .add_system(
                 get_details
                     .pipe(clear_details_on_error)
-                    .label(InteractionSystem::HoverDetails)
+                    .in_set(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
             .add_system(update_selection_radius);

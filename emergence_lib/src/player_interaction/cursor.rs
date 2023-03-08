@@ -30,7 +30,7 @@ impl Plugin for CursorPlugin {
             .add_system(move_cursor_manually.in_base_set(CoreSet::PreUpdate))
             .add_system(
                 update_cursor_pos
-                    .label(InteractionSystem::ComputeCursorPos)
+                    .in_set(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::MoveCamera),
             );
     }

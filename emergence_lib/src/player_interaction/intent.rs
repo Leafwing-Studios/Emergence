@@ -23,7 +23,7 @@ impl Plugin for IntentPlugin {
         app.init_resource::<IntentPool>()
             .add_system(
                 regenerate_intent
-                    .label(InteractionSystem::ReplenishIntent)
+                    .in_set(InteractionSystem::ReplenishIntent)
                     .before(InteractionSystem::ApplyZoning)
                     .before(InteractionSystem::UseAbilities),
             )
