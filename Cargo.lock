@@ -2912,10 +2912,9 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 [[package]]
 name = "hexx"
 version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38555ee6167495ae006c1c8c4b5ca37b6375d18131853e2566eb33151c6b99c2"
+source = "git+https://github.com/ManevilleF/hexx#83d6a515c0afc6e91715f7f611cd40d7d6b20a58"
 dependencies = [
- "glam 0.22.0",
+ "glam 0.23.0",
  "itertools",
 ]
 
