@@ -131,28 +131,28 @@ fn update_hover_details(
 
     match *selection_details {
         SelectionDetails::Ghost(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::Flex;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Structure(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Terrain(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
         }
         SelectionDetails::Unit(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
