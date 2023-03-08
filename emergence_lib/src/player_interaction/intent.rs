@@ -6,10 +6,7 @@
 
 use std::ops::{Div, Mul};
 
-use bevy::{
-    prelude::{info, App, DetectChanges, Plugin, Res, ResMut, Resource},
-    time::Time,
-};
+use bevy::{prelude::*, time::Time};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 

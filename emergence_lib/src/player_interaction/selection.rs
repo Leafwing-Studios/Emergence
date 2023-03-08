@@ -822,7 +822,6 @@ Construction materials: {input_inventory}
 
 /// Details for organisms
 mod organism_details {
-    use bevy::ecs::prelude::*;
     use bevy::ecs::query::WorldQuery;
 
     use crate::organisms::energy::EnergyPool;

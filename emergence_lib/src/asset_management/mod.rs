@@ -33,7 +33,7 @@ pub struct AssetManagementPlugin;
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TerrainHandles>()
-            .add_state::<AssetsState>()
+            .add_state::<AssetState>()
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>();
     }
@@ -83,10 +83,10 @@ impl AssetsToLoad {
     /// A system that moves into [`AssetState::Ready`] when all assets are loaded.
     fn transition_when_complete(
         assets_to_load: Res<AssetsToLoad>,
-        mut asset_state: ResMut<State<AssetState>>,
+        mut asset_state: ResMut<NextState<AssetState>>,
     ) {
         if assets_to_load.set.is_empty() {
-            asset_state.set(AssetState::Ready).unwrap();
+            asset_state.set(AssetState::Ready);
         }
     }
 }
@@ -111,10 +111,8 @@ impl AssetCollectionExt for App {
             assets_to_load.insert::<T>();
         } else {
             // Only called for the first asset collection added.
-            self.add_system_set(
-                SystemSet::on_update(AssetState::Loading)
-                    //
-                    .with_system(AssetsToLoad::transition_when_complete),
+            self.add_system(
+                AssetsToLoad::transition_when_complete.run_if(in_state(AssetState::Loading)),
             );
             self.init_resource::<AssetsToLoad>();
         }
@@ -122,9 +120,7 @@ impl AssetCollectionExt for App {
         // Store the asset collection as a resource
         self.init_resource::<T>();
         // Poll each asset collection
-        self.add_system_set(
-            SystemSet::on_update(AssetState::Loading).with_system(AssetsToLoad::check_loaded::<T>),
-        );
+        self.add_system(AssetsToLoad::check_loaded::<T>.run_if(in_state(AssetState::Loading)));
 
         self
     }
