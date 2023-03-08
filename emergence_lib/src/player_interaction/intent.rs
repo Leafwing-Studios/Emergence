@@ -7,7 +7,7 @@
 use std::ops::{Div, Mul};
 
 use bevy::{
-    prelude::{info, App, Plugin, Res, ResMut, Resource},
+    prelude::{info, App, DetectChanges, Plugin, Res, ResMut, Resource},
     time::Time,
 };
 use derive_more::{Add, AddAssign, Sub, SubAssign};
