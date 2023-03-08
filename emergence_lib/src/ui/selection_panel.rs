@@ -60,7 +60,7 @@ fn populate_hover_panel(
                     ..default()
                 },
                 background_color: Color::rgba(0., 0., 0., 0.9).into(),
-                visibility: Visibility::INVISIBLE,
+                visibility: Visibility::Hidden,
                 ..default()
             },
             HoverPanel,
@@ -160,7 +160,7 @@ fn update_hover_details(
         }
         SelectionDetails::None => {
             // Don't bother messing with Display here to avoid triggering a pointless relayout
-            *parent_visibility = Visibility::INVISIBLE;
+            *parent_visibility = Visibility::Hidden;
         }
     }
 
