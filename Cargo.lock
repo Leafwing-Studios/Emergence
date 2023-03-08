@@ -1369,11 +1369,11 @@ dependencies = [
 
 [[package]]
 name = "bevy_screen_diagnostics"
-version = "0.1.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef4d6ab29e7eb461dd0576fc9f72151179064fc00cf51e7d4d5b5133ec6456a"
+checksum = "cca1cd2cc12f5ad29e7a737580d6a21fb2817733ab3fb81aa228cc94f204e63f"
 dependencies = [
- "bevy 0.9.1",
+ "bevy 0.10.0",
 ]
 
 [[package]]
