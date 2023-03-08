@@ -1,8 +1,8 @@
 //! Creates the UI from all modules.
 //!
-use bevy::prelude::*;
-
 use crate::ui::{select_structure::SelectStructurePlugin, selection_panel::HoverDetailsPlugin};
+use bevy::prelude::*;
+use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 
 mod intent;
 mod select_structure;
@@ -52,6 +52,8 @@ impl Plugin for UiPlugin {
             SystemStage::parallel(),
         )
         .add_startup_system_to_stage(UiStage::LayoutInitialization, setup_ui)
+        .add_plugin(ScreenDiagnosticsPlugin::default())
+        .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
         .add_plugin(SelectStructurePlugin);
     }
