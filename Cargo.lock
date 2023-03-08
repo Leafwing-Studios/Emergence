@@ -2350,7 +2350,7 @@ dependencies = [
 name = "emergence_game"
 version = "0.1.0"
 dependencies = [
- "bevy 0.9.1",
+ "bevy 0.10.0",
  "emergence_lib",
 ]
 
