@@ -37,7 +37,7 @@ impl Plugin for InteractionPlugin {
 }
 
 /// Public system sets for player interaction, used for system ordering and config
-#[derive(SystemLabel, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum InteractionSystem {
     /// Moves the camera
     MoveCamera,

@@ -127,8 +127,8 @@ impl UnitBundle {
     }
 }
 
-/// System labels for unit behavior
-#[derive(SystemLabel)]
+/// System sets for unit behavior
+#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum UnitSystem {
     /// Advances the timer of all unit actions.
     AdvanceTimers,

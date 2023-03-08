@@ -33,14 +33,14 @@ pub struct AssetManagementPlugin;
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TerrainHandles>()
-            .add_state(AssetState::Loading)
+            .add_state::<AssetsState>()
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>();
     }
 }
 
 /// Tracks the progress of asset loading.
-#[derive(Default, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(States, Default, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum AssetState {
     #[default]
     /// Assets still need to be loaded.
