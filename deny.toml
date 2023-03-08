@@ -74,6 +74,7 @@ skip = [
   { name = "miniz_oxide", version = "0.3.7" },  # from bevy_egui v0.18.0
   { name = "miniz_oxide", version = "0.4.4" },  # from bevy_egui v0.18.0
   { name = "image", version = "0.23.14" },      # from bevy_egui v0.18.0
+  { name = "xml-rs", version = "0.8.4" }
 ]
 
 [sources]
@@ -81,4 +82,6 @@ unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # If you add something here please also add a comment explaining why it's necessary :)
-allow-git = []
+# hexx: waiting on a release for Bevy 0.10
+# bevy_mod_picking: waiting on PR merge plus release for Bevy 0.10
+allow-git = ["hexx", "bevy_mod_picking"]
