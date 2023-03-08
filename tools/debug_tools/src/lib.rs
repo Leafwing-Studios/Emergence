@@ -24,7 +24,7 @@ use leafwing_input_manager::prelude::*;
 // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
 // use bevy_console::*;
 
-use bevy_inspector_egui::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
 // use console::{print_to_log, PrintToLog};
 
