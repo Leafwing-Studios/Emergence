@@ -12,6 +12,7 @@ use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::math::vec2;
+use bevy::prelude::{CoreSchedule, IntoSystemAppConfigs};
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
@@ -88,7 +89,11 @@ impl Plugin for GenerationPlugin {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone())
             .insert_resource(MapGeometry::new(self.config.map_radius))
-            .add_systems((generate_terrain, apply_system_buffers, generate_organisms).chain());
+            .add_systems(
+                (generate_terrain, apply_system_buffers, generate_organisms)
+                    .chain()
+                    .in_schedule(CoreSchedule::Startup),
+            );
     }
 }
 
