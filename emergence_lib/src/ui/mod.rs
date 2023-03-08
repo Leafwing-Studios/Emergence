@@ -29,6 +29,7 @@ impl Plugin for UiPlugin {
         app.insert_resource(FiraSansFontFamily {
             regular: asset_server.load("fonts/FiraSans-Medium.ttf"),
         })
+        .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
