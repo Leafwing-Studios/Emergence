@@ -173,13 +173,13 @@ fn update_cursor_pos(
 /// Moves the cursor on the screen, based on gamepad or keyboard inputs
 fn move_cursor_manually(
     actions: Res<ActionState<PlayerAction>>,
-    mut window_query: Query<(Entity, &Window), With<PrimaryWindow>>,
+    mut window_query: Query<(Entity, &mut Window), With<PrimaryWindow>>,
     mut cursor_moved_events: EventWriter<CursorMoved>,
 ) {
     /// Controls the sensitivity of cursor movement
     const CURSOR_SPEED: f32 = 2.0;
 
-    if let Ok((primary_window_entity, primary_window)) = window_query.get_single_mut() {
+    if let Ok((primary_window_entity, mut primary_window)) = window_query.get_single_mut() {
         let maybe_cursor_pos = primary_window.cursor_position();
 
         if let Some(old_cursor_pos) = maybe_cursor_pos {
