@@ -1,6 +1,6 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
 use leafwing_input_manager::prelude::ActionState;
 
@@ -173,13 +173,13 @@ fn update_cursor_pos(
 /// Moves the cursor on the screen, based on gamepad or keyboard inputs
 fn move_cursor_manually(
     actions: Res<ActionState<PlayerAction>>,
-    mut windows: ResMut<Windows>,
+    mut window_query: Query<&Window, With<PrimaryWindow>>,
     mut cursor_moved_events: EventWriter<CursorMoved>,
 ) {
     /// Controls the sensitivity of cursor movement
     const CURSOR_SPEED: f32 = 2.0;
 
-    if let Some(primary_window) = windows.get_primary_mut() {
+    if let Ok(primary_window) = window_query.get_single_mut() {
         let maybe_cursor_pos = primary_window.cursor_position();
 
         if let Some(old_cursor_pos) = maybe_cursor_pos {
@@ -188,9 +188,9 @@ fn move_cursor_manually(
 
                 if delta != Vec2::ZERO {
                     let new_cursor_pos = old_cursor_pos + delta;
-                    primary_window.set_cursor_position(new_cursor_pos);
+                    primary_window.set_cursor_position(Some(new_cursor_pos));
                     cursor_moved_events.send(CursorMoved {
-                        id: primary_window.id(),
+                        window: primary_window.id(),
                         position: new_cursor_pos,
                     });
                 }
