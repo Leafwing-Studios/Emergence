@@ -12,18 +12,18 @@ edition = "2021"
 debug_tools = ['dep:debug_tools']
 
 [dependencies]
-bevy = "0.9"
+bevy = "0.10"
 rand = "0.8"
-noisy_bevy = "0.2"
-leafwing-input-manager = "0.7"
+noisy_bevy = "0.3"
+leafwing-input-manager = "0.9"
 emergence_macros = { path = "../emergence_macros", version = "0.6" }
 indexmap = "1.9"
 debug_tools = { path = "../tools/debug_tools", optional = true }
 petitset = "0.2"
 serde = "1.0.152"
-leafwing_abilities = "0.3.0"
+leafwing_abilities = "0.4.0"
 derive_more = "0.99.17"
 hexx = "0.4"
-bevy_mod_raycast = "0.7.0"
+bevy_mod_raycast = { git = "https://github.com/soerenmeier/bevy_mod_raycast", branch="bevy-0.10"}
 itertools = "0.10.5"
 bevy_screen_diagnostics = "0.1.1"
