@@ -22,7 +22,7 @@ impl Plugin for GraphicsPlugin {
             .add_system_set(
                 SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
             )
-            .add_system_to_stage(CoreStage::PostUpdate, inherit_materials)
+            .add_system(inherit_materials.in_set(CoreSet::PostUpdate))
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }

@@ -4,14 +4,14 @@ use bevy::prelude::*;
 
 use crate::player_interaction::{selection::SelectionDetails, InteractionSystem};
 
-use super::{FiraSansFontFamily, RightPanel, UiStage};
+use super::{FiraSansFontFamily, RightPanel};
 
 /// Initializes and updates the hover details panel.
 pub(super) struct HoverDetailsPlugin;
 
 impl Plugin for HoverDetailsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(UiStage::LayoutPopulation, populate_hover_panel)
+        app.add_startup_system(populate_hover_panel)
             .add_system(update_hover_details.after(InteractionSystem::HoverDetails));
     }
 }

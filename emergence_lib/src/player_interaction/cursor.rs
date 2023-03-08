@@ -22,11 +22,12 @@ impl Plugin for CursorPlugin {
             .add_plugin(DefaultRaycastingPlugin::<Id<Structure>>::default())
             .add_plugin(DefaultRaycastingPlugin::<Id<Unit>>::default())
             .add_plugin(DefaultRaycastingPlugin::<Ghost>::default())
-            .add_system_to_stage(
-                CoreStage::First,
-                update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
+            .add_system(
+                update_raycast_with_cursor
+                    .before(RaycastSystem::BuildRays::<Terrain>)
+                    .in_base_set(CoreSet::First),
             )
-            .add_system_to_stage(CoreStage::PreUpdate, move_cursor_manually)
+            .add_system(move_cursor_manually.in_base_set(CoreSet::PreUpdate))
             .add_system(
                 update_cursor_pos
                     .label(InteractionSystem::ComputeCursorPos)

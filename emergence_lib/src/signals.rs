@@ -17,13 +17,11 @@ pub(crate) struct SignalsPlugin;
 
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Signals>()
-            .add_system_to_stage(CoreStage::PreUpdate, emit_signals.before(diffuse_signals))
-            .add_system_to_stage(
-                CoreStage::PreUpdate,
-                diffuse_signals.before(degrade_signals),
-            )
-            .add_system_to_stage(CoreStage::PreUpdate, degrade_signals);
+        app.init_resource::<Signals>().add_systems(
+            (emit_signals, diffuse_signals, degrade_signals)
+                .chain()
+                .in_base_set(CoreSet::PreUpdate),
+        );
     }
 }
 
