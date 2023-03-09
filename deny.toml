@@ -82,6 +82,9 @@ unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # If you add something here please also add a comment explaining why it's necessary :)
-# hexx: waiting on a release for Bevy 0.10
-# bevy_mod_picking: waiting on PR merge plus release for Bevy 0.10
-allow-git = ["hexx", "bevy_mod_picking"]
+allow-git = [
+  # hexx: waiting on a release for Bevy 0.10
+  "https://github.com/ManevilleF/hexx", 
+  # bevy_mod_picking: waiting on PR merge plus release for Bevy 0.10
+  "https://github.com/soerenmeier/bevy_mod_raycast"
+]
