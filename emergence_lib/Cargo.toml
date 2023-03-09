@@ -23,7 +23,7 @@ petitset = "0.2"
 serde = "1.0.152"
 leafwing_abilities = "0.4.0"
 derive_more = "0.99.17"
-hexx = {git = "https://github.com/ManevilleF/hexx", commit = "83d6a515c0afc6e91715f7f611cd40d7d6b20a58"}
+hexx = "0.5"
 bevy_mod_raycast = { git = "https://github.com/soerenmeier/bevy_mod_raycast", branch="bevy-0.10"}
 itertools = "0.10.5"
 bevy_screen_diagnostics = "0.2"
