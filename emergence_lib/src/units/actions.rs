@@ -504,6 +504,12 @@ impl CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
             CurrentAction::work(workplace)
+        // Let units work even if they're standing on the structure
+        // This is particularly relevant in the case of ghosts, where it's easy enough to end up on top of the structure trying to work on it
+        } else if let Some(workplace) =
+            workplace_query.needs_work(unit_tile_pos, structure_id, map_geometry)
+        {
+            CurrentAction::work(workplace)
         } else {
             let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
