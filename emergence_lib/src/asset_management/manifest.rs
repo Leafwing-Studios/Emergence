@@ -78,7 +78,7 @@ mod identifier {
 
     impl<T> Id<T> {
         /// Creates a new identifier from a static-lifetime string.
-        pub(crate) fn new(str: &'static str) -> Id<T> {
+        pub(crate) const fn new(str: &'static str) -> Id<T> {
             Id {
                 str,
                 _phantom: PhantomData,
