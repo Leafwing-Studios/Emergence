@@ -360,7 +360,7 @@ fn rotate_camera(
 fn move_camera_to_goal(
     mut query: Query<(&mut Transform, &Facing, &CameraFocus, &mut CameraSettings), With<Camera3d>>,
     map_geometry: Res<MapGeometry>,
-    mut intermediate_planar_angle: Local<f32>,
+    mut cached_planar_angle: Local<Option<f32>>,
     time: Res<Time>,
 ) {
     /// Differences in target angle below this amount are ignored.
@@ -373,13 +373,17 @@ fn move_camera_to_goal(
     // Determine our goal
     let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
 
+    // The cached planar angle must begin uninitialized: otherwise changes to the default facing will result in a delay as  we pan towards it.
+    // If it was uninitialized, start it at the final location.
+    let intermediate_planar_angle = cached_planar_angle.unwrap_or(final_planar_angle);
+
     // Compute the shortest distance between them
     // Formula from https://stackoverflow.com/a/7869457
     let signed_rotation =
-        (final_planar_angle - *intermediate_planar_angle + PI).rem_euclid(TAU) - PI;
+        (final_planar_angle - intermediate_planar_angle + PI).rem_euclid(TAU) - PI;
 
     if signed_rotation.abs() < ROTATION_EPSILON {
-        *intermediate_planar_angle = final_planar_angle;
+        *cached_planar_angle = Some(final_planar_angle);
     } else {
         // Compute the correct rotation
         let max_rotation = settings.rotation_speed.delta(time.delta());
@@ -392,11 +396,11 @@ fn move_camera_to_goal(
         };
 
         // Actually mutate the intermediate angle
-        *intermediate_planar_angle += actual_signed_distance;
+        *cached_planar_angle = Some(intermediate_planar_angle + actual_signed_distance);
     }
 
     // Replace the previous transform
-    *transform = compute_camera_transform(focus, *intermediate_planar_angle, settings.inclination);
+    *transform = compute_camera_transform(focus, intermediate_planar_angle, settings.inclination);
 }
 
 /// Computes the camera transform such that it is looking at `focus`
