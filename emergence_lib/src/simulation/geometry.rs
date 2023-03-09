@@ -217,7 +217,7 @@ impl Facing {
 impl Default for Facing {
     fn default() -> Self {
         Facing {
-            direction: Direction::TopRight,
+            direction: Direction::Top,
         }
     }
 }
