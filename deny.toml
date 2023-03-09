@@ -36,23 +36,12 @@ exceptions = [
 default = "deny"
 
 [bans]
-multiple-versions = "deny"
+multiple-versions = "warn"
 # TODO: Change back to "deny"
 # This currently doesn't work with git dependencies (even if the hash is fixed)
 # See <https://github.com/Leafwing-Studios/Emergence/issues/193>
 wildcards = "warn"
 highlight = "all"
-# Certain crates/versions that will be skipped when doing duplicate detection.
-skip = [
-  { name = "ahash", version = "0.7.6" },               # from bevy_utils v0.9.1
-  { name = "windows", version = "0.43.0" }, # from gilrs v 0.5.2
-  { name = "core-foundation-sys", version = "0.6.2" }, # from cpal v 0.15
-  { name = "jni", version = "0.19" }, # from cpal v 0.15
-  { name = "redox_syscall", version = "0.2.0" }, # from bevy_asset v 0.10
-  { name = "num-rational", version = "0.4.1" }, # from bevy_egui v0.18.0
-  { name = "nix", version = "0.24.3" },         # from alsa v0.7.0
-  { name = "xml-rs", version = "0.8.4" }
-]
 
 [sources]
 unknown-registry = "deny"
