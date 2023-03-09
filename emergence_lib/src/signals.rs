@@ -82,9 +82,7 @@ impl Signals {
         goal: &Goal,
         map_geometry: &MapGeometry,
     ) -> Option<TilePos> {
-        let possible_tiles = tile_pos.empty_neighbors(map_geometry);
-
-        let mut best_choice = None;
+        let mut best_choice: Option<TilePos> = None;
         let mut best_score = SignalStrength::ZERO;
 
         let neighboring_signals = match goal {
@@ -117,12 +115,10 @@ impl Signals {
             }
         };
 
-        for possible_tile in possible_tiles {
-            if let Some(&current_score) = neighboring_signals.get(&possible_tile) {
-                if current_score > best_score {
-                    best_score = current_score;
-                    best_choice = Some(possible_tile);
-                }
+        for (possible_tile, current_score) in neighboring_signals {
+            if current_score > best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
             }
         }
 
@@ -406,6 +402,31 @@ mod tests {
     const TEST_STRUCTURE: Id<Structure> = Id::new("test_structure");
 
     #[test]
+    fn neighboring_signals_checks_origin_tile() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Contains(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        let neighboring_signals = signals.neighboring_signals(
+            SignalType::Contains(TEST_ITEM),
+            TilePos::ORIGIN,
+            &map_geometry,
+        );
+
+        assert_eq!(neighboring_signals.len(), 7);
+
+        assert_eq!(
+            neighboring_signals.get(&TilePos::ORIGIN),
+            Some(&SignalStrength(1.))
+        );
+    }
+
+    #[test]
     fn upstream_returns_none_with_no_signals() {
         let signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
@@ -447,6 +468,28 @@ mod tests {
 
     #[test]
     fn upstream_returns_none_at_peak() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Push(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Push(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    // The logic for Goal::DropOff is significantly more complex and worth testing seperately
+    fn upstream_returns_none_at_peak_dropoff() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
 
