@@ -8,18 +8,6 @@ mod intent;
 mod select_structure;
 mod selection_panel;
 
-/// The different stages of the UI setup.
-///
-/// Stages are needed here to flush the commands in-between.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-enum UiStage {
-    /// Create the initial layout structure.
-    LayoutInitialization,
-
-    /// Populate the layout structure with more content.
-    LayoutPopulation,
-}
-
 /// The font handles for the `FiraSans` font family.
 ///
 /// This is cached in a resource to improve performance.
@@ -41,17 +29,7 @@ impl Plugin for UiPlugin {
         app.insert_resource(FiraSansFontFamily {
             regular: asset_server.load("fonts/FiraSans-Medium.ttf"),
         })
-        .add_startup_stage_before(
-            StartupStage::Startup,
-            UiStage::LayoutInitialization,
-            SystemStage::parallel(),
-        )
-        .add_startup_stage_after(
-            UiStage::LayoutInitialization,
-            UiStage::LayoutPopulation,
-            SystemStage::parallel(),
-        )
-        .add_startup_system_to_stage(UiStage::LayoutInitialization, setup_ui)
+        .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)

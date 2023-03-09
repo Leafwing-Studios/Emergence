@@ -1,6 +1,6 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
 use leafwing_input_manager::prelude::ActionState;
 
@@ -22,14 +22,15 @@ impl Plugin for CursorPlugin {
             .add_plugin(DefaultRaycastingPlugin::<Id<Structure>>::default())
             .add_plugin(DefaultRaycastingPlugin::<Id<Unit>>::default())
             .add_plugin(DefaultRaycastingPlugin::<Ghost>::default())
-            .add_system_to_stage(
-                CoreStage::First,
-                update_raycast_with_cursor.before(RaycastSystem::BuildRays::<Terrain>),
+            .add_system(
+                update_raycast_with_cursor
+                    .before(RaycastSystem::BuildRays::<Terrain>)
+                    .in_base_set(CoreSet::First),
             )
-            .add_system_to_stage(CoreStage::PreUpdate, move_cursor_manually)
+            .add_system(move_cursor_manually.in_base_set(CoreSet::PreUpdate))
             .add_system(
                 update_cursor_pos
-                    .label(InteractionSystem::ComputeCursorPos)
+                    .in_set(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::MoveCamera),
             );
     }
@@ -172,13 +173,13 @@ fn update_cursor_pos(
 /// Moves the cursor on the screen, based on gamepad or keyboard inputs
 fn move_cursor_manually(
     actions: Res<ActionState<PlayerAction>>,
-    mut windows: ResMut<Windows>,
+    mut window_query: Query<(Entity, &mut Window), With<PrimaryWindow>>,
     mut cursor_moved_events: EventWriter<CursorMoved>,
 ) {
     /// Controls the sensitivity of cursor movement
     const CURSOR_SPEED: f32 = 2.0;
 
-    if let Some(primary_window) = windows.get_primary_mut() {
+    if let Ok((primary_window_entity, mut primary_window)) = window_query.get_single_mut() {
         let maybe_cursor_pos = primary_window.cursor_position();
 
         if let Some(old_cursor_pos) = maybe_cursor_pos {
@@ -187,9 +188,9 @@ fn move_cursor_manually(
 
                 if delta != Vec2::ZERO {
                     let new_cursor_pos = old_cursor_pos + delta;
-                    primary_window.set_cursor_position(new_cursor_pos);
+                    primary_window.set_cursor_position(Some(new_cursor_pos));
                     cursor_moved_events.send(CursorMoved {
-                        id: primary_window.id(),
+                        window: primary_window_entity,
                         position: new_cursor_pos,
                     });
                 }

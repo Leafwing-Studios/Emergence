@@ -19,10 +19,8 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
-            .add_system_set(
-                SystemSet::on_update(AssetState::Ready).with_system(units::display_held_item),
-            )
-            .add_system_to_stage(CoreStage::PostUpdate, inherit_materials)
+            .add_system(units::display_held_item.run_if(in_state(AssetState::Ready)))
+            .add_system(inherit_materials.in_base_set(CoreSet::PostUpdate))
             .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
     }
 }

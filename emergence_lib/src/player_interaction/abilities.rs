@@ -17,7 +17,7 @@ impl Plugin for AbilitiesPlugin {
             .insert_resource(IntentAbility::default_input_map())
             .add_system(
                 use_ability
-                    .label(InteractionSystem::UseAbilities)
+                    .in_set(InteractionSystem::UseAbilities)
                     // If we don't have enough intent, zoning should be applied first to reduce the risk of an error message.
                     .after(InteractionSystem::ApplyZoning),
             );

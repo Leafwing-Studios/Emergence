@@ -31,7 +31,7 @@ pub(crate) struct TilePos {
 
 impl Display for TilePos {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let cubic = self.to_array3();
+        let cubic = self.to_cubic_array();
 
         let x = cubic[0];
         let y = cubic[1];

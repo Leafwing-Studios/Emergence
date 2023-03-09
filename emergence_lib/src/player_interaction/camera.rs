@@ -31,14 +31,14 @@ pub(super) struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::Startup, setup_camera)
+        app.add_startup_system(setup_camera)
             .add_system(mousewheel_zoom.before(zoom))
             .add_system(zoom)
             .add_system(drag_camera.before(set_camera_inclination))
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
-            .add_system(move_camera_to_goal.label(InteractionSystem::MoveCamera));
+            .add_system(move_camera_to_goal.in_set(InteractionSystem::MoveCamera));
     }
 }
 

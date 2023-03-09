@@ -8,10 +8,11 @@ use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::terrain::{Terrain, TerrainBundle};
 use crate::units::UnitBundle;
-use bevy::app::{App, Plugin, StartupStage};
+use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::math::vec2;
+use bevy::prelude::{CoreSchedule, IntoSystemAppConfigs};
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
@@ -83,40 +84,16 @@ pub(super) struct GenerationPlugin {
     pub(super) config: GenerationConfig,
 }
 
-/// Stage labels required to organize our startup systems.
-///
-/// We must use stage labels, as we need commands to be flushed between each stage.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub(crate) enum GenerationStage {
-    /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
-    ///
-    /// Systems:
-    /// * [`generate_terrain`]
-    TerrainGeneration,
-    /// Generates starting organisms, based on [`GenerationConfig`] resource, with random positions
-    ///
-    /// Systems:
-    /// * [`generate_organisms`]
-    OrganismGeneration,
-}
-
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone())
             .insert_resource(MapGeometry::new(self.config.map_radius))
-            .add_startup_stage_before(
-                StartupStage::Startup,
-                GenerationStage::OrganismGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                GenerationStage::OrganismGeneration,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
-            .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
+            .add_systems(
+                (generate_terrain, apply_system_buffers, generate_organisms)
+                    .chain()
+                    .in_schedule(CoreSchedule::Startup),
+            );
     }
 }
 

@@ -127,8 +127,8 @@ impl UnitBundle {
     }
 }
 
-/// System labels for unit behavior
-#[derive(SystemLabel)]
+/// System sets for unit behavior
+#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum UnitSystem {
     /// Advances the timer of all unit actions.
     AdvanceTimers,
@@ -145,16 +145,16 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UnitManifest>()
-            .add_system(actions::advance_action_timer.label(UnitSystem::AdvanceTimers))
+            .add_system(actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers))
             .add_system(
                 actions::handle_actions
-                    .label(UnitSystem::Act)
+                    .in_set(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers),
             )
-            .add_system(goals::choose_goal.label(UnitSystem::ChooseGoal))
+            .add_system(goals::choose_goal.in_set(UnitSystem::ChooseGoal))
             .add_system(
                 actions::choose_actions
-                    .label(UnitSystem::ChooseNewAction)
+                    .in_set(UnitSystem::ChooseNewAction)
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
             )
