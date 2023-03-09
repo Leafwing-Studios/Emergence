@@ -167,6 +167,9 @@ pub(super) fn handle_actions(
                                 }
                             }
                         }
+                    } else {
+                        // If the target isn't there, pick a new goal
+                        *unit.goal = Goal::Wander;
                     }
                 }
                 UnitAction::DropOff {
@@ -197,6 +200,9 @@ pub(super) fn handle_actions(
                                 }
                             }
                         }
+                    } else {
+                        // If the target isn't there, pick a new goal
+                        *unit.goal = Goal::Wander;
                     }
                 }
                 UnitAction::Spin { rotation_direction } => match rotation_direction {
