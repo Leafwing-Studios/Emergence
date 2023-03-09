@@ -8,9 +8,7 @@ vulnerability = "deny"
 unmaintained = "deny"
 yanked = "deny"
 notice = "deny"
-ignore = [
-  "RUSTSEC-2020-0056", # from cpal v0.14.1 - unmaintained - https://github.com/koute/stdweb/issues/403
-]
+ignore = []
 
 [licenses]
 unlicensed = "deny"
@@ -44,36 +42,14 @@ wildcards = "warn"
 highlight = "all"
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
-  { name = "ndk-sys", version = "0.3" },               # from rodio v0.16.0
-  { name = "ndk", version = "0.6" },                   # from rodio v0.16.0
-  { name = "raw-window-handle", version = "0.4" },     # from winit v0.27.4
-  { name = "nix", version = "0.23" },                  # from cpal v0.14.1
-  { name = "rustc_version", version = "0.2" },         # from postcard v1.0.2
-  { name = "semver", version = "0.9" },                # from postcard v1.0.2
-  { name = "windows_aarch64_msvc", version = "0.36" }, # from notify v5.0.0
-  { name = "windows_i686_gnu", version = "0.36" },     # from notify v5.0.0
-  { name = "windows_i686_msvc", version = "0.36" },    # from notify v5.0.0
-  { name = "windows_x86_64_gnu", version = "0.36" },   # from notify v5.0.0
-  { name = "windows_x86_64_msvc", version = "0.36" },  # from notify v5.0.0
-  { name = "windows-sys", version = "0.36" },          # from notify v5.0.0
-  { name = "windows-sys", version = "0.45" },          # from parking_lot_core 0.9.7
-  { name = "windows", version = "0.37" },              # from rodio v0.16.0
-  { name = "windows_aarch64_msvc", version = "0.37" }, # from rodio v0.16.0
-  { name = "windows_i686_gnu", version = "0.37" },     # from rodio v0.16.0
-  { name = "windows_i686_msvc", version = "0.37" },    # from rodio v0.16.0
-  { name = "windows_x86_64_gnu", version = "0.37" },   # from rodio v0.16.0
-  { name = "windows_x86_64_msvc", version = "0.37" },  # from rodio v0.16.0
-  { name = "jni", version = "0.19.0" },                # from rodio v0.16.0
   { name = "concurrent-queue", version = "1.2.4" },    # from bevy_tasks v0.9.1
   { name = "ahash", version = "0.7.6" },               # from bevy_utils v0.9.1
-  # The bevy_egui ones are mostly caused by the arboard dependency being outdated
-  # See <https://github.com/Leafwing-Studios/Emergence/issues/194>
+  { name = "windows", version = "0.43.0" }, # from gilrs v 0.5.2
+  { name = "core-foundation-sys", version = "0.6.2" }, # from cpal v 0.15
+  { name = "redox_syscall", version = "0.2.0" }, # from bevy_asset v 0.10
   { name = "num-rational", version = "0.4.1" }, # from bevy_egui v0.18.0
   { name = "png", version = "0.16.8" },         # from bevy_egui v0.18.0
-  { name = "nix", version = "0.22.3" },         # from bevy_egui v0.18.0
-  { name = "miniz_oxide", version = "0.3.7" },  # from bevy_egui v0.18.0
-  { name = "miniz_oxide", version = "0.4.4" },  # from bevy_egui v0.18.0
-  { name = "image", version = "0.23.14" },      # from bevy_egui v0.18.0
+  { name = "nix", version = "0.24.3" },         # from alsa v0.7.0
   { name = "xml-rs", version = "0.8.4" }
 ]
 
