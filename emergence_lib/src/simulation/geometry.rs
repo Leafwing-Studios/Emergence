@@ -42,6 +42,12 @@ impl Display for TilePos {
 }
 
 impl TilePos {
+    /// The position of the central tile
+    #[allow(dead_code)]
+    pub(crate) const ORIGIN: TilePos = TilePos {
+        hex: Hex { x: 0, y: 0 },
+    };
+
     /// Generates a new [`TilePos`] from axial coordinates.
     #[cfg(test)]
     pub(crate) fn new(x: i32, y: i32) -> Self {
@@ -141,6 +147,20 @@ pub(crate) struct MapGeometry {
 }
 
 impl MapGeometry {
+    /// Creates a new [`MapGeometry`] of the provided raidus.
+    ///
+    /// All indexes will be empty.
+    pub(crate) fn new(radius: u32) -> Self {
+        MapGeometry {
+            layout: HexLayout::default(),
+            radius,
+            terrain_index: HashMap::default(),
+            structure_index: HashMap::default(),
+            ghost_index: HashMap::default(),
+            preview_index: HashMap::default(),
+            height_index: HashMap::default(),
+        }
+    }
     /// Is the provided `tile_pos` in the map?
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
@@ -172,21 +192,6 @@ impl MapGeometry {
             Some(structure_entity)
         } else {
             None
-        }
-    }
-}
-
-impl MapGeometry {
-    /// Initializes the geometry for a new map.
-    pub(super) fn new(radius: u32) -> Self {
-        MapGeometry {
-            layout: HexLayout::default(),
-            radius,
-            terrain_index: HashMap::default(),
-            structure_index: HashMap::default(),
-            ghost_index: HashMap::default(),
-            preview_index: HashMap::default(),
-            height_index: HashMap::default(),
         }
     }
 }

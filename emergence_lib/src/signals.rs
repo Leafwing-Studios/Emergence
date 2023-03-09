@@ -397,3 +397,106 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_ITEM: Id<Item> = Id::new("test_item");
+    const TEST_STRUCTURE: Id<Structure> = Id::new("test_structure");
+
+    #[test]
+    fn upstream_returns_none_with_no_signals() {
+        let signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Work(TEST_STRUCTURE), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Wander, &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_none_at_trivial_peak() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_none_at_peak() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_some_at_trivial_valley() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert!(signals
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .is_some());
+    }
+
+    #[test]
+    fn upstream_returns_some_at_valley() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(0.5),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(1.));
+        }
+
+        assert!(signals
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .is_some());
+    }
+}
