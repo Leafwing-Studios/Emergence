@@ -60,11 +60,11 @@ impl Settings {
         n_sources: 100 * 100 / Self::SPARSITY,
     };
 
-    const HUGE: Settings = Settings {
-        map_radius: 1000,
-        n_signals: 1000,
-        n_sources: 1000 * 1000 / Self::SPARSITY,
-    };
+    // const HUGE: Settings = Settings {
+    //     map_radius: 1000,
+    //     n_signals: 1000,
+    //     n_sources: 1000 * 1000 / Self::SPARSITY,
+    // };
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -87,13 +87,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("signal_diffusion_modest", |b| {
         b.iter(|| signal_diffusion(Settings::MODEST))
-    });
-
-    c.bench_function("add_signal_huge", |b| {
-        b.iter(|| add_signals(Settings::HUGE))
-    });
-    c.bench_function("signal_diffusion_huge", |b| {
-        b.iter(|| signal_diffusion(Settings::HUGE))
     });
 }
 
