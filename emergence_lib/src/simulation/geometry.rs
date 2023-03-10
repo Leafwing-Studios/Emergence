@@ -24,7 +24,7 @@ use std::f32::consts::PI;
     AddAssign,
     SubAssign,
 )]
-pub(crate) struct TilePos {
+pub struct TilePos {
     /// The underlying hex coordinate
     pub(crate) hex: Hex,
 }
@@ -43,15 +43,35 @@ impl Display for TilePos {
 
 impl TilePos {
     /// The position of the central tile
-    #[allow(dead_code)]
-    pub(crate) const ORIGIN: TilePos = TilePos {
+    pub const ORIGIN: TilePos = TilePos {
         hex: Hex { x: 0, y: 0 },
     };
 
     /// Generates a new [`TilePos`] from axial coordinates.
-    #[cfg(test)]
-    pub(crate) fn new(x: i32, y: i32) -> Self {
+    #[inline]
+    pub fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
+    }
+
+    /// Generates a random [`TilePos`], sampled uniformly from the valid positions in `map_geometry`
+    #[inline]
+    pub fn random(map_geometry: &MapGeometry, rng: &mut ThreadRng) -> TilePos {
+        let range = -(map_geometry.radius as i32)..(map_geometry.radius as i32);
+
+        // Just use rejection sampling: easy to get right
+        let mut chosen_tile: Option<TilePos> = None;
+        while chosen_tile.is_none() {
+            let x = rng.gen_range(range.clone());
+            let y = rng.gen_range(range.clone());
+
+            let proposed_tile = TilePos::new(x, y);
+
+            if map_geometry.is_valid(proposed_tile) {
+                chosen_tile = Some(proposed_tile)
+            }
+        }
+
+        chosen_tile.unwrap()
     }
 
     /// Returns the world position (in [`Transform`] units) associated with this tile.
@@ -127,7 +147,7 @@ impl TilePos {
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
-pub(crate) struct MapGeometry {
+pub struct MapGeometry {
     /// The size and orientation of the map.
     pub(crate) layout: HexLayout,
     /// The number of tiles from the center to the edge of the map.
@@ -150,7 +170,7 @@ impl MapGeometry {
     /// Creates a new [`MapGeometry`] of the provided raidus.
     ///
     /// All indexes will be empty.
-    pub(crate) fn new(radius: u32) -> Self {
+    pub fn new(radius: u32) -> Self {
         MapGeometry {
             layout: HexLayout::default(),
             radius,

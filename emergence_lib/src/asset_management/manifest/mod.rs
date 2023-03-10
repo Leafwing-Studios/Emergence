@@ -4,8 +4,8 @@
 //! Other systems should look up the data contained here,
 //! in order to populate the properties of in-game entities.
 
-pub(crate) use self::emergence_markers::*;
-pub(crate) use self::identifier::*;
+pub use self::emergence_markers::*;
+pub use self::identifier::*;
 
 mod emergence_markers;
 mod identifier;

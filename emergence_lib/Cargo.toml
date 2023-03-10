@@ -32,5 +32,5 @@ bevy_screen_diagnostics = "0.2"
 criterion = "0.4"
 
 [[bench]]
-name = "signal_propagation"
+name = "signals"
 harness = false

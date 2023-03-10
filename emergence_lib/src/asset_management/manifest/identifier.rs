@@ -15,7 +15,7 @@ use std::{
 ///
 /// It can be stored as a component to identify the variety of game object used.
 #[derive(Component, Serialize, Deserialize)]
-pub(crate) struct Id<T> {
+pub struct Id<T> {
     /// The internal string
     str: &'static str,
     /// Marker to make the compiler happy
@@ -24,7 +24,7 @@ pub(crate) struct Id<T> {
 
 impl<T> Id<T> {
     /// Creates a new identifier from a static-lifetime string.
-    pub(crate) const fn new(str: &'static str) -> Id<T> {
+    pub const fn new(str: &'static str) -> Id<T> {
         Id {
             str,
             _phantom: PhantomData,
