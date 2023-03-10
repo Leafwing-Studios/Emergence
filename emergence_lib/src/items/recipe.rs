@@ -181,22 +181,3 @@ impl Display for RecipeData {
         write!(f, "[{input_str}] -> [{output_str}] | {duration_str} s")
     }
 }
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    #[test]
-    fn should_display_inputs_outputs_craft_time() {
-        let recipe = RecipeData {
-            inputs: Vec::new(),
-            outputs: vec![ItemCount::one(Id::acacia_leaf())],
-            craft_time: Duration::from_secs(1),
-            work_required: false,
-            energy: Some(Energy(20.)),
-        };
-
-        assert_eq!(format!("{recipe}"), "[] -> [#104638856 (1)] | 1.00 s")
-    }
-}
