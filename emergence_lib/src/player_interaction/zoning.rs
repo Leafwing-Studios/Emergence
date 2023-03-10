@@ -5,7 +5,7 @@ use core::fmt::Display;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::StructureManifest,
+    asset_management::manifest::{Id, Structure, StructureManifest},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, construction::MarkedForRemoval},
@@ -180,8 +180,11 @@ fn generate_ghosts_from_zoning(
 }
 
 /// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
-fn keep_tiles_clear(mut structure_query: Query<&mut Emitter, With<MarkedForRemoval>>) {
-    for mut doomed_emitter in structure_query.iter_mut() {
-        doomed_emitter.signals = vec![(SignalType::Destroy, SignalStrength::new(100.))];
+fn keep_tiles_clear(
+    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForRemoval>>,
+) {
+    for (mut doomed_emitter, &structure_id) in structure_query.iter_mut() {
+        doomed_emitter.signals =
+            vec![(SignalType::Destroy(structure_id), SignalStrength::new(100.))];
     }
 }

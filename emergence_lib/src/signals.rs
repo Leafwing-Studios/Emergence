@@ -273,6 +273,8 @@ pub enum SignalType {
     /// Perform work at this type of structure.
     #[allow(dead_code)]
     Work(Id<Structure>),
+    /// Destroy a structure of this type
+    Destroy(Id<Structure>),
 }
 
 impl Display for SignalType {
@@ -282,6 +284,7 @@ impl Display for SignalType {
             SignalType::Pull(item_id) => format!("Pull({item_id})"),
             SignalType::Contains(item_id) => format!("Contains({item_id})"),
             SignalType::Work(structure_id) => format!("Work({structure_id})"),
+            SignalType::Destroy(structure_id) => format!("Destroy({structure_id})"),
         };
 
         write!(f, "{string}")
