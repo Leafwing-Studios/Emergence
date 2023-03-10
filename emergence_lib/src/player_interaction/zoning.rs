@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::StructureManifest,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, construction::MarkedForRemoval},
+    structures::commands::StructureCommandsExt,
     terrain::Terrain,
 };
 
@@ -150,7 +150,6 @@ fn generate_ghosts_from_zoning(
     mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain), Changed<Zoning>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
-    map_geometry: Res<MapGeometry>,
 ) {
     for (mut zoning, &tile_pos, terrain) in terrain_query.iter_mut() {
         // Reborrowing here would trigger change detection, causing this system to constantly check
@@ -166,11 +165,8 @@ fn generate_ghosts_from_zoning(
                 }
             }
             Zoning::None => commands.despawn_ghost(tile_pos),
-            Zoning::KeepClear => {
-                if let Some(structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                    commands.entity(*structure_entity).insert(MarkedForRemoval);
-                }
-            }
+            // This is handled below!
+            Zoning::KeepClear => (),
         };
     }
 }

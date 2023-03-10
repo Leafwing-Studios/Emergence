@@ -696,7 +696,6 @@ fn get_details(
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
                 maybe_organism_details,
-                marked_for_removal: structure_query_item.marked_for_removal.is_some(),
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
@@ -872,10 +871,7 @@ mod structure_details {
         asset_management::manifest::{Id, Structure},
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
-        structures::{
-            construction::MarkedForRemoval,
-            crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
-        },
+        structures::crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -894,8 +890,6 @@ mod structure_details {
             &'static ActiveRecipe,
             &'static CraftingState,
         )>,
-        /// Is this structure marked for removal?
-        pub(super) marked_for_removal: Option<&'static MarkedForRemoval>,
     }
 
     /// Detailed info about a given structure.
@@ -911,8 +905,6 @@ mod structure_details {
         pub(crate) crafting_details: Option<CraftingDetails>,
         /// Details about this organism, if it is one.
         pub(crate) maybe_organism_details: Option<OrganismDetails>,
-        /// Is this structure slated for removal?
-        pub(crate) marked_for_removal: bool,
     }
 
     impl Display for StructureDetails {
@@ -926,10 +918,6 @@ mod structure_details {
 Structure type: {structure_id}
 Tile: {tile_pos}"
             );
-
-            if self.marked_for_removal {
-                string = string + "\nMarked for removal!";
-            }
 
             if let Some(crafting) = &self.crafting_details {
                 string = string + &format!("\n{crafting}");
