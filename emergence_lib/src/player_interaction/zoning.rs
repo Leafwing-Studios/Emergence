@@ -6,6 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::manifest::StructureManifest,
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, construction::MarkedForRemoval},
     terrain::Terrain,
@@ -33,7 +34,9 @@ impl Plugin for ZoningPlugin {
             generate_ghosts_from_zoning
                 .in_set(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
-        );
+        )
+        // Must run after crafting emitters in order to wipe out their signals
+        .add_system(keep_tiles_clear.after(crate::structures::crafting::set_emitter));
     }
 }
 
@@ -147,7 +150,8 @@ fn set_zoning(
 
 /// Spawn and despawn ghosts based on zoning.
 fn generate_ghosts_from_zoning(
-    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain), Changed<Zoning>>,
+    // We cannot use change detection here, or tiles would not be kept clear when built upon after zoning is set
+    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain)>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
@@ -172,5 +176,12 @@ fn generate_ghosts_from_zoning(
                 }
             }
         };
+    }
+}
+
+/// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
+fn keep_tiles_clear(mut structure_query: Query<&mut Emitter, With<MarkedForRemoval>>) {
+    for mut doomed_emitter in structure_query.iter_mut() {
+        doomed_emitter.signals = vec![(SignalType::Destroy, SignalStrength::new(100.))];
     }
 }
