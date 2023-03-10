@@ -27,3 +27,10 @@ hexx = "0.5"
 bevy_mod_raycast = { git = "https://github.com/soerenmeier/bevy_mod_raycast", branch="bevy-0.10"}
 itertools = "0.10.5"
 bevy_screen_diagnostics = "0.2"
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "signal_propagation"
+harness = false
