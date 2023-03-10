@@ -43,7 +43,7 @@ impl Default for UnitManifest {
 
         // TODO: load this from disk
         map.insert(
-            Id::new("ant"),
+            Id::from_string_id("ant"),
             UnitData {
                 energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 diet: Diet::new(Id::leuco_chunk(), Energy(50.)),
@@ -59,7 +59,7 @@ impl Id<Unit> {
     // TODO: read these from disk
     /// The id of an ant
     pub(crate) fn ant() -> Self {
-        Self::new("ant")
+        Self::from_string_id("ant")
     }
 }
 

@@ -16,31 +16,63 @@ use std::{
 /// It can be stored as a component to identify the variety of game object used.
 #[derive(Component, Serialize, Deserialize)]
 pub(crate) struct Id<T> {
-    /// The internal string
-    str: &'static str,
+    /// The unique identifier.
+    ///
+    /// This is usually the hash of a string identifier used in the manifest files.
+    /// The number value is used to handle the data more efficiently in the game.
+    value: u64,
+
     /// Marker to make the compiler happy
     _phantom: PhantomData<T>,
 }
 
+/// A constant used in the hashing algorithm of the IDs.
+///
+/// This should be a positive prime number, roughly equal to the number of characters in the input alphabet.
+const HASH_P: u64 = 53;
+
+/// A constant used in the hashing algorithm of the IDs.
+///
+/// This should be a large prime number as it is used for modulo operations.
+/// Larger numbers have a lower chance of a hash collision.
+const HASH_M: u64 = 1_000_000_009;
+
 impl<T> Id<T> {
-    /// Creates a new identifier from a static-lifetime string.
-    pub(crate) const fn new(str: &'static str) -> Id<T> {
-        Id {
-            str,
+    /// Create a new identifier from the given unique number.
+    pub(crate) const fn new(value: u64) -> Self {
+        Self {
+            value,
             _phantom: PhantomData,
         }
+    }
+
+    /// Creates a new ID from human-readable string identifier.
+    ///
+    /// This ID is created as a hash of the string.
+    pub(crate) fn from_string_id(str: &'static str) -> Self {
+        // Algorithm adopted from <https://cp-algorithms.com/string/string-hashing.html>
+
+        let mut value = 0;
+        let mut p_pow = 1;
+
+        str.bytes().for_each(|byte| {
+            value = (value + (byte as u64 + 1) * p_pow) % HASH_M;
+            p_pow = (p_pow * HASH_P) % HASH_M;
+        });
+
+        Self::new(value)
     }
 }
 
 impl<T> Debug for Id<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Id").field("str", &self.str).finish()
+        f.debug_struct("Id").field("value", &self.value).finish()
     }
 }
 
 impl<T> PartialEq for Id<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.str == other.str
+        self.value == other.value
     }
 }
 
@@ -48,26 +80,26 @@ impl<T> Eq for Id<T> {}
 
 impl<T> PartialOrd for Id<T> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.str.partial_cmp(other.str)
+        self.value.partial_cmp(&other.value)
     }
 }
 
 impl<T> Ord for Id<T> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.str.cmp(other.str)
+        self.value.cmp(&other.value)
     }
 }
 
 impl<T> Hash for Id<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.str.hash(state);
+        self.value.hash(state);
     }
 }
 
 impl<T> Clone for Id<T> {
     fn clone(&self) -> Self {
         Self {
-            str: self.str,
+            value: self.value,
             _phantom: PhantomData,
         }
     }
@@ -77,6 +109,6 @@ impl<T> Copy for Id<T> {}
 
 impl<T> Display for Id<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.str)
+        write!(f, "#{}", self.value)
     }
 }

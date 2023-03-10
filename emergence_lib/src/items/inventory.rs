@@ -579,7 +579,7 @@ mod tests {
                 slots: vec![ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5)],
             };
 
-            assert_eq!(format!("{inventory}"), "[acacia_leaf (5/10)]".to_string());
+            assert_eq!(format!("{inventory}"), "[#104638856 (5/10)]".to_string());
         }
     }
 

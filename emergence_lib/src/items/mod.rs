@@ -15,23 +15,23 @@ pub(crate) mod slot;
 impl Id<Item> {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
-        Self::new("acacia_leaf")
+        Self::from_string_id("acacia_leaf")
     }
 
     /// The item ID of a Leuco chunk.
     pub fn leuco_chunk() -> Self {
-        Self::new("leuco_chunk")
+        Self::from_string_id("leuco_chunk")
     }
 
     /// The item ID of an ant egg.
     pub fn ant_egg() -> Self {
-        Self::new("ant_egg")
+        Self::from_string_id("ant_egg")
     }
 
     /// An item ID solely used for testing.
     #[cfg(test)]
     pub fn test() -> Self {
-        Self::new("test")
+        Self::from_string_id("test")
     }
 }
 
@@ -110,9 +110,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn should_display_item_type_and_count() {
+    fn should_display_item_id_and_count() {
         let item_count = ItemCount::new(Id::acacia_leaf(), 3);
 
-        assert_eq!(format!("{item_count}"), "acacia_leaf (3)".to_string());
+        assert_eq!(format!("{item_count}"), "#104638856 (3)".to_string());
     }
 }
