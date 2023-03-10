@@ -194,7 +194,7 @@ mod tests {
     fn should_display_item_type_count_and_capacity_for_empty_slot() {
         let item_slot = ItemSlot::new(Id::acacia_leaf(), 10);
 
-        assert_eq!(format!("{item_slot}"), "acacia_leaf (0/10)".to_string());
+        assert_eq!(format!("{item_slot}"), "#104638856 (0/10)".to_string());
     }
 
     #[test]
@@ -205,7 +205,7 @@ mod tests {
             count: 6,
         };
 
-        assert_eq!(format!("{item_slot}"), "acacia_leaf (6/10)".to_string());
+        assert_eq!(format!("{item_slot}"), "#104638856 (6/10)".to_string());
     }
 
     #[test]

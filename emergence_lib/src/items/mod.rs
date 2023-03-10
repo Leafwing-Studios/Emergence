@@ -110,9 +110,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn should_display_item_type_and_count() {
+    fn should_display_item_id_and_count() {
         let item_count = ItemCount::new(Id::acacia_leaf(), 3);
 
-        assert_eq!(format!("{item_count}"), "acacia_leaf (3)".to_string());
+        assert_eq!(format!("{item_count}"), "#104638856 (3)".to_string());
     }
 }

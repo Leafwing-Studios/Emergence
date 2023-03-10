@@ -197,6 +197,6 @@ mod tests {
             energy: Some(Energy(20.)),
         };
 
-        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00 s")
+        assert_eq!(format!("{recipe}"), "[] -> [#104638856 (1)] | 1.00 s")
     }
 }
