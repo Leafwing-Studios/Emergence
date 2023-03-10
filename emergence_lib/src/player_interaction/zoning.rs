@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::StructureManifest,
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, construction::MarkedForDeletion},
+    structures::{commands::StructureCommandsExt, construction::MarkedForRemoval},
     terrain::Terrain,
 };
 
@@ -152,7 +152,7 @@ fn generate_ghosts_from_zoning(
             Zoning::None => commands.despawn_ghost(tile_pos),
             Zoning::KeepClear => {
                 if let Some(structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                    commands.entity(*structure_entity).insert(MarkedForDeletion);
+                    commands.entity(*structure_entity).insert(MarkedForRemoval);
                 }
             }
         };

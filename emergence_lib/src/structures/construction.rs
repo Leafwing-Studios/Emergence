@@ -178,7 +178,7 @@ impl PreviewBundle {
 
 /// Marker component for structures that are intended to be deconstructed
 #[derive(Component, Debug)]
-pub(crate) struct MarkedForDeletion;
+pub(crate) struct MarkedForRemoval;
 
 /// Computes the correct signals for ghosts to send throughout their lifecycle
 // TODO: use a `Ref` instead of &mut in Bevy 0.10
