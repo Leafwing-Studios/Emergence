@@ -37,7 +37,7 @@ pub(super) fn hatch_ant_eggs(
                     commands.spawn(UnitBundle::new(
                         Id::ant(),
                         pos_to_spawn,
-                        unit_manifest.get(Id::new("ant")).clone(),
+                        unit_manifest.get(Id::from_string_id("ant")).clone(),
                         &unit_handles,
                         &map_geometry,
                     ));

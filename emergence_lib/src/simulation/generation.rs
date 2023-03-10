@@ -198,7 +198,7 @@ fn generate_organisms(
         commands.spawn(UnitBundle::new(
             Id::ant(),
             ant_position,
-            unit_manifest.get(Id::new("ant")).clone(),
+            unit_manifest.get(Id::from_string_id("ant")).clone(),
             &unit_handles,
             &map_geometry,
         ));
@@ -207,7 +207,7 @@ fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let structure_id = Id::new("acacia");
+        let structure_id = Id::from_string_id("acacia");
 
         let item = ClipboardData {
             structure_id,
@@ -224,7 +224,7 @@ fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let structure_id = Id::new("leuco");
+        let structure_id = Id::from_string_id("leuco");
 
         let item = ClipboardData {
             structure_id,
@@ -241,7 +241,7 @@ fn generate_organisms(
     // Hives
     let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
     for position in hive_positions {
-        let structure_id = Id::new("ant_hive");
+        let structure_id = Id::from_string_id("ant_hive");
 
         let item = ClipboardData {
             structure_id,

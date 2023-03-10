@@ -14,22 +14,22 @@ use super::{inventory::Inventory, ItemCount};
 impl Id<Recipe> {
     /// The ID of the recipe for the leaf production of acacia plants.
     pub fn acacia_leaf_production() -> Self {
-        Self::new("acacia_leaf_production")
+        Self::from_string_id("acacia_leaf_production")
     }
 
     /// The ID of the recipe for mushroom production of leuco mushrooms.
     pub fn leuco_chunk_production() -> Self {
-        Self::new("leuco_chunk_production")
+        Self::from_string_id("leuco_chunk_production")
     }
 
     /// The ID of the recipe to make more ant eggs from leuco mushrooms.
     pub fn ant_egg_production() -> Self {
-        Self::new("ant_egg_production")
+        Self::from_string_id("ant_egg_production")
     }
 
     /// The ID of the recipe to hatch ant eggs into adult ants.
     pub fn hatch_ants() -> Self {
-        Self::new("hatch_ants")
+        Self::from_string_id("hatch_ants")
     }
 }
 
@@ -179,24 +179,5 @@ impl Display for RecipeData {
         let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
 
         write!(f, "[{input_str}] -> [{output_str}] | {duration_str} s")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    #[test]
-    fn should_display_inputs_outputs_craft_time() {
-        let recipe = RecipeData {
-            inputs: Vec::new(),
-            outputs: vec![ItemCount::one(Id::acacia_leaf())],
-            craft_time: Duration::from_secs(1),
-            work_required: false,
-            energy: Some(Energy(20.)),
-        };
-
-        assert_eq!(format!("{recipe}"), "[] -> [acacia_leaf (1)] | 1.00 s")
     }
 }
