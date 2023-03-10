@@ -44,8 +44,6 @@ pub(crate) enum Zoning {
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
-    // Tracked at: https://github.com/Leafwing-Studios/Emergence/issues/241
-    #[allow(dead_code)]
     KeepClear,
 }
 
@@ -79,6 +77,17 @@ fn set_zoning(
                 .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
                 .collect()
         };
+
+        // Try to remove everything at the location
+        if actions.pressed(PlayerAction::KeepClear) {
+            for terrain_entity in relevant_terrain_entities {
+                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                *zoning = Zoning::KeepClear;
+            }
+
+            // Don't try to clear and zone in the same frame
+            return;
+        }
 
         // Explicitly clear the selection
         if actions.pressed(PlayerAction::ClearZoning) {
