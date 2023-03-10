@@ -5,14 +5,13 @@ use emergence_lib::simulation::geometry::{MapGeometry, TilePos};
 use rand::thread_rng;
 
 /// Setup function
-fn add_signals(map_radius: u32, n_signals: u32, n_sources: u32) -> (Signals, MapGeometry) {
+fn add_signals(map_radius: u32, n_signals: u64, n_sources: u32) -> (Signals, MapGeometry) {
     let mut signals = Signals::default();
     let map_geometry = MapGeometry::new(map_radius);
     let mut rng = thread_rng();
 
     for i in 0..n_signals {
-        let name = i.to_string();
-        let signal_type = SignalType::Pull(Id::new(&name.leak()));
+        let signal_type = SignalType::Pull(Id::new(i));
 
         for _ in 0..n_sources {
             let tile_pos = TilePos::random(&map_geometry, &mut rng);
@@ -25,7 +24,7 @@ fn add_signals(map_radius: u32, n_signals: u32, n_sources: u32) -> (Signals, Map
 }
 
 /// Benchmarks the signal diffusion process
-fn signal_diffusion(map_radius: u32, n_signals: u32, n_sources: u32) {
+fn signal_diffusion(map_radius: u32, n_signals: u64, n_sources: u32) {
     let (mut signals, map_geometry) = add_signals(map_radius, n_signals, n_sources);
     signals.diffuse(&map_geometry, DIFFUSION_FRACTION);
 }

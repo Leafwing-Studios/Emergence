@@ -15,7 +15,7 @@ use std::{
 ///
 /// It can be stored as a component to identify the variety of game object used.
 #[derive(Component, Serialize, Deserialize)]
-pub(crate) struct Id<T> {
+pub struct Id<T> {
     /// The unique identifier.
     ///
     /// This is usually the hash of a string identifier used in the manifest files.
@@ -39,7 +39,7 @@ const HASH_M: u64 = 1_000_000_009;
 
 impl<T> Id<T> {
     /// Create a new identifier from the given unique number.
-    pub(crate) const fn new(value: u64) -> Self {
+    pub const fn new(value: u64) -> Self {
         Self {
             value,
             _phantom: PhantomData,
