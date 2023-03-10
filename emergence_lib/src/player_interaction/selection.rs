@@ -710,6 +710,7 @@ fn get_details(
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
                     signals: signals.all_signals_at_position(*tile_pos),
+                    zoning: terrain_query_item.zoning.clone(),
                 })
             } else {
                 SelectionDetails::None
@@ -985,7 +986,10 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
     use std::fmt::Display;
 
-    use crate::{signals::LocalSignals, simulation::geometry::TilePos, terrain::Terrain};
+    use crate::{
+        player_interaction::zoning::Zoning, signals::LocalSignals, simulation::geometry::TilePos,
+        terrain::Terrain,
+    };
 
     /// Data needed to populate [`TerrainDetails`].
     #[derive(WorldQuery)]
@@ -994,6 +998,8 @@ mod terrain_details {
         pub(super) entity: Entity,
         /// The type of terrain
         pub(super) terrain_type: &'static Terrain,
+        /// The zoning applied to this terrain
+        pub(super) zoning: &'static Zoning,
     }
 
     /// Detailed info about a given piece of terrain.
@@ -1007,6 +1013,8 @@ mod terrain_details {
         pub(super) tile_pos: TilePos,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
+        /// The zoning of this tile
+        pub(super) zoning: Zoning,
     }
 
     impl Display for TerrainDetails {
@@ -1015,12 +1023,14 @@ mod terrain_details {
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
             let signals = &self.signals;
+            let zoning = &self.zoning;
 
             write!(
                 f,
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
+Zoning: {zoning}
 Signals:
 {signals}"
             )
