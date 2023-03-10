@@ -9,6 +9,7 @@ pub(crate) use self::identifier::*;
 
 mod emergence_markers;
 mod identifier;
+mod loader;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
