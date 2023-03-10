@@ -15,23 +15,23 @@ pub(crate) mod slot;
 impl Id<Item> {
     /// The item ID of an Acacia leaf.
     pub fn acacia_leaf() -> Self {
-        Self::new("acacia_leaf")
+        Self::from_string_id("acacia_leaf")
     }
 
     /// The item ID of a Leuco chunk.
     pub fn leuco_chunk() -> Self {
-        Self::new("leuco_chunk")
+        Self::from_string_id("leuco_chunk")
     }
 
     /// The item ID of an ant egg.
     pub fn ant_egg() -> Self {
-        Self::new("ant_egg")
+        Self::from_string_id("ant_egg")
     }
 
     /// An item ID solely used for testing.
     #[cfg(test)]
     pub fn test() -> Self {
-        Self::new("test")
+        Self::from_string_id("test")
     }
 }
 

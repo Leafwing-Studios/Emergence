@@ -63,7 +63,7 @@ impl FromWorld for StructureHandles {
         let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery"];
 
         for id in structure_names {
-            let structure_id = Id::new(id);
+            let structure_id = Id::from_string_id(id);
             let structure_path = format!("structures/{id}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);

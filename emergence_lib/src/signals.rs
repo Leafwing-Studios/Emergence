@@ -398,8 +398,8 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 mod tests {
     use super::*;
 
-    const TEST_ITEM: Id<Item> = Id::new("test_item");
-    const TEST_STRUCTURE: Id<Structure> = Id::new("test_structure");
+    const TEST_ITEM: Id<Item> = Id::from_string_id("test_item");
+    const TEST_STRUCTURE: Id<Structure> = Id::from_string_id("test_structure");
 
     #[test]
     fn neighboring_signals_checks_origin_tile() {
