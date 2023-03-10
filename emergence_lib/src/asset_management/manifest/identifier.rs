@@ -38,7 +38,8 @@ const HASH_P: u64 = 53;
 const HASH_M: u64 = 1_000_000_009;
 
 impl<T> Id<T> {
-    pub(crate) fn new(value: u64) -> Self {
+    /// Create a new identifier from the given unique number.
+    pub(crate) const fn new(value: u64) -> Self {
         Self {
             value,
             _phantom: PhantomData,
