@@ -555,34 +555,6 @@ mod tests {
         }
     }
 
-    mod display {
-        use super::super::*;
-
-        #[test]
-        fn should_display_with_no_slots() {
-            let inventory = Inventory::new(0);
-
-            assert_eq!(format!("{inventory}"), "[]".to_string());
-        }
-
-        #[test]
-        fn should_display_with_empty_slot() {
-            let inventory = Inventory::new(1);
-
-            assert_eq!(format!("{inventory}"), "[_]".to_string());
-        }
-
-        #[test]
-        fn should_display_with_filled_slot() {
-            let inventory = Inventory {
-                max_slot_count: 1,
-                slots: vec![ItemSlot::new_with_count(Id::acacia_leaf(), 10, 5)],
-            };
-
-            assert_eq!(format!("{inventory}"), "[#104638856 (5/10)]".to_string());
-        }
-    }
-
     #[test]
     fn should_count_item() {
         let inventory = Inventory {
