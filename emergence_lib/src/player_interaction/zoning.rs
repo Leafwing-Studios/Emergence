@@ -31,7 +31,7 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::SetClipboard),
         )
         .add_system(
-            generate_ghosts_from_zoning
+            manage_previews_from_zoning
                 .in_set(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
         )
@@ -149,7 +149,7 @@ fn set_zoning(
 }
 
 /// Spawn and despawn ghosts based on zoning.
-fn generate_ghosts_from_zoning(
+fn manage_previews_from_zoning(
     // We cannot use change detection here, or tiles would not be kept clear when built upon after zoning is set
     mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain)>,
     structure_manifest: Res<StructureManifest>,
