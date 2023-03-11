@@ -33,6 +33,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 }
 
 /// Choose the unit's action for this turn
+#[allow(clippy::too_many_arguments)]
 pub(super) fn choose_actions(
     mut units_query: Query<
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
@@ -143,6 +144,7 @@ pub(super) fn choose_actions(
 }
 
 /// Exhaustively handles each planned action
+#[allow(clippy::too_many_arguments)]
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut input_query: Query<&mut InputInventory>,

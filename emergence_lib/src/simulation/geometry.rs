@@ -158,9 +158,9 @@ pub struct MapGeometry {
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     pub(crate) structure_index: HashMap<TilePos, Entity>,
-    /// Which [`Ghost`](crate::structures::ghost::Ghost) entity is stored at each tile position
+    /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
     pub(crate) ghost_index: HashMap<TilePos, Entity>,
-    /// Which [`Preview`](crate::structures::ghost::Preview) entity is stored at each tile position
+    /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
     pub(crate) preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     pub(crate) height_index: HashMap<TilePos, f32>,

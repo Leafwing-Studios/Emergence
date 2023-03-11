@@ -928,15 +928,15 @@ Tile: {tile_pos}"
             );
 
             if self.marked_for_removal {
-                string = string + "\nMarked for removal!";
+                string += "\nMarked for removal!";
             }
 
             if let Some(crafting) = &self.crafting_details {
-                string = string + &format!("\n{crafting}");
+                string += &format!("\n{crafting}");
             }
 
             if let Some(organism) = &self.maybe_organism_details {
-                string = string + &format!("\n{organism}");
+                string += &format!("\n{organism}");
             };
 
             write!(f, "{string}")
