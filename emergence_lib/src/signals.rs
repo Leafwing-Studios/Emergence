@@ -166,10 +166,7 @@ impl Signals {
 
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
-        let mut pending_additions = HashMap::new();
-        let mut pending_removals = HashMap::new();
-
-        for (&signal_type, original_map) in self.maps.iter() {
+        for original_map in self.maps.values_mut() {
             let mut addition_map = SignalMap::default();
             let mut removal_map = SignalMap::default();
 
@@ -182,15 +179,7 @@ impl Signals {
                 }
             }
 
-            pending_additions.insert(signal_type, addition_map);
-            pending_removals.insert(signal_type, removal_map);
-        }
-
-        // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-        for (signal_type, original_map) in self.maps.iter_mut() {
-            let addition_map = pending_additions.get(signal_type).unwrap();
-            let removal_map = pending_additions.get(signal_type).unwrap();
-
+            // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
             for (&removal_pos, &removal_strength) in removal_map.map.iter() {
                 original_map.subtract_signal(removal_pos, removal_strength)
             }
