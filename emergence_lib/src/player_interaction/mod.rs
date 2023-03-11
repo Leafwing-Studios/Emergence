@@ -86,12 +86,12 @@ pub(crate) enum PlayerAction {
     Pipette,
     /// Sets the zoning of all currently selected tiles to the currently selected structure.
     ///
-    /// If no structure is selected, any zoning will be removed.
+    /// If no structure is selected to build, zoning will be set to [`Zoning::None`](zoning::Zoning::None).
     Zone,
     /// Sets the zoning of all currently selected tiles to [`Zoning::None`](zoning::Zoning::None).
-    ///
-    /// If no structure is selected, any zoning will be removed.
     ClearZoning,
+    /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](zoning::Zoning::KeepClear).
+    KeepClear,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
@@ -135,6 +135,7 @@ impl PlayerAction {
             Pipette => KeyCode::Q.into(),
             Zone => KeyCode::Space.into(),
             ClearZoning => KeyCode::Back.into(),
+            KeepClear => KeyCode::Delete.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
             SnapToSelection => KeyCode::Return.into(),
@@ -172,6 +173,7 @@ impl PlayerAction {
             Pipette => West.into(),
             Zone => North.into(),
             ClearZoning => DPadUp.into(),
+            KeepClear => DPadDown.into(),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
             SnapToSelection => GamepadButtonType::LeftThumb.into(),

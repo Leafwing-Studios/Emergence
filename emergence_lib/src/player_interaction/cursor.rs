@@ -8,7 +8,7 @@ use super::{InteractionSystem, PlayerAction};
 use crate::{
     asset_management::manifest::{Id, Structure, Unit},
     simulation::geometry::TilePos,
-    structures::ghost::Ghost,
+    structures::construction::Ghost,
     terrain::Terrain,
 };
 

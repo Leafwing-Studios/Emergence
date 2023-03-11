@@ -23,13 +23,13 @@ use crate::{
 };
 
 use self::{
+    construction::{ghost_lifecyle, ghost_signals},
     crafting::{ActiveRecipe, CraftingPlugin, InputInventory},
-    ghost::{ghost_lifecyle, ghost_signals},
 };
 
 pub(crate) mod commands;
+pub(crate) mod construction;
 pub(crate) mod crafting;
-pub(crate) mod ghost;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]

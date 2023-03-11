@@ -19,8 +19,8 @@ use crate::{
 };
 
 use super::{
+    construction::{GhostBundle, GhostKind, PreviewBundle},
     crafting::CraftingBundle,
-    ghost::{GhostBundle, GhostKind, PreviewBundle},
     StructureBundle, StructureManifest,
 };
 

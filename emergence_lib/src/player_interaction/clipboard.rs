@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, crafting::ActiveRecipe, ghost::Preview},
+    structures::{commands::StructureCommandsExt, construction::Preview, crafting::ActiveRecipe},
     terrain::Terrain,
 };
 
