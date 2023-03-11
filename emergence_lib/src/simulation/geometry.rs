@@ -7,6 +7,8 @@ use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use rand::{rngs::ThreadRng, Rng};
 use std::f32::consts::PI;
 
+use crate::filtered_array_iter::FilteredArrayIter;
+
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
     Component,
@@ -115,18 +117,10 @@ impl TilePos {
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
-        // PERF: this can be done without any allocations
-        let all_hexes = self.hex.all_neighbors();
-        let mut neighbors = Vec::new();
-
-        for &hex in all_hexes.iter() {
-            let tile_pos = TilePos { hex };
-            if map_geometry.is_valid(tile_pos) {
-                neighbors.push(tile_pos);
-            }
-        }
-
-        neighbors
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&pos| map_geometry.is_valid(pos));
+        iter
     }
 
     /// All adjacent tiles that are on the map and free of structures.
@@ -134,14 +128,12 @@ impl TilePos {
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.all_neighbors(map_geometry);
-        // PERF: this can be done without allocations
-        let empty_neighbors: Vec<TilePos> = neighbors
-            .into_iter()
-            .filter(|tile_pos| !map_geometry.structure_index.contains_key(tile_pos))
-            .collect();
-
-        empty_neighbors
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&pos| {
+            map_geometry.is_valid(pos) && !map_geometry.structure_index.contains_key(&pos)
+        });
+        iter
     }
 }
 
