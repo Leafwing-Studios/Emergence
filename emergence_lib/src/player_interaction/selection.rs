@@ -873,7 +873,7 @@ mod structure_details {
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
-            construction::MarkedForRemoval,
+            construction::MarkedForDemolition,
             crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
         },
     };
@@ -895,7 +895,7 @@ mod structure_details {
             &'static CraftingState,
         )>,
         /// Is this structure marked for removal?
-        pub(super) marked_for_removal: Option<&'static MarkedForRemoval>,
+        pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
     }
 
     /// Detailed info about a given structure.

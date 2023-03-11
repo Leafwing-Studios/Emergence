@@ -8,7 +8,7 @@ use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, construction::MarkedForRemoval},
+    structures::{commands::StructureCommandsExt, construction::MarkedForDemolition},
     terrain::Terrain,
 };
 
@@ -172,7 +172,9 @@ fn generate_ghosts_from_zoning(
             Zoning::None => commands.despawn_ghost(tile_pos),
             Zoning::KeepClear => {
                 if let Some(structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                    commands.entity(*structure_entity).insert(MarkedForRemoval);
+                    commands
+                        .entity(*structure_entity)
+                        .insert(MarkedForDemolition);
                 }
             }
         };
@@ -181,10 +183,12 @@ fn generate_ghosts_from_zoning(
 
 /// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
 fn keep_tiles_clear(
-    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForRemoval>>,
+    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForDemolition>>,
 ) {
     for (mut doomed_emitter, &structure_id) in structure_query.iter_mut() {
-        doomed_emitter.signals =
-            vec![(SignalType::Destroy(structure_id), SignalStrength::new(100.))];
+        doomed_emitter.signals = vec![(
+            SignalType::Demolish(structure_id),
+            SignalStrength::new(100.),
+        )];
     }
 }

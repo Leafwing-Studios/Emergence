@@ -36,6 +36,8 @@ pub(crate) enum Goal {
     Work(Id<Structure>),
     /// Attempt to feed self
     Eat(Id<Item>),
+    /// Attempting to destroy a structure
+    Demolish(Id<Structure>),
 }
 
 impl TryFrom<SignalType> for Goal {
@@ -50,6 +52,7 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
             SignalType::Contains(_) => Err(()),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
+            SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
         }
     }
 }
@@ -61,6 +64,7 @@ impl Display for Goal {
             Goal::Pickup(item) => format!("Pickup {item}"),
             Goal::DropOff(item) => format!("Dropoff {item}"),
             Goal::Work(structure) => format!("Work at {structure}"),
+            Goal::Demolish(structure) => format!("Demolish {structure}"),
             Goal::Eat(item) => format!("Eat {item}"),
         };
 
