@@ -5,7 +5,7 @@
 
 use bevy::{prelude::*, utils::HashMap};
 use core::fmt::Display;
-use core::ops::{Add, Mul, Sub};
+use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
 use crate::asset_management::manifest::{Id, Item, Structure};
@@ -108,7 +108,7 @@ impl Signals {
 
                 for (tile_pos, signal_strength) in contains_signals {
                     if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
-                        *existing_signal_strength = *existing_signal_strength + signal_strength;
+                        *existing_signal_strength += signal_strength;
                     } else {
                         total_signals.insert(tile_pos, signal_strength);
                     }
@@ -251,18 +251,23 @@ impl SignalMap {
         *self.map.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
     }
 
+    /// Returns a mutable reference to the signal strength at the given [`TilePos`].
+    ///
+    /// Missing values will be inserted with [`SignalStrength::ZERO`].
+    fn get_mut(&mut self, tile_pos: TilePos) -> &mut SignalStrength {
+        self.map.entry(tile_pos).or_insert(SignalStrength::ZERO)
+    }
+
     /// Adds the `signal_strength` to the signal at `tile_pos`.
     fn add_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        let existing = self.get(tile_pos);
-        self.map.insert(tile_pos, existing + signal_strength);
+        *self.get_mut(tile_pos) += signal_strength
     }
 
     /// Subtracts the `signal_strength` to the signal at `tile_pos`.
     ///
     /// The value is capped a minimum of [`SignalStrength::ZERO`].
     fn subtract_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        let existing = self.get(tile_pos);
-        self.map.insert(tile_pos, existing - signal_strength);
+        *self.get_mut(tile_pos) -= signal_strength;
     }
 }
 
@@ -325,11 +330,23 @@ impl Add<SignalStrength> for SignalStrength {
     }
 }
 
+impl AddAssign<SignalStrength> for SignalStrength {
+    fn add_assign(&mut self, rhs: SignalStrength) {
+        *self = *self + rhs
+    }
+}
+
 impl Sub<SignalStrength> for SignalStrength {
     type Output = SignalStrength;
 
     fn sub(self, rhs: SignalStrength) -> Self::Output {
         SignalStrength((self.0 - rhs.0).max(0.))
+    }
+}
+
+impl SubAssign<SignalStrength> for SignalStrength {
+    fn sub_assign(&mut self, rhs: SignalStrength) {
+        *self = *self - rhs
     }
 }
 
