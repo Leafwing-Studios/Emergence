@@ -83,7 +83,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
                 build_duration: Duration::from_secs(5),
                 construction_materials: leuco_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
+                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Muddy]),
                 color: Color::ORANGE_RED,
             },
         );
@@ -102,7 +102,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
                 build_duration: Duration::ZERO,
                 construction_materials: acacia_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Muddy]),
+                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Muddy]),
                 color: Color::GREEN,
             },
         );
@@ -116,7 +116,7 @@ impl Default for StructureManifest {
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
-                    Terrain::Plain,
+                    Terrain::Loam,
                     Terrain::Muddy,
                     Terrain::Rocky,
                 ]),
@@ -132,7 +132,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(5),
-                allowed_terrain_types: HashSet::from_iter([Terrain::Plain, Terrain::Rocky]),
+                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Rocky]),
                 color: Color::BLUE,
             },
         );

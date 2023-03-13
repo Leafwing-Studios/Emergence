@@ -62,7 +62,7 @@ impl GenerationConfig {
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Terrain, f32> = HashMap::new();
-        terrain_weights.insert(Terrain::Plain, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
+        terrain_weights.insert(Terrain::Loam, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
         terrain_weights.insert(Terrain::Muddy, GenerationConfig::TERRAIN_WEIGHT_HIGH);
         terrain_weights.insert(Terrain::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 

@@ -16,8 +16,8 @@ use emergence_macros::IterableEnum;
 /// Available terrain types.
 #[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum, Debug, Display)]
 pub(crate) enum Terrain {
-    /// Terrain with no distinguishing characteristics.
-    Plain,
+    /// Rich, fertile soil.
+    Loam,
     /// Terrain that is rocky, and thus difficult to traverse.
     Rocky,
     /// Terrain that is unusually muddy.
@@ -31,7 +31,7 @@ impl Terrain {
     /// Higher values make units walk faster.
     pub(crate) const fn walking_speed(&self) -> f32 {
         match self {
-            Terrain::Plain => 1.0,
+            Terrain::Loam => 1.0,
             Terrain::Rocky => 2.0,
             Terrain::Muddy => 0.5,
         }
@@ -40,7 +40,7 @@ impl Terrain {
     /// The rendering material associated with this terrain type.
     pub(crate) fn material(&self) -> StandardMaterial {
         let base_color = match self {
-            Terrain::Plain => Color::BEIGE,
+            Terrain::Loam => Color::BEIGE,
             Terrain::Rocky => Color::GRAY,
             Terrain::Muddy => Color::BISQUE,
         };
