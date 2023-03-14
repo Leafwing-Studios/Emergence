@@ -24,4 +24,8 @@ pub struct RawItemManifest {
     items: HashMap<String, RawItemData>,
 }
 
-impl RawManifest for RawItemManifest {}
+impl RawManifest for RawItemManifest {
+    fn path() -> &'static str {
+        "manifests/items.manifest.json"
+    }
+}

@@ -10,7 +10,10 @@ use bevy::{
 use serde::Deserialize;
 
 /// A utility trait to ensure that all trait bounds are satisfied.
-pub trait RawManifest: TypeUuid + Send + Sync + 'static {}
+pub trait RawManifest: TypeUuid + Send + Sync + 'static {
+    /// The path of the asset.
+    fn path() -> &'static str;
+}
 
 /// A loader for `.manifest.json` files.
 #[derive(Debug, Clone)]
