@@ -8,6 +8,7 @@ use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{MapGeometry, TilePos};
 
+#[derive(Debug)]
 pub(crate) struct TerrainData {
     /// The walking speed multiplier associated with this terrain type.
     ///
@@ -18,7 +19,7 @@ pub(crate) struct TerrainData {
 }
 
 impl TerrainData {
-    fn walking_speed(&self) -> f32 {
+    pub(crate) fn walking_speed(&self) -> f32 {
         self.walking_speed
     }
 }

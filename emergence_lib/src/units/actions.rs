@@ -6,7 +6,9 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Structure, Terrain, Unit},
+    asset_management::manifest::{
+        Id, Item, ItemManifest, Structure, Terrain, TerrainManifest, Unit,
+    },
     items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
@@ -39,6 +41,7 @@ pub(super) fn choose_actions(
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
+    terrain_manifest: Res<TerrainManifest>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -53,6 +56,7 @@ pub(super) fn choose_actions(
                         facing,
                         map_geometry,
                         &terrain_query,
+                        &terrain_manifest,
                     ),
                     _ => CurrentAction::random_spin(rng),
                 },
@@ -69,6 +73,7 @@ pub(super) fn choose_actions(
                             &signals,
                             rng,
                             &terrain_query,
+                            &terrain_manifest,
                             map_geometry,
                         )
                     }
@@ -86,6 +91,7 @@ pub(super) fn choose_actions(
                             &signals,
                             rng,
                             &terrain_query,
+                            &terrain_manifest,
                             map_geometry,
                         )
                     }
@@ -107,6 +113,7 @@ pub(super) fn choose_actions(
                             &signals,
                             rng,
                             &terrain_query,
+                            &terrain_manifest,
                             map_geometry,
                         )
                     }
@@ -119,6 +126,7 @@ pub(super) fn choose_actions(
                     &signals,
                     rng,
                     &terrain_query,
+                    &terrain_manifest,
                     map_geometry,
                 ),
             }
@@ -389,6 +397,7 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -418,6 +427,7 @@ impl CurrentAction {
                 upstream,
                 facing,
                 terrain_query,
+                terrain_manifest,
                 map_geometry,
             )
         } else {
@@ -436,6 +446,7 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -475,6 +486,7 @@ impl CurrentAction {
                 upstream,
                 facing,
                 terrain_query,
+                terrain_manifest,
                 map_geometry,
             )
         } else {
@@ -492,6 +504,7 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
@@ -515,6 +528,7 @@ impl CurrentAction {
                     chosen_workplace.1,
                     facing,
                     terrain_query,
+                    terrain_manifest,
                     map_geometry,
                 )
             } else if let Some(upstream) =
@@ -525,6 +539,7 @@ impl CurrentAction {
                     upstream,
                     facing,
                     terrain_query,
+                    terrain_manifest,
                     map_geometry,
                 )
             } else {
@@ -575,6 +590,7 @@ impl CurrentAction {
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
     ) -> Self {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
         const BASE_WALKING_DURATION: f32 = 0.5;
@@ -582,7 +598,8 @@ impl CurrentAction {
         let target_tile = unit_tile_pos.neighbor(facing.direction);
         let entity_standing_on = *map_geometry.terrain_index.get(&unit_tile_pos).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
-        let walking_duration = BASE_WALKING_DURATION / terrain_standing_on.walking_speed();
+        let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed();
+        let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
         if map_geometry.is_passable(target_tile) {
             CurrentAction {
@@ -600,12 +617,19 @@ impl CurrentAction {
         target_tile_pos: TilePos,
         facing: &Facing,
         terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
         let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
-            CurrentAction::move_forward(unit_tile_pos, facing, map_geometry, terrain_query)
+            CurrentAction::move_forward(
+                unit_tile_pos,
+                facing,
+                map_geometry,
+                terrain_query,
+                terrain_manifest,
+            )
         } else {
             CurrentAction::spin_towards(facing, required_direction)
         }
