@@ -28,12 +28,22 @@ pub(crate) struct SignalsPlugin;
 
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Signals>().add_systems(
-            (emit_signals, diffuse_signals, degrade_signals)
-                .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.init_resource::<Signals>()
+            .init_resource::<DebugColorScheme>()
+            .insert_resource(DebugDisplayedSignal(SignalType::Push(Id::from_name(
+                "acacia_leaf",
+            ))))
+            .add_systems(
+                (emit_signals, diffuse_signals, degrade_signals)
+                    .chain()
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            )
+            .add_system(
+                debug_display_signal_map
+                    .run_if(debug_signal_map_enabled)
+                    .in_base_set(CoreSet::PostUpdate),
+            );
     }
 }
 
@@ -459,6 +469,61 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         for tile_to_clear in tiles_to_clear {
             signal_map.map.remove(&tile_to_clear);
         }
+    }
+}
+
+#[derive(Resource, Debug)]
+struct DebugDisplayedSignal(SignalType);
+
+#[derive(Resource, Debug)]
+struct DebugColorScheme(Vec<Handle<StandardMaterial>>);
+
+impl FromWorld for DebugColorScheme {
+    fn from_world(world: &mut World) -> Self {
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
+
+        let mut color_scheme = Vec::with_capacity(256);
+        // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
+        // by matlab's veridis
+        for i in 0..256 {
+            let s = i as f32 / 255.0;
+            color_scheme.push(material_assets.add(StandardMaterial {
+                base_color: Color::Rgba {
+                    red: 2.0 * s - s * s,
+                    green: 0.8 * s.sqrt(),
+                    blue: s * s * 0.6,
+                    alpha: 1.0,
+                },
+                ..Default::default()
+            }));
+        }
+
+        color_scheme.shrink_to_fit();
+        DebugColorScheme(color_scheme)
+    }
+}
+
+fn debug_signal_map_enabled(displayed_signal: Option<Res<DebugDisplayedSignal>>) -> bool {
+    displayed_signal.is_some()
+}
+
+fn debug_display_signal_map(
+    mut hexes: Query<(&TilePos, &mut Handle<StandardMaterial>)>,
+    signals: Res<Signals>,
+    displayed_signal: Res<DebugDisplayedSignal>,
+    color_scheme: Res<DebugColorScheme>,
+) {
+    for (tile, mut material) in &mut hexes {
+        let signal_strength = signals.get(displayed_signal.0, *tile).0;
+        // Just a simple dark red (low strength) to bright yellow (high strength) color scheme
+        // The scale is logarithmic, so that small nuances are still pretty visible
+        let scaled_strength = signal_strength / 50.0;
+        let color_index = if signal_strength < f32::EPSILON {
+            0
+        } else {
+            ((scaled_strength * 254.0) as usize) + 1
+        };
+        *material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
     }
 }
 
