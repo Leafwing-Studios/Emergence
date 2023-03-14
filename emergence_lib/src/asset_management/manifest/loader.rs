@@ -13,7 +13,7 @@ use serde::Deserialize;
 pub trait RawManifest: TypeUuid + Send + Sync + 'static {}
 
 /// A loader for `.manifest.json` files.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct RawManifestLoader<M>
 where
     M: RawManifest,
@@ -40,5 +40,16 @@ where
             load_context.set_default_asset(LoadedAsset::new(raw_manifest));
             Ok(())
         })
+    }
+}
+
+impl<M> Default for RawManifestLoader<M>
+where
+    M: RawManifest + for<'de> Deserialize<'de>,
+{
+    fn default() -> Self {
+        Self {
+            _phantom_manifest: PhantomData::default(),
+        }
     }
 }
