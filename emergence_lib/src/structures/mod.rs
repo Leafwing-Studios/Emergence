@@ -11,7 +11,7 @@ use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
     items::{inventory::Inventory, ItemCount},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -19,7 +19,6 @@ use crate::{
     },
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
     simulation::geometry::{Facing, TilePos},
-    terrain::Terrain,
 };
 
 use self::{
@@ -47,7 +46,7 @@ pub(crate) struct StructureData {
     /// The set of items needed to create a new copy of this structure
     construction_materials: InputInventory,
     /// The set of terrain types that this structure can be built on
-    pub(crate) allowed_terrain_types: HashSet<Terrain>,
+    pub(crate) allowed_terrain_types: HashSet<Id<Terrain>>,
     /// The color associated with this structure
     pub(crate) color: Color,
 }
@@ -59,7 +58,7 @@ impl StructureData {
     }
 
     /// Returns the set of terrain types that this structure can be built on
-    pub fn allowed_terrain_types(&self) -> &HashSet<Terrain> {
+    pub fn allowed_terrain_types(&self) -> &HashSet<Id<Terrain>> {
         &self.allowed_terrain_types
     }
 }
@@ -83,7 +82,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
                 build_duration: Duration::from_secs(5),
                 construction_materials: leuco_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Muddy]),
+                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("muddy")]),
                 color: Color::ORANGE_RED,
             },
         );
@@ -102,7 +101,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
                 build_duration: Duration::ZERO,
                 construction_materials: acacia_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Muddy]),
+                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("muddy")]),
                 color: Color::GREEN,
             },
         );
@@ -116,9 +115,9 @@ impl Default for StructureManifest {
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
-                    Terrain::Loam,
-                    Terrain::Muddy,
-                    Terrain::Rocky,
+                    Id::new("loam"),
+                    Id::new("muddy"),
+                    Id::new("rocky"),
                 ]),
                 color: Color::BEIGE,
             },
@@ -132,7 +131,7 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(5),
-                allowed_terrain_types: HashSet::from_iter([Terrain::Loam, Terrain::Rocky]),
+                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("rocky")]),
                 color: Color::BLUE,
             },
         );

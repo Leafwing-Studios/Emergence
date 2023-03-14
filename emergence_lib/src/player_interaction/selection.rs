@@ -976,7 +976,11 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
     use std::fmt::Display;
 
-    use crate::{signals::LocalSignals, simulation::geometry::TilePos, terrain::Terrain};
+    use crate::{
+        asset_management::manifest::{Id, Terrain},
+        signals::LocalSignals,
+        simulation::geometry::TilePos,
+    };
 
     /// Data needed to populate [`TerrainDetails`].
     #[derive(WorldQuery)]
@@ -984,7 +988,7 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
-        pub(super) terrain_type: &'static Terrain,
+        pub(super) terrain_type: &'static Id<Terrain>,
     }
 
     /// Detailed info about a given piece of terrain.
@@ -993,7 +997,7 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
-        pub(super) terrain_type: Terrain,
+        pub(super) terrain_type: Id<Terrain>,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
         /// The signals on this tile

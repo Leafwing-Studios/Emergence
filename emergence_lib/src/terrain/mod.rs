@@ -3,54 +3,23 @@
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
-use crate as emergence_lib;
-
+use crate::asset_management::manifest::{Id, Terrain};
 use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{MapGeometry, TilePos};
-use bevy::ecs::component::Component;
-use derive_more::Display;
 
-use emergence_macros::IterableEnum;
-
-/// Available terrain types.
-#[derive(Component, Clone, Copy, Hash, Eq, PartialEq, IterableEnum, Debug, Display)]
-pub(crate) enum Terrain {
-    /// Rich, fertile soil.
-    Loam,
-    /// Terrain that is rocky, and thus difficult to traverse.
-    Rocky,
-    /// Terrain that is unusually muddy.
-    Muddy,
-}
-
-impl Terrain {
+pub(crate) struct TerrainData {
     /// The walking speed multiplier associated with this terrain type.
     ///
     /// These values should always be strictly positive.
     /// Higher values make units walk faster.
-    pub(crate) const fn walking_speed(&self) -> f32 {
-        match self {
-            Terrain::Loam => 1.0,
-            Terrain::Rocky => 2.0,
-            Terrain::Muddy => 0.5,
-        }
-    }
+    /// 1.0 is "normal speed".
+    walking_speed: f32,
+}
 
-    /// The rendering material associated with this terrain type.
-    pub(crate) fn material(&self) -> StandardMaterial {
-        let base_color = match self {
-            Terrain::Loam => Color::BEIGE,
-            Terrain::Rocky => Color::GRAY,
-            Terrain::Muddy => Color::BISQUE,
-        };
-
-        StandardMaterial {
-            base_color,
-            perceptual_roughness: 0.6,
-            metallic: 0.01,
-            ..Default::default()
-        }
+impl TerrainData {
+    fn walking_speed(&self) -> f32 {
+        self.walking_speed
     }
 }
 
@@ -58,7 +27,7 @@ impl Terrain {
 #[derive(Bundle)]
 pub(crate) struct TerrainBundle {
     /// The type of terrain
-    terrain_type: Terrain,
+    terrain_id: Id<Terrain>,
     /// The location of this terrain hex
     tile_pos: TilePos,
     /// Makes the tiles pickable
@@ -72,7 +41,7 @@ pub(crate) struct TerrainBundle {
 impl TerrainBundle {
     /// Creates a new Terrain entity.
     pub(crate) fn new(
-        terrain_type: Terrain,
+        terrain_id: Id<Terrain>,
         tile_pos: TilePos,
         handles: &TerrainHandles,
         map_geometry: &MapGeometry,
@@ -83,7 +52,7 @@ impl TerrainBundle {
             mesh: handles.mesh.clone_weak(),
             material: handles
                 .terrain_materials
-                .get(&terrain_type)
+                .get(&terrain_id)
                 .unwrap()
                 .clone_weak(),
             transform: Transform::from_xyz(world_pos.x, 0.0, world_pos.z).with_scale(Vec3 {
@@ -95,7 +64,7 @@ impl TerrainBundle {
         };
 
         TerrainBundle {
-            terrain_type,
+            terrain_id,
             tile_pos,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             zoning: Zoning::None,

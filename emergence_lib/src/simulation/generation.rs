@@ -1,12 +1,11 @@
 //! Generating starting terrain and organisms
-use crate::asset_management::manifest::{Id, StructureManifest, UnitManifest};
+use crate::asset_management::manifest::{Id, StructureManifest, Terrain, UnitManifest};
 use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
-use crate::enum_iter::IterableEnum;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::commands::StructureCommandsExt;
-use crate::terrain::{Terrain, TerrainBundle};
+use crate::terrain::TerrainBundle;
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin, StartupStage};
 use bevy::ecs::prelude::*;
@@ -35,7 +34,7 @@ pub struct GenerationConfig {
     /// Initial number of ant hives.
     n_hive: usize,
     /// Relative probability of generating tiles of each terrain type.
-    terrain_weights: HashMap<Terrain, f32>,
+    terrain_weights: HashMap<Id<Terrain>, f32>,
 }
 
 impl GenerationConfig {
@@ -52,19 +51,20 @@ impl GenerationConfig {
     const N_HIVE: usize = 1;
 
     /// The choice weight for plain terrain in default generation config
-    const TERRAIN_WEIGHT_PLAIN: f32 = 1.0;
+    const TERRAIN_WEIGHT_LOAM: f32 = 1.0;
     /// The choice weight for high terrain in default generation config
-    const TERRAIN_WEIGHT_HIGH: f32 = 0.3;
+    const TERRAIN_WEIGHT_MUDDY: f32 = 0.3;
     /// The choice weight for impassable terrain in default generation config
     const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
 }
 
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
-        let mut terrain_weights: HashMap<Terrain, f32> = HashMap::new();
-        terrain_weights.insert(Terrain::Loam, GenerationConfig::TERRAIN_WEIGHT_PLAIN);
-        terrain_weights.insert(Terrain::Muddy, GenerationConfig::TERRAIN_WEIGHT_HIGH);
-        terrain_weights.insert(Terrain::Rocky, GenerationConfig::TERRAIN_WEIGHT_ROCKY);
+        let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
+        // FIXME: load from file somehow
+        terrain_weights.insert(Id::new("loam"), GenerationConfig::TERRAIN_WEIGHT_LOAM);
+        terrain_weights.insert(Id::new("muddy"), GenerationConfig::TERRAIN_WEIGHT_MUDDY);
+        terrain_weights.insert(Id::new("rocky"), GenerationConfig::TERRAIN_WEIGHT_ROCKY);
 
         GenerationConfig {
             map_radius: GenerationConfig::MAP_RADIUS,
@@ -147,10 +147,11 @@ pub(crate) fn generate_terrain(
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let terrain_variants = Terrain::variants().collect::<Vec<Terrain>>();
     let terrain_weights = &config.terrain_weights;
+    let terrain_variants: Vec<Id<Terrain>> = terrain_weights.keys().map(|k| *k).collect();
 
     for hex in hexagon(Hex::ZERO, map_geometry.radius) {
+        // FIXME: can we not just sample from our terrain_weights directly?
         let &terrain_type = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
                 terrain_weights.get(terrain_type).unwrap()
@@ -190,7 +191,7 @@ pub(crate) fn generate_terrain(
 fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    tile_query: Query<&TilePos, With<Terrain>>,
+    tile_query: Query<&TilePos, With<Id<Terrain>>>,
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,

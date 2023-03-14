@@ -4,10 +4,9 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::StructureManifest,
+    asset_management::manifest::{Id, StructureManifest, Terrain},
     simulation::geometry::{MapGeometry, TilePos},
     structures::commands::StructureCommandsExt,
-    terrain::Terrain,
 };
 
 use super::{
@@ -56,7 +55,7 @@ fn set_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
     clipboard: Res<Clipboard>,
-    mut terrain_query: Query<&mut Zoning, With<Terrain>>,
+    mut terrain_query: Query<&mut Zoning, With<Id<Terrain>>>,
     current_selection: Res<CurrentSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
@@ -122,7 +121,7 @@ fn set_zoning(
 
 /// Spawn and despawn ghosts based on zoning.
 fn generate_ghosts_from_zoning(
-    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain), Changed<Zoning>>,
+    mut terrain_query: Query<(&mut Zoning, &TilePos, &Id<Terrain>), Changed<Zoning>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
 ) {

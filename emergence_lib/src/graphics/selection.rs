@@ -3,17 +3,19 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::terrain::TerrainHandles,
+    asset_management::{
+        manifest::{Id, Terrain},
+        terrain::TerrainHandles,
+    },
     player_interaction::selection::{CurrentSelection, HoveredTiles},
     simulation::geometry::TilePos,
-    terrain::Terrain,
 };
 
 /// Shows which tiles are being hovered and selected.
 pub(super) fn display_tile_interactions(
     current_selection: Res<CurrentSelection>,
     hovered_tiles: Res<HoveredTiles>,
-    mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Terrain, &TilePos)>,
+    mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Id<Terrain>, &TilePos)>,
     materials: Res<TerrainHandles>,
 ) {
     if current_selection.is_changed() || hovered_tiles.is_changed() {

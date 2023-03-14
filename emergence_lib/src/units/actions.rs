@@ -6,13 +6,12 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Structure, Unit},
+    asset_management::manifest::{Id, Item, ItemManifest, Structure, Terrain, Unit},
     items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
-    terrain::Terrain,
 };
 
 use super::{
@@ -39,7 +38,7 @@ pub(super) fn choose_actions(
     workplace_query: WorkplaceQuery,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
-    terrain_query: Query<&Terrain>,
+    terrain_query: Query<&Id<Terrain>>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -389,7 +388,7 @@ impl CurrentAction {
         output_inventory_query: &Query<&OutputInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
-        terrain_query: &Query<&Terrain>,
+        terrain_query: &Query<&Id<Terrain>>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -436,7 +435,7 @@ impl CurrentAction {
         input_inventory_query: &Query<&InputInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
-        terrain_query: &Query<&Terrain>,
+        terrain_query: &Query<&Id<Terrain>>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -492,7 +491,7 @@ impl CurrentAction {
         workplace_query: &WorkplaceQuery,
         signals: &Signals,
         rng: &mut ThreadRng,
-        terrain_query: &Query<&Terrain>,
+        terrain_query: &Query<&Id<Terrain>>,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
@@ -575,7 +574,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
-        terrain_query: &Query<&Terrain>,
+        terrain_query: &Query<&Id<Terrain>>,
     ) -> Self {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
         const BASE_WALKING_DURATION: f32 = 0.5;
@@ -600,7 +599,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         target_tile_pos: TilePos,
         facing: &Facing,
-        terrain_query: &Query<&Terrain>,
+        terrain_query: &Query<&Id<Terrain>>,
         map_geometry: &MapGeometry,
     ) -> Self {
         let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);

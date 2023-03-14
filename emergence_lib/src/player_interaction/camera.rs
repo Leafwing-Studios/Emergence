@@ -13,12 +13,12 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::Id;
 use crate::asset_management::manifest::Structure;
+use crate::asset_management::manifest::Terrain;
 use crate::asset_management::manifest::Unit;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::ghost::Ghost;
-use crate::terrain::Terrain;
 
 use self::speed::Speed;
 

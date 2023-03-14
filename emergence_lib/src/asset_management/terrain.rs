@@ -4,16 +4,19 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
-    simulation::geometry::MapGeometry, terrain::Terrain,
+    simulation::geometry::MapGeometry,
 };
 
-use super::hexagonal_column;
+use super::{
+    hexagonal_column,
+    manifest::{Id, Terrain},
+};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct TerrainHandles {
     /// The material used for each type of terrain
-    pub(crate) terrain_materials: HashMap<Terrain, Handle<StandardMaterial>>,
+    pub(crate) terrain_materials: HashMap<Id<Terrain>, Handle<StandardMaterial>>,
     /// The mesh used for each type of structure
     pub(crate) mesh: Handle<Mesh>,
     /// The materials used for tiles when they are selected or otherwise interacted with
@@ -24,7 +27,7 @@ impl TerrainHandles {
     /// Returns a weakly cloned handle to the correct material for a terrain tile
     pub(crate) fn get_material(
         &self,
-        terrain: &Terrain,
+        terrain: &Id<Terrain>,
         hovered: bool,
         selected: bool,
     ) -> Handle<StandardMaterial> {
@@ -46,7 +49,10 @@ impl FromWorld for TerrainHandles {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
 
         let mut terrain_materials = HashMap::new();
-        for variant in Terrain::variants() {
+        // FIXME: load from disk
+        let variants: [Id<Terrain>; 3] = [Id::new("loam"), Id::new("muddy"), Id::new("rocky")];
+
+        for variant in variants {
             let material_handle = material_assets.add(variant.material());
             terrain_materials.insert(variant, material_handle);
         }

@@ -141,6 +141,7 @@ mod emergence_markers {
     use crate::{
         items::{recipe::RecipeData, ItemData},
         structures::StructureData,
+        terrain::TerrainData,
         units::UnitData,
     };
 
@@ -161,6 +162,11 @@ mod emergence_markers {
     pub(crate) struct Structure;
     /// Stores the read-only definitions for all structures.
     pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
+
+    /// The marker type for [`Id<Terrain>`](super::Id).
+    pub(crate) struct Terrain;
+    /// Stores the read-only definitions for all structures.
+    pub(crate) type TerrainManifest = Manifest<Terrain, TerrainData>;
 
     /// The marker type for [`Id<Item>`](super::Id).
     pub(crate) struct Item;
