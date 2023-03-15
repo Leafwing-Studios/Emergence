@@ -20,7 +20,7 @@ fn spawn_sun(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             color: Color::WHITE,
-            illuminance: 1e6,
+            illuminance: 4e5,
             ..Default::default()
         },
         transform: Transform::from_xyz(30., 100., 30.).looking_at(Vec3::ZERO, Vec3::Y),
