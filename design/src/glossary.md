@@ -94,7 +94,7 @@ If this budget is exceeded, players will be frustrated and confused by your game
 
 ### Diagetic
 
-A [mechanic](glossary.md#mechanic) that is presented as occuring in the literal [game world](glossary.md#game-world).
+A [mechanic](glossary.md#mechanic) that is presented as occurring in the literal [game world](glossary.md#game-world).
 For example, most user interfaces are presented as something that only exists for the player's convenience, but doesn't exist in the game.
 However, in *Halo*, the display is part of the soldier's visor, and thus literally exists in the game.
 
@@ -595,12 +595,12 @@ The recycling flow of water: from rain to lakes and rivers and soil to plants an
 ### Water storage capacity
 
 How much water remains in soil after being flooded and drained.
-Too low and your plants will be suspectible to drought.
+Too low and your plants will be susceptible to drought.
 
 ### Water drainage
 
 How quickly water can drain out of soil.
-Too low and your plants will be suspectible to flooding.
+Too low and your plants will be susceptible to flooding.
 
 ## Emergence
 

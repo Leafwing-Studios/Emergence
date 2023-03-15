@@ -1065,7 +1065,7 @@ mod unit_details {
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried
         pub(super) held_item: &'static UnitInventory,
-        /// What this unit is trying to acheive
+        /// What this unit is trying to achieve
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
@@ -1084,7 +1084,7 @@ mod unit_details {
         pub(super) tile_pos: TilePos,
         /// What's being carried
         pub(super) held_item: UnitInventory,
-        /// What this unit is trying to acheive
+        /// What this unit is trying to achieve
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,

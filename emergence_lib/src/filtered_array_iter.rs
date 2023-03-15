@@ -27,7 +27,7 @@ impl<T, const N: usize> IntoIterator for FilteredArrayIter<T, N> {
 }
 
 impl<T, const N: usize> FilteredArrayIter<T, N> {
-    /// Analagous to [`std::iter::Iterator::filter`], but evaluates
+    /// Analogous to [`std::iter::Iterator::filter`], but evaluates
     /// the predicate immediately instead of waiting until we iterate
     /// over the array.
     ///
