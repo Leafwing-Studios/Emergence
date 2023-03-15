@@ -3,10 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Terrain},
-        terrain::TerrainHandles,
-    },
+    asset_management::manifest::{Id, Terrain},
     player_interaction::selection::{CurrentSelection, HoveredTiles},
     simulation::geometry::TilePos,
 };
@@ -15,12 +12,11 @@ use crate::{
 pub(super) fn display_tile_interactions(
     current_selection: Res<CurrentSelection>,
     hovered_tiles: Res<HoveredTiles>,
-    mut terrain_query: Query<(&mut Handle<StandardMaterial>, &Id<Terrain>, &TilePos)>,
-    materials: Res<TerrainHandles>,
+    mut terrain_query: Query<(&Id<Terrain>, &TilePos)>,
 ) {
     if current_selection.is_changed() || hovered_tiles.is_changed() {
         // PERF: We should probably avoid a linear scan over all tiles here
-        for (mut material, terrain, &tile_pos) in terrain_query.iter_mut() {
+        for (terrain, &tile_pos) in terrain_query.iter_mut() {
             let hovered = hovered_tiles.contains(&tile_pos);
             let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
                 selected_tiles.contains_tile(tile_pos)
