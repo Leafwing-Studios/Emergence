@@ -1,6 +1,6 @@
 //! Asset loading for terrain
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use crate::{
     enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
@@ -10,13 +10,14 @@ use crate::{
 use super::{
     hexagonal_column,
     manifest::{Id, Terrain},
+    Loadable,
 };
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct TerrainHandles {
-    /// The material used for each type of terrain
-    pub(crate) terrain_materials: HashMap<Id<Terrain>, Handle<StandardMaterial>>,
+    /// The scene used for each type of terrain
+    pub(crate) scenes: HashMap<Id<Terrain>, Handle<Scene>>,
     /// The mesh used for each type of structure
     pub(crate) mesh: Handle<Mesh>,
     /// The materials used for tiles when they are selected or otherwise interacted with
@@ -32,7 +33,9 @@ impl TerrainHandles {
         selected: bool,
     ) -> Handle<StandardMaterial> {
         let maybe_handle = match (hovered, selected) {
-            (false, false) => self.terrain_materials.get(terrain),
+            (false, false) => {
+                let scene = self.scenes.get(terrain).unwrap_or_default();
+            }
             (true, false) => self.interaction_materials.get(&ObjectInteraction::Hovered),
             (false, true) => self.interaction_materials.get(&ObjectInteraction::Selected),
             (true, true) => self
@@ -46,17 +49,17 @@ impl TerrainHandles {
 
 impl FromWorld for TerrainHandles {
     fn from_world(world: &mut World) -> Self {
-        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
+        let asset_server = world.resource::<AssetServer>();
 
-        let mut terrain_materials = HashMap::new();
-        // FIXME: load from disk
+        let mut scenes = HashMap::new();
         let variants: [Id<Terrain>; 3] = [Id::new("loam"), Id::new("muddy"), Id::new("rocky")];
-
-        for variant in variants {
-            let material_handle = material_assets.add(variant.material());
-            terrain_materials.insert(variant, material_handle);
+        for id in variants {
+            let path_string = format!("structures/{id}.gltf#Scene0");
+            let scene = asset_server.load(path_string);
+            scenes.insert(id, scene);
         }
 
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
             if let Some(material) = variant.material() {
@@ -71,9 +74,24 @@ impl FromWorld for TerrainHandles {
         let mesh = mesh_assets.add(mesh_object);
 
         TerrainHandles {
-            terrain_materials,
+            scenes,
             mesh,
             interaction_materials,
         }
+    }
+}
+
+impl Loadable for TerrainHandles {
+    fn load_state(&self, asset_server: &AssetServer) -> LoadState {
+        for (terrain, scene_handle) in &self.scenes {
+            let scene_load_state = asset_server.get_load_state(scene_handle);
+            info!("{terrain:?}'s scene is {scene_load_state:?}");
+
+            if scene_load_state != LoadState::Loaded {
+                return scene_load_state;
+            }
+        }
+
+        LoadState::Loaded
     }
 }
