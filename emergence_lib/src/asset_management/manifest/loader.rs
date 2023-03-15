@@ -13,7 +13,7 @@ use super::raw::RawManifest;
 
 /// A loader for `.manifest.json` files.
 #[derive(Debug, Clone)]
-pub struct RawManifestLoader<M>
+pub(crate) struct RawManifestLoader<M>
 where
     M: RawManifest,
 {
