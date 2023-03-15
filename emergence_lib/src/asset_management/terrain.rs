@@ -2,12 +2,23 @@
 
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
-use crate::{enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction};
+use crate::{
+    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction, terrain::TerrainData,
+};
 
 use super::{
-    manifest::{Id, Terrain},
+    manifest::{Id, Terrain, TerrainManifest},
     Loadable,
 };
+
+/// All logic and initialization needed for terrain.
+pub(crate) struct TerrainPlugin;
+
+impl Plugin for TerrainPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<TerrainManifest>();
+    }
+}
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
@@ -23,7 +34,7 @@ impl FromWorld for TerrainHandles {
         let mut scenes = HashMap::new();
         let variants: [Id<Terrain>; 3] = [Id::new("loam"), Id::new("muddy"), Id::new("rocky")];
         for id in variants {
-            let path_string = format!("structures/{id}.gltf#Scene0");
+            let path_string = format!("terrain/{id}.gltf#Scene0");
             let scene = asset_server.load(path_string);
             scenes.insert(id, scene);
         }
@@ -53,5 +64,17 @@ impl Loadable for TerrainHandles {
         }
 
         LoadState::Loaded
+    }
+}
+
+impl Default for TerrainManifest {
+    // TODO: load this from file
+    fn default() -> Self {
+        let mut map = HashMap::new();
+        map.insert(Id::new("rocky"), TerrainData::new(2.0));
+        map.insert(Id::new("loam"), TerrainData::new(1.0));
+        map.insert(Id::new("muddy"), TerrainData::new(0.5));
+
+        TerrainManifest::new(map)
     }
 }

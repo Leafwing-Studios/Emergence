@@ -18,6 +18,12 @@ pub(crate) struct TerrainData {
 }
 
 impl TerrainData {
+    /// Constructs a new [`TerrainData`] object
+    pub(crate) fn new(walking_speed: f32) -> Self {
+        TerrainData { walking_speed }
+    }
+
+    /// Returns the relative walking speed of units on this terrain
     pub(crate) fn walking_speed(&self) -> f32 {
         self.walking_speed
     }

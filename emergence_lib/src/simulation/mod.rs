@@ -2,6 +2,7 @@
 //!
 //! All plugins in this module should work without rendering.
 
+use crate::asset_management::terrain::TerrainPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
@@ -28,6 +29,7 @@ impl Plugin for SimulationPlugin {
                 config: self.gen_config.clone(),
             })
             .add_plugin(StructuresPlugin)
+            .add_plugin(TerrainPlugin)
             .add_plugin(OrganismPlugin)
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin);
