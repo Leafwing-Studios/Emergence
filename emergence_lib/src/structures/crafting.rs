@@ -355,7 +355,7 @@ fn gain_energy_when_crafting_completes(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 // TODO: change neglect based on inventory fullness and structure energy level
-fn set_emitter(
+pub(crate) fn set_emitter(
     mut crafting_query: Query<(
         &mut Emitter,
         &InputInventory,

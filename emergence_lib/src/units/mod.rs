@@ -6,6 +6,7 @@ use crate::{
         units::UnitHandles,
     },
     organisms::energy::{Energy, EnergyPool},
+    player_interaction::InteractionSystem,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 use bevy::{prelude::*, utils::HashMap};
@@ -149,7 +150,10 @@ impl Plugin for UnitsPlugin {
             .add_system(
                 actions::handle_actions
                     .in_set(UnitSystem::Act)
-                    .after(UnitSystem::AdvanceTimers),
+                    .after(UnitSystem::AdvanceTimers)
+                    // This must occur after MarkedForDemolition is added,
+                    // or we'll get a panic due to inserting a component on a despawned entity
+                    .after(InteractionSystem::ManagePreviews),
             )
             .add_system(goals::choose_goal.in_set(UnitSystem::ChooseGoal))
             .add_system(

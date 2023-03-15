@@ -1,12 +1,14 @@
 //! Zoning is used to indicate that a tile should contain the specified structure.
 
 use bevy::prelude::*;
+use core::fmt::Display;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::StructureManifest,
+    asset_management::manifest::{Id, Structure, StructureManifest},
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
-    structures::commands::StructureCommandsExt,
+    structures::{commands::StructureCommandsExt, construction::MarkedForDemolition},
     terrain::Terrain,
 };
 
@@ -29,10 +31,12 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::SetClipboard),
         )
         .add_system(
-            generate_ghosts_from_zoning
+            manage_previews_from_zoning
                 .in_set(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
-        );
+        )
+        // Must run after crafting emitters in order to wipe out their signals
+        .add_system(keep_tiles_clear.after(crate::structures::crafting::set_emitter));
     }
 }
 
@@ -44,9 +48,22 @@ pub(crate) enum Zoning {
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
-    // Tracked at: https://github.com/Leafwing-Studios/Emergence/issues/241
-    #[allow(dead_code)]
     KeepClear,
+}
+
+impl Display for Zoning {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Zoning::Structure(clipboard_data) => {
+                let id = clipboard_data.structure_id;
+                format!("{id}")
+            }
+            Zoning::None => "None".to_string(),
+            Zoning::KeepClear => "Keep Clear".to_string(),
+        };
+
+        write!(f, "{str}")
+    }
 }
 
 /// Applies zoning to an area, causing structures to be created (or removed) there.
@@ -79,6 +96,17 @@ fn set_zoning(
                 .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
                 .collect()
         };
+
+        // Try to remove everything at the location
+        if actions.pressed(PlayerAction::KeepClear) {
+            for terrain_entity in relevant_terrain_entities {
+                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                *zoning = Zoning::KeepClear;
+            }
+
+            // Don't try to clear and zone in the same frame
+            return;
+        }
 
         // Explicitly clear the selection
         if actions.pressed(PlayerAction::ClearZoning) {
@@ -121,10 +149,12 @@ fn set_zoning(
 }
 
 /// Spawn and despawn ghosts based on zoning.
-fn generate_ghosts_from_zoning(
-    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain), Changed<Zoning>>,
+fn manage_previews_from_zoning(
+    // We cannot use change detection here, or tiles would not be kept clear when built upon after zoning is set
+    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain)>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
+    map_geometry: Res<MapGeometry>,
 ) {
     for (mut zoning, &tile_pos, terrain) in terrain_query.iter_mut() {
         // Reborrowing here would trigger change detection, causing this system to constantly check
@@ -140,8 +170,25 @@ fn generate_ghosts_from_zoning(
                 }
             }
             Zoning::None => commands.despawn_ghost(tile_pos),
-            // TODO: this should also take delayed effect
-            Zoning::KeepClear => commands.despawn_structure(tile_pos),
+            Zoning::KeepClear => {
+                if let Some(structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                    commands
+                        .entity(*structure_entity)
+                        .insert(MarkedForDemolition);
+                }
+            }
         };
+    }
+}
+
+/// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
+fn keep_tiles_clear(
+    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForDemolition>>,
+) {
+    for (mut doomed_emitter, &structure_id) in structure_query.iter_mut() {
+        doomed_emitter.signals = vec![(
+            SignalType::Demolish(structure_id),
+            SignalStrength::new(100.),
+        )];
     }
 }

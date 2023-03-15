@@ -9,22 +9,22 @@ use crate::{
 use super::Manifest;
 
 /// The marker type for [`Id<Recipe>`](super::Id).
-pub(crate) struct Recipe;
+pub struct Recipe;
 
 /// Stores the read-only definitions for all recipes.
 pub(crate) type RecipeManifest = Manifest<Recipe, RecipeData>;
 
 /// The marker type for [`Id<Unit>`](super::Id).
-pub(crate) struct Unit;
+pub struct Unit;
 /// Stores the read-only definitions for all units.
 pub(crate) type UnitManifest = Manifest<Unit, UnitData>;
 
 /// The marker type for [`Id<Structure>`](super::Id).
-pub(crate) struct Structure;
+pub struct Structure;
 /// Stores the read-only definitions for all structures.
 pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
 /// The marker type for [`Id<Item>`](super::Id).
-pub(crate) struct Item;
+pub struct Item;
 /// Stores the read-only definitions for all items.
 pub(crate) type ItemManifest = Manifest<Item, ItemData>;

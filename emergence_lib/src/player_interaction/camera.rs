@@ -17,7 +17,7 @@ use crate::asset_management::manifest::Unit;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
-use crate::structures::ghost::Ghost;
+use crate::structures::construction::Ghost;
 use crate::terrain::Terrain;
 
 use self::speed::Speed;

@@ -3,7 +3,7 @@
 use crate::{
     asset_management::hexagonal_column, enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction, simulation::geometry::MapGeometry,
-    structures::ghost::GhostKind,
+    structures::construction::GhostKind,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
