@@ -67,8 +67,7 @@ where
     /// The handle to the raw manifest asset.
     ///
     /// We mainly need this for the asset to not be unloaded.
-    #[allow(dead_code)]
-    handle: Handle<M>,
+    _handle: Handle<M>,
 }
 
 /// Initiate the loading of the manifest.
@@ -78,7 +77,7 @@ where
 {
     let handle: Handle<M> = asset_server.load(M::path());
 
-    commands.insert_resource(RawManifestHandle::<M> { handle });
+    commands.insert_resource(RawManifestHandle::<M> { _handle: handle });
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
