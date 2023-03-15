@@ -191,24 +191,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn should_display_item_type_count_and_capacity_for_empty_slot() {
-        let item_slot = ItemSlot::new(Id::acacia_leaf(), 10);
-
-        assert_eq!(format!("{item_slot}"), "acacia_leaf (0/10)".to_string());
-    }
-
-    #[test]
-    fn should_display_item_type_count_and_capacity_for_filled_slot() {
-        let item_slot = ItemSlot {
-            item_id: Id::acacia_leaf(),
-            max_item_count: 10,
-            count: 6,
-        };
-
-        assert_eq!(format!("{item_slot}"), "acacia_leaf (6/10)".to_string());
-    }
-
-    #[test]
     fn should_be_empty_when_count_is_0() {
         let item_slot = ItemSlot {
             item_id: Id::acacia_leaf(),

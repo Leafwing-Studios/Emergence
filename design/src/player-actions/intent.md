@@ -35,7 +35,7 @@ These costs should be very low, and rapidly recovered: only planning or reconfig
 Intent can be used for several abilities, each of which is [unlocked](intent.md#unlocking-and-upgrading) as the player plays the game.
 They are listed here in the approximate unlock order.
 
-Abilties are always **dual**: their effect can always be thematically mirrored.
+Abilities are always **dual**: their effect can always be thematically mirrored.
 The more straightforward positive effect is always on the left mouse button,
 while the negative effect is on the right mouse button.
 
@@ -67,13 +67,13 @@ Additional abilities are unlocked via the [hive mind upgrade system](../research
 Additionally, many organisms have a class of [genetic upgrade](../research/genetics.md) that improves or modifies how abilities influence that strain of the organism.
 
 Similarly, some organisms will have genetic upgrades that interact with various abilities.
-Critically, these are never global: for example, organisms that increase your rate of generation or cap or unlock new abilties are forbidden.
+Critically, these are never global: for example, organisms that increase your rate of generation or cap or unlock new abilities are forbidden.
 Instead, these upgrades are local: they only affect themselves or the nearby area.
 For example, upgrades that:
 
 - cause abilities to affect nearby enemy organisms instead
 - cause organisms of this strain to go dormant until the next rainfall
-- double the duration of all abilties used in a 3 tile radius
+- double the duration of all abilities used in a 3 tile radius
 
 are all within the design space.
 These have a lower balance risk, require more careful planning and increase the potential for [creativity](../high-level/creative-automation.md) due to their reduced flexibility.

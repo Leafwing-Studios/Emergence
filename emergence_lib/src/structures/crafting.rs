@@ -67,7 +67,7 @@ impl Display for CraftingState {
                         )
                     }
                     (false, true) => {
-                        format!("Unecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
+                        format!("Unnecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
                     }
                     (false, false) => {
                         format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
@@ -355,7 +355,7 @@ fn gain_energy_when_crafting_completes(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 // TODO: change neglect based on inventory fullness and structure energy level
-fn set_emitter(
+pub(crate) fn set_emitter(
     mut crafting_query: Query<(
         &mut Emitter,
         &InputInventory,

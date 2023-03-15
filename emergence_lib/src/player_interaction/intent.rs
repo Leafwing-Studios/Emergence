@@ -6,10 +6,7 @@
 
 use std::ops::{Div, Mul};
 
-use bevy::{
-    prelude::{info, App, IntoSystemDescriptor, Plugin, Res, ResMut, Resource},
-    time::Time,
-};
+use bevy::{prelude::*, time::Time};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 
@@ -23,7 +20,7 @@ impl Plugin for IntentPlugin {
         app.init_resource::<IntentPool>()
             .add_system(
                 regenerate_intent
-                    .label(InteractionSystem::ReplenishIntent)
+                    .in_set(InteractionSystem::ReplenishIntent)
                     .before(InteractionSystem::ApplyZoning)
                     .before(InteractionSystem::UseAbilities),
             )

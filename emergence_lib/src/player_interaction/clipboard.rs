@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, crafting::ActiveRecipe, ghost::Preview},
+    structures::{commands::StructureCommandsExt, construction::Preview, crafting::ActiveRecipe},
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -23,18 +23,18 @@ impl Plugin for ClipboardPlugin {
             .add_system(clear_clipboard.before(InteractionSystem::SelectTiles))
             .add_system(
                 copy_selection
-                    .label(InteractionSystem::SetClipboard)
+                    .in_set(InteractionSystem::SetClipboard)
                     .after(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::SelectTiles),
             )
             .add_system(
                 rotate_selection
-                    .label(InteractionSystem::SetClipboard)
+                    .in_set(InteractionSystem::SetClipboard)
                     .after(copy_selection),
             )
             .add_system(
                 display_selection
-                    .label(InteractionSystem::ManagePreviews)
+                    .in_set(InteractionSystem::ManagePreviews)
                     .after(InteractionSystem::SetClipboard),
             );
     }

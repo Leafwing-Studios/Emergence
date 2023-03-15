@@ -7,10 +7,11 @@ use crate::simulation::geometry::{Facing, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::terrain::TerrainBundle;
 use crate::units::UnitBundle;
-use bevy::app::{App, Plugin, StartupStage};
+use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::math::vec2;
+use bevy::prelude::{CoreSchedule, IntoSystemAppConfigs};
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
@@ -62,9 +63,18 @@ impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
-        terrain_weights.insert(Id::new("loam"), GenerationConfig::TERRAIN_WEIGHT_LOAM);
-        terrain_weights.insert(Id::new("muddy"), GenerationConfig::TERRAIN_WEIGHT_MUDDY);
-        terrain_weights.insert(Id::new("rocky"), GenerationConfig::TERRAIN_WEIGHT_ROCKY);
+        terrain_weights.insert(
+            Id::from_string_id("loam"),
+            GenerationConfig::TERRAIN_WEIGHT_LOAM,
+        );
+        terrain_weights.insert(
+            Id::from_string_id("muddy"),
+            GenerationConfig::TERRAIN_WEIGHT_MUDDY,
+        );
+        terrain_weights.insert(
+            Id::from_string_id("rocky"),
+            GenerationConfig::TERRAIN_WEIGHT_ROCKY,
+        );
 
         GenerationConfig {
             map_radius: GenerationConfig::MAP_RADIUS,
@@ -83,40 +93,16 @@ pub(super) struct GenerationPlugin {
     pub(super) config: GenerationConfig,
 }
 
-/// Stage labels required to organize our startup systems.
-///
-/// We must use stage labels, as we need commands to be flushed between each stage.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, StageLabel)]
-pub(crate) enum GenerationStage {
-    /// Randomly generates and inserts terrain entities based on the [`GenerationConfig`] resource
-    ///
-    /// Systems:
-    /// * [`generate_terrain`]
-    TerrainGeneration,
-    /// Generates starting organisms, based on [`GenerationConfig`] resource, with random positions
-    ///
-    /// Systems:
-    /// * [`generate_organisms`]
-    OrganismGeneration,
-}
-
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone())
             .insert_resource(MapGeometry::new(self.config.map_radius))
-            .add_startup_stage_before(
-                StartupStage::Startup,
-                GenerationStage::OrganismGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_stage_before(
-                GenerationStage::OrganismGeneration,
-                GenerationStage::TerrainGeneration,
-                SystemStage::parallel(),
-            )
-            .add_startup_system_to_stage(GenerationStage::TerrainGeneration, generate_terrain)
-            .add_startup_system_to_stage(GenerationStage::OrganismGeneration, generate_organisms);
+            .add_systems(
+                (generate_terrain, apply_system_buffers, generate_organisms)
+                    .chain()
+                    .in_schedule(CoreSchedule::Startup),
+            );
     }
 }
 
@@ -224,7 +210,7 @@ fn generate_organisms(
         commands.spawn(UnitBundle::new(
             Id::ant(),
             ant_position,
-            unit_manifest.get(Id::new("ant")).clone(),
+            unit_manifest.get(Id::from_string_id("ant")).clone(),
             &unit_handles,
             &map_geometry,
         ));
@@ -233,7 +219,7 @@ fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let structure_id = Id::new("acacia");
+        let structure_id = Id::from_string_id("acacia");
 
         let item = ClipboardData {
             structure_id,
@@ -250,7 +236,7 @@ fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let structure_id = Id::new("leuco");
+        let structure_id = Id::from_string_id("leuco");
 
         let item = ClipboardData {
             structure_id,
@@ -267,7 +253,7 @@ fn generate_organisms(
     // Hives
     let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
     for position in hive_positions {
-        let structure_id = Id::new("ant_hive");
+        let structure_id = Id::from_string_id("ant_hive");
 
         let item = ClipboardData {
             structure_id,

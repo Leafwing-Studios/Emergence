@@ -13,7 +13,11 @@ use crate::{
     organisms::energy::EnergyPool,
     signals::Signals,
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
-    structures::crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
+    structures::{
+        commands::StructureCommandsExt,
+        construction::DemolitionQuery,
+        crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
+    },
 };
 
 use super::{
@@ -30,6 +34,7 @@ pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, t
 }
 
 /// Choose the unit's action for this turn
+#[allow(clippy::too_many_arguments)]
 pub(super) fn choose_actions(
     mut units_query: Query<
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
@@ -38,6 +43,7 @@ pub(super) fn choose_actions(
     input_inventory_query: Query<&InputInventory>,
     output_inventory_query: Query<&OutputInventory>,
     workplace_query: WorkplaceQuery,
+    demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
@@ -129,19 +135,34 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
+                Goal::Demolish(structure_id) => CurrentAction::find_demolition_site(
+                    *structure_id,
+                    unit_tile_pos,
+                    facing,
+                    &demolition_query,
+                    &signals,
+                    rng,
+                    &terrain_query,
+                    &terrain_manifest,
+                    map_geometry,
+                ),
             }
         }
     }
 }
 
 /// Exhaustively handles each planned action
+#[allow(clippy::too_many_arguments)]
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut input_query: Query<&mut InputInventory>,
     mut output_query: Query<&mut OutputInventory>,
     mut workplace_query: Query<&mut CraftingState>,
+    // This must be compatible with unit_query
+    structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
+    mut commands: Commands,
 ) {
     let item_manifest = &*item_manifest;
 
@@ -174,6 +195,9 @@ pub(super) fn handle_actions(
                                 }
                             }
                         }
+                    } else {
+                        // If the target isn't there, pick a new goal
+                        *unit.goal = Goal::Wander;
                     }
                 }
                 UnitAction::DropOff {
@@ -204,6 +228,9 @@ pub(super) fn handle_actions(
                                 }
                             }
                         }
+                    } else {
+                        // If the target isn't there, pick a new goal
+                        *unit.goal = Goal::Wander;
                     }
                 }
                 UnitAction::Spin { rotation_direction } => match rotation_direction {
@@ -246,6 +273,15 @@ pub(super) fn handle_actions(
                     if !success {
                         *unit.goal = Goal::Wander;
                     }
+                }
+                UnitAction::Demolish { structure_entity } => {
+                    if let Ok(&structure_tile_pos) = structure_query.get(*structure_entity) {
+                        // TODO: this should probably take time and use work?
+                        commands.despawn_structure(structure_tile_pos);
+                    }
+
+                    // Whether we succeeded or failed, pick something else to do
+                    *unit.goal = Goal::Wander;
                 }
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
@@ -315,6 +351,11 @@ pub(super) enum UnitAction {
         /// The structure to work at.
         structure_entity: Entity,
     },
+    /// Attempt to deconstruct the provided `structure_entity`
+    Demolish {
+        /// The structure to work at.
+        structure_entity: Entity,
+    },
     /// Spin left or right.
     Spin {
         /// The direction to turn in.
@@ -341,6 +382,9 @@ impl Display for UnitAction {
                 input_entity,
             } => format!("Dropping off {item_id} at {input_entity:?}"),
             UnitAction::Work { structure_entity } => format!("Working at {structure_entity:?}"),
+            UnitAction::Demolish { structure_entity } => {
+                format!("Demolishing {structure_entity:?}")
+            }
             UnitAction::Spin { rotation_direction } => format!("Spinning {rotation_direction}"),
             UnitAction::MoveForward => "Moving forward".to_string(),
             UnitAction::Eat => "Eating".to_string(),
@@ -510,6 +554,12 @@ impl CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
             CurrentAction::work(workplace)
+        // Let units work even if they're standing on the structure
+        // This is particularly relevant in the case of ghosts, where it's easy enough to end up on top of the structure trying to work on it
+        } else if let Some(workplace) =
+            workplace_query.needs_work(unit_tile_pos, structure_id, map_geometry)
+        {
+            CurrentAction::work(workplace)
         } else {
             let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
@@ -533,6 +583,66 @@ impl CurrentAction {
                 )
             } else if let Some(upstream) =
                 signals.upstream(unit_tile_pos, &Goal::Work(structure_id), map_geometry)
+            {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    upstream,
+                    facing,
+                    terrain_query,
+                    terrain_manifest,
+                    map_geometry,
+                )
+            } else {
+                CurrentAction::idle()
+            }
+        }
+    }
+
+    /// Attempt to find a structure of type `structure_id` to perform work
+    #[allow(clippy::too_many_arguments)]
+    fn find_demolition_site(
+        structure_id: Id<Structure>,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        demolition_query: &DemolitionQuery,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let ahead = unit_tile_pos.neighbor(facing.direction);
+        if let Some(workplace) =
+            demolition_query.needs_demolition(ahead, structure_id, map_geometry)
+        {
+            CurrentAction::demolish(workplace)
+        } else if let Some(workplace) =
+            demolition_query.needs_demolition(unit_tile_pos, structure_id, map_geometry)
+        {
+            CurrentAction::demolish(workplace)
+        } else {
+            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
+
+            for neighbor in neighboring_tiles {
+                if let Some(demo_site) =
+                    demolition_query.needs_demolition(neighbor, structure_id, map_geometry)
+                {
+                    demo_sites.push((demo_site, neighbor));
+                }
+            }
+
+            if let Some(chosen_demo_site) = demo_sites.choose(rng) {
+                CurrentAction::move_or_spin(
+                    unit_tile_pos,
+                    chosen_demo_site.1,
+                    facing,
+                    terrain_query,
+                    terrain_manifest,
+                    map_geometry,
+                )
+            } else if let Some(upstream) =
+                signals.upstream(unit_tile_pos, &Goal::Demolish(structure_id), map_geometry)
             {
                 CurrentAction::move_or_spin(
                     unit_tile_pos,
@@ -701,6 +811,14 @@ impl CurrentAction {
     pub(super) fn work(structure_entity: Entity) -> Self {
         CurrentAction {
             action: UnitAction::Work { structure_entity },
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+        }
+    }
+
+    /// Demolish the specified structure
+    pub(super) fn demolish(structure_entity: Entity) -> Self {
+        CurrentAction {
+            action: UnitAction::Demolish { structure_entity },
             timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }

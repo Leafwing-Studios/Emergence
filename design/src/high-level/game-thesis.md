@@ -5,9 +5,9 @@ Following the [genre analysis](genre-analysis.md), let's examine how *Emergence*
 ## Game Thesis
 
 With a biologically inspired setting and game mechanics,
-*Emergence* attempts to fill a unique niche in a very succesful genre that is low on genuine innovation.
+*Emergence* attempts to fill a unique niche in a very successful genre that is low on genuine innovation.
 
-*Factorio*, a smash hit indie game, succeded because of its:
+*Factorio*, a smash hit indie game, succeeded because of its:
 
 - relatively intuitive, easy to control UX
 - satisfying, simple audio
@@ -86,7 +86,7 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
   - game design must create reusable systems with excellent hooks
   - project management must focus on polishing and shipping complete systems
 - design risk when testing new mechanics
-  - needs agressive prototyping
+  - needs aggressive prototyping
 - visual clarity is hard when allowing for player-driven species modifications
   - can we force each high-impact choice to modify exactly one element of the unit in a modular way?
 - combat is a natural fit for the thematics, but is often clunky or frustrating in this genre

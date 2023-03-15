@@ -4,14 +4,14 @@ use bevy::prelude::*;
 
 use crate::player_interaction::{selection::SelectionDetails, InteractionSystem};
 
-use super::{FiraSansFontFamily, RightPanel, UiStage};
+use super::{FiraSansFontFamily, RightPanel};
 
 /// Initializes and updates the hover details panel.
 pub(super) struct HoverDetailsPlugin;
 
 impl Plugin for HoverDetailsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(UiStage::LayoutPopulation, populate_hover_panel)
+        app.add_startup_system(populate_hover_panel)
             .add_system(update_hover_details.after(InteractionSystem::HoverDetails));
     }
 }
@@ -60,7 +60,7 @@ fn populate_hover_panel(
                     ..default()
                 },
                 background_color: Color::rgba(0., 0., 0., 0.9).into(),
-                visibility: Visibility::INVISIBLE,
+                visibility: Visibility::Hidden,
                 ..default()
             },
             HoverPanel,
@@ -131,28 +131,28 @@ fn update_hover_details(
 
     match *selection_details {
         SelectionDetails::Ghost(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::Flex;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Structure(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Terrain(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
         }
         SelectionDetails::Unit(_) => {
-            *parent_visibility = Visibility::VISIBLE;
+            *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
@@ -160,7 +160,7 @@ fn update_hover_details(
         }
         SelectionDetails::None => {
             // Don't bother messing with Display here to avoid triggering a pointless relayout
-            *parent_visibility = Visibility::INVISIBLE;
+            *parent_visibility = Visibility::Hidden;
         }
     }
 

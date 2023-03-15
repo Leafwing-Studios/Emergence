@@ -7,6 +7,8 @@ use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use rand::{rngs::ThreadRng, Rng};
 use std::f32::consts::PI;
 
+use crate::filtered_array_iter::FilteredArrayIter;
+
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
     Component,
@@ -24,14 +26,14 @@ use std::f32::consts::PI;
     AddAssign,
     SubAssign,
 )]
-pub(crate) struct TilePos {
+pub struct TilePos {
     /// The underlying hex coordinate
     pub(crate) hex: Hex,
 }
 
 impl Display for TilePos {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let cubic = self.to_array3();
+        let cubic = self.to_cubic_array();
 
         let x = cubic[0];
         let y = cubic[1];
@@ -42,10 +44,36 @@ impl Display for TilePos {
 }
 
 impl TilePos {
+    /// The position of the central tile
+    pub const ORIGIN: TilePos = TilePos {
+        hex: Hex { x: 0, y: 0 },
+    };
+
     /// Generates a new [`TilePos`] from axial coordinates.
-    #[cfg(test)]
-    pub(crate) fn new(x: i32, y: i32) -> Self {
+    #[inline]
+    pub fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
+    }
+
+    /// Generates a random [`TilePos`], sampled uniformly from the valid positions in `map_geometry`
+    #[inline]
+    pub fn random(map_geometry: &MapGeometry, rng: &mut ThreadRng) -> TilePos {
+        let range = -(map_geometry.radius as i32)..(map_geometry.radius as i32);
+
+        // Just use rejection sampling: easy to get right
+        let mut chosen_tile: Option<TilePos> = None;
+        while chosen_tile.is_none() {
+            let x = rng.gen_range(range.clone());
+            let y = rng.gen_range(range.clone());
+
+            let proposed_tile = TilePos::new(x, y);
+
+            if map_geometry.is_valid(proposed_tile) {
+                chosen_tile = Some(proposed_tile)
+            }
+        }
+
+        chosen_tile.unwrap()
     }
 
     /// Returns the world position (in [`Transform`] units) associated with this tile.
@@ -89,18 +117,10 @@ impl TilePos {
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
-        // PERF: this can be done without any allocations
-        let all_hexes = self.hex.all_neighbors();
-        let mut neighbors = Vec::new();
-
-        for &hex in all_hexes.iter() {
-            let tile_pos = TilePos { hex };
-            if map_geometry.is_valid(tile_pos) {
-                neighbors.push(tile_pos);
-            }
-        }
-
-        neighbors
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&pos| map_geometry.is_valid(pos));
+        iter
     }
 
     /// All adjacent tiles that are on the map and free of structures.
@@ -108,20 +128,18 @@ impl TilePos {
         &self,
         map_geometry: &MapGeometry,
     ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.all_neighbors(map_geometry);
-        // PERF: this can be done without allocations
-        let empty_neighbors: Vec<TilePos> = neighbors
-            .into_iter()
-            .filter(|tile_pos| !map_geometry.structure_index.contains_key(tile_pos))
-            .collect();
-
-        empty_neighbors
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&pos| {
+            map_geometry.is_valid(pos) && !map_geometry.structure_index.contains_key(&pos)
+        });
+        iter
     }
 }
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
-pub(crate) struct MapGeometry {
+pub struct MapGeometry {
     /// The size and orientation of the map.
     pub(crate) layout: HexLayout,
     /// The number of tiles from the center to the edge of the map.
@@ -132,15 +150,29 @@ pub(crate) struct MapGeometry {
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     pub(crate) structure_index: HashMap<TilePos, Entity>,
-    /// Which [`Ghost`](crate::structures::ghost::Ghost) entity is stored at each tile position
+    /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
     pub(crate) ghost_index: HashMap<TilePos, Entity>,
-    /// Which [`Preview`](crate::structures::ghost::Preview) entity is stored at each tile position
+    /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
     pub(crate) preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     pub(crate) height_index: HashMap<TilePos, f32>,
 }
 
 impl MapGeometry {
+    /// Creates a new [`MapGeometry`] of the provided raidus.
+    ///
+    /// All indexes will be empty.
+    pub fn new(radius: u32) -> Self {
+        MapGeometry {
+            layout: HexLayout::default(),
+            radius,
+            terrain_index: HashMap::default(),
+            structure_index: HashMap::default(),
+            ghost_index: HashMap::default(),
+            preview_index: HashMap::default(),
+            height_index: HashMap::default(),
+        }
+    }
     /// Is the provided `tile_pos` in the map?
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
@@ -172,21 +204,6 @@ impl MapGeometry {
             Some(structure_entity)
         } else {
             None
-        }
-    }
-}
-
-impl MapGeometry {
-    /// Initializes the geometry for a new map.
-    pub(super) fn new(radius: u32) -> Self {
-        MapGeometry {
-            layout: HexLayout::default(),
-            radius,
-            terrain_index: HashMap::default(),
-            structure_index: HashMap::default(),
-            ghost_index: HashMap::default(),
-            preview_index: HashMap::default(),
-            height_index: HashMap::default(),
         }
     }
 }

@@ -22,13 +22,13 @@ use crate::{
 };
 
 use self::{
+    construction::{ghost_lifecyle, ghost_signals},
     crafting::{ActiveRecipe, CraftingPlugin, InputInventory},
-    ghost::{ghost_lifecyle, ghost_signals},
 };
 
 pub(crate) mod commands;
+pub(crate) mod construction;
 pub(crate) mod crafting;
-pub(crate) mod ghost;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
@@ -73,7 +73,7 @@ impl Default for StructureManifest {
 
         // TODO: read these from files
         map.insert(
-            Id::new("leuco"),
+            Id::from_string_id("leuco"),
             StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
@@ -82,7 +82,10 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
                 build_duration: Duration::from_secs(5),
                 construction_materials: leuco_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("muddy")]),
+                allowed_terrain_types: HashSet::from_iter([
+                    Id::from_string_id("loam"),
+                    Id::from_string_id("muddy"),
+                ]),
                 color: Color::ORANGE_RED,
             },
         );
@@ -92,7 +95,7 @@ impl Default for StructureManifest {
         };
 
         map.insert(
-            Id::new("acacia"),
+            Id::from_string_id("acacia"),
             StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
@@ -101,13 +104,16 @@ impl Default for StructureManifest {
                 starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
                 build_duration: Duration::ZERO,
                 construction_materials: acacia_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("muddy")]),
+                allowed_terrain_types: HashSet::from_iter([
+                    Id::from_string_id("loam"),
+                    Id::from_string_id("muddy"),
+                ]),
                 color: Color::GREEN,
             },
         );
 
         map.insert(
-            Id::new("ant_hive"),
+            Id::from_string_id("ant_hive"),
             StructureData {
                 organism: None,
                 crafts: true,
@@ -115,23 +121,26 @@ impl Default for StructureManifest {
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
-                    Id::new("loam"),
-                    Id::new("muddy"),
-                    Id::new("rocky"),
+                    Id::from_string_id("loam"),
+                    Id::from_string_id("muddy"),
+                    Id::from_string_id("rocky"),
                 ]),
                 color: Color::BEIGE,
             },
         );
 
         map.insert(
-            Id::new("hatchery"),
+            Id::from_string_id("hatchery"),
             StructureData {
                 organism: None,
                 crafts: true,
                 starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(5),
-                allowed_terrain_types: HashSet::from_iter([Id::new("loam"), Id::new("rocky")]),
+                allowed_terrain_types: HashSet::from_iter([
+                    Id::from_string_id("loam"),
+                    Id::from_string_id("rocky"),
+                ]),
                 color: Color::BLUE,
             },
         );

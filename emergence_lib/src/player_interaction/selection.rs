@@ -33,14 +33,14 @@ impl Plugin for SelectionPlugin {
             .init_resource::<HoveredTiles>()
             .add_system(
                 set_selection
-                    .label(InteractionSystem::SelectTiles)
+                    .in_set(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos)
                     .before(InteractionSystem::HoverDetails),
             )
             .add_system(
                 get_details
                     .pipe(clear_details_on_error)
-                    .label(InteractionSystem::HoverDetails)
+                    .in_set(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
             .add_system(update_selection_radius);
@@ -696,6 +696,7 @@ fn get_details(
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
                 maybe_organism_details,
+                marked_for_removal: structure_query_item.marked_for_removal.is_some(),
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
@@ -709,6 +710,7 @@ fn get_details(
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
                     signals: signals.all_signals_at_position(*tile_pos),
+                    zoning: terrain_query_item.zoning.clone(),
                 })
             } else {
                 SelectionDetails::None
@@ -822,7 +824,6 @@ Construction materials: {input_inventory}
 
 /// Details for organisms
 mod organism_details {
-    use bevy::ecs::prelude::*;
     use bevy::ecs::query::WorldQuery;
 
     use crate::organisms::energy::EnergyPool;
@@ -871,7 +872,10 @@ mod structure_details {
         asset_management::manifest::{Id, Structure},
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
-        structures::crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
+        structures::{
+            construction::MarkedForDemolition,
+            crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
+        },
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -890,6 +894,8 @@ mod structure_details {
             &'static ActiveRecipe,
             &'static CraftingState,
         )>,
+        /// Is this structure marked for removal?
+        pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
     }
 
     /// Detailed info about a given structure.
@@ -905,6 +911,8 @@ mod structure_details {
         pub(crate) crafting_details: Option<CraftingDetails>,
         /// Details about this organism, if it is one.
         pub(crate) maybe_organism_details: Option<OrganismDetails>,
+        /// Is this structure slated for removal?
+        pub(crate) marked_for_removal: bool,
     }
 
     impl Display for StructureDetails {
@@ -913,23 +921,25 @@ mod structure_details {
             let structure_id = &self.structure_id;
             let tile_pos = &self.tile_pos;
 
-            let basic_details = format!(
+            let mut string = format!(
                 "Entity: {entity:?}
 Structure type: {structure_id}
 Tile: {tile_pos}"
             );
 
-            let crafting_details = if let Some(crafting) = &self.crafting_details {
-                format!("{crafting}")
-            } else {
-                String::default()
+            if self.marked_for_removal {
+                string += "\nMarked for removal!";
+            }
+
+            if let Some(crafting) = &self.crafting_details {
+                string += &format!("\n{crafting}");
+            }
+
+            if let Some(organism) = &self.maybe_organism_details {
+                string += &format!("\n{organism}");
             };
-            let organism_details = if let Some(crafting) = &self.maybe_organism_details {
-                format!("{crafting}")
-            } else {
-                String::default()
-            };
-            write!(f, "{basic_details}\n{crafting_details}\n{organism_details}")
+
+            write!(f, "{string}")
         }
     }
 
@@ -978,6 +988,7 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::{Id, Terrain},
+        player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::TilePos,
     };
@@ -988,6 +999,8 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
+        /// The zoning applied to this terrain
+        pub(super) zoning: &'static Zoning,
         pub(super) terrain_type: &'static Id<Terrain>,
     }
 
@@ -1002,6 +1015,8 @@ mod terrain_details {
         pub(super) tile_pos: TilePos,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
+        /// The zoning of this tile
+        pub(super) zoning: Zoning,
     }
 
     impl Display for TerrainDetails {
@@ -1010,12 +1025,14 @@ mod terrain_details {
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
             let signals = &self.signals;
+            let zoning = &self.zoning;
 
             write!(
                 f,
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
+Zoning: {zoning}
 Signals:
 {signals}"
             )
@@ -1050,7 +1067,7 @@ mod unit_details {
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried
         pub(super) held_item: &'static UnitInventory,
-        /// What this unit is trying to acheive
+        /// What this unit is trying to achieve
         pub(super) goal: &'static Goal,
         /// What is currently being done
         pub(super) action: &'static CurrentAction,
@@ -1069,7 +1086,7 @@ mod unit_details {
         pub(super) tile_pos: TilePos,
         /// What's being carried
         pub(super) held_item: UnitInventory,
-        /// What this unit is trying to acheive
+        /// What this unit is trying to achieve
         pub(super) goal: Goal,
         /// What is currently being done
         pub(super) action: CurrentAction,

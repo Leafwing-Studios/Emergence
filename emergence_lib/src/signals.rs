@@ -5,31 +5,38 @@
 
 use bevy::{prelude::*, utils::HashMap};
 use core::fmt::Display;
-use core::ops::{Add, Mul, Sub};
+use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
 use crate::asset_management::manifest::{Id, Item, Structure};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::units::goals::Goal;
 
+/// The fraction of signals in each cell that will move to each of 6 neighbors each frame.
+///
+/// Higher values will result in more spread out signals.
+///
+/// If no neighbor exists, total diffusion will be reduced correspondingly.
+/// As a result, this value *must* be below 1/6,
+/// and probably should be below 1/7 to avoid weirdness.
+pub const DIFFUSION_FRACTION: f32 = 0.1;
+
 /// The resources and systems need to work with signals
 pub(crate) struct SignalsPlugin;
 
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Signals>()
-            .add_system_to_stage(CoreStage::PreUpdate, emit_signals.before(diffuse_signals))
-            .add_system_to_stage(
-                CoreStage::PreUpdate,
-                diffuse_signals.before(degrade_signals),
-            )
-            .add_system_to_stage(CoreStage::PreUpdate, degrade_signals);
+        app.init_resource::<Signals>().add_systems(
+            (emit_signals, diffuse_signals, degrade_signals)
+                .chain()
+                .in_base_set(CoreSet::PreUpdate),
+        );
     }
 }
 
 /// The central resource that tracks all signals.
 #[derive(Resource, Debug, Default)]
-pub(crate) struct Signals {
+pub struct Signals {
     /// The spatialized map for each signal
     maps: HashMap<SignalType, SignalMap>,
 }
@@ -46,7 +53,7 @@ impl Signals {
     }
 
     /// Adds `signal_strength` of `signal_type` at `tile_pos`.
-    fn add_signal(
+    pub fn add_signal(
         &mut self,
         signal_type: SignalType,
         tile_pos: TilePos,
@@ -84,9 +91,7 @@ impl Signals {
         goal: &Goal,
         map_geometry: &MapGeometry,
     ) -> Option<TilePos> {
-        let possible_tiles = tile_pos.empty_neighbors(map_geometry);
-
-        let mut best_choice = None;
+        let mut best_choice: Option<TilePos> = None;
         let mut best_score = SignalStrength::ZERO;
 
         let neighboring_signals = match goal {
@@ -103,7 +108,7 @@ impl Signals {
 
                 for (tile_pos, signal_strength) in contains_signals {
                     if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
-                        *existing_signal_strength = *existing_signal_strength + signal_strength;
+                        *existing_signal_strength += signal_strength;
                     } else {
                         total_signals.insert(tile_pos, signal_strength);
                     }
@@ -117,14 +122,17 @@ impl Signals {
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
             }
+            Goal::Demolish(structure_id) => self.neighboring_signals(
+                SignalType::Demolish(*structure_id),
+                tile_pos,
+                map_geometry,
+            ),
         };
 
-        for possible_tile in possible_tiles {
-            if let Some(&current_score) = neighboring_signals.get(&possible_tile) {
-                if current_score > best_score {
-                    best_score = current_score;
-                    best_choice = Some(possible_tile);
-                }
+        for (possible_tile, current_score) in neighboring_signals {
+            if current_score > best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
             }
         }
 
@@ -154,6 +162,32 @@ impl Signals {
         }
 
         signal_strength_map
+    }
+
+    /// Diffuses signals from one cell into the next
+    pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
+        for original_map in self.maps.values_mut() {
+            let mut addition_map = SignalMap::default();
+            let mut removal_map = SignalMap::default();
+
+            for (&occupied_tile, original_strength) in original_map.map.iter() {
+                let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
+
+                for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
+                    removal_map.add_signal(occupied_tile, amount_to_send_to_each_neighbor);
+                    addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
+                }
+            }
+
+            // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
+            for (&removal_pos, &removal_strength) in removal_map.map.iter() {
+                original_map.subtract_signal(removal_pos, removal_strength)
+            }
+
+            for (&addition_pos, &addition_strength) in addition_map.map.iter() {
+                original_map.add_signal(addition_pos, addition_strength)
+            }
+        }
     }
 }
 
@@ -206,24 +240,29 @@ impl SignalMap {
         *self.map.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
     }
 
+    /// Returns a mutable reference to the signal strength at the given [`TilePos`].
+    ///
+    /// Missing values will be inserted with [`SignalStrength::ZERO`].
+    fn get_mut(&mut self, tile_pos: TilePos) -> &mut SignalStrength {
+        self.map.entry(tile_pos).or_insert(SignalStrength::ZERO)
+    }
+
     /// Adds the `signal_strength` to the signal at `tile_pos`.
     fn add_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        let existing = self.get(tile_pos);
-        self.map.insert(tile_pos, existing + signal_strength);
+        *self.get_mut(tile_pos) += signal_strength
     }
 
     /// Subtracts the `signal_strength` to the signal at `tile_pos`.
     ///
     /// The value is capped a minimum of [`SignalStrength::ZERO`].
     fn subtract_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        let existing = self.get(tile_pos);
-        self.map.insert(tile_pos, existing - signal_strength);
+        *self.get_mut(tile_pos) -= signal_strength;
     }
 }
 
 /// The variety of signal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) enum SignalType {
+pub enum SignalType {
     /// Take this item away from here.
     Push(Id<Item>),
     /// Bring me an item of this type.
@@ -233,6 +272,8 @@ pub(crate) enum SignalType {
     /// Perform work at this type of structure.
     #[allow(dead_code)]
     Work(Id<Structure>),
+    /// Destroy a structure of this type
+    Demolish(Id<Structure>),
 }
 
 impl Display for SignalType {
@@ -242,6 +283,7 @@ impl Display for SignalType {
             SignalType::Pull(item_id) => format!("Pull({item_id})"),
             SignalType::Contains(item_id) => format!("Contains({item_id})"),
             SignalType::Work(structure_id) => format!("Work({structure_id})"),
+            SignalType::Demolish(structure_id) => format!("Demolish({structure_id})"),
         };
 
         write!(f, "{string}")
@@ -252,19 +294,19 @@ impl Display for SignalType {
 ///
 /// This has a minimum value of 0.
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
-pub(crate) struct SignalStrength(f32);
+pub struct SignalStrength(f32);
 
 impl SignalStrength {
     /// No signal is present.
-    pub(crate) const ZERO: SignalStrength = SignalStrength(0.);
+    pub const ZERO: SignalStrength = SignalStrength(0.);
 
     /// Creates a new [`SignalStrength`], ensuring that it has a minimum value of 0.
-    pub(crate) fn new(value: f32) -> Self {
+    pub fn new(value: f32) -> Self {
         SignalStrength(value.max(0.))
     }
 
     /// The underlying value
-    pub(crate) fn value(&self) -> f32 {
+    pub fn value(&self) -> f32 {
         self.0
     }
 }
@@ -277,11 +319,23 @@ impl Add<SignalStrength> for SignalStrength {
     }
 }
 
+impl AddAssign<SignalStrength> for SignalStrength {
+    fn add_assign(&mut self, rhs: SignalStrength) {
+        *self = *self + rhs
+    }
+}
+
 impl Sub<SignalStrength> for SignalStrength {
     type Output = SignalStrength;
 
     fn sub(self, rhs: SignalStrength) -> Self::Output {
         SignalStrength((self.0 - rhs.0).max(0.))
+    }
+}
+
+impl SubAssign<SignalStrength> for SignalStrength {
+    fn sub_assign(&mut self, rhs: SignalStrength) {
+        *self = *self - rhs
     }
 }
 
@@ -312,57 +366,9 @@ fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &E
 }
 
 /// Spreads signals between tiles.
-fn diffuse_signals(
-    mut signals: ResMut<Signals>,
-    map_geometry: Res<MapGeometry>,
-    mut pending_additions: Local<HashMap<SignalType, SignalMap>>,
-    mut pending_removals: Local<HashMap<SignalType, SignalMap>>,
-) {
+fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>) {
     let map_geometry = &*map_geometry;
-
-    /// The fraction of signals in each cell that will move to each of 6 neighbors each frame.
-    ///
-    /// Higher values will result in more spread out signals.
-    ///
-    /// If no neighbor exists, total diffusion will be reduced correspondingly.
-    /// As a result, this value *must* be below 1/6,
-    /// and probably should be below 1/7 to avoid weirdness.
-    const DIFFUSION_FRACTION: f32 = 0.1;
-    // These are scratch space:
-    // reset them each time diffusion is run
-    pending_additions.clear();
-    pending_removals.clear();
-
-    for (&signal_type, original_map) in signals.maps.iter() {
-        let mut addition_map = SignalMap::default();
-        let mut removal_map = SignalMap::default();
-
-        for (&occupied_tile, original_strength) in original_map.map.iter() {
-            let amount_to_send_to_each_neighbor = *original_strength * DIFFUSION_FRACTION;
-
-            for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
-                removal_map.add_signal(occupied_tile, amount_to_send_to_each_neighbor);
-                addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
-            }
-        }
-
-        pending_additions.insert(signal_type, addition_map);
-        pending_removals.insert(signal_type, removal_map);
-    }
-
-    // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-    for (signal_type, original_map) in signals.maps.iter_mut() {
-        let addition_map = pending_additions.get(signal_type).unwrap();
-        let removal_map = pending_additions.get(signal_type).unwrap();
-
-        for (&removal_pos, &removal_strength) in removal_map.map.iter() {
-            original_map.subtract_signal(removal_pos, removal_strength)
-        }
-
-        for (&addition_pos, &addition_strength) in addition_map.map.iter() {
-            original_map.add_signal(addition_pos, addition_strength)
-        }
-    }
+    signals.diffuse(map_geometry, DIFFUSION_FRACTION);
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.
@@ -397,5 +403,155 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         for tile_to_clear in tiles_to_clear {
             signal_map.map.remove(&tile_to_clear);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_ITEM: Id<Item> = Id::new(12345);
+    const TEST_STRUCTURE: Id<Structure> = Id::new(67890);
+
+    #[test]
+    fn neighboring_signals_checks_origin_tile() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Contains(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        let neighboring_signals = signals.neighboring_signals(
+            SignalType::Contains(TEST_ITEM),
+            TilePos::ORIGIN,
+            &map_geometry,
+        );
+
+        assert_eq!(neighboring_signals.len(), 7);
+
+        assert_eq!(
+            neighboring_signals.get(&TilePos::ORIGIN),
+            Some(&SignalStrength(1.))
+        );
+    }
+
+    #[test]
+    fn upstream_returns_none_with_no_signals() {
+        let signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Work(TEST_STRUCTURE), &map_geometry),
+            None
+        );
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Wander, &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_none_at_trivial_peak() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_none_at_peak() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Push(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Push(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    // The logic for Goal::DropOff is significantly more complex and worth testing separately
+    fn upstream_returns_none_at_peak_dropoff() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(1.),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert_eq!(
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            None
+        );
+    }
+
+    #[test]
+    fn upstream_returns_some_at_trivial_valley() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+        }
+
+        assert!(signals
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .is_some());
+    }
+
+    #[test]
+    fn upstream_returns_some_at_valley() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Pull(TEST_ITEM),
+            TilePos::ORIGIN,
+            SignalStrength(0.5),
+        );
+
+        for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
+            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(1.));
+        }
+
+        assert!(signals
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .is_some());
     }
 }
