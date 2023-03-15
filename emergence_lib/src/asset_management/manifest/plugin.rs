@@ -28,6 +28,9 @@ where
     M: RawManifest,
 {
     /// The handle to the raw manifest asset.
+    ///
+    /// We mainly need this for the asset to not be unloaded.
+    #[allow(dead_code)]
     handle: Handle<M>,
 }
 

@@ -4,7 +4,6 @@ use std::marker::PhantomData;
 
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
-    reflect::TypeUuid,
     utils::BoxedFuture,
 };
 use serde::Deserialize;
