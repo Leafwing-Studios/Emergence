@@ -8,7 +8,7 @@ pub(super) struct LightingPlugin;
 impl Plugin for LightingPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AmbientLight {
-            brightness: 0.5,
+            brightness: 0.0,
             color: Color::WHITE,
         })
         .add_startup_system(spawn_sun);
@@ -20,7 +20,7 @@ fn spawn_sun(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             color: Color::WHITE,
-            illuminance: 50000.,
+            illuminance: 1e6,
             ..Default::default()
         },
         transform: Transform::from_xyz(30., 100., 30.).looking_at(Vec3::ZERO, Vec3::Y),
