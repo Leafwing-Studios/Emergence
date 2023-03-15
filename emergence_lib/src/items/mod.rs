@@ -43,6 +43,11 @@ pub struct ItemData {
 }
 
 impl ItemData {
+    /// Create new item data.
+    pub fn new(stack_size: usize) -> Self {
+        Self { stack_size }
+    }
+
     /// The number of items that can fit in a single item slot.
     pub fn stack_size(&self) -> usize {
         self.stack_size

@@ -49,7 +49,7 @@ impl<T> Id<T> {
     /// Creates a new ID from human-readable string identifier.
     ///
     /// This ID is created as a hash of the string.
-    pub(crate) fn from_string_id(str: &'static str) -> Self {
+    pub(crate) fn from_string_id(str: &str) -> Self {
         // Algorithm adopted from <https://cp-algorithms.com/string/string-hashing.html>
 
         let mut value = 0;

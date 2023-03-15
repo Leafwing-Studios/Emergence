@@ -1,0 +1,14 @@
+{
+  "$schema": "./schema/items.schema.json",
+  "items": {
+    "acacia_leaf": {
+      "stack_size": 10
+    },
+    "leuco_chunk": {
+      "stack_size": 5
+    },
+    "ant_egg": {
+      "stack_size": 5
+    }
+  }
+}
