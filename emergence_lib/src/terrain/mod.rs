@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
 use crate::asset_management::manifest::{Id, Terrain};
-use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{MapGeometry, TilePos};
 
@@ -35,8 +34,8 @@ pub(crate) struct TerrainBundle {
     raycast_mesh: RaycastMesh<Terrain>,
     /// The structure that should be built here.
     zoning: Zoning,
-    /// The mesh and material used
-    pbr_bundle: PbrBundle,
+    /// The scene used to construct the terrain tile
+    scene_bundle: SceneBundle,
 }
 
 impl TerrainBundle {
@@ -44,24 +43,14 @@ impl TerrainBundle {
     pub(crate) fn new(
         terrain_id: Id<Terrain>,
         tile_pos: TilePos,
-        handles: &TerrainHandles,
+        scene_handle: &Handle<Scene>,
         map_geometry: &MapGeometry,
     ) -> Self {
         let world_pos = tile_pos.into_world_pos(map_geometry);
-
-        let pbr_bundle = PbrBundle {
-            mesh: handles.mesh.clone_weak(),
-            material: handles
-                .terrain_materials
-                .get(&terrain_id)
-                .unwrap()
-                .clone_weak(),
-            transform: Transform::from_xyz(world_pos.x, 0.0, world_pos.z).with_scale(Vec3 {
-                x: 1.,
-                y: world_pos.y,
-                z: 1.,
-            }),
-            ..default()
+        let scene_bundle = SceneBundle {
+            scene: scene_handle.clone_weak(),
+            transform: Transform::from_translation(world_pos),
+            ..Default::default()
         };
 
         TerrainBundle {
@@ -69,7 +58,7 @@ impl TerrainBundle {
             tile_pos,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             zoning: Zoning::None,
-            pbr_bundle,
+            scene_bundle,
         }
     }
 }

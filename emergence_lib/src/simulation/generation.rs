@@ -152,7 +152,7 @@ pub(crate) fn generate_terrain(
 
     for hex in hexagon(Hex::ZERO, map_geometry.radius) {
         // FIXME: can we not just sample from our terrain_weights directly?
-        let &terrain_type = terrain_variants
+        let &terrain_id = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
                 terrain_weights.get(terrain_type).unwrap()
             })
@@ -171,12 +171,14 @@ pub(crate) fn generate_terrain(
         // Store the height, so it can be used below
         map_geometry.height_index.insert(tile_pos, hex_height);
 
+        let scene_handle = handles.scenes.get(&terrain_id).unwrap();
+
         // Spawn the terrain entity
         let terrain_entity = commands
             .spawn(TerrainBundle::new(
-                terrain_type,
+                terrain_id,
                 tile_pos,
-                &handles,
+                scene_handle,
                 &map_geometry,
             ))
             .id();

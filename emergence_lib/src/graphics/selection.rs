@@ -28,7 +28,8 @@ pub(super) fn display_tile_interactions(
                 false
             };
 
-            *material = materials.get_material(terrain, hovered, selected);
+            // FIXME: unbreak tile selection display
+            //*material = materials.get_material(terrain, hovered, selected);
         }
     }
 }

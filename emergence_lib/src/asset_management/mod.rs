@@ -32,8 +32,8 @@ pub struct AssetManagementPlugin;
 
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<TerrainHandles>()
-            .add_state(AssetState::Loading)
+        app.add_state(AssetState::Loading)
+            .add_asset_collection::<TerrainHandles>()
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>();
     }
