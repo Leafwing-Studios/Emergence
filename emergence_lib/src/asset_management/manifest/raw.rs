@@ -5,7 +5,11 @@
 use bevy::{reflect::TypeUuid, utils::HashMap};
 use serde::Deserialize;
 
-use super::loader::RawManifest;
+/// A utility trait to ensure that all trait bounds are satisfied.
+pub trait RawManifest: std::fmt::Debug + TypeUuid + Send + Sync + 'static {
+    /// The path of the asset.
+    fn path() -> &'static str;
+}
 
 /// The item data as seen in the original manifest file.
 ///

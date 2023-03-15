@@ -3,8 +3,8 @@
 use bevy::prelude::*;
 
 use super::{
-    loader::{RawManifest, RawManifestLoader},
-    raw::RawItemManifest,
+    loader::RawManifestLoader,
+    raw::{RawItemManifest, RawManifest},
 };
 
 /// A plugin to load and process manifest assets.
