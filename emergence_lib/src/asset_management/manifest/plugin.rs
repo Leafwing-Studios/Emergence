@@ -96,6 +96,8 @@ fn detect_manifest_creation<M>(
                 continue;
             };
 
+            info!("Manifest asset {} loaded!", M::path());
+
             // Create the manifest and insert it as a resource
             commands.insert_resource(raw_manifest.process());
         }
@@ -116,6 +118,8 @@ fn detect_manifest_modification<M>(
                 warn!("Raw manifest modified, but asset not available!");
                 continue;
             };
+
+            debug!("Manifest asset {} modified.", M::path());
 
             // Update the manifest resource
             *manifest = raw_manifest.process();
