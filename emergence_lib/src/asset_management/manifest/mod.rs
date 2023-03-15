@@ -10,7 +10,7 @@ pub(crate) use self::identifier::*;
 mod emergence_markers;
 mod identifier;
 mod loader;
-mod plugin;
+pub(crate) mod plugin;
 mod raw;
 
 use bevy::{prelude::*, utils::HashMap};
