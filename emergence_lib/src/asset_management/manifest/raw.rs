@@ -10,12 +10,14 @@ use crate::items::ItemData;
 use super::{Id, Item, Manifest};
 
 /// A utility trait to ensure that all trait bounds are satisfied.
-pub(crate) trait RawManifest: std::fmt::Debug + TypeUuid + Send + Sync + 'static {
+pub(crate) trait RawManifest:
+    std::fmt::Debug + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
+{
     /// The marker type for the manifest ID.
-    type Marker: 'static;
+    type Marker: 'static + Send + Sync;
 
     /// The type of the processed manifest data.
-    type Data: std::fmt::Debug;
+    type Data: std::fmt::Debug + Send + Sync;
 
     /// The path of the asset.
     fn path() -> &'static str;

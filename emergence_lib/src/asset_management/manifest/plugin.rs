@@ -1,21 +1,58 @@
 //! The plugin to handle loading of manifest assets.
 
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 
 use super::{
     loader::RawManifestLoader,
     raw::{RawItemManifest, RawManifest},
+    Manifest,
 };
 
-/// A plugin to load and process manifest assets.
+/// A plugin to handle the creation of all manifest resources.
 pub struct ManifestPlugin;
 
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
-        app.init_asset_loader::<RawManifestLoader<RawItemManifest>>()
-            .add_asset::<RawItemManifest>()
-            .add_startup_system(initiate_manifest_loading::<RawItemManifest>)
-            .add_system(process_raw_manifest::<RawItemManifest>);
+        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new());
+    }
+}
+
+/// A plugin to load and process raw manifest assets.
+pub(crate) struct RawManifestPlugin<M>
+where
+    M: RawManifest,
+{
+    /// Make the compiler happy and use the generic argument.
+    _phantom_data: PhantomData<M>,
+}
+
+impl<M> RawManifestPlugin<M>
+where
+    M: RawManifest,
+{
+    /// Create a new raw manifest plugin.
+    pub(crate) fn new() -> Self {
+        Self {
+            _phantom_data: PhantomData::default(),
+        }
+    }
+}
+
+impl<M> Plugin for RawManifestPlugin<M>
+where
+    M: RawManifest,
+{
+    fn build(&self, app: &mut App) {
+        app.init_asset_loader::<RawManifestLoader<M>>()
+            .add_asset::<M>()
+            .add_startup_system(initiate_manifest_loading::<M>)
+            .add_system(detect_manifest_creation::<M>)
+            .add_system(
+                detect_manifest_modification::<M>
+                    .run_if(resource_exists::<Manifest<M::Marker, M::Data>>()),
+            );
     }
 }
 
@@ -45,23 +82,43 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-fn process_raw_manifest<M>(mut ev_asset: EventReader<AssetEvent<M>>, raw_manifests: Res<Assets<M>>)
-where
+fn detect_manifest_creation<M>(
+    mut commands: Commands,
+    mut ev_asset: EventReader<AssetEvent<M>>,
+    raw_manifests: Res<Assets<M>>,
+) where
     M: RawManifest,
 {
     for ev in ev_asset.iter() {
-        match ev {
-            AssetEvent::Created { handle } => {
-                let Some(raw_manifest) = raw_manifests.get(handle) else { continue };
-                info!("Raw manifest loaded! {raw_manifest:?}");
-            }
-            AssetEvent::Modified { handle } => {
-                let Some(raw_manifest) = raw_manifests.get(handle) else { continue };
-                info!("Raw manifest modified! {raw_manifest:?}");
-            }
-            AssetEvent::Removed { handle: _ } => {
-                info!("Raw manifest removed!");
-            }
+        if let AssetEvent::Created { handle } = ev {
+            let Some(raw_manifest) = raw_manifests.get(handle) else {
+                warn!("Raw manifest created, but asset not available!");
+                continue;
+            };
+
+            // Create the manifest and insert it as a resource
+            commands.insert_resource(raw_manifest.process());
+        }
+    }
+}
+
+/// Update the manifest after the asset has been changed.
+fn detect_manifest_modification<M>(
+    mut ev_asset: EventReader<AssetEvent<M>>,
+    raw_manifests: Res<Assets<M>>,
+    mut manifest: ResMut<Manifest<M::Marker, M::Data>>,
+) where
+    M: RawManifest,
+{
+    for ev in ev_asset.iter() {
+        if let AssetEvent::Modified { handle } = ev {
+            let Some(raw_manifest) = raw_manifests.get(handle) else {
+                warn!("Raw manifest modified, but asset not available!");
+                continue;
+            };
+
+            // Update the manifest resource
+            *manifest = raw_manifest.process();
         }
     }
 }

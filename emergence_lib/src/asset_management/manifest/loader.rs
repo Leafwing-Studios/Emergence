@@ -6,7 +6,6 @@ use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
     utils::BoxedFuture,
 };
-use serde::Deserialize;
 
 use super::raw::RawManifest;
 
@@ -22,7 +21,7 @@ where
 
 impl<M> AssetLoader for RawManifestLoader<M>
 where
-    M: RawManifest + for<'de> Deserialize<'de>,
+    M: RawManifest,
 {
     fn extensions(&self) -> &[&str] {
         &["manifest.json"]
@@ -43,7 +42,7 @@ where
 
 impl<M> Default for RawManifestLoader<M>
 where
-    M: RawManifest + for<'de> Deserialize<'de>,
+    M: RawManifest,
 {
     fn default() -> Self {
         Self {
