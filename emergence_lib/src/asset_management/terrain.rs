@@ -32,15 +32,11 @@ impl FromWorld for TerrainHandles {
         let asset_server = world.resource::<AssetServer>();
 
         let mut scenes = HashMap::new();
-        let variants: [Id<Terrain>; 3] = [
-            Id::from_string_id("loam"),
-            Id::from_string_id("muddy"),
-            Id::from_string_id("rocky"),
-        ];
-        for id in variants {
-            let path_string = format!("terrain/{id}.gltf#Scene0");
+        let names: [&str; 3] = ["loam", "muddy", "rocky"];
+        for name in names {
+            let path_string = format!("terrain/{name}.gltf#Scene0");
             let scene = asset_server.load(path_string);
-            scenes.insert(id, scene);
+            scenes.insert(Id::from_string_id(name), scene);
         }
 
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
