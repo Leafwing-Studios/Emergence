@@ -21,7 +21,7 @@ Good contraptions are:
 However, automation can be distinguished from pure contraptions because it accomplishes a **goal**.
 These are not pure toys, endlessly pushing a ball up a hill.
 Instead, they perform a task: commonly working with **resources**.
-Resources are **produced** in some way, then **transformed**, and ultimately **consumed** to acheive some goal.
+Resources are **produced** in some way, then **transformed**, and ultimately **consumed** to achieve some goal.
 
 ## What makes games "creative"?
 
@@ -82,7 +82,7 @@ The basic set of goals are:
 
 Together, these form a rich **Pareto frontier** of solutions, each of which can be considered "optimal" under some set of tradeoffs between these goals.
 
-Auxilary systems (like exploration or combat) can also provide great opportunities for player goals!
+Auxiliary systems (like exploration or combat) can also provide great opportunities for player goals!
 Traditionally, cosmetic self-expression has been a very weak motivator in this genre.
 
 ### Distinct paths

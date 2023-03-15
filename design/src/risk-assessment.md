@@ -6,7 +6,7 @@ This page keeps track of risks that we might face during development so that we 
 
 ### Feature Creep
 
-[_Feature creep_](https://en.wikipedia.org/wiki/Feature_creep) refers to the continuos addition of features that goes way beyond the initially planned scope of the game.
+[_Feature creep_](https://en.wikipedia.org/wiki/Feature_creep) refers to the continuous addition of features that goes way beyond the initially planned scope of the game.
 We are quite vulnerable to this for multiple reasons:
 
 - The game genre and theme invites for many complex features and mechanics that can be combined freely.

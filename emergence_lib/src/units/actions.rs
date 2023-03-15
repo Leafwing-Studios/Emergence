@@ -268,7 +268,7 @@ pub(super) fn handle_actions(
                 }
                 UnitAction::Demolish { structure_entity } => {
                     if let Ok(&structure_tile_pos) = structure_query.get(*structure_entity) {
-                        // TOOD: this should probably take time and use work?
+                        // TODO: this should probably take time and use work?
                         commands.despawn_structure(structure_tile_pos);
                     }
 

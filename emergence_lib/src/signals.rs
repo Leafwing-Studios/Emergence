@@ -500,7 +500,7 @@ mod tests {
     }
 
     #[test]
-    // The logic for Goal::DropOff is significantly more complex and worth testing seperately
+    // The logic for Goal::DropOff is significantly more complex and worth testing separately
     fn upstream_returns_none_at_peak_dropoff() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);

@@ -4,11 +4,11 @@
 # This is required for them to show up in the book.
 
 function is_in_summary {
-  # Count the number of occurances of the file in the summary
-  occurances=`grep $1 ./SUMMARY.md -c`
+  # Count the number of occurrences of the file in the summary
+  occurrences=`grep $1 ./SUMMARY.md -c`
   
   # If it's not in the summary, print out an error
-  if [[ $occurances -eq 0 ]]
+  if [[ $occurrences -eq 0 ]]
   then
     echo "'$1' missing in 'SUMMARY.md'"
     exit 1
