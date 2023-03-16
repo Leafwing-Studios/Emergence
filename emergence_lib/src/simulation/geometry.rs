@@ -155,7 +155,7 @@ impl Height {
     ///
     /// This should match the thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
-    pub(crate) const TOPPER_THICKNESS: f32 = 0.5;
+    pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
 
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     pub(crate) fn into_world_pos(&self) -> f32 {
