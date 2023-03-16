@@ -166,8 +166,8 @@ impl Height {
     /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
     /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
-    pub(crate) fn from_world_pos(world_z: f32) -> Self {
-        let f32_height = (world_z / Self::CONVERSION_FACTOR).round();
+    pub(crate) fn from_world_pos(world_y: f32) -> Self {
+        let f32_height = (world_y / Self::CONVERSION_FACTOR).round();
         if f32_height < 0. {
             Height::MIN
         } else if f32_height > u8::MAX as f32 {

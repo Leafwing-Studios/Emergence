@@ -1,11 +1,10 @@
 //! Generating starting terrain and organisms
 use crate::asset_management::manifest::{Id, StructureManifest, Terrain, UnitManifest};
-use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, TilePos};
 use crate::structures::commands::StructureCommandsExt;
-use crate::terrain::TerrainBundle;
+use crate::terrain::SpawnTerrainCommand;
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
@@ -127,8 +126,7 @@ const SEED: f32 = 2378.0;
 pub(crate) fn generate_terrain(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    handles: Res<TerrainHandles>,
-    mut map_geometry: ResMut<MapGeometry>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
@@ -152,23 +150,11 @@ pub(crate) fn generate_terrain(
                 * AMPLITUDE_SCALE)
                 .abs();
 
-        // Store the height, so it can be used below
-        map_geometry.update_height(tile_pos, Height::from_world_pos(hex_height));
-
-        let scene_handle = handles.scenes.get(&terrain_id).unwrap();
-
-        // Spawn the terrain entity
-        let terrain_entity = commands
-            .spawn(TerrainBundle::new(
-                terrain_id,
-                tile_pos,
-                scene_handle,
-                &map_geometry,
-            ))
-            .id();
-
-        // Update the index of what terrain is where
-        map_geometry.terrain_index.insert(tile_pos, terrain_entity);
+        commands.add(SpawnTerrainCommand {
+            tile_pos,
+            height: Height::from_world_pos(hex_height),
+            terrain_id,
+        })
     }
 }
 

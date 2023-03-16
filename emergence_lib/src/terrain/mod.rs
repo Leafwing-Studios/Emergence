@@ -1,9 +1,11 @@
 //! Generating and representing terrain as game objects.
 
+use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
 use crate::asset_management::manifest::{Id, Terrain, TerrainManifest};
+use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 
@@ -41,7 +43,7 @@ impl TerrainData {
 
 /// All of the components needed to define a piece of terrain.
 #[derive(Bundle)]
-pub(crate) struct TerrainBundle {
+struct TerrainBundle {
     /// The type of terrain
     terrain_id: Id<Terrain>,
     /// The location of this terrain hex
@@ -58,15 +60,15 @@ pub(crate) struct TerrainBundle {
 
 impl TerrainBundle {
     /// Creates a new Terrain entity.
-    pub(crate) fn new(
+    fn new(
         terrain_id: Id<Terrain>,
         tile_pos: TilePos,
-        scene_handle: &Handle<Scene>,
+        scene: Handle<Scene>,
         map_geometry: &MapGeometry,
     ) -> Self {
         let world_pos = tile_pos.into_world_pos(map_geometry);
         let scene_bundle = SceneBundle {
-            scene: scene_handle.clone_weak(),
+            scene,
             transform: Transform::from_translation(world_pos),
             ..Default::default()
         };
@@ -94,5 +96,43 @@ fn respond_to_height_changes(
             map_geometry.update_height(tile_pos, *height);
             transform.translation.y = height.into_world_pos();
         }
+    }
+}
+
+pub(crate) struct SpawnTerrainCommand {
+    pub(crate) tile_pos: TilePos,
+    pub(crate) height: Height,
+    pub(crate) terrain_id: Id<Terrain>,
+}
+
+impl Command for SpawnTerrainCommand {
+    fn write(self, world: &mut World) {
+        let handles = world.resource::<TerrainHandles>();
+        let scene_handle = handles.scenes.get(&self.terrain_id).unwrap().clone_weak();
+
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+
+        // Store the height, so it can be used below
+        map_geometry.update_height(self.tile_pos, self.height);
+
+        // Drop the borrow so the borrow checker is happy
+        let map_geometry = world.resource::<MapGeometry>();
+
+        // Spawn the terrain entity
+        let terrain_entity = world
+            .spawn(TerrainBundle::new(
+                self.terrain_id,
+                self.tile_pos,
+                scene_handle,
+                &map_geometry,
+            ))
+            .id();
+
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+
+        // Update the index of what terrain is where
+        map_geometry
+            .terrain_index
+            .insert(self.tile_pos, terrain_entity);
     }
 }
