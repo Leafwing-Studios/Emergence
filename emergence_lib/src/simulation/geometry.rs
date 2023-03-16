@@ -82,7 +82,7 @@ impl TilePos {
     #[must_use]
     pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex);
-        let y = *map_geometry.height_index.get(&self).unwrap();
+        let y = map_geometry.get_height(self).unwrap().into_world_pos();
 
         Vec3 {
             x: xz.x,
@@ -95,7 +95,6 @@ impl TilePos {
     ///
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
     #[must_use]
-    #[allow(dead_code)]
     pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
         TilePos {
             hex: map_geometry.layout.world_pos_to_hex(Vec2 {
@@ -137,6 +136,74 @@ impl TilePos {
     }
 }
 
+/// The discretized height of this tile
+///
+/// The minimum height is 0.
+#[derive(
+    Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Display,
+)]
+pub(crate) struct Height(pub u8);
+
+impl Height {
+    /// The minimum allowed height
+    pub(crate) const MIN: Height = Height(0);
+
+    /// The maximum allowable height
+    pub(crate) const MAX: Height = Height(u8::MAX);
+
+    /// The height of each step up, in world coordinates.
+    ///
+    /// This should match the thickness of all terrain topper models.
+    /// Note that the diameter of a tile is 1.0 transform units.
+    pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
+
+    /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
+    pub(crate) fn into_world_pos(self) -> f32 {
+        self.0 as f32 * Self::TOPPER_THICKNESS
+    }
+
+    /// Constructs a new height from the `y` coordinate of a `Transform`.
+    ///
+    /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
+    pub(crate) fn from_world_pos(world_y: f32) -> Self {
+        let f32_height = (world_y / Self::TOPPER_THICKNESS).round();
+        if f32_height < 0. {
+            Height::MIN
+        } else if f32_height > u8::MAX as f32 {
+            Height::MAX
+        } else if f32_height.is_nan() {
+            error!("NaN height conversion detected. Are your transforms broken?");
+            Height::MAX
+        } else {
+            Height(f32_height as u8)
+        }
+    }
+
+    /// Computes the correct [`Transform`] of the column underneath a tile of this height at this position
+    pub(crate) fn column_transform(&self) -> Transform {
+        let y_scale = self.into_world_pos();
+        let scale = Vec3 {
+            x: 1.,
+            y: y_scale,
+            z: 1.,
+        };
+
+        // This is x and z aligned with the parent
+        let translation = Vec3 {
+            x: 0.,
+            // We want this to start below the parent
+            y: -y_scale,
+            z: 0.,
+        };
+
+        Transform {
+            translation,
+            rotation: Default::default(),
+            scale,
+        }
+    }
+}
+
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
 pub struct MapGeometry {
@@ -146,7 +213,7 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
-    /// Which [`Terrain`](crate::terrain::Terrain) entity is stored at each tile position
+    /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     pub(crate) structure_index: HashMap<TilePos, Entity>,
@@ -155,7 +222,14 @@ pub struct MapGeometry {
     /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
     pub(crate) preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
-    pub(crate) height_index: HashMap<TilePos, f32>,
+    height_index: HashMap<TilePos, Height>,
+}
+
+/// A [`MapGeometry`] index was missing an entry.
+#[derive(Debug)]
+pub struct IndexError {
+    /// The tile position that was missing.
+    pub tile_pos: TilePos,
 }
 
 impl MapGeometry {
@@ -186,10 +260,31 @@ impl MapGeometry {
         self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
     }
 
-    /// Returns the average height of tiles around `tile_pos` within `radius`
+    /// Updates the height of the tile at `tile_pos`
+    pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
+        self.height_index.insert(tile_pos, height);
+    }
+
+    /// Returns the height of the tile at `tile_pos`, if available.
+    ///
+    /// This should always be [`Ok`] for all valid tiles.
+    pub(crate) fn get_height(&self, tile_pos: TilePos) -> Result<Height, IndexError> {
+        match self.height_index.get(&tile_pos) {
+            Some(height) => Ok(*height),
+            None => Err(IndexError { tile_pos }),
+        }
+    }
+
+    /// Returns the average height (in world units) of tiles around `tile_pos` within `radius`
     pub(crate) fn average_height(&self, tile_pos: TilePos, radius: u32) -> f32 {
         let hex_iter = hexagon(tile_pos.hex, radius);
-        let heights = hex_iter.map(|hex| *self.height_index.get(&TilePos { hex }).unwrap_or(&0.));
+        let heights = hex_iter
+            .map(|hex| TilePos { hex })
+            .filter(|tile_pos| self.is_valid(*tile_pos))
+            .map(|tile_pos| {
+                let height = self.get_height(tile_pos).unwrap();
+                height.into_world_pos()
+            });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
     }
@@ -287,5 +382,46 @@ pub(super) fn sync_rotation_to_facing(
         let angle = facing.direction.angle(&map_geometry.layout.orientation) + PI / 6.;
         let target = Quat::from_axis_angle(Vec3::Y, angle);
         transform.rotation = target;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn height_is_invertable() {
+        for i in u8::MIN..=u8::MAX {
+            let height = Height(i);
+            let z = height.into_world_pos();
+            let remapped_height = Height::from_world_pos(z);
+
+            assert_eq!(height, remapped_height);
+        }
+    }
+
+    #[test]
+    fn height_clamps() {
+        assert_eq!(Height::MIN, Height::from_world_pos(0.));
+        assert_eq!(Height::MIN, Height::from_world_pos(-1.));
+        assert_eq!(Height::MAX, Height::from_world_pos(9000.));
+        assert_eq!(Height::MAX, Height::from_world_pos(f32::MAX));
+    }
+
+    #[test]
+    fn world_to_tile_pos_conversions_are_invertable() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        for x in -10..=10 {
+            for y in -10..=10 {
+                let tile_pos = TilePos::new(x, y);
+                // Height chosen arbitrarily to reduce odds of this accidentally working
+                map_geometry.update_height(tile_pos, Height(17));
+                let world_pos = tile_pos.into_world_pos(&map_geometry);
+                let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
+
+                assert_eq!(tile_pos, remapped_tile_pos);
+            }
+        }
     }
 }

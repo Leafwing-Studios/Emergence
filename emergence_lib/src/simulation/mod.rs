@@ -7,6 +7,7 @@ use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::geometry::sync_rotation_to_facing;
 use crate::structures::StructuresPlugin;
+use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
 use bevy::app::{App, Plugin};
 use bevy::log::info;
@@ -28,6 +29,7 @@ impl Plugin for SimulationPlugin {
                 config: self.gen_config.clone(),
             })
             .add_plugin(StructuresPlugin)
+            .add_plugin(TerrainPlugin)
             .add_plugin(OrganismPlugin)
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin);

@@ -6,10 +6,9 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    asset_management::manifest::{Id, Structure, Unit},
+    asset_management::manifest::{Id, Structure, Terrain, Unit},
     simulation::geometry::TilePos,
     structures::construction::Ghost,
-    terrain::Terrain,
 };
 
 /// Controls raycasting and cursor aethetics.
@@ -126,7 +125,7 @@ fn update_cursor_pos(
         ),
         With<Camera>,
     >,
-    terrain_query: Query<&TilePos, With<Terrain>>,
+    terrain_query: Query<&TilePos, With<Id<Terrain>>>,
     structure_query: Query<Entity, With<Id<Structure>>>,
     unit_query: Query<Entity, With<Id<Unit>>>,
     ghost_query: Query<Entity, With<Ghost>>,

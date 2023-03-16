@@ -3,6 +3,7 @@
 use crate::{
     items::{recipe::RecipeData, ItemData},
     structures::StructureData,
+    terrain::TerrainData,
     units::UnitData,
 };
 
@@ -23,6 +24,11 @@ pub(crate) type UnitManifest = Manifest<Unit, UnitData>;
 pub struct Structure;
 /// Stores the read-only definitions for all structures.
 pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
+
+/// The marker type for [`Id<Terrain>`](super::Id).
+pub struct Terrain;
+/// Stores the read-only definitions for all items.
+pub(crate) type TerrainManifest = Manifest<Terrain, TerrainData>;
 
 /// The marker type for [`Id<Item>`](super::Id).
 pub struct Item;

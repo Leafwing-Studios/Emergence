@@ -38,6 +38,11 @@ impl Plugin for SelectionPlugin {
                     .before(InteractionSystem::HoverDetails),
             )
             .add_system(
+                set_tile_interactions
+                    .in_set(InteractionSystem::SelectTiles)
+                    .after(set_selection),
+            )
+            .add_system(
                 get_details
                     .pipe(clear_details_on_error)
                     .in_set(InteractionSystem::HoverDetails)
@@ -225,6 +230,16 @@ pub(crate) enum ObjectInteraction {
 }
 
 impl ObjectInteraction {
+    /// Constructs a new [`ObjectInteraction`]
+    pub(crate) fn new(hovered: bool, selected: bool) -> Self {
+        match (hovered, selected) {
+            (true, true) => ObjectInteraction::HoveredAndSelected,
+            (true, false) => ObjectInteraction::Hovered,
+            (false, true) => ObjectInteraction::Selected,
+            (false, false) => ObjectInteraction::None,
+        }
+    }
+
     /// The material used by objects that are being interacted with.
     pub(crate) fn material(&self) -> Option<StandardMaterial> {
         use crate::asset_management::palette::{
@@ -622,6 +637,26 @@ fn set_selection(
     }
 }
 
+/// Set tile interactions based on hover and selection state
+pub(super) fn set_tile_interactions(
+    current_selection: Res<CurrentSelection>,
+    hovered_tiles: Res<HoveredTiles>,
+    mut terrain_query: Query<(&TilePos, &mut ObjectInteraction)>,
+) {
+    if current_selection.is_changed() || hovered_tiles.is_changed() {
+        for (&tile_pos, mut object_interaction) in terrain_query.iter_mut() {
+            let hovered = hovered_tiles.contains(&tile_pos);
+            let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
+                selected_tiles.contains_tile(tile_pos)
+            } else {
+                false
+            };
+
+            *object_interaction = ObjectInteraction::new(hovered, selected);
+        }
+    }
+}
+
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
 pub(crate) enum SelectionDetails {
@@ -702,13 +737,14 @@ fn get_details(
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_query_item = terrain_query.get(*terrain_entity)?;
+                let terrain_entity = *map_geometry.terrain_index.get(tile_pos).unwrap();
+                let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {
-                    entity: terrain_query_item.entity,
+                    entity: terrain_entity,
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
+                    height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
                     zoning: terrain_query_item.zoning.clone(),
                 })
@@ -987,8 +1023,10 @@ mod terrain_details {
     use std::fmt::Display;
 
     use crate::{
-        player_interaction::zoning::Zoning, signals::LocalSignals, simulation::geometry::TilePos,
-        terrain::Terrain,
+        asset_management::manifest::{Id, Terrain},
+        player_interaction::zoning::Zoning,
+        signals::LocalSignals,
+        simulation::geometry::{Height, TilePos},
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -996,8 +1034,10 @@ mod terrain_details {
     pub(super) struct TerrainDetailsQuery {
         /// The root entity
         pub(super) entity: Entity,
+        /// The height of the tile
+        pub(super) height: &'static Height,
         /// The type of terrain
-        pub(super) terrain_type: &'static Terrain,
+        pub(super) terrain_type: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
     }
@@ -1008,9 +1048,11 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
-        pub(super) terrain_type: Terrain,
+        pub(super) terrain_type: Id<Terrain>,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
+        /// The height of the tile
+        pub(super) height: Height,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -1022,6 +1064,7 @@ mod terrain_details {
             let entity = self.entity;
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
+            let height = &self.height;
             let signals = &self.signals;
             let zoning = &self.zoning;
 
@@ -1030,6 +1073,7 @@ mod terrain_details {
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
+Height: {height}
 Zoning: {zoning}
 Signals:
 {signals}"

@@ -5,6 +5,7 @@
 use std::f32::consts::PI;
 use std::f32::consts::TAU;
 
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
@@ -13,12 +14,12 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::Id;
 use crate::asset_management::manifest::Structure;
+use crate::asset_management::manifest::Terrain;
 use crate::asset_management::manifest::Unit;
 use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::construction::Ghost;
-use crate::terrain::Terrain;
 
 use self::speed::Speed;
 
@@ -64,6 +65,7 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
         .spawn(Camera3dBundle {
             transform,
             projection,
+            tonemapping: Tonemapping::TonyMcMapface,
             ..Default::default()
         })
         .insert(settings)

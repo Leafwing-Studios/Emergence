@@ -5,11 +5,10 @@ use core::fmt::Display;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, construction::MarkedForDemolition},
-    terrain::Terrain,
 };
 
 use super::{
@@ -31,7 +30,7 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::SetClipboard),
         )
         .add_system(
-            manage_previews_from_zoning
+            generate_ghosts_from_zoning
                 .in_set(InteractionSystem::ManagePreviews)
                 .after(InteractionSystem::ApplyZoning),
         )
@@ -73,7 +72,7 @@ fn set_zoning(
     cursor: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
     clipboard: Res<Clipboard>,
-    mut terrain_query: Query<&mut Zoning, With<Terrain>>,
+    mut terrain_query: Query<&mut Zoning, With<Id<Terrain>>>,
     current_selection: Res<CurrentSelection>,
     map_geometry: Res<MapGeometry>,
 ) {
@@ -149,9 +148,8 @@ fn set_zoning(
 }
 
 /// Spawn and despawn ghosts based on zoning.
-fn manage_previews_from_zoning(
-    // We cannot use change detection here, or tiles would not be kept clear when built upon after zoning is set
-    mut terrain_query: Query<(&mut Zoning, &TilePos, &Terrain)>,
+fn generate_ghosts_from_zoning(
+    mut terrain_query: Query<(&mut Zoning, &TilePos, &Id<Terrain>), Changed<Zoning>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,

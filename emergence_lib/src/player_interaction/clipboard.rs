@@ -5,10 +5,9 @@ use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, construction::Preview, crafting::ActiveRecipe},
-    terrain::Terrain,
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -248,7 +247,7 @@ fn display_selection(
     preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
-    terrain_query: Query<&Terrain>,
+    terrain_query: Query<&Id<Terrain>>,
 ) {
     if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
         let mut desired_previews: HashMap<TilePos, ClipboardData> =

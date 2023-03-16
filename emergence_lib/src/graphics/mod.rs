@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{asset_management::AssetState, player_interaction::InteractionSystem};
 
-use self::lighting::LightingPlugin;
+use self::{lighting::LightingPlugin, selection::display_tile_overlay};
 
 mod lighting;
 mod selection;
@@ -21,7 +21,7 @@ impl Plugin for GraphicsPlugin {
         app.add_plugin(LightingPlugin)
             .add_system(units::display_held_item.run_if(in_state(AssetState::Ready)))
             .add_system(inherit_materials.in_base_set(CoreSet::PostUpdate))
-            .add_system(selection::display_tile_interactions.after(InteractionSystem::SelectTiles));
+            .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
     }
 }
 
