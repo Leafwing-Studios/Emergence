@@ -177,10 +177,15 @@ impl Signals {
             {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
+                let mut num_neighbors = 0.0;
                 for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
-                    removal_map.add_signal(occupied_tile, amount_to_send_to_each_neighbor);
+                    num_neighbors += 1.0;
                     addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
                 }
+                removal_map.add_signal(
+                    occupied_tile,
+                    amount_to_send_to_each_neighbor * num_neighbors,
+                );
             }
 
             // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
