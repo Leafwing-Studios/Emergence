@@ -153,9 +153,7 @@ pub(crate) fn generate_terrain(
                 .abs();
 
         // Store the height, so it can be used below
-        map_geometry
-            .height_index
-            .insert(tile_pos, Height::from_world_pos(hex_height));
+        map_geometry.update_height(tile_pos, Height::from_world_pos(hex_height));
 
         let scene_handle = handles.scenes.get(&terrain_id).unwrap();
 

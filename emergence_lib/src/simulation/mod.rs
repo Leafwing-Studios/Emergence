@@ -2,12 +2,12 @@
 //!
 //! All plugins in this module should work without rendering.
 
-use crate::asset_management::terrain::TerrainPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::geometry::sync_rotation_to_facing;
 use crate::structures::StructuresPlugin;
+use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
 use bevy::app::{App, Plugin};
 use bevy::log::info;

@@ -158,12 +158,12 @@ impl Height {
     /// Note that the diameter of a tile is 1.0 transform units.
     const CONVERSION_FACTOR: f32 = 0.5;
 
-    /// Computes the `z` coordinate of a `Transform` that corresponds to this height.
+    /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     pub(crate) fn into_world_pos(&self) -> f32 {
         self.0 as f32 * Self::CONVERSION_FACTOR
     }
 
-    /// Constructs a new height from the `z` coordinate of a `Transform`.
+    /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
     /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
     pub(crate) fn from_world_pos(world_z: f32) -> Self {
@@ -199,7 +199,7 @@ pub struct MapGeometry {
     /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
     pub(crate) preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
-    pub(crate) height_index: HashMap<TilePos, Height>,
+    height_index: HashMap<TilePos, Height>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -235,6 +235,11 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`
     pub(crate) fn is_passable(&self, tile_pos: TilePos) -> bool {
         self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
+    }
+
+    /// Updates the height of the tile at `tile_pos`
+    pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
+        self.height_index.insert(tile_pos, height);
     }
 
     /// Returns the height of the tile at `tile_pos`, if available.

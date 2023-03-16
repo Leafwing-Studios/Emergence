@@ -13,15 +13,6 @@ use super::{
     Loadable,
 };
 
-/// All logic and initialization needed for terrain.
-pub(crate) struct TerrainPlugin;
-
-impl Plugin for TerrainPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<TerrainManifest>();
-    }
-}
-
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
 pub(crate) struct TerrainHandles {

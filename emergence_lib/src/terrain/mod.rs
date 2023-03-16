@@ -3,9 +3,19 @@
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
-use crate::asset_management::manifest::{Id, Terrain};
+use crate::asset_management::manifest::{Id, Terrain, TerrainManifest};
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
+
+/// All logic and initialization needed for terrain.
+pub(crate) struct TerrainPlugin;
+
+impl Plugin for TerrainPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<TerrainManifest>()
+            .add_system(respond_to_height_changes);
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct TerrainData {
@@ -70,6 +80,19 @@ impl TerrainBundle {
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             zoning: Zoning::None,
             scene_bundle,
+        }
+    }
+}
+
+/// Updates the game state appropriately whenever the height of a tile is changed.
+fn respond_to_height_changes(
+    mut terrain_query: Query<(Ref<Height>, &TilePos, &mut Transform)>,
+    mut map_geometry: ResMut<MapGeometry>,
+) {
+    for (height, &tile_pos, mut transform) in terrain_query.iter_mut() {
+        if height.is_changed() {
+            map_geometry.update_height(tile_pos, *height);
+            transform.translation.y = height.into_world_pos();
         }
     }
 }
