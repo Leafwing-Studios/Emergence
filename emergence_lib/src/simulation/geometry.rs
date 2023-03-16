@@ -158,7 +158,7 @@ impl Height {
     pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
 
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
-    pub(crate) fn into_world_pos(&self) -> f32 {
+    pub(crate) fn into_world_pos(self) -> f32 {
         self.0 as f32 * Self::TOPPER_THICKNESS
     }
 
@@ -213,7 +213,7 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
-    /// Which [`Terrain`](crate::terrain::Terrain) entity is stored at each tile position
+    /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     pub(crate) structure_index: HashMap<TilePos, Entity>,

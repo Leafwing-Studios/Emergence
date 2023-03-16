@@ -132,7 +132,7 @@ pub(crate) fn generate_terrain(
     let mut rng = thread_rng();
 
     let terrain_weights = &config.terrain_weights;
-    let terrain_variants: Vec<Id<Terrain>> = terrain_weights.keys().map(|k| *k).collect();
+    let terrain_variants: Vec<Id<Terrain>> = terrain_weights.keys().copied().collect();
 
     for hex in hexagon(Hex::ZERO, map_geometry.radius) {
         // FIXME: can we not just sample from our terrain_weights directly?

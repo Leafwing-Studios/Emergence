@@ -20,6 +20,7 @@ impl Plugin for TerrainPlugin {
     }
 }
 
+/// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`].
 #[derive(Debug)]
 pub(crate) struct TerrainData {
     /// The walking speed multiplier associated with this terrain type.
@@ -147,7 +148,7 @@ impl Command for SpawnTerrainCommand {
                 self.tile_pos,
                 scene_handle,
                 mesh,
-                &map_geometry,
+                map_geometry,
             ))
             .id();
 
