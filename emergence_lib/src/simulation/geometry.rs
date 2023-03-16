@@ -95,7 +95,6 @@ impl TilePos {
     ///
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
     #[must_use]
-    #[allow(dead_code)]
     pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
         TilePos {
             hex: map_geometry.layout.world_pos_to_hex(Vec2 {
