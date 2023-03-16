@@ -167,8 +167,10 @@ impl Signals {
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         for original_map in self.maps.values_mut() {
-            let mut addition_map = Vec::new();
-            let mut removal_map = Vec::new();
+            let num_elements = original_map.map.len();
+            let size_hint = num_elements * 6;
+            let mut addition_map = Vec::with_capacity(size_hint);
+            let mut removal_map = Vec::with_capacity(size_hint);
 
             for (&occupied_tile, original_strength) in original_map
                 .map
