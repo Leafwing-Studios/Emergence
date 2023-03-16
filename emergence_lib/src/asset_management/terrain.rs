@@ -3,8 +3,10 @@
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use crate::{
-    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
-    simulation::geometry::MapGeometry, terrain::TerrainData,
+    enum_iter::IterableEnum,
+    player_interaction::selection::ObjectInteraction,
+    simulation::geometry::{Height, MapGeometry},
+    terrain::TerrainData,
 };
 
 use super::{
@@ -19,6 +21,8 @@ use super::{
 pub(crate) struct TerrainHandles {
     /// The scene used for each type of terrain
     pub(crate) scenes: HashMap<Id<Terrain>, Handle<Scene>>,
+    /// The mesh used for raycasting the terrain topper
+    pub(crate) topper_mesh: Handle<Mesh>,
     /// The mesh of the column underneath each terrain topper
     pub(crate) column_mesh: Handle<Mesh>,
     /// The material of the column underneath each terrain topper
@@ -40,17 +44,17 @@ impl FromWorld for TerrainHandles {
         }
 
         let map_geometry = world.resource::<MapGeometry>();
-        let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
+        let column_mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
+        let topper_mesh_object = hexagonal_column(&map_geometry.layout, Height::TOPPER_THICKNESS);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-        let column_mesh = mesh_assets.add(mesh_object);
+        let column_mesh = mesh_assets.add(column_mesh_object);
+        let topper_mesh = mesh_assets.add(topper_mesh_object);
 
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
-            if let Some(material) = variant.material() {
-                let material_handle = material_assets.add(material);
-                interaction_materials.insert(variant, material_handle);
-            }
+            let material_handle = material_assets.add(variant.material());
+            interaction_materials.insert(variant, material_handle);
         }
         let column_material = material_assets.add(StandardMaterial {
             base_color: COLUMN_COLOR,
@@ -60,6 +64,7 @@ impl FromWorld for TerrainHandles {
 
         TerrainHandles {
             scenes,
+            topper_mesh,
             column_mesh,
             column_material,
             interaction_materials,

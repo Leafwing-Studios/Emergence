@@ -225,23 +225,33 @@ pub(crate) enum ObjectInteraction {
 }
 
 impl ObjectInteraction {
+    /// Constructs a new [`ObjectInteraction`]
+    pub(crate) fn new(hovered: bool, selected: bool) -> Self {
+        match (hovered, selected) {
+            (true, true) => ObjectInteraction::HoveredAndSelected,
+            (true, false) => ObjectInteraction::Hovered,
+            (false, true) => ObjectInteraction::Selected,
+            (false, false) => ObjectInteraction::None,
+        }
+    }
+
     /// The material used by objects that are being interacted with.
-    pub(crate) fn material(&self) -> Option<StandardMaterial> {
+    pub(crate) fn material(&self) -> StandardMaterial {
         use crate::asset_management::palette::{
             HOVER_COLOR, SELECTION_AND_HOVER_COLOR, SELECTION_COLOR,
         };
 
-        let maybe_color = match self {
-            ObjectInteraction::Selected => Some(SELECTION_COLOR),
-            ObjectInteraction::Hovered => Some(HOVER_COLOR),
-            ObjectInteraction::HoveredAndSelected => Some(SELECTION_AND_HOVER_COLOR),
-            ObjectInteraction::None => None,
+        let base_color = match self {
+            ObjectInteraction::Selected => SELECTION_COLOR,
+            ObjectInteraction::Hovered => HOVER_COLOR,
+            ObjectInteraction::HoveredAndSelected => SELECTION_AND_HOVER_COLOR,
+            ObjectInteraction::None => Color::NONE,
         };
 
-        maybe_color.map(|base_color| StandardMaterial {
+        StandardMaterial {
             base_color,
             ..Default::default()
-        })
+        }
     }
 }
 
