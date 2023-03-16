@@ -164,9 +164,19 @@ impl Command for SpawnTerrainCommand {
         world.entity_mut(terrain_entity).add_child(hex_column);
 
         let handles = world.resource::<TerrainHandles>();
+        /// Makes the overlays ever so slightly larger than their base to avoid z-fighting.
+        ///
+        /// This value should be very slightly larger than 1.0
+        const OVERLAY_OVERSIZE_SCALE: f32 = 1.001;
+
         let overlay_bundle = PbrBundle {
             mesh: handles.topper_mesh.clone_weak(),
             visibility: Visibility::Hidden,
+            transform: Transform::from_scale(Vec3 {
+                x: OVERLAY_OVERSIZE_SCALE,
+                y: OVERLAY_OVERSIZE_SCALE,
+                z: OVERLAY_OVERSIZE_SCALE,
+            }),
             ..Default::default()
         };
         let overlay = world.spawn(overlay_bundle).id();
