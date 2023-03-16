@@ -127,6 +127,7 @@ impl GhostKind {
 
         StandardMaterial {
             base_color,
+            alpha_mode: AlphaMode::Multiply,
             ..Default::default()
         }
     }
