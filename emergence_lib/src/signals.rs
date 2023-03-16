@@ -170,7 +170,11 @@ impl Signals {
             let mut addition_map = SignalMap::default();
             let mut removal_map = SignalMap::default();
 
-            for (&occupied_tile, original_strength) in original_map.map.iter() {
+            for (&occupied_tile, original_strength) in original_map
+                .map
+                .iter()
+                .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
+            {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
                 for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
