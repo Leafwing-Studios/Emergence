@@ -112,9 +112,18 @@ fn respond_to_height_changes(
     }
 }
 
+/// Constructs a new [`Terrain`] entity.
+///
+/// The order of the chidlren *must* be:
+/// 0: column
+/// 1: overlay
+/// 2: scene root
 pub(crate) struct SpawnTerrainCommand {
+    /// The position to spawn the tile
     pub(crate) tile_pos: TilePos,
+    /// The height of the tile
     pub(crate) height: Height,
+    /// The type of tile
     pub(crate) terrain_id: Id<Terrain>,
 }
 
@@ -145,14 +154,23 @@ impl Command for SpawnTerrainCommand {
         // Spawn the column as the 0th child of the tile entity
         // The scene bundle will be added as the first child
         let handles = world.resource::<TerrainHandles>();
-        let bundle = PbrBundle {
+        let column_bundle = PbrBundle {
             mesh: handles.column_mesh.clone_weak(),
             material: handles.column_material.clone_weak(),
             ..Default::default()
         };
 
-        let hex_column = world.spawn(bundle).id();
+        let hex_column = world.spawn(column_bundle).id();
         world.entity_mut(terrain_entity).add_child(hex_column);
+
+        let handles = world.resource::<TerrainHandles>();
+        let overlay_bundle = PbrBundle {
+            mesh: handles.topper_mesh.clone_weak(),
+            visibility: Visibility::Hidden,
+            ..Default::default()
+        };
+        let overlay = world.spawn(overlay_bundle).id();
+        world.entity_mut(terrain_entity).add_child(overlay);
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
