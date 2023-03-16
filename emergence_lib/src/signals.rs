@@ -167,24 +167,35 @@ impl Signals {
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         for original_map in self.maps.values_mut() {
-            let mut addition_map = SignalMap::default();
-            let mut removal_map = SignalMap::default();
+            let num_elements = original_map.map.len();
+            let size_hint = num_elements * 6;
+            let mut addition_map = Vec::with_capacity(size_hint);
+            let mut removal_map = Vec::with_capacity(size_hint);
 
-            for (&occupied_tile, original_strength) in original_map.map.iter() {
+            for (&occupied_tile, original_strength) in original_map
+                .map
+                .iter()
+                .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
+            {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
+                let mut num_neighbors = 0.0;
                 for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
-                    removal_map.add_signal(occupied_tile, amount_to_send_to_each_neighbor);
-                    addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
+                    num_neighbors += 1.0;
+                    addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                 }
+                removal_map.push((
+                    occupied_tile,
+                    amount_to_send_to_each_neighbor * num_neighbors,
+                ));
             }
 
             // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-            for (&removal_pos, &removal_strength) in removal_map.map.iter() {
+            for (removal_pos, removal_strength) in removal_map.into_iter() {
                 original_map.subtract_signal(removal_pos, removal_strength)
             }
 
-            for (&addition_pos, &addition_strength) in addition_map.map.iter() {
+            for (addition_pos, addition_strength) in addition_map.into_iter() {
                 original_map.add_signal(addition_pos, addition_strength)
             }
         }
