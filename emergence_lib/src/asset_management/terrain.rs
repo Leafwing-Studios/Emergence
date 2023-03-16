@@ -53,8 +53,10 @@ impl FromWorld for TerrainHandles {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
-            let material_handle = material_assets.add(variant.material());
-            interaction_materials.insert(variant, material_handle);
+            if let Some(material) = variant.material() {
+                let material_handle = material_assets.add(material);
+                interaction_materials.insert(variant, material_handle);
+            }
         }
         let column_material = material_assets.add(StandardMaterial {
             base_color: COLUMN_COLOR,

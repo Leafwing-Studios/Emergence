@@ -6,7 +6,6 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::asset_management::manifest::{Id, Terrain, TerrainManifest};
 use crate::asset_management::terrain::TerrainHandles;
-use crate::player_interaction::selection::ObjectInteraction;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 
@@ -55,11 +54,9 @@ struct TerrainBundle {
     raycast_mesh: RaycastMesh<Terrain>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
-    /// The material used to display tile interactions
-    material: Handle<StandardMaterial>,
     /// The structure that should be built here.
     zoning: Zoning,
-    /// The scene used to construct the terrain tile
+    /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
 }
 
@@ -70,7 +67,6 @@ impl TerrainBundle {
         tile_pos: TilePos,
         scene: Handle<Scene>,
         mesh: Handle<Mesh>,
-        material: Handle<StandardMaterial>,
         map_geometry: &MapGeometry,
     ) -> Self {
         let world_pos = tile_pos.into_world_pos(map_geometry);
@@ -88,7 +84,6 @@ impl TerrainBundle {
             height,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh,
-            material,
             zoning: Zoning::None,
             scene_bundle,
         }
@@ -124,12 +119,6 @@ impl Command for SpawnTerrainCommand {
         let handles = world.resource::<TerrainHandles>();
         let scene_handle = handles.scenes.get(&self.terrain_id).unwrap().clone_weak();
         let mesh = handles.topper_mesh.clone_weak();
-        let material = handles
-            .interaction_materials
-            .get(&ObjectInteraction::None)
-            .unwrap()
-            .clone_weak();
-
         let mut map_geometry = world.resource_mut::<MapGeometry>();
 
         // Store the height, so it can be used below
@@ -145,7 +134,6 @@ impl Command for SpawnTerrainCommand {
                 self.tile_pos,
                 scene_handle,
                 mesh,
-                material,
                 &map_geometry,
             ))
             .id();

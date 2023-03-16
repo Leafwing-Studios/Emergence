@@ -39,8 +39,10 @@ impl FromWorld for StructureHandles {
 
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
-            let material_handle = material_assets.add(variant.material());
-            interaction_materials.insert(variant, material_handle);
+            if let Some(material) = variant.material() {
+                let material_handle = material_assets.add(material);
+                interaction_materials.insert(variant, material_handle);
+            }
         }
 
         let mut ghost_materials = HashMap::new();

@@ -236,22 +236,22 @@ impl ObjectInteraction {
     }
 
     /// The material used by objects that are being interacted with.
-    pub(crate) fn material(&self) -> StandardMaterial {
+    pub(crate) fn material(&self) -> Option<StandardMaterial> {
         use crate::asset_management::palette::{
             HOVER_COLOR, SELECTION_AND_HOVER_COLOR, SELECTION_COLOR,
         };
 
-        let base_color = match self {
-            ObjectInteraction::Selected => SELECTION_COLOR,
-            ObjectInteraction::Hovered => HOVER_COLOR,
-            ObjectInteraction::HoveredAndSelected => SELECTION_AND_HOVER_COLOR,
-            ObjectInteraction::None => Color::NONE,
+        let maybe_color = match self {
+            ObjectInteraction::Selected => Some(SELECTION_COLOR),
+            ObjectInteraction::Hovered => Some(HOVER_COLOR),
+            ObjectInteraction::HoveredAndSelected => Some(SELECTION_AND_HOVER_COLOR),
+            ObjectInteraction::None => None,
         };
 
-        StandardMaterial {
+        maybe_color.map(|base_color| StandardMaterial {
             base_color,
             ..Default::default()
-        }
+        })
     }
 }
 
