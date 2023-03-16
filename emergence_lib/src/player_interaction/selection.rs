@@ -38,6 +38,11 @@ impl Plugin for SelectionPlugin {
                     .before(InteractionSystem::HoverDetails),
             )
             .add_system(
+                set_tile_interactions
+                    .in_set(InteractionSystem::SelectTiles)
+                    .after(set_selection),
+            )
+            .add_system(
                 get_details
                     .pipe(clear_details_on_error)
                     .in_set(InteractionSystem::HoverDetails)
@@ -628,6 +633,26 @@ fn set_selection(
             selection_state.shape = SelectionShape::Line {
                 start: hovered_tile,
             };
+        }
+    }
+}
+
+/// Set tile interactions based on hover and selection state
+pub(super) fn set_tile_interactions(
+    current_selection: Res<CurrentSelection>,
+    hovered_tiles: Res<HoveredTiles>,
+    mut terrain_query: Query<(&TilePos, &mut ObjectInteraction)>,
+) {
+    if current_selection.is_changed() || hovered_tiles.is_changed() {
+        for (&tile_pos, mut object_interaction) in terrain_query.iter_mut() {
+            let hovered = hovered_tiles.contains(&tile_pos);
+            let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
+                selected_tiles.contains_tile(tile_pos)
+            } else {
+                false
+            };
+
+            *object_interaction = ObjectInteraction::new(hovered, selected);
         }
     }
 }

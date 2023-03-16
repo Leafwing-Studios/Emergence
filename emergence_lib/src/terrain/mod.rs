@@ -6,6 +6,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::asset_management::manifest::{Id, Terrain, TerrainManifest};
 use crate::asset_management::terrain::TerrainHandles;
+use crate::player_interaction::selection::ObjectInteraction;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 
@@ -54,6 +55,8 @@ struct TerrainBundle {
     raycast_mesh: RaycastMesh<Terrain>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
+    /// How is the terrain being interacted with?
+    object_interaction: ObjectInteraction,
     /// The structure that should be built here.
     zoning: Zoning,
     /// The scene used to construct the terrain tile.
@@ -84,6 +87,7 @@ impl TerrainBundle {
             height,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh,
+            object_interaction: ObjectInteraction::None,
             zoning: Zoning::None,
             scene_bundle,
         }
