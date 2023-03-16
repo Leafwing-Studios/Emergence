@@ -702,13 +702,14 @@ fn get_details(
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.terrain_index.get(tile_pos).unwrap();
-                let terrain_query_item = terrain_query.get(*terrain_entity)?;
+                let terrain_entity = *map_geometry.terrain_index.get(tile_pos).unwrap();
+                let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {
-                    entity: terrain_query_item.entity,
+                    entity: terrain_entity,
                     terrain_type: *terrain_query_item.terrain_type,
                     tile_pos: *tile_pos,
+                    height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
                     zoning: terrain_query_item.zoning.clone(),
                 })
@@ -990,7 +991,7 @@ mod terrain_details {
         asset_management::manifest::{Id, Terrain},
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
-        simulation::geometry::TilePos,
+        simulation::geometry::{Height, TilePos},
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -998,10 +999,12 @@ mod terrain_details {
     pub(super) struct TerrainDetailsQuery {
         /// The root entity
         pub(super) entity: Entity,
+        /// The height of the tile
+        pub(super) height: &'static Height,
         /// The type of terrain
+        pub(super) terrain_type: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
-        pub(super) terrain_type: &'static Id<Terrain>,
     }
 
     /// Detailed info about a given piece of terrain.
@@ -1013,6 +1016,8 @@ mod terrain_details {
         pub(super) terrain_type: Id<Terrain>,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
+        /// The height of the tile
+        pub(super) height: Height,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -1024,6 +1029,7 @@ mod terrain_details {
             let entity = self.entity;
             let terrain_type = &self.terrain_type;
             let tile_pos = &self.tile_pos;
+            let height = &self.height;
             let signals = &self.signals;
             let zoning = &self.zoning;
 
@@ -1032,6 +1038,7 @@ mod terrain_details {
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
+Height: {height}
 Zoning: {zoning}
 Signals:
 {signals}"

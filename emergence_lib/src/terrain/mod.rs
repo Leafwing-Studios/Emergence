@@ -5,7 +5,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::asset_management::manifest::{Id, Terrain};
 use crate::player_interaction::zoning::Zoning;
-use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 
 #[derive(Debug)]
 pub(crate) struct TerrainData {
@@ -36,6 +36,8 @@ pub(crate) struct TerrainBundle {
     terrain_id: Id<Terrain>,
     /// The location of this terrain hex
     tile_pos: TilePos,
+    /// The height of this terrain hex
+    height: Height,
     /// Makes the tiles pickable
     raycast_mesh: RaycastMesh<Terrain>,
     /// The structure that should be built here.
@@ -59,9 +61,12 @@ impl TerrainBundle {
             ..Default::default()
         };
 
+        let height = map_geometry.get_height(tile_pos).unwrap();
+
         TerrainBundle {
             terrain_id,
             tile_pos,
+            height,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             zoning: Zoning::None,
             scene_bundle,

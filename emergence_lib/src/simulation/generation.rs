@@ -3,7 +3,7 @@ use crate::asset_management::manifest::{Id, StructureManifest, Terrain, UnitMani
 use crate::asset_management::terrain::TerrainHandles;
 use crate::asset_management::units::UnitHandles;
 use crate::player_interaction::clipboard::ClipboardData;
-use crate::simulation::geometry::{Facing, TilePos};
+use crate::simulation::geometry::{Facing, Height, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::terrain::TerrainBundle;
 use crate::units::UnitBundle;
@@ -150,12 +150,12 @@ pub(crate) fn generate_terrain(
         let hex_height = MIN_HEIGHT
             + (fbm_simplex_2d_seeded(pos * FREQUENCY_SCALE, OCTAVES, LACUNARITY, GAIN, SEED)
                 * AMPLITUDE_SCALE)
-                .abs()
-                // Height is stepped, and should always be a multiple of 1.0
-                .round();
+                .abs();
 
         // Store the height, so it can be used below
-        map_geometry.height_index.insert(tile_pos, hex_height);
+        map_geometry
+            .height_index
+            .insert(tile_pos, Height::from_world_pos(hex_height));
 
         let scene_handle = handles.scenes.get(&terrain_id).unwrap();
 
