@@ -99,7 +99,7 @@ fn respond_to_height_changes(
             // During terrain initialization we ensure that the column is always the 0th child
             let column_child = children[0];
             let mut column_transform = column_query.get_mut(column_child).unwrap();
-            *column_transform = height.column_transform(tile_pos, &map_geometry);
+            *column_transform = height.column_transform();
         }
     }
 }

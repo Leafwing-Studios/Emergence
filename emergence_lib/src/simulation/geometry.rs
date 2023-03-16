@@ -180,21 +180,21 @@ impl Height {
     }
 
     /// Computes the correct [`Transform`] of the column underneath a tile of this height at this position
-    pub(crate) fn column_transform(
-        &self,
-        tile_pos: TilePos,
-        map_geometry: &MapGeometry,
-    ) -> Transform {
-        let y_scale = self.into_world_pos() - Height::CONVERSION_FACTOR;
+    pub(crate) fn column_transform(&self) -> Transform {
+        let y_scale = self.into_world_pos();
         let scale = Vec3 {
             x: 1.,
             y: y_scale,
             z: 1.,
         };
 
-        let mut translation = tile_pos.into_world_pos(map_geometry);
-        // We want the base to be aligned with the xz plane
-        translation.y = -y_scale / 2.;
+        // This is x and z aligned with the parent
+        let translation = Vec3 {
+            x: 0.,
+            // We want this to start below the parent
+            y: -y_scale,
+            z: 0.,
+        };
 
         Transform {
             translation,
