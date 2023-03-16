@@ -5,6 +5,7 @@
 use std::f32::consts::PI;
 use std::f32::consts::TAU;
 
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
@@ -64,6 +65,7 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
         .spawn(Camera3dBundle {
             transform,
             projection,
+            tonemapping: Tonemapping::TonyMcMapface,
             ..Default::default()
         })
         .insert(settings)

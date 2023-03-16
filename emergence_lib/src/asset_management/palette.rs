@@ -63,3 +63,11 @@ pub(crate) const SELECTION_AND_HOVER_COLOR: Color = Color::hsl(
 
 /// The color used for columns of dirt underneath tiles
 pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
+
+/// The color of daylight
+pub(crate) const LIGHT_SUN: Color = Color::Hsla {
+    hue: 30.,
+    saturation: 0.5,
+    lightness: 1.,
+    alpha: 1.,
+};
