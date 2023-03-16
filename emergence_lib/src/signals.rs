@@ -189,11 +189,11 @@ impl Signals {
             }
 
             // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-            for &(removal_pos, removal_strength) in removal_map.iter() {
+            for (removal_pos, removal_strength) in removal_map.into_iter() {
                 original_map.subtract_signal(removal_pos, removal_strength)
             }
 
-            for &(addition_pos, addition_strength) in addition_map.iter() {
+            for (addition_pos, addition_strength) in addition_map.into_iter() {
                 original_map.add_signal(addition_pos, addition_strength)
             }
         }
