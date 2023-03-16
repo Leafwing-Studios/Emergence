@@ -128,9 +128,20 @@ impl Command for SpawnTerrainCommand {
             ))
             .id();
 
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        // Spawn the column as the 0th child of the tile entity
+        // The scene bundle will be added as the first child
+        let handles = world.resource::<TerrainHandles>();
+        let bundle = PbrBundle {
+            mesh: handles.column_mesh.clone_weak(),
+            material: handles.column_material.clone_weak(),
+            ..Default::default()
+        };
+
+        let hex_column = world.spawn(bundle).id();
+        world.entity_mut(terrain_entity).add_child(hex_column);
 
         // Update the index of what terrain is where
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
         map_geometry
             .terrain_index
             .insert(self.tile_pos, terrain_entity);

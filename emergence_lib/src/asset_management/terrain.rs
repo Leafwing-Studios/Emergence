@@ -10,6 +10,7 @@ use crate::{
 use super::{
     hexagonal_column,
     manifest::{Id, Terrain, TerrainManifest},
+    palette::COLUMN_COLOR,
     Loadable,
 };
 
@@ -20,6 +21,8 @@ pub(crate) struct TerrainHandles {
     pub(crate) scenes: HashMap<Id<Terrain>, Handle<Scene>>,
     /// The mesh of the column underneath each terrain topper
     pub(crate) column_mesh: Handle<Mesh>,
+    /// The material of the column underneath each terrain topper
+    pub(crate) column_material: Handle<StandardMaterial>,
     /// The materials used to display player interaction with terrain tiles
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
@@ -36,6 +39,11 @@ impl FromWorld for TerrainHandles {
             scenes.insert(Id::from_string_id(name), scene);
         }
 
+        let map_geometry = world.resource::<MapGeometry>();
+        let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
+        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
+        let column_mesh = mesh_assets.add(mesh_object);
+
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
         let mut interaction_materials = HashMap::new();
         for variant in ObjectInteraction::variants() {
@@ -44,15 +52,16 @@ impl FromWorld for TerrainHandles {
                 interaction_materials.insert(variant, material_handle);
             }
         }
-
-        let map_geometry = world.resource::<MapGeometry>();
-        let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
-        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-        let column_mesh = mesh_assets.add(mesh_object);
+        let column_material = material_assets.add(StandardMaterial {
+            base_color: COLUMN_COLOR,
+            perceptual_roughness: 1.0,
+            ..default()
+        });
 
         TerrainHandles {
             scenes,
             column_mesh,
+            column_material,
             interaction_materials,
         }
     }

@@ -60,3 +60,6 @@ pub(crate) const SELECTION_AND_HOVER_COLOR: Color = Color::hsl(
     (SELECTION_SATURATION + HOVER_SATURATION) / 2.,
     (SELECTION_LIGHTNESS + HOVER_LIGHTNESS) / 2.,
 );
+
+/// The color used for columns of dirt underneath tiles
+pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
