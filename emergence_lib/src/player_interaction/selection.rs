@@ -255,6 +255,7 @@ impl ObjectInteraction {
 
         maybe_color.map(|base_color| StandardMaterial {
             base_color,
+            alpha_mode: AlphaMode::Blend,
             ..Default::default()
         })
     }
