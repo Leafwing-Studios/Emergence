@@ -167,8 +167,8 @@ impl Signals {
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         for original_map in self.maps.values_mut() {
-            let mut addition_map = SignalMap::default();
-            let mut removal_map = SignalMap::default();
+            let mut addition_map = Vec::new();
+            let mut removal_map = Vec::new();
 
             for (&occupied_tile, original_strength) in original_map
                 .map
@@ -180,20 +180,20 @@ impl Signals {
                 let mut num_neighbors = 0.0;
                 for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
                     num_neighbors += 1.0;
-                    addition_map.add_signal(neighboring_tile, amount_to_send_to_each_neighbor);
+                    addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                 }
-                removal_map.add_signal(
+                removal_map.push((
                     occupied_tile,
                     amount_to_send_to_each_neighbor * num_neighbors,
-                );
+                ));
             }
 
             // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-            for (&removal_pos, &removal_strength) in removal_map.map.iter() {
+            for &(removal_pos, removal_strength) in removal_map.iter() {
                 original_map.subtract_signal(removal_pos, removal_strength)
             }
 
-            for (&addition_pos, &addition_strength) in addition_map.map.iter() {
+            for &(addition_pos, addition_strength) in addition_map.iter() {
                 original_map.add_signal(addition_pos, addition_strength)
             }
         }
