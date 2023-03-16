@@ -3,10 +3,12 @@
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use crate::{
-    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction, terrain::TerrainData,
+    enum_iter::IterableEnum, player_interaction::selection::ObjectInteraction,
+    simulation::geometry::MapGeometry, terrain::TerrainData,
 };
 
 use super::{
+    hexagonal_column,
     manifest::{Id, Terrain, TerrainManifest},
     Loadable,
 };
@@ -25,6 +27,10 @@ impl Plugin for TerrainPlugin {
 pub(crate) struct TerrainHandles {
     /// The scene used for each type of terrain
     pub(crate) scenes: HashMap<Id<Terrain>, Handle<Scene>>,
+    /// The mesh of the column underneath each terrain topper
+    pub(crate) column_mesh: Handle<Mesh>,
+    /// The materials used to display player interaction with terrain tiles
+    pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
 
 impl FromWorld for TerrainHandles {
@@ -48,7 +54,16 @@ impl FromWorld for TerrainHandles {
             }
         }
 
-        TerrainHandles { scenes }
+        let map_geometry = world.resource::<MapGeometry>();
+        let mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
+        let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
+        let column_mesh = mesh_assets.add(mesh_object);
+
+        TerrainHandles {
+            scenes,
+            column_mesh,
+            interaction_materials,
+        }
     }
 }
 
