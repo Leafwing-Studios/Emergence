@@ -88,13 +88,18 @@ impl TerrainBundle {
 
 /// Updates the game state appropriately whenever the height of a tile is changed.
 fn respond_to_height_changes(
-    mut terrain_query: Query<(Ref<Height>, &TilePos, &mut Transform)>,
+    mut terrain_query: Query<(Ref<Height>, &TilePos, &mut Transform, &Children)>,
+    mut column_query: Query<&mut Transform, (With<Parent>, Without<Height>)>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (height, &tile_pos, mut transform) in terrain_query.iter_mut() {
+    for (height, &tile_pos, mut transform, children) in terrain_query.iter_mut() {
         if height.is_changed() {
             map_geometry.update_height(tile_pos, *height);
             transform.translation.y = height.into_world_pos();
+            // During terrain initialization we ensure that the column is always the 0th child
+            let column_child = children[0];
+            let mut column_transform = column_query.get_mut(column_child).unwrap();
+            *column_transform = height.column_transform(tile_pos, &map_geometry);
         }
     }
 }
