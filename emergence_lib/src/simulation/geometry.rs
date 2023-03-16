@@ -404,4 +404,21 @@ mod tests {
         assert_eq!(Height::MAX, Height::from_world_pos(9000.));
         assert_eq!(Height::MAX, Height::from_world_pos(f32::MAX));
     }
+
+    #[test]
+    fn world_to_tile_pos_conversions_are_invertable() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        for x in -10..=10 {
+            for y in -10..=10 {
+                let tile_pos = TilePos::new(x, y);
+                // Height chosen arbitrarily to reduce odds of this accidentally working
+                map_geometry.update_height(tile_pos, Height(17));
+                let world_pos = tile_pos.into_world_pos(&map_geometry);
+                let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
+
+                assert_eq!(tile_pos, remapped_tile_pos);
+            }
+        }
+    }
 }
