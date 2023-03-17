@@ -1,6 +1,6 @@
 //! Lights and lighting.
 
-use bevy::prelude::*;
+use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
 
 use crate::asset_management::palette::LIGHT_SUN;
 
@@ -23,8 +23,17 @@ fn spawn_sun(mut commands: Commands) {
         directional_light: DirectionalLight {
             color: LIGHT_SUN,
             illuminance: 1.2e5,
+            shadows_enabled: true,
             ..Default::default()
         },
+        cascade_shadow_config: CascadeShadowConfigBuilder {
+            num_cascades: 3,
+            minimum_distance: 5.,
+            maximum_distance: 200.,
+            first_cascade_far_bound: 100.,
+            overlap_proportion: 0.5,
+        }
+        .build(),
         transform: Transform::from_xyz(30., 100., 30.).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
