@@ -7,6 +7,7 @@ use super::Loadable;
 /// Stores all structural elements of the UI: buttons, frames, widgets and so on
 #[derive(Resource)]
 pub(crate) struct UiElements {
+    /// The background image used by hex menus
     pub(crate) hex_menu_background: Handle<Image>,
 }
 
