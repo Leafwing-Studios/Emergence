@@ -101,7 +101,7 @@ impl Default for CameraFocus {
 
 /// Configure how the camera moves and feels.
 #[derive(Component)]
-struct CameraSettings {
+pub(crate) struct CameraSettings {
     /// Controls how fast the camera zooms in and out.
     zoom_speed: Speed,
     /// Controls the rate that the camera can moves from side to side.
@@ -113,11 +113,11 @@ struct CameraSettings {
     /// The minimum distance that the camera can be from its focus.
     ///
     /// Should always be positive, and less than `max_zoom`.
-    min_zoom: f32,
+    pub(crate) min_zoom: f32,
     /// The maximum distance that the camera can be from its focus.
     ///
     /// Should always be positive, and less than `max_zoom`.
-    max_zoom: f32,
+    pub(crate) max_zoom: f32,
     /// How many tiles away from the focus should the camera take into consideration when computing the correct height?
     ///
     /// Increasing this value will result in a "smoother ride" over the hills and valleys of the map.
@@ -138,7 +138,7 @@ impl Default for CameraSettings {
             zoom_speed: Speed::new(400., 300.0, 1000.0),
             pan_speed: Speed::new(50., 100.0, 150.0),
             rotation_speed: Speed::new(1.0, 3.0, 5.0),
-            min_zoom: 5.,
+            min_zoom: 10.,
             max_zoom: 500.,
             float_radius: 3,
             inclination: 0.5 * PI / 2.,
