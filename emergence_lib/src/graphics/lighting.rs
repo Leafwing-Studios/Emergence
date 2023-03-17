@@ -18,7 +18,8 @@ impl Plugin for LightingPlugin {
             brightness: 1.0,
             color: LIGHT_SUN,
         })
-        .insert_resource(DirectionalLightShadowMap { size: 4096 })
+        // Controls the resolution of shadows cast by the sun
+        .insert_resource(DirectionalLightShadowMap { size: 8192 })
         .add_startup_system(spawn_sun);
     }
 }
@@ -58,11 +59,15 @@ fn spawn_sun(mut commands: Commands) {
             ..Default::default()
         },
         cascade_shadow_config: CascadeShadowConfigBuilder {
-            num_cascades: 3,
-            minimum_distance: 5.,
-            maximum_distance: 200.,
-            first_cascade_far_bound: 100.,
-            overlap_proportion: 0.5,
+            // We don't really want to vary shadow quality with distance from the light sourece, since it's always basically constant
+            num_cascades: 1,
+            // At max map height, this should be about the correct distance from the sun
+            minimum_distance: sun_height / 2.,
+            // Heights are never 0, so this is a good settings
+            maximum_distance: sun_height,
+            // We want to be some small multiple of the minimum distance
+            first_cascade_far_bound: 1.2 * (sun_height / 2.),
+            overlap_proportion: 0.8,
         }
         .build(),
         transform,
