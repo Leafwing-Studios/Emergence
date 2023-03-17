@@ -227,8 +227,8 @@ impl HexMenuBackgroundBundle {
     fn new(hex: Hex, layout: &HexLayout, texture: &Handle<Image>) -> Self {
         /// We must scale these background tiles so they fully tile the background.
         /// Per https://www.redblobgames.com/grids/hexagons/#basics (and experimentation)
-        /// that means we need a factor of sqrt(3) ~= 1.73
-        const BACKGROUND_SCALING_FACTOR: f32 = 1.73205;
+        /// that means we need a factor of 2
+        const BACKGROUND_SCALING_FACTOR: f32 = 2.;
         let width = BACKGROUND_SCALING_FACTOR * layout.hex_size.x;
         let height = BACKGROUND_SCALING_FACTOR * layout.hex_size.y;
 
