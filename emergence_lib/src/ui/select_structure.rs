@@ -49,6 +49,8 @@ struct HexMenuArrangement {
     content_map: HashMap<Hex, Id<Structure>>,
     /// The collection of menu icon entities at each hex coordinate
     icon_map: HashMap<Hex, Entity>,
+    /// The collection of menu background entities at each hex coordinate
+    background_map: HashMap<Hex, Entity>,
     /// The geometry of the hex grid
     layout: HexLayout,
 }
@@ -98,6 +100,7 @@ fn spawn_hex_menu(
             let mut arrangement = HexMenuArrangement {
                 content_map: HashMap::default(),
                 icon_map: HashMap::default(),
+                background_map: HashMap::default(),
                 layout: HexLayout {
                     orientation: HexOrientation::pointy(),
                     origin: cursor_pos,
@@ -121,9 +124,10 @@ fn spawn_hex_menu(
             variants.sort();
 
             for structure_id in variants {
-                // Just give up rather than panic if too many entities are found
                 if let Some(hex) = hexes.next() {
+                    // Content
                     arrangement.content_map.insert(hex, structure_id);
+                    // Icon
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
                             structure_id,
@@ -133,7 +137,13 @@ fn spawn_hex_menu(
                         ))
                         .id();
                     arrangement.icon_map.insert(hex, icon_entity);
+                    // Background
+                    let background_entity = commands
+                        .spawn(HexMenuBackgroundBundle::new(hex, &arrangement.layout))
+                        .id();
+                    arrangement.background_map.insert(hex, background_entity);
                 } else {
+                    // Just give up rather than panic if too many entries are found
                     warn!("Too many entries in hex menu!");
                 }
             }
@@ -182,6 +192,8 @@ impl HexMenuIconBundle {
                 size: Size::new(Val::Px(layout.hex_size.x), Val::Px(layout.hex_size.y)),
                 ..Default::default()
             },
+            // Render above the background
+            z_index: ZIndex::Global(1),
             ..Default::default()
         };
 
@@ -189,6 +201,56 @@ impl HexMenuIconBundle {
             hex_menu: HexMenu,
             image_bundle,
             structure_id,
+        }
+    }
+}
+
+/// The background for each menu entry
+#[derive(Bundle)]
+struct HexMenuBackgroundBundle {
+    /// Marker component
+    hex_menu: HexMenu,
+    /// Background image
+    image_bundle: ImageBundle,
+}
+
+impl HexMenuBackgroundBundle {
+    /// Create a new icon with the appropriate positioning and appearance.
+    fn new(hex: Hex, layout: &HexLayout) -> Self {
+        /// We must scale these background tiles so they fully tile the background.
+        /// Per https://www.redblobgames.com/grids/hexagons/#basics (and experimentation)
+        /// that means we need a factor of sqrt(3) ~= 1.73
+        const BACKGROUND_SCALING_FACTOR: f32 = 1.73205;
+        let width = BACKGROUND_SCALING_FACTOR * layout.hex_size.x;
+        let height = BACKGROUND_SCALING_FACTOR * layout.hex_size.y;
+
+        // Correct for center vs corner positioning
+        let half_cell = Vec2 {
+            x: width / 2.,
+            y: height / 2.,
+        };
+        let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
+
+        let image_bundle = ImageBundle {
+            background_color: BackgroundColor(Color::RED),
+            style: Style {
+                position: UiRect {
+                    left: Val::Px(screen_pos.x),
+                    bottom: Val::Px(screen_pos.y),
+                    ..Default::default()
+                },
+                position_type: PositionType::Absolute,
+                size: Size::new(Val::Px(width), Val::Px(height)),
+                ..Default::default()
+            },
+            // Render below the icon
+            z_index: ZIndex::Global(0),
+            ..Default::default()
+        };
+
+        HexMenuBackgroundBundle {
+            hex_menu: HexMenu,
+            image_bundle,
         }
     }
 }
