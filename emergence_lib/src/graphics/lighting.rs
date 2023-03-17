@@ -7,7 +7,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{asset_management::palette::LIGHT_SUN, simulation::geometry::Height};
+use crate::{
+    asset_management::palette::LIGHT_SUN, player_interaction::camera::CameraSettings,
+    simulation::geometry::Height,
+};
 
 /// Handles all lighting logic
 pub(super) struct LightingPlugin;
@@ -20,12 +23,15 @@ impl Plugin for LightingPlugin {
         })
         // Controls the resolution of shadows cast by the sun
         .insert_resource(DirectionalLightShadowMap { size: 8192 })
-        .add_startup_system(spawn_sun);
+        // Need to wait for the player camera to spawn
+        .add_startup_system(spawn_sun.in_base_set(StartupSet::PostStartup));
     }
 }
 
 /// Spawns a directional light source to illuminate the scene
-fn spawn_sun(mut commands: Commands) {
+fn spawn_sun(mut commands: Commands, camera_query: Query<&CameraSettings>) {
+    let camera_settings = camera_query.single();
+
     // The distance from the sun to the origin
     let sun_height = 2. * Height::MAX.into_world_pos();
     // The angle of the sun, relative to its position at noon
@@ -54,20 +60,19 @@ fn spawn_sun(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             color: LIGHT_SUN,
-            illuminance: 1.2e5,
+            illuminance: 1e5,
             shadows_enabled: true,
             ..Default::default()
         },
         cascade_shadow_config: CascadeShadowConfigBuilder {
-            // We don't really want to vary shadow quality with distance from the light sourece, since it's always basically constant
-            num_cascades: 1,
-            // At max map height, this should be about the correct distance from the sun
-            minimum_distance: sun_height / 2.,
-            // Heights are never 0, so this is a good settings
-            maximum_distance: sun_height,
-            // We want to be some small multiple of the minimum distance
-            first_cascade_far_bound: 1.2 * (sun_height / 2.),
-            overlap_proportion: 0.8,
+            // Max is 4, as of Bevy 0.10
+            num_cascades: 4,
+            // Shadows must be visible even when fully zoomed in
+            minimum_distance: camera_settings.min_zoom,
+            // Shadows must be visible even when fully zoomed out
+            maximum_distance: 4. * camera_settings.max_zoom,
+            first_cascade_far_bound: 2. * camera_settings.min_zoom,
+            overlap_proportion: 0.3,
         }
         .build(),
         transform,
