@@ -53,7 +53,7 @@ impl FromWorld for Icons {
 
         for id in structure_names {
             let structure_id = Id::from_string_id(id);
-            let structure_path = format!("structures/{id}.gltf#Scene0");
+            let structure_path = format!("icons/structures/{id}.png");
             let scene = asset_server.load(structure_path);
             structures.insert(structure_id, scene);
         }
