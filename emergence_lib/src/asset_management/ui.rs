@@ -33,7 +33,14 @@ impl Loadable for UiElements {
 #[derive(Resource)]
 pub(crate) struct Icons {
     /// The background image used by hex menus
-    pub(crate) structures: HashMap<Id<Structure>, Handle<Image>>,
+    structures: HashMap<Id<Structure>, Handle<Image>>,
+}
+
+impl Icons {
+    /// Returns a weakly cloned handle to the image of the icon corresponding to `structure_id`.
+    pub(crate) fn structure(&self, structure_id: Id<Structure>) -> Handle<Image> {
+        self.structures.get(&structure_id).unwrap().clone_weak()
+    }
 }
 
 impl FromWorld for Icons {
