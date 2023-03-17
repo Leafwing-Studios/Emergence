@@ -14,7 +14,7 @@ use std::any::TypeId;
 
 use self::{
     manifest::plugin::ManifestPlugin, structures::StructureHandles, terrain::TerrainHandles,
-    units::UnitHandles,
+    ui::UiElements, units::UnitHandles,
 };
 use bevy::{
     asset::LoadState,
@@ -28,6 +28,7 @@ pub mod manifest;
 pub(crate) mod palette;
 pub(crate) mod structures;
 pub(crate) mod terrain;
+pub(crate) mod ui;
 pub(crate) mod units;
 
 /// Collects asset management systems and resources.
@@ -39,6 +40,7 @@ impl Plugin for AssetManagementPlugin {
             .add_asset_collection::<TerrainHandles>()
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>()
+            .add_asset_collection::<UiElements>()
             .add_plugin(ManifestPlugin);
     }
 }
