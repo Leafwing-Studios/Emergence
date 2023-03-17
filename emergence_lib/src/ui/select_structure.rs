@@ -5,7 +5,10 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::{
+        manifest::{Id, Structure, StructureManifest},
+        ui::UiElements,
+    },
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
         cursor::CursorPos,
@@ -90,6 +93,7 @@ fn spawn_hex_menu(
     mut commands: Commands,
     actions: Res<ActionState<PlayerAction>>,
     cursor_pos: Res<CursorPos>,
+    ui_elements: Res<UiElements>,
     structure_manifest: Res<StructureManifest>,
 ) {
     /// The size of the hexes used in this menu.
@@ -139,7 +143,11 @@ fn spawn_hex_menu(
                     arrangement.icon_map.insert(hex, icon_entity);
                     // Background
                     let background_entity = commands
-                        .spawn(HexMenuBackgroundBundle::new(hex, &arrangement.layout))
+                        .spawn(HexMenuBackgroundBundle::new(
+                            hex,
+                            &arrangement.layout,
+                            &ui_elements.hex_menu_background,
+                        ))
                         .id();
                     arrangement.background_map.insert(hex, background_entity);
                 } else {
@@ -216,7 +224,7 @@ struct HexMenuBackgroundBundle {
 
 impl HexMenuBackgroundBundle {
     /// Create a new icon with the appropriate positioning and appearance.
-    fn new(hex: Hex, layout: &HexLayout) -> Self {
+    fn new(hex: Hex, layout: &HexLayout, texture: &Handle<Image>) -> Self {
         /// We must scale these background tiles so they fully tile the background.
         /// Per https://www.redblobgames.com/grids/hexagons/#basics (and experimentation)
         /// that means we need a factor of sqrt(3) ~= 1.73
@@ -232,7 +240,12 @@ impl HexMenuBackgroundBundle {
         let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
 
         let image_bundle = ImageBundle {
-            background_color: BackgroundColor(Color::RED),
+            background_color: BackgroundColor(Color::WHITE),
+            image: UiImage {
+                texture: texture.clone_weak(),
+                flip_x: false,
+                flip_y: false,
+            },
             style: Style {
                 position: UiRect {
                     left: Val::Px(screen_pos.x),
