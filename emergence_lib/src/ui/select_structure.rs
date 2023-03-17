@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::{
         manifest::{Id, Structure, StructureManifest},
-        ui::UiElements,
+        ui::{Icons, UiElements},
     },
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
@@ -95,6 +95,7 @@ fn spawn_hex_menu(
     cursor_pos: Res<CursorPos>,
     ui_elements: Res<UiElements>,
     structure_manifest: Res<StructureManifest>,
+    icons: Res<Icons>,
 ) {
     /// The size of the hexes used in this menu.
     const HEX_SIZE: f32 = 64.0;
@@ -137,6 +138,7 @@ fn spawn_hex_menu(
                             structure_id,
                             hex,
                             &structure_manifest,
+                            &icons,
                             &arrangement.layout,
                         ))
                         .id();
@@ -178,6 +180,7 @@ impl HexMenuIconBundle {
         structure_id: Id<Structure>,
         hex: Hex,
         structure_manifest: &StructureManifest,
+        icons: &Icons,
         layout: &HexLayout,
     ) -> Self {
         let color = structure_manifest.get(structure_id).color;
@@ -190,6 +193,11 @@ impl HexMenuIconBundle {
 
         let image_bundle = ImageBundle {
             background_color: BackgroundColor(color),
+            image: UiImage {
+                texture: icons.structure(structure_id),
+                flip_x: false,
+                flip_y: false,
+            },
             style: Style {
                 position: UiRect {
                     left: Val::Px(screen_pos.x),

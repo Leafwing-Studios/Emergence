@@ -13,8 +13,11 @@
 use std::any::TypeId;
 
 use self::{
-    manifest::plugin::ManifestPlugin, structures::StructureHandles, terrain::TerrainHandles,
-    ui::UiElements, units::UnitHandles,
+    manifest::plugin::ManifestPlugin,
+    structures::StructureHandles,
+    terrain::TerrainHandles,
+    ui::{Icons, UiElements},
+    units::UnitHandles,
 };
 use bevy::{
     asset::LoadState,
@@ -41,6 +44,7 @@ impl Plugin for AssetManagementPlugin {
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>()
             .add_asset_collection::<UiElements>()
+            .add_asset_collection::<Icons>()
             .add_plugin(ManifestPlugin);
     }
 }

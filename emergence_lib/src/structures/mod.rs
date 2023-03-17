@@ -108,7 +108,7 @@ impl Default for StructureManifest {
                     Id::from_string_id("loam"),
                     Id::from_string_id("muddy"),
                 ]),
-                color: Color::GREEN,
+                color: Color::hsl(114., 0.36, 0.5),
             },
         );
 
