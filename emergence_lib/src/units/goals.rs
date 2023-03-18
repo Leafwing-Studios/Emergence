@@ -92,7 +92,7 @@ pub(super) fn choose_goal(
         if let Goal::Wander = *goal {
             let unit_data = unit_manifest.get(*id);
             // Continuing wandering for longer increases exploration, and allows units to spread out across the map more readily.
-            if rng.gen_bool(unit_data.keep_wandering_fraction) {
+            if rng.gen_bool(1. / unit_data.mean_free_wander_period) {
                 return;
             }
 

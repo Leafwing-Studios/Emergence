@@ -36,10 +36,8 @@ pub(crate) struct UnitData {
     diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     max_impatience: u8,
-    /// What fraction of the time will this unit continue wandering rather than picking a new goal?
-    ///
-    /// 0 is never, 1 is always.
-    keep_wandering_fraction: f64,
+    /// How many actions (on average) will this unit take while wandering before picking a new goal?
+    mean_free_wander_period: f64,
 }
 
 impl Default for UnitManifest {
@@ -53,7 +51,7 @@ impl Default for UnitManifest {
                 energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 diet: Diet::new(Id::leuco_chunk(), Energy(50.)),
                 max_impatience: 10,
-                keep_wandering_fraction: 0.5,
+                mean_free_wander_period: 20.,
             },
         );
 
