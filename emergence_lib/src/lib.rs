@@ -11,6 +11,7 @@ pub mod curves;
 pub mod enum_iter;
 pub mod filtered_array_iter;
 pub mod graphics;
+pub mod infovis;
 pub mod items;
 pub mod organisms;
 pub mod player_interaction;
