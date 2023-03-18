@@ -25,7 +25,7 @@ pub(crate) struct Census {
 
 impl Display for Census {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Population {}", self.total_units)
+        write!(f, "Population: {}", self.total_units)
     }
 }
 

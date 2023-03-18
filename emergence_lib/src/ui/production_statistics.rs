@@ -27,8 +27,8 @@ fn spawn_production_statistics_menu(
 ) {
     let style = TextStyle {
         font: fonts.regular.clone_weak(),
-        font_size: 12.,
-        color: Color::SEA_GREEN,
+        font_size: 24.,
+        color: Color::WHITE,
     };
 
     let text = Text::from_section("CENSUS", style);
