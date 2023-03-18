@@ -4,9 +4,9 @@ use bevy::prelude::*;
 use core::fmt::Display;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
-use crate::asset_management::manifest::{Id, Item, Structure};
+use crate::asset_management::manifest::{Id, Item, Structure, Unit, UnitManifest};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 
@@ -74,12 +74,13 @@ impl Display for Goal {
 
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(
-    mut units_query: Query<(&TilePos, &mut Goal, &mut ImpatiencePool)>,
+    mut units_query: Query<(&TilePos, &mut Goal, &mut ImpatiencePool, &Id<Unit>)>,
+    unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience_pool, id) in units_query.iter_mut() {
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
             *goal = Goal::Wander;
@@ -89,6 +90,12 @@ pub(super) fn choose_goal(
         // Pick a new goal when wandering.
         // If anything fails, just keep wandering for now.
         if let Goal::Wander = *goal {
+            let unit_data = unit_manifest.get(*id);
+            // Continuing wandering for longer increases exploration, and allows units to spread out across the map more readily.
+            if rng.gen_bool(unit_data.keep_wandering_fraction) {
+                return;
+            }
+
             let current_signals = signals.all_signals_at_position(tile_pos);
             let mut goal_relevant_signals = current_signals.goal_relevant_signals();
             if let Ok(goal_weights) = WeightedIndex::new(
