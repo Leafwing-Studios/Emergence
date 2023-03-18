@@ -43,7 +43,7 @@ impl Default for InGameTime {
 /// Advances the in game time based on elapsed clock time when the game is not paused.
 fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
     in_game_time.fraction_of_day += time.delta_seconds() / in_game_time.seconds_per_day;
-    in_game_time.fraction_of_day = in_game_time.fraction_of_day % 1.0;
+    in_game_time.fraction_of_day %= 1.0;
 }
 
 /// Moves the sun based on the in-game time

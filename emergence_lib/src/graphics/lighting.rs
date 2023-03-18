@@ -36,9 +36,9 @@ pub(crate) struct CelestialBody {
     ///
     /// This has no effect on the angle: it simply needs to be high enough to avoid clipping at max world height.
     height: f32,
-    // The angle of the sun in radians, relative to its position at noon
-    // The sun is aligned such that -x is west, +x is east
-    // This will change throughout the day, from - PI/2 to PI/2
+    /// The angle of the sun in radians, relative to its position at noon
+    /// The sun is aligned such that -x is west, +x is east
+    /// This will change throughout the day, from - PI/2 to PI/2
     pub(crate) progress: f32,
     /// The angle that the sun is offset from vertical in radians
     ///
@@ -84,6 +84,7 @@ fn spawn_sun(mut commands: Commands, camera_query: Query<&CameraSettings>) {
         .insert(CelestialBody::default());
 }
 
+/// Moves celestial bodies to the correct position and orientation
 fn set_celestial_body_transform(
     mut query: Query<(&mut Transform, &CelestialBody), Changed<CelestialBody>>,
 ) {
