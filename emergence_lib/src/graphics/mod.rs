@@ -6,7 +6,7 @@ use crate::{asset_management::AssetState, player_interaction::InteractionSystem}
 
 use self::{lighting::LightingPlugin, selection::display_tile_overlay};
 
-mod lighting;
+pub(crate) mod lighting;
 mod selection;
 mod structures;
 mod units;

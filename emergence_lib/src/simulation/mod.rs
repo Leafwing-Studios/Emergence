@@ -6,6 +6,7 @@ use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::geometry::sync_rotation_to_facing;
+use crate::simulation::time::TemporalPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
@@ -14,6 +15,7 @@ use bevy::log::info;
 
 pub mod generation;
 pub mod geometry;
+mod time;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {
@@ -32,6 +34,7 @@ impl Plugin for SimulationPlugin {
             .add_plugin(TerrainPlugin)
             .add_plugin(OrganismPlugin)
             .add_plugin(UnitsPlugin)
-            .add_plugin(SignalsPlugin);
+            .add_plugin(SignalsPlugin)
+            .add_plugin(TemporalPlugin);
     }
 }
