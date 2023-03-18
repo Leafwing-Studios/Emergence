@@ -155,9 +155,7 @@ impl Command for SpawnStructureCommand {
             .get(&self.data.structure_id)
             .unwrap()
             .clone_weak();
-        let world_pos = self
-            .tile_pos
-            .into_world_pos(world.resource::<MapGeometry>());
+        let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
 
         let structure_entity = world
             .spawn(StructureBundle::new(
@@ -271,9 +269,7 @@ impl Command for SpawnGhostCommand {
             .unwrap();
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
-        let world_pos = self
-            .tile_pos
-            .into_world_pos(world.resource::<MapGeometry>());
+        let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
 
         let ghost_entity = world
             .spawn(GhostBundle::new(
@@ -334,7 +330,7 @@ impl Command for SpawnPreviewCommand {
         }
 
         // Compute the world position
-        let world_pos = self.tile_pos.into_world_pos(&map_geometry);
+        let world_pos = self.tile_pos.top_of_tile(&map_geometry);
 
         // Remove any existing previews
         let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
