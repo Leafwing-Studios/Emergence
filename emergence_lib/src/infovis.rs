@@ -29,6 +29,7 @@ impl Display for Census {
     }
 }
 
+/// Counts the number of organisms
 fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
     census.total_units = unit_query.iter().len();
 }

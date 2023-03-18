@@ -6,6 +6,7 @@ use crate::infovis::Census;
 
 use super::{FiraSansFontFamily, LeftPanel};
 
+/// Resources and systems for production statistics
 pub(super) struct ProductionStatisticsPlugin;
 
 impl Plugin for ProductionStatisticsPlugin {
