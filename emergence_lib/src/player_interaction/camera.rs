@@ -336,7 +336,7 @@ fn translate_camera(
         };
 
         if let Some(target) = tile_to_snap_to {
-            focus.translation = target.into_world_pos(&map_geometry);
+            focus.translation = target.top_of_tile(&map_geometry);
         }
     }
 }

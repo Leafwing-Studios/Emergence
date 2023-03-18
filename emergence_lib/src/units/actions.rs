@@ -12,7 +12,7 @@ use crate::{
     items::ItemCount,
     organisms::energy::EnergyPool,
     signals::Signals,
-    simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
+    simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
         construction::DemolitionQuery,
@@ -242,8 +242,7 @@ pub(super) fn handle_actions(
                     let target_tile = unit.tile_pos.neighbor(direction);
 
                     *unit.tile_pos = target_tile;
-                    unit.transform.translation =
-                        target_tile.into_world_pos(&map_geometry) + Height::TOPPER_THICKNESS;
+                    unit.transform.translation = target_tile.top_of_tile(&map_geometry);
                 }
                 UnitAction::Work { structure_entity } => {
                     // If something went wrong, give up on this goal

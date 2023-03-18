@@ -91,6 +91,19 @@ impl TilePos {
         }
     }
 
+    /// Returns the world position (in [`Transform`] units) associated with the top of this tile.
+    ///
+    /// The `y` value returned corresponds to the top of the tile topper at this location.
+    #[must_use]
+    pub(crate) fn top_of_tile(self, map_geometry: &MapGeometry) -> Vec3 {
+        self.into_world_pos(map_geometry)
+            + Vec3 {
+                x: 0.,
+                y: Height::TOPPER_THICKNESS,
+                z: 0.,
+            }
+    }
+
     /// Returns the nearest tile position to the provided `world_pos`
     ///
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
