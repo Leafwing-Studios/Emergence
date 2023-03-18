@@ -1,10 +1,14 @@
 //! Creates the UI from all modules.
 //!
-use crate::ui::{select_structure::SelectStructurePlugin, selection_panel::HoverDetailsPlugin};
+use crate::ui::{
+    production_statistics::ProductionStatisticsPlugin, select_structure::SelectStructurePlugin,
+    selection_panel::HoverDetailsPlugin,
+};
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 
 mod intent;
+mod production_statistics;
 mod select_structure;
 mod selection_panel;
 
@@ -33,6 +37,7 @@ impl Plugin for UiPlugin {
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
+        .add_plugin(ProductionStatisticsPlugin)
         .add_plugin(SelectStructurePlugin);
     }
 }
