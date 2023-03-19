@@ -92,11 +92,12 @@ impl Loadable for TerrainHandles {
 impl Default for TerrainManifest {
     // TODO: load this from file
     fn default() -> Self {
-        let mut map = HashMap::new();
-        map.insert(Id::from_string_id("rocky"), TerrainData::new(2.0));
-        map.insert(Id::from_string_id("loam"), TerrainData::new(1.0));
-        map.insert(Id::from_string_id("muddy"), TerrainData::new(0.5));
+        let mut manifest = TerrainManifest::new();
 
-        TerrainManifest::new(map)
+        manifest.insert("rocky", TerrainData::new(2.0));
+        manifest.insert("loam", TerrainData::new(1.0));
+        manifest.insert("muddy", TerrainData::new(0.5));
+
+        manifest
     }
 }

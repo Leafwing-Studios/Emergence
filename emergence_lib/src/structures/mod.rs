@@ -5,13 +5,13 @@
 
 use bevy::{
     prelude::*,
-    utils::{Duration, HashMap, HashSet},
+    utils::{Duration, HashSet},
 };
 use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
+    asset_management::manifest::{Id, Manifest, Structure, StructureManifest, Terrain},
     items::{inventory::Inventory, ItemCount},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -65,21 +65,24 @@ impl StructureData {
 
 impl Default for StructureManifest {
     fn default() -> Self {
-        let mut map = HashMap::default();
+        let mut manifest: StructureManifest = Manifest::new();
 
         let leuco_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(Id::leuco_chunk(), 1)),
+            inventory: Inventory::new_from_item(ItemCount::new(
+                Id::from_string_id("leuco_chunk"),
+                1,
+            )),
         };
 
         // TODO: read these from files
-        map.insert(
-            Id::from_string_id("leuco"),
+        manifest.insert(
+            "leuco",
             StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: ActiveRecipe::new(Id::leuco_chunk_production()),
+                starting_recipe: ActiveRecipe::new(Id::from_string_id("leuco_chunk_production")),
                 build_duration: Duration::from_secs(5),
                 construction_materials: leuco_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([
@@ -91,17 +94,20 @@ impl Default for StructureManifest {
         );
 
         let acacia_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(Id::acacia_leaf(), 2)),
+            inventory: Inventory::new_from_item(ItemCount::new(
+                Id::from_string_id("acacia_leaf"),
+                2,
+            )),
         };
 
-        map.insert(
-            Id::from_string_id("acacia"),
+        manifest.insert(
+            "acacia",
             StructureData {
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 crafts: true,
-                starting_recipe: ActiveRecipe::new(Id::acacia_leaf_production()),
+                starting_recipe: ActiveRecipe::new(Id::from_string_id("acacia_leaf_production")),
                 build_duration: Duration::ZERO,
                 construction_materials: acacia_construction_materials,
                 allowed_terrain_types: HashSet::from_iter([
@@ -112,12 +118,12 @@ impl Default for StructureManifest {
             },
         );
 
-        map.insert(
-            Id::from_string_id("ant_hive"),
+        manifest.insert(
+            "ant_hive",
             StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: ActiveRecipe::new(Id::ant_egg_production()),
+                starting_recipe: ActiveRecipe::new(Id::from_string_id("ant_egg_production")),
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
@@ -129,12 +135,12 @@ impl Default for StructureManifest {
             },
         );
 
-        map.insert(
-            Id::from_string_id("hatchery"),
+        manifest.insert(
+            "hatchery",
             StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: ActiveRecipe::new(Id::hatch_ants()),
+                starting_recipe: ActiveRecipe::new(Id::from_string_id("hatch_ants")),
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(5),
                 allowed_terrain_types: HashSet::from_iter([
@@ -145,7 +151,7 @@ impl Default for StructureManifest {
             },
         );
 
-        StructureManifest::new(map)
+        manifest
     }
 }
 

@@ -2,14 +2,14 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Unit, UnitManifest},
+        manifest::{Id, Manifest, Unit, UnitManifest},
         units::UnitHandles,
     },
     organisms::energy::{Energy, EnergyPool},
     player_interaction::InteractionSystem,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
@@ -42,28 +42,20 @@ pub(crate) struct UnitData {
 
 impl Default for UnitManifest {
     fn default() -> Self {
-        let mut map = HashMap::new();
+        let mut manifest: UnitManifest = Manifest::new();
 
         // TODO: load this from disk
-        map.insert(
-            Id::from_string_id("ant"),
+        manifest.insert(
+            "ant",
             UnitData {
                 energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                diet: Diet::new(Id::leuco_chunk(), Energy(50.)),
+                diet: Diet::new(Id::from_string_id("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
                 mean_free_wander_period: 20.,
             },
         );
 
-        UnitManifest::new(map)
-    }
-}
-
-impl Id<Unit> {
-    // TODO: read these from disk
-    /// The id of an ant
-    pub(crate) fn ant() -> Self {
-        Self::from_string_id("ant")
+        manifest
     }
 }
 

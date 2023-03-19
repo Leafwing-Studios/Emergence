@@ -39,7 +39,7 @@ const HASH_M: u64 = 1_000_000_009;
 
 impl<T> Id<T> {
     /// Create a new identifier from the given unique number.
-    pub const fn new(value: u64) -> Self {
+    const fn new(value: u64) -> Self {
         Self {
             value,
             _phantom: PhantomData,
@@ -49,7 +49,7 @@ impl<T> Id<T> {
     /// Creates a new ID from human-readable string identifier.
     ///
     /// This ID is created as a hash of the string.
-    pub(crate) fn from_string_id(str: &str) -> Self {
+    pub fn from_string_id(str: &str) -> Self {
         // Algorithm adopted from <https://cp-algorithms.com/string/string-hashing.html>
 
         let mut value = 0;

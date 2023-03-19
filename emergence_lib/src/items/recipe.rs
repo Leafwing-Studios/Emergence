@@ -3,35 +3,12 @@
 use std::{fmt::Display, time::Duration};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Recipe},
+    asset_management::manifest::{Id, ItemManifest},
     organisms::energy::Energy,
     structures::crafting::{InputInventory, OutputInventory},
 };
 
 use super::{inventory::Inventory, ItemCount};
-
-// TODO: these should be read from disc
-impl Id<Recipe> {
-    /// The ID of the recipe for the leaf production of acacia plants.
-    pub fn acacia_leaf_production() -> Self {
-        Self::from_string_id("acacia_leaf_production")
-    }
-
-    /// The ID of the recipe for mushroom production of leuco mushrooms.
-    pub fn leuco_chunk_production() -> Self {
-        Self::from_string_id("leuco_chunk_production")
-    }
-
-    /// The ID of the recipe to make more ant eggs from leuco mushrooms.
-    pub fn ant_egg_production() -> Self {
-        Self::from_string_id("ant_egg_production")
-    }
-
-    /// The ID of the recipe to hatch ant eggs into adult ants.
-    pub fn hatch_ants() -> Self {
-        Self::from_string_id("hatch_ants")
-    }
-}
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
@@ -122,7 +99,7 @@ impl RecipeData {
     pub(crate) fn acacia_leaf_production() -> Self {
         RecipeData::new(
             Vec::new(),
-            vec![ItemCount::one(Id::acacia_leaf())],
+            vec![ItemCount::one(Id::from_string_id("acacia_leaf"))],
             Duration::from_secs(3),
             false,
             Some(Energy(20.)),
@@ -132,8 +109,8 @@ impl RecipeData {
     /// A leuco mushroom processing acacia leaves
     pub(crate) fn leuco_chunk_production() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::acacia_leaf())],
-            vec![ItemCount::one(Id::leuco_chunk())],
+            vec![ItemCount::one(Id::from_string_id("acacia_leaf"))],
+            vec![ItemCount::one(Id::from_string_id("leuco_chunk"))],
             Duration::from_secs(2),
             false,
             Some(Energy(40.)),
@@ -143,8 +120,8 @@ impl RecipeData {
     /// An ant hive producing eggs.
     pub(crate) fn ant_egg_production() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::leuco_chunk())],
-            vec![ItemCount::one(Id::ant_egg())],
+            vec![ItemCount::one(Id::from_string_id("leuco_chunk"))],
+            vec![ItemCount::one(Id::from_string_id("ant_egg"))],
             Duration::from_secs(5),
             false,
             None,
@@ -154,7 +131,7 @@ impl RecipeData {
     /// An ant hive producing eggs.
     pub(crate) fn hatch_ants() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::ant_egg())],
+            vec![ItemCount::one(Id::from_string_id("ant_egg"))],
             vec![],
             Duration::from_secs(10),
             true,
