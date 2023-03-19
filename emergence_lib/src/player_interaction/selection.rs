@@ -1154,7 +1154,7 @@ mod unit_details {
 
     impl UnitDetails {
         /// The pretty formatting for this type.
-        fn display(&self, unit_manifest: UnitManifest) -> String {
+        pub(crate) fn display(&self, unit_manifest: UnitManifest) -> String {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
             let tile_pos = &self.tile_pos;
