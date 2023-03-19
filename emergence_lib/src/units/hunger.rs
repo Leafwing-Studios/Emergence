@@ -1,10 +1,9 @@
 //! Logic for finding and eating food when the [`EnergyPool`] is low.
 
 use bevy::prelude::*;
-use core::fmt::Display;
 
 use crate::{
-    asset_management::manifest::{Id, Item},
+    asset_management::manifest::{Id, Item, ItemManifest},
     organisms::energy::{Energy, EnergyPool},
 };
 
@@ -34,11 +33,14 @@ impl Diet {
     pub(crate) fn energy(&self) -> Energy {
         self.energy
     }
-}
 
-impl Display for Diet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} -> {} energy", self.item, self.energy)
+    /// Pretty formatting for this type
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+        format!(
+            "{} -> {} energy",
+            item_manifest.name(self.item),
+            self.energy
+        )
     }
 }
 

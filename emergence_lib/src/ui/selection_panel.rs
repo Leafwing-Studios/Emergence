@@ -187,7 +187,8 @@ fn update_hover_details(
                 details.display(&terrain_manifest, &structure_manifest, &item_manifest);
         }
         SelectionDetails::Unit(details) => {
-            unit_text.sections[0].value = details.display(*unit_manifest);
+            unit_text.sections[0].value =
+                details.display(&unit_manifest, &item_manifest, &structure_manifest);
         }
         SelectionDetails::None => (),
     };

@@ -294,7 +294,7 @@ pub enum SignalType {
 
 impl SignalType {
     /// The pretty formatting for this type
-    pub fn display(
+    pub(crate) fn display(
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,

@@ -847,7 +847,6 @@ mod ghost_details {
             let entity = self.entity;
             let structure_id = structure_manifest.name(self.structure_id);
             let tile_pos = &self.tile_pos;
-            let input_inventory = &*self.input_inventory;
             let crafting_state = &self.crafting_state;
             let recipe = self.active_recipe.display(recipe_manifest);
             let construction_materials = self.input_inventory.display(item_manifest);
@@ -1102,7 +1101,7 @@ mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, Unit, UnitManifest},
+        asset_management::manifest::{Id, ItemManifest, StructureManifest, Unit, UnitManifest},
         simulation::geometry::TilePos,
         units::{
             actions::CurrentAction, goals::Goal, impatience::ImpatiencePool,
@@ -1154,13 +1153,18 @@ mod unit_details {
 
     impl UnitDetails {
         /// The pretty formatting for this type.
-        pub(crate) fn display(&self, unit_manifest: UnitManifest) -> String {
+        pub(crate) fn display(
+            &self,
+            unit_manifest: &UnitManifest,
+            item_manifest: &ItemManifest,
+            structure_manifest: &StructureManifest,
+        ) -> String {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
             let tile_pos = &self.tile_pos;
-            let held_item = &self.held_item;
-            let goal = &self.goal;
-            let action = &self.action;
+            let held_item = self.held_item.display(item_manifest);
+            let goal = self.goal.display(item_manifest, structure_manifest);
+            let action = &self.action.display(item_manifest);
             let impatience_pool = &self.impatience_pool;
             let organism_details = &self.organism_details;
 

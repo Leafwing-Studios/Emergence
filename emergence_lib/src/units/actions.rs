@@ -1,7 +1,6 @@
 //! What are units currently doing?
 
 use bevy::{ecs::query::WorldQuery, prelude::*};
-use core::fmt::Display;
 use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
@@ -369,18 +368,25 @@ pub(super) enum UnitAction {
     Abandon,
 }
 
-impl Display for UnitAction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string: String = match self {
+impl UnitAction {
+    /// Pretty formatting for this type
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+        match self {
             UnitAction::Idle => "Idling".to_string(),
             UnitAction::PickUp {
                 item_id,
                 output_entity,
-            } => format!("Picking up {item_id} from {output_entity:?}"),
+            } => format!(
+                "Picking up {} from {output_entity:?}",
+                item_manifest.name(*item_id)
+            ),
             UnitAction::DropOff {
                 item_id,
                 input_entity,
-            } => format!("Dropping off {item_id} at {input_entity:?}"),
+            } => format!(
+                "Dropping off {} at {input_entity:?}",
+                item_manifest.name(*item_id)
+            ),
             UnitAction::Work { structure_entity } => format!("Working at {structure_entity:?}"),
             UnitAction::Demolish { structure_entity } => {
                 format!("Demolishing {structure_entity:?}")
@@ -389,9 +395,7 @@ impl Display for UnitAction {
             UnitAction::MoveForward => "Moving forward".to_string(),
             UnitAction::Eat => "Eating".to_string(),
             UnitAction::Abandon => "Abandoning held object".to_string(),
-        };
-
-        write!(f, "{string}")
+        }
     }
 }
 
@@ -410,16 +414,18 @@ impl Default for CurrentAction {
     }
 }
 
-impl Display for CurrentAction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl CurrentAction {
+    /// Pretty formatting for this type
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let action = &self.action;
         let time_remaining = self.timer.remaining_secs();
 
-        write!(f, "{action}\nRemaining: {time_remaining:.2} s.")
+        format!(
+            "{}\nRemaining: {time_remaining:.2} s.",
+            action.display(item_manifest)
+        )
     }
-}
 
-impl CurrentAction {
     /// Get the action that the unit is currently undertaking.
     pub(super) fn action(&self) -> &UnitAction {
         &self.action
