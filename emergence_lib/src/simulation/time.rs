@@ -42,15 +42,22 @@ impl InGameTime {
     pub fn fraction_of_day(&self) -> f32 {
         self.elapsed_time % 1.0
     }
+
+    /// What time is it, in 24 hour time?
+    pub fn twenty_four_hour_time(&self) -> f32 {
+        // Correct for different time systems: fraction of day begins at dawn,
+        // but 24 hour time begins at midnight.
+        ((self.fraction_of_day() + 0.25) * 24.) % 24.
+    }
 }
 
 impl Display for InGameTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Time: {} days and {:.2} fractions of a day",
+            "{} days elapsed\n{:.2}h",
             self.elapsed_days(),
-            self.fraction_of_day()
+            self.twenty_four_hour_time()
         )
     }
 }
