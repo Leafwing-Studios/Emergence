@@ -421,8 +421,13 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 mod tests {
     use super::*;
 
-    const TEST_ITEM: Id<Item> = Id::from_string_id("12345");
-    const TEST_STRUCTURE: Id<Structure> = Id::from_string_id("67890");
+    fn test_item() -> Id<Item> {
+        Id::from_string_id("12345")
+    }
+
+    fn test_structure() -> Id<Structure> {
+        Id::from_string_id("67890")
+    }
 
     #[test]
     fn neighboring_signals_checks_origin_tile() {
@@ -430,13 +435,13 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Contains(TEST_ITEM),
+            SignalType::Contains(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         let neighboring_signals = signals.neighboring_signals(
-            SignalType::Contains(TEST_ITEM),
+            SignalType::Contains(test_item()),
             TilePos::ORIGIN,
             &map_geometry,
         );
@@ -455,15 +460,19 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(test_item()), &map_geometry),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Work(TEST_STRUCTURE), &map_geometry),
+            signals.upstream(
+                TilePos::ORIGIN,
+                &Goal::Work(test_structure()),
+                &map_geometry
+            ),
             None
         );
         assert_eq!(
@@ -478,13 +487,13 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
     }
@@ -495,17 +504,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Push(TEST_ITEM),
+            SignalType::Push(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Push(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(test_item()), &map_geometry),
             None
         );
     }
@@ -517,17 +526,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
     }
@@ -538,11 +547,11 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
             .is_some());
     }
 
@@ -552,17 +561,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(0.5),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(1.));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
             .is_some());
     }
 }
