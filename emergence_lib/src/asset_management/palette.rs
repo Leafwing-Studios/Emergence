@@ -81,3 +81,14 @@ pub(crate) const LIGHT_SUN: Color = Color::Hsla {
     lightness: 1.,
     alpha: 1.,
 };
+
+/// The color of moonlight
+pub(crate) const LIGHT_MOON: Color = Color::Hsla {
+    hue: 198.,
+    saturation: 0.5,
+    lightness: 1.,
+    alpha: 1.,
+};
+
+/// The color of starlight
+pub(crate) const LIGHT_STARS: Color = Color::WHITE;

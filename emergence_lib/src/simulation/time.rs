@@ -11,7 +11,7 @@ pub(super) struct TemporalPlugin;
 
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((advance_in_game_time, move_sun).chain())
+        app.add_systems((advance_in_game_time, move_celestial_bodies).chain())
             .init_resource::<InGameTime>();
     }
 }
@@ -46,10 +46,11 @@ fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
     in_game_time.fraction_of_day %= 1.0;
 }
 
-/// Moves the sun based on the in-game time
-fn move_sun(mut query: Query<&mut CelestialBody>, in_game_time: Res<InGameTime>) {
-    let mut celestial_body = query.single_mut();
-    // Scale the progress by TAU to get a full rotation.
-    // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
-    celestial_body.progress = in_game_time.fraction_of_day * TAU - PI / 2.;
+/// Moves the sun and moon based on the in-game time
+fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res<InGameTime>) {
+    for mut celestial_body in query.iter_mut() {
+        // Scale the progress by TAU to get a full rotation.
+        // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
+        celestial_body.progress = in_game_time.fraction_of_day * TAU - PI / 2.;
+    }
 }
