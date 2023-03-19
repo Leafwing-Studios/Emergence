@@ -132,12 +132,16 @@ fn set_celestial_body_transform(
 }
 
 /// Disables lights that are under the ground
-fn toggle_lights_based_on_ground_clipping(mut query: Query<(&CelestialBody, &mut Visibility)>) {
-    for (celestial_body, mut visibility) in query.iter_mut() {
+fn toggle_lights_based_on_ground_clipping(
+    mut query: Query<(&CelestialBody, &mut Visibility, &mut DirectionalLight)>,
+) {
+    for (celestial_body, mut visibility, mut directional_light) in query.iter_mut() {
         if celestial_body.progress > 0.5 {
             *visibility = Visibility::Hidden;
+            directional_light.shadows_enabled = false;
         } else {
             *visibility = Visibility::Visible;
+            directional_light.shadows_enabled = true;
         }
     }
 }
