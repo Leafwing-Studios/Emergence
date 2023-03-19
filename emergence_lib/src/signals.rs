@@ -4,11 +4,10 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use bevy::{prelude::*, utils::HashMap};
-use core::fmt::Display;
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
-use crate::asset_management::manifest::{Id, Item, Structure};
+use crate::asset_management::manifest::{Id, Item, ItemManifest, Structure, StructureManifest};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::units::goals::Goal;
 
@@ -218,21 +217,27 @@ impl LocalSignals {
             !matches!(**signal_type, SignalType::Contains(_))
         })
     }
-}
 
-impl Display for LocalSignals {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    /// The pretty formatting for this type.
+    pub(crate) fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> String {
         let mut string = String::default();
 
         for signal_type in self.map.keys().sorted() {
             let signal_strength = self.map.get(signal_type).unwrap().0;
 
-            let substring = format!("{signal_type}: {signal_strength:.3}\n");
+            let substring = format!(
+                "{}: {signal_strength:.3}\n",
+                signal_type.display(item_manifest, structure_manifest)
+            );
 
             string += &substring;
         }
 
-        write!(f, "{string}")
+        string
     }
 }
 
@@ -287,17 +292,24 @@ pub enum SignalType {
     Demolish(Id<Structure>),
 }
 
-impl Display for SignalType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string = match self {
-            SignalType::Push(item_id) => format!("Push({item_id})"),
-            SignalType::Pull(item_id) => format!("Pull({item_id})"),
-            SignalType::Contains(item_id) => format!("Contains({item_id})"),
-            SignalType::Work(structure_id) => format!("Work({structure_id})"),
-            SignalType::Demolish(structure_id) => format!("Demolish({structure_id})"),
-        };
-
-        write!(f, "{string}")
+impl SignalType {
+    /// The pretty formatting for this type
+    pub fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> String {
+        match self {
+            SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
+            SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
+            SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
+            SignalType::Work(structure_id) => {
+                format!("Work({})", structure_manifest.name(*structure_id))
+            }
+            SignalType::Demolish(structure_id) => {
+                format!("Demolish({})", structure_manifest.name(*structure_id))
+            }
+        }
     }
 }
 

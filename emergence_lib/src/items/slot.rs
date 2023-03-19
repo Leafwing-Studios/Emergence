@@ -1,10 +1,8 @@
 //! A container for a single item type, with a capacity.
 
-use std::fmt::Display;
-
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
-use crate::asset_management::manifest::{Id, Item};
+use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
@@ -174,14 +172,14 @@ impl ItemSlot {
         let distribution = Uniform::new(0, self.max_item_count);
         self.count = distribution.sample(rng);
     }
-}
 
-impl Display for ItemSlot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
+    /// The pretty formatting for this type
+    pub fn display(&self, item_manifest: &ItemManifest) -> String {
+        format!(
             "{} ({}/{})",
-            self.item_id, self.count, self.max_item_count
+            item_manifest.name(self.item_id),
+            self.count,
+            self.max_item_count
         )
     }
 }

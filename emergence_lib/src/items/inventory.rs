@@ -1,7 +1,5 @@
 //! Storage of multiple items with a capacity.
 
-use std::fmt::Display;
-
 use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
 use super::{
@@ -494,20 +492,19 @@ impl Inventory {
             })
         }
     }
-}
 
-impl Display for Inventory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    /// The pretty formatting for this type
+    fn display(&self, item_manifest: &ItemManifest) -> String {
         let slot_strings: Vec<String> = self
             // Filled slots
             .slots
             .iter()
-            .map(|slot| format!("{slot}"))
+            .map(|slot| slot.display(item_manifest))
             // Empty slots
             .chain((0..self.free_slot_count()).map(|_| "_".to_string()))
             .collect();
 
-        write!(f, "[{}]", slot_strings.join(", "))
+        format!("[{}]", slot_strings.join(", "))
     }
 }
 

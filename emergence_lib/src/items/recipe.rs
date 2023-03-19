@@ -1,6 +1,6 @@
 //! Instructions to craft items.
 
-use std::{fmt::Display, time::Duration};
+use std::time::Duration;
 
 use crate::{
     asset_management::manifest::{Id, ItemManifest},
@@ -91,6 +91,27 @@ impl RecipeData {
     pub(crate) fn energy(&self) -> &Option<Energy> {
         &self.energy
     }
+
+    /// The pretty formatting of this type
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+        let input_strings: Vec<String> = self
+            .inputs
+            .iter()
+            .map(|input| input.display(item_manifest))
+            .collect();
+        let input_str = input_strings.join(", ");
+
+        let output_strings: Vec<String> = self
+            .outputs
+            .iter()
+            .map(|output| output.display(item_manifest))
+            .collect();
+        let output_str = output_strings.join(", ");
+
+        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
+
+        format!("[{input_str}] -> [{output_str}] | {duration_str} s")
+    }
 }
 
 // TODO: Remove this once we load recipes from asset files
@@ -137,24 +158,5 @@ impl RecipeData {
             true,
             None,
         )
-    }
-}
-
-impl Display for RecipeData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let input_strings: Vec<String> =
-            self.inputs.iter().map(|input| format!("{input}")).collect();
-        let input_str = input_strings.join(", ");
-
-        let output_strings: Vec<String> = self
-            .outputs
-            .iter()
-            .map(|output| format!("{output}"))
-            .collect();
-        let output_str = output_strings.join(", ");
-
-        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
-
-        write!(f, "[{input_str}] -> [{output_str}] | {duration_str} s")
     }
 }

@@ -1,10 +1,8 @@
 //! Everything related to items and crafting.
 
-use std::fmt::Display;
-
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{Id, Item};
+use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
 pub(crate) mod errors;
 pub(crate) mod inventory;
@@ -78,10 +76,10 @@ impl ItemCount {
     pub fn count(&self) -> usize {
         self.count
     }
-}
 
-impl Display for ItemCount {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.item_id, self.count)
+    /// The pretty text formatting of this type.
+    pub fn display(&self, item_manifest: &ItemManifest) -> String {
+        let name = item_manifest.name(self.item_id);
+        format!("{}, ({})", name, self.count)
     }
 }

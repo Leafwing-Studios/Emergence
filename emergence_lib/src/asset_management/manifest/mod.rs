@@ -63,7 +63,7 @@ where
     pub fn get(&self, id: Id<T>) -> &Data {
         self.data_map
             .get(&id)
-            .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
+            .unwrap_or_else(|| panic!("ID {id:?} not found in manifest"))
     }
 
     /// Returns the human-readable name associated with the provided `id`.
@@ -75,7 +75,7 @@ where
     pub fn name(&self, id: Id<T>) -> &str {
         self.name_map
             .get(&id)
-            .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
+            .unwrap_or_else(|| panic!("ID {id:?} not found in manifest"))
     }
 
     /// The complete list of loaded options.
