@@ -761,6 +761,7 @@ fn get_details(
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
+                diet: unit_query_item.diet.clone(),
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -1104,7 +1105,7 @@ mod unit_details {
         asset_management::manifest::{Id, ItemManifest, StructureManifest, Unit, UnitManifest},
         simulation::geometry::TilePos,
         units::{
-            actions::CurrentAction, goals::Goal, impatience::ImpatiencePool,
+            actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
             item_interaction::UnitInventory,
         },
     };
@@ -1118,6 +1119,8 @@ mod unit_details {
         pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: &'static Id<Unit>,
+        /// What does this unit eat?
+        pub(super) diet: &'static Diet,
         /// The current location
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried
@@ -1137,6 +1140,8 @@ mod unit_details {
         pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: Id<Unit>,
+        /// What does this unit eat?
+        pub(super) diet: Diet,
         /// The current location
         pub(super) tile_pos: TilePos,
         /// What's being carried
@@ -1161,6 +1166,7 @@ mod unit_details {
         ) -> String {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
+            let diet = self.diet.display(item_manifest);
             let tile_pos = &self.tile_pos;
             let held_item = self.held_item.display(item_manifest);
             let goal = self.goal.display(item_manifest, structure_manifest);
@@ -1172,6 +1178,7 @@ mod unit_details {
                 "Entity: {entity:?}
 Unit type: {unit_name}
 Tile: {tile_pos}
+Diet: {diet}
 Holding: {held_item}
 Goal: {goal}
 Action: {action}
