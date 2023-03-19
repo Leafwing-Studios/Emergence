@@ -36,9 +36,9 @@ impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Signals>()
             .init_resource::<DebugColorScheme>()
-            .insert_resource(DebugDisplayedSignal(SignalType::Push(Id::from_name(
-                "acacia_leaf",
-            ))))
+            // .insert_resource(DebugDisplayedSignal(SignalType::Push(Id::from_name(
+            //     "acacia_leaf",
+            // ))))
             .add_systems(
                 (emit_signals, update_signals)
                     .chain()
@@ -64,7 +64,7 @@ impl Signals {
     /// Returns the signal strength of `signal_type` at the given `tile_pos`.
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
+    pub(crate) fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
         match self.signal_equations.get(&signal_type) {
             Some(equation) => equation.evaluate_signal(tile_pos),
             None => SignalStrength::ZERO,
