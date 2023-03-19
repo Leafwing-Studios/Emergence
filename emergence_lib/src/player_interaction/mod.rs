@@ -141,7 +141,7 @@ impl PlayerAction {
             KeepClear => KeyCode::Delete.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
-            SnapToSelection => KeyCode::Return.into(),
+            SnapToSelection => KeyCode::L.into(),
             DragCamera => MouseButton::Middle.into(),
             Pan => VirtualDPad::wasd().into(),
             MoveCursor => VirtualDPad::arrow_keys().into(),
