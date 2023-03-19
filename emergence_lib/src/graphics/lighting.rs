@@ -72,7 +72,7 @@ impl CelestialBody {
             progress: 0.,
             inclination: 23.5 / 360. * PI / 2.,
             travel_axis: PI / 6.,
-            days_per_cycle: 0.0,
+            days_per_cycle: 2.0,
         }
     }
 }
