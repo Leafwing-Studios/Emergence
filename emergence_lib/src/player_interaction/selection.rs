@@ -14,6 +14,9 @@ use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::RecipeManifest;
+use crate::asset_management::manifest::StructureManifest;
+use crate::asset_management::manifest::TerrainManifest;
+use crate::asset_management::manifest::UnitManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -686,6 +689,9 @@ fn get_details(
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
     recipe_manifest: Res<RecipeManifest>,
+    structure_manifest: Res<StructureManifest>,
+    unit_manifest: Res<UnitManifest>,
+    terrain_manifest: Res<TerrainManifest>,
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
@@ -694,7 +700,9 @@ fn get_details(
             SelectionDetails::Ghost(GhostDetails {
                 entity: *ghost_entity,
                 tile_pos: *ghost_query_item.tile_pos,
-                structure_id: *ghost_query_item.structure_id,
+                structure_name: structure_manifest
+                    .name(*ghost_query_item.structure_id)
+                    .to_string(),
                 input_inventory: ghost_query_item.input_inventory.clone(),
                 crafting_state: ghost_query_item.crafting_state.clone(),
                 active_recipe: ghost_query_item.active_recipe.clone(),
@@ -729,7 +737,9 @@ fn get_details(
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
                 tile_pos: *structure_query_item.tile_pos,
-                structure_id: *structure_query_item.structure_id,
+                structure_name: structure_manifest
+                    .name(*structure_query_item.structure_id)
+                    .to_string(),
                 crafting_details,
                 maybe_organism_details,
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
@@ -743,7 +753,9 @@ fn get_details(
 
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
-                    terrain_type: *terrain_query_item.terrain_type,
+                    terrain_type: terrain_manifest
+                        .name(*terrain_query_item.terrain_id)
+                        .to_string(),
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
@@ -760,7 +772,7 @@ fn get_details(
 
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
-                unit_id: *unit_query_item.unit_id,
+                unit_name: unit_manifest.name(*unit_query_item.unit_id).to_string(),
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -827,7 +839,7 @@ mod ghost_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_id: Id<Structure>,
+        pub(crate) structure_name: String,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: InputInventory,
         /// The ghost's progress through construction
@@ -839,7 +851,7 @@ mod ghost_details {
     impl Display for GhostDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let entity = self.entity;
-            let structure_id = &self.structure_id;
+            let structure_id = &self.structure_name;
             let tile_pos = &self.tile_pos;
             let input_inventory = &*self.input_inventory;
             let crafting_state = &self.crafting_state;
@@ -847,7 +859,7 @@ mod ghost_details {
 
             let string = format!(
                 "Entity: {entity:?}
-                Tile: {tile_pos}
+Tile: {tile_pos}
 Ghost structure type: {structure_id}
 Recipe: {recipe}
 Construction materials: {input_inventory}
@@ -943,7 +955,7 @@ mod structure_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_id: Id<Structure>,
+        pub(crate) structure_name: String,
         /// If this organism is crafting something, the details about that.
         pub(crate) crafting_details: Option<CraftingDetails>,
         /// Details about this organism, if it is one.
@@ -955,7 +967,7 @@ mod structure_details {
     impl Display for StructureDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let entity = self.entity;
-            let structure_id = &self.structure_id;
+            let structure_id = &self.structure_name;
             let tile_pos = &self.tile_pos;
 
             let mut string = format!(
@@ -1038,7 +1050,7 @@ mod terrain_details {
         /// The height of the tile
         pub(super) height: &'static Height,
         /// The type of terrain
-        pub(super) terrain_type: &'static Id<Terrain>,
+        pub(super) terrain_id: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
     }
@@ -1049,7 +1061,7 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
-        pub(super) terrain_type: Id<Terrain>,
+        pub(super) terrain_type: String,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
         /// The height of the tile
@@ -1124,7 +1136,7 @@ mod unit_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of unit
-        pub(super) unit_id: Id<Unit>,
+        pub(super) unit_name: String,
         /// The current location
         pub(super) tile_pos: TilePos,
         /// What's being carried
@@ -1142,7 +1154,7 @@ mod unit_details {
     impl Display for UnitDetails {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let entity = self.entity;
-            let unit_id = &self.unit_id;
+            let unit_name = &self.unit_name;
             let tile_pos = &self.tile_pos;
             let held_item = &self.held_item;
             let goal = &self.goal;
@@ -1153,7 +1165,7 @@ mod unit_details {
             write!(
                 f,
                 "Entity: {entity:?}
-Unit type: {unit_id}
+Unit type: {unit_name}
 Tile: {tile_pos}
 Holding: {held_item}
 Goal: {goal}
