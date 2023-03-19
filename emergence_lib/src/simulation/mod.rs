@@ -51,8 +51,10 @@ impl Plugin for SimulationPlugin {
 /// Controls whether or not the game is paused.
 #[derive(States, Debug, PartialEq, Eq, Hash, Clone, Copy, Default)]
 enum PauseState {
+    /// Game logic is running.
     #[default]
     Playing,
+    /// Game logic is stopped.
     Paused,
 }
 
