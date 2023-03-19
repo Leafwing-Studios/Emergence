@@ -26,7 +26,8 @@ impl Plugin for LightingPlugin {
         .insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_system(set_celestial_body_transform);
+        .add_system(set_celestial_body_transform)
+        .add_system(toggle_lights_based_on_ground_clipping);
     }
 }
 
@@ -140,5 +141,16 @@ fn set_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
+    }
+}
+
+/// Disables lights that are under the ground
+fn toggle_lights_based_on_ground_clipping(mut query: Query<(&CelestialBody, &mut Visibility)>) {
+    for (celestial_body, mut visibility) in query.iter_mut() {
+        if celestial_body.progress > 0.5 {
+            *visibility = Visibility::Hidden;
+        } else {
+            *visibility = Visibility::Visible;
+        }
     }
 }
