@@ -40,7 +40,7 @@ impl FromWorld for TerrainHandles {
         for name in names {
             let path_string = format!("terrain/{name}.gltf#Scene0");
             let scene = asset_server.load(path_string);
-            scenes.insert(Id::from_string_id(name), scene);
+            scenes.insert(Id::from_name(name), scene);
         }
 
         let map_geometry = world.resource::<MapGeometry>();

@@ -49,7 +49,7 @@ impl Default for UnitManifest {
             "ant",
             UnitData {
                 energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                diet: Diet::new(Id::from_string_id("leuco_chunk"), Energy(50.)),
+                diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
                 mean_free_wander_period: 20.,
             },

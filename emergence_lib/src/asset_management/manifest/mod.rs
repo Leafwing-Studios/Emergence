@@ -48,7 +48,7 @@ where
     ///
     /// Returns any existing `Data` entry if this overwrote the data.
     pub fn insert(&mut self, name: &str, data: Data) {
-        let id = Id::from_string_id(name);
+        let id = Id::from_name(name);
 
         self.data_map.insert(id, data);
         self.name_map.insert(id, name.to_string());
