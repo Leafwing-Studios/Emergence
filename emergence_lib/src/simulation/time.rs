@@ -77,11 +77,8 @@ fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
 }
 
 /// Moves the sun and moon based on the in-game time
-fn move_celestial_bodies(
-    mut query: Query<(&mut CelestialBody, &mut Visibility)>,
-    in_game_time: Res<InGameTime>,
-) {
-    for (mut celestial_body, mut visibility) in query.iter_mut() {
+fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res<InGameTime>) {
+    for mut celestial_body in query.iter_mut() {
         // Take the modulo with respect to the period to get the revolution period correct
         let cycle_normalized_time = (in_game_time.elapsed_time % celestial_body.days_per_cycle)
             / celestial_body.days_per_cycle;
@@ -89,11 +86,5 @@ fn move_celestial_bodies(
         // Scale the progress by TAU to get a full rotation.
         // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
         celestial_body.progress = cycle_normalized_time * TAU - PI / 2.;
-
-        if celestial_body.progress > 0.5 {
-            *visibility = Visibility::Hidden;
-        } else {
-            *visibility = Visibility::Visible;
-        }
     }
 }
