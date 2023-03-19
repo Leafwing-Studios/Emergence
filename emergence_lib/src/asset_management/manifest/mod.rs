@@ -16,7 +16,7 @@ mod raw;
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
 
-/// Write-once data definitions.
+/// Write-only data definitions.
 ///
 /// These are intended to be created a single time, via [`Manifest::new`].
 #[derive(Debug, Resource)]
@@ -25,17 +25,33 @@ where
     T: 'static,
     Data: Debug,
 {
-    /// The internal mapping.
-    map: HashMap<Id<T>, Data>,
+    /// The internal mapping to the data
+    data_map: HashMap<Id<T>, Data>,
+
+    /// The human-readable name associated with each Id.
+    name_map: HashMap<Id<T>, String>,
 }
 
 impl<T, Data> Manifest<T, Data>
 where
     Data: Debug,
 {
-    /// Create a new manifest with the given definitions.
-    pub fn new(map: HashMap<Id<T>, Data>) -> Self {
-        Self { map }
+    /// Create a new empty manifest.
+    pub fn new() -> Self {
+        Self {
+            data_map: HashMap::default(),
+            name_map: HashMap::default(),
+        }
+    }
+
+    /// Adds an entry to the manifest by supplying the `name` associated with the [`Id`] type to be constructed.
+    ///
+    /// Returns any existing `Data` entry if this overwrote the data.
+    pub fn insert_by_name(&mut self, name: &str, data: Data) {
+        let id = Id::from_string_id(name);
+
+        self.data_map.insert(id, data);
+        self.name_map.insert(id, name.to_string());
     }
 
     /// Get the data entry for the given ID.
@@ -45,7 +61,19 @@ where
     /// This function panics when the given ID does not exist in the manifest.
     /// We assume that all IDs are valid and the manifests are complete.
     pub fn get(&self, id: Id<T>) -> &Data {
-        self.map
+        self.data_map
+            .get(&id)
+            .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
+    }
+
+    /// Returns the human-readable name associated with the provided `id`.
+    ///
+    /// # Panics
+    ///
+    /// This function panics when the given ID does not exist in the manifest.
+    /// We assume that all IDs are valid and the manifests are complete.
+    pub fn name(&self, id: Id<T>) -> &str {
+        self.name_map
             .get(&id)
             .unwrap_or_else(|| panic!("ID {id} not found in manifest"))
     }
@@ -54,6 +82,6 @@ where
     ///
     /// The order is arbitrary.
     pub fn variants(&self) -> impl IntoIterator<Item = Id<T>> + '_ {
-        self.map.keys().copied()
+        self.data_map.keys().copied()
     }
 }

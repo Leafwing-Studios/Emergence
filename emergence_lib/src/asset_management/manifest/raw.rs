@@ -69,6 +69,6 @@ impl RawManifest for RawItemManifest {
             })
             .collect();
 
-        Manifest { map }
+        Manifest { data_map: map }
     }
 }
