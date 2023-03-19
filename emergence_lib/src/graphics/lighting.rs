@@ -19,7 +19,7 @@ pub(super) struct LightingPlugin;
 impl Plugin for LightingPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AmbientLight {
-            brightness: 1.0,
+            brightness: 0.2,
             color: LIGHT_STARS,
         })
         // Controls the resolution of shadows cast by the sun
@@ -109,7 +109,7 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_MOON,
-                illuminance: 1e5,
+                illuminance: 2e4,
                 shadows_enabled: true,
                 ..Default::default()
             },
