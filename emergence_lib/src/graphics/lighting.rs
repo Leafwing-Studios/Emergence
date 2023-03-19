@@ -96,7 +96,7 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_SUN,
-                illuminance: 1e5,
+                illuminance: 8e4,
                 shadows_enabled: true,
                 ..Default::default()
             },
@@ -109,7 +109,7 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_MOON,
-                illuminance: 2e4,
+                illuminance: 1e4,
                 shadows_enabled: true,
                 ..Default::default()
             },

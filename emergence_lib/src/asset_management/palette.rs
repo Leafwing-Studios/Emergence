@@ -77,7 +77,7 @@ pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
 /// The color of daylight
 pub(crate) const LIGHT_SUN: Color = Color::Hsla {
     hue: 30.,
-    saturation: 0.5,
+    saturation: 1.0,
     lightness: 1.,
     alpha: 1.,
 };
@@ -85,7 +85,7 @@ pub(crate) const LIGHT_SUN: Color = Color::Hsla {
 /// The color of moonlight
 pub(crate) const LIGHT_MOON: Color = Color::Hsla {
     hue: 198.,
-    saturation: 0.5,
+    saturation: 1.0,
     lightness: 1.,
     alpha: 1.,
 };
