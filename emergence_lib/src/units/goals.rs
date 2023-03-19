@@ -1,12 +1,13 @@
 //! What are units attempting to achieve?
 
 use bevy::prelude::*;
-use core::fmt::Display;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::{thread_rng, Rng};
 
-use crate::asset_management::manifest::{Id, Item, Structure, Unit, UnitManifest};
+use crate::asset_management::manifest::{
+    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
+};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 
@@ -57,18 +58,23 @@ impl TryFrom<SignalType> for Goal {
     }
 }
 
-impl Display for Goal {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string: String = match self {
+impl Goal {
+    /// Pretty formatting for this type
+    pub(crate) fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> String {
+        match self {
             Goal::Wander => "Wander".to_string(),
-            Goal::Pickup(item) => format!("Pickup {item}"),
-            Goal::DropOff(item) => format!("Dropoff {item}"),
-            Goal::Work(structure) => format!("Work at {structure}"),
-            Goal::Demolish(structure) => format!("Demolish {structure}"),
-            Goal::Eat(item) => format!("Eat {item}"),
-        };
-
-        write!(f, "{string}")
+            Goal::Pickup(item) => format!("Pickup {}", item_manifest.name(*item)),
+            Goal::DropOff(item) => format!("Dropoff {}", item_manifest.name(*item)),
+            Goal::Work(structure) => format!("Work at {}", structure_manifest.name(*structure)),
+            Goal::Demolish(structure) => {
+                format!("Demolish {}", structure_manifest.name(*structure))
+            }
+            Goal::Eat(item) => format!("Eat {}", item_manifest.name(*item)),
+        }
     }
 }
 

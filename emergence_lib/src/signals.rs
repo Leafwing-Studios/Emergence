@@ -4,11 +4,10 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use bevy::{prelude::*, utils::HashMap};
-use core::fmt::Display;
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
-use crate::asset_management::manifest::{Id, Item, Structure};
+use crate::asset_management::manifest::{Id, Item, ItemManifest, Structure, StructureManifest};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::units::goals::Goal;
 
@@ -218,21 +217,27 @@ impl LocalSignals {
             !matches!(**signal_type, SignalType::Contains(_))
         })
     }
-}
 
-impl Display for LocalSignals {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    /// The pretty formatting for this type.
+    pub(crate) fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> String {
         let mut string = String::default();
 
         for signal_type in self.map.keys().sorted() {
             let signal_strength = self.map.get(signal_type).unwrap().0;
 
-            let substring = format!("{signal_type}: {signal_strength:.3}\n");
+            let substring = format!(
+                "{}: {signal_strength:.3}\n",
+                signal_type.display(item_manifest, structure_manifest)
+            );
 
             string += &substring;
         }
 
-        write!(f, "{string}")
+        string
     }
 }
 
@@ -287,17 +292,24 @@ pub enum SignalType {
     Demolish(Id<Structure>),
 }
 
-impl Display for SignalType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string = match self {
-            SignalType::Push(item_id) => format!("Push({item_id})"),
-            SignalType::Pull(item_id) => format!("Pull({item_id})"),
-            SignalType::Contains(item_id) => format!("Contains({item_id})"),
-            SignalType::Work(structure_id) => format!("Work({structure_id})"),
-            SignalType::Demolish(structure_id) => format!("Demolish({structure_id})"),
-        };
-
-        write!(f, "{string}")
+impl SignalType {
+    /// The pretty formatting for this type
+    pub(crate) fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> String {
+        match self {
+            SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
+            SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
+            SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
+            SignalType::Work(structure_id) => {
+                format!("Work({})", structure_manifest.name(*structure_id))
+            }
+            SignalType::Demolish(structure_id) => {
+                format!("Demolish({})", structure_manifest.name(*structure_id))
+            }
+        }
     }
 }
 
@@ -421,8 +433,13 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 mod tests {
     use super::*;
 
-    const TEST_ITEM: Id<Item> = Id::new(12345);
-    const TEST_STRUCTURE: Id<Structure> = Id::new(67890);
+    fn test_item() -> Id<Item> {
+        Id::from_name("12345")
+    }
+
+    fn test_structure() -> Id<Structure> {
+        Id::from_name("67890")
+    }
 
     #[test]
     fn neighboring_signals_checks_origin_tile() {
@@ -430,13 +447,13 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Contains(TEST_ITEM),
+            SignalType::Contains(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         let neighboring_signals = signals.neighboring_signals(
-            SignalType::Contains(TEST_ITEM),
+            SignalType::Contains(test_item()),
             TilePos::ORIGIN,
             &map_geometry,
         );
@@ -455,15 +472,19 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(test_item()), &map_geometry),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Work(TEST_STRUCTURE), &map_geometry),
+            signals.upstream(
+                TilePos::ORIGIN,
+                &Goal::Work(test_structure()),
+                &map_geometry
+            ),
             None
         );
         assert_eq!(
@@ -478,13 +499,13 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
     }
@@ -495,17 +516,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Push(TEST_ITEM),
+            SignalType::Push(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Push(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Pickup(test_item()), &map_geometry),
             None
         );
     }
@@ -517,17 +538,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(1.),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
             None
         );
     }
@@ -538,11 +559,11 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(0.5));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
             .is_some());
     }
 
@@ -552,17 +573,17 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         signals.add_signal(
-            SignalType::Pull(TEST_ITEM),
+            SignalType::Pull(test_item()),
             TilePos::ORIGIN,
             SignalStrength(0.5),
         );
 
         for neighbor in TilePos::ORIGIN.all_neighbors(&map_geometry) {
-            signals.add_signal(SignalType::Pull(TEST_ITEM), neighbor, SignalStrength(1.));
+            signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(TEST_ITEM), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
             .is_some());
     }
 }

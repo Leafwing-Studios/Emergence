@@ -2,7 +2,12 @@
 
 use bevy::prelude::*;
 
-use crate::player_interaction::{selection::SelectionDetails, InteractionSystem};
+use crate::{
+    asset_management::manifest::{
+        ItemManifest, RecipeManifest, StructureManifest, TerrainManifest, UnitManifest,
+    },
+    player_interaction::{selection::SelectionDetails, InteractionSystem},
+};
 
 use super::{FiraSansFontFamily, RightPanel};
 
@@ -83,6 +88,7 @@ fn populate_hover_panel(
 }
 
 /// Updates UI elements for hover details based on new information.
+#[allow(clippy::too_many_arguments)]
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
@@ -122,6 +128,11 @@ fn update_hover_details(
             Without<UnitDetailsMarker>,
         ),
     >,
+    structure_manifest: Res<StructureManifest>,
+    unit_manifest: Res<UnitManifest>,
+    terrain_manifest: Res<TerrainManifest>,
+    recipe_manifest: Res<RecipeManifest>,
+    item_manifest: Res<ItemManifest>,
 ) {
     let mut parent_visibility = hover_panel_query.single_mut();
     let (mut ghost_style, mut ghost_text) = ghost_details_query.single_mut();
@@ -166,16 +177,19 @@ fn update_hover_details(
 
     match &*selection_details {
         SelectionDetails::Ghost(details) => {
-            ghost_text.sections[0].value = format!("{details}");
+            ghost_text.sections[0].value =
+                details.display(&item_manifest, &structure_manifest, &recipe_manifest);
         }
         SelectionDetails::Structure(details) => {
-            structure_text.sections[0].value = format!("{details}");
+            structure_text.sections[0].value = details.display(&structure_manifest, &item_manifest);
         }
         SelectionDetails::Terrain(details) => {
-            terrain_text.sections[0].value = format!("{details}");
+            terrain_text.sections[0].value =
+                details.display(&terrain_manifest, &structure_manifest, &item_manifest);
         }
         SelectionDetails::Unit(details) => {
-            unit_text.sections[0].value = format!("{details}");
+            unit_text.sections[0].value =
+                details.display(&unit_manifest, &item_manifest, &structure_manifest);
         }
         SelectionDetails::None => (),
     };

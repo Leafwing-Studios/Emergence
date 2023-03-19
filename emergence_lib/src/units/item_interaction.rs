@@ -2,8 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::asset_management::manifest::{Id, Item};
-use core::fmt::Display;
+use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Default, Clone, Debug, Deref, DerefMut)]
@@ -12,12 +11,13 @@ pub(crate) struct UnitInventory {
     pub(crate) held_item: Option<Id<Item>>,
 }
 
-impl Display for UnitInventory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl UnitInventory {
+    /// Pretty foramtting for this type.
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         if let Some(item) = self.held_item {
-            write!(f, "{item}")
+            item_manifest.name(item).to_string()
         } else {
-            write!(f, "Nothing")
+            "Nothing".to_string()
         }
     }
 }

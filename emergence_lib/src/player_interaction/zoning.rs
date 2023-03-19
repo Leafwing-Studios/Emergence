@@ -1,7 +1,6 @@
 //! Zoning is used to indicate that a tile should contain the specified structure.
 
 use bevy::prelude::*;
-use core::fmt::Display;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -50,18 +49,16 @@ pub(crate) enum Zoning {
     KeepClear,
 }
 
-impl Display for Zoning {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Zoning::Structure(clipboard_data) => {
-                let id = clipboard_data.structure_id;
-                format!("{id}")
-            }
+impl Zoning {
+    /// Pretty formatting for this type.
+    pub(crate) fn display(&self, structure_manifest: &StructureManifest) -> String {
+        match self {
+            Zoning::Structure(clipboard_data) => structure_manifest
+                .name(clipboard_data.structure_id)
+                .to_string(),
             Zoning::None => "None".to_string(),
             Zoning::KeepClear => "Keep Clear".to_string(),
-        };
-
-        write!(f, "{str}")
+        }
     }
 }
 

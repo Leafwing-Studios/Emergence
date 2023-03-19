@@ -41,7 +41,7 @@ impl FromWorld for UnitHandles {
         let unit_names = vec!["ant"];
 
         for str in unit_names {
-            let structure_id = Id::from_string_id(str);
+            let structure_id = Id::from_name(str);
             let structure_path = format!("units/{str}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);

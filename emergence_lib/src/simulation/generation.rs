@@ -62,16 +62,13 @@ impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
+        terrain_weights.insert(Id::from_name("loam"), GenerationConfig::TERRAIN_WEIGHT_LOAM);
         terrain_weights.insert(
-            Id::from_string_id("loam"),
-            GenerationConfig::TERRAIN_WEIGHT_LOAM,
-        );
-        terrain_weights.insert(
-            Id::from_string_id("muddy"),
+            Id::from_name("muddy"),
             GenerationConfig::TERRAIN_WEIGHT_MUDDY,
         );
         terrain_weights.insert(
-            Id::from_string_id("rocky"),
+            Id::from_name("rocky"),
             GenerationConfig::TERRAIN_WEIGHT_ROCKY,
         );
 
@@ -192,9 +189,9 @@ fn generate_organisms(
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
     for ant_position in ant_positions {
         commands.spawn(UnitBundle::new(
-            Id::ant(),
+            Id::from_name("ant"),
             ant_position,
-            unit_manifest.get(Id::from_string_id("ant")).clone(),
+            unit_manifest.get(Id::from_name("ant")).clone(),
             &unit_handles,
             &map_geometry,
         ));
@@ -203,7 +200,7 @@ fn generate_organisms(
     // Plant
     let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
     for position in plant_positions {
-        let structure_id = Id::from_string_id("acacia");
+        let structure_id = Id::from_name("acacia");
 
         let item = ClipboardData {
             structure_id,
@@ -220,7 +217,7 @@ fn generate_organisms(
     // Fungi
     let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
     for position in fungus_positions {
-        let structure_id = Id::from_string_id("leuco");
+        let structure_id = Id::from_name("leuco");
 
         let item = ClipboardData {
             structure_id,
@@ -237,7 +234,7 @@ fn generate_organisms(
     // Hives
     let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
     for position in hive_positions {
-        let structure_id = Id::from_string_id("ant_hive");
+        let structure_id = Id::from_name("ant_hive");
 
         let item = ClipboardData {
             structure_id,

@@ -11,7 +11,7 @@ fn add_signals(settings: Settings) -> (Signals, MapGeometry) {
     let mut rng = thread_rng();
 
     for i in 0..settings.n_signals {
-        let signal_type = SignalType::Pull(Id::new(i));
+        let signal_type = SignalType::Pull(Id::from_name(&format!("{i}")));
 
         for _ in 0..settings.n_sources {
             let tile_pos = TilePos::random(&map_geometry, &mut rng);

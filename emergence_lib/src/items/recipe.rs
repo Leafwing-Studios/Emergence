@@ -1,37 +1,14 @@
 //! Instructions to craft items.
 
-use std::{fmt::Display, time::Duration};
+use std::time::Duration;
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Recipe},
+    asset_management::manifest::{Id, ItemManifest},
     organisms::energy::Energy,
     structures::crafting::{InputInventory, OutputInventory},
 };
 
 use super::{inventory::Inventory, ItemCount};
-
-// TODO: these should be read from disc
-impl Id<Recipe> {
-    /// The ID of the recipe for the leaf production of acacia plants.
-    pub fn acacia_leaf_production() -> Self {
-        Self::from_string_id("acacia_leaf_production")
-    }
-
-    /// The ID of the recipe for mushroom production of leuco mushrooms.
-    pub fn leuco_chunk_production() -> Self {
-        Self::from_string_id("leuco_chunk_production")
-    }
-
-    /// The ID of the recipe to make more ant eggs from leuco mushrooms.
-    pub fn ant_egg_production() -> Self {
-        Self::from_string_id("ant_egg_production")
-    }
-
-    /// The ID of the recipe to hatch ant eggs into adult ants.
-    pub fn hatch_ants() -> Self {
-        Self::from_string_id("hatch_ants")
-    }
-}
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]
@@ -114,6 +91,27 @@ impl RecipeData {
     pub(crate) fn energy(&self) -> &Option<Energy> {
         &self.energy
     }
+
+    /// The pretty formatting of this type
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+        let input_strings: Vec<String> = self
+            .inputs
+            .iter()
+            .map(|input| input.display(item_manifest))
+            .collect();
+        let input_str = input_strings.join(", ");
+
+        let output_strings: Vec<String> = self
+            .outputs
+            .iter()
+            .map(|output| output.display(item_manifest))
+            .collect();
+        let output_str = output_strings.join(", ");
+
+        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
+
+        format!("[{input_str}] -> [{output_str}] | {duration_str} s")
+    }
 }
 
 // TODO: Remove this once we load recipes from asset files
@@ -122,7 +120,7 @@ impl RecipeData {
     pub(crate) fn acacia_leaf_production() -> Self {
         RecipeData::new(
             Vec::new(),
-            vec![ItemCount::one(Id::acacia_leaf())],
+            vec![ItemCount::one(Id::from_name("acacia_leaf"))],
             Duration::from_secs(3),
             false,
             Some(Energy(20.)),
@@ -132,8 +130,8 @@ impl RecipeData {
     /// A leuco mushroom processing acacia leaves
     pub(crate) fn leuco_chunk_production() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::acacia_leaf())],
-            vec![ItemCount::one(Id::leuco_chunk())],
+            vec![ItemCount::one(Id::from_name("acacia_leaf"))],
+            vec![ItemCount::one(Id::from_name("leuco_chunk"))],
             Duration::from_secs(2),
             false,
             Some(Energy(40.)),
@@ -143,8 +141,8 @@ impl RecipeData {
     /// An ant hive producing eggs.
     pub(crate) fn ant_egg_production() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::leuco_chunk())],
-            vec![ItemCount::one(Id::ant_egg())],
+            vec![ItemCount::one(Id::from_name("leuco_chunk"))],
+            vec![ItemCount::one(Id::from_name("ant_egg"))],
             Duration::from_secs(5),
             false,
             None,
@@ -154,30 +152,11 @@ impl RecipeData {
     /// An ant hive producing eggs.
     pub(crate) fn hatch_ants() -> Self {
         RecipeData::new(
-            vec![ItemCount::one(Id::ant_egg())],
+            vec![ItemCount::one(Id::from_name("ant_egg"))],
             vec![],
             Duration::from_secs(10),
             true,
             None,
         )
-    }
-}
-
-impl Display for RecipeData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let input_strings: Vec<String> =
-            self.inputs.iter().map(|input| format!("{input}")).collect();
-        let input_str = input_strings.join(", ");
-
-        let output_strings: Vec<String> = self
-            .outputs
-            .iter()
-            .map(|output| format!("{output}"))
-            .collect();
-        let output_str = output_strings.join(", ");
-
-        let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
-
-        write!(f, "[{input_str}] -> [{output_str}] | {duration_str} s")
     }
 }

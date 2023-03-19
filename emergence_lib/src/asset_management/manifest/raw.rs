@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::items::ItemData;
 
-use super::{Id, Item, Manifest};
+use super::{Item, Manifest};
 
 /// A utility trait to ensure that all trait bounds are satisfied.
 pub(crate) trait RawManifest:
@@ -58,17 +58,14 @@ impl RawManifest for RawItemManifest {
     }
 
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
-        let map: HashMap<Id<Self::Marker>, Self::Data> = self
-            .items
-            .iter()
-            .map(|(str_id, raw_data)| {
-                let id = Id::<Self::Marker>::from_string_id(str_id);
-                let data = Self::Data::from(raw_data);
+        let mut manifest = Manifest::new();
 
-                (id, data)
-            })
-            .collect();
+        for (name, raw_data) in &self.items {
+            let data = Self::Data::from(raw_data);
 
-        Manifest { map }
+            manifest.insert(name, data)
+        }
+
+        manifest
     }
 }

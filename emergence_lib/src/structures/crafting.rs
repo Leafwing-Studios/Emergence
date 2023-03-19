@@ -5,13 +5,12 @@ use std::{fmt::Display, time::Duration};
 use bevy::{
     ecs::{query::WorldQuery, system::SystemParam},
     prelude::*,
-    utils::HashMap,
 };
 use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Recipe, RecipeManifest, Structure},
+    asset_management::manifest::{Id, ItemManifest, Manifest, Recipe, RecipeManifest, Structure},
     items::{inventory::Inventory, recipe::RecipeData, ItemData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -120,14 +119,13 @@ impl OutputInventory {
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
-impl Display for ActiveRecipe {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string = match self.0 {
-            Some(recipe_id) => format!("{recipe_id}"),
+impl ActiveRecipe {
+    /// The pretty formatting for this type
+    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
+        match self.0 {
+            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
             None => "None".to_string(),
-        };
-
-        write!(f, "{string}")
+        }
     }
 }
 
@@ -464,26 +462,26 @@ pub(crate) struct CraftingPlugin;
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
         // TODO: Load this from an asset file
-        let mut item_manifest = HashMap::new();
-        item_manifest.insert(Id::acacia_leaf(), ItemData::acacia_leaf());
-        item_manifest.insert(Id::leuco_chunk(), ItemData::leuco_chunk());
-        item_manifest.insert(Id::ant_egg(), ItemData::ant_egg());
+        let mut item_manifest: ItemManifest = Manifest::new();
+        item_manifest.insert("acacia_leaf", ItemData::acacia_leaf());
+        item_manifest.insert("leuco_chunk", ItemData::leuco_chunk());
+        item_manifest.insert("ant_egg", ItemData::ant_egg());
 
         // TODO: Load this from an asset file
-        let mut recipe_manifest = HashMap::new();
+        let mut recipe_manifest: RecipeManifest = Manifest::new();
         recipe_manifest.insert(
-            Id::acacia_leaf_production(),
+            "acacia_leaf_production",
             RecipeData::acacia_leaf_production(),
         );
         recipe_manifest.insert(
-            Id::leuco_chunk_production(),
+            "leuco_chunk_production",
             RecipeData::leuco_chunk_production(),
         );
-        recipe_manifest.insert(Id::ant_egg_production(), RecipeData::ant_egg_production());
-        recipe_manifest.insert(Id::hatch_ants(), RecipeData::hatch_ants());
+        recipe_manifest.insert("ant_egg_production", RecipeData::ant_egg_production());
+        recipe_manifest.insert("hatch_ants", RecipeData::hatch_ants());
 
-        app.insert_resource(ItemManifest::new(item_manifest))
-            .insert_resource(RecipeManifest::new(recipe_manifest))
+        app.insert_resource(item_manifest)
+            .insert_resource(recipe_manifest)
             .add_system(progress_crafting)
             .add_system(gain_energy_when_crafting_completes.after(progress_crafting))
             .add_system(set_emitter.after(progress_crafting));
