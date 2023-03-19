@@ -105,6 +105,19 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
             ..default()
         })
         .insert(CelestialBody::sun());
+
+    commands
+        .spawn(DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                color: LIGHT_MOON,
+                illuminance: 1e4,
+                shadows_enabled: true,
+                ..Default::default()
+            },
+            cascade_shadow_config,
+            ..default()
+        })
+        .insert(CelestialBody::moon());
 }
 
 /// Moves celestial bodies to the correct position and orientation
