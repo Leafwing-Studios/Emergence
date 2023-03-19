@@ -1,6 +1,7 @@
 //! Controls in-game time: day-night cycles, weather and the passing of seasons
 
-use std::f32::consts::{PI, TAU};
+use core::f32::consts::{PI, TAU};
+use core::fmt::Display;
 
 use bevy::prelude::*;
 
@@ -18,7 +19,7 @@ impl Plugin for TemporalPlugin {
 
 /// Stores the in game time.
 #[derive(Resource)]
-struct InGameTime {
+pub struct InGameTime {
     /// How much time has elapsed, in units of in-game days.
     elapsed_time: f32,
     /// The number of wall-clock seconds that should elapse per complete in-game day.
@@ -27,7 +28,7 @@ struct InGameTime {
 
 impl InGameTime {
     /// How many days have elapsed total?
-    fn elapsed_days(&self) -> u64 {
+    pub fn elapsed_days(&self) -> u64 {
         self.elapsed_time.floor() as u64
     }
 
@@ -38,8 +39,19 @@ impl InGameTime {
     /// - 0.5 is dusk
     /// - 0.75 is midnight
     /// - 0.999 is just before dawn
-    fn fraction_of_day(&self) -> f32 {
+    pub fn fraction_of_day(&self) -> f32 {
         self.elapsed_time % 1.0
+    }
+}
+
+impl Display for InGameTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Time: {} days and {:.2} fractions of a day",
+            self.elapsed_days(),
+            self.fraction_of_day()
+        )
     }
 }
 

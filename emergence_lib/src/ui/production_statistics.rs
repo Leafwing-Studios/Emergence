@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::infovis::Census;
+use crate::{infovis::Census, simulation::time::InGameTime};
 
 use super::{FiraSansFontFamily, LeftPanel};
 
@@ -32,7 +32,10 @@ fn spawn_production_statistics_menu(
         color: Color::WHITE,
     };
 
-    let text = Text::from_section("CENSUS", style);
+    let text = Text::from_sections([
+        TextSection::new("TIME", style.clone()),
+        TextSection::new("CENSUS", style),
+    ]);
 
     let production_stats_entity = commands
         .spawn(TextBundle {
@@ -51,8 +54,10 @@ fn spawn_production_statistics_menu(
 /// Updates information about the production statistics to be displayed
 fn update_production_statistics(
     mut query: Query<&mut Text, With<ProductionStats>>,
+    in_game_time: Res<InGameTime>,
     census: Res<Census>,
 ) {
-    let mut census_text = query.single_mut();
-    census_text.sections[0].value = format!("{}", *census);
+    let mut text = query.single_mut();
+    text.sections[0].value = format!("{}\n", *in_game_time);
+    text.sections[1].value = format!("{}", *census);
 }

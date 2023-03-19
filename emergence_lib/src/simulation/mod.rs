@@ -15,7 +15,7 @@ use bevy::log::info;
 
 pub mod generation;
 pub mod geometry;
-mod time;
+pub mod time;
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {
