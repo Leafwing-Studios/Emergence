@@ -33,7 +33,7 @@ While the Serious Work happens here on Github, the dev team (and curious fans) h
 
 Creativity and initiative is welcome:
 
-- if you have a great idea for a new system, open a [Discussion] about it
+- if you have a great idea for a new system, open a [Discussion](https://github.com/Leafwing-Studios/Emergence/discussions) about it
 - if you see some code that could be faster, cleaner or better, just open a PR
 
 We follow an "optimistic merging" policy here: if the code is an improvement, and aligned with our goals for the game, we'll merge it in.
