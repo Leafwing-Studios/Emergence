@@ -14,9 +14,6 @@ use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::RecipeManifest;
-use crate::asset_management::manifest::StructureManifest;
-use crate::asset_management::manifest::TerrainManifest;
-use crate::asset_management::manifest::UnitManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -689,9 +686,6 @@ fn get_details(
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
     recipe_manifest: Res<RecipeManifest>,
-    structure_manifest: Res<StructureManifest>,
-    unit_manifest: Res<UnitManifest>,
-    terrain_manifest: Res<TerrainManifest>,
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
@@ -700,9 +694,7 @@ fn get_details(
             SelectionDetails::Ghost(GhostDetails {
                 entity: *ghost_entity,
                 tile_pos: *ghost_query_item.tile_pos,
-                structure_name: structure_manifest
-                    .name(*ghost_query_item.structure_id)
-                    .to_string(),
+                structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
                 crafting_state: ghost_query_item.crafting_state.clone(),
                 active_recipe: ghost_query_item.active_recipe.clone(),
@@ -737,9 +729,7 @@ fn get_details(
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
                 tile_pos: *structure_query_item.tile_pos,
-                structure_name: structure_manifest
-                    .name(*structure_query_item.structure_id)
-                    .to_string(),
+                structure_id: *structure_query_item.structure_id,
                 crafting_details,
                 maybe_organism_details,
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
@@ -753,9 +743,7 @@ fn get_details(
 
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
-                    terrain_type: terrain_manifest
-                        .name(*terrain_query_item.terrain_id)
-                        .to_string(),
+                    terrain_id: *terrain_query_item.terrain_id,
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
@@ -772,7 +760,7 @@ fn get_details(
 
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
-                unit_name: unit_manifest.name(*unit_query_item.unit_id).to_string(),
+                unit_id: *unit_query_item.unit_id,
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -803,10 +791,10 @@ pub(crate) fn clear_details_on_error(
 mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
-    use core::fmt::Display;
-
     use crate::{
-        asset_management::manifest::{Id, Structure},
+        asset_management::manifest::{
+            Id, ItemManifest, RecipeManifest, Structure, StructureManifest,
+        },
         signals::Emitter,
         simulation::geometry::TilePos,
         structures::crafting::{ActiveRecipe, CraftingState, InputInventory},
@@ -839,7 +827,7 @@ mod ghost_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_name: String,
+        pub(crate) structure_id: Id<Structure>,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: InputInventory,
         /// The ghost's progress through construction
@@ -848,25 +836,30 @@ mod ghost_details {
         pub(super) active_recipe: ActiveRecipe,
     }
 
-    impl Display for GhostDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    impl GhostDetails {
+        /// The pretty formatting for this type
+        pub(crate) fn display(
+            &self,
+            item_manifest: &ItemManifest,
+            structure_manifest: &StructureManifest,
+            recipe_manifest: &RecipeManifest,
+        ) -> String {
             let entity = self.entity;
-            let structure_id = &self.structure_name;
+            let structure_id = structure_manifest.name(self.structure_id);
             let tile_pos = &self.tile_pos;
             let input_inventory = &*self.input_inventory;
             let crafting_state = &self.crafting_state;
-            let recipe = &self.active_recipe;
+            let recipe = self.active_recipe.display(recipe_manifest);
+            let construction_materials = self.input_inventory.display(item_manifest);
 
-            let string = format!(
+            format!(
                 "Entity: {entity:?}
 Tile: {tile_pos}
 Ghost structure type: {structure_id}
 Recipe: {recipe}
-Construction materials: {input_inventory}
+Construction materials: {construction_materials}
 {crafting_state}"
-            );
-
-            write!(f, "{string}")
+            )
         }
     }
 }
@@ -914,11 +907,9 @@ mod organism_details {
 mod structure_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
-    use core::fmt::Display;
-
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{Id, Structure},
+        asset_management::manifest::{Id, ItemManifest, Structure, StructureManifest},
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
@@ -955,7 +946,7 @@ mod structure_details {
         /// The tile position of this structure
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
-        pub(crate) structure_name: String,
+        pub(crate) structure_id: Id<Structure>,
         /// If this organism is crafting something, the details about that.
         pub(crate) crafting_details: Option<CraftingDetails>,
         /// Details about this organism, if it is one.
@@ -964,10 +955,15 @@ mod structure_details {
         pub(crate) marked_for_removal: bool,
     }
 
-    impl Display for StructureDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    impl StructureDetails {
+        /// The pretty foramtting for this type
+        pub(crate) fn display(
+            &self,
+            structure_manifest: &StructureManifest,
+            item_manifest: &ItemManifest,
+        ) -> String {
             let entity = self.entity;
-            let structure_id = &self.structure_name;
+            let structure_id = structure_manifest.name(self.structure_id);
             let tile_pos = &self.tile_pos;
 
             let mut string = format!(
@@ -981,14 +977,14 @@ Tile: {tile_pos}"
             }
 
             if let Some(crafting) = &self.crafting_details {
-                string += &format!("\n{crafting}");
+                string += &format!("\n{}", crafting.display(item_manifest));
             }
 
             if let Some(organism) = &self.maybe_organism_details {
                 string += &format!("\n{organism}");
             };
 
-            write!(f, "{string}")
+            string
         }
     }
 
@@ -1008,19 +1004,19 @@ Tile: {tile_pos}"
         pub(crate) state: CraftingState,
     }
 
-    impl Display for CraftingDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let input_inventory = &self.input_inventory;
-            let output_inventory = &self.output_inventory;
+    impl CraftingDetails {
+        /// The pretty formatting for this type.
+        pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+            let input_inventory = self.input_inventory.display(item_manifest);
+            let output_inventory = self.output_inventory.display(item_manifest);
             let crafting_state = &self.state;
 
             let recipe_string = match &self.recipe {
-                Some(recipe) => format!("{recipe}"),
+                Some(recipe) => recipe.display(item_manifest),
                 None => "None".to_string(),
             };
 
-            write!(
-                f,
+            format!(
                 "Recipe: {recipe_string}
 Input: {input_inventory}
 {crafting_state}
@@ -1033,10 +1029,11 @@ Output: {output_inventory}"
 /// Details for terrain
 mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
-    use std::fmt::Display;
 
     use crate::{
-        asset_management::manifest::{Id, Terrain},
+        asset_management::manifest::{
+            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest,
+        },
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
@@ -1061,7 +1058,7 @@ mod terrain_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of terrain
-        pub(super) terrain_type: String,
+        pub(super) terrain_id: Id<Terrain>,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
         /// The height of the tile
@@ -1072,17 +1069,22 @@ mod terrain_details {
         pub(super) zoning: Zoning,
     }
 
-    impl Display for TerrainDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    impl TerrainDetails {
+        /// The pretty formatting for this type
+        pub(crate) fn display(
+            &self,
+            terrain_manifest: &TerrainManifest,
+            structure_manifest: &StructureManifest,
+            item_manifest: &ItemManifest,
+        ) -> String {
             let entity = self.entity;
-            let terrain_type = &self.terrain_type;
+            let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
-            let signals = &self.signals;
-            let zoning = &self.zoning;
+            let signals = self.signals.display(item_manifest, structure_manifest);
+            let zoning = self.zoning.display(structure_manifest);
 
-            write!(
-                f,
+            format!(
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
@@ -1098,10 +1100,9 @@ Signals:
 /// Details for units
 mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
-    use std::fmt::Display;
 
     use crate::{
-        asset_management::manifest::{Id, Unit},
+        asset_management::manifest::{Id, Unit, UnitManifest},
         simulation::geometry::TilePos,
         units::{
             actions::CurrentAction, goals::Goal, impatience::ImpatiencePool,
@@ -1136,7 +1137,7 @@ mod unit_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of unit
-        pub(super) unit_name: String,
+        pub(super) unit_id: Id<Unit>,
         /// The current location
         pub(super) tile_pos: TilePos,
         /// What's being carried
@@ -1151,10 +1152,11 @@ mod unit_details {
         pub(super) impatience_pool: ImpatiencePool,
     }
 
-    impl Display for UnitDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    impl UnitDetails {
+        /// The pretty formatting for this type.
+        fn display(&self, unit_manifest: UnitManifest) -> String {
             let entity = self.entity;
-            let unit_name = &self.unit_name;
+            let unit_name = unit_manifest.name(self.unit_id);
             let tile_pos = &self.tile_pos;
             let held_item = &self.held_item;
             let goal = &self.goal;
@@ -1162,8 +1164,7 @@ mod unit_details {
             let impatience_pool = &self.impatience_pool;
             let organism_details = &self.organism_details;
 
-            write!(
-                f,
+            format!(
                 "Entity: {entity:?}
 Unit type: {unit_name}
 Tile: {tile_pos}

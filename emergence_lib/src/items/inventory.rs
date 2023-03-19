@@ -494,7 +494,7 @@ impl Inventory {
     }
 
     /// The pretty formatting for this type
-    fn display(&self, item_manifest: &ItemManifest) -> String {
+    pub fn display(&self, item_manifest: &ItemManifest) -> String {
         let slot_strings: Vec<String> = self
             // Filled slots
             .slots
