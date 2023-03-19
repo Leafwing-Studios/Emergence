@@ -8,7 +8,7 @@ use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
 use crate::asset_management::manifest::{
-    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
+    Id, Item, ItemManifest, Structure, StructureManifest, Terrain, Unit, UnitManifest,
 };
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
@@ -40,8 +40,8 @@ impl Plugin for SignalsPlugin {
                     .in_schedule(CoreSchedule::FixedUpdate),
             )
             .add_system(
-                debug_display_signal_map
-                    .run_if(debug_signal_map_enabled)
+                debug_display_signal_overlay
+                    .run_if(debug_signal_overlay_enabled)
                     .in_base_set(CoreSet::PostUpdate),
             );
     }
@@ -473,7 +473,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 }
 
 #[derive(Resource, Debug)]
-struct DebugDisplayedSignal(SignalType);
+pub(crate) struct DebugDisplayedSignal(SignalType);
 
 #[derive(Resource, Debug)]
 struct DebugColorScheme(Vec<Handle<StandardMaterial>>);
@@ -489,11 +489,13 @@ impl FromWorld for DebugColorScheme {
             let s = i as f32 / 255.0;
             color_scheme.push(material_assets.add(StandardMaterial {
                 base_color: Color::Rgba {
-                    red: 2.0 * s - s * s,
+                    red: 0.8 * (2.0 * s - s * s),
                     green: 0.8 * s.sqrt(),
                     blue: s * s * 0.6,
-                    alpha: 1.0,
+                    alpha: 0.8,
                 },
+                unlit: true,
+                alpha_mode: AlphaMode::Add,
                 ..Default::default()
             }));
         }
@@ -503,27 +505,42 @@ impl FromWorld for DebugColorScheme {
     }
 }
 
-fn debug_signal_map_enabled(displayed_signal: Option<Res<DebugDisplayedSignal>>) -> bool {
+fn debug_signal_overlay_enabled(displayed_signal: Option<Res<DebugDisplayedSignal>>) -> bool {
     displayed_signal.is_some()
 }
 
-fn debug_display_signal_map(
-    mut hexes: Query<(&TilePos, &mut Handle<StandardMaterial>)>,
+pub(crate) fn debug_signal_overlay_disabled(
+    displayed_signal: Option<Res<DebugDisplayedSignal>>,
+) -> bool {
+    displayed_signal.is_none()
+}
+
+fn debug_display_signal_overlay(
+    terrain_query: Query<(&TilePos, &Children), With<Id<Terrain>>>,
+    mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     signals: Res<Signals>,
     displayed_signal: Res<DebugDisplayedSignal>,
     color_scheme: Res<DebugColorScheme>,
 ) {
-    for (tile, mut material) in &mut hexes {
-        let signal_strength = signals.get(displayed_signal.0, *tile).0;
+    for (tile_pos, children) in terrain_query.iter() {
+        // This is promised to be the correct entity in the initialization of the terrain's children
+        let overlay_entity = children[1];
+
+        let (mut overlay_material, mut overlay_visibility) =
+            overlay_query.get_mut(overlay_entity).unwrap();
+
+        let signal_strength = signals.get(displayed_signal.0, *tile_pos).0;
         // Just a simple dark red (low strength) to bright yellow (high strength) color scheme
         // The scale is logarithmic, so that small nuances are still pretty visible
-        let scaled_strength = signal_strength / 50.0;
+        let scaled_strength = signal_strength.ln_1p() / 6.0;
         let color_index = if signal_strength < f32::EPSILON {
-            0
+            *overlay_visibility = Visibility::Hidden;
+            continue;
         } else {
+            *overlay_visibility = Visibility::Visible;
             ((scaled_strength * 254.0) as usize) + 1
         };
-        *material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
+        *overlay_material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
     }
 }
 
