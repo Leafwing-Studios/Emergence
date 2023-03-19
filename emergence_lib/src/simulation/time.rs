@@ -4,10 +4,12 @@ use core::f32::consts::{PI, TAU};
 use core::fmt::Display;
 
 use bevy::prelude::*;
+use leafwing_input_manager::prelude::ActionState;
 
 use crate::graphics::lighting::CelestialBody;
+use crate::player_interaction::PlayerAction;
 
-use super::SimulationSet;
+use super::{PauseState, SimulationSet};
 
 /// Introduces temporal variation into the environment.
 pub(super) struct TemporalPlugin;
@@ -20,6 +22,7 @@ impl Plugin for TemporalPlugin {
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         )
+        .add_system(pause_game)
         .init_resource::<InGameTime>();
     }
 }
@@ -93,5 +96,19 @@ fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res
         // Scale the progress by TAU to get a full rotation.
         // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
         celestial_body.progress = cycle_normalized_time * TAU - PI / 2.;
+    }
+}
+
+/// Pauses and unpauses the game when prompted by player input
+fn pause_game(
+    current_pause_state: Res<State<PauseState>>,
+    mut next_pause_state: ResMut<NextState<PauseState>>,
+    player_actions: Res<ActionState<PlayerAction>>,
+) {
+    if player_actions.just_pressed(PlayerAction::TogglePause) {
+        next_pause_state.set(match current_pause_state.0 {
+            PauseState::Paused => PauseState::Playing,
+            PauseState::Playing => PauseState::Paused,
+        });
     }
 }
