@@ -88,6 +88,7 @@ fn populate_hover_panel(
 }
 
 /// Updates UI elements for hover details based on new information.
+#[allow(clippy::too_many_arguments)]
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,

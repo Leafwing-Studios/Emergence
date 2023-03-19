@@ -50,6 +50,7 @@ pub(crate) enum Zoning {
 }
 
 impl Zoning {
+    /// Pretty formatting for this type.
     pub(crate) fn display(&self, structure_manifest: &StructureManifest) -> String {
         match self {
             Zoning::Structure(clipboard_data) => structure_manifest
