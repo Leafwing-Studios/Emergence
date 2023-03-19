@@ -4,7 +4,9 @@ use bevy::prelude::*;
 
 use crate::{asset_management::AssetState, player_interaction::InteractionSystem};
 
-use self::{lighting::LightingPlugin, selection::display_tile_overlay};
+use self::{
+    lighting::LightingPlugin, selection::display_tile_overlay, structures::remove_ghostly_shadows,
+};
 
 pub(crate) mod lighting;
 mod selection;
@@ -20,7 +22,10 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_system(units::display_held_item.run_if(in_state(AssetState::Ready)))
-            .add_system(inherit_materials.in_base_set(CoreSet::PostUpdate))
+            // Run these after Update to avoid panics due to despawned entities
+            .add_systems(
+                (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
+            )
             .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
     }
 }
