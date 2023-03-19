@@ -18,11 +18,14 @@ use crate::{
         OrganismVariety,
     },
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
-    simulation::geometry::{Facing, TilePos},
+    simulation::{
+        geometry::{Facing, TilePos},
+        SimulationSet,
+    },
 };
 
 use self::{
-    construction::{ghost_lifecyle, ghost_signals},
+    construction::{ghost_lifecycle, ghost_signals},
     crafting::{ActiveRecipe, CraftingPlugin, InputInventory},
 };
 
@@ -200,7 +203,10 @@ impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin)
             .init_resource::<StructureManifest>()
-            .add_system(ghost_signals)
-            .add_system(ghost_lifecyle);
+            .add_systems(
+                (ghost_signals, ghost_lifecycle)
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }

@@ -231,7 +231,7 @@ pub(super) fn ghost_signals(
 /// Manages the progression of ghosts from input needed -> work needed -> built.
 ///
 /// Transforms ghosts into structures once all of their construction materials have been supplied and enough work has been performed.
-pub(super) fn ghost_lifecyle(
+pub(super) fn ghost_lifecycle(
     mut ghost_query: Query<
         (
             &mut CraftingState,
@@ -244,7 +244,7 @@ pub(super) fn ghost_lifecyle(
         With<Ghost>,
     >,
     structure_manifest: Res<StructureManifest>,
-    time: Res<Time>,
+    time: Res<FixedTime>,
     mut commands: Commands,
 ) {
     for (mut crafting_state, input_inventory, &tile_pos, &structure_id, &facing, active_recipe) in
@@ -274,7 +274,7 @@ pub(super) fn ghost_lifecyle(
                 let mut updated_progress = progress;
 
                 if !work_required || worker_present {
-                    updated_progress += time.delta();
+                    updated_progress += time.period;
                 }
 
                 *crafting_state = if updated_progress >= required {

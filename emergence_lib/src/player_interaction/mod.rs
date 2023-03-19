@@ -64,6 +64,8 @@ pub(crate) enum InteractionSystem {
 /// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
 pub(crate) enum PlayerAction {
+    /// Pause or unpause the game
+    TogglePause,
     /// Selects a tile or group of tiles.
     Select,
     /// Deselects a tile or group of tiles.
@@ -123,6 +125,7 @@ impl PlayerAction {
     fn kbm_binding(&self) -> UserInput {
         use PlayerAction::*;
         match self {
+            TogglePause => KeyCode::Space.into(),
             Select => MouseButton::Left.into(),
             Deselect => MouseButton::Right.into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
@@ -133,12 +136,12 @@ impl PlayerAction {
             Line => Modifier::Alt.into(),
             SelectStructure => KeyCode::E.into(),
             Pipette => KeyCode::Q.into(),
-            Zone => KeyCode::Space.into(),
+            Zone => KeyCode::Return.into(),
             ClearZoning => KeyCode::Back.into(),
             KeepClear => KeyCode::Delete.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
-            SnapToSelection => KeyCode::Return.into(),
+            SnapToSelection => KeyCode::L.into(),
             DragCamera => MouseButton::Middle.into(),
             Pan => VirtualDPad::wasd().into(),
             MoveCursor => VirtualDPad::arrow_keys().into(),
@@ -162,6 +165,7 @@ impl PlayerAction {
         let radius_modifier = LeftTrigger;
 
         match self {
+            TogglePause => GamepadButtonType::Select.into(),
             PlayerAction::Select => South.into(),
             Deselect => East.into(),
             Multiple => RightTrigger.into(),

@@ -9,6 +9,7 @@ use itertools::Itertools;
 
 use crate::asset_management::manifest::{Id, Item, ItemManifest, Structure, StructureManifest};
 use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
 /// The fraction of signals in each cell that will move to each of 6 neighbors each frame.
@@ -28,7 +29,8 @@ impl Plugin for SignalsPlugin {
         app.init_resource::<Signals>().add_systems(
             (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
-                .in_base_set(CoreSet::PreUpdate),
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
         );
     }
 }
