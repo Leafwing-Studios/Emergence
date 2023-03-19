@@ -2,11 +2,7 @@
 
 use bevy::prelude::Component;
 use serde::{Deserialize, Serialize};
-use std::{
-    fmt::{Debug, Display},
-    hash::Hash,
-    marker::PhantomData,
-};
+use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
 /// The unique identifier of type `T`.
 ///
@@ -106,9 +102,3 @@ impl<T> Clone for Id<T> {
 }
 
 impl<T> Copy for Id<T> {}
-
-impl<T> Display for Id<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "#{}", self.value)
-    }
-}
