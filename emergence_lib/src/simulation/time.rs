@@ -7,13 +7,20 @@ use bevy::prelude::*;
 
 use crate::graphics::lighting::CelestialBody;
 
+use super::SimulationSet;
+
 /// Introduces temporal variation into the environment.
 pub(super) struct TemporalPlugin;
 
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((advance_in_game_time, move_celestial_bodies).chain())
-            .init_resource::<InGameTime>();
+        app.add_systems(
+            (advance_in_game_time, move_celestial_bodies)
+                .chain()
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        )
+        .init_resource::<InGameTime>();
     }
 }
 

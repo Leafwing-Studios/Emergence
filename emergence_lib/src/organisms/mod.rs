@@ -3,6 +3,8 @@
 use bevy::prelude::*;
 use leafwing_abilities::systems::regenerate_resource_pool;
 
+use crate::simulation::SimulationSet;
+
 use self::energy::{kill_organisms_when_out_of_energy, EnergyPool};
 
 pub(crate) mod energy;
@@ -42,7 +44,13 @@ pub struct OrganismPlugin;
 
 impl Plugin for OrganismPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(regenerate_resource_pool::<EnergyPool>)
-            .add_system(kill_organisms_when_out_of_energy);
+        app.add_systems(
+            (
+                regenerate_resource_pool::<EnergyPool>,
+                kill_organisms_when_out_of_energy,
+            )
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
     }
 }

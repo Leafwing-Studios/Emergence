@@ -7,7 +7,10 @@ use crate::{
     },
     organisms::energy::{Energy, EnergyPool},
     player_interaction::InteractionSystem,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    simulation::{
+        geometry::{Facing, MapGeometry, TilePos},
+        SimulationSet,
+    },
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
@@ -140,24 +143,25 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UnitManifest>()
-            .add_system(actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers))
-            .add_system(
+        app.init_resource::<UnitManifest>().add_systems(
+            (
+                actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
                 actions::handle_actions
                     .in_set(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers)
                     // This must occur after MarkedForDemolition is added,
                     // or we'll get a panic due to inserting a component on a despawned entity
                     .after(InteractionSystem::ManagePreviews),
-            )
-            .add_system(goals::choose_goal.in_set(UnitSystem::ChooseGoal))
-            .add_system(
+                goals::choose_goal.in_set(UnitSystem::ChooseGoal),
                 actions::choose_actions
                     .in_set(UnitSystem::ChooseNewAction)
                     .after(UnitSystem::Act)
                     .after(UnitSystem::ChooseGoal),
+                reproduction::hatch_ant_eggs,
+                hunger::check_for_hunger.before(UnitSystem::ChooseNewAction),
             )
-            .add_system(reproduction::hatch_ant_eggs)
-            .add_system(hunger::check_for_hunger.before(UnitSystem::ChooseNewAction));
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
     }
 }

@@ -231,7 +231,7 @@ pub(super) fn ghost_signals(
 /// Manages the progression of ghosts from input needed -> work needed -> built.
 ///
 /// Transforms ghosts into structures once all of their construction materials have been supplied and enough work has been performed.
-pub(super) fn ghost_lifecyle(
+pub(super) fn ghost_lifecycle(
     mut ghost_query: Query<
         (
             &mut CraftingState,
