@@ -50,7 +50,7 @@ pub(crate) struct CelestialBody {
     ///
     /// A value of 0.0 corresponds to east -> west travel.
     travel_axis: f32,
-    /// The maximum illuminance of the [`DirectionalLight`]
+    /// The base illuminance of the [`DirectionalLight`]
     illuminance: f32,
     /// The number of in-game days required to complete a full cycle.
     pub(crate) days_per_cycle: f32,
@@ -153,11 +153,8 @@ fn set_celestial_body_transform(
 /// Changes the lighting properties of the sun and moon throughout their cycles
 fn animate_celestial_body_lighting(mut query: Query<(&CelestialBody, &mut DirectionalLight)>) {
     for (celestial_body, mut directional_light) in query.iter_mut() {
-        if celestial_body.progress > 0.5 {
-            // We *cannot* disable lights or shadows completely here because it introduces perf-tanking branching
-            directional_light.illuminance = 0.;
-        } else {
-            directional_light.illuminance = celestial_body.illuminance;
-        }
+        // We want this to be 0 at midnight, and reach a peak at noon
+        let relative_intensity = celestial_body.progress.sin() + 1.0;
+        directional_light.illuminance = celestial_body.illuminance * relative_intensity;
     }
 }
