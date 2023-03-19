@@ -26,7 +26,8 @@ impl Plugin for LightingPlugin {
         .insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_system(set_celestial_body_transform);
+        .add_system(set_celestial_body_transform)
+        .add_system(animate_celestial_body_lighting);
     }
 }
 
@@ -49,6 +50,8 @@ pub(crate) struct CelestialBody {
     ///
     /// A value of 0.0 corresponds to east -> west travel.
     travel_axis: f32,
+    /// The base illuminance of the [`DirectionalLight`]
+    illuminance: f32,
     /// The number of in-game days required to complete a full cycle.
     pub(crate) days_per_cycle: f32,
 }
@@ -61,6 +64,7 @@ impl CelestialBody {
             progress: -PI / 4.,
             inclination: 23.5 / 360. * PI / 2.,
             travel_axis: 0.,
+            illuminance: 8e4,
             days_per_cycle: 1.0,
         }
     }
@@ -72,6 +76,7 @@ impl CelestialBody {
             progress: 0.,
             inclination: 23.5 / 360. * PI / 2.,
             travel_axis: PI / 6.,
+            illuminance: 1e4,
             days_per_cycle: 2.0,
         }
     }
@@ -92,31 +97,33 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
     }
     .build();
 
+    let sun = CelestialBody::sun();
     commands
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_SUN,
-                illuminance: 8e4,
+                illuminance: sun.illuminance,
                 shadows_enabled: true,
                 ..Default::default()
             },
             cascade_shadow_config: cascade_shadow_config.clone(),
             ..default()
         })
-        .insert(CelestialBody::sun());
+        .insert(sun);
 
+    let moon = CelestialBody::moon();
     commands
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_MOON,
-                illuminance: 1e4,
+                illuminance: moon.illuminance,
                 shadows_enabled: true,
                 ..Default::default()
             },
             cascade_shadow_config,
             ..default()
         })
-        .insert(CelestialBody::moon());
+        .insert(moon);
 }
 
 /// Moves celestial bodies to the correct position and orientation
@@ -140,5 +147,14 @@ fn set_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
+    }
+}
+
+/// Changes the lighting properties of the sun and moon throughout their cycles
+fn animate_celestial_body_lighting(mut query: Query<(&CelestialBody, &mut DirectionalLight)>) {
+    for (celestial_body, mut directional_light) in query.iter_mut() {
+        // We want this to be 0 at midnight, and reach a peak at noon
+        let relative_intensity = celestial_body.progress.sin() + 1.0;
+        directional_light.illuminance = celestial_body.illuminance * relative_intensity;
     }
 }
