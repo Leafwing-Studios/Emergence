@@ -37,9 +37,8 @@ pub(crate) struct CelestialBody {
     ///
     /// This has no effect on the angle: it simply needs to be high enough to avoid clipping at max world height.
     height: f32,
-    /// The angle of the sun in radians, relative to its position at noon
-    /// The sun is aligned such that -x is west, +x is east
-    /// This will change throughout the day, from - PI/2 to PI/2
+    /// The angle of the celestial body in radians, relative to its position at "noon".
+    /// This will change throughout the day, from - PI/2 at dawn to PI/2 at dusk.
     pub(crate) progress: f32,
     /// The angle that the sun is offset from vertical in radians
     ///
@@ -48,8 +47,10 @@ pub(crate) struct CelestialBody {
     inclination: f32,
     /// The rotation around the y axis in radians.
     ///
-    /// A valid of 0.0 corresponds to east -> west travel.
+    /// A value of 0.0 corresponds to east -> west travel.
     travel_axis: f32,
+    /// The number of in-game days required to complete a full cycle.
+    pub(crate) days_per_cycle: f32,
 }
 
 impl CelestialBody {
@@ -60,6 +61,7 @@ impl CelestialBody {
             progress: -PI / 4.,
             inclination: 23.5 / 360. * PI / 2.,
             travel_axis: 0.,
+            days_per_cycle: 1.0,
         }
     }
 
@@ -70,6 +72,7 @@ impl CelestialBody {
             progress: 0.,
             inclination: 23.5 / 360. * PI / 2.,
             travel_axis: PI / 6.,
+            days_per_cycle: 0.0,
         }
     }
 }

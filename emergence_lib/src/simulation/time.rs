@@ -19,22 +19,34 @@ impl Plugin for TemporalPlugin {
 /// Stores the in game time.
 #[derive(Resource)]
 struct InGameTime {
-    /// How far are we through the day.
+    /// How much time has elapsed, in units of in-game days.
+    elapsed_time: f32,
+    /// The number of wall-clock seconds that should elapse per complete in-game day.
+    seconds_per_day: f32,
+}
+
+impl InGameTime {
+    /// How many days have elapsed total?
+    fn elapsed_days(&self) -> u64 {
+        self.elapsed_time.floor() as u64
+    }
+
+    /// How far are we through the day?
     ///
     /// - 0.0 is dawn
     /// - 0.25 is noon
     /// - 0.5 is dusk
     /// - 0.75 is midnight
     /// - 0.999 is just before dawn
-    fraction_of_day: f32,
-    /// The number of wall-clock seconds that should elapse per complete in-game day.
-    seconds_per_day: f32,
+    fn fraction_of_day(&self) -> f32 {
+        self.elapsed_time % 1.0
+    }
 }
 
 impl Default for InGameTime {
     fn default() -> Self {
         InGameTime {
-            fraction_of_day: 0.10,
+            elapsed_time: 0.0,
             seconds_per_day: 60.,
         }
     }
@@ -42,8 +54,7 @@ impl Default for InGameTime {
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
 fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
-    in_game_time.fraction_of_day += time.delta_seconds() / in_game_time.seconds_per_day;
-    in_game_time.fraction_of_day %= 1.0;
+    in_game_time.elapsed_time += time.delta_seconds() / in_game_time.seconds_per_day;
 }
 
 /// Moves the sun and moon based on the in-game time
@@ -51,6 +62,8 @@ fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res
     for mut celestial_body in query.iter_mut() {
         // Scale the progress by TAU to get a full rotation.
         // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
-        celestial_body.progress = in_game_time.fraction_of_day * TAU - PI / 2.;
+        // Take the modulo with respect to the period to get the revolution period correct
+        celestial_body.progress =
+            (in_game_time.elapsed_time * TAU - PI / 2.) % celestial_body.days_per_cycle;
     }
 }
