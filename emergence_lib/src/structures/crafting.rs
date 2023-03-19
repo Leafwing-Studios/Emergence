@@ -246,7 +246,7 @@ struct CraftingQuery {
 
 /// Progress the state of recipes that are being crafted.
 fn progress_crafting(
-    time: Res<Time>,
+    time: Res<FixedTime>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
     mut crafting_query: Query<CraftingQuery>,
@@ -282,7 +282,7 @@ fn progress_crafting(
                 let mut updated_progress = progress;
 
                 if !work_required || worker_present {
-                    updated_progress += time.delta();
+                    updated_progress += time.period;
                 }
 
                 if updated_progress >= required {

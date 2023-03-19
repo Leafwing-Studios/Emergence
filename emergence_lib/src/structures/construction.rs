@@ -244,7 +244,7 @@ pub(super) fn ghost_lifecycle(
         With<Ghost>,
     >,
     structure_manifest: Res<StructureManifest>,
-    time: Res<Time>,
+    time: Res<FixedTime>,
     mut commands: Commands,
 ) {
     for (mut crafting_state, input_inventory, &tile_pos, &structure_id, &facing, active_recipe) in
@@ -274,7 +274,7 @@ pub(super) fn ghost_lifecycle(
                 let mut updated_progress = progress;
 
                 if !work_required || worker_present {
-                    updated_progress += time.delta();
+                    updated_progress += time.period;
                 }
 
                 *crafting_state = if updated_progress >= required {

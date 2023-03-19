@@ -79,8 +79,8 @@ impl Default for InGameTime {
 }
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
-fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
-    in_game_time.elapsed_time += time.delta_seconds() / in_game_time.seconds_per_day;
+fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
+    in_game_time.elapsed_time += time.period.as_secs_f32() / in_game_time.seconds_per_day;
 }
 
 /// Moves the sun and moon based on the in-game time

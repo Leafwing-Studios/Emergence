@@ -6,7 +6,7 @@
 
 use std::ops::{Div, Mul};
 
-use bevy::{prelude::*, time::Time};
+use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 
@@ -132,9 +132,9 @@ impl Pool for IntentPool {
 /// Regenerates the [`Intent`] of the hive mind.
 ///
 /// Note that we cannot use the built-in system for this, as our pool is stored somewhat unusually as a resource.
-fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<Time>) {
+fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<FixedTime>) {
     if intent_pool.current() != intent_pool.max() {
-        intent_pool.regenerate(time.delta());
+        intent_pool.regenerate(time.period);
     }
 }
 
