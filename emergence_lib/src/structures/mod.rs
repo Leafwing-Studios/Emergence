@@ -50,8 +50,6 @@ pub(crate) struct StructureData {
     construction_materials: InputInventory,
     /// The set of terrain types that this structure can be built on
     pub(crate) allowed_terrain_types: HashSet<Id<Terrain>>,
-    /// The color associated with this structure
-    pub(crate) color: Color,
 }
 
 impl StructureData {
@@ -89,7 +87,6 @@ impl Default for StructureManifest {
                     Id::from_name("loam"),
                     Id::from_name("muddy"),
                 ]),
-                color: Color::ORANGE_RED,
             },
         );
 
@@ -111,7 +108,6 @@ impl Default for StructureManifest {
                     Id::from_name("loam"),
                     Id::from_name("muddy"),
                 ]),
-                color: Color::hsl(114., 0.36, 0.5),
             },
         );
 
@@ -128,7 +124,6 @@ impl Default for StructureManifest {
                     Id::from_name("muddy"),
                     Id::from_name("rocky"),
                 ]),
-                color: Color::BEIGE,
             },
         );
 
@@ -144,7 +139,6 @@ impl Default for StructureManifest {
                     Id::from_name("loam"),
                     Id::from_name("rocky"),
                 ]),
-                color: Color::BLUE,
             },
         );
 

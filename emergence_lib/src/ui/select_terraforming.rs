@@ -1,15 +1,11 @@
-//! Quickly select which structure to place.
+//! Quickly select which terraforming option to use.
 
 use crate::{
     asset_management::{
-        manifest::{Id, Structure, StructureManifest},
+        manifest::TerrainManifest,
         palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     },
-    player_interaction::{
-        clipboard::{Clipboard, ClipboardData},
-        PlayerAction,
-    },
-    simulation::geometry::Facing,
+    player_interaction::{clipboard::Clipboard, terraform::TerraformingChoice, PlayerAction},
 };
 
 use itertools::Itertools;
@@ -21,45 +17,59 @@ use super::wheel_menu::{
     HexMenuElement, HexMenuError,
 };
 
-/// Logic used to let users select the structure to build.
-pub(super) struct SelectStructurePlugin;
+/// Logic used to let users select the terraforming option to use.
+pub(super) struct SelectTerraformingPlugin;
 
-impl Plugin for SelectStructurePlugin {
+impl Plugin for SelectTerraformingPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AvailableChoices<Id<Structure>>>()
-            .add_systems((update_structure_choices, spawn_hex_menu::<Id<Structure>>).chain())
+        app.init_resource::<AvailableChoices<TerraformingChoice>>()
+            .add_systems(
+                (
+                    update_terraforming_choices,
+                    spawn_hex_menu::<TerraformingChoice>,
+                )
+                    .chain(),
+            )
             .add_system(
                 select_hex
                     .pipe(handle_selection)
-                    .run_if(resource_exists::<HexMenuArrangement<Id<Structure>>>()),
+                    .run_if(resource_exists::<HexMenuArrangement<TerraformingChoice>>()),
             );
     }
 }
 
-impl Choice for Id<Structure> {
-    const ACTIVATION: PlayerAction = PlayerAction::SelectStructure;
+impl Choice for TerraformingChoice {
+    const ACTIVATION: PlayerAction = PlayerAction::Terraform;
 }
 
-/// Update the set of choices available to build whenever the structure manifest is updated
-fn update_structure_choices(
-    mut available_choices: ResMut<AvailableChoices<Id<Structure>>>,
-    structure_manifest: Res<StructureManifest>,
+/// Update the set of choices available to build whenever the terrain manifest is updated
+fn update_terraforming_choices(
+    mut available_choices: ResMut<AvailableChoices<TerraformingChoice>>,
+    terrain_manifest: Res<TerrainManifest>,
 ) {
-    if structure_manifest.is_changed() {
+    if terrain_manifest.is_changed() {
+        available_choices.choices = vec![TerraformingChoice::Raise, TerraformingChoice::Lower];
+
         // Sort to ensure a stable ordering
-        available_choices.choices = structure_manifest.variants().into_iter().sorted().collect();
+        // The lint here is just wrong
+        #[allow(clippy::redundant_closure)]
+        let terrain_choices = terrain_manifest
+            .variants()
+            .into_iter()
+            .sorted()
+            .map(|terrain_id| TerraformingChoice::Change(terrain_id));
+        available_choices.choices.extend(terrain_choices);
     }
 }
 
-/// Set the selected structure based on the results of the hex menu.
+/// Set the selected terraforming choice based on the results of the hex menu.
 fn handle_selection(
-    In(result): In<Result<HexMenuElement<Id<Structure>>, HexMenuError>>,
-    mut clipboard: ResMut<Clipboard>,
-    menu_query: Query<Entity, With<HexMenu>>,
+    In(result): In<Result<HexMenuElement<TerraformingChoice>, HexMenuError>>,
     mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
-    structure_manifest: Res<StructureManifest>,
+    menu_query: Query<Entity, With<HexMenu>>,
+    mut clipboard: ResMut<Clipboard>,
     commands: Commands,
-    arrangement: Res<HexMenuArrangement<Id<Structure>>>,
+    arrangement: Res<HexMenuArrangement<TerraformingChoice>>,
 ) {
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
@@ -67,22 +77,13 @@ fn handle_selection(
             commands.entity(entity).despawn_recursive();
         }
 
-        commands.remove_resource::<HexMenuArrangement<Id<Structure>>>();
+        commands.remove_resource::<HexMenuArrangement<TerraformingChoice>>();
     }
 
     match result {
         Ok(element) => {
             if element.is_complete() {
-                let structure_data = ClipboardData {
-                    structure_id: *element.data(),
-                    facing: Facing::default(),
-                    active_recipe: structure_manifest
-                        .get(*element.data())
-                        .starting_recipe()
-                        .clone(),
-                };
-
-                clipboard.set_to_structure(Some(structure_data));
+                *clipboard = Clipboard::Terraform(*element.data());
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
@@ -97,8 +98,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            clipboard.set_to_structure(None);
-
+            *clipboard = Clipboard::Empty;
             if complete {
                 cleanup(commands, menu_query);
             } else {
