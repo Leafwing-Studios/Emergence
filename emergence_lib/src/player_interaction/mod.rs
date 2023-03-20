@@ -185,7 +185,7 @@ impl PlayerAction {
             Zone => North.into(),
             ClearZoning => DPadUp.into(),
             KeepClear => DPadDown.into(),
-            Terraform => UserInput::chord([radius_modifier, North.into()]),
+            Terraform => UserInput::chord([radius_modifier, North]),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
             SnapToSelection => GamepadButtonType::LeftThumb.into(),
