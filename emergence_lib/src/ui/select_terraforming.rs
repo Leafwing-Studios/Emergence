@@ -5,10 +5,7 @@ use crate::{
         manifest::TerrainManifest,
         palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     },
-    player_interaction::{
-        terraform::{SelectedTerraforming, TerraformingChoice},
-        PlayerAction,
-    },
+    player_interaction::{clipboard::Clipboard, terraform::TerraformingChoice, PlayerAction},
 };
 
 use itertools::Itertools;
@@ -68,7 +65,7 @@ fn handle_selection(
     In(result): In<Result<HexMenuElement<TerraformingChoice>, HexMenuError>>,
     mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     menu_query: Query<Entity, With<HexMenu>>,
-    mut terraforming: ResMut<SelectedTerraforming>,
+    mut clipboard: ResMut<Clipboard>,
     commands: Commands,
     arrangement: Res<HexMenuArrangement<TerraformingChoice>>,
 ) {
@@ -84,7 +81,7 @@ fn handle_selection(
     match result {
         Ok(element) => {
             if element.is_complete() {
-                terraforming.current_selection = Some(element.data().clone());
+                *clipboard = Clipboard::Terraform(element.data().clone());
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
@@ -99,7 +96,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            terraforming.current_selection = None;
+            *clipboard = Clipboard::Empty;
             if complete {
                 cleanup(commands, menu_query);
             } else {

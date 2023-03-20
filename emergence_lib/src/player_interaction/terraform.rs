@@ -1,34 +1,30 @@
 //! Tools to alter the terrain type and height.
 
 use bevy::prelude::*;
-use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::{
-        manifest::{Id, Terrain},
+        manifest::{Id, Terrain, TerrainManifest},
         terrain::TerrainHandles,
     },
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{Height, TilePos},
     structures::commands::StructureCommandsExt,
 };
 
-use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
+use super::InteractionSystem;
 
 /// Systems that handle terraforming.
 pub(super) struct TerraformingPlugin;
 
 impl Plugin for TerraformingPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<SelectedTerraforming>().add_systems(
-            (mark_for_terraforming, apply_terraforming)
-                .in_set(InteractionSystem::ApplyTerraforming),
-        );
+        app.add_systems((apply_terraforming,).in_set(InteractionSystem::ApplyTerraforming));
     }
 }
 
 /// An option for how to terraform the world.
 ///
-/// Also used as a component added to terrain entities that marks them to be manipulated by units.
+/// When `Zoning` is set, this is added  as a component added to terrain entities that marks them to be manipulated by units.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum TerraformingChoice {
     /// Raise the height of this tile once
@@ -39,29 +35,14 @@ pub(crate) enum TerraformingChoice {
     Change(Id<Terrain>),
 }
 
-/// Currently selected terraforming settings
-#[derive(Resource, Default)]
-pub(crate) struct SelectedTerraforming {
-    pub(crate) current_selection: Option<TerraformingChoice>,
-}
-
-/// Flags terrain to be terraformed based on player selection + actions.
-fn mark_for_terraforming(
-    current_selection: Res<CurrentSelection>,
-    cursor_pos: Res<CursorPos>,
-    map_geometry: Res<MapGeometry>,
-    actions: Res<ActionState<PlayerAction>>,
-    terraforming: Res<SelectedTerraforming>,
-    mut commands: Commands,
-) {
-    if actions.just_pressed(PlayerAction::Zone) {
-        if let Some(terraforming_choice) = terraforming.current_selection {
-            let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
-            let relevant_terrain_entities = relevant_tiles.entities(&map_geometry);
-
-            for terrain_entity in relevant_terrain_entities {
-                // TODO: this should be player-configurable
-                commands.entity(terrain_entity).insert(terraforming_choice);
+impl TerraformingChoice {
+    /// Pretty formatting for this type
+    pub(crate) fn display(&self, terrain_manifest: &TerrainManifest) -> String {
+        match self {
+            TerraformingChoice::Raise => "Raise".to_string(),
+            TerraformingChoice::Lower => "Lower".to_string(),
+            TerraformingChoice::Change(terrain_id) => {
+                terrain_manifest.name(*terrain_id).to_string()
             }
         }
     }

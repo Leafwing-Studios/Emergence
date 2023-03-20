@@ -82,7 +82,7 @@ fn handle_selection(
                         .clone(),
                 };
 
-                clipboard.set(Some(structure_data));
+                clipboard.set_to_structure(Some(structure_data));
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
@@ -97,7 +97,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            clipboard.set(None);
+            clipboard.set_to_structure(None);
 
             if complete {
                 cleanup(commands, menu_query);

@@ -1105,7 +1105,7 @@ mod terrain_details {
             let tile_pos = &self.tile_pos;
             let height = &self.height;
             let signals = self.signals.display(item_manifest, structure_manifest);
-            let zoning = self.zoning.display(structure_manifest);
+            let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
             format!(
                 "Entity: {entity:?}
