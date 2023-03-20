@@ -4,7 +4,10 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Terrain},
+    asset_management::{
+        manifest::{Id, Terrain},
+        terrain::TerrainHandles,
+    },
     simulation::geometry::{Height, MapGeometry},
 };
 
@@ -55,15 +58,26 @@ fn mark_for_terraforming(
 
 /// Changes the terrain to match the [`Terraform`] component
 fn apply_terraforming(
-    mut query: Query<(Entity, &mut Id<Terrain>, &mut Height, &Terraform)>,
+    mut query: Query<(
+        Entity,
+        &Terraform,
+        &mut Id<Terrain>,
+        &mut Height,
+        &mut Handle<Scene>,
+    )>,
+    terrain_handles: Res<TerrainHandles>,
     mut commands: Commands,
 ) {
     // FIXME: we should be careful not to let this happen until all non-matching structures are removed.
-    // FIXME: terrain visuals are not updated
     // TODO: this should take work.
-    for (entity, mut terrain, mut height, terraform) in query.iter_mut() {
+    for (entity, terraform, mut terrain, mut height, mut scene_handle) in query.iter_mut() {
         *terrain = terraform.target_terrain_type;
         *height = terraform.target_height;
+        *scene_handle = terrain_handles
+            .scenes
+            .get(&terraform.target_terrain_type)
+            .unwrap()
+            .clone_weak();
 
         // Don't keep the component around
         commands.entity(entity).remove::<Terraform>();
