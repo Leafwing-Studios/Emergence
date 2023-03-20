@@ -74,8 +74,10 @@ fn handle_selection(
 
     match result {
         Ok(element) => {
-            terraforming.current_selection = Some(element.data().clone());
-            cleanup(commands, menu_query);
+            if element.is_complete() {
+                terraforming.current_selection = Some(element.data().clone());
+                cleanup(commands, menu_query);
+            }
         }
         Err(HexMenuError::NoSelection { complete }) => {
             if complete {
