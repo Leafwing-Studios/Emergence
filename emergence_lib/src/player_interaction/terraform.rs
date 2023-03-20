@@ -8,7 +8,8 @@ use crate::{
         manifest::{Id, Terrain},
         terrain::TerrainHandles,
     },
-    simulation::geometry::{Height, MapGeometry},
+    simulation::geometry::{Height, MapGeometry, TilePos},
+    structures::commands::StructureCommandsExt,
 };
 
 use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
@@ -61,6 +62,7 @@ fn apply_terraforming(
     mut query: Query<(
         Entity,
         &Terraform,
+        &TilePos,
         &mut Id<Terrain>,
         &mut Height,
         &mut Handle<Scene>,
@@ -68,9 +70,9 @@ fn apply_terraforming(
     terrain_handles: Res<TerrainHandles>,
     mut commands: Commands,
 ) {
-    // FIXME: we should be careful not to let this happen until all non-matching structures are removed.
     // TODO: this should take work.
-    for (entity, terraform, mut terrain, mut height, mut scene_handle) in query.iter_mut() {
+    for (entity, terraform, tile_pos, mut terrain, mut height, mut scene_handle) in query.iter_mut()
+    {
         *terrain = terraform.target_terrain_type;
         *height = terraform.target_height;
         *scene_handle = terrain_handles
@@ -81,5 +83,8 @@ fn apply_terraforming(
 
         // Don't keep the component around
         commands.entity(entity).remove::<Terraform>();
+
+        // Despawn any structures here; terraforming can't be done with roots growing into stuff!
+        commands.despawn_structure(*tile_pos);
     }
 }
