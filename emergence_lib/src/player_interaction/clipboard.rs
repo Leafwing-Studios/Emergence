@@ -46,8 +46,11 @@ impl Plugin for ClipboardPlugin {
 /// Stores a selection to copy and paste.
 #[derive(Default, Resource, Debug)]
 pub(crate) enum Clipboard {
+    /// The clipboard is set to terraform terrain.
     Terraform(TerraformingChoice),
+    /// The clipboard contains a structure.
     Structures(HashMap<TilePos, ClipboardData>),
+    /// The clipboard is empty.
     #[default]
     Empty,
 }

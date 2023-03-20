@@ -51,6 +51,8 @@ fn update_terraforming_choices(
         available_choices.choices = vec![TerraformingChoice::Raise, TerraformingChoice::Lower];
 
         // Sort to ensure a stable ordering
+        // The lint here is just wrong
+        #[allow(clippy::redundant_closure)]
         let terrain_choices = terrain_manifest
             .variants()
             .into_iter()
@@ -81,7 +83,7 @@ fn handle_selection(
     match result {
         Ok(element) => {
             if element.is_complete() {
-                *clipboard = Clipboard::Terraform(element.data().clone());
+                *clipboard = Clipboard::Terraform(*element.data());
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {

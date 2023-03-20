@@ -1,5 +1,5 @@
-//! Creates the UI from all modules.
-//!
+//! Manages all UI across the entire game.
+
 use crate::ui::{
     production_statistics::ProductionStatisticsPlugin, select_structure::SelectStructurePlugin,
     select_terraforming::SelectTerraformingPlugin, selection_panel::HoverDetailsPlugin,

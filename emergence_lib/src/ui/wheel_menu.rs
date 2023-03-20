@@ -1,3 +1,5 @@
+//! A reusable gesture-based selector.
+
 use bevy::{prelude::*, utils::HashMap};
 use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
@@ -126,8 +128,10 @@ pub(super) trait Choice: Clone + Hash + Eq + Send + Sync + 'static {
     const ACTIVATION: PlayerAction;
 }
 
+/// The list of choices available to use in a menu.
 #[derive(Resource)]
 pub(super) struct AvailableChoices<D> {
+    /// The backing ordered [`Vec`]
     pub(super) choices: Vec<D>,
 }
 
