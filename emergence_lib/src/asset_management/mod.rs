@@ -13,7 +13,7 @@
 use std::any::TypeId;
 
 use self::{
-    manifest::plugin::ManifestPlugin,
+    manifest::{plugin::ManifestPlugin, Id, Structure},
     structures::StructureHandles,
     terrain::TerrainHandles,
     ui::{Icons, UiElements},
@@ -44,7 +44,7 @@ impl Plugin for AssetManagementPlugin {
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>()
             .add_asset_collection::<UiElements>()
-            .add_asset_collection::<Icons>()
+            .add_asset_collection::<Icons<Id<Structure>>>()
             .add_plugin(ManifestPlugin);
     }
 }

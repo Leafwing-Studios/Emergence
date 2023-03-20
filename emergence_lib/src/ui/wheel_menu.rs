@@ -3,12 +3,12 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Structure, StructureManifest},
-        ui::{Icons, UiElements},
-    },
+    asset_management::ui::{Icons, UiElements},
     player_interaction::{cursor::CursorPos, PlayerAction},
 };
+
+use core::fmt::Debug;
+use core::hash::Hash;
 
 /// A marker component for any element of a hex menu.
 #[derive(Component)]
@@ -121,14 +121,19 @@ pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
     }
 }
 
+#[derive(Resource)]
+pub(super) struct AvailableChoices<D> {
+    choices: Vec<D>,
+}
+
 /// Creates a new hex menu.
-pub(super) fn spawn_hex_menu(
+pub(super) fn spawn_hex_menu<D: Clone + Hash + Eq + Send + Sync + 'static>(
     mut commands: Commands,
     actions: Res<ActionState<PlayerAction>>,
     cursor_pos: Res<CursorPos>,
     ui_elements: Res<UiElements>,
-    structure_manifest: Res<StructureManifest>,
-    icons: Res<Icons>,
+    available_choices: Res<AvailableChoices<D>>,
+    icons: Res<Icons<D>>,
 ) {
     /// The size of the hexes used in this menu.
     const HEX_SIZE: f32 = 64.0;
@@ -156,21 +161,17 @@ pub(super) fn spawn_hex_menu(
             let mut hexes =
                 Hex::ZERO.custom_spiral_range(1..range, hexx::Direction::BottomRight, true);
 
-            let mut variants: Vec<Id<Structure>> =
-                Vec::from_iter(structure_manifest.variants().into_iter());
-            // We want a stable order so muscle memory works effectively
-            variants.sort();
+            let variants: Vec<_> = Vec::from_iter(available_choices.choices.iter().cloned());
 
-            for structure_id in variants {
+            for data in variants {
                 if let Some(hex) = hexes.next() {
                     // Content
-                    arrangement.content_map.insert(hex, structure_id);
+                    arrangement.content_map.insert(hex, data.clone());
                     // Icon
                     let icon_entity = commands
                         .spawn(HexMenuIconBundle::new(
-                            structure_id,
+                            data,
                             hex,
-                            &structure_manifest,
                             &icons,
                             &arrangement.layout,
                         ))
@@ -201,22 +202,18 @@ pub(super) fn spawn_hex_menu(
 struct HexMenuIconBundle {
     /// Marker component
     hex_menu: HexMenu,
-    /// Small image of structure
+    /// Bundle that stores the icon to use
     image_bundle: ImageBundle,
-    /// The corresponding `Id<Structure>`
-    structure_id: Id<Structure>,
 }
 
 impl HexMenuIconBundle {
     /// Create a new icon with the appropriate positioning and appearance.
-    fn new(
-        structure_id: Id<Structure>,
+    fn new<D: Hash + Eq + Send + Sync + 'static>(
+        data: D,
         hex: Hex,
-        structure_manifest: &StructureManifest,
-        icons: &Icons,
+        icons: &Icons<D>,
         layout: &HexLayout,
     ) -> Self {
-        let color = structure_manifest.get(structure_id).color;
         // Correct for center vs corner positioning
         let half_cell = Vec2 {
             x: layout.hex_size.x / 2.,
@@ -225,9 +222,8 @@ impl HexMenuIconBundle {
         let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
 
         let image_bundle = ImageBundle {
-            background_color: BackgroundColor(color),
             image: UiImage {
-                texture: icons.structure(structure_id),
+                texture: icons.get(data),
                 flip_x: false,
                 flip_y: false,
             },
@@ -249,7 +245,6 @@ impl HexMenuIconBundle {
         HexMenuIconBundle {
             hex_menu: HexMenu,
             image_bundle,
-            structure_id,
         }
     }
 }

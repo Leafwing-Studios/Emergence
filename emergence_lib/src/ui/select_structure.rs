@@ -9,7 +9,8 @@ use crate::{
 use bevy::prelude::*;
 
 use super::wheel_menu::{
-    select_hex, spawn_hex_menu, HexMenu, HexMenuArrangement, HexMenuElement, HexMenuError,
+    select_hex, spawn_hex_menu, AvailableChoices, HexMenu, HexMenuArrangement, HexMenuElement,
+    HexMenuError,
 };
 
 /// Hex menu and selection modifying logic.
@@ -17,8 +18,15 @@ pub(super) struct SelectStructurePlugin;
 
 impl Plugin for SelectStructurePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(spawn_hex_menu)
+        app.init_resource::<AvailableChoices<Id<Structure>>>()
+            .add_system(spawn_hex_menu::<Id<Structure>>)
             .add_system(select_hex.pipe(handle_selection));
+    }
+}
+
+impl FromWorld for AvailableChoices<Id<Structure>> {
+    fn from_world(world: &mut World) -> Self {
+        todo!()
     }
 }
 
