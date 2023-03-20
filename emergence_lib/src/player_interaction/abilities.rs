@@ -25,6 +25,7 @@ impl Plugin for AbilitiesPlugin {
 }
 
 /// The different intent-spending "abilities" that the hive mind can use
+// FIXME: these need to be unified
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub(crate) enum IntentAbility {
     /// Gather allied units.
@@ -38,7 +39,7 @@ impl IntentAbility {
     fn default_input_map() -> InputMap<IntentAbility> {
         InputMap::new([
             (KeyCode::F, IntentAbility::Lure),
-            (KeyCode::G, IntentAbility::Warning),
+            (KeyCode::V, IntentAbility::Warning),
         ])
     }
 
