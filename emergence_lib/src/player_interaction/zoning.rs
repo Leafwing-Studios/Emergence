@@ -22,8 +22,8 @@ pub(super) struct ZoningPlugin;
 
 impl Plugin for ZoningPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(
-            set_zoning
+        app.add_systems(
+            (mark_for_demolition, set_zoning)
                 .in_set(InteractionSystem::ApplyZoning)
                 .after(InteractionSystem::SelectTiles)
                 .after(InteractionSystem::SetClipboard),
@@ -140,6 +140,25 @@ fn set_zoning(
                     }
                 }
             }
+        }
+    }
+}
+
+/// Mark the selected structure for deletion.
+///
+/// Note that this is distinct from setting the tile to [`Zoning::KeepClear`], as it does not persist.
+fn mark_for_demolition(
+    player_actions: Res<ActionState<PlayerAction>>,
+    current_selection: Res<CurrentSelection>,
+    mut commands: Commands,
+) {
+    if player_actions.just_pressed(PlayerAction::KeepClear)
+        || player_actions.just_pressed(PlayerAction::ClearZoning)
+    {
+        if let CurrentSelection::Structure(structure_entity) = *current_selection {
+            commands
+                .entity(structure_entity)
+                .insert(MarkedForDemolition);
         }
     }
 }
