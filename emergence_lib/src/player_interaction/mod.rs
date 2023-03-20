@@ -13,6 +13,7 @@ pub(crate) mod clipboard;
 pub(crate) mod cursor;
 pub(crate) mod intent;
 pub(crate) mod selection;
+pub(crate) mod terraform;
 pub(crate) mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
@@ -28,6 +29,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(selection::SelectionPlugin)
+            .add_plugin(terraform::TerraformingPlugin)
             .add_plugin(clipboard::ClipboardPlugin)
             .add_plugin(zoning::ZoningPlugin);
 
@@ -51,6 +53,8 @@ pub(crate) enum InteractionSystem {
     ReplenishIntent,
     /// Apply zoning to tiles
     ApplyZoning,
+    /// Apply terraforming to tiles
+    ApplyTerraforming,
     /// Use intent-spending abilities
     UseAbilities,
     /// Spawn and despawn ghosts
@@ -94,6 +98,8 @@ pub(crate) enum PlayerAction {
     ClearZoning,
     /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](zoning::Zoning::KeepClear).
     KeepClear,
+    /// Set the height of a tile.
+    Terraform,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
@@ -139,6 +145,7 @@ impl PlayerAction {
             Zone => KeyCode::Return.into(),
             ClearZoning => KeyCode::Back.into(),
             KeepClear => KeyCode::Delete.into(),
+            Terraform => KeyCode::G.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
             SnapToSelection => KeyCode::L.into(),
@@ -178,6 +185,7 @@ impl PlayerAction {
             Zone => North.into(),
             ClearZoning => DPadUp.into(),
             KeepClear => DPadDown.into(),
+            Terraform => UserInput::chord([radius_modifier, North]),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
             SnapToSelection => GamepadButtonType::LeftThumb.into(),
