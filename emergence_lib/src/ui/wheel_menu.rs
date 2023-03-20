@@ -52,12 +52,6 @@ impl<D: Clone> HexMenuArrangement<D> {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
-
-    /// Fetches the entity corresponding to the icon under the cursor.
-    fn get_icon(&self, cursor_pos: Vec2) -> Option<Entity> {
-        let hex = self.get_hex(cursor_pos);
-        self.icon_map.get(&hex).copied()
-    }
 }
 
 /// The data corresponding to one element of the hex menu.
@@ -65,8 +59,6 @@ impl<D: Clone> HexMenuArrangement<D> {
 pub(super) struct HexMenuElement<D> {
     /// The payload of this element.
     data: D,
-    /// The entity corresponding to the [`HexMenuIconBundle`].
-    icon_entity: Entity,
     /// Is the action complete?
     complete: bool,
 }
@@ -75,11 +67,6 @@ impl<D> HexMenuElement<D> {
     /// The data stored in this element.
     pub(super) fn data(&self) -> &D {
         &self.data
-    }
-
-    /// The entity corresponding to the [`HexMenuIconBundle`].
-    pub(super) fn icon_entity(&self) -> Entity {
-        self.icon_entity
     }
 
     /// Is the action complete?
@@ -98,13 +85,9 @@ pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
         let complete = actions.released(PlayerAction::SelectStructure);
 
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-            let maybe_item = arrangement.get_item(cursor_pos);
-            let maybe_icon_entity = arrangement.get_icon(cursor_pos);
-
-            if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
+            if let Some(item) = arrangement.get_item(cursor_pos) {
                 Ok(HexMenuElement {
                     data: item,
-                    icon_entity,
                     complete,
                 })
             } else {

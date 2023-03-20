@@ -42,7 +42,6 @@ fn handle_selection(
     In(result): In<Result<HexMenuElement<Id<Structure>>, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
-    mut icon_query: Query<(Entity, &Id<Structure>, &mut BackgroundColor), With<HexMenu>>,
     structure_manifest: Res<StructureManifest>,
     commands: Commands,
 ) {
@@ -69,14 +68,6 @@ fn handle_selection(
 
                 clipboard.set(Some(structure_data));
                 cleanup(commands, menu_query);
-            } else {
-                for (icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
-                    if icon_entity == element.icon_entity() {
-                        *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
-                    } else {
-                        *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
-                    }
-                }
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
@@ -84,10 +75,6 @@ fn handle_selection(
 
             if complete {
                 cleanup(commands, menu_query);
-            } else {
-                for (_icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
-                    *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
-                }
             }
         }
         Err(HexMenuError::NoMenu) => (),
