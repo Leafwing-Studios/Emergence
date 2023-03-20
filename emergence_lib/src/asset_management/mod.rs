@@ -138,7 +138,7 @@ impl AssetCollectionExt for App {
 
 /// Constructs the mesh for a single hexagonal column with the specified height.
 fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = MeshInfo::partial_hexagonal_column(hex_layout, Hex::ZERO, hex_height);
+    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, hex_height);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
