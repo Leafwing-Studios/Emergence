@@ -73,7 +73,10 @@ fn handle_selection(
     }
 
     match result {
-        Ok(element) => terraforming.current_selection = Some(element.data().clone()),
+        Ok(element) => {
+            terraforming.current_selection = Some(element.data().clone());
+            cleanup(commands, menu_query);
+        }
         Err(HexMenuError::NoSelection { complete }) => {
             if complete {
                 terraforming.current_selection = None;
