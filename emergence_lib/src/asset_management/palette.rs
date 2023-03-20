@@ -92,3 +92,24 @@ pub(crate) const LIGHT_MOON: Color = Color::Hsla {
 
 /// The color of starlight
 pub(crate) const LIGHT_STARS: Color = Color::WHITE;
+
+/// Colors used in the UI
+pub(crate) mod ui {
+    use bevy::prelude::Color;
+
+    /// The color used by highlighted /selected menu options
+    pub(crate) const MENU_HIGHLIGHT_COLOR: Color = Color::Hsla {
+        hue: 0.,
+        saturation: 0.,
+        lightness: 0.95,
+        alpha: 1.0,
+    };
+
+    /// The color used by neutral / unselected menu options
+    pub(crate) const MENU_NEUTRAL_COLOR: Color = Color::Hsla {
+        hue: 0.,
+        saturation: 0.,
+        lightness: 0.7,
+        alpha: 1.0,
+    };
+}

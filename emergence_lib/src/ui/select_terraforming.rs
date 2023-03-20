@@ -1,7 +1,10 @@
 //! Quickly select which terraforming option to use.
 
 use crate::{
-    asset_management::manifest::TerrainManifest,
+    asset_management::{
+        manifest::TerrainManifest,
+        palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
+    },
     player_interaction::{
         terraform::{SelectedTerraforming, TerraformingChoice},
         PlayerAction,
@@ -30,7 +33,11 @@ impl Plugin for SelectTerraformingPlugin {
                 )
                     .chain(),
             )
-            .add_system(select_hex.pipe(handle_selection));
+            .add_system(
+                select_hex
+                    .pipe(handle_selection)
+                    .run_if(resource_exists::<HexMenuArrangement<TerraformingChoice>>()),
+            );
     }
 }
 
@@ -59,9 +66,11 @@ fn update_terraforming_choices(
 /// Set the selected terraforming choice based on the results of the hex menu.
 fn handle_selection(
     In(result): In<Result<HexMenuElement<TerraformingChoice>, HexMenuError>>,
+    mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     menu_query: Query<Entity, With<HexMenu>>,
     mut terraforming: ResMut<SelectedTerraforming>,
     commands: Commands,
+    arrangement: Res<HexMenuArrangement<TerraformingChoice>>,
 ) {
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
@@ -77,12 +86,28 @@ fn handle_selection(
             if element.is_complete() {
                 terraforming.current_selection = Some(element.data().clone());
                 cleanup(commands, menu_query);
+            } else {
+                for (&background_hex, &background_entity) in arrangement.background_map() {
+                    if let Ok(mut background_color) = background_query.get_mut(background_entity) {
+                        *background_color = if background_hex == element.hex() {
+                            BackgroundColor(MENU_HIGHLIGHT_COLOR)
+                        } else {
+                            BackgroundColor(MENU_NEUTRAL_COLOR)
+                        }
+                    }
+                }
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
+            terraforming.current_selection = None;
             if complete {
-                terraforming.current_selection = None;
                 cleanup(commands, menu_query);
+            } else {
+                for &background_entity in arrangement.background_map().values() {
+                    if let Ok(mut background_color) = background_query.get_mut(background_entity) {
+                        *background_color = BackgroundColor(MENU_NEUTRAL_COLOR)
+                    }
+                }
             }
         }
         Err(HexMenuError::NoMenu) => (),

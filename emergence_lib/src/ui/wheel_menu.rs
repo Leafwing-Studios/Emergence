@@ -3,7 +3,10 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::ui::{Icons, UiElements},
+    asset_management::{
+        palette::ui::MENU_NEUTRAL_COLOR,
+        ui::{Icons, UiElements},
+    },
     player_interaction::{cursor::CursorPos, PlayerAction},
 };
 
@@ -52,6 +55,11 @@ impl<D: Clone> HexMenuArrangement<D> {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
+
+    /// The collection of menu background entities at each hex coordinate
+    pub(super) fn background_map(&self) -> &HashMap<Hex, Entity> {
+        &self.background_map
+    }
 }
 
 /// The data corresponding to one element of the hex menu.
@@ -59,6 +67,8 @@ impl<D: Clone> HexMenuArrangement<D> {
 pub(super) struct HexMenuElement<D> {
     /// The payload of this element.
     data: D,
+    /// The hex coordinate of the menu that this corresponds to.
+    hex: Hex,
     /// Is the action complete?
     complete: bool,
 }
@@ -67,6 +77,11 @@ impl<D> HexMenuElement<D> {
     /// The data stored in this element.
     pub(super) fn data(&self) -> &D {
         &self.data
+    }
+
+    /// The hex coordinate of the menu that this corresponds to.
+    pub(super) fn hex(&self) -> Hex {
+        self.hex
     }
 
     /// Is the action complete?
@@ -85,9 +100,10 @@ pub(super) fn select_hex<D: Choice>(
         let complete = actions.released(D::ACTIVATION);
 
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
-            if let Some(item) = arrangement.get_item(cursor_pos) {
+            if let Some(data) = arrangement.get_item(cursor_pos) {
                 Ok(HexMenuElement {
-                    data: item,
+                    data,
+                    hex: arrangement.get_hex(cursor_pos),
                     complete,
                 })
             } else {
@@ -272,7 +288,7 @@ impl HexMenuBackgroundBundle {
         let screen_pos: Vec2 = layout.hex_to_world_pos(hex) - half_cell;
 
         let image_bundle = ImageBundle {
-            background_color: BackgroundColor(Color::WHITE),
+            background_color: BackgroundColor(MENU_NEUTRAL_COLOR),
             image: UiImage {
                 texture: texture.clone_weak(),
                 flip_x: false,

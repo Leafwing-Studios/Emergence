@@ -1,7 +1,10 @@
 //! Quickly select which structure to place.
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::{
+        manifest::{Id, Structure, StructureManifest},
+        palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
+    },
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
         PlayerAction,
@@ -25,7 +28,11 @@ impl Plugin for SelectStructurePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AvailableChoices<Id<Structure>>>()
             .add_systems((update_structure_choices, spawn_hex_menu::<Id<Structure>>).chain())
-            .add_system(select_hex.pipe(handle_selection));
+            .add_system(
+                select_hex
+                    .pipe(handle_selection)
+                    .run_if(resource_exists::<HexMenuArrangement<Id<Structure>>>()),
+            );
     }
 }
 
@@ -49,8 +56,10 @@ fn handle_selection(
     In(result): In<Result<HexMenuElement<Id<Structure>>, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
+    mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     structure_manifest: Res<StructureManifest>,
     commands: Commands,
+    arrangement: Res<HexMenuArrangement<Id<Structure>>>,
 ) {
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
@@ -75,6 +84,16 @@ fn handle_selection(
 
                 clipboard.set(Some(structure_data));
                 cleanup(commands, menu_query);
+            } else {
+                for (&background_hex, &background_entity) in arrangement.background_map() {
+                    if let Ok(mut background_color) = background_query.get_mut(background_entity) {
+                        *background_color = if background_hex == element.hex() {
+                            BackgroundColor(MENU_HIGHLIGHT_COLOR)
+                        } else {
+                            BackgroundColor(MENU_NEUTRAL_COLOR)
+                        }
+                    }
+                }
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
@@ -82,6 +101,12 @@ fn handle_selection(
 
             if complete {
                 cleanup(commands, menu_query);
+            } else {
+                for &background_entity in arrangement.background_map().values() {
+                    if let Ok(mut background_color) = background_query.get_mut(background_entity) {
+                        *background_color = BackgroundColor(MENU_NEUTRAL_COLOR)
+                    }
+                }
             }
         }
         Err(HexMenuError::NoMenu) => (),
