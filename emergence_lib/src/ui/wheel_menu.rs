@@ -28,11 +28,11 @@ pub(super) enum HexMenuError {
 
 /// The location of the items in the hex menu.
 #[derive(Resource)]
-pub(super) struct HexMenuArrangement {
+pub(super) struct HexMenuArrangement<D> {
     /// A simple mapping from position to contents.
     ///
     /// If entries are missing, the action will be cancelled if released there.
-    content_map: HashMap<Hex, Id<Structure>>,
+    content_map: HashMap<Hex, D>,
     /// The collection of menu icon entities at each hex coordinate
     icon_map: HashMap<Hex, Entity>,
     /// The collection of menu background entities at each hex coordinate
@@ -41,14 +41,14 @@ pub(super) struct HexMenuArrangement {
     layout: HexLayout,
 }
 
-impl HexMenuArrangement {
+impl<D: Clone> HexMenuArrangement<D> {
     /// Computes the hex that corresponds to the cursor position.
     fn get_hex(&self, cursor_pos: Vec2) -> Hex {
         self.layout.world_pos_to_hex(cursor_pos)
     }
 
     /// Fetches the element under the cursor.
-    fn get_item(&self, cursor_pos: Vec2) -> Option<Id<Structure>> {
+    fn get_item(&self, cursor_pos: Vec2) -> Option<D> {
         let hex = self.get_hex(cursor_pos);
         self.content_map.get(&hex).cloned()
     }
@@ -62,19 +62,19 @@ impl HexMenuArrangement {
 
 /// The data corresponding to one element of the hex menu.
 #[derive(Debug, PartialEq, Eq)]
-pub(super) struct HexMenuData {
-    /// The type of structure to place.
-    structure_id: Id<Structure>,
+pub(super) struct HexMenuElement<D> {
+    /// The payload of this element.
+    data: D,
     /// The entity corresponding to the [`HexMenuIconBundle`].
     icon_entity: Entity,
     /// Is the action complete?
     complete: bool,
 }
 
-impl HexMenuData {
-    /// The type of structure to place.
-    pub(super) fn structure_id(&self) -> Id<Structure> {
-        self.structure_id
+impl<D> HexMenuElement<D> {
+    /// The data stored in this element.
+    pub(super) fn data(&self) -> &D {
+        &self.data
     }
 
     /// The entity corresponding to the [`HexMenuIconBundle`].
@@ -89,11 +89,11 @@ impl HexMenuData {
 }
 
 /// Select a hexagon from the hex menu.
-pub(super) fn select_hex(
+pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
     cursor_pos: Res<CursorPos>,
-    hex_menu_arrangement: Option<Res<HexMenuArrangement>>,
+    hex_menu_arrangement: Option<Res<HexMenuArrangement<D>>>,
     actions: Res<ActionState<PlayerAction>>,
-) -> Result<HexMenuData, HexMenuError> {
+) -> Result<HexMenuElement<D>, HexMenuError> {
     if let Some(arrangement) = hex_menu_arrangement {
         let complete = actions.released(PlayerAction::SelectStructure);
 
@@ -102,8 +102,8 @@ pub(super) fn select_hex(
             let maybe_icon_entity = arrangement.get_icon(cursor_pos);
 
             if let (Some(item), Some(icon_entity)) = (maybe_item, maybe_icon_entity) {
-                Ok(HexMenuData {
-                    structure_id: item,
+                Ok(HexMenuElement {
+                    data: item,
                     icon_entity,
                     complete,
                 })

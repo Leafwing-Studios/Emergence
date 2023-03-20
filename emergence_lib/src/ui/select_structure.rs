@@ -9,7 +9,7 @@ use crate::{
 use bevy::prelude::*;
 
 use super::wheel_menu::{
-    select_hex, spawn_hex_menu, HexMenu, HexMenuArrangement, HexMenuData, HexMenuError,
+    select_hex, spawn_hex_menu, HexMenu, HexMenuArrangement, HexMenuElement, HexMenuError,
 };
 
 /// Hex menu and selection modifying logic.
@@ -24,7 +24,7 @@ impl Plugin for SelectStructurePlugin {
 
 /// Set the selected structure based on the results of the hex menu.
 fn handle_selection(
-    In(result): In<Result<HexMenuData, HexMenuError>>,
+    In(result): In<Result<HexMenuElement<Id<Structure>>, HexMenuError>>,
     mut clipboard: ResMut<Clipboard>,
     menu_query: Query<Entity, With<HexMenu>>,
     mut icon_query: Query<(Entity, &Id<Structure>, &mut BackgroundColor), With<HexMenu>>,
@@ -37,17 +37,17 @@ fn handle_selection(
             commands.entity(entity).despawn_recursive();
         }
 
-        commands.remove_resource::<HexMenuArrangement>();
+        commands.remove_resource::<HexMenuArrangement<Id<Structure>>>();
     }
 
     match result {
-        Ok(data) => {
-            if data.is_complete() {
+        Ok(element) => {
+            if element.is_complete() {
                 let structure_data = ClipboardData {
-                    structure_id: data.structure_id(),
+                    structure_id: *element.data(),
                     facing: Facing::default(),
                     active_recipe: structure_manifest
-                        .get(data.structure_id())
+                        .get(*element.data())
                         .starting_recipe()
                         .clone(),
                 };
@@ -56,7 +56,7 @@ fn handle_selection(
                 cleanup(commands, menu_query);
             } else {
                 for (icon_entity, &structure_id, mut icon_color) in icon_query.iter_mut() {
-                    if icon_entity == data.icon_entity() {
+                    if icon_entity == element.icon_entity() {
                         *icon_color = BackgroundColor(Color::ANTIQUE_WHITE);
                     } else {
                         *icon_color = BackgroundColor(structure_manifest.get(structure_id).color);
