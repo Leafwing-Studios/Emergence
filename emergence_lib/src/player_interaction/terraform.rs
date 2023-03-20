@@ -11,7 +11,7 @@ use crate::{
     structures::commands::StructureCommandsExt,
 };
 
-use super::InteractionSystem;
+use super::{zoning::Zoning, InteractionSystem};
 
 /// Systems that handle terraforming.
 pub(super) struct TerraformingPlugin;
@@ -23,28 +23,57 @@ impl Plugin for TerraformingPlugin {
 }
 
 /// An option for how to terraform the world.
-///
-/// When `Zoning` is set, this is added  as a component added to terrain entities that marks them to be manipulated by units.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum TerraformingChoice {
     /// Raise the height of this tile once
     Raise,
     /// Lower the height of this tile once
     Lower,
-    /// Replace the existing soil with the provided Id<Terrain>.
+    /// Replace the existing soil with the provided [`Id<Terrain>`].
     Change(Id<Terrain>),
 }
 
 impl TerraformingChoice {
+    /// Converts `self` into a [`MarkedForTerraforming`] component.
+    pub(crate) fn into_mark(
+        self,
+        current_height: Height,
+        current_material: Id<Terrain>,
+    ) -> MarkedForTerraforming {
+        match self {
+            TerraformingChoice::Raise => MarkedForTerraforming {
+                target_height: current_height + Height(1),
+                target_material: current_material,
+            },
+            TerraformingChoice::Lower => MarkedForTerraforming {
+                target_height: current_height - Height(1),
+                target_material: current_material,
+            },
+            TerraformingChoice::Change(target_material) => MarkedForTerraforming {
+                target_height: current_height,
+                target_material,
+            },
+        }
+    }
+}
+
+/// When `Zoning` is set, this is added  as a component added to terrain entities that marks them to be manipulated by units.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct MarkedForTerraforming {
+    /// The desired height of this tile
+    target_height: Height,
+    /// The desired terrain material of this tile
+    target_material: Id<Terrain>,
+}
+
+impl MarkedForTerraforming {
     /// Pretty formatting for this type
     pub(crate) fn display(&self, terrain_manifest: &TerrainManifest) -> String {
-        match self {
-            TerraformingChoice::Raise => "Raise".to_string(),
-            TerraformingChoice::Lower => "Lower".to_string(),
-            TerraformingChoice::Change(terrain_id) => {
-                terrain_manifest.name(*terrain_id).to_string()
-            }
-        }
+        format!(
+            "Terraform: Height {}, Terrain Type {}",
+            self.target_height,
+            terrain_manifest.name(self.target_material)
+        )
     }
 }
 
@@ -52,8 +81,9 @@ impl TerraformingChoice {
 fn apply_terraforming(
     mut query: Query<(
         Entity,
-        &TerraformingChoice,
+        &MarkedForTerraforming,
         &TilePos,
+        &mut Zoning,
         &mut Id<Terrain>,
         &mut Height,
         &mut Handle<Scene>,
@@ -61,24 +91,33 @@ fn apply_terraforming(
     terrain_handles: Res<TerrainHandles>,
     mut commands: Commands,
 ) {
-    // TODO: this should take work.
-    for (entity, terraform, tile_pos, mut terrain, mut height, mut scene_handle) in query.iter_mut()
+    for (
+        entity,
+        marked_for_terraforming,
+        tile_pos,
+        mut zoning,
+        mut terrain,
+        mut height,
+        mut scene_handle,
+    ) in query.iter_mut()
     {
-        match terraform {
-            TerraformingChoice::Raise => *height += Height(1),
-            TerraformingChoice::Lower => *height -= Height(1),
-            TerraformingChoice::Change(target_terrain_type) => {
-                *terrain = *target_terrain_type;
-                *scene_handle = terrain_handles
-                    .scenes
-                    .get(target_terrain_type)
-                    .unwrap()
-                    .clone_weak();
-            }
-        }
+        // TODO: this should take work.
+        *height = marked_for_terraforming.target_height;
+        *terrain = marked_for_terraforming.target_material;
+        *scene_handle = terrain_handles
+            .scenes
+            .get(&marked_for_terraforming.target_material)
+            .unwrap()
+            .clone_weak();
 
-        // Don't keep the component around
-        commands.entity(entity).remove::<TerraformingChoice>();
+        if *height == marked_for_terraforming.target_height
+            && *terrain == marked_for_terraforming.target_material
+        {
+            // Don't keep the components around once we've completed our action
+            commands.entity(entity).remove::<MarkedForTerraforming>();
+            // Reset the zoning when we're done
+            *zoning = Zoning::None;
+        }
 
         // Despawn any structures here; terraforming can't be done with roots growing into stuff!
         commands.despawn_structure(*tile_pos);
