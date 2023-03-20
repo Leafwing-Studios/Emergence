@@ -6,6 +6,8 @@ use crate::{
     simulation::geometry::Facing,
 };
 
+use itertools::Itertools;
+
 use bevy::prelude::*;
 
 use super::wheel_menu::{
@@ -19,14 +21,19 @@ pub(super) struct SelectStructurePlugin;
 impl Plugin for SelectStructurePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AvailableChoices<Id<Structure>>>()
-            .add_system(spawn_hex_menu::<Id<Structure>>)
+            .add_systems((update_structure_choices, spawn_hex_menu::<Id<Structure>>).chain())
             .add_system(select_hex.pipe(handle_selection));
     }
 }
 
-impl FromWorld for AvailableChoices<Id<Structure>> {
-    fn from_world(world: &mut World) -> Self {
-        todo!()
+/// Update the set of choices available to build whenever the structure manifest is updated
+fn update_structure_choices(
+    mut available_choices: ResMut<AvailableChoices<Id<Structure>>>,
+    structure_manifest: Res<StructureManifest>,
+) {
+    if structure_manifest.is_changed() {
+        // Sort to ensure a stable ordering
+        available_choices.choices = structure_manifest.variants().into_iter().sorted().collect();
     }
 }
 

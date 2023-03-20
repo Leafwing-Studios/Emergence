@@ -123,7 +123,15 @@ pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
 
 #[derive(Resource)]
 pub(super) struct AvailableChoices<D> {
-    choices: Vec<D>,
+    pub(super) choices: Vec<D>,
+}
+
+impl<D> Default for AvailableChoices<D> {
+    fn default() -> Self {
+        Self {
+            choices: Vec::new(),
+        }
+    }
 }
 
 /// Creates a new hex menu.
