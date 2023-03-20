@@ -2,7 +2,10 @@
 
 use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest},
-    player_interaction::clipboard::{Clipboard, ClipboardData},
+    player_interaction::{
+        clipboard::{Clipboard, ClipboardData},
+        PlayerAction,
+    },
     simulation::geometry::Facing,
 };
 
@@ -11,8 +14,8 @@ use itertools::Itertools;
 use bevy::prelude::*;
 
 use super::wheel_menu::{
-    select_hex, spawn_hex_menu, AvailableChoices, HexMenu, HexMenuArrangement, HexMenuElement,
-    HexMenuError,
+    select_hex, spawn_hex_menu, AvailableChoices, Choice, HexMenu, HexMenuArrangement,
+    HexMenuElement, HexMenuError,
 };
 
 /// Logic used to let users select the structure to build.
@@ -24,6 +27,10 @@ impl Plugin for SelectStructurePlugin {
             .add_systems((update_structure_choices, spawn_hex_menu::<Id<Structure>>).chain())
             .add_system(select_hex.pipe(handle_selection));
     }
+}
+
+impl Choice for Id<Structure> {
+    const ACTIVATION: PlayerAction = PlayerAction::SelectStructure;
 }
 
 /// Update the set of choices available to build whenever the structure manifest is updated

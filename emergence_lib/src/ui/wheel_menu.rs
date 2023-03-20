@@ -76,13 +76,13 @@ impl<D> HexMenuElement<D> {
 }
 
 /// Select a hexagon from the hex menu.
-pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
+pub(super) fn select_hex<D: Choice>(
     cursor_pos: Res<CursorPos>,
     hex_menu_arrangement: Option<Res<HexMenuArrangement<D>>>,
     actions: Res<ActionState<PlayerAction>>,
 ) -> Result<HexMenuElement<D>, HexMenuError> {
     if let Some(arrangement) = hex_menu_arrangement {
-        let complete = actions.released(PlayerAction::SelectStructure);
+        let complete = actions.released(D::ACTIVATION);
 
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
             if let Some(item) = arrangement.get_item(cursor_pos) {
@@ -104,6 +104,12 @@ pub(super) fn select_hex<D: Send + Sync + Clone + 'static>(
     }
 }
 
+/// A choice that can be used in a wheel menu.
+pub(super) trait Choice: Clone + Hash + Eq + Send + Sync + 'static {
+    /// The action that is pressed to bring up this wheel menu
+    const ACTIVATION: PlayerAction;
+}
+
 #[derive(Resource)]
 pub(super) struct AvailableChoices<D> {
     pub(super) choices: Vec<D>,
@@ -118,7 +124,7 @@ impl<D> Default for AvailableChoices<D> {
 }
 
 /// Creates a new hex menu.
-pub(super) fn spawn_hex_menu<D: Clone + Hash + Eq + Send + Sync + 'static>(
+pub(super) fn spawn_hex_menu<D: Choice>(
     mut commands: Commands,
     actions: Res<ActionState<PlayerAction>>,
     cursor_pos: Res<CursorPos>,
@@ -128,8 +134,7 @@ pub(super) fn spawn_hex_menu<D: Clone + Hash + Eq + Send + Sync + 'static>(
 ) {
     /// The size of the hexes used in this menu.
     const HEX_SIZE: f32 = 64.0;
-
-    if actions.just_pressed(PlayerAction::SelectStructure) {
+    if actions.just_pressed(D::ACTIVATION) {
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
             let mut arrangement = HexMenuArrangement {
                 content_map: HashMap::default(),

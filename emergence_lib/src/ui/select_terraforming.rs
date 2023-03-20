@@ -1,8 +1,11 @@
-//! Quickly select which structure to place.
+//! Quickly select which terraforming option to use.
 
 use crate::{
     asset_management::manifest::TerrainManifest,
-    player_interaction::terraform::{SelectedTerraforming, TerraformingChoice},
+    player_interaction::{
+        terraform::{SelectedTerraforming, TerraformingChoice},
+        PlayerAction,
+    },
 };
 
 use itertools::Itertools;
@@ -10,8 +13,8 @@ use itertools::Itertools;
 use bevy::prelude::*;
 
 use super::wheel_menu::{
-    select_hex, spawn_hex_menu, AvailableChoices, HexMenu, HexMenuArrangement, HexMenuElement,
-    HexMenuError,
+    select_hex, spawn_hex_menu, AvailableChoices, Choice, HexMenu, HexMenuArrangement,
+    HexMenuElement, HexMenuError,
 };
 
 /// Logic used to let users select the terraforming option to use.
@@ -31,7 +34,11 @@ impl Plugin for SelectTerraformingPlugin {
     }
 }
 
-/// Update the set of choices available to build whenever the structure manifest is updated
+impl Choice for TerraformingChoice {
+    const ACTIVATION: PlayerAction = PlayerAction::Terraform;
+}
+
+/// Update the set of choices available to build whenever the terrain manifest is updated
 fn update_terraforming_choices(
     mut available_choices: ResMut<AvailableChoices<TerraformingChoice>>,
     terrain_manifest: Res<TerrainManifest>,
@@ -49,7 +56,7 @@ fn update_terraforming_choices(
     }
 }
 
-/// Set the selected structure based on the results of the hex menu.
+/// Set the selected terraforming choice based on the results of the hex menu.
 fn handle_selection(
     In(result): In<Result<HexMenuElement<TerraformingChoice>, HexMenuError>>,
     menu_query: Query<Entity, With<HexMenu>>,
