@@ -12,6 +12,8 @@
 
 use std::any::TypeId;
 
+use crate::player_interaction::terraform::TerraformingChoice;
+
 use self::{
     manifest::{plugin::ManifestPlugin, Id, Structure},
     structures::StructureHandles,
@@ -45,6 +47,7 @@ impl Plugin for AssetManagementPlugin {
             .add_asset_collection::<UnitHandles>()
             .add_asset_collection::<UiElements>()
             .add_asset_collection::<Icons<Id<Structure>>>()
+            .add_asset_collection::<Icons<TerraformingChoice>>()
             .add_plugin(ManifestPlugin);
     }
 }

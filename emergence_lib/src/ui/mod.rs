@@ -2,7 +2,7 @@
 //!
 use crate::ui::{
     production_statistics::ProductionStatisticsPlugin, select_structure::SelectStructurePlugin,
-    selection_panel::HoverDetailsPlugin,
+    select_terraforming::SelectTerraformingPlugin, selection_panel::HoverDetailsPlugin,
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -10,6 +10,7 @@ use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlu
 mod intent;
 mod production_statistics;
 mod select_structure;
+mod select_terraforming;
 mod selection_panel;
 mod wheel_menu;
 
@@ -39,7 +40,8 @@ impl Plugin for UiPlugin {
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
-        .add_plugin(SelectStructurePlugin);
+        .add_plugin(SelectStructurePlugin)
+        .add_plugin(SelectTerraformingPlugin);
     }
 }
 

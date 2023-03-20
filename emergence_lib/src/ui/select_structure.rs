@@ -15,7 +15,7 @@ use super::wheel_menu::{
     HexMenuError,
 };
 
-/// Hex menu and selection modifying logic.
+/// Logic used to let users select the structure to build.
 pub(super) struct SelectStructurePlugin;
 
 impl Plugin for SelectStructurePlugin {
