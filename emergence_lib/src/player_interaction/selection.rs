@@ -180,6 +180,14 @@ impl SelectedTiles {
         .filter(|tile_pos| map_geometry.terrain_index.contains_key(tile_pos))
         .collect()
     }
+
+    /// Fetches the entities that correspond to these tiles
+    pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
+        self.selection()
+            .iter()
+            .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
+            .collect()
+    }
 }
 
 /// The set of tiles that are being hovered
@@ -293,6 +301,21 @@ pub(crate) enum CurrentSelection {
 }
 
 impl CurrentSelection {
+    /// Returns the set of terrain tiles that should be affected by actions.
+    pub(super) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
+        match self {
+            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
+            _ => match cursor_pos.maybe_tile_pos() {
+                Some(cursor_tile_pos) => {
+                    let mut selected_tiles = SelectedTiles::default();
+                    selected_tiles.add_tile(cursor_tile_pos);
+                    selected_tiles
+                }
+                None => SelectedTiles::default(),
+            },
+        }
+    }
+
     /// Just select the terrain.
     #[must_use]
     fn select_terrain(
