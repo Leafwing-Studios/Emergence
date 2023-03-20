@@ -11,6 +11,7 @@ mod intent;
 mod production_statistics;
 mod select_structure;
 mod selection_panel;
+mod wheel_menu;
 
 /// The font handles for the `FiraSans` font family.
 ///
