@@ -7,7 +7,7 @@ use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use rand::{rngs::ThreadRng, Rng};
 use std::{
     f32::consts::PI,
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Sub, SubAssign},
 };
 
 use crate::filtered_array_iter::FilteredArrayIter;
@@ -156,19 +156,7 @@ impl TilePos {
 ///
 /// The minimum height is 0.
 #[derive(
-    Component,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Deref,
-    DerefMut,
-    Display,
-    AddAssign,
-    SubAssign,
+    Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Display,
 )]
 pub(crate) struct Height(pub u8);
 
@@ -245,6 +233,18 @@ impl Sub for Height {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Height(self.0.saturating_sub(rhs.0))
+    }
+}
+
+impl AddAssign for Height {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
+impl SubAssign for Height {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
     }
 }
 
