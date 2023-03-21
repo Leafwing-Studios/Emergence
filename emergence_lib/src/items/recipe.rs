@@ -71,7 +71,7 @@ impl RecipeData {
 
     /// An inventory with empty slots for all of the inputs of this recipe.
     pub(crate) fn input_inventory(&self, item_manifest: &ItemManifest) -> InputInventory {
-        let mut inventory = Inventory::new(self.inputs.len());
+        let mut inventory = Inventory::new(self.inputs.len(), None);
         for item_count in &self.inputs {
             inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
@@ -80,7 +80,7 @@ impl RecipeData {
 
     /// An inventory with empty slots for all of the outputs of this recipe.
     pub(crate) fn output_inventory(&self, item_manifest: &ItemManifest) -> OutputInventory {
-        let mut inventory = Inventory::new(self.outputs.len());
+        let mut inventory = Inventory::new(self.outputs.len(), None);
         for item_count in &self.outputs {
             inventory.add_empty_slot(item_count.item_id, item_manifest);
         }
