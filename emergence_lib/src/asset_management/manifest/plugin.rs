@@ -8,7 +8,7 @@ use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
 use super::{
     loader::RawManifestLoader,
-    raw::{RawItemManifest, RawManifest},
+    raw::{RawItemManifest, RawManifest, RawRecipeManifest},
     Manifest,
 };
 
@@ -17,7 +17,8 @@ pub struct ManifestPlugin;
 
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new());
+        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(RawManifestPlugin::<RawRecipeManifest>::new());
     }
 }
 

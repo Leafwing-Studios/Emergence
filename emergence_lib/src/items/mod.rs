@@ -62,11 +62,6 @@ impl ItemCount {
         Self { item_id, count }
     }
 
-    /// A single one of the given item.
-    pub(crate) fn one(item_id: Id<Item>) -> Self {
-        Self { item_id, count: 1 }
-    }
-
     /// The unique identifier of the item being counted.
     pub fn item_id(&self) -> Id<Item> {
         self.item_id

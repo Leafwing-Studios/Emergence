@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest},
+    asset_management::manifest::ItemManifest,
     organisms::energy::Energy,
     structures::crafting::{InputInventory, OutputInventory},
 };
@@ -111,52 +111,5 @@ impl RecipeData {
         let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
 
         format!("[{input_str}] -> [{output_str}] | {duration_str} s")
-    }
-}
-
-// TODO: Remove this once we load recipes from asset files
-impl RecipeData {
-    /// An acacia plant producing leaves.
-    pub(crate) fn acacia_leaf_production() -> Self {
-        RecipeData::new(
-            Vec::new(),
-            vec![ItemCount::one(Id::from_name("acacia_leaf"))],
-            Duration::from_secs(3),
-            false,
-            Some(Energy(20.)),
-        )
-    }
-
-    /// A leuco mushroom processing acacia leaves
-    pub(crate) fn leuco_chunk_production() -> Self {
-        RecipeData::new(
-            vec![ItemCount::one(Id::from_name("acacia_leaf"))],
-            vec![ItemCount::one(Id::from_name("leuco_chunk"))],
-            Duration::from_secs(2),
-            false,
-            Some(Energy(40.)),
-        )
-    }
-
-    /// An ant hive producing eggs.
-    pub(crate) fn ant_egg_production() -> Self {
-        RecipeData::new(
-            vec![ItemCount::one(Id::from_name("leuco_chunk"))],
-            vec![ItemCount::one(Id::from_name("ant_egg"))],
-            Duration::from_secs(5),
-            false,
-            None,
-        )
-    }
-
-    /// An ant hive producing eggs.
-    pub(crate) fn hatch_ants() -> Self {
-        RecipeData::new(
-            vec![ItemCount::one(Id::from_name("ant_egg"))],
-            vec![],
-            Duration::from_secs(10),
-            true,
-            None,
-        )
     }
 }
