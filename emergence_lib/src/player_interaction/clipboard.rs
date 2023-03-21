@@ -265,6 +265,7 @@ fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResM
 fn preview_clipboard(
     clipboard: Res<Clipboard>,
     hovered_tiles: Res<HoveredTiles>,
+    current_selection: Res<CurrentSelection>,
     mut commands: Commands,
     preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
     structure_manifest: Res<StructureManifest>,
@@ -281,9 +282,23 @@ fn preview_clipboard(
         // Track the previews that should exist, using a retained-style API
         let mut desired_previews = HashMap::new();
 
-        for (&clipboard_pos, data) in map.iter() {
-            // Offset by cursor pos
-            desired_previews.insert(clipboard_pos + cursor_pos, data);
+        // When we only have one structure on the clipboard, applying zoning will apply it to the entire selection
+        if map.len() == 1 {
+            let data = map.values().next().unwrap();
+            if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
+                for &world_pos in selected_tiles.selection().iter() {
+                    desired_previews.insert(world_pos, data);
+                }
+            }
+            for &world_pos in hovered_tiles.iter() {
+                desired_previews.insert(world_pos, data);
+            }
+        // In more complex cases, the clipbarod will be positioned accordingly
+        } else {
+            for (&clipboard_pos, data) in map.iter() {
+                // Offset by cursor pos
+                desired_previews.insert(clipboard_pos + cursor_pos, data);
+            }
         }
 
         // Despawn any previews that do not match
