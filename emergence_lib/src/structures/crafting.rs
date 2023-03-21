@@ -10,7 +10,9 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Manifest, Recipe, RecipeManifest, Structure},
+    asset_management::manifest::{
+        Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure,
+    },
     items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -123,6 +125,17 @@ impl OutputInventory {
 pub(crate) struct StorageInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,
+}
+
+impl StorageInventory {
+    /// Creates a new [`StorageInventory`] with the provided number of slots.
+    ///
+    /// If `reserved_for` is `Some`, only one item variety will be able to be stored here.
+    pub(crate) fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
+        StorageInventory {
+            inventory: Inventory::new(max_slot_count, reserved_for),
+        }
+    }
 }
 
 /// The recipe that is currently being crafted, if any.

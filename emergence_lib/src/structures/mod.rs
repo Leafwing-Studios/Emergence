@@ -11,7 +11,7 @@ use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::manifest::{Id, Manifest, Structure, StructureManifest, Terrain},
+    asset_management::manifest::{Id, Item, Manifest, Structure, StructureManifest, Terrain},
     items::inventory::Inventory,
     organisms::{
         energy::{Energy, EnergyPool},
@@ -56,7 +56,12 @@ pub(crate) struct StructureData {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum StructureKind {
     /// Stores items.
-    Storage,
+    Storage {
+        /// The number of slots in the inventory, controlling how large it is.
+        max_slot_count: usize,
+        /// Is any item allowed here, or just one?
+        reserved_for: Option<Id<Item>>,
+    },
     /// Crafts items, turning inputs into outputs.
     Crafting {
         /// Does this structure start with a recipe pre-selected?
@@ -169,7 +174,10 @@ impl Default for StructureManifest {
             "storage",
             StructureData {
                 organism: None,
-                kind: StructureKind::Storage,
+                kind: StructureKind::Storage {
+                    max_slot_count: 24,
+                    reserved_for: None,
+                },
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
