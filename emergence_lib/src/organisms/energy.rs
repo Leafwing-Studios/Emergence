@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+use serde::Deserialize;
 
 use crate::asset_management::manifest::{Id, Structure};
 use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
@@ -51,7 +52,9 @@ impl Display for EnergyPool {
 /// A quantity of energy, used to modify a [`EnergyPool`].
 ///
 /// Organisms produce energy by crafting recipes.
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default, Add, Sub, AddAssign, SubAssign)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, PartialOrd, Default, Add, Sub, AddAssign, SubAssign, Deserialize,
+)]
 pub(crate) struct Energy(pub f32);
 
 impl Display for Energy {

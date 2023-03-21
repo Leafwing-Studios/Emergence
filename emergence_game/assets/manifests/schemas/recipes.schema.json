@@ -23,19 +23,18 @@
               "min": 0
             }
           },
-          "duration_ms": {
+          "craft_time_ms": {
             "type": "number",
             "min": 0
           },
           "work_required": {
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "energy": {
             "type": "number"
           }
         },
-        "required": ["inputs", "outputs", "duration_ms"]
+        "required": ["inputs", "outputs", "craft_time_ms"]
       }
     }
   },

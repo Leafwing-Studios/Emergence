@@ -6,8 +6,7 @@
       "outputs": {
         "acacia_leaf": 1
       },
-      "duration_ms": 3000,
-      "work_required": false,
+      "craft_time_ms": 3000,
       "energy": 20
     },
     "leuco_chunk_production": {
@@ -17,7 +16,7 @@
       "outputs": {
         "leuco_chunk": 1
       },
-      "duration_ms": 2000,
+      "craft_time_ms": 2000,
       "energy": 40
     },
     "ant_egg_production": {
@@ -27,14 +26,14 @@
       "outputs": {
         "ant_egg": 1
       },
-      "duration_ms": 5000
+      "craft_time_ms": 5000
     },
     "hatch_ants": {
       "inputs": {
         "ant_egg": 1
       },
       "outputs": {},
-      "duration_ms": 10000,
+      "craft_time_ms": 10000,
       "work_required": true
     }
   }
