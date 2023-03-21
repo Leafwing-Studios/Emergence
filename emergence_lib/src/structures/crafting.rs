@@ -121,7 +121,7 @@ impl OutputInventory {
 }
 
 /// An inventory that simply stores items
-#[derive(Component, Debug, Default, Deref, DerefMut)]
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
 pub(crate) struct StorageInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,

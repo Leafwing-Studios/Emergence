@@ -764,6 +764,9 @@ fn get_details(
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
                 maybe_organism_details,
+                storage_inventory: structure_query_item
+                    .storage_inventory
+                    .map(|ref_si| ref_si.clone()),
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
             })
         }
@@ -946,7 +949,9 @@ mod structure_details {
         simulation::geometry::TilePos,
         structures::{
             construction::MarkedForDemolition,
-            crafting::{ActiveRecipe, CraftingState, InputInventory, OutputInventory},
+            crafting::{
+                ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
+            },
         },
     };
 
@@ -966,6 +971,8 @@ mod structure_details {
             &'static ActiveRecipe,
             &'static CraftingState,
         )>,
+        /// If this structure stores things, its inventory.
+        pub(super) storage_inventory: Option<&'static StorageInventory>,
         /// Is this structure marked for removal?
         pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
     }
@@ -979,8 +986,10 @@ mod structure_details {
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
         pub(crate) structure_id: Id<Structure>,
-        /// If this organism is crafting something, the details about that.
+        /// If this structure is crafting something, the details about that.
         pub(crate) crafting_details: Option<CraftingDetails>,
+        /// If this structure stores things, its inventory.
+        pub(crate) storage_inventory: Option<StorageInventory>,
         /// Details about this organism, if it is one.
         pub(crate) maybe_organism_details: Option<OrganismDetails>,
         /// Is this structure slated for removal?
@@ -1010,6 +1019,10 @@ Tile: {tile_pos}"
 
             if let Some(crafting) = &self.crafting_details {
                 string += &format!("\n{}", crafting.display(item_manifest));
+            }
+
+            if let Some(storage) = &self.storage_inventory {
+                string += &format!("\nStoring:{}", storage.display(item_manifest));
             }
 
             if let Some(organism) = &self.maybe_organism_details {
