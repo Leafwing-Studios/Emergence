@@ -26,8 +26,7 @@ impl Plugin for LightingPlugin {
         .insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_system(set_celestial_body_transform)
-        .add_system(animate_celestial_body_lighting);
+        .add_system(set_celestial_body_transform);
     }
 }
 
@@ -147,14 +146,5 @@ fn set_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
-    }
-}
-
-/// Changes the lighting properties of the sun and moon throughout their cycles
-fn animate_celestial_body_lighting(mut query: Query<(&CelestialBody, &mut DirectionalLight)>) {
-    for (celestial_body, mut directional_light) in query.iter_mut() {
-        // We want this to be 0 at midnight, and reach a peak at noon
-        let relative_intensity = celestial_body.progress.sin() + 1.0;
-        directional_light.illuminance = celestial_body.illuminance * relative_intensity;
     }
 }
