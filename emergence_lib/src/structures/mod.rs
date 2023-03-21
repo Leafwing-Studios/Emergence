@@ -12,7 +12,7 @@ use leafwing_abilities::prelude::Pool;
 
 use crate::{
     asset_management::manifest::{Id, Manifest, Structure, StructureManifest, Terrain},
-    items::{inventory::Inventory, ItemCount},
+    items::inventory::Inventory,
     organisms::{
         energy::{Energy, EnergyPool},
         OrganismVariety,
@@ -69,7 +69,7 @@ impl Default for StructureManifest {
         let mut manifest: StructureManifest = Manifest::new();
 
         let leuco_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(Id::from_name("leuco_chunk"), 1)),
+            inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
         };
 
         // TODO: read these from files
@@ -91,7 +91,7 @@ impl Default for StructureManifest {
         );
 
         let acacia_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(ItemCount::new(Id::from_name("acacia_leaf"), 2)),
+            inventory: Inventory::new_from_item(Id::from_name("acacia_leaf"), 2),
         };
 
         manifest.insert(

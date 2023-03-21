@@ -180,10 +180,10 @@ impl CraftingBundle {
         } else {
             Self {
                 input_inventory: InputInventory {
-                    inventory: Inventory::new(0),
+                    inventory: Inventory::new(0, None),
                 },
                 output_inventory: OutputInventory {
-                    inventory: Inventory::new(1),
+                    inventory: Inventory::new(1, None),
                 },
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::NeedsInput,
