@@ -148,7 +148,7 @@ impl Default for StructureManifest {
             StructureData {
                 organism: None,
                 crafts: false,
-                starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
+                starting_recipe: ActiveRecipe::NONE,
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(10),
                 allowed_terrain_types: HashSet::from_iter([
