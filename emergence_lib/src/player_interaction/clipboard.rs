@@ -279,55 +279,63 @@ fn preview_clipboard(
 
     let cursor_pos = *hovered_tiles.iter().next().unwrap();
 
-    if let Clipboard::Structures(map) = &*clipboard {
-        // Track the previews that should exist, using a retained-style API
-        let mut desired_previews = HashMap::new();
+    match &*clipboard {
+        Clipboard::Structures(map) => {
+            // Track the previews that should exist, using a retained-style API
+            let mut desired_previews = HashMap::new();
 
-        // When we only have one structure on the clipboard, applying zoning will apply it to the entire selection
-        if map.len() == 1 {
-            let data = map.values().next().unwrap();
-            if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-                for &world_pos in selected_tiles.selection().iter() {
+            // When we only have one structure on the clipboard, applying zoning will apply it to the entire selection
+            if map.len() == 1 {
+                let data = map.values().next().unwrap();
+                if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
+                    for &world_pos in selected_tiles.selection().iter() {
+                        desired_previews.insert(world_pos, data);
+                    }
+                }
+                for &world_pos in hovered_tiles.iter() {
                     desired_previews.insert(world_pos, data);
                 }
+            // In more complex cases, the clipbarod will be positioned accordingly
+            } else {
+                for (&clipboard_pos, data) in map.iter() {
+                    // Offset by cursor pos
+                    desired_previews.insert(clipboard_pos + cursor_pos, data);
+                }
             }
-            for &world_pos in hovered_tiles.iter() {
-                desired_previews.insert(world_pos, data);
-            }
-        // In more complex cases, the clipbarod will be positioned accordingly
-        } else {
-            for (&clipboard_pos, data) in map.iter() {
-                // Offset by cursor pos
-                desired_previews.insert(clipboard_pos + cursor_pos, data);
-            }
-        }
 
-        // Despawn any previews that do not match
-        for (tile_pos, structure_id, facing) in preview_query.iter() {
-            if let Some(clipboard_data) = desired_previews.get(tile_pos) {
-                if *structure_id == clipboard_data.structure_id && *facing == clipboard_data.facing
-                {
-                    // This preview is already handled; no need to do anything
-                    desired_previews.remove(tile_pos);
+            // Despawn any previews that do not match
+            for (tile_pos, structure_id, facing) in preview_query.iter() {
+                if let Some(clipboard_data) = desired_previews.get(tile_pos) {
+                    if *structure_id == clipboard_data.structure_id
+                        && *facing == clipboard_data.facing
+                    {
+                        // This preview is already handled; no need to do anything
+                        desired_previews.remove(tile_pos);
+                    } else {
+                        // This data is now wrong; just despawn it and rebuild
+                        commands.despawn_preview(*tile_pos);
+                    }
                 } else {
-                    // This data is now wrong; just despawn it and rebuild
+                    // No preview is needed at that location
                     commands.despawn_preview(*tile_pos);
                 }
-            } else {
-                // No preview is needed at that location
-                commands.despawn_preview(*tile_pos);
+            }
+
+            // Spawn any new previews
+            for (tile_pos, &clipboard_data) in desired_previews.iter() {
+                let allowed_terrain_types = structure_manifest
+                    .get(clipboard_data.structure_id)
+                    .allowed_terrain_types();
+                if let Some(terrain_entity) = map_geometry.terrain_index.get(tile_pos) {
+                    let terrain_type = terrain_query.get(*terrain_entity).unwrap();
+                    let forbidden = !allowed_terrain_types.contains(terrain_type);
+                    commands.spawn_preview(*tile_pos, clipboard_data.clone(), forbidden);
+                }
             }
         }
-
-        // Spawn any new previews
-        for (tile_pos, &clipboard_data) in desired_previews.iter() {
-            let allowed_terrain_types = structure_manifest
-                .get(clipboard_data.structure_id)
-                .allowed_terrain_types();
-            if let Some(terrain_entity) = map_geometry.terrain_index.get(tile_pos) {
-                let terrain_type = terrain_query.get(*terrain_entity).unwrap();
-                let forbidden = !allowed_terrain_types.contains(terrain_type);
-                commands.spawn_preview(*tile_pos, clipboard_data.clone(), forbidden);
+        Clipboard::Empty | Clipboard::Terraform(_) => {
+            for (&tile_pos, ..) in preview_query.iter() {
+                commands.despawn_preview(tile_pos);
             }
         }
     }
