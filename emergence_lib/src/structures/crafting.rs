@@ -118,21 +118,21 @@ impl OutputInventory {
     }
 }
 
+/// An inventory that simply stores items
+#[derive(Component, Debug, Default, Deref, DerefMut)]
+pub(crate) struct StorageInventory {
+    /// Inner storage
+    pub(crate) inventory: Inventory,
+}
+
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {
-    /// The pretty formatting for this type
-    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
-        match self.0 {
-            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
-            None => "None".to_string(),
-        }
-    }
-}
+    /// The un-set [`ActiveRecipe`].
+    pub(crate) const NONE: ActiveRecipe = ActiveRecipe(None);
 
-impl ActiveRecipe {
     /// Creates a new [`ActiveRecipe`], set to `recipe_id`
     pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
         ActiveRecipe(Some(recipe_id))
@@ -141,6 +141,14 @@ impl ActiveRecipe {
     /// The ID of the currently active recipe, if one has been selected.
     pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
+    }
+
+    /// The pretty formatting for this type
+    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
+        match self.0 {
+            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
+            None => "None".to_string(),
+        }
     }
 }
 

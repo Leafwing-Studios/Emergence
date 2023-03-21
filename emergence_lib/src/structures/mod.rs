@@ -132,11 +132,28 @@ impl Default for StructureManifest {
             StructureData {
                 organism: None,
                 crafts: true,
-                starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
+                starting_recipe: ActiveRecipe::NONE,
                 construction_materials: InputInventory::default(),
                 build_duration: Duration::from_secs(5),
                 allowed_terrain_types: HashSet::from_iter([
                     Id::from_name("loam"),
+                    Id::from_name("muddy"),
+                    Id::from_name("rocky"),
+                ]),
+            },
+        );
+
+        manifest.insert(
+            "storage",
+            StructureData {
+                organism: None,
+                crafts: false,
+                starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
+                construction_materials: InputInventory::default(),
+                build_duration: Duration::from_secs(10),
+                allowed_terrain_types: HashSet::from_iter([
+                    Id::from_name("loam"),
+                    Id::from_name("muddy"),
                     Id::from_name("rocky"),
                 ]),
             },
