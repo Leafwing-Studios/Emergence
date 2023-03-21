@@ -11,7 +11,7 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
     asset_management::manifest::{Id, ItemManifest, Manifest, Recipe, RecipeManifest, Structure},
-    items::{inventory::Inventory, recipe::RecipeData, ItemData},
+    items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
