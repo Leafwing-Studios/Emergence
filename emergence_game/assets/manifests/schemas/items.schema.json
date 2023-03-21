@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.leafwing-studios.com/Emergence/items",
   "title": "Item Manifest",
   "type": "object",
   "properties": {

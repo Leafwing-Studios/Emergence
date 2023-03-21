@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Recipe Manifest",
+  "type": "object",
+  "properties": {
+    "recipes": {
+      "description": "A map from recipe identifiers to their definition.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "min": 0
+            }
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "min": 0
+            }
+          },
+          "duration_ms": {
+            "type": "number",
+            "min": 0
+          },
+          "work_required": {
+            "type": "boolean",
+            "default": false
+          },
+          "energy": {
+            "type": "number"
+          }
+        },
+        "required": ["inputs", "outputs", "duration_ms"]
+      }
+    }
+  },
+  "required": ["recipes"]
+}

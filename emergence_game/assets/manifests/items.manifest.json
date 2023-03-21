@@ -1,5 +1,5 @@
 {
-  "$schema": "./schema/items.schema.json",
+  "$schema": "./schemas/items.schema.json",
   "items": {
     "acacia_leaf": {
       "stack_size": 10
