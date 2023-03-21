@@ -14,6 +14,7 @@ use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::RecipeManifest;
+use crate::asset_management::AssetState;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -45,6 +46,7 @@ impl Plugin for SelectionPlugin {
             .add_system(
                 get_details
                     .pipe(clear_details_on_error)
+                    .run_if(in_state(AssetState::Ready))
                     .in_set(InteractionSystem::HoverDetails)
                     .after(InteractionSystem::SelectTiles),
             )
