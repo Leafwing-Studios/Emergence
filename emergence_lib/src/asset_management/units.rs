@@ -55,9 +55,9 @@ impl Loadable for UnitHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (unit, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
-            info!("{unit:?}'s scene is {scene_load_state:?}");
 
             if scene_load_state != LoadState::Loaded {
+                info!("Unit {unit:?}'s scene is {scene_load_state:?}");
                 return scene_load_state;
             }
         }
