@@ -78,9 +78,9 @@ impl Loadable for TerrainHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (terrain, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
-            info!("{terrain:?}'s scene is {scene_load_state:?}");
 
             if scene_load_state != LoadState::Loaded {
+                info!("Terrain {terrain:?}'s scene is {scene_load_state:?}");
                 return scene_load_state;
             }
         }
