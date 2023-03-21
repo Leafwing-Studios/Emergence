@@ -102,11 +102,11 @@ where
     Icons<D>: FromWorld,
 {
     fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
-        for (structure, icon_handle) in &self.map {
+        for (data, icon_handle) in &self.map {
             let load_state = asset_server.get_load_state(icon_handle);
-            info!("{structure:?}'s icon is {load_state:?}");
 
             if load_state != LoadState::Loaded {
+                info!("{data:?}'s icon is {load_state:?}");
                 return load_state;
             }
         }
