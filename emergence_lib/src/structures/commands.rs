@@ -2,7 +2,7 @@
 
 use bevy::{
     ecs::system::Command,
-    prelude::{Commands, DespawnRecursiveExt, Mut, World},
+    prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
 };
 use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
@@ -326,19 +326,20 @@ impl Command for SpawnPreviewCommand {
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.tile_pos) {
+            warn!("Preview position {:?} not valid.", self.tile_pos);
             return;
         }
 
         // Compute the world position
         let world_pos = self.tile_pos.top_of_tile(&map_geometry);
 
-        // Remove any existing previews
+        // Remove any existing previews at this location
         let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
-
         if let Some(existing_preview) = maybe_existing_preview {
             world.entity_mut(existing_preview).despawn_recursive();
         }
 
+        // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();
         let scene_handle = structure_handles
             .scenes
@@ -365,6 +366,7 @@ impl Command for SpawnPreviewCommand {
             ))
             .id();
 
+        // Update the index to reflect the new state
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry.preview_index.insert(self.tile_pos, preview_entity);
     }
