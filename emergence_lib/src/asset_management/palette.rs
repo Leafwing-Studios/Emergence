@@ -90,6 +90,14 @@ pub(crate) const LIGHT_MOON: Color = Color::Hsla {
     alpha: 1.,
 };
 
+/// The color of a clear and sunny sky.
+pub(crate) const SKY_SUNNY: Color = Color::Hsla {
+    hue: 202.,
+    saturation: 0.8,
+    lightness: 0.8,
+    alpha: 1.0,
+};
+
 /// The color of starlight
 pub(crate) const LIGHT_STARS: Color = Color::WHITE;
 
