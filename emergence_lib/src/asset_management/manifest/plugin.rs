@@ -17,7 +17,14 @@ pub struct ManifestPlugin;
 
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new());
+        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(RawManifestPlugin::<RawRecipeManifest>::new())
+            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Ready
+            .add_system(
+                apply_system_buffers
+                    .after(DetectManifestCreationSet)
+                    .in_schedule(OnExit(AssetState::Loading)),
+            );
     }
 }
 
@@ -59,12 +66,6 @@ where
             .add_system(
                 detect_manifest_creation::<M>
                     .in_set(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::Loading)),
-            )
-            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Ready
-            .add_system(
-                apply_system_buffers
-                    .after(DetectManifestCreationSet)
                     .in_schedule(OnExit(AssetState::Loading)),
             )
             .add_system(
