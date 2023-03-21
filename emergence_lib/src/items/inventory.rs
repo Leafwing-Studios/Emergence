@@ -346,7 +346,7 @@ impl Inventory {
         for item_count in item_counts {
             if !self.permits(item_count.item_id) {
                 return Err(AddManyItemsError {
-                    excess_counts: item_counts.iter().cloned().collect(),
+                    excess_counts: item_counts.to_vec(),
                 });
             }
         }
