@@ -12,6 +12,10 @@ fn main() {
             }),
             ..Default::default()
         }))
+        .add_plugin(emergence_lib::simulation::GeometryPlugin {
+            gen_config: GenerationConfig::default(),
+        })
+        .add_plugin(emergence_lib::asset_management::AssetManagementPlugin)
         .add_plugin(emergence_lib::simulation::SimulationPlugin {
             gen_config: GenerationConfig::default(),
         })
@@ -19,6 +23,5 @@ fn main() {
         .add_plugin(emergence_lib::graphics::GraphicsPlugin)
         .add_plugin(emergence_lib::infovis::InfoVisPlugin)
         .add_plugin(emergence_lib::ui::UiPlugin)
-        .add_plugin(emergence_lib::asset_management::AssetManagementPlugin)
         .run();
 }

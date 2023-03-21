@@ -3,8 +3,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::{
-        ItemManifest, RecipeManifest, StructureManifest, TerrainManifest, UnitManifest,
+    asset_management::{
+        manifest::{
+            ItemManifest, RecipeManifest, StructureManifest, TerrainManifest, UnitManifest,
+        },
+        AssetState,
     },
     player_interaction::{selection::SelectionDetails, InteractionSystem},
 };
@@ -16,8 +19,11 @@ pub(super) struct HoverDetailsPlugin;
 
 impl Plugin for HoverDetailsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(populate_hover_panel)
-            .add_system(update_hover_details.after(InteractionSystem::HoverDetails));
+        app.add_startup_system(populate_hover_panel).add_system(
+            update_hover_details
+                .after(InteractionSystem::HoverDetails)
+                .run_if(in_state(AssetState::Ready)),
+        );
     }
 }
 
