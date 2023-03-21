@@ -575,7 +575,7 @@ fn set_selection(
     let cursor_pos = &*cursor_pos;
     let map_geometry = &*map_geometry;
 
-    let hovered_tile = cursor_pos.maybe_tile_pos().unwrap_or_default();
+    let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
     selection_state.compute(actions, hovered_tile);
