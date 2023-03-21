@@ -11,10 +11,13 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
     asset_management::manifest::{Id, ItemManifest, Manifest, Recipe, RecipeManifest, Structure},
-    items::{inventory::Inventory, recipe::RecipeData, ItemData},
+    items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::{
+        geometry::{MapGeometry, TilePos},
+        SimulationSet,
+    },
 };
 
 /// The current state in the crafting progress.
@@ -462,12 +465,6 @@ pub(crate) struct CraftingPlugin;
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
         // TODO: Load this from an asset file
-        let mut item_manifest: ItemManifest = Manifest::new();
-        item_manifest.insert("acacia_leaf", ItemData::acacia_leaf());
-        item_manifest.insert("leuco_chunk", ItemData::leuco_chunk());
-        item_manifest.insert("ant_egg", ItemData::ant_egg());
-
-        // TODO: Load this from an asset file
         let mut recipe_manifest: RecipeManifest = Manifest::new();
         recipe_manifest.insert(
             "acacia_leaf_production",
@@ -480,10 +477,14 @@ impl Plugin for CraftingPlugin {
         recipe_manifest.insert("ant_egg_production", RecipeData::ant_egg_production());
         recipe_manifest.insert("hatch_ants", RecipeData::hatch_ants());
 
-        app.insert_resource(item_manifest)
-            .insert_resource(recipe_manifest)
-            .add_system(progress_crafting)
-            .add_system(gain_energy_when_crafting_completes.after(progress_crafting))
-            .add_system(set_emitter.after(progress_crafting));
+        app.insert_resource(recipe_manifest).add_systems(
+            (
+                progress_crafting,
+                gain_energy_when_crafting_completes.after(progress_crafting),
+                set_emitter.after(progress_crafting),
+            )
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
     }
 }

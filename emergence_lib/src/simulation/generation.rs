@@ -1,6 +1,7 @@
 //! Generating starting terrain and organisms
 use crate::asset_management::manifest::{Id, StructureManifest, Terrain, UnitManifest};
 use crate::asset_management::units::UnitHandles;
+use crate::asset_management::AssetState;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, TilePos};
 use crate::structures::commands::StructureCommandsExt;
@@ -10,7 +11,7 @@ use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
 use bevy::math::vec2;
-use bevy::prelude::{CoreSchedule, IntoSystemAppConfigs};
+use bevy::prelude::IntoSystemAppConfigs;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
 use hexx::Hex;
@@ -24,7 +25,7 @@ use super::geometry::MapGeometry;
 #[derive(Resource, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
-    map_radius: u32,
+    pub(super) map_radius: u32,
     /// Initial number of ants.
     n_ant: usize,
     /// Initial number of plants.
@@ -92,13 +93,11 @@ pub(super) struct GenerationPlugin {
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
-        app.insert_resource(self.config.clone())
-            .insert_resource(MapGeometry::new(self.config.map_radius))
-            .add_systems(
-                (generate_terrain, apply_system_buffers, generate_organisms)
-                    .chain()
-                    .in_schedule(CoreSchedule::Startup),
-            );
+        app.insert_resource(self.config.clone()).add_systems(
+            (generate_terrain, apply_system_buffers, generate_organisms)
+                .chain()
+                .in_schedule(OnEnter(AssetState::Ready)),
+        );
     }
 }
 
