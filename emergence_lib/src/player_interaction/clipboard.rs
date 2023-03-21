@@ -11,7 +11,9 @@ use crate::{
 };
 
 use super::{
-    cursor::CursorPos, selection::CurrentSelection, terraform::TerraformingChoice,
+    cursor::CursorPos,
+    selection::{CurrentSelection, HoveredTiles},
+    terraform::TerraformingChoice,
     InteractionSystem, PlayerAction,
 };
 
@@ -38,7 +40,9 @@ impl Plugin for ClipboardPlugin {
             .add_system(
                 preview_clipboard
                     .in_set(InteractionSystem::ManagePreviews)
-                    .after(InteractionSystem::SetClipboard),
+                    .after(InteractionSystem::SetClipboard)
+                    // The set of hovered tiles is computed here too
+                    .after(InteractionSystem::SelectTiles),
             );
     }
 }
@@ -260,51 +264,36 @@ fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResM
 /// Preview the current clipboard under the cursor
 fn preview_clipboard(
     clipboard: Res<Clipboard>,
-    cursor_pos: Res<CursorPos>,
+    hovered_tiles: Res<HoveredTiles>,
     mut commands: Commands,
-    preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
+    preview_query: Query<&TilePos, With<Preview>>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
     terrain_query: Query<&Id<Terrain>>,
 ) {
-    if let Some(cursor_pos) = cursor_pos.maybe_tile_pos() {
-        if let Clipboard::Structures(map) = &*clipboard {
-            let mut desired_previews = map.clone();
+    if hovered_tiles.is_empty() {
+        return;
+    };
 
-            // Handle previews that already exist
-            for (pos_in_world, existing_structure_id, existing_facing) in preview_query.iter() {
-                let pos_in_clipboard = *pos_in_world - cursor_pos;
+    let cursor_pos = *hovered_tiles.iter().next().unwrap();
 
-                // Preview should exist
-                if let Some(desired_clipboard_data) = desired_previews.get(&pos_in_clipboard) {
-                    // Preview's identity changed
-                    if *existing_structure_id != desired_clipboard_data.structure_id
-                        || *existing_facing != desired_clipboard_data.facing
-                    {
-                        commands.despawn_preview(*pos_in_world);
-                    } else {
-                        // This ghost is still correct
-                        desired_previews.remove(pos_in_world);
-                    }
+    if let Clipboard::Structures(map) = &*clipboard {
+        // Despawn previews that already exist
+        for &pos_in_world in preview_query.iter() {
+            commands.despawn_preview(pos_in_world);
+        }
 
-                // Preview should no longer exist
-                } else {
-                    commands.despawn_preview(*pos_in_world);
-                }
-            }
+        // Handle any remaining new ghosts
+        for (&pos_in_clipboard, clipboard_data) in map.iter() {
+            let pos_in_world = pos_in_clipboard + cursor_pos;
 
-            // Handle any remaining new ghosts
-            for (&pos_in_clipboard, clipboard_data) in desired_previews.iter() {
-                let pos_in_world = pos_in_clipboard + cursor_pos;
-
-                let allowed_terrain_types = structure_manifest
-                    .get(clipboard_data.structure_id)
-                    .allowed_terrain_types();
-                if let Some(terrain_entity) = map_geometry.terrain_index.get(&pos_in_world) {
-                    let terrain_type = terrain_query.get(*terrain_entity).unwrap();
-                    let forbidden = !allowed_terrain_types.contains(terrain_type);
-                    commands.spawn_preview(pos_in_world, clipboard_data.clone(), forbidden);
-                }
+            let allowed_terrain_types = structure_manifest
+                .get(clipboard_data.structure_id)
+                .allowed_terrain_types();
+            if let Some(terrain_entity) = map_geometry.terrain_index.get(&pos_in_world) {
+                let terrain_type = terrain_query.get(*terrain_entity).unwrap();
+                let forbidden = !allowed_terrain_types.contains(terrain_type);
+                commands.spawn_preview(pos_in_world, clipboard_data.clone(), forbidden);
             }
         }
     }

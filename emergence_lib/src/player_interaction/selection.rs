@@ -191,7 +191,7 @@ impl SelectedTiles {
 }
 
 /// The set of tiles that are being hovered
-#[derive(Resource, Debug, Default, Deref, DerefMut)]
+#[derive(Resource, Debug, Default, Deref)]
 pub(crate) struct HoveredTiles {
     /// The set of tiles that are hovered over
     hovered: HashSet<TilePos>,
