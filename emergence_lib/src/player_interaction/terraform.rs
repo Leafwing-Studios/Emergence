@@ -77,7 +77,7 @@ impl MarkedForTerraforming {
     }
 }
 
-/// Changes the terrain to match the [`Terraform`] component
+/// Changes the terrain to match the [`MarkedForTerraforming`] component
 fn apply_terraforming(
     mut query: Query<(
         Entity,
