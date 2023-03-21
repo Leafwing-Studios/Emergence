@@ -14,6 +14,11 @@ use super::{
 /// An inventory to store multiple types of items.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Inventory {
+    /// Is this inventory reserved for a single item type?
+    ///
+    /// If so, this field will be `Some(reserved_item_id)`.
+    reserved_for: Option<Id<Item>>,
+
     /// The item slots that are currently active.
     ///
     /// `slots.len() <= max_slot_count` is guaranteed.
@@ -56,6 +61,7 @@ impl Inventory {
     /// Create an empty inventory with the given amount of slots.
     pub(crate) fn new(max_slot_count: usize) -> Self {
         Self {
+            reserved_for: None,
             slots: Vec::new(),
             max_slot_count,
         }
@@ -65,6 +71,7 @@ impl Inventory {
     /// Creates an inventory from the provided [`ItemCount`].
     pub(crate) fn new_from_item(item_count: ItemCount) -> Self {
         Self {
+            reserved_for: None,
             slots: vec![ItemSlot::new(item_count.item_id, item_count.count)],
             max_slot_count: 1,
         }
@@ -523,6 +530,7 @@ mod tests {
 
     fn full_inventory() -> Inventory {
         Inventory {
+            reserved_for: None,
             max_slot_count: 1,
             slots: vec![ItemSlot::new_with_count(Id::from_name("test"), 10, 10)],
         }
@@ -530,6 +538,7 @@ mod tests {
 
     fn partial_inventory() -> Inventory {
         Inventory {
+            reserved_for: None,
             max_slot_count: 1,
             slots: vec![ItemSlot::new_with_count(Id::from_name("test"), 10, 7)],
         }
@@ -537,6 +546,7 @@ mod tests {
 
     fn empty_inventory() -> Inventory {
         Inventory {
+            reserved_for: None,
             max_slot_count: 1,
             slots: vec![],
         }
@@ -552,6 +562,7 @@ mod tests {
     #[test]
     fn should_count_item() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -566,6 +577,7 @@ mod tests {
     #[test]
     fn should_determine_that_item_count_is_available() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -580,6 +592,7 @@ mod tests {
     #[test]
     fn should_determine_that_item_count_is_not_available() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -601,6 +614,7 @@ mod tests {
     #[test]
     fn should_determine_that_inventory_is_not_empty() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -615,6 +629,7 @@ mod tests {
     #[test]
     fn should_determine_that_inventory_is_full() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -630,6 +645,7 @@ mod tests {
     #[test]
     fn should_determine_that_inventory_is_not_full() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -644,6 +660,7 @@ mod tests {
     #[test]
     fn should_calculate_number_of_free_slots() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -658,6 +675,7 @@ mod tests {
     #[test]
     fn should_calculate_remaining_space_for_item() {
         let inventory = Inventory {
+            reserved_for: None,
             max_slot_count: 4,
             slots: vec![
                 ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -681,6 +699,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_fit() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -703,6 +722,7 @@ mod tests {
             #[test]
             fn should_fill_up_when_not_all_fit() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -735,6 +755,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_fit() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -757,6 +778,7 @@ mod tests {
             #[test]
             fn should_not_add_anything_if_not_enough_space() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -786,6 +808,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_fit() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -811,6 +834,7 @@ mod tests {
             #[test]
             fn should_not_add_anything_if_not_enough_space() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -844,6 +868,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -863,6 +888,7 @@ mod tests {
             #[test]
             fn should_empty_when_not_all_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -888,6 +914,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -910,6 +937,7 @@ mod tests {
             #[test]
             fn should_not_remove_anything_if_not_enough_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -938,6 +966,7 @@ mod tests {
             #[test]
             fn should_be_ok_when_all_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
@@ -960,6 +989,7 @@ mod tests {
             #[test]
             fn should_not_remove_anything_if_not_enough_exist() {
                 let mut inventory = Inventory {
+                    reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
                         ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
