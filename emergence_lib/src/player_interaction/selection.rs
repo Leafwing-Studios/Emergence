@@ -261,9 +261,18 @@ impl ObjectInteraction {
             ObjectInteraction::None => None,
         };
 
+        // Prevent z-fighting between ghosts and previews
+        let depth_bias = match self {
+            ObjectInteraction::Selected => 1.,
+            ObjectInteraction::Hovered => 2.,
+            ObjectInteraction::HoveredAndSelected => 3.,
+            ObjectInteraction::None => 4.,
+        };
+
         maybe_color.map(|base_color| StandardMaterial {
             base_color,
             alpha_mode: AlphaMode::Blend,
+            depth_bias,
             ..Default::default()
         })
     }
