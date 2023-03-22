@@ -1,3 +1,5 @@
+//! Data and manifest definitions for structure.
+
 use crate::{
     items::inventory::Inventory,
     organisms::{

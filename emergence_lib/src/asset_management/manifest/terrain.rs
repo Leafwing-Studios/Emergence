@@ -1,3 +1,5 @@
+//! Data and manifest definitions for terrain.
+
 use super::TerrainManifest;
 
 /// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`].
