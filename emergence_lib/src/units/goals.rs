@@ -12,6 +12,7 @@ use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 
 use super::impatience::ImpatiencePool;
+use super::item_interaction::UnitInventory;
 
 /// A unit's current goals.
 ///
@@ -87,16 +88,35 @@ impl Goal {
 
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(
-    mut units_query: Query<(&TilePos, &mut Goal, &mut ImpatiencePool, &Id<Unit>)>,
+    mut units_query: Query<(
+        &TilePos,
+        &mut Goal,
+        &mut ImpatiencePool,
+        &UnitInventory,
+        &Id<Unit>,
+    )>,
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool, id) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, id) in units_query.iter_mut() {
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
-            *goal = Goal::Wander;
+            // If you're holding something, try to put it away nicely
+            *goal = if let Some(held_item) = unit_inventory.held_item {
+                // Don't get stuck trying to do a hopeless storage task forever
+                if *goal != Goal::Wander && *goal != Goal::Store(held_item) {
+                    Goal::Store(held_item)
+                } else {
+                    Goal::Wander
+                }
+            } else {
+                Goal::Wander
+            };
+
+            // Reset impatience when we choose a new goal
+            impatience_pool.reset();
         }
 
         // By default, goals are reset to wandering when completed.
