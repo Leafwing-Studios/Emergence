@@ -1,3 +1,5 @@
+//! The patterns and mechanisms of how organisms change over time.
+
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
 
@@ -98,7 +100,7 @@ impl LifePath {
     pub(crate) fn is_complete(&self) -> bool {
         let mut ready = true;
         if let Some(energy_pool) = &self.energy_required {
-            ready = ready & energy_pool.is_satiated();
+            ready &= energy_pool.is_satiated();
         };
 
         ready
