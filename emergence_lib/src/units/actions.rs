@@ -159,8 +159,8 @@ pub(super) fn choose_actions(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
-    mut input_query: Query<&mut InputInventory>,
-    mut output_query: Query<&mut OutputInventory>,
+    mut input_query: Query<AnyOf<(&mut InputInventory, &mut StorageInventory)>>,
+    mut output_query: Query<AnyOf<(&mut OutputInventory, &mut StorageInventory)>>,
     mut workplace_query: Query<&mut CraftingState>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
@@ -180,14 +180,24 @@ pub(super) fn handle_actions(
                     item_id,
                     output_entity,
                 } => {
-                    if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
+                    if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
+                        output_query.get_mut(*output_entity)
+                    {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
                             Some(held_item_id) => Goal::DropOff(held_item_id),
                             None => {
                                 let item_count = ItemCount::new(*item_id, 1);
-                                let transfer_result =
-                                    output_inventory.remove_item_all_or_nothing(&item_count);
+                                let transfer_result = if let Some(mut output_inventory) =
+                                    maybe_output_inventory
+                                {
+                                    output_inventory.remove_item_all_or_nothing(&item_count)
+                                } else if let Some(mut storage_inventory) = maybe_storage_inventory
+                                {
+                                    storage_inventory.remove_item_all_or_nothing(&item_count)
+                                } else {
+                                    unreachable!()
+                                };
 
                                 // If our unit's all loaded, swap to delivering it
                                 match transfer_result {
@@ -208,15 +218,27 @@ pub(super) fn handle_actions(
                     item_id,
                     input_entity,
                 } => {
-                    if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
+                    if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
+                        input_query.get_mut(*input_entity)
+                    {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We should be holding something, if we're not find something else to do
                             None => Goal::Wander,
                             Some(held_item_id) => {
                                 if held_item_id == *item_id {
                                     let item_count = ItemCount::new(held_item_id, 1);
-                                    let transfer_result = input_inventory
-                                        .add_item_all_or_nothing(&item_count, item_manifest);
+                                    let transfer_result =
+                                        if let Some(mut input_inventory) = maybe_input_inventory {
+                                            input_inventory
+                                                .add_item_all_or_nothing(&item_count, item_manifest)
+                                        } else if let Some(mut storage_inventory) =
+                                            maybe_storage_inventory
+                                        {
+                                            storage_inventory
+                                                .add_item_all_or_nothing(&item_count, item_manifest)
+                                        } else {
+                                            unreachable!()
+                                        };
 
                                     // If our unit is unloaded, swap to wandering to find something else to do
                                     match transfer_result {
