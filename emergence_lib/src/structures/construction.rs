@@ -82,7 +82,7 @@ impl GhostBundle {
             tile_pos,
             structure_id,
             facing: clipboard_data.facing,
-            construction_materials: structure_data.construction_materials.clone(),
+            construction_materials: structure_data.construction_strategy.materials.clone(),
             crafting_state: CraftingState::NeedsInput,
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
@@ -257,8 +257,9 @@ pub(super) fn ghost_lifecycle(
                         let structure_details = structure_manifest.get(structure_id);
                         CraftingState::InProgress {
                             progress: Duration::ZERO,
-                            required: structure_details.build_duration,
-                            work_required: structure_details.build_duration > Duration::ZERO,
+                            required: structure_details.construction_strategy.work,
+                            work_required: structure_details.construction_strategy.work
+                                > Duration::ZERO,
                             worker_present: false,
                         }
                     }
@@ -290,14 +291,31 @@ pub(super) fn ghost_lifecycle(
             }
             CraftingState::RecipeComplete => {
                 commands.despawn_ghost(tile_pos);
-                commands.spawn_structure(
-                    tile_pos,
-                    ClipboardData {
-                        structure_id,
-                        facing,
-                        active_recipe: active_recipe.clone(),
-                    },
-                );
+
+                // Spawn the seedling form of a structure if any
+                if let Some(seedling) = structure_manifest
+                    .get(structure_id)
+                    .construction_strategy
+                    .seedling
+                {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id: seedling,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
+                } else {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
+                }
             }
             _ => unreachable!(),
         }

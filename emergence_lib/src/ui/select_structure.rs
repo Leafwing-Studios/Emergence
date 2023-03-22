@@ -47,7 +47,11 @@ fn update_structure_choices(
 ) {
     if structure_manifest.is_changed() {
         // Sort to ensure a stable ordering
-        available_choices.choices = structure_manifest.variants().into_iter().sorted().collect();
+        available_choices.choices = structure_manifest
+            .prototypes()
+            .into_iter()
+            .sorted()
+            .collect();
     }
 }
 

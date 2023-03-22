@@ -5,7 +5,11 @@ use crate::{
         manifest::{Id, Manifest, Unit, UnitManifest},
         units::UnitHandles,
     },
-    organisms::energy::{Energy, EnergyPool},
+    organisms::{
+        energy::{Energy, EnergyPool},
+        lifecycle::Lifecycle,
+        OrganismId, OrganismVariety,
+    },
     player_interaction::InteractionSystem,
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
@@ -33,14 +37,21 @@ mod reproduction;
 /// The data associated with each variety of unit
 #[derive(Debug, Clone)]
 pub(crate) struct UnitData {
-    /// The energy pool of this unit
-    energy_pool: EnergyPool,
+    /// The data shared by all organisms
+    organism_variety: OrganismVariety,
     /// What this unit type needs to eat
     diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     max_impatience: u8,
     /// How many actions (on average) will this unit take while wandering before picking a new goal?
     mean_free_wander_period: f64,
+}
+
+impl UnitData {
+    /// Returns the [`OrganismVariety`] data for this type of unit.
+    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
+        &self.organism_variety
+    }
 }
 
 impl Default for UnitManifest {
@@ -51,7 +62,11 @@ impl Default for UnitManifest {
         manifest.insert(
             "ant",
             UnitData {
-                energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                organism_variety: OrganismVariety {
+                    prototypical_form: OrganismId::Unit(Id::from_name("ant")),
+                    lifecycle: Lifecycle::STATIC,
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
                 mean_free_wander_period: 20.,
@@ -114,7 +129,10 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             diet: unit_data.diet,
-            organism_bundle: OrganismBundle::new(unit_data.energy_pool),
+            organism_bundle: OrganismBundle::new(
+                unit_data.organism_variety.energy_pool,
+                unit_data.organism_variety.lifecycle,
+            ),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {

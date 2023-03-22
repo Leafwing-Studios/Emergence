@@ -9,7 +9,7 @@ use crate::{
         Id, Item, ItemManifest, Structure, Terrain, TerrainManifest, Unit,
     },
     items::ItemCount,
-    organisms::energy::EnergyPool,
+    organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalStrength, SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
@@ -353,6 +353,7 @@ pub(super) fn handle_actions(
                         if held_item == unit.diet.item() {
                             let proposed = unit.energy_pool.current() + unit.diet.energy();
                             unit.energy_pool.set_current(proposed);
+                            unit.lifecycle.record_energy_gained(unit.diet.energy());
                         }
                     }
 
@@ -375,6 +376,8 @@ pub(super) struct ActionDataQuery {
     goal: &'static mut Goal,
     /// The unit's action
     action: &'static CurrentAction,
+    /// The unit's progress towards any transformations
+    lifecycle: &'static mut Lifecycle,
     /// What the unit is holding
     unit_inventory: &'static mut UnitInventory,
     /// The unit's spatial position for rendering

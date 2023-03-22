@@ -51,7 +51,7 @@ impl FromWorld for Icons<Id<Structure>> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         let structure_manifest = world.resource::<StructureManifest>();
-        let structure_names = structure_manifest.names();
+        let structure_names = structure_manifest.prototype_names();
 
         let mut map = HashMap::new();
 
