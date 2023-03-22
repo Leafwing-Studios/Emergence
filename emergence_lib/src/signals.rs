@@ -46,7 +46,7 @@ impl Signals {
     /// Returns the signal strength of `signal_type` at the given `tile_pos`.
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
+    pub fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
         match self.maps.get(&signal_type) {
             Some(map) => map.get(tile_pos),
             None => SignalStrength::ZERO,
@@ -117,7 +117,7 @@ impl Signals {
 
                 total_signals
             }
-            Goal::DropOff(item_id) => {
+            Goal::Store(item_id) => {
                 let pull_signals =
                     self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
                 let stores_signals =
@@ -133,6 +133,9 @@ impl Signals {
                 }
 
                 total_signals
+            }
+            Goal::Deliver(item_id) => {
+                self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry)
             }
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
@@ -498,7 +501,7 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
         assert_eq!(
@@ -531,7 +534,7 @@ mod tests {
         );
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
     }
@@ -574,7 +577,7 @@ mod tests {
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
     }
@@ -589,7 +592,7 @@ mod tests {
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry)
             .is_some());
     }
 
@@ -609,7 +612,7 @@ mod tests {
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry)
             .is_some());
     }
 }

@@ -30,8 +30,13 @@ pub(crate) enum Goal {
     #[allow(dead_code)]
     Pickup(Id<Item>),
     /// Attempting to drop off an object
+    ///
+    /// This can place the object in storage or a structure that actively needs it.
     #[allow(dead_code)]
-    DropOff(Id<Item>),
+    Store(Id<Item>),
+    /// Attempting to drop off an object to a structure that actively needs it.
+    #[allow(dead_code)]
+    Deliver(Id<Item>),
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
     Work(Id<Structure>),
@@ -69,7 +74,8 @@ impl Goal {
         match self {
             Goal::Wander => "Wander".to_string(),
             Goal::Pickup(item) => format!("Pickup {}", item_manifest.name(*item)),
-            Goal::DropOff(item) => format!("Dropoff {}", item_manifest.name(*item)),
+            Goal::Store(item) => format!("Store {}", item_manifest.name(*item)),
+            Goal::Deliver(item) => format!("Deliver {}", item_manifest.name(*item)),
             Goal::Work(structure) => format!("Work at {}", structure_manifest.name(*structure)),
             Goal::Demolish(structure) => {
                 format!("Demolish {}", structure_manifest.name(*structure))

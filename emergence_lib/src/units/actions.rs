@@ -10,7 +10,7 @@ use crate::{
     },
     items::ItemCount,
     organisms::energy::EnergyPool,
-    signals::Signals,
+    signals::{SignalStrength, SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
@@ -89,11 +89,11 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::DropOff(item_id) => {
+                Goal::Store(item_id) => {
                     if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
                         CurrentAction::abandon()
                     } else {
-                        CurrentAction::find_receptacle(
+                        CurrentAction::find_storage(
                             *item_id,
                             unit_tile_pos,
                             facing,
@@ -104,6 +104,24 @@ pub(super) fn choose_actions(
                             &terrain_query,
                             &terrain_manifest,
                             &item_manifest,
+                            map_geometry,
+                        )
+                    }
+                }
+                Goal::Deliver(item_id) => {
+                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
+                        CurrentAction::abandon()
+                    } else {
+                        CurrentAction::find_delivery(
+                            *item_id,
+                            unit_tile_pos,
+                            facing,
+                            goal,
+                            &input_inventory_query,
+                            &signals,
+                            rng,
+                            &terrain_query,
+                            &terrain_manifest,
                             map_geometry,
                         )
                     }
@@ -173,6 +191,7 @@ pub(super) fn handle_actions(
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
+    signals: Res<Signals>,
     mut commands: Commands,
 ) {
     let item_manifest = &*item_manifest;
@@ -192,7 +211,7 @@ pub(super) fn handle_actions(
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
-                            Some(held_item_id) => Goal::DropOff(held_item_id),
+                            Some(held_item_id) => Goal::Store(held_item_id),
                             None => {
                                 let item_count = ItemCount::new(*item_id, 1);
                                 let transfer_result = if let Some(mut output_inventory) =
@@ -210,7 +229,15 @@ pub(super) fn handle_actions(
                                 match transfer_result {
                                     Ok(()) => {
                                         unit.unit_inventory.held_item = Some(*item_id);
-                                        Goal::DropOff(*item_id)
+                                        if signals.get(SignalType::Pull(*item_id), *unit.tile_pos)
+                                            > SignalStrength::ZERO
+                                        {
+                                            // If we can see any `Pull` signals of the right type, deliver the item.
+                                            Goal::Deliver(*item_id)
+                                        } else {
+                                            // Otherwise, simply store it
+                                            Goal::Store(*item_id)
+                                        }
                                     }
                                     Err(..) => Goal::Pickup(*item_id),
                                 }
@@ -253,11 +280,11 @@ pub(super) fn handle_actions(
                                             unit.unit_inventory.held_item = None;
                                             Goal::Wander
                                         }
-                                        Err(..) => Goal::DropOff(held_item_id),
+                                        Err(..) => Goal::Store(held_item_id),
                                     }
                                 } else {
                                     // Somehow we're holding the wrong thing
-                                    Goal::DropOff(held_item_id)
+                                    Goal::Store(held_item_id)
                                 }
                             }
                         }
@@ -531,7 +558,7 @@ impl CurrentAction {
 
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
-    fn find_receptacle(
+    fn find_storage(
         item_id: Id<Item>,
         unit_tile_pos: TilePos,
         facing: &Facing,
@@ -574,6 +601,72 @@ impl CurrentAction {
                         }
                     } else {
                         error!("input_inventory_query contained an object with neither an input nor storage inventory.")
+                    }
+                }
+            }
+        }
+
+        if let Some((input_entity, input_tile_pos)) = receptacles.choose(rng) {
+            CurrentAction::dropoff(
+                item_id,
+                *input_entity,
+                facing,
+                unit_tile_pos,
+                *input_tile_pos,
+            )
+        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+            CurrentAction::move_or_spin(
+                unit_tile_pos,
+                upstream,
+                facing,
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
+        }
+    }
+
+    /// Attempt to locate a place to put an item of type `item_id`.
+    #[allow(clippy::too_many_arguments)]
+    fn find_delivery(
+        item_id: Id<Item>,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        goal: &Goal,
+        input_inventory_query: &Query<AnyOf<(&InputInventory, &StorageInventory)>>,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
+
+        for tile_pos in neighboring_tiles {
+            // Ghosts
+            if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+                if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((ghost_entity, tile_pos));
+                        }
+                    }
+                }
+            }
+
+            // Structures
+            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                // We deliberately avoid storage locations here, our goal is to complete a delivery!
+                if let Ok((maybe_input_inventory, _maybe_storage_inventory)) =
+                    input_inventory_query.get(structure_entity)
+                {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
                     }
                 }
             }
