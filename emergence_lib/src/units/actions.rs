@@ -52,6 +52,7 @@ pub(super) fn choose_actions(
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     terrain_manifest: Res<TerrainManifest>,
+    item_manifest: Res<ItemManifest>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -102,6 +103,7 @@ pub(super) fn choose_actions(
                             rng,
                             &terrain_query,
                             &terrain_manifest,
+                            &item_manifest,
                             map_geometry,
                         )
                     }
@@ -539,6 +541,7 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
+        item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
@@ -566,7 +569,7 @@ impl CurrentAction {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
-                        if storage_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if storage_inventory.remaining_space_for_item(item_id, item_manifest) > 0 {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     } else {
