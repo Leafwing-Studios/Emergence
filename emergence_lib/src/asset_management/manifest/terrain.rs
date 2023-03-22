@@ -2,7 +2,7 @@
 
 use super::TerrainManifest;
 
-/// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`].
+/// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`](super::Id).
 #[derive(Debug)]
 pub(crate) struct TerrainData {
     /// The walking speed multiplier associated with this terrain type.
