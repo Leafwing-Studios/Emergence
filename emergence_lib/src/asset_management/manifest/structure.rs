@@ -17,6 +17,8 @@ use super::{Id, Item, Manifest, StructureManifest, Terrain};
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureData {
+    /// Is this the "base" form that we should display to players in menus and for ghosts?
+    pub(crate) prototypical: bool,
     /// Data needed for living structures
     pub(crate) organism: Option<OrganismVariety>,
     /// What base variety of structure is this?
@@ -80,6 +82,7 @@ impl Default for StructureManifest {
         manifest.insert(
             "leuco",
             StructureData {
+                prototypical: true,
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
@@ -102,6 +105,7 @@ impl Default for StructureManifest {
         manifest.insert(
             "acacia",
             StructureData {
+                prototypical: true,
                 organism: Some(OrganismVariety {
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
@@ -120,6 +124,7 @@ impl Default for StructureManifest {
         manifest.insert(
             "ant_hive",
             StructureData {
+                prototypical: true,
                 organism: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
@@ -137,6 +142,7 @@ impl Default for StructureManifest {
         manifest.insert(
             "hatchery",
             StructureData {
+                prototypical: true,
                 organism: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
@@ -154,6 +160,7 @@ impl Default for StructureManifest {
         manifest.insert(
             "storage",
             StructureData {
+                prototypical: true,
                 organism: None,
                 kind: StructureKind::Storage {
                     max_slot_count: 3,
