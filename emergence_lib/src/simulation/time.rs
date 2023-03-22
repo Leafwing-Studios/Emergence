@@ -2,9 +2,12 @@
 
 use core::f32::consts::{PI, TAU};
 use core::fmt::Display;
+use std::ops::{Div, Mul};
 
 use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
+use leafwing_abilities::pool::MaxPoolLessThanZero;
+use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::graphics::lighting::CelestialBody;
@@ -38,8 +41,24 @@ pub struct InGameTime {
 }
 
 /// A duration of time, in in-game days.
-#[derive(Debug, Clone, Copy, Add, Sub, AddAssign, SubAssign)]
+#[derive(Debug, Clone, Copy, Add, Sub, AddAssign, SubAssign, PartialEq, PartialOrd)]
 pub struct Days(pub f32);
+
+impl Div<f32> for Days {
+    type Output = Days;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Days(self.0 / rhs)
+    }
+}
+
+impl Mul<f32> for Days {
+    type Output = Days;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Days(self.0 * rhs)
+    }
+}
 
 impl InGameTime {
     /// How many days have elapsed total?
@@ -118,3 +137,62 @@ fn pause_game(
         });
     }
 }
+
+/// A [`Pool`] of [`Days`], which builds up and will eventually be filled (at which point some event will occur).
+#[derive(Clone, Copy)]
+struct TimePool {
+    current: Days,
+    max: Days,
+}
+
+impl Pool for TimePool {
+    type Quantity = Days;
+
+    const ZERO: Days = Days(0.);
+
+    fn new(
+        current: Self::Quantity,
+        max: Self::Quantity,
+        _regen_per_second: Self::Quantity,
+    ) -> Self {
+        Self { current, max }
+    }
+
+    fn current(&self) -> Self::Quantity {
+        self.current
+    }
+
+    fn set_current(&mut self, new_quantity: Self::Quantity) -> Self::Quantity {
+        let actual = Days(new_quantity.0.clamp(0., self.max.0));
+        self.current = actual;
+        actual
+    }
+
+    fn max(&self) -> Self::Quantity {
+        self.max
+    }
+
+    fn set_max(
+        &mut self,
+        new_max: Self::Quantity,
+    ) -> Result<(), leafwing_abilities::pool::MaxPoolLessThanZero> {
+        if new_max < Self::ZERO {
+            Err(MaxPoolLessThanZero)
+        } else {
+            self.max = new_max;
+            self.set_current(self.current);
+            Ok(())
+        }
+    }
+
+    fn regen_per_second(&self) -> Self::Quantity {
+        panic!("Time does not regenerate")
+    }
+
+    fn set_regen_per_second(&mut self, _new_regen_per_second: Self::Quantity) {
+        panic!("Time does not regenerate")
+    }
+}
+
+/// Advances life cycles accorded to elapsed in-game time
+fn record_elapsed_time_for_lifecycles() {}
