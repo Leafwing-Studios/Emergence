@@ -4,7 +4,7 @@ use crate::{
     items::inventory::Inventory,
     organisms::{
         energy::{Energy, EnergyPool},
-        lifecycle::Lifecycle,
+        lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
     },
     structures::crafting::{ActiveRecipe, InputInventory},
@@ -152,7 +152,10 @@ impl Default for StructureManifest {
             StructureData {
                 organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycle: Lifecycle::STATIC,
+                    lifecycle: Lifecycle::new(vec![LifePath {
+                        new_form: OrganismId::Structure(Id::from_name("acacia_sprout")),
+                        energy_required: Some(EnergyPool::simple(300.)),
+                    }]),
                     energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {
@@ -167,7 +170,10 @@ impl Default for StructureManifest {
             StructureData {
                 organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycle: Lifecycle::STATIC,
+                    lifecycle: Lifecycle::new(vec![LifePath {
+                        new_form: OrganismId::Structure(Id::from_name("acacia")),
+                        energy_required: Some(EnergyPool::simple(500.)),
+                    }]),
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {

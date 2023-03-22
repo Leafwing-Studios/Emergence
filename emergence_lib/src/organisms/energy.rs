@@ -26,6 +26,11 @@ pub(crate) struct EnergyPool {
 }
 
 impl EnergyPool {
+    /// Quickly construct a new empty energy pool with a max energy of `max` and no regeneration.
+    pub(crate) fn simple(max: f32) -> Self {
+        EnergyPool::new_empty(Energy(max), Energy(0.))
+    }
+
     /// Is this organism out of energy?
     pub(crate) fn is_empty(&self) -> bool {
         self.current <= Energy(0.)
