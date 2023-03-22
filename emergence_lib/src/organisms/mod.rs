@@ -33,11 +33,10 @@ impl OrganismId {
         unit_manifest: &UnitManifest,
     ) -> String {
         match self {
-            OrganismId::Structure(structure_id) => format!(
-                "Living structure: {} ",
-                structure_manifest.name(*structure_id)
-            ),
-            OrganismId::Unit(unit_id) => format!("Unit: {} ", unit_manifest.name(*unit_id)),
+            OrganismId::Structure(structure_id) => {
+                format!("{} (S)", structure_manifest.name(*structure_id))
+            }
+            OrganismId::Unit(unit_id) => format!("{} (U)", unit_manifest.name(*unit_id)),
         }
     }
 }
