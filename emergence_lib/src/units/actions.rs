@@ -563,6 +563,7 @@ impl CurrentAction {
 
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::collapsible_match)]
     fn find_storage(
         item_id: Id<Item>,
         unit_tile_pos: TilePos,
@@ -638,6 +639,7 @@ impl CurrentAction {
 
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::collapsible_match)]
     fn find_delivery(
         item_id: Id<Item>,
         unit_tile_pos: TilePos,

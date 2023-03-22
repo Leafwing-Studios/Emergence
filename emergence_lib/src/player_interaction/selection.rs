@@ -764,9 +764,7 @@ fn get_details(
                 structure_id: *structure_query_item.structure_id,
                 crafting_details,
                 maybe_organism_details,
-                storage_inventory: structure_query_item
-                    .storage_inventory
-                    .map(|ref_si| ref_si.clone()),
+                storage_inventory: structure_query_item.storage_inventory.cloned(),
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
             })
         }
