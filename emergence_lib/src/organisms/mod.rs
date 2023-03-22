@@ -1,7 +1,7 @@
 //! Models organisms, which have two primary types: units (organisms that can move around freely)
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
-use leafwing_abilities::{prelude::Pool, systems::regenerate_resource_pool};
+use leafwing_abilities::systems::regenerate_resource_pool;
 
 use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest, Unit, UnitManifest},

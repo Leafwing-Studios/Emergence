@@ -18,20 +18,31 @@ use super::{Id, Item, Manifest, Structure, StructureManifest, Terrain};
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
 pub(crate) struct StructureData {
-    /// Is this the "base" form that we should display to players in menus and for ghosts?
-    pub(crate) prototypical: bool,
     /// Data needed for living structures
     pub(crate) organism_variety: Option<OrganismVariety>,
     /// What base variety of structure is this?
     ///
     /// Determines the components that this structure gets.
     pub(crate) kind: StructureKind,
+    /// How new copies of this structure can be built
+    pub(crate) construction_strategy: ConstructionStrategy,
+}
+
+/// How new structures of this sort can be built.
+///
+/// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
+#[derive(Debug, Clone)]
+pub(crate) struct ConstructionStrategy {
+    /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
+    ///
+    /// If `None`, this structure can be built directly.
+    pub(crate) seedling: Option<Id<Structure>>,
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
-    pub(crate) build_duration: Duration,
+    pub(crate) work: Duration,
     /// The set of items needed to create a new copy of this structure
-    pub(crate) construction_materials: InputInventory,
+    pub(crate) materials: InputInventory,
     /// The set of terrain types that this structure can be built on
     pub(crate) allowed_terrain_types: HashSet<Id<Terrain>>,
 }
@@ -67,7 +78,7 @@ impl StructureData {
 
     /// Returns the set of terrain types that this structure can be built on
     pub fn allowed_terrain_types(&self) -> &HashSet<Id<Terrain>> {
-        &self.allowed_terrain_types
+        &self.construction_strategy.allowed_terrain_types
     }
 }
 
@@ -78,8 +89,11 @@ impl StructureManifest {
     pub(crate) fn prototypes(&self) -> impl IntoIterator<Item = Id<Structure>> + '_ {
         self.data_map
             .iter()
-            .filter(|(_k, v)| v.prototypical)
-            .map(|(k, _v)| *k)
+            .filter(|(id, v)| match &v.organism_variety {
+                None => true,
+                Some(variety) => variety.prototypical_form == OrganismId::Structure(**id),
+            })
+            .map(|(id, _v)| *id)
     }
 
     /// Returns the names of all structures where [`StructureData`]'s `prototypical` field is `true`.
@@ -95,15 +109,10 @@ impl Default for StructureManifest {
     fn default() -> Self {
         let mut manifest: StructureManifest = Manifest::new();
 
-        let leuco_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
-        };
-
         // TODO: read these from files
         manifest.insert(
             "leuco",
             StructureData {
-                prototypical: true,
                 organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
                     lifecycle: Lifecycle::STATIC,
@@ -112,23 +121,50 @@ impl Default for StructureManifest {
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("leuco_chunk_production")),
                 },
-                build_duration: Duration::from_secs(5),
-                construction_materials: leuco_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([
-                    Id::from_name("loam"),
-                    Id::from_name("muddy"),
-                ]),
+                construction_strategy: ConstructionStrategy {
+                    seedling: None,
+                    work: Duration::from_secs(3),
+                    materials: InputInventory {
+                        inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
+                    },
+                    allowed_terrain_types: HashSet::from_iter([
+                        Id::from_name("loam"),
+                        Id::from_name("muddy"),
+                    ]),
+                },
             },
         );
 
-        let acacia_construction_materials = InputInventory {
-            inventory: Inventory::new_from_item(Id::from_name("acacia_leaf"), 2),
+        let acacia_construction_strategy = ConstructionStrategy {
+            seedling: Some(Id::from_name("acacia_seed")),
+            work: Duration::ZERO,
+            materials: InputInventory {
+                inventory: Inventory::new_from_item(Id::from_name("acacia_leaf"), 1),
+            },
+            allowed_terrain_types: HashSet::from_iter([
+                Id::from_name("loam"),
+                Id::from_name("muddy"),
+            ]),
         };
 
         manifest.insert(
-            "acacia",
+            "acacia_seed",
             StructureData {
-                prototypical: true,
+                organism_variety: Some(OrganismVariety {
+                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                    lifecycle: Lifecycle::STATIC,
+                    energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
+                }),
+                kind: StructureKind::Crafting {
+                    starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                },
+                construction_strategy: acacia_construction_strategy.clone(),
+            },
+        );
+
+        manifest.insert(
+            "acacia_sprout",
+            StructureData {
                 organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
                     lifecycle: Lifecycle::STATIC,
@@ -137,67 +173,85 @@ impl Default for StructureManifest {
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
                 },
-                build_duration: Duration::ZERO,
-                construction_materials: acacia_construction_materials,
-                allowed_terrain_types: HashSet::from_iter([
-                    Id::from_name("loam"),
-                    Id::from_name("muddy"),
-                ]),
+                construction_strategy: acacia_construction_strategy.clone(),
+            },
+        );
+
+        manifest.insert(
+            "acacia",
+            StructureData {
+                organism_variety: Some(OrganismVariety {
+                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                    lifecycle: Lifecycle::STATIC,
+                    energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
+                }),
+                kind: StructureKind::Crafting {
+                    starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                },
+                construction_strategy: acacia_construction_strategy,
             },
         );
 
         manifest.insert(
             "ant_hive",
             StructureData {
-                prototypical: true,
                 organism_variety: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
                 },
-                construction_materials: InputInventory::default(),
-                build_duration: Duration::from_secs(10),
-                allowed_terrain_types: HashSet::from_iter([
-                    Id::from_name("loam"),
-                    Id::from_name("muddy"),
-                    Id::from_name("rocky"),
-                ]),
+                construction_strategy: ConstructionStrategy {
+                    seedling: None,
+                    work: Duration::from_secs(10),
+                    materials: InputInventory::default(),
+                    allowed_terrain_types: HashSet::from_iter([
+                        Id::from_name("loam"),
+                        Id::from_name("muddy"),
+                        Id::from_name("rocky"),
+                    ]),
+                },
             },
         );
 
         manifest.insert(
             "hatchery",
             StructureData {
-                prototypical: true,
                 organism_variety: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
                 },
-                construction_materials: InputInventory::default(),
-                build_duration: Duration::from_secs(5),
-                allowed_terrain_types: HashSet::from_iter([
-                    Id::from_name("loam"),
-                    Id::from_name("muddy"),
-                    Id::from_name("rocky"),
-                ]),
+                construction_strategy: ConstructionStrategy {
+                    seedling: None,
+                    work: Duration::from_secs(5),
+                    materials: InputInventory::default(),
+                    allowed_terrain_types: HashSet::from_iter([
+                        Id::from_name("loam"),
+                        Id::from_name("muddy"),
+                        Id::from_name("rocky"),
+                    ]),
+                },
             },
         );
 
         manifest.insert(
             "storage",
             StructureData {
-                prototypical: true,
                 organism_variety: None,
                 kind: StructureKind::Storage {
                     max_slot_count: 3,
                     reserved_for: None,
                 },
-                construction_materials: InputInventory::default(),
-                build_duration: Duration::from_secs(10),
-                allowed_terrain_types: HashSet::from_iter([
-                    Id::from_name("loam"),
-                    Id::from_name("muddy"),
-                    Id::from_name("rocky"),
-                ]),
+                construction_strategy: ConstructionStrategy {
+                    seedling: None,
+                    work: Duration::from_secs(10),
+                    materials: InputInventory {
+                        inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
+                    },
+                    allowed_terrain_types: HashSet::from_iter([
+                        Id::from_name("loam"),
+                        Id::from_name("muddy"),
+                        Id::from_name("rocky"),
+                    ]),
+                },
             },
         );
 
