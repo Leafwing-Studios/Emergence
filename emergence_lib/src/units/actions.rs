@@ -14,7 +14,7 @@ use crate::{
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
-        construction::DemolitionQuery,
+        construction::{DemolitionQuery, MarkedForDemolition},
         crafting::{
             CraftingState, InputInventory, OutputInventory, StorageInventory, WorkplaceQuery,
         },
@@ -44,7 +44,12 @@ pub(super) fn choose_actions(
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
         With<Id<Unit>>,
     >,
-    input_inventory_query: Query<AnyOf<(&InputInventory, &StorageInventory)>>,
+    // We shouldn't be dropping off new stuff at structures that are about to be destroyed!
+    input_inventory_query: Query<
+        AnyOf<(&InputInventory, &StorageInventory)>,
+        Without<MarkedForDemolition>,
+    >,
+    // But we can take their items away
     output_inventory_query: Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
@@ -563,7 +568,10 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        input_inventory_query: &Query<AnyOf<(&InputInventory, &StorageInventory)>>,
+        input_inventory_query: &Query<
+            AnyOf<(&InputInventory, &StorageInventory)>,
+            Without<MarkedForDemolition>,
+        >,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -635,7 +643,10 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        input_inventory_query: &Query<AnyOf<(&InputInventory, &StorageInventory)>>,
+        input_inventory_query: &Query<
+            AnyOf<(&InputInventory, &StorageInventory)>,
+            Without<MarkedForDemolition>,
+        >,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
