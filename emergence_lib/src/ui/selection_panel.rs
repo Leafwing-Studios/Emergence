@@ -187,7 +187,8 @@ fn update_hover_details(
                 details.display(&item_manifest, &structure_manifest, &recipe_manifest);
         }
         SelectionDetails::Structure(details) => {
-            structure_text.sections[0].value = details.display(&structure_manifest, &item_manifest);
+            structure_text.sections[0].value =
+                details.display(&structure_manifest, &unit_manifest, &item_manifest);
         }
         SelectionDetails::Terrain(details) => {
             terrain_text.sections[0].value =

@@ -21,7 +21,7 @@ pub(crate) struct StructureData {
     /// Is this the "base" form that we should display to players in menus and for ghosts?
     pub(crate) prototypical: bool,
     /// Data needed for living structures
-    pub(crate) organism: Option<OrganismVariety>,
+    pub(crate) organism_variety: Option<OrganismVariety>,
     /// What base variety of structure is this?
     ///
     /// Determines the components that this structure gets.
@@ -104,9 +104,9 @@ impl Default for StructureManifest {
             "leuco",
             StructureData {
                 prototypical: true,
-                organism: Some(OrganismVariety {
+                organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
-                    lifecycles: Lifecycle::STATIC,
+                    lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {
@@ -129,9 +129,9 @@ impl Default for StructureManifest {
             "acacia",
             StructureData {
                 prototypical: true,
-                organism: Some(OrganismVariety {
+                organism_variety: Some(OrganismVariety {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycles: Lifecycle::STATIC,
+                    lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {
@@ -150,7 +150,7 @@ impl Default for StructureManifest {
             "ant_hive",
             StructureData {
                 prototypical: true,
-                organism: None,
+                organism_variety: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
                 },
@@ -168,7 +168,7 @@ impl Default for StructureManifest {
             "hatchery",
             StructureData {
                 prototypical: true,
-                organism: None,
+                organism_variety: None,
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
                 },
@@ -186,7 +186,7 @@ impl Default for StructureManifest {
             "storage",
             StructureData {
                 prototypical: true,
-                organism: None,
+                organism_variety: None,
                 kind: StructureKind::Storage {
                     max_slot_count: 3,
                     reserved_for: None,

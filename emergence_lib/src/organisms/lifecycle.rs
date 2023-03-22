@@ -61,6 +61,19 @@ impl Lifecycle {
             }
         }
     }
+
+    /// Pretty formatting for this type
+    pub(crate) fn display(
+        &self,
+        structure_manifest: &StructureManifest,
+        unit_manifest: &UnitManifest,
+    ) -> String {
+        let mut string = String::new();
+        for life_path in &self.life_paths {
+            string += &format!("\n{}", life_path.display(structure_manifest, unit_manifest));
+        }
+        string
+    }
 }
 
 impl Default for Lifecycle {
@@ -89,6 +102,26 @@ impl LifePath {
         };
 
         ready
+    }
+
+    /// Pretty formatting for this type
+    pub(crate) fn display(
+        &self,
+        structure_manifest: &StructureManifest,
+        unit_manifest: &UnitManifest,
+    ) -> String {
+        let mut string = String::new();
+
+        if let Some(energy_pool) = &self.energy_required {
+            string += &format!("{}/{} energy", energy_pool.current(), energy_pool.max());
+        }
+
+        string += &format!(
+            "-> {}",
+            self.new_form.display(structure_manifest, unit_manifest)
+        );
+
+        string
     }
 }
 

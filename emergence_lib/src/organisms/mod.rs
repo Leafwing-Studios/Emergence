@@ -1,7 +1,7 @@
 //! Models organisms, which have two primary types: units (organisms that can move around freely)
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
-use leafwing_abilities::systems::regenerate_resource_pool;
+use leafwing_abilities::{prelude::Pool, systems::regenerate_resource_pool};
 
 use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest, Unit, UnitManifest},
@@ -34,10 +34,10 @@ impl OrganismId {
     ) -> String {
         match self {
             OrganismId::Structure(structure_id) => format!(
-                "Living structure: {}, ",
+                "Living structure: {} ",
                 structure_manifest.name(*structure_id)
             ),
-            OrganismId::Unit(unit_id) => format!("Unit: {}, ", unit_manifest.name(*unit_id)),
+            OrganismId::Unit(unit_id) => format!("Unit: {} ", unit_manifest.name(*unit_id)),
         }
     }
 }
@@ -70,7 +70,7 @@ pub(crate) struct OrganismVariety {
     /// The "base" form that we should display to players in menus and for ghosts?
     pub(crate) prototypical_form: OrganismId,
     /// The lifecycle of this organism, which reflect how and why it can change form.
-    pub(crate) lifecycles: Lifecycle,
+    pub(crate) lifecycle: Lifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
     pub(crate) energy_pool: EnergyPool,
 }

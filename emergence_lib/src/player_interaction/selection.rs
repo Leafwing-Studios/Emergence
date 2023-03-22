@@ -14,6 +14,8 @@ use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::RecipeManifest;
+use crate::asset_management::manifest::StructureManifest;
+use crate::asset_management::manifest::UnitManifest;
 use crate::signals::Signals;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -717,6 +719,8 @@ fn get_details(
     terrain_query: Query<TerrainDetailsQuery>,
     unit_query: Query<UnitDetailsQuery>,
     map_geometry: Res<MapGeometry>,
+    structure_manifest: Res<StructureManifest>,
+    unit_manifest: Res<UnitManifest>,
     recipe_manifest: Res<RecipeManifest>,
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
@@ -753,10 +757,19 @@ fn get_details(
             };
 
             // Not all structures are organisms
-            let maybe_organism_details = organism_query
-                .get(*structure_entity)
-                .ok()
-                .map(|item| item.into());
+            let maybe_organism_details =
+                organism_query
+                    .get(*structure_entity)
+                    .ok()
+                    .map(|query_item| OrganismDetails {
+                        prototypical_form: structure_manifest
+                            .get(*structure_query_item.structure_id)
+                            .organism_variety.as_ref()
+                            .expect("All structures with organism components must be registered in the manifest as organisms")
+                            .prototypical_form,
+                        lifecycle: query_item.lifecycle.clone(),
+                        energy_pool: query_item.energy_pool.clone(),
+                    });
 
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
@@ -789,7 +802,15 @@ fn get_details(
         CurrentSelection::Unit(unit_entity) => {
             let unit_query_item = unit_query.get(*unit_entity)?;
             // All units are organisms
-            let organism_details = organism_query.get(*unit_entity)?.into();
+            let organism_query_item = organism_query.get(*unit_entity)?;
+            let organism_details = OrganismDetails {
+                prototypical_form: unit_manifest
+                    .get(*unit_query_item.unit_id)
+                    .organism_variety()
+                    .prototypical_form,
+                lifecycle: organism_query_item.lifecycle.clone(),
+                energy_pool: organism_query_item.energy_pool.clone(),
+            };
 
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
@@ -901,12 +922,16 @@ Construction materials: {construction_materials}
 mod organism_details {
     use bevy::ecs::query::WorldQuery;
 
-    use crate::organisms::energy::EnergyPool;
-    use core::fmt::Display;
+    use crate::{
+        asset_management::manifest::{StructureManifest, UnitManifest},
+        organisms::{energy::EnergyPool, lifecycle::Lifecycle, OrganismId},
+    };
 
     /// Data needed to populate [`OrganismDetails`].
     #[derive(WorldQuery)]
     pub(super) struct OrganismDetailsQuery {
+        /// The organism's current progress through its lifecycle
+        pub(super) lifecycle: &'static Lifecycle,
         /// The current and max energy
         pub(super) energy_pool: &'static EnergyPool,
     }
@@ -914,24 +939,33 @@ mod organism_details {
     /// Detailed info about a given organism.
     #[derive(Debug)]
     pub(crate) struct OrganismDetails {
+        /// The prototypical "base" bersion of this orgnaism
+        pub(super) prototypical_form: OrganismId,
+        /// The organism's current progress through its lifecycle
+        pub(super) lifecycle: Lifecycle,
         /// The current and max energy
         pub(super) energy_pool: EnergyPool,
     }
 
-    impl From<OrganismDetailsQueryItem<'_>> for OrganismDetails {
-        fn from(item: OrganismDetailsQueryItem) -> Self {
-            OrganismDetails {
-                energy_pool: item.energy_pool.clone(),
-            }
-        }
-    }
+    impl OrganismDetails {
+        /// Pretty formatting for this type
+        pub(crate) fn display(
+            &self,
+            structure_manifest: &StructureManifest,
+            unit_manifest: &UnitManifest,
+        ) -> String {
+            let prototypical_form = self
+                .prototypical_form
+                .display(structure_manifest, unit_manifest);
+            let lifecycle = self.lifecycle.display(structure_manifest, unit_manifest);
 
-    impl Display for OrganismDetails {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let energy_pool = &self.energy_pool;
-            let string = format!("Energy: {energy_pool}");
 
-            write!(f, "{string}")
+            format!(
+                "Prototypical form: {prototypical_form}
+Lifecycle: {lifecycle}
+Energy: {energy_pool}"
+            )
         }
     }
 }
@@ -942,7 +976,9 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, Structure, StructureManifest},
+        asset_management::manifest::{
+            Id, ItemManifest, Structure, StructureManifest, UnitManifest,
+        },
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
@@ -999,6 +1035,7 @@ mod structure_details {
         pub(crate) fn display(
             &self,
             structure_manifest: &StructureManifest,
+            unit_manifest: &UnitManifest,
             item_manifest: &ItemManifest,
         ) -> String {
             let entity = self.entity;
@@ -1024,7 +1061,7 @@ Tile: {tile_pos}"
             }
 
             if let Some(organism) = &self.maybe_organism_details {
-                string += &format!("\n{organism}");
+                string += &format!("\n{}", organism.display(structure_manifest, unit_manifest));
             };
 
             string
@@ -1215,7 +1252,9 @@ mod unit_details {
             let goal = self.goal.display(item_manifest, structure_manifest);
             let action = &self.action.display(item_manifest);
             let impatience_pool = &self.impatience_pool;
-            let organism_details = &self.organism_details;
+            let organism_details = self
+                .organism_details
+                .display(structure_manifest, unit_manifest);
 
             format!(
                 "Entity: {entity:?}

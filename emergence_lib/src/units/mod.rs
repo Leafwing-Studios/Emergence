@@ -47,6 +47,13 @@ pub(crate) struct UnitData {
     mean_free_wander_period: f64,
 }
 
+impl UnitData {
+    /// Returns the [`OrganismVariety`] data for this type of unit.
+    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
+        &self.organism_variety
+    }
+}
+
 impl Default for UnitManifest {
     fn default() -> Self {
         let mut manifest: UnitManifest = Manifest::new();
@@ -57,7 +64,7 @@ impl Default for UnitManifest {
             UnitData {
                 organism_variety: OrganismVariety {
                     prototypical_form: OrganismId::Unit(Id::from_name("ant")),
-                    lifecycles: Lifecycle::STATIC,
+                    lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
@@ -124,7 +131,7 @@ impl UnitBundle {
             diet: unit_data.diet,
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
-                unit_data.organism_variety.lifecycles,
+                unit_data.organism_variety.lifecycle,
             ),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
