@@ -46,7 +46,7 @@ impl Signals {
     /// Returns the signal strength of `signal_type` at the given `tile_pos`.
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
+    pub fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
         match self.maps.get(&signal_type) {
             Some(map) => map.get(tile_pos),
             None => SignalStrength::ZERO,
@@ -117,7 +117,24 @@ impl Signals {
 
                 total_signals
             }
-            Goal::DropOff(item_id) => {
+            Goal::Store(item_id) => {
+                let pull_signals =
+                    self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
+                let stores_signals =
+                    self.neighboring_signals(SignalType::Stores(*item_id), tile_pos, map_geometry);
+                let mut total_signals = pull_signals;
+
+                for (tile_pos, signal_strength) in stores_signals {
+                    if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                        *existing_signal_strength += signal_strength;
+                    } else {
+                        total_signals.insert(tile_pos, signal_strength);
+                    }
+                }
+
+                total_signals
+            }
+            Goal::Deliver(item_id) => {
                 self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry)
             }
             Goal::Work(structure_id) => {
@@ -216,7 +233,10 @@ impl LocalSignals {
         &self,
     ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
         self.map.iter().filter(|(signal_type, _signal_strength)| {
-            !matches!(**signal_type, SignalType::Contains(_))
+            !matches!(
+                **signal_type,
+                SignalType::Contains(_) | SignalType::Stores(_)
+            )
         })
     }
 
@@ -286,7 +306,13 @@ pub enum SignalType {
     /// Bring me an item of this type.
     Pull(Id<Item>),
     /// Has an item of this type, in case you were looking.
+    ///
+    /// The passive form of `Push`.
     Contains(Id<Item>),
+    /// Stores items of this type, in case you were looking.
+    ///
+    /// The passive form of `Pull`.
+    Stores(Id<Item>),
     /// Perform work at this type of structure.
     #[allow(dead_code)]
     Work(Id<Structure>),
@@ -305,6 +331,7 @@ impl SignalType {
             SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
             SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
             SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
+            SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
             SignalType::Work(structure_id) => {
                 format!("Work({})", structure_manifest.name(*structure_id))
             }
@@ -474,7 +501,7 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
         assert_eq!(
@@ -507,7 +534,7 @@ mod tests {
         );
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
     }
@@ -550,7 +577,7 @@ mod tests {
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry),
             None
         );
     }
@@ -565,7 +592,7 @@ mod tests {
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry)
             .is_some());
     }
 
@@ -585,7 +612,7 @@ mod tests {
         }
 
         assert!(signals
-            .upstream(TilePos::ORIGIN, &Goal::DropOff(test_item()), &map_geometry)
+            .upstream(TilePos::ORIGIN, &Goal::Store(test_item()), &map_geometry)
             .is_some());
     }
 }

@@ -1,6 +1,7 @@
 //! Storage of multiple items with a capacity.
 
 use bevy::prelude::warn;
+use itertools::rev;
 
 use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
@@ -86,6 +87,11 @@ impl Inventory {
     /// Returns a mutable iterator over the contained item slots.
     pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut ItemSlot> {
         self.slots.iter_mut()
+    }
+
+    /// Which type of item is this inventory reserved for, if any?
+    pub(crate) fn reserved_for(&self) -> Option<Id<Item>> {
+        self.reserved_for
     }
 
     /// Does this inventory allow storage of items of the type `item_id`?
@@ -197,7 +203,9 @@ impl Inventory {
             }
         }
 
-        for i in slots_to_clear {
+        // We must iterate in the reverse order (from highest to lowest),
+        // to avoid critical logic errors (and panics!) due to disrupting the arrangement of slots.
+        for i in rev(slots_to_clear) {
             self.slots.remove(i);
         }
     }

@@ -10,7 +10,9 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, ItemManifest, Manifest, Recipe, RecipeManifest, Structure},
+    asset_management::manifest::{
+        Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure,
+    },
     items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -118,21 +120,32 @@ impl OutputInventory {
     }
 }
 
+/// An inventory that simply stores items
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
+pub(crate) struct StorageInventory {
+    /// Inner storage
+    pub(crate) inventory: Inventory,
+}
+
+impl StorageInventory {
+    /// Creates a new [`StorageInventory`] with the provided number of slots.
+    ///
+    /// If `reserved_for` is `Some`, only one item variety will be able to be stored here.
+    pub(crate) fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
+        StorageInventory {
+            inventory: Inventory::new(max_slot_count, reserved_for),
+        }
+    }
+}
+
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {
-    /// The pretty formatting for this type
-    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
-        match self.0 {
-            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
-            None => "None".to_string(),
-        }
-    }
-}
+    /// The un-set [`ActiveRecipe`].
+    pub(crate) const NONE: ActiveRecipe = ActiveRecipe(None);
 
-impl ActiveRecipe {
     /// Creates a new [`ActiveRecipe`], set to `recipe_id`
     pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
         ActiveRecipe(Some(recipe_id))
@@ -141,6 +154,14 @@ impl ActiveRecipe {
     /// The ID of the currently active recipe, if one has been selected.
     pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
+    }
+
+    /// The pretty formatting for this type
+    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
+        match self.0 {
+            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
+            None => "None".to_string(),
+        }
     }
 }
 
@@ -355,8 +376,7 @@ fn gain_energy_when_crafting_completes(
 }
 
 /// Causes crafting structures to emit signals based on the items they have and need.
-// TODO: change neglect based on inventory fullness and structure energy level
-pub(crate) fn set_emitter(
+pub(crate) fn set_crafting_emitter(
     mut crafting_query: Query<(
         &mut Emitter,
         &InputInventory,
@@ -408,6 +428,62 @@ pub(crate) fn set_emitter(
                     .push((SignalType::Work(structure_id), signal_strength));
             }
         }
+    }
+}
+
+/// Causes storage structures to emit signals based on the items they have and accept.
+pub(crate) fn set_storage_emitter(
+    mut crafting_query: Query<(&mut Emitter, &StorageInventory)>,
+    item_manifest: Res<ItemManifest>,
+) {
+    for (mut emitter, storage_inventory) in crafting_query.iter_mut() {
+        // Reset and recompute all signals
+        emitter.signals.clear();
+
+        match storage_inventory.reserved_for() {
+            // Item-specific storage
+            Some(item_id) => {
+                // If there's space, signal that
+                if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
+                    let signal_type = SignalType::Stores(item_id);
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength));
+                }
+
+                // If there's any inventory, signal that
+                if storage_inventory.item_count(item_id) > 0 {
+                    let signal_type = SignalType::Contains(item_id);
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength));
+                }
+            }
+            // Junk drawer
+            None => {
+                // You could put anything in here!
+                for item_id in item_manifest.variants() {
+                    // If there's space, signal that
+                    if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
+                        let signal_type = SignalType::Stores(item_id);
+                        let signal_strength = SignalStrength::new(10.);
+                        emitter.signals.push((signal_type, signal_strength));
+                    }
+
+                    // If there's any inventory, signal that
+                    if storage_inventory.item_count(item_id) > 0 {
+                        let signal_type = SignalType::Contains(item_id);
+                        let signal_strength = SignalStrength::new(10.);
+                        emitter.signals.push((signal_type, signal_strength));
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The space in storage inventories is not reserved
+fn clear_empty_storage_slots(mut query: Query<&mut StorageInventory>) {
+    for mut storage_inventory in query.iter_mut() {
+        storage_inventory.clear_empty_slots();
     }
 }
 
@@ -481,7 +557,9 @@ impl Plugin for CraftingPlugin {
             (
                 progress_crafting,
                 gain_energy_when_crafting_completes.after(progress_crafting),
-                set_emitter.after(progress_crafting),
+                set_crafting_emitter.after(progress_crafting),
+                set_storage_emitter,
+                clear_empty_storage_slots,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),

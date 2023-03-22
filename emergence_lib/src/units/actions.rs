@@ -10,12 +10,14 @@ use crate::{
     },
     items::ItemCount,
     organisms::energy::EnergyPool,
-    signals::Signals,
+    signals::{SignalStrength, SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
-        construction::DemolitionQuery,
-        crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
+        construction::{DemolitionQuery, MarkedForDemolition},
+        crafting::{
+            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkplaceQuery,
+        },
     },
 };
 
@@ -42,14 +44,20 @@ pub(super) fn choose_actions(
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
         With<Id<Unit>>,
     >,
-    input_inventory_query: Query<&InputInventory>,
-    output_inventory_query: Query<&OutputInventory>,
+    // We shouldn't be dropping off new stuff at structures that are about to be destroyed!
+    input_inventory_query: Query<
+        AnyOf<(&InputInventory, &StorageInventory)>,
+        Without<MarkedForDemolition>,
+    >,
+    // But we can take their items away
+    output_inventory_query: Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     terrain_manifest: Res<TerrainManifest>,
+    item_manifest: Res<ItemManifest>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
@@ -86,11 +94,30 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::DropOff(item_id) => {
+                Goal::Store(item_id) => {
                     if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
                         CurrentAction::abandon()
                     } else {
-                        CurrentAction::find_receptacle(
+                        CurrentAction::find_storage(
+                            *item_id,
+                            unit_tile_pos,
+                            facing,
+                            goal,
+                            &input_inventory_query,
+                            &signals,
+                            rng,
+                            &terrain_query,
+                            &terrain_manifest,
+                            &item_manifest,
+                            map_geometry,
+                        )
+                    }
+                }
+                Goal::Deliver(item_id) => {
+                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
+                        CurrentAction::abandon()
+                    } else {
+                        CurrentAction::find_delivery(
                             *item_id,
                             unit_tile_pos,
                             facing,
@@ -157,13 +184,19 @@ pub(super) fn choose_actions(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
-    mut input_query: Query<&mut InputInventory>,
-    mut output_query: Query<&mut OutputInventory>,
+    mut inventory_query: Query<
+        AnyOf<(
+            &mut InputInventory,
+            &mut OutputInventory,
+            &mut StorageInventory,
+        )>,
+    >,
     mut workplace_query: Query<&mut CraftingState>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
+    signals: Res<Signals>,
     mut commands: Commands,
 ) {
     let item_manifest = &*item_manifest;
@@ -178,20 +211,38 @@ pub(super) fn handle_actions(
                     item_id,
                     output_entity,
                 } => {
-                    if let Ok(mut output_inventory) = output_query.get_mut(*output_entity) {
+                    if let Ok((_, maybe_output_inventory, maybe_storage_inventory)) =
+                        inventory_query.get_mut(*output_entity)
+                    {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
-                            Some(held_item_id) => Goal::DropOff(held_item_id),
+                            Some(held_item_id) => Goal::Store(held_item_id),
                             None => {
                                 let item_count = ItemCount::new(*item_id, 1);
-                                let transfer_result =
-                                    output_inventory.remove_item_all_or_nothing(&item_count);
+                                let transfer_result = if let Some(mut output_inventory) =
+                                    maybe_output_inventory
+                                {
+                                    output_inventory.remove_item_all_or_nothing(&item_count)
+                                } else if let Some(mut storage_inventory) = maybe_storage_inventory
+                                {
+                                    storage_inventory.remove_item_all_or_nothing(&item_count)
+                                } else {
+                                    unreachable!()
+                                };
 
                                 // If our unit's all loaded, swap to delivering it
                                 match transfer_result {
                                     Ok(()) => {
                                         unit.unit_inventory.held_item = Some(*item_id);
-                                        Goal::DropOff(*item_id)
+                                        if signals.get(SignalType::Pull(*item_id), *unit.tile_pos)
+                                            > SignalStrength::ZERO
+                                        {
+                                            // If we can see any `Pull` signals of the right type, deliver the item.
+                                            Goal::Deliver(*item_id)
+                                        } else {
+                                            // Otherwise, simply store it
+                                            Goal::Store(*item_id)
+                                        }
                                     }
                                     Err(..) => Goal::Pickup(*item_id),
                                 }
@@ -206,15 +257,27 @@ pub(super) fn handle_actions(
                     item_id,
                     input_entity,
                 } => {
-                    if let Ok(mut input_inventory) = input_query.get_mut(*input_entity) {
+                    if let Ok((maybe_input_inventory, _, maybe_storage_inventory)) =
+                        inventory_query.get_mut(*input_entity)
+                    {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We should be holding something, if we're not find something else to do
                             None => Goal::Wander,
                             Some(held_item_id) => {
                                 if held_item_id == *item_id {
                                     let item_count = ItemCount::new(held_item_id, 1);
-                                    let transfer_result = input_inventory
-                                        .add_item_all_or_nothing(&item_count, item_manifest);
+                                    let transfer_result =
+                                        if let Some(mut input_inventory) = maybe_input_inventory {
+                                            input_inventory
+                                                .add_item_all_or_nothing(&item_count, item_manifest)
+                                        } else if let Some(mut storage_inventory) =
+                                            maybe_storage_inventory
+                                        {
+                                            storage_inventory
+                                                .add_item_all_or_nothing(&item_count, item_manifest)
+                                        } else {
+                                            unreachable!()
+                                        };
 
                                     // If our unit is unloaded, swap to wandering to find something else to do
                                     match transfer_result {
@@ -222,11 +285,11 @@ pub(super) fn handle_actions(
                                             unit.unit_inventory.held_item = None;
                                             Goal::Wander
                                         }
-                                        Err(..) => Goal::DropOff(held_item_id),
+                                        Err(..) => Goal::Store(held_item_id),
                                     }
                                 } else {
                                     // Somehow we're holding the wrong thing
-                                    Goal::DropOff(held_item_id)
+                                    Goal::Store(held_item_id)
                                 }
                             }
                         }
@@ -338,14 +401,14 @@ pub(super) enum UnitAction {
     PickUp {
         /// The item to pickup.
         item_id: Id<Item>,
-        /// The entity to grab it from, which must have an [`OutputInventory`] component.
+        /// The entity to grab it from, which must have an [`OutputInventory`] or [`StorageInventory`] component.
         output_entity: Entity,
     },
     /// Drops off the `item_id` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
         item_id: Id<Item>,
-        /// The entity to drop it off at, which must have an [`InputInventory`] component.
+        /// The entity to drop it off at, which must have an [`InputInventory`] or [`StorageInventory`] component.
         input_entity: Entity,
     },
     /// Perform work at the provided `structure_entity`
@@ -446,7 +509,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        output_inventory_query: &Query<&OutputInventory>,
+        output_inventory_query: &Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -458,9 +521,19 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
-                    if output_inventory.item_count(item_id) > 0 {
-                        sources.push((structure_entity, tile_pos));
+                if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
+                    output_inventory_query.get(structure_entity)
+                {
+                    if let Some(output_inventory) = maybe_output_inventory {
+                        if output_inventory.item_count(item_id) > 0 {
+                            sources.push((structure_entity, tile_pos));
+                        }
+                    } else if let Some(storage_inventory) = maybe_storage_inventory {
+                        if storage_inventory.item_count(item_id) > 0 {
+                            sources.push((structure_entity, tile_pos));
+                        }
+                    } else {
+                        error!("output_inventory_query contained an object with neither an output nor storage inventory.")
                     }
                 }
             }
@@ -490,12 +563,92 @@ impl CurrentAction {
 
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::too_many_arguments)]
-    fn find_receptacle(
+    #[allow(clippy::collapsible_match)]
+    fn find_storage(
         item_id: Id<Item>,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        input_inventory_query: &Query<&InputInventory>,
+        input_inventory_query: &Query<
+            AnyOf<(&InputInventory, &StorageInventory)>,
+            Without<MarkedForDemolition>,
+        >,
+        signals: &Signals,
+        rng: &mut ThreadRng,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        item_manifest: &ItemManifest,
+        map_geometry: &MapGeometry,
+    ) -> CurrentAction {
+        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
+
+        for tile_pos in neighboring_tiles {
+            // Ghosts
+            if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+                if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((ghost_entity, tile_pos));
+                        }
+                    }
+                }
+            }
+
+            // Structures
+            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
+                    input_inventory_query.get(structure_entity)
+                {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
+                    } else if let Some(storage_inventory) = maybe_storage_inventory {
+                        if storage_inventory.remaining_space_for_item(item_id, item_manifest) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
+                    } else {
+                        error!("input_inventory_query contained an object with neither an input nor storage inventory.")
+                    }
+                }
+            }
+        }
+
+        if let Some((input_entity, input_tile_pos)) = receptacles.choose(rng) {
+            CurrentAction::dropoff(
+                item_id,
+                *input_entity,
+                facing,
+                unit_tile_pos,
+                *input_tile_pos,
+            )
+        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+            CurrentAction::move_or_spin(
+                unit_tile_pos,
+                upstream,
+                facing,
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
+        }
+    }
+
+    /// Attempt to locate a place to put an item of type `item_id`.
+    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::collapsible_match)]
+    fn find_delivery(
+        item_id: Id<Item>,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        goal: &Goal,
+        input_inventory_query: &Query<
+            AnyOf<(&InputInventory, &StorageInventory)>,
+            Without<MarkedForDemolition>,
+        >,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -508,18 +661,25 @@ impl CurrentAction {
         for tile_pos in neighboring_tiles {
             // Ghosts
             if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
-                if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
-                    if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        receptacles.push((ghost_entity, tile_pos));
+                if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((ghost_entity, tile_pos));
+                        }
                     }
                 }
             }
 
             // Structures
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
-                    if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        receptacles.push((structure_entity, tile_pos));
+                // We deliberately avoid storage locations here, our goal is to complete a delivery!
+                if let Ok((maybe_input_inventory, _maybe_storage_inventory)) =
+                    input_inventory_query.get(structure_entity)
+                {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
                     }
                 }
             }

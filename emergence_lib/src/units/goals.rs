@@ -12,6 +12,7 @@ use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 
 use super::impatience::ImpatiencePool;
+use super::item_interaction::UnitInventory;
 
 /// A unit's current goals.
 ///
@@ -30,8 +31,13 @@ pub(crate) enum Goal {
     #[allow(dead_code)]
     Pickup(Id<Item>),
     /// Attempting to drop off an object
+    ///
+    /// This can place the object in storage or a structure that actively needs it.
     #[allow(dead_code)]
-    DropOff(Id<Item>),
+    Store(Id<Item>),
+    /// Attempting to drop off an object to a structure that actively needs it.
+    #[allow(dead_code)]
+    Deliver(Id<Item>),
     /// Attempting to perform work at a structure
     #[allow(dead_code)]
     Work(Id<Structure>),
@@ -52,6 +58,7 @@ impl TryFrom<SignalType> for Goal {
             // Go grab the item, so you can bring it to me
             SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
             SignalType::Contains(_) => Err(()),
+            SignalType::Stores(_) => Err(()),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
         }
@@ -68,7 +75,8 @@ impl Goal {
         match self {
             Goal::Wander => "Wander".to_string(),
             Goal::Pickup(item) => format!("Pickup {}", item_manifest.name(*item)),
-            Goal::DropOff(item) => format!("Dropoff {}", item_manifest.name(*item)),
+            Goal::Store(item) => format!("Store {}", item_manifest.name(*item)),
+            Goal::Deliver(item) => format!("Deliver {}", item_manifest.name(*item)),
             Goal::Work(structure) => format!("Work at {}", structure_manifest.name(*structure)),
             Goal::Demolish(structure) => {
                 format!("Demolish {}", structure_manifest.name(*structure))
@@ -80,16 +88,35 @@ impl Goal {
 
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(
-    mut units_query: Query<(&TilePos, &mut Goal, &mut ImpatiencePool, &Id<Unit>)>,
+    mut units_query: Query<(
+        &TilePos,
+        &mut Goal,
+        &mut ImpatiencePool,
+        &UnitInventory,
+        &Id<Unit>,
+    )>,
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool, id) in units_query.iter_mut() {
+    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, id) in units_query.iter_mut() {
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
-            *goal = Goal::Wander;
+            // If you're holding something, try to put it away nicely
+            *goal = if let Some(held_item) = unit_inventory.held_item {
+                // Don't get stuck trying to do a hopeless storage task forever
+                if *goal != Goal::Wander && *goal != Goal::Store(held_item) {
+                    Goal::Store(held_item)
+                } else {
+                    Goal::Wander
+                }
+            } else {
+                Goal::Wander
+            };
+
+            // Reset impatience when we choose a new goal
+            impatience_pool.reset();
         }
 
         // By default, goals are reset to wandering when completed.

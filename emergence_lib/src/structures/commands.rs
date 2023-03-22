@@ -15,13 +15,14 @@ use crate::{
     graphics::InheritedMaterial,
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
+    signals::Emitter,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 
 use super::{
     construction::{GhostBundle, GhostKind, PreviewBundle},
-    crafting::CraftingBundle,
-    StructureBundle, StructureManifest,
+    crafting::{CraftingBundle, StorageInventory},
+    StructureBundle, StructureKind, StructureManifest,
 };
 
 /// An extension trait for [`Commands`] for working with structures.
@@ -174,30 +175,41 @@ impl Command for SpawnStructureCommand {
                 .insert(OrganismBundle::new(organism_details.energy_pool.clone()));
         };
 
-        if structure_variety.crafts {
-            world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
-                world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
-                    let crafting_bundle = match self.randomized {
-                        false => CraftingBundle::new(
-                            structure_variety.starting_recipe,
-                            &recipe_manifest,
-                            &item_manifest,
-                        ),
-                        true => {
-                            let rng = &mut thread_rng();
-                            CraftingBundle::randomized(
-                                structure_variety.starting_recipe,
+        match structure_variety.kind {
+            StructureKind::Storage {
+                max_slot_count,
+                reserved_for,
+            } => {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(StorageInventory::new(max_slot_count, reserved_for))
+                    .insert(Emitter::default());
+            }
+            StructureKind::Crafting { starting_recipe } => {
+                world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
+                    world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
+                        let crafting_bundle = match self.randomized {
+                            false => CraftingBundle::new(
+                                starting_recipe,
                                 &recipe_manifest,
                                 &item_manifest,
-                                rng,
-                            )
-                        }
-                    };
+                            ),
+                            true => {
+                                let rng = &mut thread_rng();
+                                CraftingBundle::randomized(
+                                    starting_recipe,
+                                    &recipe_manifest,
+                                    &item_manifest,
+                                    rng,
+                                )
+                            }
+                        };
 
-                    world.entity_mut(structure_entity).insert(crafting_bundle);
+                        world.entity_mut(structure_entity).insert(crafting_bundle);
+                    })
                 })
-            })
-        };
+            }
+        }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry

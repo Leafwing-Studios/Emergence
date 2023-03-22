@@ -53,7 +53,7 @@ impl FromWorld for Icons<Id<Structure>> {
         let mut map = HashMap::new();
 
         // TODO: discover this from the file directory
-        let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery"];
+        let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery", "storage"];
 
         for id in structure_names {
             let structure_id = Id::from_name(id);
