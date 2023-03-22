@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
     hexagonal_column,
-    manifest::{Id, Terrain},
+    manifest::{Id, Terrain, TerrainManifest},
     palette::COLUMN_COLOR,
     Loadable,
 };
@@ -32,10 +32,10 @@ pub(crate) struct TerrainHandles {
 
 impl FromWorld for TerrainHandles {
     fn from_world(world: &mut World) -> Self {
+        let names = world.resource::<TerrainManifest>().names();
         let asset_server = world.resource::<AssetServer>();
 
         let mut scenes = HashMap::new();
-        let names: [&str; 3] = ["loam", "muddy", "rocky"];
         for name in names {
             let path_string = format!("terrain/{name}.gltf#Scene0");
             let scene = asset_server.load(path_string);

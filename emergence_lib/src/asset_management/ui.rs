@@ -7,7 +7,7 @@ use core::hash::Hash;
 use crate::player_interaction::terraform::TerraformingChoice;
 
 use super::{
-    manifest::{Id, Structure, StructureManifest},
+    manifest::{Id, Structure, StructureManifest, TerrainManifest},
     Loadable,
 };
 
@@ -71,8 +71,7 @@ impl FromWorld for Icons<TerraformingChoice> {
         let asset_server = world.resource::<AssetServer>();
         let mut map = HashMap::new();
 
-        // TODO: discover this from the file directory
-        let terrain_names = vec!["muddy", "rocky", "loam"];
+        let terrain_names = world.resource::<TerrainManifest>().names();
 
         for id in terrain_names {
             let terrain_id = Id::from_name(id);
