@@ -1022,7 +1022,7 @@ Tile: {tile_pos}"
             }
 
             if let Some(storage) = &self.storage_inventory {
-                string += &format!("\nStoring:{}", storage.display(item_manifest));
+                string += &format!("\nStoring: {}", storage.display(item_manifest));
             }
 
             if let Some(organism) = &self.maybe_organism_details {
