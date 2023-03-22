@@ -376,8 +376,7 @@ fn gain_energy_when_crafting_completes(
 }
 
 /// Causes crafting structures to emit signals based on the items they have and need.
-// TODO: change neglect based on inventory fullness and structure energy level
-pub(crate) fn set_emitter(
+pub(crate) fn set_crafting_emitter(
     mut crafting_query: Query<(
         &mut Emitter,
         &InputInventory,
@@ -427,6 +426,29 @@ pub(crate) fn set_emitter(
                 emitter
                     .signals
                     .push((SignalType::Work(structure_id), signal_strength));
+            }
+        }
+    }
+}
+
+/// Causes storage structures to emit signals based on the items they have and accept.
+pub(crate) fn set_storage_emitter(mut crafting_query: Query<(&mut Emitter, &StorageInventory)>) {
+    for (mut emitter, storage_inventory) in crafting_query.iter_mut() {
+        // Reset and recompute all signals
+        emitter.signals.clear();
+
+        // Input signals
+        for item_slot in storage_inventory.iter() {
+            if !item_slot.is_full() {
+                let signal_type = SignalType::Stores(item_slot.item_id());
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength));
+            }
+
+            if !item_slot.is_empty() {
+                let signal_type = SignalType::Contains(item_slot.item_id());
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength));
             }
         }
     }
@@ -502,7 +524,8 @@ impl Plugin for CraftingPlugin {
             (
                 progress_crafting,
                 gain_energy_when_crafting_completes.after(progress_crafting),
-                set_emitter.after(progress_crafting),
+                set_crafting_emitter.after(progress_crafting),
+                set_storage_emitter,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),

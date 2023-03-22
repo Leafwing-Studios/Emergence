@@ -286,7 +286,13 @@ pub enum SignalType {
     /// Bring me an item of this type.
     Pull(Id<Item>),
     /// Has an item of this type, in case you were looking.
+    ///
+    /// The passive form of `Push`.
     Contains(Id<Item>),
+    /// Stores items of this type, in case you were looking.
+    ///
+    /// The passive form of `Pull`.
+    Stores(Id<Item>),
     /// Perform work at this type of structure.
     #[allow(dead_code)]
     Work(Id<Structure>),
@@ -305,6 +311,7 @@ impl SignalType {
             SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
             SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
             SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
+            SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
             SignalType::Work(structure_id) => {
                 format!("Work({})", structure_manifest.name(*structure_id))
             }

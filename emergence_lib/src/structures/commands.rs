@@ -15,6 +15,7 @@ use crate::{
     graphics::InheritedMaterial,
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
+    signals::Emitter,
     simulation::geometry::{Facing, MapGeometry, TilePos},
 };
 
@@ -181,7 +182,8 @@ impl Command for SpawnStructureCommand {
             } => {
                 world
                     .entity_mut(structure_entity)
-                    .insert(StorageInventory::new(max_slot_count, reserved_for));
+                    .insert(StorageInventory::new(max_slot_count, reserved_for))
+                    .insert(Emitter::default());
             }
             StructureKind::Crafting { starting_recipe } => {
                 world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
