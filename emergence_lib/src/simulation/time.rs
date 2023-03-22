@@ -4,6 +4,7 @@ use core::f32::consts::{PI, TAU};
 use core::fmt::Display;
 
 use bevy::prelude::*;
+use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::graphics::lighting::CelestialBody;
@@ -31,15 +32,19 @@ impl Plugin for TemporalPlugin {
 #[derive(Resource)]
 pub struct InGameTime {
     /// How much time has elapsed, in units of in-game days.
-    elapsed_time: f32,
+    elapsed_time: Days,
     /// The number of wall-clock seconds that should elapse per complete in-game day.
     seconds_per_day: f32,
 }
 
+/// A duration of time, in in-game days.
+#[derive(Debug, Clone, Copy, Add, Sub, AddAssign, SubAssign)]
+pub struct Days(pub f32);
+
 impl InGameTime {
     /// How many days have elapsed total?
     pub fn elapsed_days(&self) -> u64 {
-        self.elapsed_time.floor() as u64
+        self.elapsed_time.0.floor() as u64
     }
 
     /// How far are we through the day?
@@ -50,7 +55,7 @@ impl InGameTime {
     /// - 0.75 is midnight
     /// - 0.999 is just before dawn
     pub fn fraction_of_day(&self) -> f32 {
-        self.elapsed_time % 1.0
+        self.elapsed_time.0 % 1.0
     }
 
     /// What time is it, in 24 hour time?
@@ -75,7 +80,7 @@ impl Display for InGameTime {
 impl Default for InGameTime {
     fn default() -> Self {
         InGameTime {
-            elapsed_time: 0.0,
+            elapsed_time: Days(0.0),
             seconds_per_day: 60.,
         }
     }
@@ -83,14 +88,15 @@ impl Default for InGameTime {
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
 fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
-    in_game_time.elapsed_time += time.period.as_secs_f32() / in_game_time.seconds_per_day;
+    let delta = Days(time.period.as_secs_f32() / in_game_time.seconds_per_day);
+    in_game_time.elapsed_time += delta;
 }
 
 /// Moves the sun and moon based on the in-game time
 fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res<InGameTime>) {
     for mut celestial_body in query.iter_mut() {
         // Take the modulo with respect to the period to get the revolution period correct
-        let cycle_normalized_time = (in_game_time.elapsed_time % celestial_body.days_per_cycle)
+        let cycle_normalized_time = (in_game_time.elapsed_time.0 % celestial_body.days_per_cycle)
             / celestial_body.days_per_cycle;
 
         // Scale the progress by TAU to get a full rotation.
