@@ -6,7 +6,6 @@ use crate::{
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{Height, MapGeometry},
-    terrain::TerrainData,
 };
 
 use super::{
@@ -33,10 +32,10 @@ pub(crate) struct TerrainHandles {
 
 impl FromWorld for TerrainHandles {
     fn from_world(world: &mut World) -> Self {
+        let names = world.resource::<TerrainManifest>().names();
         let asset_server = world.resource::<AssetServer>();
 
         let mut scenes = HashMap::new();
-        let names: [&str; 3] = ["loam", "muddy", "rocky"];
         for name in names {
             let path_string = format!("terrain/{name}.gltf#Scene0");
             let scene = asset_server.load(path_string);
@@ -86,18 +85,5 @@ impl Loadable for TerrainHandles {
         }
 
         LoadState::Loaded
-    }
-}
-
-impl Default for TerrainManifest {
-    // TODO: load this from file
-    fn default() -> Self {
-        let mut manifest = TerrainManifest::new();
-
-        manifest.insert("rocky", TerrainData::new(2.0));
-        manifest.insert("loam", TerrainData::new(1.0));
-        manifest.insert("muddy", TerrainData::new(0.5));
-
-        manifest
     }
 }

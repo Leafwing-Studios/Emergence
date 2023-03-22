@@ -1,8 +1,10 @@
 //! Asset loading for structures
 
 use crate::{
-    asset_management::hexagonal_column, enum_iter::IterableEnum,
-    player_interaction::selection::ObjectInteraction, simulation::geometry::MapGeometry,
+    asset_management::{hexagonal_column, manifest::StructureManifest},
+    enum_iter::IterableEnum,
+    player_interaction::selection::ObjectInteraction,
+    simulation::geometry::MapGeometry,
     structures::construction::GhostKind,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
@@ -57,14 +59,13 @@ impl FromWorld for StructureHandles {
             picking_mesh,
         };
 
+        let structure_manifest = world.resource::<StructureManifest>();
+        let structure_names = structure_manifest.names();
         let asset_server = world.resource::<AssetServer>();
 
-        // TODO: discover this from the file directory
-        let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery", "storage"];
-
-        for id in structure_names {
-            let structure_id = Id::from_name(id);
-            let structure_path = format!("structures/{id}.gltf#Scene0");
+        for name in structure_names {
+            let structure_id = Id::from_name(name);
+            let structure_path = format!("structures/{name}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);
         }

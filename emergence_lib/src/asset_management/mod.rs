@@ -42,13 +42,13 @@ pub struct AssetManagementPlugin;
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<AssetState>()
+            .add_plugin(ManifestPlugin)
             .add_asset_collection::<TerrainHandles>()
             .add_asset_collection::<StructureHandles>()
             .add_asset_collection::<UnitHandles>()
             .add_asset_collection::<UiElements>()
             .add_asset_collection::<Icons<Id<Structure>>>()
-            .add_asset_collection::<Icons<TerraformingChoice>>()
-            .add_plugin(ManifestPlugin);
+            .add_asset_collection::<Icons<TerraformingChoice>>();
     }
 }
 

@@ -7,7 +7,7 @@ use core::hash::Hash;
 use crate::player_interaction::terraform::TerraformingChoice;
 
 use super::{
-    manifest::{Id, Structure},
+    manifest::{Id, Structure, StructureManifest, TerrainManifest},
     Loadable,
 };
 
@@ -50,10 +50,10 @@ impl<D: Send + Sync + 'static + Hash + Eq> Icons<D> {
 impl FromWorld for Icons<Id<Structure>> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        let mut map = HashMap::new();
+        let structure_manifest = world.resource::<StructureManifest>();
+        let structure_names = structure_manifest.names();
 
-        // TODO: discover this from the file directory
-        let structure_names = vec!["acacia", "leuco", "ant_hive", "hatchery", "storage"];
+        let mut map = HashMap::new();
 
         for id in structure_names {
             let structure_id = Id::from_name(id);
@@ -71,8 +71,7 @@ impl FromWorld for Icons<TerraformingChoice> {
         let asset_server = world.resource::<AssetServer>();
         let mut map = HashMap::new();
 
-        // TODO: discover this from the file directory
-        let terrain_names = vec!["muddy", "rocky", "loam"];
+        let terrain_names = world.resource::<TerrainManifest>().names();
 
         for id in terrain_names {
             let terrain_id = Id::from_name(id);

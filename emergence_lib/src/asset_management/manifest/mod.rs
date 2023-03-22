@@ -12,6 +12,8 @@ mod identifier;
 mod loader;
 pub(crate) mod plugin;
 mod raw;
+pub(crate) mod structure;
+pub(crate) mod terrain;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
@@ -76,6 +78,14 @@ where
         self.name_map
             .get(&id)
             .unwrap_or_else(|| panic!("ID {id:?} not found in manifest"))
+    }
+
+    /// Returns the complete list of names of the loaded options.
+    ///
+    /// The order is arbitrary.
+    pub fn names(&self) -> impl IntoIterator<Item = &str> {
+        let variants = self.variants();
+        variants.into_iter().map(|id| self.name(id))
     }
 
     /// The complete list of loaded options.
