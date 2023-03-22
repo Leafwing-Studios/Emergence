@@ -175,7 +175,7 @@ impl Default for StructureManifest {
             StructureData {
                 organism: None,
                 kind: StructureKind::Storage {
-                    max_slot_count: 24,
+                    max_slot_count: 3,
                     reserved_for: None,
                 },
                 construction_materials: InputInventory::default(),
