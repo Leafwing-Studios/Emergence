@@ -159,8 +159,13 @@ pub(super) fn choose_actions(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn handle_actions(
     mut unit_query: Query<ActionDataQuery>,
-    mut input_query: Query<AnyOf<(&mut InputInventory, &mut StorageInventory)>>,
-    mut output_query: Query<AnyOf<(&mut OutputInventory, &mut StorageInventory)>>,
+    mut inventory_query: Query<
+        AnyOf<(
+            &mut InputInventory,
+            &mut OutputInventory,
+            &mut StorageInventory,
+        )>,
+    >,
     mut workplace_query: Query<&mut CraftingState>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
@@ -180,8 +185,8 @@ pub(super) fn handle_actions(
                     item_id,
                     output_entity,
                 } => {
-                    if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
-                        output_query.get_mut(*output_entity)
+                    if let Ok((_, maybe_output_inventory, maybe_storage_inventory)) =
+                        inventory_query.get_mut(*output_entity)
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
@@ -218,8 +223,8 @@ pub(super) fn handle_actions(
                     item_id,
                     input_entity,
                 } => {
-                    if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
-                        input_query.get_mut(*input_entity)
+                    if let Ok((maybe_input_inventory, _, maybe_storage_inventory)) =
+                        inventory_query.get_mut(*input_entity)
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We should be holding something, if we're not find something else to do
