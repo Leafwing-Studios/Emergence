@@ -291,14 +291,31 @@ pub(super) fn ghost_lifecycle(
             }
             CraftingState::RecipeComplete => {
                 commands.despawn_ghost(tile_pos);
-                commands.spawn_structure(
-                    tile_pos,
-                    ClipboardData {
-                        structure_id,
-                        facing,
-                        active_recipe: active_recipe.clone(),
-                    },
-                );
+
+                // Spawn the seedling form of a structure if any
+                if let Some(seedling) = structure_manifest
+                    .get(structure_id)
+                    .construction_strategy
+                    .seedling
+                {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id: seedling,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
+                } else {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
+                }
             }
             _ => unreachable!(),
         }
