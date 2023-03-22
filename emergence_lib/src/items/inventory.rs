@@ -1,6 +1,7 @@
 //! Storage of multiple items with a capacity.
 
 use bevy::prelude::warn;
+use itertools::rev;
 
 use crate::asset_management::manifest::{Id, Item, ItemManifest};
 
@@ -202,7 +203,9 @@ impl Inventory {
             }
         }
 
-        for i in slots_to_clear {
+        // We must iterate in the reverse order (from highest to lowest),
+        // to avoid critical logic errors (and panics!) due to disrupting the arrangement of slots.
+        for i in rev(slots_to_clear) {
             self.slots.remove(i);
         }
     }
