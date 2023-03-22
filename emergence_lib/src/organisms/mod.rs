@@ -3,11 +3,44 @@
 use bevy::prelude::*;
 use leafwing_abilities::systems::regenerate_resource_pool;
 
-use crate::simulation::SimulationSet;
+use crate::{
+    asset_management::manifest::{Id, Structure, StructureManifest, Unit, UnitManifest},
+    simulation::SimulationSet,
+};
 
-use self::energy::{kill_organisms_when_out_of_energy, EnergyPool};
+use self::{
+    energy::{kill_organisms_when_out_of_energy, EnergyPool},
+    lifecycle::{transform_when_lifecycle_complete, Lifecycle},
+};
 
 pub(crate) mod energy;
+pub(crate) mod lifecycle;
+
+/// The [`Id`] of an organism.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) enum OrganismId {
+    /// Represents a [`Structure`].
+    Structure(Id<Structure>),
+    /// Represents a [`Unit`].
+    Unit(Id<Unit>),
+}
+
+impl OrganismId {
+    /// Pretty formatting for this type.
+    pub(crate) fn display(
+        &self,
+        structure_manifest: &StructureManifest,
+        unit_manifest: &UnitManifest,
+    ) -> String {
+        match self {
+            OrganismId::Structure(structure_id) => format!(
+                "Living structure: {}, ",
+                structure_manifest.name(*structure_id)
+            ),
+            OrganismId::Unit(unit_id) => format!("Unit: {}, ", unit_manifest.name(*unit_id)),
+        }
+    }
+}
 
 /// All of the standard components of an [`Organism`]
 #[derive(Bundle)]
@@ -16,14 +49,17 @@ pub(crate) struct OrganismBundle {
     organism: Organism,
     /// The energy available to this organism
     energy_pool: EnergyPool,
+    /// The ways this organism can transform, and the progress toward doing so.
+    lifecycle: Lifecycle,
 }
 
 impl OrganismBundle {
     /// Create a new [`OrganismBundle`]
-    pub(crate) fn new(energy_pool: EnergyPool) -> OrganismBundle {
+    pub(crate) fn new(energy_pool: EnergyPool, lifecycle: Lifecycle) -> OrganismBundle {
         OrganismBundle {
             organism: Organism,
             energy_pool,
+            lifecycle,
         }
     }
 }
@@ -31,6 +67,10 @@ impl OrganismBundle {
 /// Information about a variety of organism.
 #[derive(Debug, Clone)]
 pub(crate) struct OrganismVariety {
+    /// The "base" form that we should display to players in menus and for ghosts?
+    pub(crate) prototypical_form: OrganismId,
+    /// The lifecycle of this organism, which reflect how and why it can change form.
+    pub(crate) lifecycles: Lifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
     pub(crate) energy_pool: EnergyPool,
 }
@@ -48,6 +88,7 @@ impl Plugin for OrganismPlugin {
             (
                 regenerate_resource_pool::<EnergyPool>,
                 kill_organisms_when_out_of_energy,
+                transform_when_lifecycle_complete,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),

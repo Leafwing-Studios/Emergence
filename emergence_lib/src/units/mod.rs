@@ -7,7 +7,8 @@ use crate::{
     },
     organisms::{
         energy::{Energy, EnergyPool},
-        OrganismVariety,
+        lifecycle::Lifecycle,
+        OrganismId, OrganismVariety,
     },
     player_interaction::InteractionSystem,
     simulation::{
@@ -55,6 +56,8 @@ impl Default for UnitManifest {
             "ant",
             UnitData {
                 organism_variety: OrganismVariety {
+                    prototypical_form: OrganismId::Unit(Id::from_name("ant")),
+                    lifecycles: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
@@ -119,7 +122,10 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             diet: unit_data.diet,
-            organism_bundle: OrganismBundle::new(unit_data.organism_variety.energy_pool),
+            organism_bundle: OrganismBundle::new(
+                unit_data.organism_variety.energy_pool,
+                unit_data.organism_variety.lifecycles,
+            ),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {

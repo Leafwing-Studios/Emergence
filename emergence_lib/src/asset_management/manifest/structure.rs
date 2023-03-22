@@ -4,7 +4,8 @@ use crate::{
     items::inventory::Inventory,
     organisms::{
         energy::{Energy, EnergyPool},
-        OrganismVariety,
+        lifecycle::Lifecycle,
+        OrganismId, OrganismVariety,
     },
     structures::crafting::{ActiveRecipe, InputInventory},
 };
@@ -104,6 +105,8 @@ impl Default for StructureManifest {
             StructureData {
                 prototypical: true,
                 organism: Some(OrganismVariety {
+                    prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
+                    lifecycles: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {
@@ -127,6 +130,8 @@ impl Default for StructureManifest {
             StructureData {
                 prototypical: true,
                 organism: Some(OrganismVariety {
+                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                    lifecycles: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
                 kind: StructureKind::Crafting {

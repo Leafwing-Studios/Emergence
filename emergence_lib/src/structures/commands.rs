@@ -172,7 +172,10 @@ impl Command for SpawnStructureCommand {
         if let Some(organism_details) = &structure_variety.organism {
             world
                 .entity_mut(structure_entity)
-                .insert(OrganismBundle::new(organism_details.energy_pool.clone()));
+                .insert(OrganismBundle::new(
+                    organism_details.energy_pool.clone(),
+                    organism_details.lifecycles.clone(),
+                ));
         };
 
         match structure_variety.kind {

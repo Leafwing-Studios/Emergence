@@ -14,7 +14,7 @@ use crate::{
         Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure,
     },
     items::{inventory::Inventory, recipe::RecipeData},
-    organisms::{energy::EnergyPool, Organism},
+    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
@@ -359,16 +359,23 @@ fn progress_crafting(
 
 /// Sessile organisms gain energy when they finish crafting recipes.
 fn gain_energy_when_crafting_completes(
-    mut sessile_query: Query<(&mut EnergyPool, &CraftingState, &ActiveRecipe)>,
+    mut sessile_query: Query<(
+        &mut EnergyPool,
+        &mut Lifecycle,
+        &CraftingState,
+        &ActiveRecipe,
+    )>,
     recipe_manifest: Res<RecipeManifest>,
 ) {
-    for (mut energy_pool, crafting_state, active_recipe) in sessile_query.iter_mut() {
+    for (mut energy_pool, mut lifecycle, crafting_state, active_recipe) in sessile_query.iter_mut()
+    {
         if matches!(crafting_state, CraftingState::RecipeComplete) {
             if let Some(recipe_id) = active_recipe.recipe_id() {
                 let recipe = recipe_manifest.get(*recipe_id);
                 if let Some(energy) = recipe.energy() {
                     let proposed = energy_pool.current() + *energy;
                     energy_pool.set_current(proposed);
+                    lifecycle.record_energy_gained(*energy);
                 }
             }
         }
