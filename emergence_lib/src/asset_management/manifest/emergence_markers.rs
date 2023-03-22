@@ -2,11 +2,10 @@
 
 use crate::{
     items::{recipe::RecipeData, ItemData},
-    terrain::TerrainData,
     units::UnitData,
 };
 
-use super::{structure::StructureData, Manifest};
+use super::{structure::StructureData, terrain::TerrainData, Manifest};
 
 /// The marker type for [`Id<Recipe>`](super::Id).
 pub struct Recipe;

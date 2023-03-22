@@ -6,12 +6,11 @@ use crate::{
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{Height, MapGeometry},
-    terrain::TerrainData,
 };
 
 use super::{
     hexagonal_column,
-    manifest::{Id, Terrain, TerrainManifest},
+    manifest::{Id, Terrain},
     palette::COLUMN_COLOR,
     Loadable,
 };
@@ -86,18 +85,5 @@ impl Loadable for TerrainHandles {
         }
 
         LoadState::Loaded
-    }
-}
-
-impl Default for TerrainManifest {
-    // TODO: load this from file
-    fn default() -> Self {
-        let mut manifest = TerrainManifest::new();
-
-        manifest.insert("rocky", TerrainData::new(2.0));
-        manifest.insert("loam", TerrainData::new(1.0));
-        manifest.insert("muddy", TerrainData::new(0.5));
-
-        manifest
     }
 }

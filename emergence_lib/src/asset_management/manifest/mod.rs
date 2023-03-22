@@ -13,6 +13,7 @@ mod loader;
 pub(crate) mod plugin;
 mod raw;
 pub(crate) mod structure;
+pub(crate) mod terrain;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;

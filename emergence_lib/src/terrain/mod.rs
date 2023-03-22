@@ -4,7 +4,7 @@ use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
-use crate::asset_management::manifest::{Id, Terrain, TerrainManifest};
+use crate::asset_management::manifest::{Id, Terrain};
 use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::player_interaction::zoning::Zoning;
@@ -16,34 +16,11 @@ pub(crate) struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<TerrainManifest>().add_system(
+        app.add_system(
             respond_to_height_changes
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
-    }
-}
-
-/// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`].
-#[derive(Debug)]
-pub(crate) struct TerrainData {
-    /// The walking speed multiplier associated with this terrain type.
-    ///
-    /// These values should always be strictly positive.
-    /// Higher values make units walk faster.
-    /// 1.0 is "normal speed".
-    walking_speed: f32,
-}
-
-impl TerrainData {
-    /// Constructs a new [`TerrainData`] object
-    pub(crate) fn new(walking_speed: f32) -> Self {
-        TerrainData { walking_speed }
-    }
-
-    /// Returns the relative walking speed of units on this terrain
-    pub(crate) fn walking_speed(&self) -> f32 {
-        self.walking_speed
     }
 }
 

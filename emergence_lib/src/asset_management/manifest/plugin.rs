@@ -9,7 +9,7 @@ use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 use super::{
     loader::RawManifestLoader,
     raw::{RawItemManifest, RawManifest},
-    Manifest, StructureManifest,
+    Manifest, StructureManifest, TerrainManifest,
 };
 
 /// A plugin to handle the creation of all manifest resources.
@@ -18,6 +18,7 @@ pub struct ManifestPlugin;
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StructureManifest>()
+            .init_resource::<TerrainManifest>()
             .add_plugin(RawManifestPlugin::<RawItemManifest>::new())
             // This is needed to ensure that the manifest resources are actually created in time for AssetState::Ready
             .add_system(
