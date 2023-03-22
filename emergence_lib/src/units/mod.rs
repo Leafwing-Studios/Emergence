@@ -5,7 +5,10 @@ use crate::{
         manifest::{Id, Manifest, Unit, UnitManifest},
         units::UnitHandles,
     },
-    organisms::energy::{Energy, EnergyPool},
+    organisms::{
+        energy::{Energy, EnergyPool},
+        OrganismVariety,
+    },
     player_interaction::InteractionSystem,
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
@@ -33,8 +36,8 @@ mod reproduction;
 /// The data associated with each variety of unit
 #[derive(Debug, Clone)]
 pub(crate) struct UnitData {
-    /// The energy pool of this unit
-    energy_pool: EnergyPool,
+    /// The data shared by all organisms
+    organism_variety: OrganismVariety,
     /// What this unit type needs to eat
     diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
@@ -51,7 +54,9 @@ impl Default for UnitManifest {
         manifest.insert(
             "ant",
             UnitData {
-                energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                organism_variety: OrganismVariety {
+                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
                 mean_free_wander_period: 20.,
@@ -114,7 +119,7 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             diet: unit_data.diet,
-            organism_bundle: OrganismBundle::new(unit_data.energy_pool),
+            organism_bundle: OrganismBundle::new(unit_data.organism_variety.energy_pool),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
