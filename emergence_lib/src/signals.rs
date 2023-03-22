@@ -118,7 +118,21 @@ impl Signals {
                 total_signals
             }
             Goal::DropOff(item_id) => {
-                self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry)
+                let pull_signals =
+                    self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
+                let stores_signals =
+                    self.neighboring_signals(SignalType::Stores(*item_id), tile_pos, map_geometry);
+                let mut total_signals = pull_signals;
+
+                for (tile_pos, signal_strength) in stores_signals {
+                    if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                        *existing_signal_strength += signal_strength;
+                    } else {
+                        total_signals.insert(tile_pos, signal_strength);
+                    }
+                }
+
+                total_signals
             }
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
@@ -216,7 +230,10 @@ impl LocalSignals {
         &self,
     ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
         self.map.iter().filter(|(signal_type, _signal_strength)| {
-            !matches!(**signal_type, SignalType::Contains(_))
+            !matches!(
+                **signal_type,
+                SignalType::Contains(_) | SignalType::Stores(_)
+            )
         })
     }
 
