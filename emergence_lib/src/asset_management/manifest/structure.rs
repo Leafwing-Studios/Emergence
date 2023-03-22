@@ -12,7 +12,7 @@ use bevy::utils::{Duration, HashSet};
 
 use leafwing_abilities::prelude::Pool;
 
-use super::{Id, Item, Manifest, StructureManifest, Terrain};
+use super::{Id, Item, Manifest, Structure, StructureManifest, Terrain};
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
@@ -67,6 +67,26 @@ impl StructureData {
     /// Returns the set of terrain types that this structure can be built on
     pub fn allowed_terrain_types(&self) -> &HashSet<Id<Terrain>> {
         &self.allowed_terrain_types
+    }
+}
+
+impl StructureManifest {
+    /// Returns the list of [`Id<Structure>`] where [`StructureData`]'s `prototypical` field is `true`.
+    ///
+    /// These should be used to populate menus and other player-facing tools.
+    pub(crate) fn prototypes(&self) -> impl IntoIterator<Item = Id<Structure>> + '_ {
+        self.data_map
+            .iter()
+            .filter(|(_k, v)| v.prototypical)
+            .map(|(k, _v)| *k)
+    }
+
+    /// Returns the names of all structures where [`StructureData`]'s `prototypical` field is `true`.
+    ///
+    /// These should be used to populate menus and other player-facing tools.
+    pub(crate) fn prototype_names(&self) -> impl IntoIterator<Item = &str> {
+        let prototypes = self.prototypes();
+        prototypes.into_iter().map(|id| self.name(id))
     }
 }
 
