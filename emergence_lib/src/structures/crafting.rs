@@ -480,6 +480,13 @@ pub(crate) fn set_storage_emitter(
     }
 }
 
+/// The space in storage inventories is not reserved
+fn clear_empty_storage_slots(mut query: Query<&mut StorageInventory>) {
+    for mut storage_inventory in query.iter_mut() {
+        storage_inventory.clear_empty_slots();
+    }
+}
+
 /// A query about the [`CraftingState`] of a structure that might need work done.
 #[derive(SystemParam)]
 pub(crate) struct WorkplaceQuery<'w, 's> {
@@ -552,6 +559,7 @@ impl Plugin for CraftingPlugin {
                 gain_energy_when_crafting_completes.after(progress_crafting),
                 set_crafting_emitter.after(progress_crafting),
                 set_storage_emitter,
+                clear_empty_storage_slots,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
