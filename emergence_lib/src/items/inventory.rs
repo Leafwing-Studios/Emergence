@@ -88,6 +88,11 @@ impl Inventory {
         self.slots.iter_mut()
     }
 
+    /// Which type of item is this inventory reserved for, if any?
+    pub(crate) fn reserved_for(&self) -> Option<Id<Item>> {
+        self.reserved_for
+    }
+
     /// Does this inventory allow storage of items of the type `item_id`?
     pub(crate) fn permits(&self, item_id: Id<Item>) -> bool {
         match self.reserved_for {

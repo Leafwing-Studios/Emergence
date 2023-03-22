@@ -432,23 +432,49 @@ pub(crate) fn set_crafting_emitter(
 }
 
 /// Causes storage structures to emit signals based on the items they have and accept.
-pub(crate) fn set_storage_emitter(mut crafting_query: Query<(&mut Emitter, &StorageInventory)>) {
+pub(crate) fn set_storage_emitter(
+    mut crafting_query: Query<(&mut Emitter, &StorageInventory)>,
+    item_manifest: Res<ItemManifest>,
+) {
     for (mut emitter, storage_inventory) in crafting_query.iter_mut() {
         // Reset and recompute all signals
         emitter.signals.clear();
 
-        // Input signals
-        for item_slot in storage_inventory.iter() {
-            if !item_slot.is_full() {
-                let signal_type = SignalType::Stores(item_slot.item_id());
-                let signal_strength = SignalStrength::new(10.);
-                emitter.signals.push((signal_type, signal_strength));
-            }
+        match storage_inventory.reserved_for() {
+            // Item-specific storage
+            Some(item_id) => {
+                // If there's space, signal that
+                if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
+                    let signal_type = SignalType::Stores(item_id);
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength));
+                }
 
-            if !item_slot.is_empty() {
-                let signal_type = SignalType::Contains(item_slot.item_id());
-                let signal_strength = SignalStrength::new(10.);
-                emitter.signals.push((signal_type, signal_strength));
+                // If there's any inventory, signal that
+                if storage_inventory.item_count(item_id) > 0 {
+                    let signal_type = SignalType::Contains(item_id);
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength));
+                }
+            }
+            // Junk drawer
+            None => {
+                // You could put anything in here!
+                for item_id in item_manifest.variants() {
+                    // If there's space, signal that
+                    if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
+                        let signal_type = SignalType::Stores(item_id);
+                        let signal_strength = SignalStrength::new(10.);
+                        emitter.signals.push((signal_type, signal_strength));
+                    }
+
+                    // If there's any inventory, signal that
+                    if storage_inventory.item_count(item_id) > 0 {
+                        let signal_type = SignalType::Contains(item_id);
+                        let signal_strength = SignalStrength::new(10.);
+                        emitter.signals.push((signal_type, signal_strength));
+                    }
+                }
             }
         }
     }
