@@ -15,7 +15,9 @@ use crate::{
     structures::{
         commands::StructureCommandsExt,
         construction::DemolitionQuery,
-        crafting::{CraftingState, InputInventory, OutputInventory, WorkplaceQuery},
+        crafting::{
+            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkplaceQuery,
+        },
     },
 };
 
@@ -42,8 +44,8 @@ pub(super) fn choose_actions(
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
         With<Id<Unit>>,
     >,
-    input_inventory_query: Query<&InputInventory>,
-    output_inventory_query: Query<&OutputInventory>,
+    input_inventory_query: Query<AnyOf<(&InputInventory, &StorageInventory)>>,
+    output_inventory_query: Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
@@ -338,14 +340,14 @@ pub(super) enum UnitAction {
     PickUp {
         /// The item to pickup.
         item_id: Id<Item>,
-        /// The entity to grab it from, which must have an [`OutputInventory`] component.
+        /// The entity to grab it from, which must have an [`OutputInventory`] or [`StorageInventory`] component.
         output_entity: Entity,
     },
     /// Drops off the `item_id` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
         item_id: Id<Item>,
-        /// The entity to drop it off at, which must have an [`InputInventory`] component.
+        /// The entity to drop it off at, which must have an [`InputInventory`] or [`StorageInventory`] component.
         input_entity: Entity,
     },
     /// Perform work at the provided `structure_entity`
@@ -446,7 +448,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        output_inventory_query: &Query<&OutputInventory>,
+        output_inventory_query: &Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -458,9 +460,19 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                if let Ok(output_inventory) = output_inventory_query.get(structure_entity) {
-                    if output_inventory.item_count(item_id) > 0 {
-                        sources.push((structure_entity, tile_pos));
+                if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
+                    output_inventory_query.get(structure_entity)
+                {
+                    if let Some(output_inventory) = maybe_output_inventory {
+                        if output_inventory.item_count(item_id) > 0 {
+                            sources.push((structure_entity, tile_pos));
+                        }
+                    } else if let Some(storage_inventory) = maybe_storage_inventory {
+                        if storage_inventory.item_count(item_id) > 0 {
+                            sources.push((structure_entity, tile_pos));
+                        }
+                    } else {
+                        error!("output_inventory_query contained an object with neither an output nor storage inventory.")
                     }
                 }
             }
@@ -495,7 +507,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
-        input_inventory_query: &Query<&InputInventory>,
+        input_inventory_query: &Query<AnyOf<(&InputInventory, &StorageInventory)>>,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -508,18 +520,30 @@ impl CurrentAction {
         for tile_pos in neighboring_tiles {
             // Ghosts
             if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
-                if let Ok(input_inventory) = input_inventory_query.get(ghost_entity) {
-                    if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        receptacles.push((ghost_entity, tile_pos));
+                if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((ghost_entity, tile_pos));
+                        }
                     }
                 }
             }
 
             // Structures
             if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
-                if let Ok(input_inventory) = input_inventory_query.get(structure_entity) {
-                    if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
-                        receptacles.push((structure_entity, tile_pos));
+                if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
+                    input_inventory_query.get(structure_entity)
+                {
+                    if let Some(input_inventory) = maybe_input_inventory {
+                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
+                    } else if let Some(storage_inventory) = maybe_storage_inventory {
+                        if storage_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                            receptacles.push((structure_entity, tile_pos));
+                        }
+                    } else {
+                        error!("input_inventory_query contained an object with neither an input nor storage inventory.")
                     }
                 }
             }
