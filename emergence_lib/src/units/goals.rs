@@ -69,10 +69,11 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Push(item_id) => Ok(Goal::Pickup(item_id)),
             // Go grab the item, so you can bring it to me
             SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
-            SignalType::Contains(_) => Err(()),
-            SignalType::Stores(_) => Err(()),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
+            SignalType::Contains(_) => Err(()),
+            SignalType::Stores(_) => Err(()),
+            SignalType::Unit(_) => Err(()),
         }
     }
 }

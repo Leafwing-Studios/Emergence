@@ -7,7 +7,9 @@ use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest, Structure, StructureManifest};
+use crate::asset_management::manifest::{
+    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
+};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
@@ -242,6 +244,7 @@ impl LocalSignals {
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
+        unit_manifest: &UnitManifest,
     ) -> String {
         let mut string = String::default();
 
@@ -250,7 +253,7 @@ impl LocalSignals {
 
             let substring = format!(
                 "{}: {signal_strength:.3}\n",
-                signal_type.display(item_manifest, structure_manifest)
+                signal_type.display(item_manifest, structure_manifest, unit_manifest)
             );
 
             string += &substring;
@@ -302,6 +305,11 @@ pub enum SignalType {
     Push(Id<Item>),
     /// Bring me an item of this type.
     Pull(Id<Item>),
+    /// Perform work at this type of structure.
+    #[allow(dead_code)]
+    Work(Id<Structure>),
+    /// Destroy a structure of this type
+    Demolish(Id<Structure>),
     /// Has an item of this type, in case you were looking.
     ///
     /// The passive form of `Push`.
@@ -310,11 +318,8 @@ pub enum SignalType {
     ///
     /// The passive form of `Pull`.
     Stores(Id<Item>),
-    /// Perform work at this type of structure.
-    #[allow(dead_code)]
-    Work(Id<Structure>),
-    /// Destroy a structure of this type
-    Demolish(Id<Structure>),
+    /// Has a unit of this type.
+    Unit(Id<Unit>),
 }
 
 impl SignalType {
@@ -324,10 +329,11 @@ impl SignalType {
         match self {
             SignalType::Push(_) => true,
             SignalType::Pull(_) => true,
-            SignalType::Contains(_) => false,
-            SignalType::Stores(_) => false,
             SignalType::Work(_) => true,
             SignalType::Demolish(_) => true,
+            SignalType::Contains(_) => false,
+            SignalType::Stores(_) => false,
+            SignalType::Unit(_) => false,
         }
     }
 
@@ -336,18 +342,20 @@ impl SignalType {
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
+        unit_manifest: &UnitManifest,
     ) -> String {
         match self {
             SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
             SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
-            SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
-            SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
             SignalType::Work(structure_id) => {
                 format!("Work({})", structure_manifest.name(*structure_id))
             }
             SignalType::Demolish(structure_id) => {
                 format!("Demolish({})", structure_manifest.name(*structure_id))
             }
+            SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
+            SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
+            SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
         }
     }
 }

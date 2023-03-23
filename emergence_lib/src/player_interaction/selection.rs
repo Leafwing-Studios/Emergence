@@ -1122,7 +1122,7 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::{
-            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest,
+            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest, UnitManifest,
         },
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
@@ -1166,12 +1166,15 @@ mod terrain_details {
             terrain_manifest: &TerrainManifest,
             structure_manifest: &StructureManifest,
             item_manifest: &ItemManifest,
+            unit_manifest: &UnitManifest,
         ) -> String {
             let entity = self.entity;
             let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
-            let signals = self.signals.display(item_manifest, structure_manifest);
+            let signals = self
+                .signals
+                .display(item_manifest, structure_manifest, unit_manifest);
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
             format!(
