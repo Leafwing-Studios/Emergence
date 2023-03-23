@@ -11,6 +11,7 @@ use crate::{
         OrganismId, OrganismVariety,
     },
     player_interaction::InteractionSystem,
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
         SimulationSet,
@@ -136,6 +137,8 @@ pub(crate) struct UnitBundle {
     held_item: UnitInventory,
     /// What does this unit need to eat?
     diet: Diet,
+    /// What signals is this unit emitting?
+    emitter: Emitter,
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
@@ -167,6 +170,12 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             diet: unit_data.diet,
+            emitter: Emitter {
+                signals: vec![(
+                    SignalType::Unit(Id::from_name("ant")),
+                    SignalStrength::new(1.),
+                )],
+            },
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
                 unit_data.organism_variety.lifecycle,
