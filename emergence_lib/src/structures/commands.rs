@@ -131,6 +131,8 @@ struct SpawnStructureCommand {
 
 impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
+        // Pulling this out early reduces awful borrow checker errors.
+        let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is empty.
@@ -145,7 +147,7 @@ impl Command for SpawnStructureCommand {
 
         let structure_variety = world
             .resource::<StructureManifest>()
-            .get(self.data.structure_id)
+            .get(structure_id)
             .clone();
 
         let structure_handles = world.resource::<StructureHandles>();
@@ -153,7 +155,7 @@ impl Command for SpawnStructureCommand {
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
         let scene_handle = structure_handles
             .scenes
-            .get(&self.data.structure_id)
+            .get(&structure_id)
             .unwrap()
             .clone_weak();
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
@@ -191,24 +193,30 @@ impl Command for SpawnStructureCommand {
             StructureKind::Crafting { starting_recipe } => {
                 world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
                     world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
-                        let crafting_bundle = match self.randomized {
-                            false => CraftingBundle::new(
-                                starting_recipe,
-                                &recipe_manifest,
-                                &item_manifest,
-                            ),
-                            true => {
-                                let rng = &mut thread_rng();
-                                CraftingBundle::randomized(
+                        world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
+                            let crafting_bundle = match self.randomized {
+                                false => CraftingBundle::new(
+                                    structure_id,
                                     starting_recipe,
                                     &recipe_manifest,
                                     &item_manifest,
-                                    rng,
-                                )
-                            }
-                        };
+                                    &structure_manifest,
+                                ),
+                                true => {
+                                    let rng = &mut thread_rng();
+                                    CraftingBundle::randomized(
+                                        structure_id,
+                                        starting_recipe,
+                                        &recipe_manifest,
+                                        &item_manifest,
+                                        &structure_manifest,
+                                        rng,
+                                    )
+                                }
+                            };
 
-                        world.entity_mut(structure_entity).insert(crafting_bundle);
+                            world.entity_mut(structure_entity).insert(crafting_bundle);
+                        })
                     })
                 })
             }

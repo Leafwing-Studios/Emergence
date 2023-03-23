@@ -65,11 +65,6 @@ impl RecipeData {
         self.craft_time
     }
 
-    /// Is work from units needed to advance this recipe?
-    pub(crate) fn work_required(&self) -> bool {
-        self.conditions.workers_required > 0
-    }
-
     /// Are the conditions to craft this recipe met?
     pub(crate) fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
         self.conditions.satisfied(workers, total_light)
@@ -96,6 +91,16 @@ impl RecipeData {
     /// The amount of energy produced by crafting the recipe, if any.
     pub(crate) fn energy(&self) -> &Option<Energy> {
         &self.energy
+    }
+
+    /// The number of workers this recipe needs to be crafted at all.
+    pub(crate) fn workers_required(&self) -> u8 {
+        self.conditions.workers_required
+    }
+
+    /// Does this recipe need workers to produce?
+    pub(crate) fn needs_workers(&self) -> bool {
+        self.conditions.workers_required > 0
     }
 
     /// The pretty formatting of this type
@@ -156,7 +161,10 @@ impl RecipeData {
             vec![ItemCount::one(Id::from_name("leuco_chunk"))],
             vec![ItemCount::one(Id::from_name("ant_egg"))],
             Duration::from_secs(5),
-            RecipeConditions::NONE,
+            RecipeConditions {
+                workers_required: 3,
+                allowable_light_range: None,
+            },
             None,
         )
     }
