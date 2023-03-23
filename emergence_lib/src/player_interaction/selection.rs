@@ -739,22 +739,24 @@ fn get_details(
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity)?;
 
-            let crafting_details = if let Some((input, output, active_recipe, state)) =
-                structure_query_item.crafting
-            {
-                let maybe_recipe_id = *active_recipe.recipe_id();
-                let recipe =
-                    maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
+            let crafting_details =
+                if let Some((input, output, active_recipe, workers_present, state)) =
+                    structure_query_item.crafting
+                {
+                    let maybe_recipe_id = *active_recipe.recipe_id();
+                    let recipe =
+                        maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
-                Some(CraftingDetails {
-                    input_inventory: input.inventory.clone(),
-                    output_inventory: output.inventory.clone(),
-                    recipe,
-                    state: state.clone(),
-                })
-            } else {
-                None
-            };
+                    Some(CraftingDetails {
+                        input_inventory: input.inventory.clone(),
+                        output_inventory: output.inventory.clone(),
+                        recipe,
+                        workers_present: workers_present.clone(),
+                        state: state.clone(),
+                    })
+                } else {
+                    None
+                };
 
             // Not all structures are organisms
             let maybe_organism_details =
@@ -985,6 +987,7 @@ mod structure_details {
             construction::MarkedForDemolition,
             crafting::{
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
+                WorkersPresent,
             },
         },
     };
@@ -1003,6 +1006,7 @@ mod structure_details {
             &'static InputInventory,
             &'static OutputInventory,
             &'static ActiveRecipe,
+            &'static WorkersPresent,
             &'static CraftingState,
         )>,
         /// If this structure stores things, its inventory.
@@ -1082,6 +1086,9 @@ Tile: {tile_pos}"
 
         /// The state of the ongoing crafting process.
         pub(crate) state: CraftingState,
+
+        /// The number of workers that are presently working on this.
+        pub(crate) workers_present: WorkersPresent,
     }
 
     impl CraftingDetails {
@@ -1096,10 +1103,13 @@ Tile: {tile_pos}"
                 None => "None".to_string(),
             };
 
+            let workers_present = &self.workers_present;
+
             format!(
                 "Recipe: {recipe_string}
 Input: {input_inventory}
 {crafting_state}
+Workers present: {workers_present}
 Output: {output_inventory}"
             )
         }

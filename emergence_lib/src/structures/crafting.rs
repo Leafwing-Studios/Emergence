@@ -191,10 +191,16 @@ impl WorkersPresent {
     pub(crate) fn current(&self) -> u8 {
         self.present
     }
+}
 
-    /// The maximum number of workers allowed.
-    pub(crate) fn allowed(&self) -> u8 {
-        self.allowed
+impl Display for WorkersPresent {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{present} / {allowed}",
+            present = self.present,
+            allowed = self.allowed
+        )
     }
 }
 
