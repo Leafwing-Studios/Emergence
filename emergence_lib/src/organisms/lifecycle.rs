@@ -9,7 +9,10 @@ use crate::{
         units::UnitHandles,
     },
     player_interaction::clipboard::ClipboardData,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    simulation::{
+        geometry::{Facing, MapGeometry, TilePos},
+        time::{Days, TimePool},
+    },
     structures::commands::StructureCommandsExt,
     units::UnitBundle,
 };
@@ -64,6 +67,16 @@ impl Lifecycle {
         }
     }
 
+    /// Records any elapsed in-game time, storing the results in any [`LifePath`]s that care about this.
+    pub(crate) fn record_elapsed_time(&mut self, delta_days: Days) {
+        for life_path in &mut self.life_paths {
+            if let Some(time_pool) = &mut life_path.time_required {
+                let proposed = time_pool.current() + delta_days;
+                time_pool.set_current(proposed);
+            }
+        }
+    }
+
     /// Pretty formatting for this type
     pub(crate) fn display(
         &self,
@@ -93,14 +106,21 @@ pub(crate) struct LifePath {
     pub(crate) new_form: OrganismId,
     /// The amount of energy that must be produced before we can transform.
     pub(crate) energy_required: Option<EnergyPool>,
+    /// The amount of time that must pass before we can transform.
+    pub(crate) time_required: Option<TimePool>,
 }
 
 impl LifePath {
     /// Have all of the prerequisites been met to transform?
     pub(crate) fn is_complete(&self) -> bool {
+        // All conditions must be true in order for the life path to be complete
         let mut ready = true;
         if let Some(energy_pool) = &self.energy_required {
-            ready &= energy_pool.is_satiated();
+            ready &= energy_pool.is_full();
+        };
+
+        if let Some(time_pool) = &self.time_required {
+            ready &= time_pool.is_full();
         };
 
         ready
@@ -116,6 +136,10 @@ impl LifePath {
 
         if let Some(energy_pool) = &self.energy_required {
             string += &format!("{}/{} energy", energy_pool.current(), energy_pool.max());
+        }
+
+        if let Some(time_pool) = &self.time_required {
+            string += &format!("{:.2}/{:.2} days", time_pool.current().0, time_pool.max().0);
         }
 
         string += &format!(

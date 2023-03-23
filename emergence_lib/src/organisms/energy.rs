@@ -41,9 +41,14 @@ impl EnergyPool {
         self.current <= self.warning_threshold
     }
 
-    /// Is this organism close to running out of energy?
+    /// Is this organism's appetite satisfied?
     pub(crate) fn is_satiated(&self) -> bool {
         self.current >= self.satiation_threshold
+    }
+
+    /// Is this pool full?
+    pub(crate) fn is_full(&self) -> bool {
+        self.current >= self.max
     }
 }
 
