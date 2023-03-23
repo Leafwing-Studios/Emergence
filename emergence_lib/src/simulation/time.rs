@@ -146,7 +146,9 @@ fn pause_game(
 /// A [`Pool`] of [`Days`], which builds up and will eventually be filled (at which point some event will occur).
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct TimePool {
+    /// The current quantity of this pool.
     current: Days,
+    /// The maximum quantity of this pool.
     max: Days,
 }
 
