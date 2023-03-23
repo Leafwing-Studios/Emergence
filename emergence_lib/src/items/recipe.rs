@@ -134,7 +134,7 @@ impl RecipeData {
             Vec::new(),
             vec![ItemCount::one(Id::from_name("acacia_leaf"))],
             Duration::from_secs(3),
-            RecipeConditions::new(0, Threshold::new(Illuminance(3e3), Illuminance(2e4))),
+            RecipeConditions::new(0, Threshold::new(Illuminance(5e3), Illuminance(6e4))),
             Some(Energy(20.)),
         )
     }
