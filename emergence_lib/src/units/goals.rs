@@ -3,7 +3,8 @@
 use bevy::prelude::*;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
-use rand::{thread_rng, Rng};
+use rand::rngs::ThreadRng;
+use rand::thread_rng;
 
 use crate::asset_management::manifest::{
     Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
@@ -13,6 +14,7 @@ use crate::simulation::geometry::TilePos;
 
 use super::impatience::ImpatiencePool;
 use super::item_interaction::UnitInventory;
+use super::WanderingBehavior;
 
 /// A unit's current goals.
 ///
@@ -20,13 +22,15 @@ use super::item_interaction::UnitInventory;
 /// Once a goal is complete, they will typically transition back into [`Goal::Wander`] and attempt to find something new to do.
 ///
 /// This component serves as a state machine.
-#[derive(Component, PartialEq, Eq, Clone, Default, Debug)]
+#[derive(Component, PartialEq, Clone, Debug)]
 pub(crate) enum Goal {
     /// Attempting to find something useful to do
     ///
     /// Units will try and follow a signal, if they can pick up a trail, but will not fixate on it until the signal is strong enough.
-    #[default]
-    Wander,
+    Wander {
+        /// How many actions will this unit take before picking a new goal?
+        remaining_actions: Option<u16>,
+    },
     /// Attempting to pick up an object
     #[allow(dead_code)]
     Pickup(Id<Item>),
@@ -45,6 +49,14 @@ pub(crate) enum Goal {
     Eat(Id<Item>),
     /// Attempting to destroy a structure
     Demolish(Id<Structure>),
+}
+
+impl Default for Goal {
+    fn default() -> Self {
+        Goal::Wander {
+            remaining_actions: None,
+        }
+    }
 }
 
 impl TryFrom<SignalType> for Goal {
@@ -73,7 +85,10 @@ impl Goal {
         structure_manifest: &StructureManifest,
     ) -> String {
         match self {
-            Goal::Wander => "Wander".to_string(),
+            Goal::Wander { remaining_actions } => format!(
+                "Wander ({} actions remaining)",
+                remaining_actions.unwrap_or(0)
+            ),
             Goal::Pickup(item) => format!("Pickup {}", item_manifest.name(*item)),
             Goal::Store(item) => format!("Store {}", item_manifest.name(*item)),
             Goal::Deliver(item) => format!("Deliver {}", item_manifest.name(*item)),
@@ -106,44 +121,80 @@ pub(super) fn choose_goal(
             // If you're holding something, try to put it away nicely
             *goal = if let Some(held_item) = unit_inventory.held_item {
                 // Don't get stuck trying to do a hopeless storage task forever
-                if *goal != Goal::Wander && *goal != Goal::Store(held_item) {
+                if !matches!(*goal, Goal::Store(..) | Goal::Wander { .. }) {
                     Goal::Store(held_item)
                 } else {
-                    Goal::Wander
+                    Goal::Wander {
+                        remaining_actions: None,
+                    }
                 }
             } else {
-                Goal::Wander
+                Goal::Wander {
+                    remaining_actions: None,
+                }
             };
 
             // Reset impatience when we choose a new goal
             impatience_pool.reset();
         }
 
-        // By default, goals are reset to wandering when completed.
-        // Pick a new goal when wandering.
-        // If anything fails, just keep wandering for now.
-        if let Goal::Wander = *goal {
-            let unit_data = unit_manifest.get(*id);
-            // Continuing wandering for longer increases exploration, and allows units to spread out across the map more readily.
-            if rng.gen_bool(1. / unit_data.mean_free_wander_period) {
-                return;
-            }
+        if let Goal::Wander { remaining_actions } = *goal {
+            let wandering_behavior = &unit_manifest.get(*id).wandering_behavior;
+            *goal = compute_new_goal(
+                remaining_actions,
+                tile_pos,
+                wandering_behavior,
+                rng,
+                &signals,
+            );
 
-            let current_signals = signals.all_signals_at_position(tile_pos);
-            let mut goal_relevant_signals = current_signals.goal_relevant_signals();
-            if let Ok(goal_weights) = WeightedIndex::new(
-                goal_relevant_signals
-                    .clone()
-                    .map(|(_type, strength)| strength.value()),
-            ) {
-                let selected_goal_index = goal_weights.sample(rng);
-                if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
-                    let selected_signal_type = *selected_signal.0;
-                    *goal = selected_signal_type.try_into().unwrap();
-                    // Reset impatience when we choose a new goal
-                    impatience_pool.reset();
-                }
-            }
+            // Reset impatience when we choose a new goal
+            impatience_pool.reset();
         }
+    }
+}
+
+/// Pick a new goal when wandering.
+///
+// By default, goals are reset to wandering when completed.
+/// If anything fails, just keep wandering for now.
+fn compute_new_goal(
+    mut remaining_actions: Option<u16>,
+    tile_pos: TilePos,
+    wandering_behavior: &WanderingBehavior,
+    rng: &mut ThreadRng,
+    signals: &Signals,
+) -> Goal {
+    // When we first get a wandering goal, pick a number of actions to take before picking a new goal.
+    if remaining_actions.is_none() {
+        remaining_actions = Some(wandering_behavior.sample(rng));
+    }
+
+    // If we have actions left while wandering, use them up before picking a new goal.
+    if let Some(n) = remaining_actions {
+        if n != 0 {
+            return Goal::Wander {
+                remaining_actions: Some(n - 1),
+            };
+        }
+    }
+
+    // Pick a new goal based on the signals at this tile
+    let current_signals = signals.all_signals_at_position(tile_pos);
+    let mut goal_relevant_signals = current_signals.goal_relevant_signals();
+    if let Ok(goal_weights) = WeightedIndex::new(
+        goal_relevant_signals
+            .clone()
+            .map(|(_type, strength)| strength.value()),
+    ) {
+        let selected_goal_index = goal_weights.sample(rng);
+        if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
+            let selected_signal_type = *selected_signal.0;
+            selected_signal_type.try_into().unwrap()
+        } else {
+            Goal::Wander { remaining_actions }
+        }
+    } else {
+        Goal::Wander { remaining_actions }
     }
 }

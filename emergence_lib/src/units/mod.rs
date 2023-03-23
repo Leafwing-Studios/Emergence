@@ -19,6 +19,7 @@ use crate::{
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use leafwing_abilities::prelude::Pool;
+use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng};
 
 use self::{
     actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
@@ -43,8 +44,41 @@ pub(crate) struct UnitData {
     diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     max_impatience: u8,
-    /// How many actions (on average) will this unit take while wandering before picking a new goal?
-    mean_free_wander_period: f64,
+    /// How many actions will units of this type take while wandering before picking a new goal?
+    ///
+    /// This stores a [`WeightedIndex`] to allow for multimodal distributions.
+    wandering_behavior: WanderingBehavior,
+}
+
+/// Controls the distribution of wandering durations on a per-unit-type basis.
+#[derive(Debug, Clone)]
+struct WanderingBehavior {
+    /// How many actions will units take while wandering before picking a new goal?
+    wander_durations: Vec<u16>,
+    /// The relative probability of each value in `mean_free_wander_period`.
+    weights: WeightedIndex<f32>,
+}
+
+impl WanderingBehavior {
+    /// Randomly choose the number of actions to take while wandering.
+    fn sample(&self, rng: &mut ThreadRng) -> u16 {
+        self.wander_durations[self.weights.sample(rng)]
+    }
+}
+
+impl FromIterator<(u16, f32)> for WanderingBehavior {
+    fn from_iter<T: IntoIterator<Item = (u16, f32)>>(iter: T) -> Self {
+        let mut wander_durations = Vec::new();
+        let mut weights = Vec::new();
+        for (duration, weight) in iter {
+            wander_durations.push(duration);
+            weights.push(weight);
+        }
+        WanderingBehavior {
+            wander_durations,
+            weights: WeightedIndex::new(weights).unwrap(),
+        }
+    }
 }
 
 impl UnitData {
@@ -69,7 +103,11 @@ impl Default for UnitManifest {
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
-                mean_free_wander_period: 20.,
+                wandering_behavior: WanderingBehavior::from_iter([
+                    (0, 0.7),
+                    (64, 0.2),
+                    (1024, 0.1),
+                ]),
             },
         );
 

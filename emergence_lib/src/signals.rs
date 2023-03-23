@@ -96,7 +96,7 @@ impl Signals {
         let mut best_score = SignalStrength::ZERO;
 
         let neighboring_signals = match goal {
-            Goal::Wander => return None,
+            Goal::Wander { .. } => return None,
             Goal::Pickup(item_id) | Goal::Eat(item_id) => {
                 let push_signals =
                     self.neighboring_signals(SignalType::Push(*item_id), tile_pos, map_geometry);
@@ -517,7 +517,7 @@ mod tests {
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ORIGIN, &Goal::Wander, &map_geometry),
+            signals.upstream(TilePos::ORIGIN, &Goal::default(), &map_geometry),
             None
         );
     }

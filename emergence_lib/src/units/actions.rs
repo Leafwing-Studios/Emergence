@@ -67,7 +67,7 @@ pub(super) fn choose_actions(
         if action.finished() {
             *action = match goal {
                 // Alternate between spinning and moving forward.
-                Goal::Wander => match action.action() {
+                Goal::Wander { .. } => match action.action() {
                     UnitAction::Spin { .. } => CurrentAction::move_forward(
                         unit_tile_pos,
                         facing,
@@ -286,7 +286,7 @@ pub(super) fn finish_actions(
                         }
                     } else {
                         // If the target isn't there, pick a new goal
-                        *unit.goal = Goal::Wander;
+                        *unit.goal = Goal::default();
                     }
                 }
                 UnitAction::DropOff {
@@ -298,7 +298,7 @@ pub(super) fn finish_actions(
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We should be holding something, if we're not find something else to do
-                            None => Goal::Wander,
+                            None => Goal::default(),
                             Some(held_item_id) => {
                                 if held_item_id == *item_id {
                                     let item_count = ItemCount::new(held_item_id, 1);
@@ -319,7 +319,7 @@ pub(super) fn finish_actions(
                                     match transfer_result {
                                         Ok(()) => {
                                             unit.unit_inventory.held_item = None;
-                                            Goal::Wander
+                                            Goal::default()
                                         }
                                         Err(..) => Goal::Store(held_item_id),
                                     }
@@ -331,7 +331,7 @@ pub(super) fn finish_actions(
                         }
                     } else {
                         // If the target isn't there, pick a new goal
-                        *unit.goal = Goal::Wander;
+                        *unit.goal = Goal::default();
                     }
                 }
                 UnitAction::Spin { rotation_direction } => match rotation_direction {
@@ -357,7 +357,7 @@ pub(super) fn finish_actions(
                     }
 
                     if !success {
-                        *unit.goal = Goal::Wander;
+                        *unit.goal = Goal::default();
                     }
                 }
                 UnitAction::Demolish { structure_entity } => {
@@ -367,7 +367,7 @@ pub(super) fn finish_actions(
                     }
 
                     // Whether we succeeded or failed, pick something else to do
-                    *unit.goal = Goal::Wander;
+                    *unit.goal = Goal::default();
                 }
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
