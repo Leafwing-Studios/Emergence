@@ -181,6 +181,30 @@ pub(super) fn choose_actions(
     }
 }
 
+/// Exhaustively handles the setup for each planned action
+pub(super) fn start_actions(
+    mut unit_query: Query<&mut CurrentAction>,
+    mut workplace_query: Query<&mut WorkersPresent>,
+) {
+    for mut action in unit_query.iter_mut() {
+        if action.just_started {
+            if let Some(workplace_entity) = action.action().workplace() {
+                if let Ok(mut workers_present) = workplace_query.get_mut(workplace_entity) {
+                    // This has a side effect of adding the worker to the workplace
+                    let result = workers_present.add_worker();
+                    if result.is_err() {
+                        *action = CurrentAction::idle();
+                    }
+                } else {
+                    warn!("Unit tried to start working at an entity that is not a workplace!");
+                }
+            }
+
+            action.just_started = false;
+        }
+    }
+}
+
 /// Exhaustively handles the cleanup for each planned action
 #[allow(clippy::too_many_arguments)]
 pub(super) fn finish_actions(
@@ -205,27 +229,15 @@ pub(super) fn finish_actions(
     for mut unit in unit_query.iter_mut() {
         if unit.action.finished() {
             // Take workers off of the job once actions complete
-            match unit.action.action() {
-                UnitAction::Work { structure_entity }
-                | UnitAction::Demolish { structure_entity }
-                | UnitAction::DropOff {
-                    item_id: _,
-                    input_entity: structure_entity,
+            if let Some(workplace_entity) = unit.action.action().workplace() {
+                if let Ok(workplace) = workplace_query.get_mut(workplace_entity) {
+                    let (.., mut workers_present) = workplace;
+                    // FIXME: this isn't robust to units dying
+                    workers_present.remove_worker();
+                } else {
+                    warn!("Unit was working at an entity that is not a workplace!");
                 }
-                | UnitAction::PickUp {
-                    item_id: _,
-                    output_entity: structure_entity,
-                } => {
-                    if let Ok(workplace) = workplace_query.get_mut(*structure_entity) {
-                        let (.., mut workers_present) = workplace;
-                        // FIXME: this isn't robust to units dying
-                        workers_present.remove_worker();
-                    } else {
-                        warn!("Unit was working at an entity that is not a workplace!");
-                    }
-                }
-                _ => (),
-            };
+            }
 
             match unit.action.action() {
                 UnitAction::Idle => {
@@ -449,6 +461,23 @@ pub(super) enum UnitAction {
 }
 
 impl UnitAction {
+    /// Gets the workplace [`Entity`] that this action is targeting, if any.
+    fn workplace(&self) -> Option<Entity> {
+        match self {
+            UnitAction::Work { structure_entity }
+            | UnitAction::Demolish { structure_entity }
+            | UnitAction::DropOff {
+                item_id: _,
+                input_entity: structure_entity,
+            }
+            | UnitAction::PickUp {
+                item_id: _,
+                output_entity: structure_entity,
+            } => Some(*structure_entity),
+            _ => None,
+        }
+    }
+
     /// Pretty formatting for this type
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         match self {
@@ -486,6 +515,8 @@ pub(crate) struct CurrentAction {
     action: UnitAction,
     /// The amount of time left to complete the action.
     timer: Timer,
+    /// Did this action just start?
+    just_started: bool,
 }
 
 impl Default for CurrentAction {
@@ -846,6 +877,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Spin { rotation_direction },
             timer: Timer::from_seconds(0.1, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -898,6 +930,7 @@ impl CurrentAction {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
+                just_started: true,
             }
         } else {
             CurrentAction::idle()
@@ -933,6 +966,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Idle,
             timer: Timer::from_seconds(0.1, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -953,6 +987,7 @@ impl CurrentAction {
                     output_entity,
                 },
                 timer: Timer::from_seconds(0.5, TimerMode::Once),
+                just_started: true,
             }
         } else {
             CurrentAction::spin_towards(facing, required_direction)
@@ -976,6 +1011,7 @@ impl CurrentAction {
                     input_entity,
                 },
                 timer: Timer::from_seconds(0.2, TimerMode::Once),
+                just_started: true,
             }
         } else {
             CurrentAction::spin_towards(facing, required_direction)
@@ -987,6 +1023,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Eat,
             timer: Timer::from_seconds(0.5, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -995,6 +1032,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Work { structure_entity },
             timer: Timer::from_seconds(1.0, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -1003,6 +1041,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Demolish { structure_entity },
             timer: Timer::from_seconds(1.0, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -1011,6 +1050,7 @@ impl CurrentAction {
         CurrentAction {
             action: UnitAction::Abandon,
             timer: Timer::from_seconds(0.1, TimerMode::Once),
+            just_started: true,
         }
     }
 }
