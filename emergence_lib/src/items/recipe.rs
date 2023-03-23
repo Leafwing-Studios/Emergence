@@ -5,6 +5,7 @@ use std::time::Duration;
 use crate::{
     asset_management::manifest::{Id, ItemManifest},
     organisms::energy::Energy,
+    simulation::light::{Illuminance, TotalLight},
     structures::crafting::{InputInventory, OutputInventory},
 };
 
@@ -22,8 +23,8 @@ pub(crate) struct RecipeData {
     /// The time needed to craft the recipe.
     craft_time: Duration,
 
-    /// Is work by units needed to advance this recipe?
-    work_required: bool,
+    /// The conditions that must be met to craft the recipe.
+    conditions: RecipeConditions,
 
     /// The amount of [`Energy`] produced by making this recipe, if any.
     ///
@@ -37,14 +38,14 @@ impl RecipeData {
         inputs: Vec<ItemCount>,
         outputs: Vec<ItemCount>,
         craft_time: Duration,
-        work_required: bool,
+        conditions: RecipeConditions,
         energy: Option<Energy>,
     ) -> Self {
         Self {
             inputs,
             outputs,
             craft_time,
-            work_required,
+            conditions,
             energy,
         }
     }
@@ -66,7 +67,7 @@ impl RecipeData {
 
     /// Is work from units needed to advance this recipe?
     pub(crate) fn work_required(&self) -> bool {
-        self.work_required
+        self.conditions.workers_required > 0
     }
 
     /// An inventory with empty slots for all of the inputs of this recipe.
@@ -122,7 +123,7 @@ impl RecipeData {
             Vec::new(),
             vec![ItemCount::one(Id::from_name("acacia_leaf"))],
             Duration::from_secs(3),
-            false,
+            RecipeConditions::NONE,
             Some(Energy(20.)),
         )
     }
@@ -133,7 +134,7 @@ impl RecipeData {
             vec![ItemCount::one(Id::from_name("acacia_leaf"))],
             vec![ItemCount::one(Id::from_name("leuco_chunk"))],
             Duration::from_secs(2),
-            false,
+            RecipeConditions::NONE,
             Some(Energy(40.)),
         )
     }
@@ -144,7 +145,7 @@ impl RecipeData {
             vec![ItemCount::one(Id::from_name("leuco_chunk"))],
             vec![ItemCount::one(Id::from_name("ant_egg"))],
             Duration::from_secs(5),
-            false,
+            RecipeConditions::NONE,
             None,
         )
     }
@@ -155,8 +156,55 @@ impl RecipeData {
             vec![ItemCount::one(Id::from_name("ant_egg"))],
             vec![],
             Duration::from_secs(10),
-            true,
+            RecipeConditions {
+                workers_required: 1,
+                allowable_light_range: None,
+            },
             None,
         )
+    }
+}
+
+/// The environmental conditions needed for work to be done on a recipe.
+#[derive(Debug, Clone)]
+pub(crate) struct RecipeConditions {
+    workers_required: u8,
+    allowable_light_range: Option<Threshold<Illuminance>>,
+}
+
+impl RecipeConditions {
+    /// No special conditions are needed for this recipe.
+    pub(crate) const NONE: RecipeConditions = RecipeConditions {
+        workers_required: 0,
+        allowable_light_range: None,
+    };
+
+    fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
+        let work_satisfied = self.workers_required == 0 || workers >= self.workers_required;
+        let light_satisfied = self
+            .allowable_light_range
+            .as_ref()
+            .map_or(true, |range| range.contains(total_light.illuminance()));
+
+        work_satisfied && light_satisfied
+    }
+}
+
+/// A viable range of a value.
+#[derive(Debug, Clone)]
+pub(crate) struct Threshold<T: PartialOrd> {
+    min: T,
+    max: T,
+}
+
+impl<T: PartialOrd> Threshold<T> {
+    fn new(min: T, max: T) -> Self {
+        assert!(min <= max);
+
+        Self { min, max }
+    }
+
+    fn contains(&self, value: T) -> bool {
+        self.min <= value && value <= self.max
     }
 }

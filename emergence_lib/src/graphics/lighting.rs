@@ -10,7 +10,7 @@ use bevy::{
 use crate::{
     asset_management::palette::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
     player_interaction::camera::CameraSettings,
-    simulation::geometry::Height,
+    simulation::{geometry::Height, light::Illuminance},
 };
 
 /// Handles all lighting logic
@@ -56,7 +56,7 @@ pub(crate) struct CelestialBody {
 
 impl CelestialBody {
     /// Computes the total irradiance produced by this celestial body based on its position in the sky.
-    pub(crate) fn compute_light(&self) -> f32 {
+    pub(crate) fn compute_light(&self) -> Illuminance {
         // Computes the total angle formed by the celestial body and the horizon
         //
         // We cannot simply use the progress, as the inclination also needs to be taken into account.
@@ -64,7 +64,7 @@ impl CelestialBody {
         // We're treating the latitude here as equatorial.
         let cos_solar_zenith_angle = self.hour_angle.cos() * self.declination.cos();
         let solar_zenith_angle = cos_solar_zenith_angle.acos();
-        self.illuminance * solar_zenith_angle.cos().max(0.)
+        Illuminance(self.illuminance * solar_zenith_angle.cos().max(0.))
     }
 
     /// The starting settings for the sun
