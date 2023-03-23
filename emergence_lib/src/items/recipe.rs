@@ -123,7 +123,7 @@ impl RecipeData {
             Vec::new(),
             vec![ItemCount::one(Id::from_name("acacia_leaf"))],
             Duration::from_secs(3),
-            RecipeConditions::NONE,
+            RecipeConditions::new(0, Threshold::new(Illuminance(3e3), Illuminance(2e4))),
             Some(Energy(20.)),
         )
     }
@@ -179,6 +179,17 @@ impl RecipeConditions {
         allowable_light_range: None,
     };
 
+    /// Creates a new [`RecipeConditions`].
+    pub(crate) const fn new(
+        workers_required: u8,
+        allowable_light_range: Threshold<Illuminance>,
+    ) -> Self {
+        Self {
+            workers_required,
+            allowable_light_range: Some(allowable_light_range),
+        }
+    }
+
     fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
         let work_satisfied = self.workers_required == 0 || workers >= self.workers_required;
         let light_satisfied = self
@@ -198,7 +209,7 @@ pub(crate) struct Threshold<T: PartialOrd> {
 }
 
 impl<T: PartialOrd> Threshold<T> {
-    fn new(min: T, max: T) -> Self {
+    pub(crate) fn new(min: T, max: T) -> Self {
         assert!(min <= max);
 
         Self { min, max }
