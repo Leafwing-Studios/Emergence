@@ -93,6 +93,11 @@ impl RecipeData {
         &self.energy
     }
 
+    /// Does this recipe need workers to produce?
+    pub(crate) fn needs_workers(&self) -> bool {
+        self.conditions.workers_required > 0
+    }
+
     /// The pretty formatting of this type
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let input_strings: Vec<String> = self

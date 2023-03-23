@@ -439,7 +439,9 @@ pub(crate) fn set_crafting_emitter(
         &CraftingState,
         &Id<Structure>,
         &WorkersPresent,
+        &ActiveRecipe,
     )>,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
     for (
         mut emitter,
@@ -448,6 +450,7 @@ pub(crate) fn set_crafting_emitter(
         crafting_state,
         &structure_id,
         workers_present,
+        active_recipe,
     ) in crafting_query.iter_mut()
     {
         // Reset and recompute all signals
@@ -477,11 +480,14 @@ pub(crate) fn set_crafting_emitter(
 
         // Work signals
         if let CraftingState::InProgress { .. } = crafting_state {
-            if workers_present.needs_more() {
-                let signal_strength = SignalStrength::new(100.);
-                emitter
-                    .signals
-                    .push((SignalType::Work(structure_id), signal_strength));
+            if let Some(recipe_id) = active_recipe.recipe_id() {
+                let recipe = recipe_manifest.get(*recipe_id);
+                if workers_present.needs_more() && recipe.needs_workers() {
+                    let signal_strength = SignalStrength::new(100.);
+                    emitter
+                        .signals
+                        .push((SignalType::Work(structure_id), signal_strength));
+                }
             }
         }
     }
