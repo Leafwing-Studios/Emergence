@@ -16,7 +16,8 @@ use crate::{
         commands::StructureCommandsExt,
         construction::{DemolitionQuery, MarkedForDemolition},
         crafting::{
-            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkplaceQuery,
+            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+            WorkplaceQuery,
         },
     },
 };
@@ -191,7 +192,7 @@ pub(super) fn handle_actions(
             &mut StorageInventory,
         )>,
     >,
-    mut workplace_query: Query<&mut CraftingState>,
+    mut workplace_query: Query<(&mut CraftingState, &WorkersPresent)>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
@@ -314,22 +315,12 @@ pub(super) fn handle_actions(
                     // This temporary variable is just to avoid horribly complex nesting
                     let mut success = false;
 
-                    if let Ok(mut crafting_state) = workplace_query.get_mut(*structure_entity) {
-                        if let CraftingState::InProgress {
-                            progress,
-                            required,
-                            work_required,
-                            worker_present: _,
-                        } = *crafting_state
-                        {
-                            if work_required {
-                                *crafting_state = CraftingState::InProgress {
-                                    progress,
-                                    required,
-                                    work_required,
-                                    // FIXME: this will stay true indefinitely
-                                    worker_present: true,
-                                };
+                    if let Ok((mut crafting_state, workers_present)) =
+                        workplace_query.get_mut(*structure_entity)
+                    {
+                        if let CraftingState::InProgress { progress, required } = *crafting_state {
+                            if workers_present.needs_more() {
+                                *crafting_state = CraftingState::InProgress { progress, required };
                                 success = true;
                             }
                         }

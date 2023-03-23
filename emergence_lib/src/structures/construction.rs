@@ -21,6 +21,7 @@ use crate::{
     simulation::geometry::{Facing, TilePos},
 };
 
+use super::crafting::WorkersPresent;
 use super::{
     commands::StructureCommandsExt,
     crafting::{ActiveRecipe, CraftingState, InputInventory},
@@ -47,6 +48,8 @@ pub(super) struct GhostBundle {
     facing: Facing,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
+    /// The number of workers that are present / allowed to build this structure.
+    workers_present: WorkersPresent,
     /// Tracks work that needs to be done on this building
     crafting_state: CraftingState,
     /// What should the structure craft when it is first built?
@@ -83,6 +86,7 @@ impl GhostBundle {
             structure_id,
             facing: clipboard_data.facing,
             construction_materials: structure_data.construction_strategy.materials.clone(),
+            workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
@@ -191,12 +195,15 @@ pub(super) fn ghost_signals(
             &mut Emitter,
             &mut CraftingState,
             &InputInventory,
+            &WorkersPresent,
         ),
         With<Ghost>,
     >,
 ) {
     // Ghosts that are ignored will slowly become more important to build.
-    for (&structure_id, mut emitter, crafting_state, input_inventory) in ghost_query.iter_mut() {
+    for (&structure_id, mut emitter, crafting_state, input_inventory, workers_present) in
+        ghost_query.iter_mut()
+    {
         if crafting_state.is_changed() {
             match *crafting_state {
                 CraftingState::NeedsInput => {
@@ -210,13 +217,11 @@ pub(super) fn ghost_signals(
                 CraftingState::InProgress {
                     progress: _,
                     required: _,
-                    work_required,
-                    worker_present: _,
                 } => {
                     // Wipe out any pull signals as we've already got enough stuff.
                     emitter.signals.clear();
 
-                    if work_required {
+                    if workers_present.needs_more() {
                         let signal_type = SignalType::Work(structure_id);
                         let signal_strength = SignalStrength::new(10.);
                         emitter.signals.push((signal_type, signal_strength))
@@ -240,6 +245,7 @@ pub(super) fn ghost_lifecycle(
             &Id<Structure>,
             &Facing,
             &ActiveRecipe,
+            &WorkersPresent,
         ),
         With<Ghost>,
     >,
@@ -247,8 +253,15 @@ pub(super) fn ghost_lifecycle(
     time: Res<FixedTime>,
     mut commands: Commands,
 ) {
-    for (mut crafting_state, input_inventory, &tile_pos, &structure_id, &facing, active_recipe) in
-        ghost_query.iter_mut()
+    for (
+        mut crafting_state,
+        input_inventory,
+        &tile_pos,
+        &structure_id,
+        &facing,
+        active_recipe,
+        workers_present,
+    ) in ghost_query.iter_mut()
     {
         match *crafting_state {
             CraftingState::NeedsInput => {
@@ -258,23 +271,15 @@ pub(super) fn ghost_lifecycle(
                         CraftingState::InProgress {
                             progress: Duration::ZERO,
                             required: structure_details.construction_strategy.work,
-                            work_required: structure_details.construction_strategy.work
-                                > Duration::ZERO,
-                            worker_present: false,
                         }
                     }
                     false => CraftingState::NeedsInput,
                 };
             }
-            CraftingState::InProgress {
-                progress,
-                required,
-                work_required,
-                worker_present,
-            } => {
+            CraftingState::InProgress { progress, required } => {
                 let mut updated_progress = progress;
 
-                if !work_required || worker_present {
+                if workers_present.needs_more() {
                     updated_progress += time.period;
                 }
 
@@ -284,8 +289,6 @@ pub(super) fn ghost_lifecycle(
                     CraftingState::InProgress {
                         progress: updated_progress,
                         required,
-                        work_required,
-                        worker_present,
                     }
                 }
             }

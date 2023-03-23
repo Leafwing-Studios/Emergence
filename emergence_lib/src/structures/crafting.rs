@@ -35,10 +35,6 @@ pub(crate) enum CraftingState {
         progress: Duration,
         /// How long does this recipe take to complete in full?
         required: Duration,
-        /// Does this recipe require work to be done?
-        work_required: bool,
-        /// Is a unit currently working on this recipe?
-        worker_present: bool,
     },
     /// Resources need to be claimed before more crafting can continue.
     FullAndBlocked,
@@ -52,32 +48,12 @@ pub(crate) enum CraftingState {
 
 impl Display for CraftingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
+        let string = match self {
             CraftingState::NeedsInput => "Waiting for input".to_string(),
-            CraftingState::InProgress {
-                progress,
-                required,
-                work_required,
-                worker_present,
-            } => {
+            CraftingState::InProgress { progress, required } => {
                 let progress_in_seconds = progress.as_secs_f32();
                 let required_in_seconds = required.as_secs_f32();
-                match (work_required, worker_present) {
-                    (true, true) => {
-                        format!("Work in progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
-                    }
-                    (true, false) => {
-                        format!(
-                            "Worker needed ({progress_in_seconds:.1} / {required_in_seconds:.1})"
-                        )
-                    }
-                    (false, true) => {
-                        format!("Unnecessary worker present ({progress_in_seconds:.1} / {required_in_seconds:.1})")
-                    }
-                    (false, false) => {
-                        format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
-                    }
-                }
+                format!("In progress ({progress_in_seconds:.1} / {required_in_seconds:.1})")
             }
             CraftingState::RecipeComplete => "Recipe complete".to_string(),
             CraftingState::FullAndBlocked => "Blocked".to_string(),
@@ -85,7 +61,7 @@ impl Display for CraftingState {
             CraftingState::NoRecipe => "No recipe set".to_string(),
         };
 
-        write!(f, "{str}")
+        write!(f, "{string}")
     }
 }
 
@@ -206,8 +182,13 @@ impl WorkersPresent {
         }
     }
 
+    /// Are more workers needed?
+    pub(crate) fn needs_more(&self) -> bool {
+        self.present < self.allowed
+    }
+
     /// The number of workers present.
-    pub(crate) fn present(&self) -> u8 {
+    pub(crate) fn current(&self) -> u8 {
         self.present
     }
 
@@ -283,8 +264,6 @@ impl CraftingBundle {
                 craft_state: CraftingState::InProgress {
                     progress,
                     required: recipe.craft_time(),
-                    work_required: recipe.work_required(),
-                    worker_present: false,
                 },
                 emitter: Emitter::default(),
                 workers_present: WorkersPresent::new(max_workers),
@@ -313,6 +292,8 @@ struct CraftingQuery {
     input: &'static mut InputInventory,
     /// The outputs
     output: &'static mut OutputInventory,
+    /// The number of workers present
+    workers_present: &'static WorkersPresent,
     /// Is this an organism?
     maybe_organism: Option<&'static Organism>,
 }
@@ -338,8 +319,6 @@ fn progress_crafting(
                         Ok(()) => CraftingState::InProgress {
                             progress: Duration::ZERO,
                             required: recipe.craft_time(),
-                            work_required: recipe.work_required(),
-                            worker_present: false,
                         },
                         Err(_) => CraftingState::NeedsInput,
                     }
@@ -347,16 +326,11 @@ fn progress_crafting(
                     CraftingState::NoRecipe
                 }
             }
-            CraftingState::InProgress {
-                progress,
-                required,
-                work_required,
-                worker_present,
-            } => {
+            CraftingState::InProgress { progress, required } => {
                 let mut updated_progress = progress;
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    if recipe.satisfied(worker_present as u8, &total_light) {
+                    if recipe.satisfied(crafter.workers_present.current(), &total_light) {
                         updated_progress += time.period;
                         if updated_progress >= required {
                             CraftingState::RecipeComplete
@@ -364,17 +338,10 @@ fn progress_crafting(
                             CraftingState::InProgress {
                                 progress: updated_progress,
                                 required,
-                                work_required,
-                                worker_present,
                             }
                         }
                     } else {
-                        CraftingState::InProgress {
-                            progress,
-                            required,
-                            work_required,
-                            worker_present,
-                        }
+                        CraftingState::InProgress { progress, required }
                     }
                 } else {
                     CraftingState::NoRecipe
@@ -450,10 +417,17 @@ pub(crate) fn set_crafting_emitter(
         &OutputInventory,
         &CraftingState,
         &Id<Structure>,
+        &WorkersPresent,
     )>,
 ) {
-    for (mut emitter, input_inventory, output_inventory, crafting_state, &structure_id) in
-        crafting_query.iter_mut()
+    for (
+        mut emitter,
+        input_inventory,
+        output_inventory,
+        crafting_state,
+        &structure_id,
+        workers_present,
+    ) in crafting_query.iter_mut()
     {
         // Reset and recompute all signals
         emitter.signals.clear();
@@ -481,14 +455,8 @@ pub(crate) fn set_crafting_emitter(
         }
 
         // Work signals
-        if let CraftingState::InProgress {
-            progress: _,
-            required: _,
-            work_required,
-            worker_present,
-        } = crafting_state
-        {
-            if work_required & !worker_present {
+        if let CraftingState::InProgress { .. } = crafting_state {
+            if workers_present.needs_more() {
                 let signal_strength = SignalStrength::new(100.);
                 emitter
                     .signals
@@ -558,7 +526,15 @@ fn clear_empty_storage_slots(mut query: Query<&mut StorageInventory>) {
 #[derive(SystemParam)]
 pub(crate) struct WorkplaceQuery<'w, 's> {
     /// The contained query type.
-    query: Query<'w, 's, (&'static CraftingState, &'static Id<Structure>)>,
+    query: Query<
+        'w,
+        's,
+        (
+            &'static CraftingState,
+            &'static Id<Structure>,
+            &'static WorkersPresent,
+        ),
+    >,
 }
 
 impl<'w, 's> WorkplaceQuery<'w, 's> {
@@ -578,20 +554,15 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
             *map_geometry.structure_index.get(&structure_pos)?
         };
 
-        let (found_crafting_state, found_structure_id) = self.query.get(entity).ok()?;
+        let (found_crafting_state, found_structure_id, workers_present) =
+            self.query.get(entity).ok()?;
 
         if *found_structure_id != structure_id {
             return None;
         }
 
-        if let CraftingState::InProgress {
-            progress: _,
-            required: _,
-            work_required,
-            worker_present: _,
-        } = found_crafting_state
-        {
-            if *work_required {
+        if let CraftingState::InProgress { .. } = found_crafting_state {
+            if workers_present.needs_more() {
                 Some(entity)
             } else {
                 None

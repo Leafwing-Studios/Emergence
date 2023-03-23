@@ -65,11 +65,6 @@ impl RecipeData {
         self.craft_time
     }
 
-    /// Is work from units needed to advance this recipe?
-    pub(crate) fn work_required(&self) -> bool {
-        self.conditions.workers_required > 0
-    }
-
     /// Are the conditions to craft this recipe met?
     pub(crate) fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
         self.conditions.satisfied(workers, total_light)
