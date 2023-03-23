@@ -164,7 +164,7 @@ impl Plugin for UnitsPlugin {
         app.init_resource::<UnitManifest>().add_systems(
             (
                 actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
-                actions::handle_actions
+                actions::finish_actions
                     .in_set(UnitSystem::Act)
                     .after(UnitSystem::AdvanceTimers)
                     // This must occur after MarkedForDemolition is added,

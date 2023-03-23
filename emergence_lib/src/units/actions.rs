@@ -181,9 +181,9 @@ pub(super) fn choose_actions(
     }
 }
 
-/// Exhaustively handles each planned action
+/// Exhaustively handles the cleanup for each planned action
 #[allow(clippy::too_many_arguments)]
-pub(super) fn handle_actions(
+pub(super) fn finish_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut inventory_query: Query<
         AnyOf<(
@@ -192,7 +192,7 @@ pub(super) fn handle_actions(
             &mut StorageInventory,
         )>,
     >,
-    mut workplace_query: Query<(&mut CraftingState, &mut WorkersPresent)>,
+    mut workplace_query: Query<(&CraftingState, &mut WorkersPresent)>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
@@ -204,6 +204,29 @@ pub(super) fn handle_actions(
 
     for mut unit in unit_query.iter_mut() {
         if unit.action.finished() {
+            // Take workers off of the job once actions complete
+            match unit.action.action() {
+                UnitAction::Work { structure_entity }
+                | UnitAction::Demolish { structure_entity }
+                | UnitAction::DropOff {
+                    item_id: _,
+                    input_entity: structure_entity,
+                }
+                | UnitAction::PickUp {
+                    item_id: _,
+                    output_entity: structure_entity,
+                } => {
+                    if let Ok(workplace) = workplace_query.get_mut(*structure_entity) {
+                        let (.., mut workers_present) = workplace;
+                        // FIXME: this isn't robust to units dying
+                        workers_present.remove_worker();
+                    } else {
+                        warn!("Unit was working at an entity that is not a workplace!");
+                    }
+                }
+                _ => (),
+            };
+
             match unit.action.action() {
                 UnitAction::Idle => {
                     unit.impatience.increment();
@@ -313,13 +336,12 @@ pub(super) fn handle_actions(
                 UnitAction::Work { structure_entity } => {
                     let mut success = false;
 
-                    if let Ok((mut crafting_state, mut workers_present)) =
+                    if let Ok((crafting_state, workers_present)) =
                         workplace_query.get_mut(*structure_entity)
                     {
-                        if let CraftingState::InProgress { progress, required } = *crafting_state {
-                            if workers_present.add_worker().is_ok() {
+                        if let CraftingState::InProgress { .. } = *crafting_state {
+                            if workers_present.needs_more() {
                                 success = true;
-                                *crafting_state = CraftingState::InProgress { progress, required };
                             }
                         }
                     }
