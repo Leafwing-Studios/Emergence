@@ -22,13 +22,24 @@ impl Plugin for LightPlugin {
 
 /// The total current amount of light available.
 #[derive(Resource, Default, Debug)]
-struct TotalLight {
+pub(crate) struct TotalLight {
+    /// The total amount of light available, in lux.
     illuminance: f32,
+}
+
+impl TotalLight {
+    /// The total amount of light available, in lux.
+    pub(crate) fn illuminance(&self) -> f32 {
+        self.illuminance
+    }
 }
 
 impl Display for TotalLight {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.2} lux", self.illuminance)
+        // Rounds to the nearest 100 lux
+        let rounded_illuminance = (self.illuminance / 100.).round() * 100.;
+
+        write!(f, "{rounded_illuminance:.0} lux")
     }
 }
 
