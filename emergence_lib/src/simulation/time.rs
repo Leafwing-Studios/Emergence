@@ -125,7 +125,7 @@ fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res
 
         // Scale the progress by TAU to get a full rotation.
         // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
-        celestial_body.progress = cycle_normalized_time * TAU - PI / 2.;
+        celestial_body.hour_angle = cycle_normalized_time * TAU - PI / 2.;
     }
 }
 
