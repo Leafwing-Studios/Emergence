@@ -35,14 +35,20 @@ impl TotalLight {
     }
 }
 
+impl Display for TotalLight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.illuminance())
+    }
+}
+
 /// Light illuminance in lux.
 #[derive(Add, AddAssign, Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub(crate) struct Illuminance(pub(crate) f32);
 
-impl Display for TotalLight {
+impl Display for Illuminance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Rounds to the nearest 100 lux
-        let rounded_illuminance = (self.illuminance.0 / 100.).round() * 100.;
+        let rounded_illuminance = (self.0 / 100.).round() * 100.;
 
         write!(f, "{rounded_illuminance:.0} lux")
     }

@@ -1,6 +1,6 @@
 //! Instructions to craft items.
 
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 use crate::{
     asset_management::manifest::{Id, ItemManifest},
@@ -111,7 +111,13 @@ impl RecipeData {
 
         let duration_str = format!("{:.2}", self.craft_time().as_secs_f32());
 
-        format!("[{input_str}] -> [{output_str}] | {duration_str} s")
+        let condition_str = if self.conditions == RecipeConditions::NONE {
+            String::new()
+        } else {
+            format!("\nwhen {}", self.conditions)
+        };
+
+        format!("[{input_str}] -> [{output_str}] | {duration_str} s{condition_str}")
     }
 }
 
@@ -166,10 +172,22 @@ impl RecipeData {
 }
 
 /// The environmental conditions needed for work to be done on a recipe.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct RecipeConditions {
     workers_required: u8,
     allowable_light_range: Option<Threshold<Illuminance>>,
+}
+
+impl Display for RecipeConditions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.workers_required > 0 {
+            write!(f, "Workers: {}", self.workers_required)?;
+        }
+        if let Some(range) = &self.allowable_light_range {
+            write!(f, "Light: {}", *range)?;
+        }
+        Ok(())
+    }
 }
 
 impl RecipeConditions {
@@ -202,7 +220,7 @@ impl RecipeConditions {
 }
 
 /// A viable range of a value.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Threshold<T: PartialOrd> {
     min: T,
     max: T,
@@ -217,5 +235,11 @@ impl<T: PartialOrd> Threshold<T> {
 
     fn contains(&self, value: T) -> bool {
         self.min <= value && value <= self.max
+    }
+}
+
+impl<T: Display + PartialOrd> Display for Threshold<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} - {}", self.min, self.max)
     }
 }
