@@ -165,7 +165,7 @@ pub(crate) struct CraftingBundle {
 }
 
 /// The number of workers present / allowed at this structure.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct WorkersPresent {
     /// The number of workers present
     present: u8,

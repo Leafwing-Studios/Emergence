@@ -348,13 +348,11 @@ pub(super) fn finish_actions(
                 UnitAction::Work { structure_entity } => {
                     let mut success = false;
 
-                    if let Ok((crafting_state, workers_present)) =
+                    if let Ok((CraftingState::InProgress { .. }, workers_present)) =
                         workplace_query.get_mut(*structure_entity)
                     {
-                        if let CraftingState::InProgress { .. } = *crafting_state {
-                            if workers_present.needs_more() {
-                                success = true;
-                            }
+                        if workers_present.needs_more() {
+                            success = true;
                         }
                     }
 
