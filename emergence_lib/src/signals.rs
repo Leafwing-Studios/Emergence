@@ -236,7 +236,7 @@ impl LocalSignals {
     ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
         self.map
             .iter()
-            .filter(|(signal_type, _signal_strength)| signal_type.goal_producing())
+            .filter(|(signal_type, _signal_strength)| Goal::try_from(**signal_type).is_ok())
     }
 
     /// The pretty formatting for this type.
@@ -323,20 +323,6 @@ pub enum SignalType {
 }
 
 impl SignalType {
-    /// Can this signal type cause a goal to be selected?
-    #[must_use]
-    pub(crate) const fn goal_producing(&self) -> bool {
-        match self {
-            SignalType::Push(_) => true,
-            SignalType::Pull(_) => true,
-            SignalType::Work(_) => true,
-            SignalType::Demolish(_) => true,
-            SignalType::Contains(_) => false,
-            SignalType::Stores(_) => false,
-            SignalType::Unit(_) => false,
-        }
-    }
-
     /// The pretty formatting for this type
     pub(crate) fn display(
         &self,
