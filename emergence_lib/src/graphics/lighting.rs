@@ -10,7 +10,7 @@ use bevy::{
 use crate::{
     asset_management::palette::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
     player_interaction::camera::CameraSettings,
-    simulation::geometry::Height,
+    simulation::{geometry::Height, light::Illuminance},
 };
 
 /// Handles all lighting logic
@@ -37,14 +37,13 @@ pub(crate) struct CelestialBody {
     ///
     /// This has no effect on the angle: it simply needs to be high enough to avoid clipping at max world height.
     height: f32,
-    /// The angle of the celestial body in radians, relative to its position at "noon".
+    /// The angle of the celestial body in radians, relative to the zenith (the sun's position at "noon").
     /// This will change throughout the day, from - PI/2 at dawn to PI/2 at dusk.
-    pub(crate) progress: f32,
-    /// The angle that the sun is offset from vertical in radians
+    pub(crate) hour_angle: f32,
+    /// The angle that the sun is offset from the zenith in radians.
     ///
-    /// This technically changes with latitude.
-    /// Should be zero from the equator.
-    inclination: f32,
+    /// In real life changes with latitude and season.
+    declination: f32,
     /// The rotation around the y axis in radians.
     ///
     /// A value of 0.0 corresponds to east -> west travel.
@@ -56,12 +55,24 @@ pub(crate) struct CelestialBody {
 }
 
 impl CelestialBody {
+    /// Computes the total irradiance produced by this celestial body based on its position in the sky.
+    pub(crate) fn compute_light(&self) -> Illuminance {
+        // Computes the total angle formed by the celestial body and the horizon
+        //
+        // We cannot simply use the progress, as the inclination also needs to be taken into account.
+        // See https://en.wikipedia.org/wiki/Solar_zenith_angle
+        // We're treating the latitude here as equatorial.
+        let cos_solar_zenith_angle = self.hour_angle.cos() * self.declination.cos();
+        let solar_zenith_angle = cos_solar_zenith_angle.acos();
+        Illuminance(self.illuminance * solar_zenith_angle.cos().max(0.))
+    }
+
     /// The starting settings for the sun
     fn sun() -> CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
-            progress: -PI / 4.,
-            inclination: 23.5 / 360. * PI / 2.,
+            hour_angle: -PI / 4.,
+            declination: 23.5 / 360. * PI / 2.,
             travel_axis: 0.,
             illuminance: 8e4,
             days_per_cycle: 1.0,
@@ -72,11 +83,11 @@ impl CelestialBody {
     fn moon() -> CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
-            progress: 0.,
-            inclination: 23.5 / 360. * PI / 2.,
+            hour_angle: 0.,
+            declination: 23.5 / 360. * PI / 2.,
             travel_axis: PI / 6.,
             illuminance: 1e4,
-            days_per_cycle: 2.0,
+            days_per_cycle: 29.53,
         }
     }
 }
@@ -137,10 +148,10 @@ fn set_celestial_body_transform(
         transform.rotate_around(
             Vec3::ZERO,
             Quat::from_euler(
-                EulerRot::YXZ,
+                EulerRot::XZY,
+                celestial_body.hour_angle,
+                celestial_body.declination,
                 celestial_body.travel_axis,
-                celestial_body.progress,
-                celestial_body.inclination,
             ),
         );
 

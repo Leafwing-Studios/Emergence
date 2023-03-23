@@ -7,6 +7,7 @@ use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::geometry::{sync_rotation_to_facing, MapGeometry};
+use crate::simulation::light::LightPlugin;
 use crate::simulation::time::TemporalPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
@@ -15,6 +16,7 @@ use bevy::prelude::*;
 
 pub mod generation;
 pub mod geometry;
+pub mod light;
 pub mod time;
 
 /// Sets up world geometry
@@ -56,7 +58,8 @@ impl Plugin for SimulationPlugin {
             .add_plugin(OrganismPlugin)
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin)
-            .add_plugin(TemporalPlugin);
+            .add_plugin(TemporalPlugin)
+            .add_plugin(LightPlugin);
     }
 }
 
