@@ -192,7 +192,7 @@ pub(super) fn handle_actions(
             &mut StorageInventory,
         )>,
     >,
-    mut workplace_query: Query<(&mut CraftingState, &WorkersPresent)>,
+    mut workplace_query: Query<(&mut CraftingState, &mut WorkersPresent)>,
     // This must be compatible with unit_query
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
@@ -311,17 +311,15 @@ pub(super) fn handle_actions(
                     unit.transform.translation = target_tile.top_of_tile(&map_geometry);
                 }
                 UnitAction::Work { structure_entity } => {
-                    // If something went wrong, give up on this goal
-                    // This temporary variable is just to avoid horribly complex nesting
                     let mut success = false;
 
-                    if let Ok((mut crafting_state, workers_present)) =
+                    if let Ok((mut crafting_state, mut workers_present)) =
                         workplace_query.get_mut(*structure_entity)
                     {
                         if let CraftingState::InProgress { progress, required } = *crafting_state {
-                            if workers_present.needs_more() {
-                                *crafting_state = CraftingState::InProgress { progress, required };
+                            if workers_present.add_worker().is_ok() {
                                 success = true;
+                                *crafting_state = CraftingState::InProgress { progress, required };
                             }
                         }
                     }

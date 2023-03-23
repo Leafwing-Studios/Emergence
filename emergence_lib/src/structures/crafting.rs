@@ -191,6 +191,21 @@ impl WorkersPresent {
     pub(crate) fn current(&self) -> u8 {
         self.present
     }
+
+    /// Adds a worker to this structure if there is room.
+    pub(crate) fn add_worker(&mut self) -> Result<(), ()> {
+        if self.needs_more() {
+            self.present += 1;
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    /// Removes a worker from this structure
+    pub(crate) fn remove_worker(&mut self) {
+        self.present = self.present.saturating_sub(1);
+    }
 }
 
 impl Display for WorkersPresent {
