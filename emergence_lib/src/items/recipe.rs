@@ -179,7 +179,9 @@ impl RecipeData {
 /// The environmental conditions needed for work to be done on a recipe.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct RecipeConditions {
+    /// The number of workers required to advance this recipe.
     workers_required: u8,
+    /// The range of light levels that are acceptable for this recipe.
     allowable_light_range: Option<Threshold<Illuminance>>,
 }
 
@@ -213,6 +215,7 @@ impl RecipeConditions {
         }
     }
 
+    /// Are the conditions to craft this recipe met?
     fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
         let work_satisfied = self.workers_required == 0 || workers >= self.workers_required;
         let light_satisfied = self
@@ -227,17 +230,21 @@ impl RecipeConditions {
 /// A viable range of a value.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Threshold<T: PartialOrd> {
+    /// The minimum value of the range.
     min: T,
+    /// The maximum value of the range.
     max: T,
 }
 
 impl<T: PartialOrd> Threshold<T> {
+    /// Creates a new [`Threshold`].
     pub(crate) fn new(min: T, max: T) -> Self {
         assert!(min <= max);
 
         Self { min, max }
     }
 
+    /// Returns true if the value is within the threshold.
     fn contains(&self, value: T) -> bool {
         self.min <= value && value <= self.max
     }
