@@ -93,6 +93,11 @@ impl RecipeData {
         &self.energy
     }
 
+    /// The number of workers this recipe needs to be crafted at all.
+    pub(crate) fn workers_required(&self) -> u8 {
+        self.conditions.workers_required
+    }
+
     /// Does this recipe need workers to produce?
     pub(crate) fn needs_workers(&self) -> bool {
         self.conditions.workers_required > 0

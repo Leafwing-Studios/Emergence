@@ -352,7 +352,16 @@ fn progress_crafting(
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
                     if recipe.satisfied(crafter.workers_present.current(), &total_light) {
-                        updated_progress += time.period;
+                        // Many hands make light work!
+                        if recipe.workers_required() > 0 {
+                            let work_ratio = crafter.workers_present.current() as f32
+                                / recipe.workers_required() as f32;
+                            updated_progress +=
+                                Duration::from_secs_f32(time.period.as_secs_f32() * work_ratio);
+                        } else {
+                            updated_progress += time.period;
+                        }
+
                         if updated_progress >= required {
                             CraftingState::RecipeComplete
                         } else {
