@@ -173,10 +173,7 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             emitter: Emitter {
-                signals: vec![(
-                    SignalType::Unit(Id::from_name("ant")),
-                    SignalStrength::new(1.),
-                )],
+                signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
             },
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
