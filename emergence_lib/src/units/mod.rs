@@ -50,6 +50,7 @@ pub(crate) struct UnitData {
     wandering_behavior: WanderingBehavior,
 }
 
+/// Controls the distribution of wandering durations on a per-unit-type basis.
 #[derive(Debug, Clone)]
 struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
@@ -59,6 +60,7 @@ struct WanderingBehavior {
 }
 
 impl WanderingBehavior {
+    /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {
         self.wander_durations[self.weights.sample(rng)]
     }
