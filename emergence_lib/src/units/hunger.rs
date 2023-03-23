@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest},
+    asset_management::manifest::{Id, Item, ItemManifest, Unit, UnitManifest},
     organisms::energy::{Energy, EnergyPool},
 };
 
@@ -45,9 +45,13 @@ impl Diet {
 }
 
 /// Swaps the goal to [`Goal::Eat`] when energy is low
-pub(super) fn check_for_hunger(mut unit_query: Query<(&mut Goal, &EnergyPool, &Diet)>) {
-    for (mut goal, energy_pool, diet) in unit_query.iter_mut() {
+pub(super) fn check_for_hunger(
+    mut unit_query: Query<(&mut Goal, &EnergyPool, &Id<Unit>)>,
+    unit_manifest: Res<UnitManifest>,
+) {
+    for (mut goal, energy_pool, unit_id) in unit_query.iter_mut() {
         if energy_pool.is_hungry() {
+            let diet = &unit_manifest.get(*unit_id).diet;
             *goal = Goal::Eat(diet.item);
         } else if matches!(*goal, Goal::Eat(..)) && energy_pool.is_satiated() {
             *goal = Goal::Wander {

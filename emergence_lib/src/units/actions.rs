@@ -6,7 +6,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::{
-        Id, Item, ItemManifest, Structure, Terrain, TerrainManifest, Unit,
+        Id, Item, ItemManifest, Structure, Terrain, TerrainManifest, Unit, UnitManifest,
     },
     items::ItemCount,
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
@@ -22,9 +22,7 @@ use crate::{
     },
 };
 
-use super::{
-    goals::Goal, hunger::Diet, impatience::ImpatiencePool, item_interaction::UnitInventory,
-};
+use super::{goals::Goal, impatience::ImpatiencePool, item_interaction::UnitInventory};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(
@@ -221,6 +219,7 @@ pub(super) fn finish_actions(
     structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
+    unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
     mut commands: Commands,
 ) {
@@ -371,10 +370,13 @@ pub(super) fn finish_actions(
                 }
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
-                        if held_item == unit.diet.item() {
-                            let proposed = unit.energy_pool.current() + unit.diet.energy();
+                        let unit_data = unit_manifest.get(*unit.unit_id);
+                        let diet = unit_data.diet();
+
+                        if held_item == diet.item() {
+                            let proposed = unit.energy_pool.current() + diet.energy();
                             unit.energy_pool.set_current(proposed);
-                            unit.lifecycle.record_energy_gained(unit.diet.energy());
+                            unit.lifecycle.record_energy_gained(diet.energy());
                         }
                     }
 
@@ -393,6 +395,8 @@ pub(super) fn finish_actions(
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
+    /// The [`Id`] of the unit type
+    unit_id: &'static Id<Unit>,
     /// The unit's goal
     goal: &'static mut Goal,
     /// The unit's action
@@ -405,8 +409,6 @@ pub(super) struct ActionDataQuery {
     transform: &'static mut Transform,
     /// The tile that the unit is on
     tile_pos: &'static mut TilePos,
-    /// What the unit eats
-    diet: &'static Diet,
     /// How much energy the unit has
     energy_pool: &'static mut EnergyPool,
     /// How frustrated this unit is about not being able to progress towards its goal

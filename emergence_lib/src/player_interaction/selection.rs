@@ -814,10 +814,12 @@ fn get_details(
                 energy_pool: organism_query_item.energy_pool.clone(),
             };
 
+            let unit_data = unit_manifest.get(*unit_query_item.unit_id);
+
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
-                diet: unit_query_item.diet.clone(),
+                diet: unit_data.diet().clone(),
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -1212,8 +1214,6 @@ mod unit_details {
         pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: &'static Id<Unit>,
-        /// What does this unit eat?
-        pub(super) diet: &'static Diet,
         /// The current location
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried

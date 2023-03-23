@@ -51,6 +51,18 @@ pub(crate) struct UnitData {
     wandering_behavior: WanderingBehavior,
 }
 
+impl UnitData {
+    /// Returns the [`OrganismVariety`] data for this type of unit.
+    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
+        &self.organism_variety
+    }
+
+    /// Returns the [`Diet`] for this type of unit.
+    pub(crate) fn diet(&self) -> &Diet {
+        &self.diet
+    }
+}
+
 /// Controls the distribution of wandering durations on a per-unit-type basis.
 #[derive(Debug, Clone)]
 struct WanderingBehavior {
@@ -79,13 +91,6 @@ impl FromIterator<(u16, f32)> for WanderingBehavior {
             wander_durations,
             weights: WeightedIndex::new(weights).unwrap(),
         }
-    }
-}
-
-impl UnitData {
-    /// Returns the [`OrganismVariety`] data for this type of unit.
-    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
-        &self.organism_variety
     }
 }
 
@@ -135,8 +140,6 @@ pub(crate) struct UnitBundle {
     current_action: CurrentAction,
     /// What is the unit currently holding, if anything?
     held_item: UnitInventory,
-    /// What does this unit need to eat?
-    diet: Diet,
     /// What signals is this unit emitting?
     emitter: Emitter,
     /// Organism data
@@ -169,7 +172,6 @@ impl UnitBundle {
             impatience: ImpatiencePool::new(unit_data.max_impatience),
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
-            diet: unit_data.diet,
             emitter: Emitter {
                 signals: vec![(
                     SignalType::Unit(Id::from_name("ant")),
