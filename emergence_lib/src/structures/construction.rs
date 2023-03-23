@@ -4,6 +4,7 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::organisms::activity::ActivityConditions;
 use crate::simulation::geometry::MapGeometry;
 use crate::{
     self as emergence_lib, asset_management::manifest::StructureManifest,
@@ -212,6 +213,7 @@ pub(super) fn ghost_signals(
                     required: _,
                     work_required,
                     worker_present: _,
+                    conditions: _,
                 } => {
                     // Wipe out any pull signals as we've already got enough stuff.
                     emitter.signals.clear();
@@ -261,6 +263,7 @@ pub(super) fn ghost_lifecycle(
                             work_required: structure_details.construction_strategy.work
                                 > Duration::ZERO,
                             worker_present: false,
+                            conditions: ActivityConditions::default(),
                         }
                     }
                     false => CraftingState::NeedsInput,
@@ -271,6 +274,7 @@ pub(super) fn ghost_lifecycle(
                 required,
                 work_required,
                 worker_present,
+                conditions,
             } => {
                 let mut updated_progress = progress;
 
@@ -286,6 +290,7 @@ pub(super) fn ghost_lifecycle(
                         required,
                         work_required,
                         worker_present,
+                        conditions,
                     }
                 }
             }

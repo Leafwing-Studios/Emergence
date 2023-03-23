@@ -6,6 +6,7 @@ use crate::{
         units::UnitHandles,
     },
     organisms::{
+        activity::ActivityConditions,
         energy::{Energy, EnergyPool},
         lifecycle::Lifecycle,
         OrganismId, OrganismVariety,
@@ -66,6 +67,7 @@ impl Default for UnitManifest {
                     prototypical_form: OrganismId::Unit(Id::from_name("ant")),
                     lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    activity_conditions: ActivityConditions::default(),
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
@@ -132,6 +134,7 @@ impl UnitBundle {
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
                 unit_data.organism_variety.lifecycle,
+                unit_data.organism_variety.activity_conditions,
             ),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),

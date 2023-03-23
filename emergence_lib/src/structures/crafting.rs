@@ -14,10 +14,14 @@ use crate::{
         Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure,
     },
     items::{inventory::Inventory, recipe::RecipeData},
-    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
+    organisms::{
+        activity::ActivityConditions, energy::EnergyPool, lifecycle::Lifecycle, Organism,
+        OrganismVariety,
+    },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
+        time::InGameTime,
         SimulationSet,
     },
 };
@@ -38,6 +42,8 @@ pub(crate) enum CraftingState {
         work_required: bool,
         /// Is a unit currently working on this recipe?
         worker_present: bool,
+        /// Conditions for activity on this crafting
+        conditions: ActivityConditions,
     },
     /// Resources need to be claimed before more crafting can continue.
     FullAndBlocked,
@@ -58,6 +64,7 @@ impl Display for CraftingState {
                 required,
                 work_required,
                 worker_present,
+                conditions: _,
             } => {
                 let progress_in_seconds = progress.as_secs_f32();
                 let required_in_seconds = required.as_secs_f32();
@@ -221,6 +228,7 @@ impl CraftingBundle {
         starting_recipe: ActiveRecipe,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
+        organism_variety: &Option<OrganismVariety>,
         rng: &mut ThreadRng,
     ) -> Self {
         if let Some(recipe_id) = starting_recipe.0 {
@@ -243,6 +251,10 @@ impl CraftingBundle {
                     required: recipe.craft_time(),
                     work_required: recipe.work_required(),
                     worker_present: false,
+                    conditions: organism_variety
+                        .as_ref()
+                        .map(|o| o.activity_conditions)
+                        .unwrap_or_default(),
                 },
                 emitter: Emitter::default(),
             }
@@ -266,11 +278,14 @@ struct CraftingQuery {
     output: &'static mut OutputInventory,
     /// Is this an organism?
     maybe_organism: Option<&'static Organism>,
+    /// Does this have activity conditions?
+    maybe_activity_conditions: Option<&'static ActivityConditions>,
 }
 
 /// Progress the state of recipes that are being crafted.
 fn progress_crafting(
     time: Res<FixedTime>,
+    in_game_time: Res<InGameTime>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
     mut crafting_query: Query<CraftingQuery>,
@@ -290,6 +305,10 @@ fn progress_crafting(
                             required: recipe.craft_time(),
                             work_required: recipe.work_required(),
                             worker_present: false,
+                            conditions: crafter
+                                .maybe_activity_conditions
+                                .cloned()
+                                .unwrap_or_default(),
                         },
                         Err(_) => CraftingState::NeedsInput,
                     }
@@ -302,10 +321,11 @@ fn progress_crafting(
                 required,
                 work_required,
                 worker_present,
+                conditions,
             } => {
                 let mut updated_progress = progress;
 
-                if !work_required || worker_present {
+                if (!work_required || worker_present) && conditions.is_active(&in_game_time) {
                     updated_progress += time.period;
                 }
 
@@ -317,6 +337,7 @@ fn progress_crafting(
                         required,
                         work_required,
                         worker_present,
+                        conditions,
                     }
                 }
             }
@@ -426,6 +447,7 @@ pub(crate) fn set_crafting_emitter(
             required: _,
             work_required,
             worker_present,
+            conditions: _,
         } = crafting_state
         {
             if work_required & !worker_present {
@@ -529,6 +551,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
             required: _,
             work_required,
             worker_present: _,
+            conditions: _,
         } = found_crafting_state
         {
             if *work_required {

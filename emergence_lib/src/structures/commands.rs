@@ -175,6 +175,7 @@ impl Command for SpawnStructureCommand {
                 .insert(OrganismBundle::new(
                     organism_details.energy_pool.clone(),
                     organism_details.lifecycle.clone(),
+                    organism_details.activity_conditions,
                 ));
         };
 
@@ -203,6 +204,7 @@ impl Command for SpawnStructureCommand {
                                     starting_recipe,
                                     &recipe_manifest,
                                     &item_manifest,
+                                    &structure_variety.organism_variety,
                                     rng,
                                 )
                             }

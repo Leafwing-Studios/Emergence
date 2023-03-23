@@ -9,10 +9,12 @@ use crate::{
 };
 
 use self::{
+    activity::ActivityConditions,
     energy::{kill_organisms_when_out_of_energy, EnergyPool},
     lifecycle::{transform_when_lifecycle_complete, Lifecycle},
 };
 
+pub(crate) mod activity;
 pub(crate) mod energy;
 pub(crate) mod lifecycle;
 
@@ -50,15 +52,22 @@ pub(crate) struct OrganismBundle {
     energy_pool: EnergyPool,
     /// The ways this organism can transform, and the progress toward doing so.
     lifecycle: Lifecycle,
+    /// Conditions for activity of this organism
+    activity_conditions: ActivityConditions,
 }
 
 impl OrganismBundle {
     /// Create a new [`OrganismBundle`]
-    pub(crate) fn new(energy_pool: EnergyPool, lifecycle: Lifecycle) -> OrganismBundle {
+    pub(crate) fn new(
+        energy_pool: EnergyPool,
+        lifecycle: Lifecycle,
+        activity_conditions: ActivityConditions,
+    ) -> OrganismBundle {
         OrganismBundle {
             organism: Organism,
             energy_pool,
             lifecycle,
+            activity_conditions,
         }
     }
 }
@@ -72,6 +81,8 @@ pub(crate) struct OrganismVariety {
     pub(crate) lifecycle: Lifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
     pub(crate) energy_pool: EnergyPool,
+    /// Conditions for this organism's activity
+    pub(crate) activity_conditions: ActivityConditions,
 }
 
 /// A living part of the game ecosystem.

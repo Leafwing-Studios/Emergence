@@ -320,6 +320,7 @@ pub(super) fn handle_actions(
                             required,
                             work_required,
                             worker_present: _,
+                            conditions,
                         } = *crafting_state
                         {
                             if work_required {
@@ -329,6 +330,7 @@ pub(super) fn handle_actions(
                                     work_required,
                                     // FIXME: this will stay true indefinitely
                                     worker_present: true,
+                                    conditions,
                                 };
                                 success = true;
                             }

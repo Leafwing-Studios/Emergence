@@ -3,6 +3,7 @@
 use crate::{
     items::inventory::Inventory,
     organisms::{
+        activity::ActivityConditions,
         energy::{Energy, EnergyPool},
         lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
@@ -118,6 +119,7 @@ impl Default for StructureManifest {
                     prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
                     lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    activity_conditions: ActivityConditions::default(),
                 }),
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("leuco_chunk_production")),
@@ -159,6 +161,7 @@ impl Default for StructureManifest {
                         time_required: Some(TimePool::simple(1.)),
                     }]),
                     energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
+                    activity_conditions: ActivityConditions::default(),
                 }),
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
@@ -178,6 +181,7 @@ impl Default for StructureManifest {
                         time_required: None,
                     }]),
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    activity_conditions: ActivityConditions::new(0.25..0.5),
                 }),
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
@@ -193,6 +197,7 @@ impl Default for StructureManifest {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
                     lifecycle: Lifecycle::STATIC,
                     energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
+                    activity_conditions: ActivityConditions::new(0.25..0.5),
                 }),
                 kind: StructureKind::Crafting {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
