@@ -29,7 +29,7 @@ pub(crate) enum Goal {
     /// Units will try and follow a signal, if they can pick up a trail, but will not fixate on it until the signal is strong enough.
     Wander {
         /// How many actions will this unit take before picking a new goal?
-        remaining_actions: Option<u8>,
+        remaining_actions: Option<u16>,
     },
     /// Attempting to pick up an object
     #[allow(dead_code)]
@@ -159,7 +159,7 @@ pub(super) fn choose_goal(
 // By default, goals are reset to wandering when completed.
 /// If anything fails, just keep wandering for now.
 fn compute_new_goal(
-    mut remaining_actions: Option<u8>,
+    mut remaining_actions: Option<u16>,
     tile_pos: TilePos,
     wandering_behavior: &WanderingBehavior,
     rng: &mut ThreadRng,

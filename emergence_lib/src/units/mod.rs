@@ -53,19 +53,19 @@ pub(crate) struct UnitData {
 #[derive(Debug, Clone)]
 struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
-    wander_durations: Vec<u8>,
+    wander_durations: Vec<u16>,
     /// The relative probability of each value in `mean_free_wander_period`.
     weights: WeightedIndex<f32>,
 }
 
 impl WanderingBehavior {
-    fn sample(&self, rng: &mut ThreadRng) -> u8 {
+    fn sample(&self, rng: &mut ThreadRng) -> u16 {
         self.wander_durations[self.weights.sample(rng)]
     }
 }
 
-impl FromIterator<(u8, f32)> for WanderingBehavior {
-    fn from_iter<T: IntoIterator<Item = (u8, f32)>>(iter: T) -> Self {
+impl FromIterator<(u16, f32)> for WanderingBehavior {
+    fn from_iter<T: IntoIterator<Item = (u16, f32)>>(iter: T) -> Self {
         let mut wander_durations = Vec::new();
         let mut weights = Vec::new();
         for (duration, weight) in iter {
@@ -101,7 +101,7 @@ impl Default for UnitManifest {
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
-                wandering_behavior: WanderingBehavior::from_iter([(2, 0.8), (40, 0.2)]),
+                wandering_behavior: WanderingBehavior::from_iter([(2, 0.5), (1024, 0.5)]),
             },
         );
 
