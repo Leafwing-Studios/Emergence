@@ -11,7 +11,7 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
     asset_management::manifest::{
-        Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure,
+        Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure, StructureManifest,
     },
     items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
@@ -183,15 +183,51 @@ pub(crate) struct CraftingBundle {
 
     /// Emits signals, drawing units towards this structure to ensure crafting flows smoothly
     emitter: Emitter,
+
+    /// The number of workers present / allowed at this structure
+    workers_present: WorkersPresent,
+}
+
+/// The number of workers present / allowed at this structure.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct WorkersPresent {
+    /// The number of workers present
+    present: u8,
+    /// The maximum number of workers allowed
+    allowed: u8,
+}
+
+impl WorkersPresent {
+    /// Create a new [`WorkersPresent`] with the provided maximum number of workers allowed.
+    pub(crate) fn new(allowed: u8) -> Self {
+        Self {
+            present: 0,
+            allowed,
+        }
+    }
+
+    /// The number of workers present.
+    pub(crate) fn present(&self) -> u8 {
+        self.present
+    }
+
+    /// The maximum number of workers allowed.
+    pub(crate) fn allowed(&self) -> u8 {
+        self.allowed
+    }
 }
 
 impl CraftingBundle {
     /// Create a new crafting bundle with empty inventories.
     pub(crate) fn new(
+        structure_id: Id<Structure>,
         starting_recipe: ActiveRecipe,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
     ) -> Self {
+        let max_workers = structure_manifest.get(structure_id).max_workers;
+
         if let Some(recipe_id) = starting_recipe.0 {
             let recipe = recipe_manifest.get(recipe_id);
 
@@ -201,6 +237,7 @@ impl CraftingBundle {
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
+                workers_present: WorkersPresent::new(max_workers),
             }
         } else {
             Self {
@@ -213,15 +250,18 @@ impl CraftingBundle {
                 active_recipe: ActiveRecipe(None),
                 craft_state: CraftingState::NeedsInput,
                 emitter: Emitter::default(),
+                workers_present: WorkersPresent::new(max_workers),
             }
         }
     }
 
     /// Generates a new crafting bundle that is at a random point in its cycle.
     pub(crate) fn randomized(
+        structure_id: Id<Structure>,
         starting_recipe: ActiveRecipe,
         recipe_manifest: &RecipeManifest,
         item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
         rng: &mut ThreadRng,
     ) -> Self {
         if let Some(recipe_id) = starting_recipe.0 {
@@ -234,6 +274,7 @@ impl CraftingBundle {
 
             let distribution = Uniform::new(Duration::ZERO, recipe.craft_time());
             let progress = distribution.sample(rng);
+            let max_workers = structure_manifest.get(structure_id).max_workers;
 
             Self {
                 input_inventory,
@@ -246,9 +287,16 @@ impl CraftingBundle {
                     worker_present: false,
                 },
                 emitter: Emitter::default(),
+                workers_present: WorkersPresent::new(max_workers),
             }
         } else {
-            CraftingBundle::new(starting_recipe, recipe_manifest, item_manifest)
+            CraftingBundle::new(
+                structure_id,
+                starting_recipe,
+                recipe_manifest,
+                item_manifest,
+                structure_manifest,
+            )
         }
     }
 }

@@ -27,6 +27,8 @@ pub(crate) struct StructureData {
     pub(crate) kind: StructureKind,
     /// How new copies of this structure can be built
     pub(crate) construction_strategy: ConstructionStrategy,
+    /// The maximum number of workers that can work at this structure at once.
+    pub(crate) max_workers: u8,
 }
 
 /// How new structures of this sort can be built.
@@ -133,6 +135,7 @@ impl Default for StructureManifest {
                         Id::from_name("muddy"),
                     ]),
                 },
+                max_workers: 6,
             },
         );
 
@@ -164,6 +167,7 @@ impl Default for StructureManifest {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
+                max_workers: 1,
             },
         );
 
@@ -183,6 +187,7 @@ impl Default for StructureManifest {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
+                max_workers: 1,
             },
         );
 
@@ -198,6 +203,7 @@ impl Default for StructureManifest {
                     starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
                 },
                 construction_strategy: acacia_construction_strategy,
+                max_workers: 6,
             },
         );
 
@@ -218,6 +224,7 @@ impl Default for StructureManifest {
                         Id::from_name("rocky"),
                     ]),
                 },
+                max_workers: 3,
             },
         );
 
@@ -238,6 +245,7 @@ impl Default for StructureManifest {
                         Id::from_name("rocky"),
                     ]),
                 },
+                max_workers: 6,
             },
         );
 
@@ -261,6 +269,7 @@ impl Default for StructureManifest {
                         Id::from_name("rocky"),
                     ]),
                 },
+                max_workers: 6,
             },
         );
 
