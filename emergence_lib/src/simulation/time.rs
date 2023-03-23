@@ -158,6 +158,11 @@ impl TimePool {
             max: Days(max),
         }
     }
+
+    /// Is this pool full?
+    pub(crate) fn is_full(&self) -> bool {
+        self.current >= self.max
+    }
 }
 
 impl Pool for TimePool {

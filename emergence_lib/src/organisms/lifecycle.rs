@@ -113,9 +113,14 @@ pub(crate) struct LifePath {
 impl LifePath {
     /// Have all of the prerequisites been met to transform?
     pub(crate) fn is_complete(&self) -> bool {
+        // All conditions must be true in order for the life path to be complete
         let mut ready = true;
         if let Some(energy_pool) = &self.energy_required {
-            ready &= energy_pool.is_satiated();
+            ready &= energy_pool.is_full();
+        };
+
+        if let Some(time_pool) = &self.time_required {
+            ready &= time_pool.is_full();
         };
 
         ready
