@@ -109,11 +109,7 @@ impl Default for UnitManifest {
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
-                wandering_behavior: WanderingBehavior::from_iter([
-                    (0, 0.7),
-                    (64, 0.2),
-                    (1024, 0.1),
-                ]),
+                wandering_behavior: WanderingBehavior::from_iter([(1, 0.7), (32, 0.2), (64, 0.1)]),
             },
         );
 
