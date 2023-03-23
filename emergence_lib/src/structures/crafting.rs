@@ -18,6 +18,7 @@ use crate::{
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
+        light::TotalLight,
         SimulationSet,
     },
 };
@@ -273,6 +274,7 @@ fn progress_crafting(
     time: Res<FixedTime>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
+    total_light: Res<TotalLight>,
     mut crafting_query: Query<CraftingQuery>,
 ) {
     for mut crafter in crafting_query.iter_mut() {
@@ -304,20 +306,30 @@ fn progress_crafting(
                 worker_present,
             } => {
                 let mut updated_progress = progress;
-
-                if !work_required || worker_present {
-                    updated_progress += time.period;
-                }
-
-                if updated_progress >= required {
-                    CraftingState::RecipeComplete
-                } else {
-                    CraftingState::InProgress {
-                        progress: updated_progress,
-                        required,
-                        work_required,
-                        worker_present,
+                if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
+                    let recipe = recipe_manifest.get(*recipe_id);
+                    if recipe.satisfied(worker_present as u8, &total_light) {
+                        updated_progress += time.period;
+                        if updated_progress >= required {
+                            CraftingState::RecipeComplete
+                        } else {
+                            CraftingState::InProgress {
+                                progress: updated_progress,
+                                required,
+                                work_required,
+                                worker_present,
+                            }
+                        }
+                    } else {
+                        CraftingState::InProgress {
+                            progress,
+                            required,
+                            work_required,
+                            worker_present,
+                        }
                     }
+                } else {
+                    CraftingState::NoRecipe
                 }
             }
             CraftingState::RecipeComplete => {
