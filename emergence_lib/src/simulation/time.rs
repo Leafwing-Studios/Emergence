@@ -11,6 +11,7 @@ use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::graphics::lighting::CelestialBody;
+use crate::organisms::lifecycle::Lifecycle;
 use crate::player_interaction::PlayerAction;
 
 use super::{PauseState, SimulationSet};
@@ -21,7 +22,11 @@ pub(super) struct TemporalPlugin;
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (advance_in_game_time, move_celestial_bodies)
+            (
+                advance_in_game_time,
+                move_celestial_bodies,
+                record_elapsed_time_for_lifecycles,
+            )
                 .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -139,10 +144,20 @@ fn pause_game(
 }
 
 /// A [`Pool`] of [`Days`], which builds up and will eventually be filled (at which point some event will occur).
-#[derive(Clone, Copy)]
-struct TimePool {
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct TimePool {
     current: Days,
     max: Days,
+}
+
+impl TimePool {
+    /// Creates a new [`TimePool`] with the given maximum capacity.
+    pub(crate) fn simple(max: f32) -> Self {
+        Self {
+            current: Days(0.),
+            max: Days(max),
+        }
+    }
 }
 
 impl Pool for TimePool {
@@ -195,4 +210,13 @@ impl Pool for TimePool {
 }
 
 /// Advances life cycles accorded to elapsed in-game time
-fn record_elapsed_time_for_lifecycles() {}
+fn record_elapsed_time_for_lifecycles(
+    mut query: Query<&mut Lifecycle>,
+    in_game_time: Res<InGameTime>,
+    fixed_time: Res<FixedTime>,
+) {
+    for mut lifecycle in query.iter_mut() {
+        let delta_days = Days(fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day);
+        lifecycle.record_elapsed_time(delta_days);
+    }
+}

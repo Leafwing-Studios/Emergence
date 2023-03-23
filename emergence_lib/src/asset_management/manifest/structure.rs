@@ -7,6 +7,7 @@ use crate::{
         lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
     },
+    simulation::time::TimePool,
     structures::crafting::{ActiveRecipe, InputInventory},
 };
 use bevy::utils::{Duration, HashSet};
@@ -154,7 +155,8 @@ impl Default for StructureManifest {
                     prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
                     lifecycle: Lifecycle::new(vec![LifePath {
                         new_form: OrganismId::Structure(Id::from_name("acacia_sprout")),
-                        energy_required: Some(EnergyPool::simple(300.)),
+                        energy_required: None,
+                        time_required: Some(TimePool::simple(1.)),
                     }]),
                     energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
                 }),
@@ -173,6 +175,7 @@ impl Default for StructureManifest {
                     lifecycle: Lifecycle::new(vec![LifePath {
                         new_form: OrganismId::Structure(Id::from_name("acacia")),
                         energy_required: Some(EnergyPool::simple(500.)),
+                        time_required: None,
                     }]),
                     energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                 }),
