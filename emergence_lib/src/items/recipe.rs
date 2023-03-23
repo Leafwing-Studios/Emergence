@@ -156,7 +156,10 @@ impl RecipeData {
             vec![ItemCount::one(Id::from_name("leuco_chunk"))],
             vec![ItemCount::one(Id::from_name("ant_egg"))],
             Duration::from_secs(5),
-            RecipeConditions::NONE,
+            RecipeConditions {
+                workers_required: 3,
+                allowable_light_range: None,
+            },
             None,
         )
     }
