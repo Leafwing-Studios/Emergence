@@ -2,16 +2,14 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_management::AssetState, player_interaction::InteractionSystem};
+use crate::asset_management::AssetState;
 
 use self::{
-    atmosphere::AtmospherePlugin, lighting::LightingPlugin, selection::display_tile_overlay,
-    structures::remove_ghostly_shadows,
+    atmosphere::AtmospherePlugin, lighting::LightingPlugin, structures::remove_ghostly_shadows,
 };
 
 mod atmosphere;
 pub(crate) mod lighting;
-mod selection;
 mod structures;
 mod units;
 
@@ -28,8 +26,7 @@ impl Plugin for GraphicsPlugin {
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
-            )
-            .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
+            );
     }
 }
 

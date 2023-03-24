@@ -6,7 +6,11 @@ use bevy::prelude::*;
 use core::fmt::Display;
 
 use crate::{
-    asset_management::manifest::{Id, Terrain, Unit},
+    asset_management::{
+        manifest::{Id, Terrain, Unit},
+        terrain::TerrainHandles,
+    },
+    player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalType, Signals},
     simulation::geometry::TilePos,
 };
@@ -20,7 +24,8 @@ impl Plugin for InfoVisPlugin {
             .init_resource::<Census>()
             .init_resource::<DebugColorScheme>()
             .insert_resource(DebugDisplayedSignal(SignalType::Unit(Id::from_name("ant"))))
-            .add_system(visualize_signals);
+            .add_system(visualize_signals)
+            .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
     }
 }
 
@@ -103,5 +108,39 @@ fn visualize_signals(
             ((scaled_strength * 254.0) as usize) + 1
         };
         *overlay_material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
+    }
+}
+
+/// Displays the overlay of the tile
+fn display_tile_overlay(
+    terrain_query: Query<
+        (&Children, &ObjectInteraction),
+        (With<Id<Terrain>>, Changed<ObjectInteraction>),
+    >,
+    mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
+    terrain_handles: Res<TerrainHandles>,
+) {
+    for (children, object_interaction) in terrain_query.iter() {
+        // This is promised to be the correct entity in the initialization of the terrain's children
+        let overlay_entity = children[1];
+
+        let (mut overlay_material, mut overlay_visibility) =
+            overlay_query.get_mut(overlay_entity).unwrap();
+
+        match object_interaction {
+            ObjectInteraction::None => {
+                *overlay_visibility = Visibility::Hidden;
+            }
+            _ => {
+                *overlay_visibility = Visibility::Visible;
+                let new_material = terrain_handles
+                    .interaction_materials
+                    .get(object_interaction)
+                    .unwrap()
+                    .clone_weak();
+
+                *overlay_material = new_material;
+            }
+        }
     }
 }
