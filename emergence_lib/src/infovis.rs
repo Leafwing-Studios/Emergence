@@ -23,8 +23,8 @@ impl Plugin for InfoVisPlugin {
         app.add_system(census)
             .init_resource::<Census>()
             .init_resource::<TileOverlay>()
-            .add_system(visualize_signals)
-            .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
+            .add_system(visualize_signals);
+        //.add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
     }
 }
 
@@ -50,7 +50,7 @@ fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
 #[derive(Resource, Debug)]
 pub(crate) struct TileOverlay {
     /// The type of signal that is currently being visualized.
-    visualized_signal: Option<SignalType>,
+    pub(crate) visualized_signal: Option<SignalType>,
     /// The materials used to visualize the signal strength.
     ///
     /// Note that we cannot simply store a `Vec<Color>` here,
@@ -90,15 +90,40 @@ impl FromWorld for TileOverlay {
 }
 
 impl TileOverlay {
+    /// The number of colors in the color ramp.
+    const N_COLORS: usize = 256;
+
+    /// The maximum displayed value for signal strength.
+    const MAX_SIGNAL_STRENGTH: f32 = 1e5;
+
     fn get_material(&self, signal_strength: SignalStrength) -> Option<Handle<StandardMaterial>> {
+        // Don't bother visualizing signals that are too weak to be detected
         if signal_strength.value() < f32::EPSILON {
             return None;
         }
-        // The scale is logarithmic, so that small nuances are still pretty visible
-        let scaled_strength = signal_strength.value().ln_1p() / 6.0;
 
-        let color_index = ((scaled_strength * 254.0) as usize) + 1;
-        Some(self.color_ramp[color_index.min(255)].clone_weak())
+        // The scale is logarithmic, so that small nuances are still pretty visible
+        // By adding 1 to the signal strength, we avoid taking the log of 0
+        let logged_strength = signal_strength.value().ln_1p();
+
+        // At MAX_SIGNAL_STRENGTH, we want to fetch the last color in the ramp.
+        // At 0, we want to fetch the first color in the ramp.
+        // We can achieve this by scaling the logged signal strength by the number of colors in the ramp.
+        let logged_strength_at_max = Self::MAX_SIGNAL_STRENGTH.ln_1p();
+        // The logged_strength_at_min is equal to 0, as we are taking the log of (0+1)
+
+        // Now, we can compute the scaling factor as (logged_strength_at_max - logged_strength_at_min) / N_COLORS
+        let scaling_factor = logged_strength_at_max / Self::N_COLORS as f32;
+
+        let scaled_strength = logged_strength / scaling_factor;
+
+        // Scale the signal strength to the number of colors in the ramp
+        let color_index: usize = (scaled_strength * Self::N_COLORS as f32) as usize;
+
+        // Avoid indexing out of bounds with a fallible check
+        self.color_ramp
+            .get(color_index)
+            .map(|handle| handle.clone_weak())
     }
 }
 

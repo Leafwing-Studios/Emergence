@@ -1,13 +1,15 @@
 //! Manages all UI across the entire game.
 
 use crate::ui::{
-    production_statistics::ProductionStatisticsPlugin, select_structure::SelectStructurePlugin,
-    select_terraforming::SelectTerraformingPlugin, selection_panel::HoverDetailsPlugin,
+    overlay::OverlayMenuPlugin, production_statistics::ProductionStatisticsPlugin,
+    select_structure::SelectStructurePlugin, select_terraforming::SelectTerraformingPlugin,
+    selection_panel::HoverDetailsPlugin,
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 
 mod intent;
+mod overlay;
 mod production_statistics;
 mod select_structure;
 mod select_terraforming;
@@ -40,6 +42,7 @@ impl Plugin for UiPlugin {
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
+        .add_plugin(OverlayMenuPlugin)
         .add_plugin(SelectStructurePlugin)
         .add_plugin(SelectTerraformingPlugin);
     }
