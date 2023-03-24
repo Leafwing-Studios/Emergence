@@ -174,7 +174,11 @@ fn compute_new_goal(
     // When we first get a wandering goal, pick a number of actions to take before picking a new goal.
     if remaining_actions.is_none() {
         // Units should wander for longer when they are more densely packed in order to fight crowding.
-        let density_multiplier = signals.get(SignalType::Unit(unit_id), tile_pos).value();
+        let density_multiplier = signals
+            .get(SignalType::Unit(unit_id), tile_pos)
+            .value()
+            // This needs to scale in a sublinear but strictly positive way.
+            .ln_1p();
         let number_of_actions =
             (wandering_behavior.sample(rng) as f32 * density_multiplier).round() as u16;
         remaining_actions = Some(number_of_actions);
