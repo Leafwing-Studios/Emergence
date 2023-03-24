@@ -72,6 +72,11 @@ pub(crate) mod infovis {
         (SELECTION_LIGHTNESS + HOVER_LIGHTNESS) / 2.,
         OVERLAY_ALPHA,
     );
+
+    /// The color used to indicate that the signal strength is low.
+    pub(crate) const SIGNAL_OVERLAY_LOW: Color = Color::hsla(0., 0., 0., OVERLAY_ALPHA);
+    /// The color used to indicate that the signal strength is high.
+    pub(crate) const SIGNAL_OVERLAY_HIGH: Color = Color::hsla(0., 0., 1., OVERLAY_ALPHA);
 }
 
 /// Colors used for the world's environment

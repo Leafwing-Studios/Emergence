@@ -11,6 +11,7 @@ use core::fmt::Display;
 use crate::{
     asset_management::{
         manifest::{Id, Terrain, Unit},
+        palette::infovis::{SIGNAL_OVERLAY_HIGH, SIGNAL_OVERLAY_LOW},
         terrain::TerrainHandles,
     },
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
@@ -71,13 +72,24 @@ impl FromWorld for TileOverlay {
     fn from_world(world: &mut World) -> Self {
         let mut colors = Vec::with_capacity(Self::N_COLORS);
         for i in 0..Self::N_COLORS {
-            let s = i as f32 / (Self::N_COLORS as f32 - 1.0);
-            colors.push(Color::Rgba {
-                red: 0.8 * (2.0 * s - s * s),
-                green: 0.8 * s.sqrt(),
-                blue: s * s * 0.6,
-                alpha: 0.8,
-            });
+            // Linearly interpolate the colors in the color ramp between SIGNAL_OVERLAY_LOW and SIGNAL_OVERLAY_HIGH
+            // Make sure to use HSLA colorspace to avoid weird artifacts
+            let t = i as f32 / (Self::N_COLORS - 1) as f32;
+            let Color::Hsla { hue: low_hue, saturation: low_saturation, lightness: low_lightness, alpha: low_alpha } = SIGNAL_OVERLAY_LOW else {
+                 panic!("Expected HSLA color for `SIGNAL_OVERLAY_LOW`");
+            };
+
+            let Color::Hsla { hue: high_hue, saturation: high_saturation, lightness: high_lightness, alpha: high_alpha } = SIGNAL_OVERLAY_HIGH else {
+                panic!("Expected HSLA color for `SIGNAL_OVERLAY_HIGH`");
+            };
+
+            let hue = low_hue * (1.0 - t) + high_hue * t;
+            let saturation = low_saturation * (1.0 - t) + high_saturation * t;
+            let lightness = low_lightness * (1.0 - t) + high_lightness * t;
+            let alpha = low_alpha * (1.0 - t) + high_alpha * t;
+
+            let color = Color::hsla(hue, saturation, lightness, alpha);
+            colors.push(color);
         }
 
         // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
