@@ -11,6 +11,7 @@ use crate::{
         OrganismId, OrganismVariety,
     },
     player_interaction::InteractionSystem,
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
         SimulationSet,
@@ -50,6 +51,18 @@ pub(crate) struct UnitData {
     wandering_behavior: WanderingBehavior,
 }
 
+impl UnitData {
+    /// Returns the [`OrganismVariety`] data for this type of unit.
+    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
+        &self.organism_variety
+    }
+
+    /// Returns the [`Diet`] for this type of unit.
+    pub(crate) fn diet(&self) -> &Diet {
+        &self.diet
+    }
+}
+
 /// Controls the distribution of wandering durations on a per-unit-type basis.
 #[derive(Debug, Clone)]
 struct WanderingBehavior {
@@ -81,13 +94,6 @@ impl FromIterator<(u16, f32)> for WanderingBehavior {
     }
 }
 
-impl UnitData {
-    /// Returns the [`OrganismVariety`] data for this type of unit.
-    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
-        &self.organism_variety
-    }
-}
-
 impl Default for UnitManifest {
     fn default() -> Self {
         let mut manifest: UnitManifest = Manifest::new();
@@ -103,11 +109,7 @@ impl Default for UnitManifest {
                 },
                 diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
                 max_impatience: 10,
-                wandering_behavior: WanderingBehavior::from_iter([
-                    (0, 0.7),
-                    (64, 0.2),
-                    (1024, 0.1),
-                ]),
+                wandering_behavior: WanderingBehavior::from_iter([(1, 0.7), (8, 0.2), (16, 0.1)]),
             },
         );
 
@@ -134,8 +136,8 @@ pub(crate) struct UnitBundle {
     current_action: CurrentAction,
     /// What is the unit currently holding, if anything?
     held_item: UnitInventory,
-    /// What does this unit need to eat?
-    diet: Diet,
+    /// What signals is this unit emitting?
+    emitter: Emitter,
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
@@ -166,7 +168,9 @@ impl UnitBundle {
             impatience: ImpatiencePool::new(unit_data.max_impatience),
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
-            diet: unit_data.diet,
+            emitter: Emitter {
+                signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
+            },
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
                 unit_data.organism_variety.lifecycle,

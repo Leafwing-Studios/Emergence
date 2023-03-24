@@ -814,10 +814,12 @@ fn get_details(
                 energy_pool: organism_query_item.energy_pool.clone(),
             };
 
+            let unit_data = unit_manifest.get(*unit_query_item.unit_id);
+
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
-                diet: unit_query_item.diet.clone(),
+                diet: unit_data.diet().clone(),
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
@@ -1122,7 +1124,7 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::{
-            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest,
+            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest, UnitManifest,
         },
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
@@ -1166,12 +1168,15 @@ mod terrain_details {
             terrain_manifest: &TerrainManifest,
             structure_manifest: &StructureManifest,
             item_manifest: &ItemManifest,
+            unit_manifest: &UnitManifest,
         ) -> String {
             let entity = self.entity;
             let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
-            let signals = self.signals.display(item_manifest, structure_manifest);
+            let signals = self
+                .signals
+                .display(item_manifest, structure_manifest, unit_manifest);
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
             format!(
@@ -1209,8 +1214,6 @@ mod unit_details {
         pub(super) entity: Entity,
         /// The type of unit
         pub(super) unit_id: &'static Id<Unit>,
-        /// What does this unit eat?
-        pub(super) diet: &'static Diet,
         /// The current location
         pub(super) tile_pos: &'static TilePos,
         /// What's being carried

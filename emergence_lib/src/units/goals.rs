@@ -69,10 +69,11 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Push(item_id) => Ok(Goal::Pickup(item_id)),
             // Go grab the item, so you can bring it to me
             SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
-            SignalType::Contains(_) => Err(()),
-            SignalType::Stores(_) => Err(()),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
+            SignalType::Contains(_) => Err(()),
+            SignalType::Stores(_) => Err(()),
+            SignalType::Unit(_) => Err(()),
         }
     }
 }
@@ -105,6 +106,7 @@ impl Goal {
 pub(super) fn choose_goal(
     mut units_query: Query<(
         &TilePos,
+        &Id<Unit>,
         &mut Goal,
         &mut ImpatiencePool,
         &UnitInventory,
@@ -115,7 +117,9 @@ pub(super) fn choose_goal(
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, id) in units_query.iter_mut() {
+    for (&tile_pos, &unit_id, mut goal, mut impatience_pool, unit_inventory, id) in
+        units_query.iter_mut()
+    {
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
             // If you're holding something, try to put it away nicely
@@ -142,6 +146,7 @@ pub(super) fn choose_goal(
             let wandering_behavior = &unit_manifest.get(*id).wandering_behavior;
             *goal = compute_new_goal(
                 remaining_actions,
+                unit_id,
                 tile_pos,
                 wandering_behavior,
                 rng,
@@ -160,6 +165,7 @@ pub(super) fn choose_goal(
 /// If anything fails, just keep wandering for now.
 fn compute_new_goal(
     mut remaining_actions: Option<u16>,
+    unit_id: Id<Unit>,
     tile_pos: TilePos,
     wandering_behavior: &WanderingBehavior,
     rng: &mut ThreadRng,
@@ -167,7 +173,11 @@ fn compute_new_goal(
 ) -> Goal {
     // When we first get a wandering goal, pick a number of actions to take before picking a new goal.
     if remaining_actions.is_none() {
-        remaining_actions = Some(wandering_behavior.sample(rng));
+        // Units should wander for longer when they are more densely packed in order to fight crowding.
+        let density_multiplier = signals.get(SignalType::Unit(unit_id), tile_pos).value();
+        let number_of_actions =
+            (wandering_behavior.sample(rng) as f32 * density_multiplier).round() as u16;
+        remaining_actions = Some(number_of_actions);
     }
 
     // If we have actions left while wandering, use them up before picking a new goal.
