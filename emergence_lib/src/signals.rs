@@ -6,6 +6,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
+use rand::seq::SliceRandom;
 
 use crate::asset_management::manifest::{
     Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
@@ -219,6 +220,14 @@ impl Signals {
                 original_map.add_signal(addition_pos, addition_strength)
             }
         }
+    }
+
+    /// Returns a random signal type present in the map.
+    pub(crate) fn random_signal_type(&self) -> Option<SignalType> {
+        let mut rng = rand::thread_rng();
+        let mut keys: Vec<&SignalType> = self.maps.keys().collect();
+        keys.shuffle(&mut rng);
+        keys.pop().copied()
     }
 }
 

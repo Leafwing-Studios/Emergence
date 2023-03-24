@@ -2,11 +2,11 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, ItemManifest, StructureManifest, UnitManifest},
+        manifest::{ItemManifest, StructureManifest, UnitManifest},
         AssetState,
     },
     infovis::TileOverlay,
-    signals::SignalType,
+    signals::Signals,
 };
 use bevy::prelude::*;
 
@@ -34,9 +34,11 @@ fn select_overlay(
     // FIXME: use an actual UI widget for this...
     keyboard_input: Res<Input<KeyCode>>,
     mut tile_overlay: ResMut<TileOverlay>,
+    signals: Res<Signals>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Grave) {
-        tile_overlay.visualized_signal = Some(SignalType::Push(Id::from_name("acacia_leaf")));
+    if keyboard_input.just_pressed(KeyCode::F1) {
+        // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
+        tile_overlay.visualized_signal = signals.random_signal_type();
     }
 }
 
