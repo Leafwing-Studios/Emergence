@@ -2,7 +2,10 @@
 //!
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+};
 use core::fmt::Display;
 
 use crate::{
@@ -56,46 +59,91 @@ pub(crate) struct TileOverlay {
     /// Note that we cannot simply store a `Vec<Color>` here,
     /// because we need to be able to display the entire gradients of signal strength simultaneously.
     color_ramp: Vec<Handle<StandardMaterial>>,
+    /// The image to be used to display the gradient in order to create a legend.
+    legend_image_handle: Handle<Image>,
 }
 
 impl FromWorld for TileOverlay {
     fn from_world(world: &mut World) -> Self {
-        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
-
-        let mut color_ramp = Vec::with_capacity(256);
-        // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
-        // by matlab's veridis
+        let mut colors = Vec::with_capacity(Self::N_COLORS);
         for i in 0..Self::N_COLORS {
             let s = i as f32 / (Self::N_COLORS as f32 - 1.0);
+            colors.push(Color::Rgba {
+                red: 0.8 * (2.0 * s - s * s),
+                green: 0.8 * s.sqrt(),
+                blue: s * s * 0.6,
+                alpha: 0.8,
+            });
+        }
+
+        // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
+        // by matlab's veridis
+
+        let mut color_ramp = Vec::with_capacity(Self::N_COLORS);
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
+
+        for base_color in colors.iter().cloned() {
             color_ramp.push(material_assets.add(StandardMaterial {
-                base_color: Color::Rgba {
-                    red: 0.8 * (2.0 * s - s * s),
-                    green: 0.8 * s.sqrt(),
-                    blue: s * s * 0.6,
-                    alpha: 0.8,
-                },
+                base_color,
                 unlit: true,
                 alpha_mode: AlphaMode::Add,
                 ..Default::default()
             }));
         }
-
         color_ramp.shrink_to_fit();
+
+        // Create the legend image
+        let size = Extent3d {
+            width: Self::LEGEND_WIDTH,
+            height: Self::N_COLORS as u32,
+            depth_or_array_layers: 1,
+        };
+        let dimension = TextureDimension::D2;
+        let format = TextureFormat::Rgba8UnormSrgb;
+
+        // Initialize the legend data with all zeros
+        let mut data = vec![0; size.width as usize * size.height as usize * 4];
+
+        // Set the color of each pixel to the corresponding color in the color ramp
+        // Each line is a row of pixels of the same color, corresponding to a value in the color ramp
+        // Each pixel is represented by 4 bytes, in RGBA order
+        for (row, color) in colors.into_iter().enumerate() {
+            let row_start = row * size.width as usize * 4;
+            for column in 0..size.width as usize {
+                let pixel_start = row_start + column * 4;
+                data[pixel_start + 0] = (color.r() * 255.0) as u8;
+                data[pixel_start + 1] = (color.g() * 255.0) as u8;
+                data[pixel_start + 2] = (color.b() * 255.0) as u8;
+                data[pixel_start + 3] = (color.a() * 255.0) as u8;
+            }
+        }
+
+        let legend_image = Image::new(size, dimension, data, format);
+
+        let mut image_assets = world.resource_mut::<Assets<Image>>();
+        let legend_image_handle = image_assets.add(legend_image);
 
         Self {
             visualized_signal: None,
             color_ramp,
+            legend_image_handle,
         }
     }
 }
 
 impl TileOverlay {
     /// The number of colors in the color ramp.
-    const N_COLORS: usize = 256;
+    pub(crate) const N_COLORS: usize = 256;
 
     /// The maximum displayed value for signal strength.
     const MAX_SIGNAL_STRENGTH: f32 = 1e3;
 
+    /// The width of the legend image.
+    pub(crate) const LEGEND_WIDTH: u32 = 32;
+
+    /// Gets the material that should be used to visualize the given signal strength, if any.
+    ///
+    /// If this is `None`, then the signal strength is too weak to be visualized and the tile should be invisible.
     fn get_material(&self, signal_strength: SignalStrength) -> Option<Handle<StandardMaterial>> {
         // Don't bother visualizing signals that are too weak to be detected
         if signal_strength.value() < f32::EPSILON {
@@ -121,6 +169,11 @@ impl TileOverlay {
         // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals
         let color_index = color_index.min(Self::N_COLORS - 1);
         Some(self.color_ramp[color_index].clone_weak())
+    }
+
+    /// Gets the handle to the image that should be used to display the legend.
+    pub(crate) fn legend_image_handle(&self) -> Handle<Image> {
+        self.legend_image_handle.clone_weak()
     }
 }
 
