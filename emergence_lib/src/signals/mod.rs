@@ -23,7 +23,7 @@ use self::equation::DiffusionEquation;
 pub const DIFFUSIVITY: f32 = 0.2;
 
 /// The decay rate of signals: how fast signals decay, in "signal strength" per second.
-pub const DECAY_RATE: f32 = 2.0;
+pub const DECAY_RATE: f32 = 1.5;
 
 /// The strength below which a signal is considered negligible. The total
 /// quantity of a single emission is considered when trimming signals.

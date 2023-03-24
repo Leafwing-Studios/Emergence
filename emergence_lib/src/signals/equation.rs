@@ -43,18 +43,16 @@ impl DiffusionEquation {
             let time = self.time - time;
             debug_assert!(time > 0.0);
             // Using hex's distance makes distances a little bit "squished" in directions of the
-            // polygons' vertices.
+            // polygons' vertices, and a contour-line plot of signal strength would show hexagons
+            // instead of circles.
             // TODO: Should we use another distance function ? e.g. one that computes a distance
             //       equivalent to world distance.
             let x = source.distance_to(at_tile.hex) as f32;
-            sum += strength
-                / 2.0
-                / (1.0 + DECAY_RATE * time)
-                / (consts::PI * DIFFUSIVITY * time).sqrt()
-                * (0.25 * x * -x / DIFFUSIVITY / time).exp();
+            sum += strength / (4.0 * (1.0 + DECAY_RATE * time) * consts::PI * DIFFUSIVITY * time)
+                * (-0.25 * x * x / (DIFFUSIVITY * time)).exp();
             // Same expression, with precision loss optimized by Herbie (though it should be negligible):
-            // sum += (t * consts::PI * DIFFUSIVITY).powf(0.5) * 0.5 / (DECAY.mul_add(time, 1))
-            //     * (-x * x).div(DIFFUSIVITY * 4.0 * time).exp();
+            // sum += 0.25 * consts::FRAC_1_PI * (strength / DIFFUSIVITY)
+            //     * ((x / DIFFUSIVITY * (-0.25 * x / time)).exp() / time);
         }
         SignalStrength(sum)
     }
