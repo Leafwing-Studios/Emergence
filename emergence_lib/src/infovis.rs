@@ -65,8 +65,8 @@ impl FromWorld for TileOverlay {
         let mut color_ramp = Vec::with_capacity(256);
         // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
         // by matlab's veridis
-        for i in 0..256 {
-            let s = i as f32 / 255.0;
+        for i in 0..Self::N_COLORS {
+            let s = i as f32 / (Self::N_COLORS as f32 - 1.0);
             color_ramp.push(material_assets.add(StandardMaterial {
                 base_color: Color::Rgba {
                     red: 0.8 * (2.0 * s - s * s),
