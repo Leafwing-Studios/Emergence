@@ -94,7 +94,7 @@ impl TileOverlay {
     const N_COLORS: usize = 256;
 
     /// The maximum displayed value for signal strength.
-    const MAX_SIGNAL_STRENGTH: f32 = 1e5;
+    const MAX_SIGNAL_STRENGTH: f32 = 1e3;
 
     fn get_material(&self, signal_strength: SignalStrength) -> Option<Handle<StandardMaterial>> {
         // Don't bother visualizing signals that are too weak to be detected
