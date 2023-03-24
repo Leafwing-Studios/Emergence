@@ -26,8 +26,12 @@ impl Plugin for InfoVisPlugin {
         app.add_system(census)
             .init_resource::<Census>()
             .init_resource::<TileOverlay>()
-            .add_system(visualize_signals);
-        //.add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
+            .add_system(visualize_signals)
+            .add_system(
+                display_tile_overlay
+                    .after(InteractionSystem::SelectTiles)
+                    .after(visualize_signals),
+            );
     }
 }
 
@@ -212,12 +216,10 @@ fn visualize_signals(
 
 /// Displays the overlay of the tile
 fn display_tile_overlay(
-    terrain_query: Query<
-        (&Children, &ObjectInteraction),
-        (With<Id<Terrain>>, Changed<ObjectInteraction>),
-    >,
+    terrain_query: Query<(&Children, &ObjectInteraction), With<Id<Terrain>>>,
     mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     terrain_handles: Res<TerrainHandles>,
+    tile_overlay: Res<TileOverlay>,
 ) {
     for (children, object_interaction) in terrain_query.iter() {
         // This is promised to be the correct entity in the initialization of the terrain's children
@@ -228,7 +230,9 @@ fn display_tile_overlay(
 
         match object_interaction {
             ObjectInteraction::None => {
-                *overlay_visibility = Visibility::Hidden;
+                if tile_overlay.visualized_signal.is_none() {
+                    *overlay_visibility = Visibility::Hidden;
+                }
             }
             _ => {
                 *overlay_visibility = Visibility::Visible;
