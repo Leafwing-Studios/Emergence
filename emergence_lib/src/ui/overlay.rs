@@ -12,6 +12,7 @@ use bevy::prelude::*;
 
 use super::{FiraSansFontFamily, LeftPanel};
 
+/// The plugin that adds the overlay menu to the UI.
 pub(super) struct OverlayMenuPlugin;
 
 impl Plugin for OverlayMenuPlugin {
@@ -87,6 +88,7 @@ fn setup_overlay_menu(
     commands.insert_resource(OverlayMenu { signal_type_entity });
 }
 
+/// Updates the text that displays the [`SignalType`] being visualized.
 fn update_signal_type_display(
     mut query: Query<&mut Text>,
     overlay_menu: Res<OverlayMenu>,
@@ -98,10 +100,9 @@ fn update_signal_type_display(
     let mut text = query.get_mut(overlay_menu.signal_type_entity).unwrap();
 
     text.sections[0].value = match tile_overlay.visualized_signal {
-        Some(signal_type) => format!(
-            "{}",
+        Some(signal_type) => {
             signal_type.display(&item_manifest, &structure_manifest, &unit_manifest)
-        ),
+        }
         None => "No signal".to_string(),
     };
 }

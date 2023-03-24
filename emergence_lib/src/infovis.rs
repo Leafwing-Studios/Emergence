@@ -69,6 +69,7 @@ pub(crate) struct TileOverlay {
 }
 
 impl FromWorld for TileOverlay {
+    #[allow(clippy::identity_op)]
     fn from_world(world: &mut World) -> Self {
         let mut colors = Vec::with_capacity(Self::N_COLORS);
         for i in 0..Self::N_COLORS {
