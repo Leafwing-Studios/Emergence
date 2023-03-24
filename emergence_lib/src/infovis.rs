@@ -102,10 +102,6 @@ impl TileOverlay {
             return None;
         }
 
-        // The scale is logarithmic, so that small nuances are still pretty visible
-        // By adding 1 to the signal strength, we avoid taking the log of 0
-        let logged_strength = signal_strength.value().ln_1p();
-
         // At MAX_SIGNAL_STRENGTH, we want to fetch the last color in the ramp.
         // At 0, we want to fetch the first color in the ramp.
         // We can achieve this by scaling the logged signal strength by the number of colors in the ramp.
@@ -115,15 +111,16 @@ impl TileOverlay {
         // Now, we can compute the scaling factor as (logged_strength_at_max - logged_strength_at_min) / N_COLORS
         let scaling_factor = logged_strength_at_max / Self::N_COLORS as f32;
 
-        let scaled_strength = logged_strength / scaling_factor;
+        // The scale is logarithmic, so that small nuances are still pretty visible
+        // By adding 1 to the signal strength, we avoid taking the log of 0
+        let scaled_strength = signal_strength.value() / scaling_factor;
+        let logged_strength = scaled_strength.ln_1p();
 
         // Scale the signal strength to the number of colors in the ramp
-        let color_index: usize = (scaled_strength * Self::N_COLORS as f32) as usize;
-
-        // Avoid indexing out of bounds with a fallible check
-        self.color_ramp
-            .get(color_index)
-            .map(|handle| handle.clone_weak())
+        let color_index: usize = (logged_strength * Self::N_COLORS as f32) as usize;
+        // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals
+        let color_index = color_index.min(Self::N_COLORS - 1);
+        Some(self.color_ramp[color_index].clone_weak())
     }
 }
 
