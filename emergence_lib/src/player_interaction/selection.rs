@@ -252,7 +252,7 @@ impl ObjectInteraction {
 
     /// The material used by objects that are being interacted with.
     pub(crate) fn material(&self) -> Option<StandardMaterial> {
-        use crate::asset_management::palette::{
+        use crate::asset_management::palette::infovis::{
             HOVER_COLOR, SELECTION_AND_HOVER_COLOR, SELECTION_COLOR,
         };
 

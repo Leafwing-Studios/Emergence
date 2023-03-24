@@ -8,7 +8,7 @@ use bevy::{
 };
 
 use crate::{
-    asset_management::palette::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
+    asset_management::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
     player_interaction::camera::CameraSettings,
     simulation::{geometry::Height, light::Illuminance},
 };

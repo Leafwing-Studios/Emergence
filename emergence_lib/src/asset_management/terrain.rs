@@ -11,7 +11,7 @@ use crate::{
 use super::{
     hexagonal_column,
     manifest::{Id, Terrain, TerrainManifest},
-    palette::COLUMN_COLOR,
+    palette::environment::COLUMN_COLOR,
     Loadable,
 };
 
