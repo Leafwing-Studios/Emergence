@@ -123,7 +123,9 @@ impl FromWorld for TileOverlay {
         // Set the color of each pixel to the corresponding color in the color ramp
         // Each line is a row of pixels of the same color, corresponding to a value in the color ramp
         // Each pixel is represented by 4 bytes, in RGBA order
-        for (row, color) in colors.into_iter().enumerate() {
+        // We need to reverse the order of the rows, because the image is stored in memory from top to bottom
+        // and we want the lowest value to be at the bottom of the image.
+        for (row, color) in colors.into_iter().rev().enumerate() {
             let row_start = row * size.width as usize * 4;
             for column in 0..size.width as usize {
                 let pixel_start = row_start + column * 4;
