@@ -57,7 +57,6 @@ fn setup_overlay_menu(
                 texture: tile_overlay.legend_image_handle(),
                 ..Default::default()
             },
-            background_color: BackgroundColor(Color::PINK),
             ..Default::default()
         })
         .id();
