@@ -22,10 +22,7 @@ impl Plugin for InfoVisPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(census)
             .init_resource::<Census>()
-            .init_resource::<DebugColorScheme>()
-            .insert_resource(TileOverlay {
-                visualized_signal: Some(SignalType::Unit(Id::from_name("ant"))),
-            })
+            .init_resource::<TileOverlay>()
             .add_system(visualize_signals)
             .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
     }
@@ -54,22 +51,19 @@ fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
 pub(crate) struct TileOverlay {
     /// The type of signal that is currently being visualized.
     visualized_signal: Option<SignalType>,
+    color_ramp: Vec<Handle<StandardMaterial>>,
 }
 
-/// The color ramp used to visualize signal strength.
-#[derive(Resource, Debug)]
-struct DebugColorScheme(Vec<Handle<StandardMaterial>>);
-
-impl FromWorld for DebugColorScheme {
+impl FromWorld for TileOverlay {
     fn from_world(world: &mut World) -> Self {
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
 
-        let mut color_scheme = Vec::with_capacity(256);
+        let mut color_ramp = Vec::with_capacity(256);
         // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
         // by matlab's veridis
         for i in 0..256 {
             let s = i as f32 / 255.0;
-            color_scheme.push(material_assets.add(StandardMaterial {
+            color_ramp.push(material_assets.add(StandardMaterial {
                 base_color: Color::Rgba {
                     red: 0.8 * (2.0 * s - s * s),
                     green: 0.8 * s.sqrt(),
@@ -82,8 +76,12 @@ impl FromWorld for DebugColorScheme {
             }));
         }
 
-        color_scheme.shrink_to_fit();
-        DebugColorScheme(color_scheme)
+        color_ramp.shrink_to_fit();
+
+        Self {
+            visualized_signal: None,
+            color_ramp,
+        }
     }
 }
 
@@ -93,7 +91,6 @@ fn visualize_signals(
     mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     signals: Res<Signals>,
     tile_overlay: Res<TileOverlay>,
-    color_scheme: Res<DebugColorScheme>,
 ) {
     if let Some(signal_type) = tile_overlay.visualized_signal {
         for (tile_pos, children) in terrain_query.iter() {
@@ -113,7 +110,7 @@ fn visualize_signals(
                 *overlay_visibility = Visibility::Visible;
                 ((scaled_strength * 254.0) as usize) + 1
             };
-            *overlay_material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
+            *overlay_material.as_mut() = tile_overlay.color_ramp[color_index.min(255)].clone_weak();
         }
     }
 }
