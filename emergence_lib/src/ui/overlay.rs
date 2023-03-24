@@ -88,7 +88,7 @@ fn setup_overlay_menu(
     commands.insert_resource(OverlayMenu { signal_type_entity });
 }
 
-/// Updates the text that displays the [`SignalType`] being visualized.
+/// Updates the text that displays the [`SignalType`](crate::signals::SignalType) being visualized.
 fn update_signal_type_display(
     mut query: Query<&mut Text>,
     overlay_menu: Res<OverlayMenu>,
