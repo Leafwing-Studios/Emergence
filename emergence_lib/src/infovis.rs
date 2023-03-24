@@ -11,7 +11,7 @@ use crate::{
         terrain::TerrainHandles,
     },
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
-    signals::{SignalType, Signals},
+    signals::{SignalStrength, SignalType, Signals},
     simulation::geometry::TilePos,
 };
 
@@ -51,6 +51,10 @@ fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
 pub(crate) struct TileOverlay {
     /// The type of signal that is currently being visualized.
     visualized_signal: Option<SignalType>,
+    /// The materials used to visualize the signal strength.
+    ///
+    /// Note that we cannot simply store a `Vec<Color>` here,
+    /// because we need to be able to display the entire gradients of signal strength simultaneously.
     color_ramp: Vec<Handle<StandardMaterial>>,
 }
 
@@ -85,6 +89,19 @@ impl FromWorld for TileOverlay {
     }
 }
 
+impl TileOverlay {
+    fn get_material(&self, signal_strength: SignalStrength) -> Option<Handle<StandardMaterial>> {
+        if signal_strength.value() < f32::EPSILON {
+            return None;
+        }
+        // The scale is logarithmic, so that small nuances are still pretty visible
+        let scaled_strength = signal_strength.value().ln_1p() / 6.0;
+
+        let color_index = ((scaled_strength * 254.0) as usize) + 1;
+        Some(self.color_ramp[color_index.min(255)].clone_weak())
+    }
+}
+
 /// Displays the currently visualized signal for the player using a map overlay.
 fn visualize_signals(
     terrain_query: Query<(&TilePos, &Children), With<Id<Terrain>>>,
@@ -100,17 +117,17 @@ fn visualize_signals(
             let (mut overlay_material, mut overlay_visibility) =
                 overlay_query.get_mut(overlay_entity).unwrap();
 
-            let signal_strength = signals.get(signal_type, *tile_pos).value();
-            // The scale is logarithmic, so that small nuances are still pretty visible
-            let scaled_strength = signal_strength.ln_1p() / 6.0;
-            let color_index = if signal_strength < f32::EPSILON {
-                *overlay_visibility = Visibility::Hidden;
-                continue;
-            } else {
-                *overlay_visibility = Visibility::Visible;
-                ((scaled_strength * 254.0) as usize) + 1
-            };
-            *overlay_material.as_mut() = tile_overlay.color_ramp[color_index.min(255)].clone_weak();
+            let signal_strength = signals.get(signal_type, *tile_pos);
+            let maybe_material = tile_overlay.get_material(signal_strength);
+            match maybe_material {
+                Some(material) => {
+                    *overlay_visibility = Visibility::Visible;
+                    *overlay_material = material;
+                }
+                None => {
+                    *overlay_visibility = Visibility::Hidden;
+                }
+            }
         }
     }
 }
