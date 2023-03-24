@@ -26,7 +26,7 @@ impl Plugin for OverlayMenuPlugin {
 /// Records the structure of the overlay menu. for easy lookup.
 #[derive(Resource)]
 struct OverlayMenu {
-    /// The entity that tracks the [`SignalType`] being displayed.
+    /// The entity that tracks the [`SignalType`](crate::signals::SignalType) being displayed.
     signal_type_entity: Entity,
 }
 
