@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_management::AssetState, player_interaction::InteractionSystem};
+use crate::{
+    asset_management::AssetState, player_interaction::InteractionSystem,
+    signals::debug_signal_overlay_disabled,
+};
 
 use self::{
     atmosphere::AtmospherePlugin, lighting::LightingPlugin, selection::display_tile_overlay,
@@ -29,7 +32,11 @@ impl Plugin for GraphicsPlugin {
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
             )
-            .add_system(display_tile_overlay.after(InteractionSystem::SelectTiles));
+            .add_system(
+                display_tile_overlay
+                    .after(InteractionSystem::SelectTiles)
+                    .run_if(debug_signal_overlay_disabled),
+            );
     }
 }
 

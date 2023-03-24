@@ -3,54 +3,70 @@
 //! By collecting information about the local environment into a slowly updated, tile-centric data structure,
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
+mod equation;
+
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use itertools::Itertools;
 
 use crate::asset_management::manifest::{
-    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
+    Id, Item, ItemManifest, Structure, StructureManifest, Terrain, Unit, UnitManifest,
 };
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
-/// The fraction of signals in each cell that will move to each of 6 neighbors each frame.
-///
-/// Higher values will result in more spread out signals.
-///
-/// If no neighbor exists, total diffusion will be reduced correspondingly.
-/// As a result, this value *must* be below 1/6,
-/// and probably should be below 1/7 to avoid weirdness.
-pub const DIFFUSION_FRACTION: f32 = 0.1;
+use self::equation::DiffusionEquation;
+
+/// The diffusivity of signals: how fast signals diffuse to neighboring tiles, in seconds per
+/// tile.
+pub const DIFFUSIVITY: f32 = 0.2;
+
+/// The decay rate of signals: how fast signals decay, in "signal strength" per second.
+pub const DECAY_RATE: f32 = 1.5;
+
+/// The strength below which a signal is considered negligible. The total
+/// quantity of a single emission is considered when trimming signals.
+pub const DECAY_THRESHOLD: f32 = 0.1;
 
 /// The resources and systems need to work with signals
 pub(crate) struct SignalsPlugin;
 
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Signals>().add_systems(
-            (emit_signals, diffuse_signals, degrade_signals)
-                .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.init_resource::<Signals>()
+            .init_resource::<DebugColorScheme>()
+            // .insert_resource(DebugDisplayedSignal(SignalType::Push(Id::from_name(
+            //     "acacia_leaf",
+            // ))))
+            .add_systems(
+                (emit_signals, update_signals)
+                    .chain()
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            )
+            .add_system(
+                debug_display_signal_overlay
+                    .run_if(debug_signal_overlay_enabled)
+                    .in_base_set(CoreSet::PostUpdate),
+            );
     }
 }
 
 /// The central resource that tracks all signals.
 #[derive(Resource, Debug, Default)]
 pub struct Signals {
-    /// The spatialized map for each signal
-    maps: HashMap<SignalType, SignalMap>,
+    /// The equations associated to each signal type.
+    signal_equations: HashMap<SignalType, DiffusionEquation>,
 }
 
 impl Signals {
     /// Returns the signal strength of `signal_type` at the given `tile_pos`.
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    pub fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
-        match self.maps.get(&signal_type) {
-            Some(map) => map.get(tile_pos),
+    pub(crate) fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
+        match self.signal_equations.get(&signal_type) {
+            Some(equation) => equation.evaluate_signal(tile_pos),
             None => SignalStrength::ZERO,
         }
     }
@@ -62,12 +78,12 @@ impl Signals {
         tile_pos: TilePos,
         signal_strength: SignalStrength,
     ) {
-        match self.maps.get_mut(&signal_type) {
-            Some(map) => map.add_signal(tile_pos, signal_strength),
+        match self.signal_equations.get_mut(&signal_type) {
+            Some(equation) => equation.emit_signal(tile_pos, signal_strength),
             None => {
-                let mut new_map = SignalMap::default();
-                new_map.add_signal(tile_pos, signal_strength);
-                self.maps.insert(signal_type, new_map);
+                let mut new_equation = DiffusionEquation::default();
+                new_equation.emit_signal(tile_pos, signal_strength);
+                self.signal_equations.insert(signal_type, new_equation);
             }
         }
     }
@@ -77,7 +93,7 @@ impl Signals {
     /// This is useful for decision-making.
     pub(crate) fn all_signals_at_position(&self, tile_pos: TilePos) -> LocalSignals {
         let mut all_signals = HashMap::new();
-        for &signal_type in self.maps.keys() {
+        for &signal_type in self.signal_equations.keys() {
             let strength = self.get(signal_type, tile_pos);
             all_signals.insert(signal_type, strength);
         }
@@ -183,43 +199,6 @@ impl Signals {
 
         signal_strength_map
     }
-
-    /// Diffuses signals from one cell into the next
-    pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
-        for original_map in self.maps.values_mut() {
-            let num_elements = original_map.map.len();
-            let size_hint = num_elements * 6;
-            let mut addition_map = Vec::with_capacity(size_hint);
-            let mut removal_map = Vec::with_capacity(size_hint);
-
-            for (&occupied_tile, original_strength) in original_map
-                .map
-                .iter()
-                .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
-            {
-                let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
-
-                let mut num_neighbors = 0.0;
-                for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
-                    num_neighbors += 1.0;
-                    addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
-                }
-                removal_map.push((
-                    occupied_tile,
-                    amount_to_send_to_each_neighbor * num_neighbors,
-                ));
-            }
-
-            // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-            for (removal_pos, removal_strength) in removal_map.into_iter() {
-                original_map.subtract_signal(removal_pos, removal_strength)
-            }
-
-            for (addition_pos, addition_strength) in addition_map.into_iter() {
-                original_map.add_signal(addition_pos, addition_strength)
-            }
-        }
-    }
 }
 
 /// All of the signals on a single tile.
@@ -260,41 +239,6 @@ impl LocalSignals {
         }
 
         string
-    }
-}
-
-/// Stores the [`SignalStrength`] of the given [`SignalType`] at each [`TilePos`].
-#[derive(Debug, Default)]
-struct SignalMap {
-    /// The lookup data structure
-    map: HashMap<TilePos, SignalStrength>,
-}
-
-impl SignalMap {
-    /// Returns the signal strenth at the given [`TilePos`].
-    ///
-    /// Missing values will be filled with [`SignalStrength::ZERO`].
-    fn get(&self, tile_pos: TilePos) -> SignalStrength {
-        *self.map.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
-    }
-
-    /// Returns a mutable reference to the signal strength at the given [`TilePos`].
-    ///
-    /// Missing values will be inserted with [`SignalStrength::ZERO`].
-    fn get_mut(&mut self, tile_pos: TilePos) -> &mut SignalStrength {
-        self.map.entry(tile_pos).or_insert(SignalStrength::ZERO)
-    }
-
-    /// Adds the `signal_strength` to the signal at `tile_pos`.
-    fn add_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        *self.get_mut(tile_pos) += signal_strength
-    }
-
-    /// Subtracts the `signal_strength` to the signal at `tile_pos`.
-    ///
-    /// The value is capped a minimum of [`SignalStrength::ZERO`].
-    fn subtract_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        *self.get_mut(tile_pos) -= signal_strength;
     }
 }
 
@@ -422,43 +366,90 @@ fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &E
 }
 
 /// Spreads signals between tiles.
-fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>) {
-    let map_geometry = &*map_geometry;
-    signals.diffuse(map_geometry, DIFFUSION_FRACTION);
+fn update_signals(mut signals: ResMut<Signals>, time: Res<Time>) {
+    let current_time = time.elapsed_seconds_wrapped();
+    let mut signals_to_clear = Vec::new();
+    for (signal_type, equation) in signals.signal_equations.iter_mut() {
+        equation.advance_time(current_time);
+        if equation.trim_neglible_emissions() {
+            signals_to_clear.push(*signal_type);
+        }
+    }
+    for signal_type in signals_to_clear {
+        signals.signal_equations.remove(&signal_type);
+        trace!("Cleared signal {:?}", signal_type);
+    }
+    trace!("{} Signal types left", signals.signal_equations.len());
 }
 
-/// Degrades signals, allowing them to approach an asymptotically constant level.
-fn degrade_signals(mut signals: ResMut<Signals>) {
-    /// The fraction of signal that will decay at each step.
-    ///
-    /// Higher values lead to faster decay and improved signal responsiveness.
-    /// This must always be between 0 and 1.
-    const DEGRADATION_FRACTION: f32 = 0.01;
+#[derive(Resource, Debug)]
+pub(crate) struct DebugDisplayedSignal(SignalType);
 
-    /// The value below which decayed signals are eliminated completely
-    ///
-    /// Increasing this value will:
-    ///  - increase computational costs
-    ///  - increase the range at which tasks can be detected
-    ///  - increase the amount of time units will wait around for more production
-    const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
+#[derive(Resource, Debug)]
+struct DebugColorScheme(Vec<Handle<StandardMaterial>>);
 
-    for signal_map in signals.maps.values_mut() {
-        let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
+impl FromWorld for DebugColorScheme {
+    fn from_world(world: &mut World) -> Self {
+        let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
 
-        for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
-            let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
-
-            if new_strength > EPSILON_STRENGTH {
-                *signal_strength = new_strength;
-            } else {
-                tiles_to_clear.push(*tile_pos);
-            }
+        let mut color_scheme = Vec::with_capacity(256);
+        // FIXME: This color palette is not very colorblind-friendly, even though it was inspired
+        // by matlab's veridis
+        for i in 0..256 {
+            let s = i as f32 / 255.0;
+            color_scheme.push(material_assets.add(StandardMaterial {
+                base_color: Color::Rgba {
+                    red: 0.8 * (2.0 * s - s * s),
+                    green: 0.8 * s.sqrt(),
+                    blue: s * s * 0.6,
+                    alpha: 0.8,
+                },
+                unlit: true,
+                alpha_mode: AlphaMode::Add,
+                ..Default::default()
+            }));
         }
 
-        for tile_to_clear in tiles_to_clear {
-            signal_map.map.remove(&tile_to_clear);
-        }
+        color_scheme.shrink_to_fit();
+        DebugColorScheme(color_scheme)
+    }
+}
+
+fn debug_signal_overlay_enabled(displayed_signal: Option<Res<DebugDisplayedSignal>>) -> bool {
+    displayed_signal.is_some()
+}
+
+pub(crate) fn debug_signal_overlay_disabled(
+    displayed_signal: Option<Res<DebugDisplayedSignal>>,
+) -> bool {
+    displayed_signal.is_none()
+}
+
+fn debug_display_signal_overlay(
+    terrain_query: Query<(&TilePos, &Children), With<Id<Terrain>>>,
+    mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
+    signals: Res<Signals>,
+    displayed_signal: Res<DebugDisplayedSignal>,
+    color_scheme: Res<DebugColorScheme>,
+) {
+    for (tile_pos, children) in terrain_query.iter() {
+        // This is promised to be the correct entity in the initialization of the terrain's children
+        let overlay_entity = children[1];
+
+        let (mut overlay_material, mut overlay_visibility) =
+            overlay_query.get_mut(overlay_entity).unwrap();
+
+        let signal_strength = signals.get(displayed_signal.0, *tile_pos).0;
+        // The scale is logarithmic, so that small nuances are still pretty visible
+        let scaled_strength = signal_strength.ln_1p() / 6.0;
+        let color_index = if signal_strength < f32::EPSILON {
+            *overlay_visibility = Visibility::Hidden;
+            continue;
+        } else {
+            *overlay_visibility = Visibility::Visible;
+            ((scaled_strength * 254.0) as usize) + 1
+        };
+        *overlay_material.as_mut() = color_scheme.0[color_index.min(255)].clone_weak();
     }
 }
 
