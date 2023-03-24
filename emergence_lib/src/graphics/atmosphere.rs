@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::asset_management::palette::SKY_SUNNY;
+use crate::asset_management::palette::environment::SKY_SUNNY;
 
 /// Logic and resources to modify the sky and atmosphere.
 pub(super) struct AtmospherePlugin;
