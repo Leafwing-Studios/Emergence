@@ -114,19 +114,22 @@ fn visualize_signals(
             // This is promised to be the correct entity in the initialization of the terrain's children
             let overlay_entity = children[1];
 
-            let (mut overlay_material, mut overlay_visibility) =
-                overlay_query.get_mut(overlay_entity).unwrap();
-
-            let signal_strength = signals.get(signal_type, *tile_pos);
-            let maybe_material = tile_overlay.get_material(signal_strength);
-            match maybe_material {
-                Some(material) => {
-                    *overlay_visibility = Visibility::Visible;
-                    *overlay_material = material;
+            if let Ok((mut overlay_material, mut overlay_visibility)) =
+                overlay_query.get_mut(overlay_entity)
+            {
+                let signal_strength = signals.get(signal_type, *tile_pos);
+                let maybe_material = tile_overlay.get_material(signal_strength);
+                match maybe_material {
+                    Some(material) => {
+                        *overlay_visibility = Visibility::Visible;
+                        *overlay_material = material;
+                    }
+                    None => {
+                        *overlay_visibility = Visibility::Hidden;
+                    }
                 }
-                None => {
-                    *overlay_visibility = Visibility::Hidden;
-                }
+            } else {
+                error!("Could not get overlay entity for tile {tile_pos:?}");
             }
         }
     }
