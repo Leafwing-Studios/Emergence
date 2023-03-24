@@ -16,10 +16,56 @@ pub struct SignalEmission {
     pub source: TilePos,
 }
 
-/// A solver for the diffusion equation, optimized towards emergence's use case.
+/// A solver for the diffusion equation.
 ///
-/// The characteristics of emergence relevant to the problem can be summarized as the following:
-/// - Few occasional sources emitting "packets" of signal
+/// The diffusion equation can be formulated in its generic form as:
+///
+/// ∂ϕ(x, t)/∂t = ∇⋅(D(ϕ, x) ∇ϕ(x, t))
+///
+/// where:
+/// - ϕ is the density of the diffusing material. In emergence's case, ϕ is the signal strength.
+/// - D is the diffusivity of the environment. For emergence, this is a constant for now, making
+///   our case equivalent to the classic [heat equation](https://en.wikipedia.org/wiki/Heat_equation).
+/// - x is a location.
+/// - t is the time.
+/// - ∇⋅ is the divergence operator.
+/// - ∇ is the gradient operator.
+///
+/// To solve the equation, one can use the [fundamental solution](https://en.wikipedia.org/wiki/Heat_equation#Fundamental_solutions)
+/// of the heat equation, in 2D:
+///
+/// ϕ(x, t) = 1/(4 π D t) * exp(−x⋅x / (4 D t))
+///
+/// where x⋅x is a dot product.
+///
+/// The fundamental solution solves a problem with no boundary conditions and
+/// an initial density given by the [Dirac delta function](https://en.wikipedia.org/wiki/Dirac_delta_function).
+/// The general solution, for any initial condition is a convolution with the fundamental solution:
+///
+/// s(x, t) = ∫ Φ(x−y, t) g(y) dy
+///
+/// where:
+/// - g is the initial condition, i.e. s(x, 0).
+/// - y is a surface element in the same space as x.
+///
+/// Practically, we don't want to deal with costly convolutions, so we'll try to avoid them.
+/// Because signals are emitted in pulses, and convolution is distributive, we can separate each
+/// emission and sum their contributions:
+///
+/// s(x, t) = ∫ Φ(x−y, t-T0) e0(y) dy + ∫ Φ(x−y, t-T1) e1(y) dy + ... + ∫ Φ(x−y, t-Tn) en(y) dy
+///
+/// where:
+/// - en is the initial condition of the nth emission.
+/// - Tn is the time at which the nth emission was emitted.
+///
+/// It would be very practical to get rid of all these integrals, and one way to do so is for
+/// the initial conditions of each emissions to be Dirac delta functions. This also fits very well
+/// the analogy of a pulse of signal being emitted before being diffused. The solution is
+/// drastically simplified:
+///
+/// s(x, t) = Φ(x-y0, t-T0) + Φ(x-y1, t-T1) + ... + Φ(x-yn, t-Tn)
+///
+/// where yn is the location of the nth signal emission.
 // NOTE: One equation per signal type implies they don't interact together.
 #[derive(Default, Debug)]
 pub struct DiffusionEquation {

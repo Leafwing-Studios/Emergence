@@ -440,7 +440,6 @@ fn debug_display_signal_overlay(
             overlay_query.get_mut(overlay_entity).unwrap();
 
         let signal_strength = signals.get(displayed_signal.0, *tile_pos).0;
-        // Just a simple dark red (low strength) to bright yellow (high strength) color scheme
         // The scale is logarithmic, so that small nuances are still pretty visible
         let scaled_strength = signal_strength.ln_1p() / 6.0;
         let color_index = if signal_strength < f32::EPSILON {
