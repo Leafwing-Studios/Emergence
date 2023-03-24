@@ -154,7 +154,7 @@ impl TileOverlay {
     pub(crate) const N_COLORS: usize = 256;
 
     /// The maximum displayed value for signal strength.
-    const MAX_SIGNAL_STRENGTH: f32 = 1e3;
+    const MAX_SIGNAL_STRENGTH: f32 = 1e2;
 
     /// The width of the legend image.
     pub(crate) const LEGEND_WIDTH: u32 = 32;
@@ -170,20 +170,16 @@ impl TileOverlay {
 
         // At MAX_SIGNAL_STRENGTH, we want to fetch the last color in the ramp.
         // At 0, we want to fetch the first color in the ramp.
-        // We can achieve this by scaling the logged signal strength by the number of colors in the ramp.
-        let logged_strength_at_max = Self::MAX_SIGNAL_STRENGTH.ln_1p();
-        // The logged_strength_at_min is equal to 0, as we are taking the log of (0+1)
-
-        // Now, we can compute the scaling factor as (logged_strength_at_max - logged_strength_at_min) / N_COLORS
-        let scaling_factor = logged_strength_at_max / Self::N_COLORS as f32;
 
         // The scale is logarithmic, so that small nuances are still pretty visible
         // By adding 1 to the signal strength, we avoid taking the log of 0
-        let scaled_strength = signal_strength.value() / scaling_factor;
-        let logged_strength = scaled_strength.ln_1p();
+        // This produces a value in the range [0, 1] for all signal strengths that we care about.
+        let normalized_strength =
+            signal_strength.value().ln_1p() / Self::MAX_SIGNAL_STRENGTH.ln_1p();
 
-        // Scale the signal strength to the number of colors in the ramp
-        let color_index: usize = (logged_strength * Self::N_COLORS as f32) as usize;
+        // Now that strength is normalized, we can scale it to the number of colors in the ramp
+        // Which should give us a nice distribution of colors that uses the entire range.
+        let color_index: usize = (normalized_strength * (Self::N_COLORS as f32)) as usize;
         // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals
         let color_index = color_index.min(Self::N_COLORS - 1);
         Some(self.color_ramp[color_index].clone_weak())
