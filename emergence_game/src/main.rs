@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-use bevy::window::{PresentMode, WindowPlugin};
-use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use bevy::window::{PresentMode, WindowMode, WindowPlugin};
+use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use emergence_lib::simulation::generation::GenerationConfig;
 
 fn main() {

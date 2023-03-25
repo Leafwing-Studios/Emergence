@@ -743,8 +743,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_raycast"
-version = "0.7.0"
-source = "git+https://github.com/soerenmeier/bevy_mod_raycast?branch=bevy-0.10#ebec4facf385ff789080e32b7fd1f2ea99a6a986"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc98a75743120396c8f3e3b47bfeb7f3d39248c46a625972005e51ca4d110a2a"
 dependencies = [
  "bevy",
 ]
