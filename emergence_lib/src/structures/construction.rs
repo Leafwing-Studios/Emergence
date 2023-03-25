@@ -28,7 +28,7 @@ use super::{
 };
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
-#[derive(Component, Clone, Copy, Debug)]
+#[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
 pub(crate) struct Ghost;
 
 /// A marker component indicating that this structure should be rendered in a transparent style.

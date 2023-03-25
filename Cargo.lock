@@ -576,6 +576,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_framepace"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ceed91c013a62e38ff4975d027504c23fc44df3554f96e4098ff303f585bfae"
+dependencies = [
+ "bevy",
+ "spin_sleep",
+]
+
+[[package]]
 name = "bevy_gilrs"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -733,8 +743,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_raycast"
-version = "0.7.0"
-source = "git+https://github.com/soerenmeier/bevy_mod_raycast?branch=bevy-0.10#ebec4facf385ff789080e32b7fd1f2ea99a6a986"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc98a75743120396c8f3e3b47bfeb7f3d39248c46a625972005e51ca4d110a2a"
 dependencies = [
  "bevy",
 ]
@@ -1660,6 +1671,7 @@ name = "emergence_game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_framepace",
  "emergence_lib",
 ]
 
@@ -3402,6 +3414,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "spin_sleep"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cafa7900db085f4354dbc7025e25d7a839a14360ea13b5fc4fd717f2d3b23134"
+dependencies = [
+ "once_cell",
+ "winapi",
 ]
 
 [[package]]
