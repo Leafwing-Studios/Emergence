@@ -49,6 +49,11 @@ fn display_status(
     fonts: Res<FiraSansFontFamily>,
     mut commands: Commands,
 ) {
+    // PERF: immediate mode for now
+    for entity in status_display_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
     if status_visualization.enabled {
         for (transform, goal) in unit_query.iter() {
             commands
@@ -90,10 +95,6 @@ fn display_status(
                     ..Default::default()
                 })
                 .insert(StatusDisplay);
-        }
-    } else {
-        for entity in status_display_query.iter() {
-            commands.entity(entity).despawn_recursive();
         }
     }
 }
