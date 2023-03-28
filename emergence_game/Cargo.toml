@@ -12,4 +12,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.10"
+bevy_framepace = "0.12.0"
 emergence_lib = { path = "../emergence_lib", version = "0.1.0" }

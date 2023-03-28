@@ -1,6 +1,6 @@
 //! Code for a generic identifier type
 
-use bevy::prelude::Component;
+use bevy::{prelude::Component, reflect::Reflect};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
@@ -10,7 +10,7 @@ use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 /// Unlike enum variants, these can be read from disk and constructred at runtime.
 ///
 /// It can be stored as a component to identify the variety of game object used.
-#[derive(Component, Serialize, Deserialize)]
+#[derive(Component, Reflect, Serialize, Deserialize)]
 pub struct Id<T> {
     /// The unique identifier.
     ///
@@ -19,6 +19,7 @@ pub struct Id<T> {
     value: u64,
 
     /// Marker to make the compiler happy
+    #[reflect(ignore)]
     _phantom: PhantomData<T>,
 }
 

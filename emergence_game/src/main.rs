@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use bevy::window::{PresentMode, WindowPlugin};
+use bevy::window::{PresentMode, WindowMode, WindowPlugin};
+use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use emergence_lib::simulation::generation::GenerationConfig;
 
 fn main() {
@@ -8,10 +9,15 @@ fn main() {
             primary_window: Some(Window {
                 title: "Emergence".to_string(),
                 present_mode: PresentMode::AutoNoVsync,
+                mode: WindowMode::Fullscreen,
                 ..default()
             }),
             ..Default::default()
         }))
+        .add_plugin(FramepacePlugin)
+        .insert_resource(FramepaceSettings {
+            limiter: Limiter::Auto,
+        })
         .add_plugin(emergence_lib::simulation::GeometryPlugin {
             gen_config: GenerationConfig::default(),
         })
