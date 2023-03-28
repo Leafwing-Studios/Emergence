@@ -97,6 +97,7 @@ fn setup_overlay_menu(
 fn update_signal_type_display(
     mut text_query: Query<&mut Text>,
     mut image_query: Query<&mut UiImage>,
+    fonts: Res<FiraSansFontFamily>,
     overlay_menu: Res<OverlayMenu>,
     tile_overlay: Res<TileOverlay>,
     item_manifest: Res<ItemManifest>,
@@ -104,18 +105,28 @@ fn update_signal_type_display(
     unit_manifest: Res<UnitManifest>,
 ) {
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
-
-    text.sections[0].value = match tile_overlay.visualized_signal {
-        Some(signal_type) => {
-            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest)
-        }
-        None => "No signal".to_string(),
-    };
-
     let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
-    legend.texture = if let Some(signal_type) = tile_overlay.visualized_signal {
-        tile_overlay.legend_image_handle(signal_type.into())
+
+    if let Some(signal_type) = tile_overlay.visualized_signal {
+        let signal_kind: SignalKind = signal_type.into();
+
+        text.sections[0].value =
+            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
+        text.sections[0].style = TextStyle {
+            font: text.sections[0].style.font.clone_weak(),
+            font_size: 20.0,
+            color: signal_kind.color(),
+        };
+
+        legend.texture = tile_overlay.legend_image_handle(signal_kind)
     } else {
-        Handle::default()
-    };
+        text.sections[0].value = "No signal".to_string();
+        text.sections[0].style = TextStyle {
+            font: fonts.regular.clone_weak(),
+            font_size: 20.0,
+            color: Color::WHITE,
+        };
+
+        legend.texture = Handle::default();
+    }
 }

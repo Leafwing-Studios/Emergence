@@ -90,13 +90,18 @@ pub(crate) mod infovis {
         pub(crate) const fn hue(&self) -> f32 {
             match self {
                 SignalKind::Push => 0.,
+                SignalKind::Contains => 120.,
                 SignalKind::Pull => 30.,
+                SignalKind::Stores => 150.,
                 SignalKind::Work => 60.,
                 SignalKind::Demolish => 90.,
-                SignalKind::Contains => 120.,
-                SignalKind::Stores => 150.,
                 SignalKind::Unit => 180.,
             }
+        }
+
+        /// The base color used for each signal kind.
+        pub(crate) const fn color(&self) -> Color {
+            Color::hsla(self.hue(), 0.8, 0.5, 1.0)
         }
 
         /// The color used to indicate that the signal strength is low.
