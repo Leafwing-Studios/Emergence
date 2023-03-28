@@ -3,7 +3,7 @@
 use crate::ui::{
     overlay::OverlayMenuPlugin, production_statistics::ProductionStatisticsPlugin,
     select_structure::SelectStructurePlugin, select_terraforming::SelectTerraformingPlugin,
-    selection_panel::HoverDetailsPlugin,
+    selection_panel::HoverDetailsPlugin, status::StatusPlugin,
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -14,6 +14,7 @@ mod production_statistics;
 mod select_structure;
 mod select_terraforming;
 mod selection_panel;
+mod status;
 mod wheel_menu;
 
 /// The font handles for the `FiraSans` font family.
@@ -42,6 +43,7 @@ impl Plugin for UiPlugin {
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(HoverDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
+        .add_plugin(StatusPlugin)
         .add_plugin(OverlayMenuPlugin)
         .add_plugin(SelectStructurePlugin)
         .add_plugin(SelectTerraformingPlugin);
