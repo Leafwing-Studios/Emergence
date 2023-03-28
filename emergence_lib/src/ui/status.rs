@@ -81,7 +81,7 @@ fn display_status(
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),
-                            color: Color::WHITE,
+                            color: goal.color(),
                         },
                     )
                     .with_alignment(TextAlignment::Center),
