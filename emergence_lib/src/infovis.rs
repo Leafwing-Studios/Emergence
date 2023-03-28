@@ -156,7 +156,7 @@ impl FromWorld for TileOverlay {
 
 impl TileOverlay {
     /// The number of colors in the color ramp.
-    pub(crate) const N_COLORS: usize = 256;
+    pub(crate) const N_COLORS: usize = 16;
 
     /// The maximum displayed value for signal strength.
     const MAX_SIGNAL_STRENGTH: f32 = 1e2;
