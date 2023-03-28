@@ -55,44 +55,58 @@ fn display_status(
     }
 
     if status_visualization.enabled {
-        for (transform, goal) in unit_query.iter() {
+        for (unit_transform, goal) in unit_query.iter() {
+            let transform = Transform {
+                translation: Vec3::new(
+                    unit_transform.translation.x,
+                    unit_transform.translation.y + 0.5,
+                    unit_transform.translation.z,
+                ),
+                scale: Vec3::splat(0.0085),
+                ..Default::default()
+            };
+
             commands
                 .spawn(BillboardTextBundle {
+                    transform,
                     text: Text::from_section(
-                        format!("Goal: {:?}", goal),
+                        format!("{:?}", goal),
                         TextStyle {
+                            font_size: 60.0,
                             font: fonts.regular.clone_weak(),
-                            font_size: 20.0,
                             color: Color::WHITE,
                         },
-                    ),
-                    transform: Transform::from_translation(Vec3::new(
-                        transform.translation.x,
-                        transform.translation.y + 0.5,
-                        transform.translation.z,
-                    )),
-                    ..Default::default()
+                    )
+                    .with_alignment(TextAlignment::Center),
+                    ..default()
                 })
                 .insert(StatusDisplay);
         }
 
-        for (transform, crafting_state) in crafting_query.iter() {
+        for (structure_transform, crafting_state) in crafting_query.iter() {
+            let transform = Transform {
+                translation: Vec3::new(
+                    structure_transform.translation.x,
+                    structure_transform.translation.y + 1.0,
+                    structure_transform.translation.z,
+                ),
+                scale: Vec3::splat(0.0085),
+                ..Default::default()
+            };
+
             commands
                 .spawn(BillboardTextBundle {
+                    transform,
                     text: Text::from_section(
-                        format!("Crafting: {:?}", crafting_state),
+                        format!("{:?}", crafting_state),
                         TextStyle {
+                            font_size: 60.0,
                             font: fonts.regular.clone_weak(),
-                            font_size: 20.0,
                             color: Color::WHITE,
                         },
-                    ),
-                    transform: Transform::from_translation(Vec3::new(
-                        transform.translation.x,
-                        transform.translation.y + 0.5,
-                        transform.translation.z,
-                    )),
-                    ..Default::default()
+                    )
+                    .with_alignment(TextAlignment::Center),
+                    ..default()
                 })
                 .insert(StatusDisplay);
         }
