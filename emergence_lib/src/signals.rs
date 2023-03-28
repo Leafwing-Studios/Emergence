@@ -315,7 +315,6 @@ pub enum SignalType {
     /// Bring me an item of this type.
     Pull(Id<Item>),
     /// Perform work at this type of structure.
-    #[allow(dead_code)]
     Work(Id<Structure>),
     /// Destroy a structure of this type
     Demolish(Id<Structure>),
@@ -351,6 +350,44 @@ impl SignalType {
             SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
             SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
             SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
+        }
+    }
+}
+
+/// The data-less equivalent of [`SignalType`].
+///
+/// This has an infallible conversion from [`SignalType`] using the [`From`] trait.
+pub(crate) enum SignalKind {
+    /// Take this item away from here.
+    Push,
+    /// Bring me an item of this type.
+    Pull,
+    /// Perform work at this type of structure.
+    Work,
+    /// Destroy a structure of this type
+    Demolish,
+    /// Has an item of this type, in case you were looking.
+    ///
+    /// The passive form of `Push`.
+    Contains,
+    /// Stores items of this type, in case you were looking.
+    ///
+    /// The passive form of `Pull`.
+    Stores,
+    /// Has a unit of this type.
+    Unit,
+}
+
+impl From<SignalType> for SignalKind {
+    fn from(signal_type: SignalType) -> Self {
+        match signal_type {
+            SignalType::Push(_) => SignalKind::Push,
+            SignalType::Pull(_) => SignalKind::Pull,
+            SignalType::Work(_) => SignalKind::Work,
+            SignalType::Demolish(_) => SignalKind::Demolish,
+            SignalType::Contains(_) => SignalKind::Contains,
+            SignalType::Stores(_) => SignalKind::Stores,
+            SignalType::Unit(_) => SignalKind::Unit,
         }
     }
 }
