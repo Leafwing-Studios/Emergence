@@ -94,6 +94,7 @@ fn setup_overlay_menu(
 }
 
 /// Updates the text that displays the [`SignalType`](crate::signals::SignalType) being visualized.
+#[allow(clippy::too_many_arguments)]
 fn update_signal_type_display(
     mut text_query: Query<&mut Text>,
     mut image_query: Query<&mut UiImage>,
