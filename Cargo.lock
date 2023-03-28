@@ -732,6 +732,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_billboard"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0073b07413bff1989a129922bf458774a1a786aa5cc06d4553efd7ba3e7d6772"
+dependencies = [
+ "bevy",
+ "bitflags",
+]
+
+[[package]]
 name = "bevy_mod_raycast"
 version = "0.7.0"
 source = "git+https://github.com/soerenmeier/bevy_mod_raycast?branch=bevy-0.10#ebec4facf385ff789080e32b7fd1f2ea99a6a986"
@@ -1669,6 +1679,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bevy",
+ "bevy_mod_billboard",
  "bevy_mod_raycast",
  "bevy_screen_diagnostics",
  "criterion",

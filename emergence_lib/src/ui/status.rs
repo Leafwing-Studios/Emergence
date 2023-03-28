@@ -1,6 +1,7 @@
 //! Code to display the status of each unit and crafting structure.
 
 use bevy::prelude::*;
+use bevy_mod_billboard::{BillboardPlugin, BillboardTextBundle};
 
 use crate::{
     asset_management::AssetState, structures::crafting::CraftingState, units::goals::Goal,
@@ -14,7 +15,8 @@ impl Plugin for StatusPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StatusVisualization>()
             .add_system(toggle_status_visualization.before(display_status))
-            .add_system(display_status.run_if(in_state(AssetState::Ready)));
+            .add_system(display_status.run_if(in_state(AssetState::Ready)))
+            .add_plugin(BillboardPlugin);
     }
 }
 
@@ -50,7 +52,7 @@ fn display_status(
     if status_visualization.enabled {
         for (transform, goal) in unit_query.iter() {
             commands
-                .spawn(Text2dBundle {
+                .spawn(BillboardTextBundle {
                     text: Text::from_section(
                         format!("Goal: {:?}", goal),
                         TextStyle {
@@ -71,7 +73,7 @@ fn display_status(
 
         for (transform, crafting_state) in crafting_query.iter() {
             commands
-                .spawn(Text2dBundle {
+                .spawn(BillboardTextBundle {
                     text: Text::from_section(
                         format!("Crafting: {:?}", crafting_state),
                         TextStyle {

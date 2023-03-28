@@ -13,6 +13,7 @@ debug_tools = ['dep:debug_tools']
 
 [dependencies]
 bevy = "0.10"
+bevy_mod_billboard = "0.2"
 rand = "0.8"
 noisy_bevy = "0.3"
 leafwing-input-manager = "0.9"
