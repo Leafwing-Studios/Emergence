@@ -4,7 +4,12 @@ use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardPlugin, BillboardTextBundle};
 
 use crate::{
-    asset_management::AssetState, structures::crafting::CraftingState, units::goals::Goal,
+    asset_management::{
+        manifest::{ItemManifest, StructureManifest},
+        AssetState,
+    },
+    structures::crafting::CraftingState,
+    units::goals::Goal,
 };
 
 use super::FiraSansFontFamily;
@@ -47,6 +52,8 @@ fn display_status(
     crafting_query: Query<(&Transform, &CraftingState)>,
     status_display_query: Query<Entity, With<StatusDisplay>>,
     fonts: Res<FiraSansFontFamily>,
+    item_manifest: Res<ItemManifest>,
+    structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
 ) {
     // PERF: immediate mode for now
@@ -70,7 +77,7 @@ fn display_status(
                 .spawn(BillboardTextBundle {
                     transform,
                     text: Text::from_section(
-                        format!("{:?}", goal),
+                        format!("{}", goal.display(&item_manifest, &structure_manifest)),
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),
@@ -98,7 +105,7 @@ fn display_status(
                 .spawn(BillboardTextBundle {
                     transform,
                     text: Text::from_section(
-                        format!("{:?}", crafting_state),
+                        format!("{crafting_state}"),
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),
