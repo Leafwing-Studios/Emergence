@@ -87,21 +87,32 @@ pub(crate) mod infovis {
         const SIGNAL_LIGHTNESS_HIGH: f32 = 1.0;
 
         /// The base hue used for each signal kind.
+        /// The principles here are:
+        /// - Red is for destruction
+        /// - Similar colors are for similar signals
+        /// - More vibrant colors are for signals that generate goals
         pub(crate) const fn hue(&self) -> f32 {
             match self {
-                SignalKind::Push => 0.,
-                SignalKind::Contains => 120.,
-                SignalKind::Pull => 30.,
-                SignalKind::Stores => 150.,
-                SignalKind::Work => 60.,
-                SignalKind::Demolish => 90.,
-                SignalKind::Unit => 180.,
+                // Orange
+                SignalKind::Push => 30.,
+                // Yellow
+                SignalKind::Contains => 60.,
+                // Green
+                SignalKind::Pull => 120.,
+                // Teal
+                SignalKind::Stores => 180.,
+                // Blue
+                SignalKind::Work => 240.,
+                // Red
+                SignalKind::Demolish => 0.,
+                // Purple
+                SignalKind::Unit => 300.,
             }
         }
 
         /// The base color used for each signal kind.
         pub(crate) const fn color(&self) -> Color {
-            Color::hsla(self.hue(), 0.8, 0.5, 1.0)
+            Color::hsla(self.hue(), 0.6, 0.5, 1.0)
         }
 
         /// The color used to indicate that the signal strength is low.
