@@ -4,7 +4,7 @@
 pub(crate) mod infovis {
     use bevy::prelude::Color;
 
-    use crate::{signals::SignalKind, units::goals::Goal};
+    use crate::{signals::SignalKind, structures::crafting::CraftingState, units::goals::Goal};
 
     /// The alpha value used for selection/hovering/other UI overlay
     const OVERLAY_ALPHA: f32 = 0.5;
@@ -137,7 +137,7 @@ pub(crate) mod infovis {
     }
 
     impl Goal {
-        /// Gets the color associated with each variety of goal.
+        /// Returns the color associated with each variety of goal.
         pub(crate) const fn color(&self) -> Color {
             match self {
                 Goal::Wander { .. } => Color::Hsla {
@@ -182,6 +182,20 @@ pub(crate) mod infovis {
                     lightness: 0.7,
                     alpha: 1.0,
                 },
+            }
+        }
+    }
+
+    impl CraftingState {
+        /// Returns the color associated with each crafting state.
+        pub(crate) const fn color(&self) -> Color {
+            match self {
+                CraftingState::NeedsInput => Color::YELLOW,
+                CraftingState::InProgress { .. } => Color::GREEN,
+                CraftingState::FullAndBlocked => Color::YELLOW,
+                CraftingState::RecipeComplete => Color::PINK,
+                CraftingState::Overproduction => Color::PURPLE,
+                CraftingState::NoRecipe => Color::WHITE,
             }
         }
     }
