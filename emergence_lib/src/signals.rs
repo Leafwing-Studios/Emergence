@@ -3,8 +3,10 @@
 //! By collecting information about the local environment into a slowly updated, tile-centric data structure,
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
+use crate as emergence_lib;
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
 
@@ -357,6 +359,7 @@ impl SignalType {
 /// The data-less equivalent of [`SignalType`].
 ///
 /// This has an infallible conversion from [`SignalType`] using the [`From`] trait.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IterableEnum)]
 pub(crate) enum SignalKind {
     /// Take this item away from here.
     Push,

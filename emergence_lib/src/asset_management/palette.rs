@@ -4,6 +4,8 @@
 pub(crate) mod infovis {
     use bevy::prelude::Color;
 
+    use crate::signals::SignalKind;
+
     /// The alpha value used for selection/hovering/other UI overlay
     const OVERLAY_ALPHA: f32 = 0.5;
 
@@ -73,12 +75,50 @@ pub(crate) mod infovis {
         OVERLAY_ALPHA,
     );
 
-    /// The color used to indicate that the signal strength is low.
-    ///
-    /// Beginning at a low lightness means that the effect will be very translucent when the signal strength is low.
-    pub(crate) const SIGNAL_OVERLAY_LOW: Color = Color::hsla(300., 0.0, 0., OVERLAY_ALPHA);
-    /// The color used to indicate that the signal strength is high.
-    pub(crate) const SIGNAL_OVERLAY_HIGH: Color = Color::hsla(300., 1., 1.0, OVERLAY_ALPHA);
+    impl SignalKind {
+        /// The saturation used to indicate that the signal strength is low.
+        const SIGNAL_SATURATION_LOW: f32 = 0.0;
+        /// The saturation used to indicate that the signal strength is high.
+        const SIGNAL_SATURATION_HIGH: f32 = 1.0;
+
+        /// The lightness used to indicate that the signal strength is low.
+        const SIGNAL_LIGHTNESS_LOW: f32 = 0.0;
+        /// The lightness used to indicate that the signal strength is high.
+        const SIGNAL_LIGHTNESS_HIGH: f32 = 1.0;
+
+        /// The base hue used for each signal kind.
+        pub(crate) const fn hue(&self) -> f32 {
+            match self {
+                SignalKind::Push => 0.,
+                SignalKind::Pull => 30.,
+                SignalKind::Work => 60.,
+                SignalKind::Demolish => 90.,
+                SignalKind::Contains => 120.,
+                SignalKind::Stores => 150.,
+                SignalKind::Unit => 180.,
+            }
+        }
+
+        /// The color used to indicate that the signal strength is low.
+        pub(crate) const fn color_low(&self) -> Color {
+            Color::hsla(
+                self.hue(),
+                Self::SIGNAL_SATURATION_LOW,
+                Self::SIGNAL_LIGHTNESS_LOW,
+                OVERLAY_ALPHA,
+            )
+        }
+
+        /// The color used to indicate that the signal strength is high.
+        pub(crate) const fn color_high(&self) -> Color {
+            Color::hsla(
+                self.hue(),
+                Self::SIGNAL_SATURATION_HIGH,
+                Self::SIGNAL_LIGHTNESS_HIGH,
+                OVERLAY_ALPHA,
+            )
+        }
+    }
 }
 
 /// Colors used for the world's environment
