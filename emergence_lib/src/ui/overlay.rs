@@ -6,7 +6,7 @@ use crate::{
         AssetState,
     },
     infovis::TileOverlay,
-    signals::Signals,
+    signals::{SignalKind, Signals},
 };
 use bevy::prelude::*;
 
@@ -28,6 +28,8 @@ impl Plugin for OverlayMenuPlugin {
 struct OverlayMenu {
     /// The entity that tracks the [`SignalType`](crate::signals::SignalType) being displayed.
     signal_type_entity: Entity,
+    /// The entity that stores the legend image.
+    legend_entity: Entity,
 }
 
 /// Controls the overlay that is currently being displayed based on UI interactions.
@@ -77,7 +79,7 @@ fn setup_overlay_menu(
                 ..Default::default()
             },
             image: UiImage {
-                texture: tile_overlay.legend_image_handle(),
+                texture: tile_overlay.legend_image_handle(SignalKind::Contains),
                 ..Default::default()
             },
             ..Default::default()
@@ -85,24 +87,47 @@ fn setup_overlay_menu(
         .id();
     commands.entity(left_panel_entity).add_child(legend_entity);
 
-    commands.insert_resource(OverlayMenu { signal_type_entity });
+    commands.insert_resource(OverlayMenu {
+        signal_type_entity,
+        legend_entity,
+    });
 }
 
 /// Updates the text that displays the [`SignalType`](crate::signals::SignalType) being visualized.
+#[allow(clippy::too_many_arguments)]
 fn update_signal_type_display(
-    mut query: Query<&mut Text>,
+    mut text_query: Query<&mut Text>,
+    mut image_query: Query<&mut UiImage>,
+    fonts: Res<FiraSansFontFamily>,
     overlay_menu: Res<OverlayMenu>,
     tile_overlay: Res<TileOverlay>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
 ) {
-    let mut text = query.get_mut(overlay_menu.signal_type_entity).unwrap();
+    let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
+    let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
 
-    text.sections[0].value = match tile_overlay.visualized_signal {
-        Some(signal_type) => {
-            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest)
-        }
-        None => "No signal".to_string(),
-    };
+    if let Some(signal_type) = tile_overlay.visualized_signal {
+        let signal_kind: SignalKind = signal_type.into();
+
+        text.sections[0].value =
+            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
+        text.sections[0].style = TextStyle {
+            font: text.sections[0].style.font.clone_weak(),
+            font_size: 20.0,
+            color: signal_kind.color(),
+        };
+
+        legend.texture = tile_overlay.legend_image_handle(signal_kind)
+    } else {
+        text.sections[0].value = "No signal".to_string();
+        text.sections[0].style = TextStyle {
+            font: fonts.regular.clone_weak(),
+            font_size: 20.0,
+            color: Color::WHITE,
+        };
+
+        legend.texture = Handle::default();
+    }
 }
