@@ -124,6 +124,10 @@ pub(crate) enum PlayerAction {
     RotateCameraLeft,
     /// Rotates the camera clockwise
     RotateCameraRight,
+    /// Toggles the status overlay
+    ToggleStatusInfo,
+    /// Toggle the signal strength overlay
+    ToggleSignalOverlay,
 }
 
 impl PlayerAction {
@@ -160,6 +164,8 @@ impl PlayerAction {
             TiltCameraDown => UserInput::modified(Modifier::Alt, KeyCode::Minus),
             RotateCameraLeft => KeyCode::Q.into(),
             RotateCameraRight => KeyCode::E.into(),
+            ToggleStatusInfo => KeyCode::F1.into(),
+            ToggleSignalOverlay => KeyCode::F2.into(),
         }
     }
 
@@ -170,6 +176,7 @@ impl PlayerAction {
 
         let camera_modifier = RightTrigger2;
         let radius_modifier = LeftTrigger;
+        let infovis_modifier = LeftTrigger2;
 
         match self {
             TogglePause => GamepadButtonType::Select.into(),
@@ -198,6 +205,8 @@ impl PlayerAction {
             TiltCameraDown => UserInput::chord([RightTrigger, DPadDown]),
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
             RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
+            ToggleStatusInfo => UserInput::chord([infovis_modifier, DPadLeft]),
+            ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
         }
     }
 

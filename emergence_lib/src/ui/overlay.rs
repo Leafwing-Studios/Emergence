@@ -6,9 +6,11 @@ use crate::{
         AssetState,
     },
     infovis::TileOverlay,
+    player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
 };
 use bevy::prelude::*;
+use leafwing_input_manager::prelude::ActionState;
 
 use super::{FiraSansFontFamily, LeftPanel};
 
@@ -35,11 +37,11 @@ struct OverlayMenu {
 /// Controls the overlay that is currently being displayed based on UI interactions.
 fn select_overlay(
     // FIXME: use an actual UI widget for this...
-    keyboard_input: Res<Input<KeyCode>>,
+    player_actions: Res<ActionState<PlayerAction>>,
     mut tile_overlay: ResMut<TileOverlay>,
     signals: Res<Signals>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::F1) {
+    if player_actions.just_pressed(PlayerAction::ToggleSignalOverlay) {
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
         tile_overlay.visualized_signal = signals.random_signal_type();
     }
