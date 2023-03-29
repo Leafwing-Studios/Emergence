@@ -37,7 +37,7 @@ impl Plugin for SelectionPlugin {
 }
 
 /// The set of tiles that is currently selected
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct SelectedTiles {
     /// Actively selected tiles
     selected: HashSet<TilePos>,
@@ -677,7 +677,10 @@ pub(super) fn set_tile_interactions(
 #[cfg(test)]
 mod tests {
     use super::SelectedTiles;
-    use crate::simulation::geometry::TilePos;
+    use crate::{
+        player_interaction::{cursor::CursorPos, selection::CurrentSelection},
+        simulation::geometry::TilePos,
+    };
 
     #[test]
     fn simple_selection() {
@@ -718,5 +721,22 @@ mod tests {
         assert_eq!(selected_tiles.selected.len(), 3);
         selected_tiles.clear_selection();
         assert_eq!(selected_tiles.selected.len(), 0);
+    }
+
+    #[test]
+    fn relevant_tiles_returns_cursor_pos_with_empty_selection() {
+        let cursor_pos = CursorPos::new(TilePos::new(24, 7));
+        let mut cursor_pos_selected = SelectedTiles::default();
+        cursor_pos_selected.add_tile(cursor_pos.maybe_tile_pos().unwrap());
+
+        assert_eq!(
+            CurrentSelection::None.relevant_tiles(&cursor_pos),
+            cursor_pos_selected
+        );
+
+        assert_eq!(
+            CurrentSelection::Terrain(SelectedTiles::default()).relevant_tiles(&cursor_pos),
+            cursor_pos_selected
+        );
     }
 }

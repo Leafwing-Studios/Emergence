@@ -53,6 +53,15 @@ pub(crate) struct CursorPos {
 }
 
 impl CursorPos {
+    /// Creates a new [`CursorPos`] with the given tile position.
+    #[cfg(test)]
+    pub(crate) fn new(tile_pos: TilePos) -> Self {
+        Self {
+            tile_pos: Some(tile_pos),
+            ..Default::default()
+        }
+    }
+
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
