@@ -241,7 +241,7 @@ fn drag_camera(
     mut mouse_motion_events: EventReader<MouseMotion>,
 ) {
     /// Controls the deadzone for camera dragging
-    const DRAG_THRESHOLD: f32 = 0.01;
+    const DRAG_THRESHOLD: f32 = 2.;
 
     if actions.pressed(PlayerAction::DragCamera) {
         for event in mouse_motion_events.iter() {
