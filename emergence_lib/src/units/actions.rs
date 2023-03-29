@@ -37,7 +37,6 @@ pub(super) fn advance_action_timer(
 }
 
 /// Choose the unit's action for this turn
-#[allow(clippy::too_many_arguments)]
 pub(super) fn choose_actions(
     mut units_query: Query<
         (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
@@ -204,7 +203,6 @@ pub(super) fn start_actions(
 }
 
 /// Exhaustively handles the cleanup for each planned action
-#[allow(clippy::too_many_arguments)]
 pub(super) fn finish_actions(
     mut unit_query: Query<ActionDataQuery>,
     mut inventory_query: Query<
@@ -548,7 +546,6 @@ impl CurrentAction {
     }
 
     /// Attempt to locate a source of the provided `item_id`.
-    #[allow(clippy::too_many_arguments)]
     fn find_item(
         item_id: Id<Item>,
         unit_tile_pos: TilePos,
@@ -607,7 +604,6 @@ impl CurrentAction {
     }
 
     /// Attempt to locate a place to put an item of type `item_id`.
-    #[allow(clippy::too_many_arguments)]
     #[allow(clippy::collapsible_match)]
     fn find_storage(
         item_id: Id<Item>,
@@ -683,7 +679,6 @@ impl CurrentAction {
     }
 
     /// Attempt to locate a place to put an item of type `item_id`.
-    #[allow(clippy::too_many_arguments)]
     #[allow(clippy::collapsible_match)]
     fn find_delivery(
         item_id: Id<Item>,
@@ -753,7 +748,6 @@ impl CurrentAction {
     }
 
     /// Attempt to find a structure of type `structure_id` to perform work
-    #[allow(clippy::too_many_arguments)]
     fn find_workplace(
         structure_id: Id<Structure>,
         unit_tile_pos: TilePos,
@@ -813,7 +807,6 @@ impl CurrentAction {
     }
 
     /// Attempt to find a structure of type `structure_id` to perform work
-    #[allow(clippy::too_many_arguments)]
     fn find_demolition_site(
         structure_id: Id<Structure>,
         unit_tile_pos: TilePos,

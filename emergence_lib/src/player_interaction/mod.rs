@@ -59,8 +59,6 @@ pub(crate) enum InteractionSystem {
     UseAbilities,
     /// Spawn and despawn ghosts
     ManagePreviews,
-    /// Updates information about the hovered entities
-    HoverDetails,
 }
 
 /// Actions that the player can take to modify the game world or their view of it.
@@ -68,11 +66,15 @@ pub(crate) enum InteractionSystem {
 /// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
 pub(crate) enum PlayerAction {
-    /// Pause or unpause the game
+    /// Pause or unpause the game.
     TogglePause,
-    /// Selects a tile or group of tiles.
+    /// When the clipboard is full, places the clipboard contents on the map.
+    ///
+    /// When the clipboard is empty, selects a tile or group of tiles.
     Select,
-    /// Deselects a tile or group of tiles.
+    /// When the clipboard is full, clears the clipboard.
+    ///
+    /// When the clipboard is empty, deselects a tile or group of tiles.
     Deselect,
     /// Increases the radius of the selection by one tile.
     IncreaseSelectionRadius,
@@ -124,6 +126,10 @@ pub(crate) enum PlayerAction {
     RotateCameraLeft,
     /// Rotates the camera clockwise
     RotateCameraRight,
+    /// Toggles the status overlay
+    ToggleStatusInfo,
+    /// Toggle the signal strength overlay
+    ToggleSignalOverlay,
 }
 
 impl PlayerAction {
@@ -160,6 +166,8 @@ impl PlayerAction {
             TiltCameraDown => UserInput::modified(Modifier::Alt, KeyCode::Minus),
             RotateCameraLeft => KeyCode::Q.into(),
             RotateCameraRight => KeyCode::E.into(),
+            ToggleStatusInfo => KeyCode::F1.into(),
+            ToggleSignalOverlay => KeyCode::F2.into(),
         }
     }
 
@@ -170,6 +178,7 @@ impl PlayerAction {
 
         let camera_modifier = RightTrigger2;
         let radius_modifier = LeftTrigger;
+        let infovis_modifier = LeftTrigger2;
 
         match self {
             TogglePause => GamepadButtonType::Select.into(),
@@ -198,6 +207,8 @@ impl PlayerAction {
             TiltCameraDown => UserInput::chord([RightTrigger, DPadDown]),
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
             RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
+            ToggleStatusInfo => UserInput::chord([infovis_modifier, DPadLeft]),
+            ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
         }
     }
 

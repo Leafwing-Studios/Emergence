@@ -2,12 +2,14 @@
 
 use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardPlugin, BillboardTextBundle};
+use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::{
         manifest::{ItemManifest, StructureManifest},
         AssetState,
     },
+    player_interaction::PlayerAction,
     structures::crafting::CraftingState,
     units::goals::Goal,
 };
@@ -40,15 +42,14 @@ struct StatusVisualization {
 /// Toggles the status display on and off.
 fn toggle_status_visualization(
     mut status_visualization: ResMut<StatusVisualization>,
-    keyboard_input: Res<Input<KeyCode>>,
+    player_actions: Res<ActionState<PlayerAction>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::F2) {
+    if player_actions.just_pressed(PlayerAction::ToggleStatusInfo) {
         status_visualization.enabled = !status_visualization.enabled;
     }
 }
 
 /// Displays the status of each unit and crafting structure.
-#[allow(clippy::too_many_arguments)]
 fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Transform, &Goal)>,

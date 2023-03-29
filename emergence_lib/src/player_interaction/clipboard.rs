@@ -60,6 +60,15 @@ pub(crate) enum Clipboard {
 }
 
 impl Clipboard {
+    /// Is the clipboard empty?
+    pub(crate) fn is_empty(&self) -> bool {
+        match self {
+            Clipboard::Empty => true,
+            Clipboard::Structures(map) => map.is_empty(),
+            Clipboard::Terraform(_) => false,
+        }
+    }
+
     /// Sets the contents of the clipboard to a single structure (or clears it if [`None`] is provided).
     pub(crate) fn set_to_structure(&mut self, maybe_structure: Option<ClipboardData>) {
         *self = match maybe_structure {
@@ -145,12 +154,8 @@ impl Clipboard {
 }
 
 /// Clears the clipboard when the correct actions are pressed
-fn clear_clipboard(
-    mut clipboard: ResMut<Clipboard>,
-    current_selection: Res<CurrentSelection>,
-    actions: Res<ActionState<PlayerAction>>,
-) {
-    if current_selection.is_empty() && actions.just_pressed(PlayerAction::Deselect) {
+fn clear_clipboard(mut clipboard: ResMut<Clipboard>, actions: Res<ActionState<PlayerAction>>) {
+    if actions.just_pressed(PlayerAction::Deselect) {
         *clipboard = Clipboard::Empty;
     }
 }
@@ -262,7 +267,6 @@ fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResM
 }
 
 /// Preview the current clipboard under the cursor
-#[allow(clippy::too_many_arguments)]
 fn preview_clipboard(
     clipboard: Res<Clipboard>,
     hovered_tiles: Res<HoveredTiles>,
