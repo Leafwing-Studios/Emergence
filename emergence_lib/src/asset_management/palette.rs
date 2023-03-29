@@ -4,7 +4,7 @@
 pub(crate) mod infovis {
     use bevy::prelude::Color;
 
-    use crate::signals::SignalKind;
+    use crate::{signals::SignalKind, structures::crafting::CraftingState, units::goals::Goal};
 
     /// The alpha value used for selection/hovering/other UI overlay
     const OVERLAY_ALPHA: f32 = 0.5;
@@ -133,6 +133,70 @@ pub(crate) mod infovis {
                 Self::SIGNAL_LIGHTNESS_HIGH,
                 OVERLAY_ALPHA,
             )
+        }
+    }
+
+    impl Goal {
+        /// Returns the color associated with each variety of goal.
+        pub(crate) const fn color(&self) -> Color {
+            match self {
+                Goal::Wander { .. } => Color::Hsla {
+                    hue: 330.,
+                    saturation: 0.2,
+                    lightness: 0.9,
+                    alpha: 1.0,
+                },
+                Goal::Pickup(_) => Color::Hsla {
+                    hue: SignalKind::Pull.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Store(_) => Color::Hsla {
+                    hue: SignalKind::Stores.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Deliver(_) => Color::Hsla {
+                    hue: SignalKind::Push.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Work(_) => Color::Hsla {
+                    hue: SignalKind::Work.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Eat(_) => Color::Hsla {
+                    hue: 60.,
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Demolish(_) => Color::Hsla {
+                    hue: SignalKind::Demolish.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+            }
+        }
+    }
+
+    impl CraftingState {
+        /// Returns the color associated with each crafting state.
+        pub(crate) const fn color(&self) -> Color {
+            match self {
+                CraftingState::NeedsInput => Color::YELLOW,
+                CraftingState::InProgress { .. } => Color::GREEN,
+                CraftingState::FullAndBlocked => Color::YELLOW,
+                CraftingState::RecipeComplete => Color::PINK,
+                CraftingState::Overproduction => Color::PURPLE,
+                CraftingState::NoRecipe => Color::WHITE,
+            }
         }
     }
 }
