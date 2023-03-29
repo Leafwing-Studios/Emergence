@@ -128,6 +128,8 @@ pub(crate) struct CameraSettings {
     inclination: Rotation,
     /// The rate in radians per second that the inclination changes.
     inclination_speed: Speed,
+    /// How much should dragging the mouse rotate the camera?
+    drag_ratio: f32,
 }
 
 impl Default for CameraSettings {
@@ -142,6 +144,7 @@ impl Default for CameraSettings {
             facing: Rotation::default(),
             inclination: Rotation::from_radians(0.5 * PI / 2.),
             inclination_speed: Speed::new(0.5, 1.0, 2.0),
+            drag_ratio: 0.05,
         }
     }
 }
@@ -230,8 +233,8 @@ fn drag_camera(
 ) {
     if actions.pressed(PlayerAction::DragCamera) {
         let mut settings = camera_query.single_mut();
-        let rotation_rate = settings.rotation_speed.delta(time.delta());
-        let inclination_rate = settings.inclination_speed.delta(time.delta());
+        let rotation_rate = settings.rotation_speed.delta(time.delta()) * settings.drag_ratio;
+        let inclination_rate = settings.inclination_speed.delta(time.delta()) * settings.drag_ratio;
 
         for mouse_motion in mouse_motion_events.iter() {
             settings.facing += Rotation::from_radians(mouse_motion.delta.x * rotation_rate);
