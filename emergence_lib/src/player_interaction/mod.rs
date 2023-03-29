@@ -130,6 +130,8 @@ pub(crate) enum PlayerAction {
     ToggleStatusInfo,
     /// Toggle the signal strength overlay
     ToggleSignalOverlay,
+    /// Show / hide the strongest signal overlay
+    ToggleStrongestSignalOverlay,
 }
 
 impl PlayerAction {
@@ -168,6 +170,7 @@ impl PlayerAction {
             RotateCameraRight => KeyCode::E.into(),
             ToggleStatusInfo => KeyCode::F1.into(),
             ToggleSignalOverlay => KeyCode::F2.into(),
+            ToggleStrongestSignalOverlay => KeyCode::F3.into(),
         }
     }
 
@@ -208,7 +211,8 @@ impl PlayerAction {
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
             RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
             ToggleStatusInfo => UserInput::chord([infovis_modifier, DPadLeft]),
-            ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
+            ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadUp]),
+            ToggleStrongestSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
         }
     }
 

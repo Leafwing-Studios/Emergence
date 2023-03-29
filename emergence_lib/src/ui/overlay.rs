@@ -5,7 +5,7 @@ use crate::{
         manifest::{ItemManifest, StructureManifest, UnitManifest},
         AssetState,
     },
-    infovis::TileOverlay,
+    infovis::{OverlayType, TileOverlay},
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
 };
@@ -41,6 +41,14 @@ fn select_overlay(
     mut tile_overlay: ResMut<TileOverlay>,
     signals: Res<Signals>,
 ) {
+    if player_actions.just_pressed(PlayerAction::ToggleStrongestSignalOverlay) {
+        if tile_overlay.visualized_signal != OverlayType::StrongestSignal {
+            tile_overlay.visualized_signal = OverlayType::StrongestSignal;
+        } else {
+            tile_overlay.visualized_signal = OverlayType::None;
+        }
+    }
+
     if player_actions.just_pressed(PlayerAction::ToggleSignalOverlay) {
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
         tile_overlay.visualized_signal = signals.random_signal_type().into();
