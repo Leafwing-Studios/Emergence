@@ -88,6 +88,29 @@ impl Signals {
         LocalSignals { map: all_signals }
     }
 
+    /// Returns the strongest goal related signal at the given `tile_pos`.
+    ///
+    /// This is useful for visualization.
+    pub(crate) fn strongest_goal_signal_at_position(
+        &self,
+        tile_pos: TilePos,
+    ) -> Option<SignalType> {
+        let mut strongest_signal = None;
+        let mut strongest_strength = SignalStrength::ZERO;
+
+        for &signal_type in self.maps.keys() {
+            if Goal::try_from(signal_type).is_ok() {
+                let strength = self.get(signal_type, tile_pos);
+                if strength > strongest_strength {
+                    strongest_signal = Some(signal_type);
+                    strongest_strength = strength;
+                }
+            }
+        }
+
+        strongest_signal
+    }
+
     /// Returns the adjacent, empty tile position that contains the highest sum signal strength that can be used to meet the provided `goal`.
     ///
     /// If no suitable tile exists, [`None`] will be returned instead.

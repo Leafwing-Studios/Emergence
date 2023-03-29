@@ -42,16 +42,16 @@ fn select_overlay(
     signals: Res<Signals>,
 ) {
     if player_actions.just_pressed(PlayerAction::ToggleStrongestSignalOverlay) {
-        if tile_overlay.visualized_signal != OverlayType::StrongestSignal {
-            tile_overlay.visualized_signal = OverlayType::StrongestSignal;
+        if tile_overlay.overlay_type != OverlayType::StrongestSignal {
+            tile_overlay.overlay_type = OverlayType::StrongestSignal;
         } else {
-            tile_overlay.visualized_signal = OverlayType::None;
+            tile_overlay.overlay_type = OverlayType::None;
         }
     }
 
     if player_actions.just_pressed(PlayerAction::ToggleSignalOverlay) {
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
-        tile_overlay.visualized_signal = signals.random_signal_type().into();
+        tile_overlay.overlay_type = signals.random_signal_type().into();
     }
 }
 
@@ -117,7 +117,7 @@ fn update_signal_type_display(
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
     let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
 
-    match &tile_overlay.visualized_signal {
+    match &tile_overlay.overlay_type {
         crate::infovis::OverlayType::None => {
             text.sections[0].value = "No signal".to_string();
             text.sections[0].style = TextStyle {
@@ -141,6 +141,15 @@ fn update_signal_type_display(
 
             legend.texture = tile_overlay.legend_image_handle(signal_kind)
         }
-        crate::infovis::OverlayType::StrongestSignal => todo!(),
+        crate::infovis::OverlayType::StrongestSignal => {
+            text.sections[0].value = "Strongest goal-relevant signal".to_string();
+            text.sections[0].style = TextStyle {
+                font: fonts.regular.clone_weak(),
+                font_size: 20.0,
+                color: Color::WHITE,
+            };
+
+            legend.texture = Handle::default();
+        }
     }
 }

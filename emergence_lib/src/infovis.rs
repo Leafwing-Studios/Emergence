@@ -59,7 +59,7 @@ fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
 #[derive(Resource, Debug)]
 pub(crate) struct TileOverlay {
     /// The type of signal that is currently being visualized.
-    pub(crate) visualized_signal: OverlayType,
+    pub(crate) overlay_type: OverlayType,
     /// The materials used to visualize the signal strength.
     ///
     /// Note that we cannot simply store a `Vec<Color>` here,
@@ -174,7 +174,7 @@ impl FromWorld for TileOverlay {
         }
 
         Self {
-            visualized_signal: OverlayType::None,
+            overlay_type: OverlayType::None,
             color_ramps,
             legends,
         }
@@ -234,35 +234,41 @@ fn set_overlay_material(
     signals: Res<Signals>,
     tile_overlay: Res<TileOverlay>,
 ) {
-    match &tile_overlay.visualized_signal {
-        OverlayType::None => (),
-        OverlayType::Single(signal_type) => {
-            for (tile_pos, children) in terrain_query.iter() {
-                // This is promised to be the correct entity in the initialization of the terrain's children
-                let overlay_entity = children[1];
+    if tile_overlay.overlay_type == OverlayType::None {
+        return;
+    }
 
-                if let Ok((mut overlay_material, mut overlay_visibility)) =
-                    overlay_query.get_mut(overlay_entity)
-                {
-                    let signal_strength = signals.get(*signal_type, *tile_pos);
-                    let signal_kind = (*signal_type).into();
-                    let maybe_material = tile_overlay.get_material(signal_kind, signal_strength);
-                    match maybe_material {
-                        Some(material) => {
-                            *overlay_visibility = Visibility::Visible;
-                            *overlay_material = material;
-                        }
-                        None => {
-                            *overlay_visibility = Visibility::Hidden;
-                        }
+    for (&tile_pos, children) in terrain_query.iter() {
+        // This is promised to be the correct entity in the initialization of the terrain's children
+        let overlay_entity = children[1];
+
+        if let Ok((mut overlay_material, mut overlay_visibility)) =
+            overlay_query.get_mut(overlay_entity)
+        {
+            let maybe_signal_type = match tile_overlay.overlay_type {
+                OverlayType::None => None,
+                OverlayType::Single(signal_type) => Some(signal_type),
+                OverlayType::StrongestSignal => signals.strongest_goal_signal_at_position(tile_pos),
+            };
+
+            if let Some(signal_type) = maybe_signal_type {
+                let signal_strength = signals.get(signal_type, tile_pos);
+                let signal_kind = signal_type.into();
+                let maybe_material = tile_overlay.get_material(signal_kind, signal_strength);
+                match maybe_material {
+                    Some(material) => {
+                        *overlay_visibility = Visibility::Visible;
+                        *overlay_material = material;
                     }
-                } else {
-                    error!("Could not get overlay entity for tile {tile_pos:?}");
+                    None => {
+                        *overlay_visibility = Visibility::Hidden;
+                    }
                 }
             }
+        } else {
+            error!("Could not get overlay entity for tile {tile_pos:?}");
         }
-        OverlayType::StrongestSignal => todo!(),
-    };
+    }
 }
 
 /// Displays the overlay of the tile
@@ -281,7 +287,7 @@ fn display_tile_overlay(
 
         match object_interaction {
             ObjectInteraction::None => {
-                if tile_overlay.visualized_signal.is_none() {
+                if tile_overlay.overlay_type.is_none() {
                     *overlay_visibility = Visibility::Hidden;
                 }
             }
