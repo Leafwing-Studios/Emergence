@@ -10,13 +10,13 @@ use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
+use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::Id;
 use crate::asset_management::manifest::Structure;
 use crate::asset_management::manifest::Terrain;
 use crate::asset_management::manifest::Unit;
-use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::construction::Ghost;
@@ -53,11 +53,11 @@ impl Plugin for CameraPlugin {
 const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 
 /// Spawns a [`Camera3dBundle`] and associated camera components.
-fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
+fn setup_camera(mut commands: Commands) {
     let focus = CameraFocus::default();
     let settings = CameraSettings::default();
-    let facing = Facing::default();
-    let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
+    let facing = CameraFacing::default();
+    let planar_angle = facing.planar_angle.into_radians();
 
     let transform = compute_camera_transform(&focus, planar_angle, settings.inclination);
     let projection = Projection::Perspective(PerspectiveProjection {
@@ -74,7 +74,7 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
         })
         .insert(settings)
         .insert(focus)
-        .insert(Facing::default())
+        .insert(facing)
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<Id<Structure>>::new())
         .insert(RaycastSource::<Id<Unit>>::new())
@@ -101,6 +101,15 @@ impl Default for CameraFocus {
             distance: STARTING_DISTANCE_FROM_ORIGIN,
         }
     }
+}
+
+/// The direction that the camera is facing.
+///
+/// This is stored as a rotation around the vertical axis, in radians.
+#[derive(Component, Debug, Default)]
+struct CameraFacing {
+    /// The angle in radians that the camera forms around the z-axis.
+    planar_angle: Rotation,
 }
 
 /// Configure how the camera moves and feels.
@@ -141,7 +150,7 @@ impl Default for CameraSettings {
         CameraSettings {
             zoom_speed: Speed::new(400., 300.0, 1000.0),
             pan_speed: Speed::new(50., 100.0, 150.0),
-            rotation_speed: Speed::new(1.0, 3.0, 5.0),
+            rotation_speed: Speed::new(1.0, 2.0, 4.0),
             min_zoom: 10.,
             max_zoom: 500.,
             float_radius: 3,
@@ -297,7 +306,12 @@ fn zoom(
 /// Pan the camera
 fn translate_camera(
     mut camera_query: Query<
-        (&Transform, &mut CameraFocus, &Facing, &mut CameraSettings),
+        (
+            &Transform,
+            &mut CameraFocus,
+            &CameraFacing,
+            &mut CameraSettings,
+        ),
         With<Camera3d>,
     >,
     time: Res<Time>,
@@ -323,7 +337,7 @@ fn translate_camera(
             z: scaled_xy.x,
         };
 
-        let facing_angle = facing.direction.angle(&map_geometry.layout.orientation);
+        let facing_angle = facing.planar_angle.into_radians();
         let rotation = Quat::from_rotation_y(facing_angle);
         let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
@@ -353,25 +367,35 @@ fn translate_camera(
 
 /// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<&mut Facing, With<Camera3d>>,
+    mut query: Query<(&mut CameraFacing, &mut CameraSettings), With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
+    time: Res<Time>,
 ) {
-    let mut facing = query.single_mut();
+    let (mut facing, mut settings) = query.single_mut();
+
+    let delta = settings.rotation_speed.delta(time.delta());
 
     // Set facing
-    if actions.just_pressed(PlayerAction::RotateCameraLeft) {
-        facing.rotate_right();
+    if actions.pressed(PlayerAction::RotateCameraLeft) {
+        facing.planar_angle -= Rotation::from_radians(delta);
     }
 
-    if actions.just_pressed(PlayerAction::RotateCameraRight) {
-        facing.rotate_left();
+    if actions.pressed(PlayerAction::RotateCameraRight) {
+        facing.planar_angle += Rotation::from_radians(delta);
     }
 }
 
 /// Move the camera around a central point, constantly looking at it and maintaining a fixed distance.
 fn move_camera_to_goal(
-    mut query: Query<(&mut Transform, &Facing, &CameraFocus, &mut CameraSettings), With<Camera3d>>,
-    map_geometry: Res<MapGeometry>,
+    mut query: Query<
+        (
+            &mut Transform,
+            &CameraFacing,
+            &CameraFocus,
+            &mut CameraSettings,
+        ),
+        With<Camera3d>,
+    >,
     mut cached_planar_angle: Local<Option<f32>>,
     time: Res<Time>,
 ) {
@@ -383,7 +407,7 @@ fn move_camera_to_goal(
     let (mut transform, facing, focus, mut settings) = query.single_mut();
 
     // Determine our goal
-    let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
+    let final_planar_angle = facing.planar_angle.into_radians();
 
     // The cached planar angle must begin uninitialized: otherwise changes to the default facing will result in a delay as  we pan towards it.
     // If it was uninitialized, start it at the final location.
