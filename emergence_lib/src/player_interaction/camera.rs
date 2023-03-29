@@ -238,7 +238,10 @@ fn drag_camera(
 
         for mouse_motion in mouse_motion_events.iter() {
             settings.facing += Rotation::from_radians(mouse_motion.delta.x * rotation_rate);
-            settings.inclination += Rotation::from_radians(mouse_motion.delta.y * inclination_rate);
+            let proposed_inclination =
+                settings.inclination.into_radians() + mouse_motion.delta.y * inclination_rate;
+            let actual_inclination = proposed_inclination.clamp(0.0, PI / 2. - 1e-6);
+            settings.inclination = Rotation::from_radians(actual_inclination);
         }
     }
 }
