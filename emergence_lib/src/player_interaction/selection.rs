@@ -554,7 +554,8 @@ impl SelectionState {
         };
 
         // If the clipboard is not empty, PlayerAction::Select is used to paste from the clipboard instead of selecting.
-        if !clipboard.is_empty() {
+        // Allow users to override this using shift+select to expand or shrink their selection.
+        if !clipboard.is_empty() && !self.multiple {
             self.action = SelectionAction::Preview;
         }
     }
