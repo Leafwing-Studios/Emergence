@@ -194,7 +194,7 @@ fn copy_selection(
     structure_query: Query<ClipboardQuery, Without<Preview>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    if actions.just_pressed(PlayerAction::Pipette) {
+    if actions.just_pressed(PlayerAction::Copy) {
         // We want to replace our selection, rather than add to it
         let mut map = HashMap::new();
 

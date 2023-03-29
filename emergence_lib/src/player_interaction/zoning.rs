@@ -107,7 +107,7 @@ fn set_zoning(
     }
 
     // Apply zoning
-    if actions.pressed(PlayerAction::Zone) {
+    if actions.pressed(PlayerAction::Paste) {
         match &*clipboard {
             Clipboard::Terraform(terraform_choice) => {
                 for terrain_entity in relevant_terrain_entities {

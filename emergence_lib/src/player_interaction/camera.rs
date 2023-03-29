@@ -326,7 +326,7 @@ fn translate_camera(
     }
 
     // Snap to selected object
-    if actions.pressed(PlayerAction::SnapToSelection) {
+    if actions.pressed(PlayerAction::CenterCameraOnSelection) {
         let tile_to_snap_to = match &*selection {
             CurrentSelection::Ghost(entity)
             | CurrentSelection::Unit(entity)

@@ -39,7 +39,7 @@ impl Plugin for SelectTerraformingPlugin {
 }
 
 impl Choice for TerraformingChoice {
-    const ACTIVATION: PlayerAction = PlayerAction::Terraform;
+    const ACTIVATION: PlayerAction = PlayerAction::SelectTerraform;
 }
 
 /// Update the set of choices available to build whenever the terrain manifest is updated
