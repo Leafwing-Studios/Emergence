@@ -246,8 +246,8 @@ fn drag_camera(
     if actions.pressed(PlayerAction::DragCamera) {
         for event in mouse_motion_events.iter() {
             match event.delta.x {
-                x if x > DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraRight),
-                x if x < -DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraLeft),
+                x if x > DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraLeft),
+                x if x < -DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraRight),
                 _ => (),
             }
 
