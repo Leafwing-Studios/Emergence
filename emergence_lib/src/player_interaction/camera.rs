@@ -35,7 +35,11 @@ impl Plugin for CameraPlugin {
         app.add_startup_system(setup_camera)
             .add_system(mousewheel_zoom.before(zoom))
             .add_system(zoom)
-            .add_system(drag_camera.before(set_camera_inclination))
+            .add_system(
+                drag_camera
+                    .before(set_camera_inclination)
+                    .before(rotate_camera),
+            )
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
@@ -222,7 +226,7 @@ fn mousewheel_zoom(
     mouse_wheel_events.clear();
 }
 
-/// Use middle-mouse + drag to tilt the camera up and down
+/// Use middle-mouse + drag to rotate the camera and tilt it up and down
 fn drag_camera(
     mut actions: ResMut<ActionState<PlayerAction>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
@@ -232,6 +236,12 @@ fn drag_camera(
 
     if actions.pressed(PlayerAction::DragCamera) {
         for event in mouse_motion_events.iter() {
+            match event.delta.x {
+                x if x > DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraRight),
+                x if x < -DRAG_THRESHOLD => actions.press(PlayerAction::RotateCameraLeft),
+                _ => (),
+            }
+
             match event.delta.y {
                 y if y > DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraUp),
                 y if y < -DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraDown),
