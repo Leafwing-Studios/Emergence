@@ -59,8 +59,6 @@ pub(crate) enum InteractionSystem {
     UseAbilities,
     /// Spawn and despawn ghosts
     ManagePreviews,
-    /// Updates information about the hovered entities
-    HoverDetails,
 }
 
 /// Actions that the player can take to modify the game world or their view of it.
