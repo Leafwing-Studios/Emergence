@@ -5,7 +5,7 @@ use crate::{
         manifest::{ItemManifest, StructureManifest, UnitManifest},
         AssetState,
     },
-    infovis::TileOverlay,
+    infovis::{OverlayType, TileOverlay},
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
 };
@@ -41,9 +41,17 @@ fn select_overlay(
     mut tile_overlay: ResMut<TileOverlay>,
     signals: Res<Signals>,
 ) {
+    if player_actions.just_pressed(PlayerAction::ToggleStrongestSignalOverlay) {
+        if tile_overlay.overlay_type != OverlayType::StrongestSignal {
+            tile_overlay.overlay_type = OverlayType::StrongestSignal;
+        } else {
+            tile_overlay.overlay_type = OverlayType::None;
+        }
+    }
+
     if player_actions.just_pressed(PlayerAction::ToggleSignalOverlay) {
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
-        tile_overlay.visualized_signal = signals.random_signal_type();
+        tile_overlay.overlay_type = signals.random_signal_type().into();
     }
 }
 
@@ -108,27 +116,72 @@ fn update_signal_type_display(
 ) {
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
     let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
+    let font_size = 20.0;
 
-    if let Some(signal_type) = tile_overlay.visualized_signal {
-        let signal_kind: SignalKind = signal_type.into();
+    match &tile_overlay.overlay_type {
+        crate::infovis::OverlayType::None => {
+            text.sections = vec![TextSection {
+                value: "No signal".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
 
-        text.sections[0].value =
-            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
-        text.sections[0].style = TextStyle {
-            font: text.sections[0].style.font.clone_weak(),
-            font_size: 20.0,
-            color: signal_kind.color(),
-        };
+            legend.texture = Handle::default();
+        }
+        crate::infovis::OverlayType::Single(signal_type) => {
+            let signal_kind: SignalKind = (*signal_type).into();
 
-        legend.texture = tile_overlay.legend_image_handle(signal_kind)
-    } else {
-        text.sections[0].value = "No signal".to_string();
-        text.sections[0].style = TextStyle {
-            font: fonts.regular.clone_weak(),
-            font_size: 20.0,
-            color: Color::WHITE,
-        };
+            text.sections = vec![TextSection {
+                value: signal_type.display(&item_manifest, &structure_manifest, &unit_manifest),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: signal_kind.color(),
+                },
+            }];
 
-        legend.texture = Handle::default();
+            legend.texture = tile_overlay.legend_image_handle(signal_kind)
+        }
+        crate::infovis::OverlayType::StrongestSignal => {
+            text.sections = vec![
+                TextSection {
+                    value: "Push\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Push.color(),
+                    },
+                },
+                TextSection {
+                    value: "Pull\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Pull.color(),
+                    },
+                },
+                TextSection {
+                    value: "Work\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Work.color(),
+                    },
+                },
+                TextSection {
+                    value: "Demolish".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Demolish.color(),
+                    },
+                },
+            ];
+
+            legend.texture = Handle::default();
+        }
     }
 }
