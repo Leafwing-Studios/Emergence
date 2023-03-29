@@ -50,7 +50,6 @@ fn toggle_status_visualization(
 }
 
 /// Displays the status of each unit and crafting structure.
-#[allow(clippy::too_many_arguments)]
 fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Transform, &Goal)>,

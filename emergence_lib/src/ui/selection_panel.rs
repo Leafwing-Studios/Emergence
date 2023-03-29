@@ -108,7 +108,6 @@ fn populate_hover_panel(
 }
 
 /// Updates UI elements for hover details based on new information.
-#[allow(clippy::too_many_arguments)]
 fn update_hover_details(
     selection_details: Res<SelectionDetails>,
     mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
@@ -260,7 +259,6 @@ pub(crate) enum SelectionDetails {
 }
 
 /// Get details about the hovered entity.
-#[allow(clippy::too_many_arguments)]
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,

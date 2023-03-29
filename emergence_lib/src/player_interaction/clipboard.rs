@@ -267,7 +267,6 @@ fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResM
 }
 
 /// Preview the current clipboard under the cursor
-#[allow(clippy::too_many_arguments)]
 fn preview_clipboard(
     clipboard: Res<Clipboard>,
     hovered_tiles: Res<HoveredTiles>,

@@ -5,6 +5,8 @@
 #![warn(clippy::doc_markdown)]
 // Often exceeded by queries
 #![allow(clippy::type_complexity)]
+// Unhelpful for systems
+#![allow(clippy::too_many_arguments)]
 
 pub mod asset_management;
 pub mod curves;
