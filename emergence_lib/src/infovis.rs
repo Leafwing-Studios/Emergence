@@ -69,6 +69,7 @@ pub(crate) struct TileOverlay {
     legends: HashMap<SignalKind, Handle<Image>>,
 }
 
+/// The type of information that is being visualized by the overlay.
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum OverlayType {
     /// No signal is being visualized.
