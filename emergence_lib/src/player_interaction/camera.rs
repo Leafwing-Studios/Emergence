@@ -149,7 +149,7 @@ impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
             zoom_speed: Speed::new(400., 300.0, 1000.0),
-            pan_speed: Speed::new(50., 100.0, 150.0),
+            pan_speed: Speed::new(10., 20.0, 20.0),
             rotation_speed: Speed::new(1.0, 2.0, 4.0),
             min_zoom: 10.,
             max_zoom: 500.,
