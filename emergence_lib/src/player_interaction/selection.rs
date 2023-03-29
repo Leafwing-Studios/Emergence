@@ -297,15 +297,23 @@ impl CurrentSelection {
     /// Returns the set of terrain tiles that should be affected by actions.
     pub(super) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
         match self {
-            CurrentSelection::Terrain(selected_tiles) => selected_tiles.clone(),
-            _ => match cursor_pos.maybe_tile_pos() {
-                Some(cursor_tile_pos) => {
+            CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
+                true => {
                     let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_tile(cursor_tile_pos);
+                    if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                        selected_tiles.add_tile(cursor_tile_pos);
+                    }
                     selected_tiles
                 }
-                None => SelectedTiles::default(),
+                false => selected_tiles.clone(),
             },
+            _ => {
+                let mut selected_tiles = SelectedTiles::default();
+                if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                    selected_tiles.add_tile(cursor_tile_pos);
+                }
+                selected_tiles
+            }
         }
     }
 
