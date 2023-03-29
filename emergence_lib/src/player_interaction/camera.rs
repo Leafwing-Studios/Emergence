@@ -346,6 +346,9 @@ fn set_camera_focus(
             let euler = quat.to_euler(EulerRot::YXZ);
             let angle_around_y = euler.0;
             settings.facing = Rotation::from_radians(angle_around_y);
+        } else {
+            // If we don't have a unit selected, go back to free camera mode
+            settings.camera_mode = CameraMode::Free;
         }
     }
 }
