@@ -94,19 +94,19 @@ pub(crate) mod infovis {
         pub(crate) const fn hue(&self) -> f32 {
             match self {
                 // Orange
-                SignalKind::Push => 30.,
+                SignalKind::Pull => 20.,
                 // Yellow
-                SignalKind::Contains => 60.,
+                SignalKind::Stores => 70.,
                 // Green
-                SignalKind::Pull => 120.,
+                SignalKind::Push => 130.,
                 // Teal
-                SignalKind::Stores => 180.,
-                // Blue
-                SignalKind::Work => 240.,
+                SignalKind::Contains => 180.,
+                // Purple
+                SignalKind::Work => 300.,
                 // Red
                 SignalKind::Demolish => 0.,
-                // Purple
-                SignalKind::Unit => 300.,
+                // Blue
+                SignalKind::Unit => 220.,
             }
         }
 
