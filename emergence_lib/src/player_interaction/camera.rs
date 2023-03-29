@@ -41,14 +41,13 @@ impl Plugin for CameraPlugin {
             )
             .add_system(
                 set_camera_focus
-                    // Prevent the camera from rotating while following a unit
-                    .after(rotate_camera)
-                    // Avoid one-frame lag  when following a unit
-                    .before(translate_camera),
+                    // Allow users to break out of CameraMode::Follow by moving the camera manually
+                    .before(rotate_camera)
+                    .before(pan_camera),
             )
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
-            .add_system(translate_camera.before(InteractionSystem::MoveCamera))
+            .add_system(pan_camera.before(InteractionSystem::MoveCamera))
             .add_system(move_camera_to_goal.in_set(InteractionSystem::MoveCamera));
     }
 }
@@ -354,7 +353,7 @@ fn set_camera_focus(
 }
 
 /// Pan the camera
-fn translate_camera(
+fn pan_camera(
     mut camera_query: Query<(&Transform, &mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
@@ -364,6 +363,8 @@ fn translate_camera(
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
+        settings.camera_mode = CameraMode::Free;
+
         let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy
@@ -402,10 +403,12 @@ fn rotate_camera(
 
     // Set facing
     if actions.pressed(PlayerAction::RotateCameraLeft) {
+        settings.camera_mode = CameraMode::Free;
         settings.facing -= Rotation::from_radians(delta);
     }
 
     if actions.pressed(PlayerAction::RotateCameraRight) {
+        settings.camera_mode = CameraMode::Free;
         settings.facing += Rotation::from_radians(delta);
     }
 }
