@@ -86,26 +86,26 @@ pub(crate) enum PlayerAction {
     Line,
     /// Selects a structure from a wheel menu.
     SelectStructure,
+    /// Set the height of a tile.
+    SelectTerraform,
     /// Selects the structure on the tile under the player's cursor.
     ///
     /// If there is no structure there, the player's selection is cleared.
-    Pipette,
+    Copy,
     /// Sets the zoning of all currently selected tiles to the currently selected structure.
     ///
     /// If no structure is selected to build, zoning will be set to [`Zoning::None`](zoning::Zoning::None).
-    Zone,
+    Paste,
     /// Sets the zoning of all currently selected tiles to [`Zoning::None`](zoning::Zoning::None).
     ClearZoning,
     /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](zoning::Zoning::KeepClear).
     KeepClear,
-    /// Set the height of a tile.
-    Terraform,
     /// Rotates the conents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
     RotateClipboardRight,
     /// Snaps the camera to the selected object
-    SnapToSelection,
+    CenterCameraOnSelection,
     /// Drag the camera with the cursor
     DragCamera,
     /// Move the camera from side to side
@@ -140,15 +140,15 @@ impl PlayerAction {
             Multiple => Modifier::Shift.into(),
             Area => Modifier::Control.into(),
             Line => Modifier::Alt.into(),
-            SelectStructure => KeyCode::E.into(),
-            Pipette => KeyCode::Q.into(),
-            Zone => KeyCode::Return.into(),
+            SelectStructure => KeyCode::Key1.into(),
+            SelectTerraform => KeyCode::Key2.into(),
+            Copy => UserInput::modified(Modifier::Control, KeyCode::C),
+            Paste => UserInput::modified(Modifier::Control, KeyCode::V),
             ClearZoning => KeyCode::Back.into(),
             KeepClear => KeyCode::Delete.into(),
-            Terraform => KeyCode::G.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
-            SnapToSelection => KeyCode::L.into(),
+            CenterCameraOnSelection => KeyCode::L.into(),
             DragCamera => MouseButton::Middle.into(),
             Pan => VirtualDPad::wasd().into(),
             MoveCursor => VirtualDPad::arrow_keys().into(),
@@ -158,8 +158,8 @@ impl PlayerAction {
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
             TiltCameraUp => UserInput::modified(Modifier::Alt, KeyCode::Equals),
             TiltCameraDown => UserInput::modified(Modifier::Alt, KeyCode::Minus),
-            RotateCameraLeft => KeyCode::Z.into(),
-            RotateCameraRight => KeyCode::C.into(),
+            RotateCameraLeft => KeyCode::Q.into(),
+            RotateCameraRight => KeyCode::E.into(),
         }
     }
 
@@ -181,14 +181,14 @@ impl PlayerAction {
             Area => LeftTrigger.into(),
             Line => LeftTrigger2.into(),
             SelectStructure => RightThumb.into(),
-            Pipette => West.into(),
-            Zone => North.into(),
+            Copy => West.into(),
+            Paste => North.into(),
             ClearZoning => DPadUp.into(),
             KeepClear => DPadDown.into(),
-            Terraform => UserInput::chord([radius_modifier, North]),
+            SelectTerraform => UserInput::chord([radius_modifier, North]),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
-            SnapToSelection => GamepadButtonType::LeftThumb.into(),
+            CenterCameraOnSelection => GamepadButtonType::LeftThumb.into(),
             DragCamera => GamepadButtonType::RightThumb.into(),
             Pan => DualAxis::left_stick().into(),
             MoveCursor => DualAxis::right_stick().into(),

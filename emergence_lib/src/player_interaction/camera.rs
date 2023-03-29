@@ -3,20 +3,19 @@
 //! This RTS-style camera can zoom, pan and rotate.
 
 use std::f32::consts::PI;
-use std::f32::consts::TAU;
 
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
+use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::Id;
 use crate::asset_management::manifest::Structure;
 use crate::asset_management::manifest::Terrain;
 use crate::asset_management::manifest::Unit;
-use crate::simulation::geometry::Facing;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::construction::Ghost;
@@ -35,7 +34,11 @@ impl Plugin for CameraPlugin {
         app.add_startup_system(setup_camera)
             .add_system(mousewheel_zoom.before(zoom))
             .add_system(zoom)
-            .add_system(drag_camera.before(set_camera_inclination))
+            .add_system(
+                drag_camera
+                    .before(set_camera_inclination)
+                    .before(rotate_camera),
+            )
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
             .add_system(translate_camera.before(InteractionSystem::MoveCamera))
@@ -49,13 +52,11 @@ impl Plugin for CameraPlugin {
 const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 
 /// Spawns a [`Camera3dBundle`] and associated camera components.
-fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
+fn setup_camera(mut commands: Commands) {
     let focus = CameraFocus::default();
     let settings = CameraSettings::default();
-    let facing = Facing::default();
-    let planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
 
-    let transform = compute_camera_transform(&focus, planar_angle, settings.inclination);
+    let transform = compute_camera_transform(&focus, settings.facing, settings.inclination);
     let projection = Projection::Perspective(PerspectiveProjection {
         fov: 0.2,
         ..Default::default()
@@ -70,7 +71,6 @@ fn setup_camera(mut commands: Commands, map_geometry: Res<MapGeometry>) {
         })
         .insert(settings)
         .insert(focus)
-        .insert(Facing::default())
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<Id<Structure>>::new())
         .insert(RaycastSource::<Id<Unit>>::new())
@@ -106,6 +106,8 @@ pub(crate) struct CameraSettings {
     zoom_speed: Speed,
     /// Controls the rate that the camera can moves from side to side.
     pan_speed: Speed,
+    /// The angle in radians that the camera forms around the y axis.
+    facing: Rotation,
     /// Controls how fast the camera rotates around the vertical axis.
     ///
     /// Units are in radians per second.
@@ -123,26 +125,26 @@ pub(crate) struct CameraSettings {
     /// Increasing this value will result in a "smoother ride" over the hills and valleys of the map.
     float_radius: u32,
     /// The angle in radians that the camera forms with the ground.
-    ///
-    /// This value should be between 0 (horizontal) and PI / 2 (vertical).
-    inclination: f32,
+    inclination: Rotation,
     /// The rate in radians per second that the inclination changes.
-    ///
-    /// This value should be positive.
-    inclination_speed: f32,
+    inclination_speed: Speed,
+    /// How much should dragging the mouse rotate the camera?
+    drag_ratio: f32,
 }
 
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
             zoom_speed: Speed::new(400., 300.0, 1000.0),
-            pan_speed: Speed::new(50., 100.0, 150.0),
-            rotation_speed: Speed::new(1.0, 3.0, 5.0),
+            pan_speed: Speed::new(10., 20.0, 20.0),
+            rotation_speed: Speed::new(1.0, 2.0, 4.0),
             min_zoom: 10.,
             max_zoom: 500.,
             float_radius: 3,
-            inclination: 0.5 * PI / 2.,
-            inclination_speed: 1.,
+            facing: Rotation::default(),
+            inclination: Rotation::from_radians(0.5 * PI / 2.),
+            inclination_speed: Speed::new(0.5, 1.0, 2.0),
+            drag_ratio: 0.05,
         }
     }
 }
@@ -222,21 +224,24 @@ fn mousewheel_zoom(
     mouse_wheel_events.clear();
 }
 
-/// Use middle-mouse + drag to tilt the camera up and down
+/// Use middle-mouse + drag to rotate the camera and tilt it up and down
 fn drag_camera(
-    mut actions: ResMut<ActionState<PlayerAction>>,
+    actions: Res<ActionState<PlayerAction>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
+    mut camera_query: Query<&mut CameraSettings>,
+    time: Res<Time>,
 ) {
-    /// Controls the deadzone for camera dragging
-    const DRAG_THRESHOLD: f32 = 0.01;
-
     if actions.pressed(PlayerAction::DragCamera) {
-        for event in mouse_motion_events.iter() {
-            match event.delta.y {
-                y if y > DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraUp),
-                y if y < -DRAG_THRESHOLD => actions.press(PlayerAction::TiltCameraDown),
-                _ => (),
-            }
+        let mut settings = camera_query.single_mut();
+        let rotation_rate = settings.rotation_speed.delta(time.delta()) * settings.drag_ratio;
+        let inclination_rate = settings.inclination_speed.delta(time.delta()) * settings.drag_ratio;
+
+        for mouse_motion in mouse_motion_events.iter() {
+            settings.facing += Rotation::from_radians(mouse_motion.delta.x * rotation_rate);
+            let proposed_inclination =
+                settings.inclination.into_radians() + mouse_motion.delta.y * inclination_rate;
+            let actual_inclination = proposed_inclination.clamp(0.0, PI / 2. - 1e-6);
+            settings.inclination = Rotation::from_radians(actual_inclination);
         }
     }
 }
@@ -250,14 +255,16 @@ fn set_camera_inclination(
     let mut settings = camera_query.single_mut();
 
     let delta = if actions.pressed(PlayerAction::TiltCameraUp) {
-        settings.inclination_speed * time.delta_seconds()
+        settings.inclination_speed.delta(time.delta())
     } else if actions.pressed(PlayerAction::TiltCameraDown) {
-        -settings.inclination_speed * time.delta_seconds()
+        -settings.inclination_speed.delta(time.delta())
     } else {
         return;
     };
+    let proposed = settings.inclination.into_radians() + delta;
     // Cannot actually use PI/2., as this results in a singular matrix which causes look_at to fail in weird ways
-    settings.inclination = (settings.inclination + delta).clamp(0.0, PI / 2. - 1e-6);
+    let actual = proposed.clamp(0.0, PI / 2. - 1e-6);
+    settings.inclination = Rotation::from_radians(actual);
 }
 
 /// Zooms the camera in and out
@@ -286,17 +293,14 @@ fn zoom(
 
 /// Pan the camera
 fn translate_camera(
-    mut camera_query: Query<
-        (&Transform, &mut CameraFocus, &Facing, &mut CameraSettings),
-        With<Camera3d>,
-    >,
+    mut camera_query: Query<(&Transform, &mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
     selection: Res<CurrentSelection>,
     tile_pos_query: Query<&TilePos>,
 ) {
-    let (transform, mut focus, facing, mut settings) = camera_query.single_mut();
+    let (transform, mut focus, mut settings) = camera_query.single_mut();
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
@@ -313,7 +317,7 @@ fn translate_camera(
             z: scaled_xy.x,
         };
 
-        let facing_angle = facing.direction.angle(&map_geometry.layout.orientation);
+        let facing_angle = settings.facing.into_radians();
         let rotation = Quat::from_rotation_y(facing_angle);
         let oriented_translation = rotation.mul_vec3(unoriented_translation);
 
@@ -326,7 +330,7 @@ fn translate_camera(
     }
 
     // Snap to selected object
-    if actions.pressed(PlayerAction::SnapToSelection) {
+    if actions.pressed(PlayerAction::CenterCameraOnSelection) {
         let tile_to_snap_to = match &*selection {
             CurrentSelection::Ghost(entity)
             | CurrentSelection::Unit(entity)
@@ -343,70 +347,40 @@ fn translate_camera(
 
 /// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<&mut Facing, With<Camera3d>>,
+    mut query: Query<&mut CameraSettings, With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
+    time: Res<Time>,
 ) {
-    let mut facing = query.single_mut();
+    let mut settings = query.single_mut();
+
+    let delta = settings.rotation_speed.delta(time.delta());
 
     // Set facing
-    if actions.just_pressed(PlayerAction::RotateCameraLeft) {
-        facing.rotate_right();
+    if actions.pressed(PlayerAction::RotateCameraLeft) {
+        settings.facing -= Rotation::from_radians(delta);
     }
 
-    if actions.just_pressed(PlayerAction::RotateCameraRight) {
-        facing.rotate_left();
+    if actions.pressed(PlayerAction::RotateCameraRight) {
+        settings.facing += Rotation::from_radians(delta);
     }
 }
 
 /// Move the camera around a central point, constantly looking at it and maintaining a fixed distance.
 fn move_camera_to_goal(
-    mut query: Query<(&mut Transform, &Facing, &CameraFocus, &mut CameraSettings), With<Camera3d>>,
-    map_geometry: Res<MapGeometry>,
-    mut cached_planar_angle: Local<Option<f32>>,
-    time: Res<Time>,
+    mut query: Query<(&mut Transform, &CameraFocus, &CameraSettings), With<Camera3d>>,
 ) {
-    /// Differences in target angle below this amount are ignored.
-    ///
-    /// This reduces camera jitter.
-    const ROTATION_EPSILON: f32 = 1e-3;
-
-    let (mut transform, facing, focus, mut settings) = query.single_mut();
-
-    // Determine our goal
-    let final_planar_angle = facing.direction.angle(&map_geometry.layout.orientation);
-
-    // The cached planar angle must begin uninitialized: otherwise changes to the default facing will result in a delay as  we pan towards it.
-    // If it was uninitialized, start it at the final location.
-    let intermediate_planar_angle = cached_planar_angle.unwrap_or(final_planar_angle);
-
-    // Compute the shortest distance between them
-    // Formula from https://stackoverflow.com/a/7869457
-    let signed_rotation =
-        (final_planar_angle - intermediate_planar_angle + PI).rem_euclid(TAU) - PI;
-
-    if signed_rotation.abs() < ROTATION_EPSILON {
-        *cached_planar_angle = Some(final_planar_angle);
-    } else {
-        // Compute the correct rotation
-        let max_rotation = settings.rotation_speed.delta(time.delta());
-
-        // Make sure not to overshoot
-        let actual_signed_distance = if signed_rotation > 0. {
-            signed_rotation.min(max_rotation)
-        } else {
-            signed_rotation.max(-max_rotation)
-        };
-
-        // Actually mutate the intermediate angle
-        *cached_planar_angle = Some(intermediate_planar_angle + actual_signed_distance);
-    }
+    let (mut transform, focus, settings) = query.single_mut();
 
     // Replace the previous transform
-    *transform = compute_camera_transform(focus, intermediate_planar_angle, settings.inclination);
+    *transform = compute_camera_transform(focus, settings.facing, settings.inclination);
 }
 
 /// Computes the camera transform such that it is looking at `focus`
-fn compute_camera_transform(focus: &CameraFocus, planar_angle: f32, inclination: f32) -> Transform {
+fn compute_camera_transform(
+    focus: &CameraFocus,
+    facing: Rotation,
+    inclination: Rotation,
+) -> Transform {
     // Always begin due "south" of the focus.
     let mut transform =
         Transform::from_translation(focus.translation + Vec3::NEG_X * focus.distance);
@@ -414,11 +388,14 @@ fn compute_camera_transform(focus: &CameraFocus, planar_angle: f32, inclination:
     // Tilt up
     transform.translate_around(
         focus.translation,
-        Quat::from_axis_angle(Vec3::NEG_Z, inclination),
+        Quat::from_axis_angle(Vec3::NEG_Z, inclination.into_radians()),
     );
 
     // Rotate left and right
-    transform.translate_around(focus.translation, Quat::from_rotation_y(planar_angle));
+    transform.translate_around(
+        focus.translation,
+        Quat::from_rotation_y(facing.into_radians()),
+    );
 
     // Look at the focus
     transform.look_at(focus.translation, Vec3::Y);
