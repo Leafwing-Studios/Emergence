@@ -43,7 +43,7 @@ fn select_overlay(
 ) {
     if player_actions.just_pressed(PlayerAction::ToggleSignalOverlay) {
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
-        tile_overlay.visualized_signal = signals.random_signal_type();
+        tile_overlay.visualized_signal = signals.random_signal_type().into();
     }
 }
 
@@ -109,26 +109,30 @@ fn update_signal_type_display(
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
     let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
 
-    if let Some(signal_type) = tile_overlay.visualized_signal {
-        let signal_kind: SignalKind = signal_type.into();
+    match &tile_overlay.visualized_signal {
+        crate::infovis::OverlayType::None => {
+            text.sections[0].value = "No signal".to_string();
+            text.sections[0].style = TextStyle {
+                font: fonts.regular.clone_weak(),
+                font_size: 20.0,
+                color: Color::WHITE,
+            };
 
-        text.sections[0].value =
-            signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
-        text.sections[0].style = TextStyle {
-            font: text.sections[0].style.font.clone_weak(),
-            font_size: 20.0,
-            color: signal_kind.color(),
-        };
+            legend.texture = Handle::default();
+        }
+        crate::infovis::OverlayType::Single(signal_type) => {
+            let signal_kind: SignalKind = (*signal_type).into();
 
-        legend.texture = tile_overlay.legend_image_handle(signal_kind)
-    } else {
-        text.sections[0].value = "No signal".to_string();
-        text.sections[0].style = TextStyle {
-            font: fonts.regular.clone_weak(),
-            font_size: 20.0,
-            color: Color::WHITE,
-        };
+            text.sections[0].value =
+                signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
+            text.sections[0].style = TextStyle {
+                font: text.sections[0].style.font.clone_weak(),
+                font_size: 20.0,
+                color: signal_kind.color(),
+            };
 
-        legend.texture = Handle::default();
+            legend.texture = tile_overlay.legend_image_handle(signal_kind)
+        }
+        crate::infovis::OverlayType::StrongestSignal => todo!(),
     }
 }

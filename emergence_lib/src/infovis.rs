@@ -28,11 +28,11 @@ impl Plugin for InfoVisPlugin {
         app.add_system(census)
             .init_resource::<Census>()
             .init_resource::<TileOverlay>()
-            .add_system(visualize_signals)
+            .add_system(set_overlay_material)
             .add_system(
                 display_tile_overlay
                     .after(InteractionSystem::SelectTiles)
-                    .after(visualize_signals),
+                    .after(set_overlay_material),
             );
     }
 }
@@ -59,7 +59,7 @@ fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
 #[derive(Resource, Debug)]
 pub(crate) struct TileOverlay {
     /// The type of signal that is currently being visualized.
-    pub(crate) visualized_signal: Option<SignalType>,
+    pub(crate) visualized_signal: OverlayType,
     /// The materials used to visualize the signal strength.
     ///
     /// Note that we cannot simply store a `Vec<Color>` here,
@@ -67,6 +67,33 @@ pub(crate) struct TileOverlay {
     color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
     /// The images to be used to display the gradient in order to create a legend.
     legends: HashMap<SignalKind, Handle<Image>>,
+}
+
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
+pub(crate) enum OverlayType {
+    /// No signal is being visualized.
+    #[default]
+    None,
+    /// The signal strength of a single signal type is being visualized.
+    Single(SignalType),
+    /// The strongest signal in each cell is being visualized.
+    StrongestSignal,
+}
+
+impl OverlayType {
+    /// Returns true if this overlay type is `None`.
+    pub(crate) const fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+}
+
+impl From<Option<SignalType>> for OverlayType {
+    fn from(signal_type: Option<SignalType>) -> Self {
+        match signal_type {
+            Some(signal_type) => Self::Single(signal_type),
+            None => Self::None,
+        }
+    }
 }
 
 impl FromWorld for TileOverlay {
@@ -147,7 +174,7 @@ impl FromWorld for TileOverlay {
         }
 
         Self {
-            visualized_signal: None,
+            visualized_signal: OverlayType::None,
             color_ramps,
             legends,
         }
@@ -200,38 +227,42 @@ impl TileOverlay {
     }
 }
 
-/// Displays the currently visualized signal for the player using a map overlay.
-fn visualize_signals(
+/// Sets the material for the currently visualized map overlay.
+fn set_overlay_material(
     terrain_query: Query<(&TilePos, &Children), With<Id<Terrain>>>,
     mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     signals: Res<Signals>,
     tile_overlay: Res<TileOverlay>,
 ) {
-    if let Some(signal_type) = tile_overlay.visualized_signal {
-        for (tile_pos, children) in terrain_query.iter() {
-            // This is promised to be the correct entity in the initialization of the terrain's children
-            let overlay_entity = children[1];
+    match &tile_overlay.visualized_signal {
+        OverlayType::None => (),
+        OverlayType::Single(signal_type) => {
+            for (tile_pos, children) in terrain_query.iter() {
+                // This is promised to be the correct entity in the initialization of the terrain's children
+                let overlay_entity = children[1];
 
-            if let Ok((mut overlay_material, mut overlay_visibility)) =
-                overlay_query.get_mut(overlay_entity)
-            {
-                let signal_strength = signals.get(signal_type, *tile_pos);
-                let signal_kind = signal_type.into();
-                let maybe_material = tile_overlay.get_material(signal_kind, signal_strength);
-                match maybe_material {
-                    Some(material) => {
-                        *overlay_visibility = Visibility::Visible;
-                        *overlay_material = material;
+                if let Ok((mut overlay_material, mut overlay_visibility)) =
+                    overlay_query.get_mut(overlay_entity)
+                {
+                    let signal_strength = signals.get(*signal_type, *tile_pos);
+                    let signal_kind = (*signal_type).into();
+                    let maybe_material = tile_overlay.get_material(signal_kind, signal_strength);
+                    match maybe_material {
+                        Some(material) => {
+                            *overlay_visibility = Visibility::Visible;
+                            *overlay_material = material;
+                        }
+                        None => {
+                            *overlay_visibility = Visibility::Hidden;
+                        }
                     }
-                    None => {
-                        *overlay_visibility = Visibility::Hidden;
-                    }
+                } else {
+                    error!("Could not get overlay entity for tile {tile_pos:?}");
                 }
-            } else {
-                error!("Could not get overlay entity for tile {tile_pos:?}");
             }
         }
-    }
+        OverlayType::StrongestSignal => todo!(),
+    };
 }
 
 /// Displays the overlay of the tile
