@@ -39,9 +39,17 @@ impl Plugin for CameraPlugin {
                     .before(set_camera_inclination)
                     .before(rotate_camera),
             )
+            .add_system(
+                set_camera_focus
+                    // Allow users to break out of CameraMode::Follow by moving the camera manually
+                    .before(rotate_camera)
+                    .before(pan_camera)
+                    // Avoid jittering when the camera is following a unit
+                    .after(drag_camera),
+            )
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
-            .add_system(translate_camera.before(InteractionSystem::MoveCamera))
+            .add_system(pan_camera.before(InteractionSystem::MoveCamera))
             .add_system(move_camera_to_goal.in_set(InteractionSystem::MoveCamera));
     }
 }
@@ -102,6 +110,8 @@ impl Default for CameraFocus {
 /// Configure how the camera moves and feels.
 #[derive(Component)]
 pub(crate) struct CameraSettings {
+    /// How should this camera behave?
+    pub(crate) camera_mode: CameraMode,
     /// Controls how fast the camera zooms in and out.
     zoom_speed: Speed,
     /// Controls the rate that the camera can moves from side to side.
@@ -135,6 +145,7 @@ pub(crate) struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         CameraSettings {
+            camera_mode: CameraMode::Free,
             zoom_speed: Speed::new(400., 300.0, 1000.0),
             pan_speed: Speed::new(10., 20.0, 20.0),
             rotation_speed: Speed::new(1.0, 2.0, 4.0),
@@ -147,6 +158,15 @@ impl Default for CameraSettings {
             drag_ratio: 0.05,
         }
     }
+}
+
+/// Controls how the camera moves.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CameraMode {
+    /// The camera is free to move around the map.
+    Free,
+    /// The camera is following the selected unit.
+    FollowUnit,
 }
 
 /// Contains the [`Speed`] struct.
@@ -291,19 +311,62 @@ fn zoom(
     focus.distance = (focus.distance + delta_zoom).clamp(settings.min_zoom, settings.max_zoom);
 }
 
+/// Sets the tile that the camera is  camera's focus.
+fn set_camera_focus(
+    actions: Res<ActionState<PlayerAction>>,
+    selection: Res<CurrentSelection>,
+    tile_pos_query: Query<&TilePos>,
+    map_geometry: Res<MapGeometry>,
+    unit_query: Query<&Transform>,
+    mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
+) {
+    let (mut focus, mut settings) = camera_query.single_mut();
+
+    // Snap to selected object
+    if actions.pressed(PlayerAction::CenterCameraOnSelection)
+        || settings.camera_mode == CameraMode::FollowUnit
+    {
+        let tile_to_snap_to = match &*selection {
+            CurrentSelection::Ghost(entity)
+            | CurrentSelection::Unit(entity)
+            | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
+            CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
+            CurrentSelection::None => None,
+        };
+
+        if let Some(target) = tile_to_snap_to {
+            focus.translation = target.top_of_tile(&map_geometry);
+        }
+    }
+
+    // Also rotate the camera to match the orientation of the unit we're following
+    if settings.camera_mode == CameraMode::FollowUnit {
+        if let CurrentSelection::Unit(entity) = &*selection {
+            let unit_transform = unit_query.get(*entity).unwrap();
+            let quat = unit_transform.rotation;
+            let euler = quat.to_euler(EulerRot::YXZ);
+            let angle_around_y = euler.0;
+            settings.facing = Rotation::from_radians(angle_around_y);
+        } else {
+            // If we don't have a unit selected, go back to free camera mode
+            settings.camera_mode = CameraMode::Free;
+        }
+    }
+}
+
 /// Pan the camera
-fn translate_camera(
+fn pan_camera(
     mut camera_query: Query<(&Transform, &mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
-    selection: Res<CurrentSelection>,
-    tile_pos_query: Query<&TilePos>,
 ) {
     let (transform, mut focus, mut settings) = camera_query.single_mut();
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
+        settings.camera_mode = CameraMode::Free;
+
         let dual_axis_data = actions.axis_pair(PlayerAction::Pan).unwrap();
         let base_xy = dual_axis_data.xy();
         let scaled_xy = base_xy
@@ -328,21 +391,6 @@ fn translate_camera(
     } else {
         settings.pan_speed.reset_speed();
     }
-
-    // Snap to selected object
-    if actions.pressed(PlayerAction::CenterCameraOnSelection) {
-        let tile_to_snap_to = match &*selection {
-            CurrentSelection::Ghost(entity)
-            | CurrentSelection::Unit(entity)
-            | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
-            CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
-            CurrentSelection::None => None,
-        };
-
-        if let Some(target) = tile_to_snap_to {
-            focus.translation = target.top_of_tile(&map_geometry);
-        }
-    }
 }
 
 /// Rotates the camera around the [`CameraFocus`].
@@ -357,10 +405,12 @@ fn rotate_camera(
 
     // Set facing
     if actions.pressed(PlayerAction::RotateCameraLeft) {
+        settings.camera_mode = CameraMode::Free;
         settings.facing -= Rotation::from_radians(delta);
     }
 
     if actions.pressed(PlayerAction::RotateCameraRight) {
+        settings.camera_mode = CameraMode::Free;
         settings.facing += Rotation::from_radians(delta);
     }
 }

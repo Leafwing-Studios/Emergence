@@ -3,7 +3,7 @@
 use crate::ui::{
     overlay::OverlayMenuPlugin, production_statistics::ProductionStatisticsPlugin,
     select_structure::SelectStructurePlugin, select_terraforming::SelectTerraformingPlugin,
-    selection_panel::HoverDetailsPlugin, status::StatusPlugin,
+    selection_details::SelectionDetailsPlugin, status::StatusPlugin,
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -13,7 +13,7 @@ mod overlay;
 mod production_statistics;
 mod select_structure;
 mod select_terraforming;
-mod selection_panel;
+mod selection_details;
 mod status;
 mod wheel_menu;
 
@@ -41,7 +41,7 @@ impl Plugin for UiPlugin {
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
-        .add_plugin(HoverDetailsPlugin)
+        .add_plugin(SelectionDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
         .add_plugin(StatusPlugin)
         .add_plugin(OverlayMenuPlugin)
