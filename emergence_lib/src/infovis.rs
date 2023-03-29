@@ -131,7 +131,7 @@ impl FromWorld for TileOverlay {
                 color_ramp.push(material_assets.add(StandardMaterial {
                     base_color,
                     unlit: true,
-                    alpha_mode: AlphaMode::Add,
+                    alpha_mode: AlphaMode::Blend,
                     ..Default::default()
                 }));
             }
