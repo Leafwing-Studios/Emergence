@@ -43,7 +43,9 @@ impl Plugin for CameraPlugin {
                 set_camera_focus
                     // Allow users to break out of CameraMode::Follow by moving the camera manually
                     .before(rotate_camera)
-                    .before(pan_camera),
+                    .before(pan_camera)
+                    // Avoid jittering when the camera is following a unit
+                    .after(drag_camera),
             )
             .add_system(set_camera_inclination.before(InteractionSystem::MoveCamera))
             .add_system(rotate_camera.before(InteractionSystem::MoveCamera))
