@@ -110,7 +110,7 @@ impl Default for CameraFocus {
 #[derive(Component)]
 pub(crate) struct CameraSettings {
     /// How should this camera behave?
-    camera_mode: CameraMode,
+    pub(crate) camera_mode: CameraMode,
     /// Controls how fast the camera zooms in and out.
     zoom_speed: Speed,
     /// Controls the rate that the camera can moves from side to side.
@@ -161,7 +161,7 @@ impl Default for CameraSettings {
 
 /// Controls how the camera moves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum CameraMode {
+pub(crate) enum CameraMode {
     /// The camera is free to move around the map.
     Free,
     /// The camera is following the selected unit.

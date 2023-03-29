@@ -9,7 +9,11 @@ use crate::{
         },
         AssetState,
     },
-    player_interaction::{selection::CurrentSelection, InteractionSystem},
+    player_interaction::{
+        camera::{CameraMode, CameraSettings},
+        selection::CurrentSelection,
+        InteractionSystem,
+    },
     signals::Signals,
     simulation::geometry::MapGeometry,
 };
@@ -37,6 +41,7 @@ impl Plugin for SelectionDetailsPlugin {
                     .after(InteractionSystem::SelectTiles)
                     .before(update_selection_details),
             )
+            .add_system(change_camera_mode.after(update_selection_details))
             .add_system(update_selection_details.run_if(in_state(AssetState::Ready)));
     }
 }
@@ -105,6 +110,21 @@ fn populate_selection_panel(
         .add_child(structure_details)
         .add_child(terrain_details)
         .add_child(unit_details);
+}
+
+/// Changes the camera mode when the "follow unit" button is pressed.
+fn change_camera_mode(
+    mut camera_query: Query<&mut CameraSettings>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    // FIXME: This should be a button press, not a key press.
+    if keyboard_input.just_pressed(KeyCode::C) {
+        let mut camera_settings = camera_query.single_mut();
+        camera_settings.camera_mode = match camera_settings.camera_mode {
+            CameraMode::FollowUnit => CameraMode::Free,
+            CameraMode::Free => CameraMode::FollowUnit,
+        };
+    }
 }
 
 /// Updates UI elements for selection details panel based on new information.
