@@ -1,4 +1,4 @@
-//! Displays information about the currently hovered entity.
+//! Displays information about the currently selected object(s).
 
 use bevy::{ecs::query::QueryEntityError, prelude::*};
 
@@ -24,26 +24,26 @@ use self::{
 
 use super::{FiraSansFontFamily, RightPanel};
 
-/// Initializes and updates the hover details panel.
-pub(super) struct HoverDetailsPlugin;
+/// Initializes and updates the selection details panel.
+pub(super) struct SelectionDetailsPlugin;
 
-impl Plugin for HoverDetailsPlugin {
+impl Plugin for SelectionDetailsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectionDetails>()
-            .add_startup_system(populate_hover_panel)
+            .add_startup_system(populate_selection_panel)
             .add_system(
                 get_details
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
-                    .before(update_hover_details),
+                    .before(update_selection_details),
             )
-            .add_system(update_hover_details.run_if(in_state(AssetState::Ready)));
+            .add_system(update_selection_details.run_if(in_state(AssetState::Ready)));
     }
 }
 
-/// The root node for the hover panel.
+/// The root node for the selection panel.
 #[derive(Component)]
-struct HoverPanel;
+struct SelectionPanel;
 
 /// The UI node that stores all ghost details.
 #[derive(Component, Default)]
@@ -61,8 +61,8 @@ struct TerrainDetailsMarker;
 #[derive(Component, Default)]
 struct UnitDetailsMarker;
 
-/// Estabilishes UI elements for hover details.
-fn populate_hover_panel(
+/// Estabilishes UI elements for selection details panel.
+fn populate_selection_panel(
     mut commands: Commands,
     font_family: Res<FiraSansFontFamily>,
     parent_query: Query<Entity, With<RightPanel>>,
@@ -75,7 +75,7 @@ fn populate_hover_panel(
 
     let right_panel = parent_query.single();
 
-    let hover_panel = commands
+    let selection = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -88,7 +88,7 @@ fn populate_hover_panel(
                 visibility: Visibility::Hidden,
                 ..default()
             },
-            HoverPanel,
+            SelectionPanel,
         ))
         .id();
 
@@ -98,19 +98,19 @@ fn populate_hover_panel(
     let terrain_details = populate_details::<TerrainDetailsMarker>(&mut commands, &key_text_style);
     let unit_details = populate_details::<UnitDetailsMarker>(&mut commands, &key_text_style);
 
-    commands.entity(right_panel).add_child(hover_panel);
+    commands.entity(right_panel).add_child(selection);
     commands
-        .entity(hover_panel)
+        .entity(selection)
         .add_child(ghost_details)
         .add_child(structure_details)
         .add_child(terrain_details)
         .add_child(unit_details);
 }
 
-/// Updates UI elements for hover details based on new information.
-fn update_hover_details(
+/// Updates UI elements for selection details panel based on new information.
+fn update_selection_details(
     selection_details: Res<SelectionDetails>,
-    mut hover_panel_query: Query<&mut Visibility, With<HoverPanel>>,
+    mut selection_panel_query: Query<&mut Visibility, With<SelectionPanel>>,
     mut ghost_details_query: Query<
         (&mut Style, &mut Text),
         (
@@ -153,7 +153,7 @@ fn update_hover_details(
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
-    let mut parent_visibility = hover_panel_query.single_mut();
+    let mut parent_visibility = selection_panel_query.single_mut();
     let (mut ghost_style, mut ghost_text) = ghost_details_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
@@ -258,7 +258,7 @@ pub(crate) enum SelectionDetails {
     None,
 }
 
-/// Get details about the hovered entity.
+/// Get details about the selected object(s).
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
