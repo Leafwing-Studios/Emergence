@@ -14,6 +14,7 @@ use crate::{
 
 use super::FiraSansFontFamily;
 
+/// Plugin that displays the status of each unit and crafting structure.
 pub(super) struct StatusPlugin;
 
 impl Plugin for StatusPlugin {
@@ -32,6 +33,7 @@ struct StatusDisplay;
 /// Controls the visibility of the status display.
 #[derive(Resource, Default)]
 struct StatusVisualization {
+    /// Should we display this information?
     enabled: bool,
 }
 
@@ -46,6 +48,7 @@ fn toggle_status_visualization(
 }
 
 /// Displays the status of each unit and crafting structure.
+#[allow(clippy::too_many_arguments)]
 fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Transform, &Goal)>,
@@ -77,7 +80,7 @@ fn display_status(
                 .spawn(BillboardTextBundle {
                     transform,
                     text: Text::from_section(
-                        format!("{}", goal.display(&item_manifest, &structure_manifest)),
+                        goal.display(&item_manifest, &structure_manifest),
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),
