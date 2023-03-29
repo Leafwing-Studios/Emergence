@@ -22,6 +22,7 @@ use crate::simulation::geometry::TilePos;
 
 use crate as emergence_lib;
 
+use super::clipboard::Clipboard;
 use super::{cursor::CursorPos, InteractionSystem, PlayerAction};
 
 /// Code and data for selecting groups of tiles
@@ -462,17 +463,6 @@ impl CurrentSelection {
     }
 }
 
-impl CurrentSelection {
-    /// Is anything currently selected?
-    pub(crate) fn is_empty(&self) -> bool {
-        match self {
-            CurrentSelection::None => true,
-            CurrentSelection::Terrain(selected_tiles) => selected_tiles.is_empty(),
-            _ => false,
-        }
-    }
-}
-
 /// Tracks what should be done with the selection (and hovered tiles) this frame.
 #[derive(Resource, Default, Debug)]
 struct SelectionState {
@@ -520,7 +510,12 @@ enum SelectionShape {
 
 impl SelectionState {
     /// Determine what selection state should be used this frame based on player actions
-    fn compute(&mut self, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
+    fn compute(
+        &mut self,
+        clipboard: &Clipboard,
+        actions: &ActionState<PlayerAction>,
+        hovered_tile: TilePos,
+    ) {
         use PlayerAction::*;
 
         self.multiple = actions.pressed(PlayerAction::Multiple);
@@ -568,11 +563,17 @@ impl SelectionState {
                 }
             }
         };
+
+        // If the clipboard is not empty, PlayerAction::Select is used to paste from the clipboard instead of selecting.
+        if !clipboard.is_empty() {
+            self.action = SelectionAction::Preview;
+        }
     }
 }
 
 /// Determine what should be selected based on player inputs.
 fn set_selection(
+    clipboard: Res<Clipboard>,
     mut current_selection: ResMut<CurrentSelection>,
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
@@ -589,7 +590,7 @@ fn set_selection(
     let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
-    selection_state.compute(actions, hovered_tile);
+    selection_state.compute(&clipboard, actions, hovered_tile);
 
     // Update hovered tiles
     hovered_tiles.update(hovered_tile, &selection_state);

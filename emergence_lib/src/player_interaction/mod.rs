@@ -68,11 +68,15 @@ pub(crate) enum InteractionSystem {
 /// This should only store actions that need a dedicated keybinding.
 #[derive(Actionlike, Clone, Debug)]
 pub(crate) enum PlayerAction {
-    /// Pause or unpause the game
+    /// Pause or unpause the game.
     TogglePause,
-    /// Selects a tile or group of tiles.
+    /// When the clipboard is full, places the clipboard contents on the map.
+    ///
+    /// When the clipboard is empty, selects a tile or group of tiles.
     Select,
-    /// Deselects a tile or group of tiles.
+    /// When the clipboard is full, clears the clipboard.
+    ///
+    /// When the clipboard is empty, deselects a tile or group of tiles.
     Deselect,
     /// Increases the radius of the selection by one tile.
     IncreaseSelectionRadius,
