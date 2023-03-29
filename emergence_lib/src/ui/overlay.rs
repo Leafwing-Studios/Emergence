@@ -116,38 +116,70 @@ fn update_signal_type_display(
 ) {
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
     let mut legend = image_query.get_mut(overlay_menu.legend_entity).unwrap();
+    let font_size = 20.0;
 
     match &tile_overlay.overlay_type {
         crate::infovis::OverlayType::None => {
-            text.sections[0].value = "No signal".to_string();
-            text.sections[0].style = TextStyle {
-                font: fonts.regular.clone_weak(),
-                font_size: 20.0,
-                color: Color::WHITE,
-            };
+            text.sections = vec![TextSection {
+                value: "No signal".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
 
             legend.texture = Handle::default();
         }
         crate::infovis::OverlayType::Single(signal_type) => {
             let signal_kind: SignalKind = (*signal_type).into();
 
-            text.sections[0].value =
-                signal_type.display(&item_manifest, &structure_manifest, &unit_manifest);
-            text.sections[0].style = TextStyle {
-                font: text.sections[0].style.font.clone_weak(),
-                font_size: 20.0,
-                color: signal_kind.color(),
-            };
+            text.sections = vec![TextSection {
+                value: signal_type.display(&item_manifest, &structure_manifest, &unit_manifest),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: signal_kind.color(),
+                },
+            }];
 
             legend.texture = tile_overlay.legend_image_handle(signal_kind)
         }
         crate::infovis::OverlayType::StrongestSignal => {
-            text.sections[0].value = "Strongest goal-relevant signal".to_string();
-            text.sections[0].style = TextStyle {
-                font: fonts.regular.clone_weak(),
-                font_size: 20.0,
-                color: Color::WHITE,
-            };
+            text.sections = vec![
+                TextSection {
+                    value: "Push\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Push.color(),
+                    },
+                },
+                TextSection {
+                    value: "Pull\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Pull.color(),
+                    },
+                },
+                TextSection {
+                    value: "Work\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Work.color(),
+                    },
+                },
+                TextSection {
+                    value: "Demolish".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Demolish.color(),
+                    },
+                },
+            ];
 
             legend.texture = Handle::default();
         }
