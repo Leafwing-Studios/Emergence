@@ -1,6 +1,9 @@
 //! Manages the game world's grid and data tied to that grid
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
@@ -10,7 +13,11 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-use crate::{filtered_array_iter::FilteredArrayIter, structures::construction::Footprint};
+use crate::{
+    asset_management::manifest::{Id, Terrain},
+    filtered_array_iter::FilteredArrayIter,
+    structures::construction::Footprint,
+};
 
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
@@ -270,7 +277,7 @@ pub struct MapGeometry {
 }
 
 /// A [`MapGeometry`] index was missing an entry.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct IndexError {
     /// The tile position that was missing.
     pub tile_pos: TilePos,
@@ -291,10 +298,19 @@ impl MapGeometry {
             height_index: HashMap::default(),
         }
     }
+
     /// Is the provided `tile_pos` in the map?
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
+    }
+
+    /// Are all of the tiles in the `footprint` centered around `center` in the map?
+    pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
+        footprint
+            .in_world_space(tile_pos)
+            .iter()
+            .all(|tile_pos| self.is_valid(*tile_pos))
     }
 
     /// Is the provided `tile_pos` passable?
@@ -305,11 +321,55 @@ impl MapGeometry {
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
-    pub(crate) fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
+    fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(center)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+    }
+
+    /// Are all of the terrain tiles in the provided `footprint` appropriate?
+    fn is_terrain_valid(
+        &self,
+        center: TilePos,
+        footprint: &Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &HashSet<Id<Terrain>>,
+    ) -> bool {
+        footprint.in_world_space(center).iter().all(|tile_pos| {
+            let terrain_entity = self.terrain_index.get(tile_pos).unwrap();
+            let terrain_id = terrain_query.get(*terrain_entity).unwrap();
+            allowed_terrain_types.contains(terrain_id)
+        })
+    }
+
+    /// Are all of the terrain tiles in the provided `footprint` flat?
+    fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
+        let height = self.get_height(center).unwrap();
+
+        footprint
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
+    }
+
+    /// Can the structure with the provided `footprint` be built at the `center` tile?
+    /// This checks that:
+    /// - the area is in the map
+    /// - the area is flat
+    /// - the area is free of structures
+    /// - all tiles match the provided allowable terrain list
+    pub(crate) fn can_build(
+        &self,
+        center: TilePos,
+        footprint: &Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &HashSet<Id<Terrain>>,
+    ) -> bool {
+        self.is_footprint_valid(center, footprint)
+            && self.is_terrain_flat(center, footprint)
+            && self.is_space_available(center, footprint)
+            && self.is_terrain_valid(center, footprint, terrain_query, allowed_terrain_types)
     }
 
     /// Updates the height of the tile at `tile_pos`

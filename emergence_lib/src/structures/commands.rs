@@ -1,15 +1,15 @@
 //! Methods to use [`Commands`] to manipulate structures.
 
 use bevy::{
-    ecs::system::Command,
-    prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
+    ecs::system::{Command, SystemState},
+    prelude::{warn, Commands, DespawnRecursiveExt, Mut, Query, Res, World},
 };
 use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::{
-        manifest::{structure::StructureKind, ItemManifest, RecipeManifest},
+        manifest::{structure::StructureKind, Id, ItemManifest, RecipeManifest, Terrain},
         structures::StructureHandles,
     },
     graphics::InheritedMaterial,
@@ -133,22 +133,26 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        // Pulling this out early reduces awful borrow checker errors.
         let structure_id = self.data.structure_id;
-        let manifest = world.resource::<StructureManifest>();
-        let structure_variety = manifest.get(structure_id);
 
-        let footprint = &structure_variety.footprint;
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
 
-        // Check that the tiles needed are empty.
-        if !geometry.is_space_available(self.tile_pos, footprint) {
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        if !geometry.can_build(
+            self.tile_pos,
+            &structure_variety.footprint,
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        ) {
             return;
         }
-
-        let structure_variety = world
-            .resource::<StructureManifest>()
-            .get(structure_id)
-            .clone();
 
         let structure_handles = world.resource::<StructureHandles>();
 
@@ -271,12 +275,22 @@ impl Command for SpawnGhostCommand {
             return;
         }
 
-        let structure_manifest = world.resource::<StructureManifest>();
-        let structure_variety = structure_manifest.get(structure_id);
-        let footprint = &structure_variety.footprint;
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
 
-        // Check that the tiles needed are empty.
-        if !geometry.is_space_available(self.tile_pos, footprint) {
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        if !geometry.can_build(
+            self.tile_pos,
+            &structure_variety.footprint,
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        ) {
             return;
         }
 
@@ -364,8 +378,6 @@ impl Command for SpawnPreviewCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
-        // Track whether or not we can build this structure here.
-        let mut forbidden = false;
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.tile_pos) {
@@ -373,17 +385,25 @@ impl Command for SpawnPreviewCommand {
             return;
         }
 
-        let structure_manifest = world.resource::<StructureManifest>();
-        let structure_variety = structure_manifest.get(structure_id);
-        let footprint = &structure_variety.footprint;
-
-        // Check that the tiles needed are empty.
-        if !map_geometry.is_space_available(self.tile_pos, footprint) {
-            forbidden = true;
-        }
-
         // Compute the world position
         let world_pos = self.tile_pos.top_of_tile(&map_geometry);
+
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
+
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        let forbidden = !geometry.can_build(
+            self.tile_pos,
+            &structure_variety.footprint,
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        );
 
         // Remove any existing previews at this location
         let mut map_geometry = world.resource_mut::<MapGeometry>();
