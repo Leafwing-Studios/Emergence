@@ -7,7 +7,7 @@ use crate::{
         lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
     },
-    simulation::{geometry::TilePos, time::TimePool},
+    simulation::time::TimePool,
     structures::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
@@ -257,17 +257,7 @@ impl Default for StructureManifest {
                 },
                 max_workers: 6,
                 // Forms a crescent shape
-                footprint: Footprint {
-                    set: [
-                        TilePos::new(1, 0),
-                        TilePos::new(1, -1),
-                        TilePos::new(0, -1),
-                        TilePos::new(-1, 0),
-                    ]
-                    .iter()
-                    .copied()
-                    .collect(),
-                },
+                footprint: Footprint::single(),
             },
         );
 
