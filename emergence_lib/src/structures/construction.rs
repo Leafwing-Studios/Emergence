@@ -4,12 +4,14 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use std::num::NonZeroU8;
+
 use crate::simulation::geometry::MapGeometry;
 use crate::{
     self as emergence_lib, asset_management::manifest::StructureManifest,
     graphics::InheritedMaterial,
 };
-use bevy::utils::Duration;
+use bevy::utils::{Duration, HashSet};
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
@@ -351,4 +353,18 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
             false => None,
         }
     }
+}
+
+/// The set of tiles taken up by a structure.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) enum Footprint {
+    #[default]
+    /// Only a single tile is taken up by this structure.
+    Single,
+    /// A hexagon with the given radius is taken up by this structure.
+    Hexagonal(NonZeroU8),
+    /// An irregular set of tiles is taken up by this structure.
+    ///
+    /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
+    Irregular(HashSet<TilePos>),
 }

@@ -1,5 +1,7 @@
 //! Data and manifest definitions for structure.
 
+use std::num::NonZeroU8;
+
 use crate::{
     items::inventory::Inventory,
     organisms::{
@@ -7,8 +9,11 @@ use crate::{
         lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
     },
-    simulation::time::TimePool,
-    structures::crafting::{ActiveRecipe, InputInventory},
+    simulation::{geometry::TilePos, time::TimePool},
+    structures::{
+        construction::Footprint,
+        crafting::{ActiveRecipe, InputInventory},
+    },
 };
 use bevy::utils::{Duration, HashSet};
 
@@ -29,6 +34,8 @@ pub(crate) struct StructureData {
     pub(crate) construction_strategy: ConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
     pub(crate) max_workers: u8,
+    /// The tiles taken up by this building.
+    pub(crate) footprint: Footprint,
 }
 
 /// How new structures of this sort can be built.
@@ -136,6 +143,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 6,
+                footprint: Footprint::Single,
             },
         );
 
@@ -168,6 +176,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
                 max_workers: 1,
+                footprint: Footprint::Single,
             },
         );
 
@@ -188,6 +197,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
                 max_workers: 1,
+                footprint: Footprint::Single,
             },
         );
 
@@ -204,6 +214,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy,
                 max_workers: 6,
+                footprint: Footprint::Single,
             },
         );
 
@@ -225,6 +236,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 3,
+                footprint: Footprint::Hexagonal(NonZeroU8::new(1).unwrap()),
             },
         );
 
@@ -246,6 +258,18 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 6,
+                // Forms a crescent shape
+                footprint: Footprint::Irregular(
+                    [
+                        TilePos::new(1, 0),
+                        TilePos::new(1, -1),
+                        TilePos::new(0, -1),
+                        TilePos::new(-1, 0),
+                    ]
+                    .iter()
+                    .copied()
+                    .collect(),
+                ),
             },
         );
 
@@ -270,6 +294,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 6,
+                footprint: Footprint::Single,
             },
         );
 
