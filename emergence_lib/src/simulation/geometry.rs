@@ -372,10 +372,7 @@ impl MapGeometry {
         // Iterate through all of the entries, removing any other entries that point to the same entity
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
-            self.structure_index = self
-                .structure_index
-                .drain_filter(|_k, v| *v == removed_entity)
-                .collect();
+            self.structure_index.retain(|_k, v| *v != removed_entity);
         };
 
         removed
@@ -407,10 +404,7 @@ impl MapGeometry {
         // Iterate through all of the entries, removing any other entries that point to the same entity
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
-            self.ghost_index = self
-                .ghost_index
-                .drain_filter(|_k, v| *v == removed_entity)
-                .collect();
+            self.ghost_index.retain(|_k, v| *v != removed_entity);
         };
 
         removed
@@ -437,10 +431,7 @@ impl MapGeometry {
         // Iterate through all of the entries, removing any other entries that point to the same entity
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
-            self.preview_index = self
-                .preview_index
-                .drain_filter(|_k, v| *v == removed_entity)
-                .collect();
+            self.preview_index.retain(|_k, v| *v != removed_entity);
         };
 
         removed
@@ -566,6 +557,38 @@ mod tests {
 
                 assert_eq!(tile_pos, remapped_tile_pos);
             }
+        }
+    }
+
+    #[test]
+    fn adding_multi_tile_structure_adds_to_index() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        let footprint = Footprint::hexagon(1);
+        let structure_entity = Entity::from_bits(42);
+        let center = TilePos::new(17, -2);
+        map_geometry.add_structure(center, &footprint, structure_entity);
+
+        // Check that the structure index was updated correctly
+        for tile_pos in footprint.in_world_space(center) {
+            assert_eq!(Some(structure_entity), map_geometry.get_structure(tile_pos));
+        }
+    }
+
+    #[test]
+    fn removing_multi_tile_structure_clears_indexes() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        let footprint = Footprint::hexagon(1);
+        let structure_entity = Entity::from_bits(42);
+        let center = TilePos::new(17, -2);
+        map_geometry.add_structure(center, &footprint, structure_entity);
+        map_geometry.remove_structure(center);
+
+        // Check that the structure index was updated correctly
+        for tile_pos in footprint.in_world_space(center) {
+            dbg!(tile_pos);
+            assert_eq!(None, map_geometry.get_structure(tile_pos));
         }
     }
 }
