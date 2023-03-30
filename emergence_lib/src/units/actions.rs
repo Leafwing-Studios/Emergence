@@ -914,7 +914,7 @@ impl CurrentAction {
         const BASE_WALKING_DURATION: f32 = 0.5;
 
         let target_tile = unit_tile_pos.neighbor(facing.direction);
-        let entity_standing_on = *map_geometry.terrain_index.get(&unit_tile_pos).unwrap();
+        let entity_standing_on = map_geometry.get_terrain(unit_tile_pos).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
         let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed();
         let walking_duration = BASE_WALKING_DURATION / walking_speed;

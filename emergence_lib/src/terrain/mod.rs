@@ -166,8 +166,6 @@ impl Command for SpawnTerrainCommand {
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
-        map_geometry
-            .terrain_index
-            .insert(self.tile_pos, terrain_entity);
+        map_geometry.add_terrain(self.tile_pos, terrain_entity);
     }
 }

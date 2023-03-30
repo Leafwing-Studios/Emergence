@@ -138,7 +138,7 @@ fn set_zoning(
 
                     for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
                         // Avoid trying to operate on terrain that doesn't exist
-                        if let Some(&terrain_entity) = map_geometry.terrain_index.get(&tile_pos) {
+                        if let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) {
                             let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
                             *zoning = Zoning::Structure(clipboard_item.clone());
                         }

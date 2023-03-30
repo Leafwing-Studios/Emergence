@@ -265,7 +265,7 @@ pub struct MapGeometry {
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
-    pub(crate) terrain_index: HashMap<TilePos, Entity>,
+    terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
@@ -414,12 +414,22 @@ impl MapGeometry {
         }
     }
 
+    /// Gets the terrain [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.terrain_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `terrain_entity` to the terrain index at the provided `tile_pos`.
+    pub(crate) fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
+        self.terrain_index.insert(tile_pos, terrain_entity);
+    }
+
     /// Gets the structure [`Entity`] at the provided `tile_pos`, if any.
     pub(crate) fn get_structure(&self, tile_pos: TilePos) -> Option<Entity> {
         self.structure_index.get(&tile_pos).copied()
     }
 
-    /// Adds the provided `structure_entity` to the structure index at the provided `tile_pos`.
+    /// Adds the provided `structure_entity` to the structure index at the provided `center`.
     pub(crate) fn add_structure(
         &mut self,
         center: TilePos,
@@ -451,7 +461,7 @@ impl MapGeometry {
         self.ghost_index.get(&tile_pos).copied()
     }
 
-    /// Adds the provided `ghost_entity` to the structure index at the provided `tile_pos`.
+    /// Adds the provided `ghost_entity` to the structure index at the provided `center`.
     pub(crate) fn add_ghost(
         &mut self,
         center: TilePos,
@@ -478,7 +488,7 @@ impl MapGeometry {
         removed
     }
 
-    /// Adds the provided `preview_entity` to the structure index at the provided `tile_pos`.
+    /// Adds the provided `preview_entity` to the structure index at the provided `center`.
     pub(crate) fn add_preview(
         &mut self,
         center: TilePos,

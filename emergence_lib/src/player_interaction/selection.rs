@@ -161,7 +161,7 @@ impl SelectedTiles {
         // PERF: we could be faster about this by only collecting once
         .into_iter()
         // Ensure we don't try to operate off of the map
-        .filter(|tile_pos| map_geometry.terrain_index.contains_key(tile_pos))
+        .filter(|tile_pos| map_geometry.is_valid(*tile_pos))
         .collect()
     }
 
@@ -169,7 +169,7 @@ impl SelectedTiles {
     pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
         self.selection()
             .iter()
-            .map(|tile_pos| *map_geometry.terrain_index.get(tile_pos).unwrap())
+            .flat_map(|tile_pos| map_geometry.get_terrain(*tile_pos))
             .collect()
     }
 }
