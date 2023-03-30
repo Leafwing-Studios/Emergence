@@ -743,8 +743,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_billboard"
-version = "0.2.0"
-source = "git+https://github.com/alice-i-cecile/bevy_mod_billboard/?branch=memory-leak#e0c0ff06c3dd155b00d87b694ff9e8d04d90e391"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1762817f52292d9d48eac5b1c6a3b9f83d6d120671fa1f968961a724aefc30b"
 dependencies = [
  "bevy",
  "bitflags",
