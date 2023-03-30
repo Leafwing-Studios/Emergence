@@ -9,7 +9,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "Emergence".to_string(),
                 present_mode: PresentMode::AutoNoVsync,
-                mode: WindowMode::Fullscreen,
+                mode: WindowMode::BorderlessFullscreen,
                 ..default()
             }),
             ..Default::default()
