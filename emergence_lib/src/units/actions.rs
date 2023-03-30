@@ -562,7 +562,7 @@ impl CurrentAction {
         let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
                     output_inventory_query.get(structure_entity)
                 {
@@ -637,7 +637,7 @@ impl CurrentAction {
             }
 
             // Structures
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
                     input_inventory_query.get(structure_entity)
                 {
@@ -711,7 +711,7 @@ impl CurrentAction {
             }
 
             // Structures
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 // We deliberately avoid storage locations here, our goal is to complete a delivery!
                 if let Ok((maybe_input_inventory, _maybe_storage_inventory)) =
                     input_inventory_query.get(structure_entity)

@@ -587,7 +587,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
         let entity = if let Some(ghost_entity) = map_geometry.ghost_index.get(&structure_pos) {
             *ghost_entity
         } else {
-            *map_geometry.structure_index.get(&structure_pos)?
+            map_geometry.get_structure(structure_pos)?
         };
 
         let (found_crafting_state, found_structure_id, workers_present) =

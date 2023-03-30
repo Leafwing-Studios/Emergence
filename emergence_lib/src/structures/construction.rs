@@ -344,7 +344,7 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
         structure_id: Id<Structure>,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
-        let entity = *map_geometry.structure_index.get(&structure_pos)?;
+        let entity = map_geometry.get_structure(structure_pos)?;
 
         let &found_structure_id = self.query.get(entity).ok()?;
 

@@ -200,9 +200,9 @@ fn mark_based_on_zoning(
             Zoning::None => commands.despawn_ghost(tile_pos),
             Zoning::KeepClear => {
                 commands.despawn_ghost(tile_pos);
-                if let Some(structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+                if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                     commands
-                        .entity(*structure_entity)
+                        .entity(structure_entity)
                         .insert(MarkedForDemolition);
                 }
             }

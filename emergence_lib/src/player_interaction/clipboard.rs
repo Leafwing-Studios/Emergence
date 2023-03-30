@@ -236,10 +236,8 @@ fn copy_selection(
             // Otherwise, just grab whatever's under the cursor
             CurrentSelection::None | CurrentSelection::Unit(_) => {
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
-                    if let Some(structure_entity) =
-                        map_geometry.structure_index.get(&cursor_tile_pos)
-                    {
-                        let clipboard_data = structure_query.get(*structure_entity).unwrap().into();
+                    if let Some(structure_entity) = map_geometry.get_structure(cursor_tile_pos) {
+                        let clipboard_data = structure_query.get(structure_entity).unwrap().into();
                         map.insert(TilePos::default(), clipboard_data);
                         *clipboard = Clipboard::Structures(map);
                     }

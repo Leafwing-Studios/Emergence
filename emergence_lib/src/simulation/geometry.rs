@@ -260,7 +260,7 @@ pub struct MapGeometry {
     /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
     pub(crate) terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
-    pub(crate) structure_index: HashMap<TilePos, Entity>,
+    structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
     pub(crate) ghost_index: HashMap<TilePos, Entity>,
     /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
@@ -344,6 +344,23 @@ impl MapGeometry {
         } else {
             None
         }
+    }
+
+    /// Gets the structure [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_structure(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.structure_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `structure_entity` to the structure index at the provided `tile_pos`.
+    pub(crate) fn add_structure(&mut self, tile_pos: TilePos, structure_entity: Entity) {
+        self.structure_index.insert(tile_pos, structure_entity);
+    }
+
+    /// Removes any structure entity found at the provided `tile_pos` from the structure index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        self.structure_index.remove(&tile_pos)
     }
 }
 

@@ -136,7 +136,7 @@ impl Command for SpawnStructureCommand {
         let geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is empty.
-        if geometry.structure_index.contains_key(&self.tile_pos) {
+        if !geometry.is_passable(self.tile_pos) {
             return;
         }
 
@@ -223,9 +223,7 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry
-            .structure_index
-            .insert(self.tile_pos, structure_entity);
+        geometry.add_structure(self.tile_pos, structure_entity);
     }
 }
 
@@ -238,7 +236,7 @@ struct DespawnStructureCommand {
 impl Command for DespawnStructureCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.structure_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.remove_structure(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
