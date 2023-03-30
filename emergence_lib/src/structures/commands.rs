@@ -377,7 +377,7 @@ impl Command for SpawnPreviewCommand {
         }
 
         // Compute the world position
-        let world_pos = self.tile_pos.top_of_tile(&map_geometry);
+        let world_pos = self.tile_pos.top_of_tile(map_geometry);
 
         let mut system_state: SystemState<(
             Query<&Id<Terrain>>,

@@ -147,54 +147,56 @@ fn set_zoning(
                             terraform_choice.into_mark(current_height, current_material),
                         );
                     }
-                    false => {
-                        // TODO: Previews for terraforming are not yet implemented
-                        ()
-                    }
+                    // TODO: Previews for terraforming are not yet implemented
+                    false => (),
                 }
             }
         }
         Clipboard::Structures(map) => {
             // Zone using the single selected structure
-            if map.len() == 1 {
-                let clipboard_item = map.values().next().unwrap();
-                match apply_zoning {
-                    true => {
-                        for terrain_entity in relevant_terrain_entities {
-                            let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
-                            *zoning = Zoning::Structure(clipboard_item.clone());
-                        }
-                    }
-                    false => {
-                        for &tile_pos in relevant_tiles.selection().iter() {
-                            commands.spawn_preview(tile_pos, clipboard_item.clone());
-                        }
-                    }
-                }
-            // Paste the selection
-            } else if map.len() > 1 {
-                let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() else {
-                    return;
-                };
-
-                for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
+            match map.len() {
+                0 => (),
+                1 => {
+                    let clipboard_item = map.values().next().unwrap();
                     match apply_zoning {
                         true => {
-                            // Avoid trying to operate on terrain that doesn't exist
-                            if let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) {
+                            for terrain_entity in relevant_terrain_entities {
                                 let (mut zoning, ..) =
                                     terrain_query.get_mut(terrain_entity).unwrap();
                                 *zoning = Zoning::Structure(clipboard_item.clone());
                             }
                         }
                         false => {
-                            commands.spawn_preview(tile_pos, clipboard_item);
+                            for &tile_pos in relevant_tiles.selection().iter() {
+                                commands.spawn_preview(tile_pos, clipboard_item.clone());
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() else {
+                        return;
+                    };
+
+                    for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
+                        match apply_zoning {
+                            true => {
+                                // Avoid trying to operate on terrain that doesn't exist
+                                if let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) {
+                                    let (mut zoning, ..) =
+                                        terrain_query.get_mut(terrain_entity).unwrap();
+                                    *zoning = Zoning::Structure(clipboard_item.clone());
+                                }
+                            }
+                            false => {
+                                commands.spawn_preview(tile_pos, clipboard_item);
+                            }
                         }
                     }
                 }
             }
         }
-        Clipboard::Empty => {}
+        Clipboard::Empty => (),
     }
 }
 
