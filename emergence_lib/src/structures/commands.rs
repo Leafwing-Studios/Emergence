@@ -136,7 +136,7 @@ impl Command for SpawnStructureCommand {
         let geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is empty.
-        if !geometry.is_passable(self.tile_pos) {
+        if geometry.get_structure(self.tile_pos).is_some() {
             return;
         }
 
