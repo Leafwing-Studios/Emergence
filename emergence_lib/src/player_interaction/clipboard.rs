@@ -5,7 +5,7 @@ use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest, Terrain},
+    asset_management::manifest::{Id, Structure},
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, construction::Preview, crafting::ActiveRecipe},
 };
@@ -271,9 +271,6 @@ fn preview_clipboard(
     current_selection: Res<CurrentSelection>,
     mut commands: Commands,
     preview_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Preview>>,
-    structure_manifest: Res<StructureManifest>,
-    map_geometry: Res<MapGeometry>,
-    terrain_query: Query<&Id<Terrain>>,
 ) {
     if hovered_tiles.is_empty() {
         return;
@@ -325,14 +322,7 @@ fn preview_clipboard(
 
             // Spawn any new previews
             for (tile_pos, &clipboard_data) in desired_previews.iter() {
-                let allowed_terrain_types = structure_manifest
-                    .get(clipboard_data.structure_id)
-                    .allowed_terrain_types();
-                if let Some(terrain_entity) = map_geometry.terrain_index.get(tile_pos) {
-                    let terrain_type = terrain_query.get(*terrain_entity).unwrap();
-                    let forbidden = !allowed_terrain_types.contains(terrain_type);
-                    commands.spawn_preview(*tile_pos, clipboard_data.clone(), forbidden);
-                }
+                commands.spawn_preview(*tile_pos, clipboard_data.clone());
             }
         }
         Clipboard::Empty | Clipboard::Terraform(_) => {

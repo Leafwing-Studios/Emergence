@@ -61,7 +61,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool);
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Despawns any preview at the provided `tile_pos`.
     ///
@@ -106,12 +106,8 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool) {
-        self.add(SpawnPreviewCommand {
-            tile_pos,
-            data,
-            forbidden,
-        });
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
+        self.add(SpawnPreviewCommand { tile_pos, data });
     }
 
     fn despawn_preview(&mut self, tile_pos: TilePos) {
@@ -131,17 +127,21 @@ struct SpawnStructureCommand {
 
 impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
-        // Pulling this out early reduces awful borrow checker errors.
-        let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
-
-        // Check that the tile is empty.
-        if geometry.get_structure(self.tile_pos).is_some() {
+        // Check that the tile is within the bounds of the map
+        if !geometry.is_valid(self.tile_pos) {
             return;
         }
 
-        // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.tile_pos) {
+        // Pulling this out early reduces awful borrow checker errors.
+        let structure_id = self.data.structure_id;
+        let manifest = world.resource::<StructureManifest>();
+        let structure_variety = manifest.get(structure_id);
+
+        let footprint = &structure_variety.footprint;
+
+        // Check that the tiles needed are empty.
+        if !geometry.is_space_available(self.tile_pos, footprint) {
             return;
         }
 
@@ -264,14 +264,24 @@ struct SpawnGhostCommand {
 impl Command for SpawnGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
-        let mut geometry = world.resource_mut::<MapGeometry>();
+        let geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
         if !geometry.is_valid(self.tile_pos) {
             return;
         }
 
+        let structure_manifest = world.resource::<StructureManifest>();
+        let structure_variety = structure_manifest.get(structure_id);
+        let footprint = &structure_variety.footprint;
+
+        // Check that the tiles needed are empty.
+        if !geometry.is_space_available(self.tile_pos, footprint) {
+            return;
+        }
+
         // Remove any existing ghosts
+        let mut geometry = world.resource_mut::<MapGeometry>();
         let maybe_existing_ghost = geometry.remove_ghost(self.tile_pos);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
@@ -348,13 +358,14 @@ struct SpawnPreviewCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
-    /// Is this structure allowed to be built here?
-    forbidden: bool,
 }
 
 impl Command for SpawnPreviewCommand {
     fn write(self, world: &mut World) {
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        let structure_id = self.data.structure_id;
+        let map_geometry = world.resource::<MapGeometry>();
+        // Track whether or not we can build this structure here.
+        let mut forbidden = false;
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.tile_pos) {
@@ -362,10 +373,20 @@ impl Command for SpawnPreviewCommand {
             return;
         }
 
+        let structure_manifest = world.resource::<StructureManifest>();
+        let structure_variety = structure_manifest.get(structure_id);
+        let footprint = &structure_variety.footprint;
+
+        // Check that the tiles needed are empty.
+        if !map_geometry.is_space_available(self.tile_pos, footprint) {
+            forbidden = true;
+        }
+
         // Compute the world position
         let world_pos = self.tile_pos.top_of_tile(&map_geometry);
 
         // Remove any existing previews at this location
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
         let maybe_existing_preview = map_geometry.remove_preview(self.tile_pos);
         if let Some(existing_preview) = maybe_existing_preview {
             world.entity_mut(existing_preview).despawn_recursive();
@@ -379,14 +400,13 @@ impl Command for SpawnPreviewCommand {
             .unwrap()
             .clone_weak();
 
-        let ghost_kind = match self.forbidden {
+        let ghost_kind = match forbidden {
             true => GhostKind::ForbiddenPreview,
             false => GhostKind::Preview,
         };
 
         let preview_handle = structure_handles.ghost_materials.get(&ghost_kind).unwrap();
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
-        let structure_id = self.data.structure_id;
 
         // Spawn a preview
         let preview_entity = world

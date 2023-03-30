@@ -304,6 +304,14 @@ impl MapGeometry {
         self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
     }
 
+    /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
+    pub(crate) fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
+        footprint
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+    }
+
     /// Updates the height of the tile at `tile_pos`
     pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
         self.height_index.insert(tile_pos, height);
