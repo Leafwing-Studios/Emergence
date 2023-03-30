@@ -13,3 +13,6 @@ default-members = ["emergence_game", "emergence_lib"]
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
+
+[patch.crates-io]
+bevy = {path = "../bevy"}
