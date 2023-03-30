@@ -355,7 +355,7 @@ fn get_details(
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(tile_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = *map_geometry.terrain_index.get(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {

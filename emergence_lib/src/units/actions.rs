@@ -562,7 +562,7 @@ impl CurrentAction {
         let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
                     output_inventory_query.get(structure_entity)
                 {
@@ -626,7 +626,7 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             // Ghosts
-            if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+            if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
                         if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
@@ -637,7 +637,7 @@ impl CurrentAction {
             }
 
             // Structures
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
                     input_inventory_query.get(structure_entity)
                 {
@@ -700,7 +700,7 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             // Ghosts
-            if let Some(&ghost_entity) = map_geometry.ghost_index.get(&tile_pos) {
+            if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
                         if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
@@ -711,7 +711,7 @@ impl CurrentAction {
             }
 
             // Structures
-            if let Some(&structure_entity) = map_geometry.structure_index.get(&tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                 // We deliberately avoid storage locations here, our goal is to complete a delivery!
                 if let Ok((maybe_input_inventory, _maybe_storage_inventory)) =
                     input_inventory_query.get(structure_entity)
@@ -914,7 +914,7 @@ impl CurrentAction {
         const BASE_WALKING_DURATION: f32 = 0.5;
 
         let target_tile = unit_tile_pos.neighbor(facing.direction);
-        let entity_standing_on = *map_geometry.terrain_index.get(&unit_tile_pos).unwrap();
+        let entity_standing_on = map_geometry.get_terrain(unit_tile_pos).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
         let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed();
         let walking_duration = BASE_WALKING_DURATION / walking_speed;

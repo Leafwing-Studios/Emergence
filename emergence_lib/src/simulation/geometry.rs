@@ -1,6 +1,9 @@
 //! Manages the game world's grid and data tied to that grid
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
@@ -10,7 +13,11 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-use crate::filtered_array_iter::FilteredArrayIter;
+use crate::{
+    asset_management::manifest::{Id, Terrain},
+    filtered_array_iter::FilteredArrayIter,
+    structures::construction::Footprint,
+};
 
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
@@ -48,7 +55,7 @@ impl Display for TilePos {
 
 impl TilePos {
     /// The position of the central tile
-    pub const ORIGIN: TilePos = TilePos {
+    pub const ZERO: TilePos = TilePos {
         hex: Hex { x: 0, y: 0 },
     };
 
@@ -150,6 +157,15 @@ impl TilePos {
         });
         iter
     }
+
+    /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+        let n_rotations = facing.rotation_count();
+
+        TilePos {
+            hex: self.hex.rotate_right(n_rotations),
+        }
+    }
 }
 
 /// The discretized height of this tile
@@ -167,22 +183,23 @@ impl Height {
     /// The maximum allowable height
     pub(crate) const MAX: Height = Height(u8::MAX);
 
-    /// The height of each step up, in world coordinates.
-    ///
-    /// This should match the thickness of all terrain topper models.
+    /// The thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
     pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
 
+    /// The height of each step up, in world coordinates.
+    pub(crate) const STEP_HEIGHT: f32 = 1.0;
+
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     pub(crate) fn into_world_pos(self) -> f32 {
-        self.0 as f32 * Self::TOPPER_THICKNESS
+        self.0 as f32 * Self::STEP_HEIGHT
     }
 
     /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
     /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
     pub(crate) fn from_world_pos(world_y: f32) -> Self {
-        let f32_height = (world_y / Self::TOPPER_THICKNESS).round();
+        let f32_height = (world_y / Self::STEP_HEIGHT).round();
         if f32_height < 0. {
             Height::MIN
         } else if f32_height > u8::MAX as f32 {
@@ -258,19 +275,17 @@ pub struct MapGeometry {
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
-    pub(crate) terrain_index: HashMap<TilePos, Entity>,
+    terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
-    pub(crate) structure_index: HashMap<TilePos, Entity>,
+    structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
-    pub(crate) ghost_index: HashMap<TilePos, Entity>,
-    /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
-    pub(crate) preview_index: HashMap<TilePos, Entity>,
+    ghost_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct IndexError {
     /// The tile position that was missing.
     pub tile_pos: TilePos,
@@ -287,14 +302,22 @@ impl MapGeometry {
             terrain_index: HashMap::default(),
             structure_index: HashMap::default(),
             ghost_index: HashMap::default(),
-            preview_index: HashMap::default(),
             height_index: HashMap::default(),
         }
     }
+
     /// Is the provided `tile_pos` in the map?
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
+    }
+
+    /// Are all of the tiles in the `footprint` centered around `center` in the map?
+    pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
+        footprint
+            .in_world_space(tile_pos)
+            .iter()
+            .all(|tile_pos| self.is_valid(*tile_pos))
     }
 
     /// Is the provided `tile_pos` passable?
@@ -302,6 +325,62 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`
     pub(crate) fn is_passable(&self, tile_pos: TilePos) -> bool {
         self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
+    }
+
+    /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
+    fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
+        footprint
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+    }
+
+    /// Are all of the terrain tiles in the provided `footprint` appropriate?
+    fn is_terrain_valid(
+        &self,
+        center: TilePos,
+        footprint: &Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &HashSet<Id<Terrain>>,
+    ) -> bool {
+        footprint.in_world_space(center).iter().all(|tile_pos| {
+            let terrain_entity = self.terrain_index.get(tile_pos).unwrap();
+            let terrain_id = terrain_query.get(*terrain_entity).unwrap();
+            allowed_terrain_types.contains(terrain_id)
+        })
+    }
+
+    /// Are all of the terrain tiles in the provided `footprint` flat?
+    fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
+        let height = self.get_height(center).unwrap();
+
+        footprint
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
+    }
+
+    /// Can the structure with the provided `footprint` be built at the `center` tile?
+    ///
+    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
+    /// matching the [`Facing`] of the structure.
+    ///
+    /// This checks that:
+    /// - the area is in the map
+    /// - the area is flat
+    /// - the area is free of structures
+    /// - all tiles match the provided allowable terrain list
+    pub(crate) fn can_build(
+        &self,
+        center: TilePos,
+        footprint: Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &HashSet<Id<Terrain>>,
+    ) -> bool {
+        self.is_footprint_valid(center, &footprint)
+            && self.is_terrain_flat(center, &footprint)
+            && self.is_space_available(center, &footprint)
+            && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
     }
 
     /// Updates the height of the tile at `tile_pos`
@@ -345,6 +424,80 @@ impl MapGeometry {
             None
         }
     }
+
+    /// Gets the terrain [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.terrain_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `terrain_entity` to the terrain index at the provided `tile_pos`.
+    pub(crate) fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
+        self.terrain_index.insert(tile_pos, terrain_entity);
+    }
+
+    /// Gets the structure [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_structure(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.structure_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `structure_entity` to the structure index at the provided `center`.
+    pub(crate) fn add_structure(
+        &mut self,
+        center: TilePos,
+        footprint: &Footprint,
+        structure_entity: Entity,
+    ) {
+        for tile_pos in footprint.in_world_space(center) {
+            self.structure_index.insert(tile_pos, structure_entity);
+        }
+    }
+
+    /// Removes any structure entity found at the provided `tile_pos` from the structure index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        let removed = self.structure_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.structure_index.retain(|_k, v| *v != removed_entity);
+        };
+
+        removed
+    }
+
+    /// Gets the ghost [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_ghost(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.ghost_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `ghost_entity` to the structure index at the provided `center`.
+    pub(crate) fn add_ghost(
+        &mut self,
+        center: TilePos,
+        footprint: &Footprint,
+        ghost_entity: Entity,
+    ) {
+        for tile_pos in footprint.in_world_space(center) {
+            self.ghost_index.insert(tile_pos, ghost_entity);
+        }
+    }
+
+    /// Removes any ghost entity found at the provided `tile_pos` from the ghost index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_ghost(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        let removed = self.ghost_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.ghost_index.retain(|_k, v| *v != removed_entity);
+        };
+
+        removed
+    }
 }
 
 /// The hex direction that this entity is facing.
@@ -367,6 +520,20 @@ impl Facing {
     /// Rotates this facing one 60 degree step counterclockwise.
     pub(crate) fn rotate_right(&mut self) {
         self.direction = self.direction.right();
+    }
+
+    /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
+    ///
+    /// This is intended to be paired with [`Hex::rotate_right`](hexx::Hex) to rotate a hex to face this direction.
+    pub(crate) const fn rotation_count(&self) -> u32 {
+        match self.direction {
+            Direction::Top => 0,
+            Direction::TopLeft => 1,
+            Direction::BottomLeft => 2,
+            Direction::Bottom => 3,
+            Direction::BottomRight => 4,
+            Direction::TopRight => 5,
+        }
     }
 }
 
@@ -466,6 +633,38 @@ mod tests {
 
                 assert_eq!(tile_pos, remapped_tile_pos);
             }
+        }
+    }
+
+    #[test]
+    fn adding_multi_tile_structure_adds_to_index() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        let footprint = Footprint::hexagon(1);
+        let structure_entity = Entity::from_bits(42);
+        let center = TilePos::new(17, -2);
+        map_geometry.add_structure(center, &footprint, structure_entity);
+
+        // Check that the structure index was updated correctly
+        for tile_pos in footprint.in_world_space(center) {
+            assert_eq!(Some(structure_entity), map_geometry.get_structure(tile_pos));
+        }
+    }
+
+    #[test]
+    fn removing_multi_tile_structure_clears_indexes() {
+        let mut map_geometry = MapGeometry::new(10);
+
+        let footprint = Footprint::hexagon(1);
+        let structure_entity = Entity::from_bits(42);
+        let center = TilePos::new(17, -2);
+        map_geometry.add_structure(center, &footprint, structure_entity);
+        map_geometry.remove_structure(center);
+
+        // Check that the structure index was updated correctly
+        for tile_pos in footprint.in_world_space(center) {
+            dbg!(tile_pos);
+            assert_eq!(None, map_geometry.get_structure(tile_pos));
         }
     }
 }

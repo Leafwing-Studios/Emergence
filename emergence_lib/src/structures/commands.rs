@@ -1,15 +1,15 @@
 //! Methods to use [`Commands`] to manipulate structures.
 
 use bevy::{
-    ecs::system::Command,
-    prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
+    ecs::system::{Command, SystemState},
+    prelude::{warn, Commands, DespawnRecursiveExt, Mut, Query, Res, World},
 };
 use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::{
-        manifest::{structure::StructureKind, ItemManifest, RecipeManifest},
+        manifest::{structure::StructureKind, Id, ItemManifest, RecipeManifest, Terrain},
         structures::StructureHandles,
     },
     graphics::InheritedMaterial,
@@ -61,12 +61,7 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool);
-
-    /// Despawns any preview at the provided `tile_pos`.
-    ///
-    /// Has no effect if the tile position is already empty.
-    fn despawn_preview(&mut self, tile_pos: TilePos);
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
@@ -106,16 +101,8 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData, forbidden: bool) {
-        self.add(SpawnPreviewCommand {
-            tile_pos,
-            data,
-            forbidden,
-        });
-    }
-
-    fn despawn_preview(&mut self, tile_pos: TilePos) {
-        self.add(DespawnPreviewCommand { tile_pos });
+    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
+        self.add(SpawnPreviewCommand { tile_pos, data });
     }
 }
 
@@ -131,24 +118,32 @@ struct SpawnStructureCommand {
 
 impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
-        // Pulling this out early reduces awful borrow checker errors.
-        let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
-
-        // Check that the tile is empty.
-        if geometry.structure_index.contains_key(&self.tile_pos) {
-            return;
-        }
-
         // Check that the tile is within the bounds of the map
         if !geometry.is_valid(self.tile_pos) {
             return;
         }
 
-        let structure_variety = world
-            .resource::<StructureManifest>()
-            .get(structure_id)
-            .clone();
+        let structure_id = self.data.structure_id;
+
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
+
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        if !geometry.can_build(
+            self.tile_pos,
+            structure_variety.footprint.rotated(self.data.facing),
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        ) {
+            return;
+        }
 
         let structure_handles = world.resource::<StructureHandles>();
 
@@ -223,9 +218,11 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry
-            .structure_index
-            .insert(self.tile_pos, structure_entity);
+        geometry.add_structure(
+            self.tile_pos,
+            &structure_variety.footprint,
+            structure_entity,
+        );
     }
 }
 
@@ -238,7 +235,7 @@ struct DespawnStructureCommand {
 impl Command for DespawnStructureCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.structure_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.remove_structure(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -261,15 +258,36 @@ struct SpawnGhostCommand {
 
 impl Command for SpawnGhostCommand {
     fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
+        let structure_id = self.data.structure_id;
+        let geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
         if !geometry.is_valid(self.tile_pos) {
             return;
         }
 
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
+
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        if !geometry.can_build(
+            self.tile_pos,
+            structure_variety.footprint.rotated(self.data.facing),
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        ) {
+            return;
+        }
+
         // Remove any existing ghosts
-        let maybe_existing_ghost = geometry.ghost_index.remove(&self.tile_pos);
+        let mut geometry = world.resource_mut::<MapGeometry>();
+        let maybe_existing_ghost = geometry.remove_ghost(self.tile_pos);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
             world.entity_mut(existing_ghost).despawn_recursive();
@@ -283,7 +301,7 @@ impl Command for SpawnGhostCommand {
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
         let scene_handle = structure_handles
             .scenes
-            .get(&self.data.structure_id)
+            .get(&structure_id)
             .unwrap()
             .clone_weak();
         let ghostly_handle = structure_handles
@@ -306,8 +324,14 @@ impl Command for SpawnGhostCommand {
             ))
             .id();
 
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.ghost_index.insert(self.tile_pos, ghost_entity);
+        // Update the index to reflect the new state
+        world.resource_scope(|world, mut map_geometry: Mut<MapGeometry>| {
+            let structure_manifest = world.resource::<StructureManifest>();
+            let structure_variety = structure_manifest.get(structure_id);
+            let footprint = &structure_variety.footprint;
+
+            map_geometry.add_ghost(self.tile_pos, footprint, ghost_entity);
+        });
     }
 }
 
@@ -320,7 +344,7 @@ struct DespawnGhostCommand {
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.ghost_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.remove_ghost(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -339,13 +363,12 @@ struct SpawnPreviewCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
-    /// Is this structure allowed to be built here?
-    forbidden: bool,
 }
 
 impl Command for SpawnPreviewCommand {
     fn write(self, world: &mut World) {
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        let structure_id = self.data.structure_id;
+        let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.tile_pos) {
@@ -354,13 +377,24 @@ impl Command for SpawnPreviewCommand {
         }
 
         // Compute the world position
-        let world_pos = self.tile_pos.top_of_tile(&map_geometry);
+        let world_pos = self.tile_pos.top_of_tile(map_geometry);
 
-        // Remove any existing previews at this location
-        let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
-        if let Some(existing_preview) = maybe_existing_preview {
-            world.entity_mut(existing_preview).despawn_recursive();
-        }
+        let mut system_state: SystemState<(
+            Query<&Id<Terrain>>,
+            Res<MapGeometry>,
+            Res<StructureManifest>,
+        )> = SystemState::new(world);
+
+        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let structure_variety = manifest.get(structure_id).clone();
+
+        // Check that the tiles needed are appropriate.
+        let forbidden = !geometry.can_build(
+            self.tile_pos,
+            structure_variety.footprint.rotated(self.data.facing),
+            &terrain_query,
+            structure_variety.allowed_terrain_types(),
+        );
 
         // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();
@@ -370,7 +404,7 @@ impl Command for SpawnPreviewCommand {
             .unwrap()
             .clone_weak();
 
-        let ghost_kind = match self.forbidden {
+        let ghost_kind = match forbidden {
             true => GhostKind::ForbiddenPreview,
             false => GhostKind::Preview,
         };
@@ -379,40 +413,12 @@ impl Command for SpawnPreviewCommand {
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview
-        let preview_entity = world
-            .spawn(PreviewBundle::new(
-                self.tile_pos,
-                self.data,
-                scene_handle,
-                inherited_material,
-                world_pos,
-            ))
-            .id();
-
-        // Update the index to reflect the new state
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.preview_index.insert(self.tile_pos, preview_entity);
-    }
-}
-
-/// A [`Command`] used to despawn a preview via [`StructureCommandsExt`].
-struct DespawnPreviewCommand {
-    /// The tile position at which the structure to be despawned is found.
-    tile_pos: TilePos,
-}
-
-impl Command for DespawnPreviewCommand {
-    fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.preview_index.remove(&self.tile_pos);
-
-        // Check that there's something there to despawn
-        if maybe_entity.is_none() {
-            return;
-        }
-
-        let preview_entity = maybe_entity.unwrap();
-        // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
-        world.entity_mut(preview_entity).despawn_recursive();
+        world.spawn(PreviewBundle::new(
+            self.tile_pos,
+            self.data,
+            scene_handle,
+            inherited_material,
+            world_pos,
+        ));
     }
 }

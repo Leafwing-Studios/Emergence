@@ -5,7 +5,7 @@ use leafwing_abilities::prelude::Pool;
 
 use crate::{
     asset_management::{
-        manifest::{Id, StructureManifest, Unit, UnitManifest},
+        manifest::{Id, StructureManifest, Terrain, Unit, UnitManifest},
         units::UnitHandles,
     },
     player_interaction::clipboard::ClipboardData,
@@ -44,15 +44,15 @@ impl Lifecycle {
         Lifecycle { life_paths }
     }
 
-    /// Returns the [`OrganismId`] associated with the first completed [`LifePath`], if any.
-    pub(crate) fn new_form(&self) -> Option<OrganismId> {
-        for life_path in &self.life_paths {
-            if life_path.is_complete() {
-                return Some(life_path.new_form);
-            }
-        }
-
-        None
+    /// Returns the [`OrganismId`] the list of completed [`LifePath`], if any.
+    ///
+    /// These are prioritized in the order they were added to the lifecycle.
+    pub(crate) fn new_forms(&self) -> Vec<OrganismId> {
+        self.life_paths
+            .iter()
+            .filter(|life_path| life_path.is_complete())
+            .map(|life_path| life_path.new_form)
+            .collect()
     }
 
     /// Records any energy gained, storing the results in any [`LifePath`]s that care about this.
@@ -158,10 +158,28 @@ pub(super) fn transform_when_lifecycle_complete(
     unit_manifest: Res<UnitManifest>,
     unit_handles: Res<UnitHandles>,
     map_geometry: Res<MapGeometry>,
+    terrain_query: Query<&Id<Terrain>>,
     mut commands: Commands,
 ) {
     for (entity, lifecycle, &tile_pos, &facing, maybe_unit) in query.iter() {
-        if let Some(new_form) = lifecycle.new_form() {
+        for new_form in lifecycle.new_forms() {
+            // Make sure that there's a valid place to spawn the new form.
+            if let OrganismId::Structure(structure_id) = new_form {
+                let variety = structure_manifest.get(structure_id);
+                let footprint = variety.footprint.rotated(facing);
+                let allowed_terrain_types = &variety.allowed_terrain_types();
+
+                if map_geometry.can_build(
+                    tile_pos,
+                    footprint,
+                    &terrain_query,
+                    allowed_terrain_types,
+                ) {
+                    // Look for another viable form to transform into.
+                    continue;
+                }
+            }
+
             // Cleanup is handled on the basis of what this organism *currently* is.
             if maybe_unit.is_some() {
                 commands.entity(entity).despawn_recursive();
@@ -193,6 +211,9 @@ pub(super) fn transform_when_lifecycle_complete(
                     ));
                 }
             }
+
+            // We only want to transform once, so we break out of the loop.
+            break;
         }
     }
 }

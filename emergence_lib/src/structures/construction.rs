@@ -4,15 +4,18 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::asset_management::manifest::Terrain;
 use crate::simulation::geometry::MapGeometry;
 use crate::{
     self as emergence_lib, asset_management::manifest::StructureManifest,
     graphics::InheritedMaterial,
 };
-use bevy::utils::Duration;
+use bevy::utils::{Duration, HashSet};
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
+use hexx::shapes::hexagon;
+use hexx::Hex;
 
 use crate::{
     asset_management::manifest::{Id, Structure},
@@ -342,13 +345,82 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
         structure_id: Id<Structure>,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
-        let entity = *map_geometry.structure_index.get(&structure_pos)?;
+        let entity = map_geometry.get_structure(structure_pos)?;
 
         let &found_structure_id = self.query.get(entity).ok()?;
 
         match found_structure_id == structure_id {
             true => Some(entity),
             false => None,
+        }
+    }
+}
+
+/// The set of tiles taken up by a structure.
+///
+/// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) struct Footprint {
+    /// The set of tiles is taken up by this structure.
+    pub(crate) set: HashSet<TilePos>,
+}
+
+impl Footprint {
+    /// A footprint that occupies a single tile.
+    pub(crate) fn single() -> Self {
+        Self {
+            set: HashSet::from_iter(vec![TilePos::ZERO]),
+        }
+    }
+
+    /// A footprint that occupies a set of tiles in a solid hexagon.
+    pub(crate) fn hexagon(radius: u32) -> Self {
+        let mut set = HashSet::new();
+        for hex in hexagon(Hex::ZERO, radius) {
+            set.insert(TilePos { hex });
+        }
+
+        Footprint { set }
+    }
+
+    /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
+    pub(crate) fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
+        self.set
+            .iter()
+            .map(|&offset| center + offset)
+            .collect::<HashSet<_>>()
+    }
+
+    /// Rotates the footprint by the provided [`Facing`].
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+        let mut set = HashSet::new();
+        for &tile_pos in self.set.iter() {
+            set.insert(tile_pos.rotated(facing));
+        }
+
+        Footprint { set }
+    }
+}
+
+/// Ensures that all ghosts can be built.
+pub(super) fn validate_ghosts(
+    map_geometry: Res<MapGeometry>,
+    ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
+    structure_manifest: Res<StructureManifest>,
+    terrain_query: Query<&Id<Terrain>>,
+    mut commands: Commands,
+) {
+    // We only need to validate this when the map geometry changes.
+    if !map_geometry.is_changed() {
+        return;
+    }
+
+    for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
+        let structure_details = structure_manifest.get(structure_id);
+        let footprint = structure_details.footprint.rotated(facing);
+        let allowed_terrain_types = structure_details.allowed_terrain_types();
+        if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
+            commands.despawn_ghost(tile_pos);
         }
     }
 }

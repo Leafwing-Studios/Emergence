@@ -16,7 +16,7 @@ use crate::{
 };
 
 use self::{
-    construction::{ghost_lifecycle, ghost_signals},
+    construction::{ghost_lifecycle, ghost_signals, validate_ghosts},
     crafting::CraftingPlugin,
 };
 
@@ -30,7 +30,11 @@ pub(super) struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(CraftingPlugin).add_systems(
-            (ghost_signals, ghost_lifecycle)
+            (
+                validate_ghosts,
+                ghost_signals.after(validate_ghosts),
+                ghost_lifecycle.after(validate_ghosts),
+            )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
