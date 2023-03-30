@@ -294,7 +294,7 @@ fn preview_clipboard(
                 for &world_pos in hovered_tiles.iter() {
                     desired_previews.insert(world_pos, data);
                 }
-            // In more complex cases, the clipbarod will be positioned accordingly
+            // In more complex cases, the clipboard will be positioned accordingly
             } else {
                 for (&clipboard_pos, data) in map.iter() {
                     // Offset by cursor pos
