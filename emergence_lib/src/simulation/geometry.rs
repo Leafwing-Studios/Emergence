@@ -367,7 +367,18 @@ impl MapGeometry {
     ///
     /// Returns the removed entity, if any.
     pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        self.structure_index.remove(&tile_pos)
+        let removed = self.structure_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.structure_index = self
+                .structure_index
+                .drain_filter(|_k, v| *v == removed_entity)
+                .collect();
+        };
+
+        removed
     }
 
     /// Gets the ghost [`Entity`] at the provided `tile_pos`, if any.
@@ -391,7 +402,18 @@ impl MapGeometry {
     ///
     /// Returns the removed entity, if any.
     pub(crate) fn remove_ghost(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        self.ghost_index.remove(&tile_pos)
+        let removed = self.ghost_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.ghost_index = self
+                .ghost_index
+                .drain_filter(|_k, v| *v == removed_entity)
+                .collect();
+        };
+
+        removed
     }
 
     /// Adds the provided `preview_entity` to the structure index at the provided `tile_pos`.
@@ -410,7 +432,18 @@ impl MapGeometry {
     ///
     /// Returns the removed entity, if any.
     pub(crate) fn remove_preview(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        self.preview_index.remove(&tile_pos)
+        let removed = self.preview_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.preview_index = self
+                .preview_index
+                .drain_filter(|_k, v| *v == removed_entity)
+                .collect();
+        };
+
+        removed
     }
 }
 
