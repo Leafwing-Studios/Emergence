@@ -405,13 +405,6 @@ impl Command for SpawnPreviewCommand {
             structure_variety.allowed_terrain_types(),
         );
 
-        // Remove any existing previews at this location
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
-        let maybe_existing_preview = map_geometry.remove_preview(self.tile_pos);
-        if let Some(existing_preview) = maybe_existing_preview {
-            world.entity_mut(existing_preview).despawn_recursive();
-        }
-
         // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();
         let scene_handle = structure_handles
@@ -462,11 +455,7 @@ impl Command for DespawnPreviewCommand {
         let maybe_entity = geometry.remove_preview(self.tile_pos);
 
         // Check that there's something there to despawn
-        if maybe_entity.is_none() {
-            return;
-        }
-
-        let preview_entity = maybe_entity.unwrap();
+        let Some(preview_entity) = maybe_entity else { return };
         // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
         world.entity_mut(preview_entity).despawn_recursive();
     }
