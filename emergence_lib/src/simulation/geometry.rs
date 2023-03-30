@@ -183,22 +183,23 @@ impl Height {
     /// The maximum allowable height
     pub(crate) const MAX: Height = Height(u8::MAX);
 
-    /// The height of each step up, in world coordinates.
-    ///
-    /// This should match the thickness of all terrain topper models.
+    /// The thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
     pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
 
+    /// The height of each step up, in world coordinates.
+    pub(crate) const STEP_HEIGHT: f32 = 1.0;
+
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     pub(crate) fn into_world_pos(self) -> f32 {
-        self.0 as f32 * Self::TOPPER_THICKNESS
+        self.0 as f32 * Self::STEP_HEIGHT
     }
 
     /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
     /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
     pub(crate) fn from_world_pos(world_y: f32) -> Self {
-        let f32_height = (world_y / Self::TOPPER_THICKNESS).round();
+        let f32_height = (world_y / Self::STEP_HEIGHT).round();
         if f32_height < 0. {
             Height::MIN
         } else if f32_height > u8::MAX as f32 {
