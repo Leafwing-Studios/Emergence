@@ -7,7 +7,10 @@ use crate::{
     asset_management::manifest::{Id, Structure, StructureManifest, Terrain, TerrainManifest},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Height, MapGeometry, TilePos},
-    structures::{commands::StructureCommandsExt, construction::MarkedForDemolition},
+    structures::{
+        commands::StructureCommandsExt,
+        construction::{MarkedForDemolition, Preview},
+    },
 };
 
 use super::{
@@ -29,6 +32,7 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::SelectTiles)
                 .after(InteractionSystem::SetClipboard),
         )
+        .add_system(cleanup_previews.after(set_zoning))
         .add_system(
             mark_based_on_zoning
                 .in_set(InteractionSystem::ManagePreviews)
@@ -69,6 +73,27 @@ impl Zoning {
         }
     }
 }
+
+/// Cleans up all old previews.
+///
+/// We're just using an immediate mode system for this, since it's much easier to ensure correctness.
+fn cleanup_previews(
+    mut commands: Commands,
+    new_query: Query<Entity, (With<Preview>, Without<CleanMeUp>)>,
+    old_query: Query<Entity, (With<Preview>, With<CleanMeUp>)>,
+) {
+    for entity in new_query.iter() {
+        commands.entity(entity).insert(CleanMeUp);
+    }
+
+    for entity in old_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+/// A marker component for previews that should be deleted.
+#[derive(Component)]
+struct CleanMeUp;
 
 /// Applies zoning to an area, causing structures to be created (or removed) there.
 ///

@@ -270,8 +270,6 @@ pub struct MapGeometry {
     structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
     ghost_index: HashMap<TilePos, Entity>,
-    /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
-    preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -294,7 +292,6 @@ impl MapGeometry {
             terrain_index: HashMap::default(),
             structure_index: HashMap::default(),
             ghost_index: HashMap::default(),
-            preview_index: HashMap::default(),
             height_index: HashMap::default(),
         }
     }
@@ -483,33 +480,6 @@ impl MapGeometry {
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
             self.ghost_index.retain(|_k, v| *v != removed_entity);
-        };
-
-        removed
-    }
-
-    /// Adds the provided `preview_entity` to the structure index at the provided `center`.
-    pub(crate) fn add_preview(
-        &mut self,
-        center: TilePos,
-        footprint: &Footprint,
-        preview_entity: Entity,
-    ) {
-        for tile_pos in footprint.in_world_space(center) {
-            self.preview_index.insert(tile_pos, preview_entity);
-        }
-    }
-
-    /// Removes any preview entity found at the provided `tile_pos` from the preview index.
-    ///
-    /// Returns the removed entity, if any.
-    pub(crate) fn remove_preview(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.preview_index.remove(&tile_pos);
-
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.preview_index.retain(|_k, v| *v != removed_entity);
         };
 
         removed

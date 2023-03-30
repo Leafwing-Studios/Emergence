@@ -62,11 +62,6 @@ pub(crate) trait StructureCommandsExt {
     ///
     /// Replaces any existing preview.
     fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
-
-    /// Despawns any preview at the provided `tile_pos`.
-    ///
-    /// Has no effect if the tile position is already empty.
-    fn despawn_preview(&mut self, tile_pos: TilePos);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
@@ -108,10 +103,6 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
 
     fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnPreviewCommand { tile_pos, data });
-    }
-
-    fn despawn_preview(&mut self, tile_pos: TilePos) {
-        self.add(DespawnPreviewCommand { tile_pos });
     }
 }
 
@@ -422,41 +413,12 @@ impl Command for SpawnPreviewCommand {
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview
-        let preview_entity = world
-            .spawn(PreviewBundle::new(
-                self.tile_pos,
-                self.data,
-                scene_handle,
-                inherited_material,
-                world_pos,
-            ))
-            .id();
-
-        // Update the index to reflect the new state
-        world.resource_scope(|world, mut map_geometry: Mut<MapGeometry>| {
-            let structure_manifest = world.resource::<StructureManifest>();
-            let structure_variety = structure_manifest.get(structure_id);
-            let footprint = &structure_variety.footprint;
-
-            map_geometry.add_preview(self.tile_pos, footprint, preview_entity);
-        });
-    }
-}
-
-/// A [`Command`] used to despawn a preview via [`StructureCommandsExt`].
-struct DespawnPreviewCommand {
-    /// The tile position at which the structure to be despawned is found.
-    tile_pos: TilePos,
-}
-
-impl Command for DespawnPreviewCommand {
-    fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_preview(self.tile_pos);
-
-        // Check that there's something there to despawn
-        let Some(preview_entity) = maybe_entity else { return };
-        // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
-        world.entity_mut(preview_entity).despawn_recursive();
+        world.spawn(PreviewBundle::new(
+            self.tile_pos,
+            self.data,
+            scene_handle,
+            inherited_material,
+            world_pos,
+        ));
     }
 }
