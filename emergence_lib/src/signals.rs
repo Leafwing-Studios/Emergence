@@ -485,10 +485,27 @@ pub(crate) struct Emitter {
 }
 
 /// Emits signals from [`Emitter`] sources.
-fn emit_signals(mut signals: ResMut<Signals>, emitter_query: Query<(&TilePos, &Emitter)>) {
-    for (&tile_pos, emitter) in emitter_query.iter() {
-        for (signal_type, signal_strength) in &emitter.signals {
-            signals.add_signal(*signal_type, tile_pos, *signal_strength);
+fn emit_signals(
+    mut signals: ResMut<Signals>,
+    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>)>,
+    structure_manifest: Res<StructureManifest>,
+) {
+    for (&center, emitter, maybe_structure_id) in emitter_query.iter() {
+        match maybe_structure_id {
+            // Signals should be emitted from all tiles in the footprint of a structure.
+            Some(structure_id) => {
+                let footprint = &structure_manifest.get(*structure_id).footprint;
+                for tile_pos in footprint.in_world_space(center) {
+                    for (signal_type, signal_strength) in &emitter.signals {
+                        signals.add_signal(*signal_type, tile_pos, *signal_strength);
+                    }
+                }
+            }
+            None => {
+                for (signal_type, signal_strength) in &emitter.signals {
+                    signals.add_signal(*signal_type, center, *signal_strength);
+                }
+            }
         }
     }
 }
