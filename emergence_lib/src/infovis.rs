@@ -187,7 +187,7 @@ impl TileOverlay {
     pub(crate) const N_COLORS: usize = 16;
 
     /// The maximum displayed value for signal strength.
-    const MAX_SIGNAL_STRENGTH: f32 = 1e2;
+    const MAX_SIGNAL_STRENGTH: f32 = 1e3;
 
     /// The width of the legend image.
     pub(crate) const LEGEND_WIDTH: u32 = 32;
