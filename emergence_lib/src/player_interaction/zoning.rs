@@ -130,16 +130,8 @@ fn set_zoning(
             }
         }
         Clipboard::Structures(map) => {
-            // Clear zoning
-            if map.is_empty() {
-                if apply_zoning {
-                    for terrain_entity in relevant_terrain_entities {
-                        let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
-                        *zoning = Zoning::None;
-                    }
-                }
             // Zone using the single selected structure
-            } else if map.len() == 1 {
+            if map.len() == 1 {
                 let clipboard_item = map.values().next().unwrap();
                 match apply_zoning {
                     true => {
@@ -155,7 +147,7 @@ fn set_zoning(
                     }
                 }
             // Paste the selection
-            } else {
+            } else if map.len() > 1 {
                 let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() else {
                     return;
                 };
@@ -177,15 +169,7 @@ fn set_zoning(
                 }
             }
         }
-        Clipboard::Empty => {
-            if apply_zoning {
-                // Clear zoning
-                for terrain_entity in relevant_terrain_entities {
-                    let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
-                    *zoning = Zoning::None;
-                }
-            }
-        }
+        Clipboard::Empty => {}
     }
 }
 
