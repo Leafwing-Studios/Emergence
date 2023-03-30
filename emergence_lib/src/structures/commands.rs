@@ -223,7 +223,11 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.add_structure(self.tile_pos, structure_entity);
+        geometry.add_structure(
+            self.tile_pos,
+            &structure_variety.footprint,
+            structure_entity,
+        );
     }
 }
 
@@ -259,6 +263,7 @@ struct SpawnGhostCommand {
 
 impl Command for SpawnGhostCommand {
     fn write(self, world: &mut World) {
+        let structure_id = self.data.structure_id;
         let mut geometry = world.resource_mut::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
@@ -281,7 +286,7 @@ impl Command for SpawnGhostCommand {
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
         let scene_handle = structure_handles
             .scenes
-            .get(&self.data.structure_id)
+            .get(&structure_id)
             .unwrap()
             .clone_weak();
         let ghostly_handle = structure_handles
@@ -304,8 +309,14 @@ impl Command for SpawnGhostCommand {
             ))
             .id();
 
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.add_ghost(self.tile_pos, ghost_entity);
+        // Update the index to reflect the new state
+        world.resource_scope(|world, mut map_geometry: Mut<MapGeometry>| {
+            let structure_manifest = world.resource::<StructureManifest>();
+            let structure_variety = structure_manifest.get(structure_id);
+            let footprint = &structure_variety.footprint;
+
+            map_geometry.add_ghost(self.tile_pos, footprint, ghost_entity);
+        });
     }
 }
 
@@ -375,6 +386,7 @@ impl Command for SpawnPreviewCommand {
 
         let preview_handle = structure_handles.ghost_materials.get(&ghost_kind).unwrap();
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
+        let structure_id = self.data.structure_id;
 
         // Spawn a preview
         let preview_entity = world
@@ -388,8 +400,13 @@ impl Command for SpawnPreviewCommand {
             .id();
 
         // Update the index to reflect the new state
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.add_preview(self.tile_pos, preview_entity);
+        world.resource_scope(|world, mut map_geometry: Mut<MapGeometry>| {
+            let structure_manifest = world.resource::<StructureManifest>();
+            let structure_variety = structure_manifest.get(structure_id);
+            let footprint = &structure_variety.footprint;
+
+            map_geometry.add_preview(self.tile_pos, footprint, preview_entity);
+        });
     }
 }
 

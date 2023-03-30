@@ -10,7 +10,7 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-use crate::filtered_array_iter::FilteredArrayIter;
+use crate::{filtered_array_iter::FilteredArrayIter, structures::construction::Footprint};
 
 /// A hex-based coordinate, that represents exactly one tile.
 #[derive(
@@ -352,8 +352,15 @@ impl MapGeometry {
     }
 
     /// Adds the provided `structure_entity` to the structure index at the provided `tile_pos`.
-    pub(crate) fn add_structure(&mut self, tile_pos: TilePos, structure_entity: Entity) {
-        self.structure_index.insert(tile_pos, structure_entity);
+    pub(crate) fn add_structure(
+        &mut self,
+        center: TilePos,
+        footprint: &Footprint,
+        structure_entity: Entity,
+    ) {
+        for tile_pos in footprint.in_world_space(center) {
+            self.structure_index.insert(tile_pos, structure_entity);
+        }
     }
 
     /// Removes any structure entity found at the provided `tile_pos` from the structure index.
@@ -369,8 +376,15 @@ impl MapGeometry {
     }
 
     /// Adds the provided `ghost_entity` to the structure index at the provided `tile_pos`.
-    pub(crate) fn add_ghost(&mut self, tile_pos: TilePos, structure_entity: Entity) {
-        self.ghost_index.insert(tile_pos, structure_entity);
+    pub(crate) fn add_ghost(
+        &mut self,
+        center: TilePos,
+        footprint: &Footprint,
+        ghost_entity: Entity,
+    ) {
+        for tile_pos in footprint.in_world_space(center) {
+            self.ghost_index.insert(tile_pos, ghost_entity);
+        }
     }
 
     /// Removes any ghost entity found at the provided `tile_pos` from the ghost index.
@@ -381,8 +395,15 @@ impl MapGeometry {
     }
 
     /// Adds the provided `preview_entity` to the structure index at the provided `tile_pos`.
-    pub(crate) fn add_preview(&mut self, tile_pos: TilePos, structure_entity: Entity) {
-        self.preview_index.insert(tile_pos, structure_entity);
+    pub(crate) fn add_preview(
+        &mut self,
+        center: TilePos,
+        footprint: &Footprint,
+        preview_entity: Entity,
+    ) {
+        for tile_pos in footprint.in_world_space(center) {
+            self.preview_index.insert(tile_pos, preview_entity);
+        }
     }
 
     /// Removes any preview entity found at the provided `tile_pos` from the preview index.

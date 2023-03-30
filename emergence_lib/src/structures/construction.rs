@@ -381,4 +381,12 @@ impl Footprint {
 
         Footprint { set }
     }
+
+    /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
+    pub(crate) fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
+        self.set
+            .iter()
+            .map(|&offset| center + offset)
+            .collect::<HashSet<_>>()
+    }
 }
