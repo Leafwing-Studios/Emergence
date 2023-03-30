@@ -390,12 +390,22 @@ impl Footprint {
             .map(|&offset| center + offset)
             .collect::<HashSet<_>>()
     }
+
+    /// Rotates the footprint by the provided [`Facing`].
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+        let mut set = HashSet::new();
+        for &tile_pos in self.set.iter() {
+            set.insert(tile_pos.rotated(facing));
+        }
+
+        Footprint { set }
+    }
 }
 
 /// Ensures that all ghosts can be built.
 pub(super) fn validate_ghosts(
     map_geometry: Res<MapGeometry>,
-    ghost_query: Query<(&TilePos, &Id<Structure>), With<Ghost>>,
+    ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
     structure_manifest: Res<StructureManifest>,
     terrain_query: Query<&Id<Terrain>>,
     mut commands: Commands,
@@ -405,9 +415,9 @@ pub(super) fn validate_ghosts(
         return;
     }
 
-    for (&tile_pos, &structure_id) in ghost_query.iter() {
+    for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
-        let footprint = &structure_details.footprint;
+        let footprint = structure_details.footprint.rotated(facing);
         let allowed_terrain_types = structure_details.allowed_terrain_types();
         if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
             commands.despawn_ghost(tile_pos);

@@ -138,7 +138,7 @@ impl Command for SpawnStructureCommand {
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint,
+            structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
             structure_variety.allowed_terrain_types(),
         ) {
@@ -278,7 +278,7 @@ impl Command for SpawnGhostCommand {
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint,
+            structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
             structure_variety.allowed_terrain_types(),
         ) {
@@ -391,7 +391,7 @@ impl Command for SpawnPreviewCommand {
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint,
+            structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
             structure_variety.allowed_terrain_types(),
         );

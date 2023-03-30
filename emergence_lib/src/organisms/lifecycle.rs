@@ -166,7 +166,7 @@ pub(super) fn transform_when_lifecycle_complete(
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
                 let variety = structure_manifest.get(structure_id);
-                let footprint = &variety.footprint;
+                let footprint = variety.footprint.rotated(facing);
                 let allowed_terrain_types = &variety.allowed_terrain_types();
 
                 if map_geometry.can_build(

@@ -157,6 +157,15 @@ impl TilePos {
         });
         iter
     }
+
+    /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+        let n_rotations = facing.rotation_count();
+
+        TilePos {
+            hex: self.hex.rotate_right(n_rotations),
+        }
+    }
 }
 
 /// The discretized height of this tile
@@ -351,6 +360,10 @@ impl MapGeometry {
     }
 
     /// Can the structure with the provided `footprint` be built at the `center` tile?
+    ///
+    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
+    /// matching the [`Facing`] of the structure.
+    ///
     /// This checks that:
     /// - the area is in the map
     /// - the area is flat
@@ -359,14 +372,14 @@ impl MapGeometry {
     pub(crate) fn can_build(
         &self,
         center: TilePos,
-        footprint: &Footprint,
+        footprint: Footprint,
         terrain_query: &Query<&Id<Terrain>>,
         allowed_terrain_types: &HashSet<Id<Terrain>>,
     ) -> bool {
-        self.is_footprint_valid(center, footprint)
-            && self.is_terrain_flat(center, footprint)
-            && self.is_space_available(center, footprint)
-            && self.is_terrain_valid(center, footprint, terrain_query, allowed_terrain_types)
+        self.is_footprint_valid(center, &footprint)
+            && self.is_terrain_flat(center, &footprint)
+            && self.is_space_available(center, &footprint)
+            && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
     }
 
     /// Updates the height of the tile at `tile_pos`
@@ -506,6 +519,20 @@ impl Facing {
     /// Rotates this facing one 60 degree step counterclockwise.
     pub(crate) fn rotate_right(&mut self) {
         self.direction = self.direction.right();
+    }
+
+    /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
+    ///
+    /// This is intended to be paired with [`Hex::rotate_right`](hexx::Hex) to rotate a hex to face this direction.
+    pub(crate) const fn rotation_count(&self) -> u32 {
+        match self.direction {
+            Direction::Top => 0,
+            Direction::TopLeft => 1,
+            Direction::BottomLeft => 2,
+            Direction::Bottom => 3,
+            Direction::BottomRight => 4,
+            Direction::TopRight => 5,
+        }
     }
 }
 
