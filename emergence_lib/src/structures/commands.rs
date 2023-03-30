@@ -267,7 +267,7 @@ impl Command for SpawnGhostCommand {
         }
 
         // Remove any existing ghosts
-        let maybe_existing_ghost = geometry.ghost_index.remove(&self.tile_pos);
+        let maybe_existing_ghost = geometry.remove_ghost(self.tile_pos);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
             world.entity_mut(existing_ghost).despawn_recursive();
@@ -305,7 +305,7 @@ impl Command for SpawnGhostCommand {
             .id();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.ghost_index.insert(self.tile_pos, ghost_entity);
+        geometry.add_ghost(self.tile_pos, ghost_entity);
     }
 }
 
@@ -318,7 +318,7 @@ struct DespawnGhostCommand {
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.ghost_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.remove_ghost(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -355,7 +355,7 @@ impl Command for SpawnPreviewCommand {
         let world_pos = self.tile_pos.top_of_tile(&map_geometry);
 
         // Remove any existing previews at this location
-        let maybe_existing_preview = map_geometry.preview_index.remove(&self.tile_pos);
+        let maybe_existing_preview = map_geometry.remove_preview(self.tile_pos);
         if let Some(existing_preview) = maybe_existing_preview {
             world.entity_mut(existing_preview).despawn_recursive();
         }
@@ -389,7 +389,7 @@ impl Command for SpawnPreviewCommand {
 
         // Update the index to reflect the new state
         let mut geometry = world.resource_mut::<MapGeometry>();
-        geometry.preview_index.insert(self.tile_pos, preview_entity);
+        geometry.add_preview(self.tile_pos, preview_entity);
     }
 }
 
@@ -402,7 +402,7 @@ struct DespawnPreviewCommand {
 impl Command for DespawnPreviewCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.preview_index.remove(&self.tile_pos);
+        let maybe_entity = geometry.remove_preview(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {

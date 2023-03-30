@@ -262,9 +262,9 @@ pub struct MapGeometry {
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
-    pub(crate) ghost_index: HashMap<TilePos, Entity>,
+    ghost_index: HashMap<TilePos, Entity>,
     /// Which [`Preview`](crate::structures::construction::Preview) entity is stored at each tile position
-    pub(crate) preview_index: HashMap<TilePos, Entity>,
+    preview_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -361,6 +361,35 @@ impl MapGeometry {
     /// Returns the removed entity, if any.
     pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
         self.structure_index.remove(&tile_pos)
+    }
+
+    /// Gets the ghost [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_ghost(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.ghost_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `ghost_entity` to the structure index at the provided `tile_pos`.
+    pub(crate) fn add_ghost(&mut self, tile_pos: TilePos, structure_entity: Entity) {
+        self.ghost_index.insert(tile_pos, structure_entity);
+    }
+
+    /// Removes any ghost entity found at the provided `tile_pos` from the ghost index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_ghost(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        self.ghost_index.remove(&tile_pos)
+    }
+
+    /// Adds the provided `preview_entity` to the structure index at the provided `tile_pos`.
+    pub(crate) fn add_preview(&mut self, tile_pos: TilePos, structure_entity: Entity) {
+        self.preview_index.insert(tile_pos, structure_entity);
+    }
+
+    /// Removes any preview entity found at the provided `tile_pos` from the preview index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_preview(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        self.preview_index.remove(&tile_pos)
     }
 }
 
