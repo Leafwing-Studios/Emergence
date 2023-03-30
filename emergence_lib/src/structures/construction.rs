@@ -4,6 +4,7 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::asset_management::manifest::Terrain;
 use crate::simulation::geometry::MapGeometry;
 use crate::{
     self as emergence_lib, asset_management::manifest::StructureManifest,
@@ -388,5 +389,28 @@ impl Footprint {
             .iter()
             .map(|&offset| center + offset)
             .collect::<HashSet<_>>()
+    }
+}
+
+/// Ensures that all ghosts can be built.
+pub(super) fn validate_ghosts(
+    map_geometry: Res<MapGeometry>,
+    ghost_query: Query<(&TilePos, &Id<Structure>), With<Ghost>>,
+    structure_manifest: Res<StructureManifest>,
+    terrain_query: Query<&Id<Terrain>>,
+    mut commands: Commands,
+) {
+    // We only need to validate this when the map geometry changes.
+    if !map_geometry.is_changed() {
+        return;
+    }
+
+    for (&tile_pos, &structure_id) in ghost_query.iter() {
+        let structure_details = structure_manifest.get(structure_id);
+        let footprint = &structure_details.footprint;
+        let allowed_terrain_types = structure_details.allowed_terrain_types();
+        if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
+            commands.despawn_ghost(tile_pos);
+        }
     }
 }
