@@ -1,7 +1,5 @@
 //! Data and manifest definitions for structure.
 
-use std::num::NonZeroU8;
-
 use crate::{
     items::inventory::Inventory,
     organisms::{
@@ -143,7 +141,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 6,
-                footprint: Footprint::Single,
+                footprint: Footprint::single(),
             },
         );
 
@@ -176,7 +174,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
                 max_workers: 1,
-                footprint: Footprint::Single,
+                footprint: Footprint::single(),
             },
         );
 
@@ -197,7 +195,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy.clone(),
                 max_workers: 1,
-                footprint: Footprint::Single,
+                footprint: Footprint::single(),
             },
         );
 
@@ -214,7 +212,7 @@ impl Default for StructureManifest {
                 },
                 construction_strategy: acacia_construction_strategy,
                 max_workers: 6,
-                footprint: Footprint::Single,
+                footprint: Footprint::single(),
             },
         );
 
@@ -236,7 +234,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 3,
-                footprint: Footprint::Hexagonal(NonZeroU8::new(1).unwrap()),
+                footprint: Footprint::hexagon(1),
             },
         );
 
@@ -259,8 +257,8 @@ impl Default for StructureManifest {
                 },
                 max_workers: 6,
                 // Forms a crescent shape
-                footprint: Footprint::Irregular(
-                    [
+                footprint: Footprint {
+                    set: [
                         TilePos::new(1, 0),
                         TilePos::new(1, -1),
                         TilePos::new(0, -1),
@@ -269,7 +267,7 @@ impl Default for StructureManifest {
                     .iter()
                     .copied()
                     .collect(),
-                ),
+                },
             },
         );
 
@@ -294,7 +292,7 @@ impl Default for StructureManifest {
                     ]),
                 },
                 max_workers: 6,
-                footprint: Footprint::Single,
+                footprint: Footprint::single(),
             },
         );
 

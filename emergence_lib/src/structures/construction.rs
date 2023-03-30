@@ -4,8 +4,6 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use std::num::NonZeroU8;
-
 use crate::simulation::geometry::MapGeometry;
 use crate::{
     self as emergence_lib, asset_management::manifest::StructureManifest,
@@ -15,6 +13,8 @@ use bevy::utils::{Duration, HashSet};
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
+use hexx::shapes::hexagon;
+use hexx::Hex;
 
 use crate::{
     asset_management::manifest::{Id, Structure},
@@ -356,15 +356,29 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
 }
 
 /// The set of tiles taken up by a structure.
+///
+/// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub(crate) enum Footprint {
-    #[default]
-    /// Only a single tile is taken up by this structure.
-    Single,
-    /// A hexagon with the given radius is taken up by this structure.
-    Hexagonal(NonZeroU8),
-    /// An irregular set of tiles is taken up by this structure.
-    ///
-    /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
-    Irregular(HashSet<TilePos>),
+pub(crate) struct Footprint {
+    /// The set of tiles is taken up by this structure.
+    pub(crate) set: HashSet<TilePos>,
+}
+
+impl Footprint {
+    /// A footprint that occupies a single tile.
+    pub(crate) fn single() -> Self {
+        Self {
+            set: HashSet::from_iter(vec![TilePos::ZERO]),
+        }
+    }
+
+    /// A footprint that occupies a set of tiles in a solid hexagon.
+    pub(crate) fn hexagon(radius: u32) -> Self {
+        let mut set = HashSet::new();
+        for hex in hexagon(Hex::ZERO, radius) {
+            set.insert(TilePos { hex });
+        }
+
+        Footprint { set }
+    }
 }

@@ -48,7 +48,7 @@ impl Display for TilePos {
 
 impl TilePos {
     /// The position of the central tile
-    pub const ORIGIN: TilePos = TilePos {
+    pub const ZERO: TilePos = TilePos {
         hex: Hex { x: 0, y: 0 },
     };
 
