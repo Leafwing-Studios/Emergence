@@ -1,9 +1,18 @@
 //! Manages all UI across the entire game.
 
-use crate::ui::{
-    overlay::OverlayMenuPlugin, production_statistics::ProductionStatisticsPlugin,
-    select_structure::SelectStructurePlugin, select_terraforming::SelectTerraformingPlugin,
-    selection_details::SelectionDetailsPlugin, status::StatusPlugin,
+use crate::{
+    asset_management::{manifest::Id, AssetCollectionExt},
+    player_interaction::terraform::TerraformingChoice,
+    structures::structure_manifest::Structure,
+    ui::{
+        overlay::OverlayMenuPlugin,
+        production_statistics::ProductionStatisticsPlugin,
+        select_structure::SelectStructurePlugin,
+        select_terraforming::SelectTerraformingPlugin,
+        selection_details::SelectionDetailsPlugin,
+        status::StatusPlugin,
+        ui_assets::{Icons, UiElements},
+    },
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -15,6 +24,7 @@ mod select_structure;
 mod select_terraforming;
 mod selection_details;
 mod status;
+mod ui_assets;
 mod wheel_menu;
 
 /// The font handles for the `FiraSans` font family.
@@ -38,6 +48,9 @@ impl Plugin for UiPlugin {
         app.insert_resource(FiraSansFontFamily {
             regular: asset_server.load("fonts/FiraSans-Medium.ttf"),
         })
+        .add_asset_collection::<UiElements>()
+        .add_asset_collection::<Icons<Id<Structure>>>()
+        .add_asset_collection::<Icons<TerraformingChoice>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)

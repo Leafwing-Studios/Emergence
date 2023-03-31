@@ -12,29 +12,17 @@
 
 use std::any::TypeId;
 
-use crate::{
-    player_interaction::terraform::TerraformingChoice, structures::structure_manifest::Structure,
-};
-
-use self::{
-    manifest::{plugin::ManifestPlugin, Id},
-    ui::{Icons, UiElements},
-};
+use self::manifest::plugin::ManifestPlugin;
 use bevy::{asset::LoadState, prelude::*, utils::HashSet};
 
 pub mod manifest;
-pub(crate) mod ui;
 
 /// Collects asset management systems and resources.
 pub struct AssetManagementPlugin;
 
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<AssetState>()
-            .add_plugin(ManifestPlugin)
-            .add_asset_collection::<UiElements>()
-            .add_asset_collection::<Icons<Id<Structure>>>()
-            .add_asset_collection::<Icons<TerraformingChoice>>();
+        app.add_state::<AssetState>().add_plugin(ManifestPlugin);
     }
 }
 

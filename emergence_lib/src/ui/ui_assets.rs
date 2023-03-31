@@ -5,12 +5,11 @@ use core::fmt::Debug;
 use core::hash::Hash;
 
 use crate::{
+    asset_management::{manifest::Id, Loadable},
     player_interaction::terraform::TerraformingChoice,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
 };
-
-use super::{manifest::Id, Loadable};
 
 /// Stores all structural elements of the UI: buttons, frames, widgets and so on
 #[derive(Resource)]
