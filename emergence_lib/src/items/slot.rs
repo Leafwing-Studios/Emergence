@@ -2,11 +2,12 @@
 
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest};
+use crate::asset_management::manifest::Id;
 
 use super::{
     errors::{AddOneItemError, RemoveOneItemError},
     inventory::InventoryState,
+    item_manifest::{Item, ItemManifest},
     ItemCount,
 };
 

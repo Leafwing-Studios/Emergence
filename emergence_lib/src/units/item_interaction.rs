@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest};
+use crate::{
+    asset_management::manifest::Id,
+    items::item_manifest::{Item, ItemManifest},
+};
 
 /// The item(s) that a unit is carrying.
 #[derive(Component, Default, Clone, Debug, Deref, DerefMut)]

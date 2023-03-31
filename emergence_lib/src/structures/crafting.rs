@@ -10,9 +10,10 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Manifest},
+    asset_management::manifest::{Id, Manifest},
     items::{
         inventory::Inventory,
+        item_manifest::{Item, ItemManifest},
         recipe::{Recipe, RecipeData, RecipeManifest},
     },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},

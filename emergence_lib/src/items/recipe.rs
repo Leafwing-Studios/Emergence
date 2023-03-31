@@ -1,9 +1,10 @@
 //! Instructions to craft items.
 
+use super::item_manifest::ItemManifest;
 use super::{inventory::Inventory, ItemCount};
 use crate::asset_management::manifest::Manifest;
 use crate::{
-    asset_management::manifest::{Id, ItemManifest},
+    asset_management::manifest::Id,
     organisms::energy::Energy,
     simulation::light::{Illuminance, TotalLight},
     structures::crafting::{InputInventory, OutputInventory},

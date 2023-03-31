@@ -5,8 +5,11 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Terrain, TerrainManifest},
-    items::ItemCount,
+    asset_management::manifest::{Id, Terrain, TerrainManifest},
+    items::{
+        item_manifest::{Item, ItemManifest},
+        ItemCount,
+    },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalStrength, SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},

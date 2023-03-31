@@ -6,14 +6,11 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::{AssetCollectionExt, AssetState, Loadable},
+    items::item_manifest::RawItemManifest,
     structures::structure_manifest::StructureManifest,
 };
 
-use super::{
-    loader::RawManifestLoader,
-    raw::{RawItemManifest, RawManifest},
-    Manifest, TerrainManifest,
-};
+use super::{loader::RawManifestLoader, raw::RawManifest, Manifest, TerrainManifest};
 
 /// A plugin to handle the creation of all manifest resources.
 pub struct ManifestPlugin;

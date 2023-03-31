@@ -3,11 +3,8 @@
 use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
-    asset_management::{
-        manifest::{ItemManifest, TerrainManifest},
-        AssetState,
-    },
-    items::recipe::RecipeManifest,
+    asset_management::{manifest::TerrainManifest, AssetState},
+    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     player_interaction::{
         camera::{CameraMode, CameraSettings},
         selection::CurrentSelection,
@@ -421,8 +418,8 @@ mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest},
-        items::recipe::RecipeManifest,
+        asset_management::manifest::Id,
+        items::{item_manifest::ItemManifest, recipe::RecipeManifest},
         signals::Emitter,
         simulation::geometry::TilePos,
         structures::{
@@ -553,8 +550,8 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{Id, ItemManifest},
-        items::{inventory::Inventory, recipe::RecipeData},
+        asset_management::manifest::Id,
+        items::{inventory::Inventory, item_manifest::ItemManifest, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
             construction::MarkedForDemolition,
@@ -696,7 +693,8 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, Terrain, TerrainManifest},
+        asset_management::manifest::{Id, Terrain, TerrainManifest},
+        items::item_manifest::ItemManifest,
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
@@ -770,7 +768,8 @@ mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest},
+        asset_management::manifest::Id,
+        items::item_manifest::ItemManifest,
         simulation::geometry::TilePos,
         structures::structure_manifest::StructureManifest,
         units::{

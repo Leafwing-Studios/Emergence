@@ -1,8 +1,8 @@
 //! Data and manifest definitions for structure.
 
 use crate::{
-    asset_management::manifest::{Id, Item, Manifest, Terrain},
-    items::inventory::Inventory,
+    asset_management::manifest::{Id, Manifest, Terrain},
+    items::{inventory::Inventory, item_manifest::Item},
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{LifePath, Lifecycle},

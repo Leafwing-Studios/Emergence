@@ -1,50 +1,14 @@
 //! Everything related to items and crafting.
 
-use serde::{Deserialize, Serialize};
+use crate::asset_management::manifest::Id;
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest};
+use self::item_manifest::{Item, ItemManifest};
 
 pub(crate) mod errors;
 pub(crate) mod inventory;
+pub(crate) mod item_manifest;
 pub(crate) mod recipe;
 pub(crate) mod slot;
-
-/// The data associated with each item.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ItemData {
-    /// The number of items that can fit in a single item slot.
-    stack_size: usize,
-}
-
-impl ItemData {
-    /// Create new item data.
-    pub fn new(stack_size: usize) -> Self {
-        Self { stack_size }
-    }
-
-    /// The number of items that can fit in a single item slot.
-    pub fn stack_size(&self) -> usize {
-        self.stack_size
-    }
-
-    // TODO: Remove this once we can load item data from asset files
-    /// A leaf from an acacia plant.
-    pub fn acacia_leaf() -> Self {
-        Self { stack_size: 10 }
-    }
-
-    // TODO: Remove this once we can load item data from asset files
-    /// A piece of a leuco mushroom.
-    pub fn leuco_chunk() -> Self {
-        Self { stack_size: 5 }
-    }
-
-    // TODO: Remove this once we can load item data from asset files
-    /// An egg that will hatch into a grown ant.
-    pub fn ant_egg() -> Self {
-        Self { stack_size: 5 }
-    }
-}
 
 /// A specific amount of a given item.
 #[derive(Debug, Clone, PartialEq, Eq)]

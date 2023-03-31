@@ -1,8 +1,9 @@
 //! Controls what is being visualized on the terrain by the [`TileOverlay`].
 
 use crate::{
-    asset_management::{manifest::ItemManifest, AssetState},
+    asset_management::AssetState,
     infovis::{OverlayType, TileOverlay},
+    items::item_manifest::ItemManifest,
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
     structures::structure_manifest::StructureManifest,

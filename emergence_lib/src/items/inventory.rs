@@ -3,13 +3,14 @@
 use bevy::prelude::warn;
 use itertools::rev;
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest};
+use crate::asset_management::manifest::Id;
 
 use super::{
     errors::{
         AddManyItemsError, AddOneItemError, ItemTransferError, RemoveManyItemsError,
         RemoveOneItemError,
     },
+    item_manifest::{Item, ItemManifest},
     slot::ItemSlot,
     ItemCount,
 };
@@ -280,7 +281,7 @@ impl Inventory {
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
                 item_count.item_id(),
-                item_manifest.get(item_count.item_id()).stack_size,
+                item_manifest.get(item_count.item_id()).stack_size(),
             );
 
             match new_slot.add_until_full(items_to_add) {
@@ -362,7 +363,7 @@ impl Inventory {
         let excess_counts: Vec<ItemCount> = item_counts
             .iter()
             .filter_map(|item_count| {
-                let stack_size = item_manifest.get(item_count.item_id()).stack_size;
+                let stack_size = item_manifest.get(item_count.item_id()).stack_size();
 
                 let remaining_reserved_space =
                     self.remaining_reserved_space_for_item(item_count.item_id());
@@ -583,12 +584,12 @@ impl Inventory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{asset_management::manifest::Manifest, items::ItemData};
+    use crate::{asset_management::manifest::Manifest, items::item_manifest::ItemData};
 
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut manifest = Manifest::new();
-        manifest.insert("acacia_leaf", ItemData::acacia_leaf());
+        manifest.insert("acacia_leaf", ItemData { stack_size: 10 });
         manifest.insert("test", ItemData { stack_size: 10 });
         manifest
     }

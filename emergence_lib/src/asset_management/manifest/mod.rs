@@ -7,12 +7,10 @@
 mod identifier;
 pub use self::identifier::*;
 mod loader;
-pub(crate) mod plugin;
-mod raw;
+pub mod plugin;
+pub mod raw;
 pub(crate) mod terrain;
 pub use terrain::*;
-pub(crate) mod item;
-pub use item::*;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;

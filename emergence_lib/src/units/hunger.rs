@@ -3,7 +3,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest},
+    asset_management::manifest::Id,
+    items::item_manifest::{Item, ItemManifest},
     organisms::energy::{Energy, EnergyPool},
 };
 

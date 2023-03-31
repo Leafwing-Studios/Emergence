@@ -9,11 +9,11 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::{
-        manifest::{Id, ItemManifest, Terrain},
+        manifest::{Id, Terrain},
         structures::StructureHandles,
     },
     graphics::InheritedMaterial,
-    items::recipe::RecipeManifest,
+    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,

@@ -6,7 +6,8 @@ use rand::prelude::Distribution;
 use rand::rngs::ThreadRng;
 use rand::thread_rng;
 
-use crate::asset_management::manifest::{Id, Item, ItemManifest};
+use crate::asset_management::manifest::Id;
+use crate::items::item_manifest::{Item, ItemManifest};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::{Structure, StructureManifest};

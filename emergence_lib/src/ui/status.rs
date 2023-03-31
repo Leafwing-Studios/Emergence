@@ -5,7 +5,8 @@ use bevy_mod_billboard::{BillboardPlugin, BillboardTextBundle};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::{manifest::ItemManifest, AssetState},
+    asset_management::AssetState,
+    items::item_manifest::ItemManifest,
     player_interaction::PlayerAction,
     structures::{crafting::CraftingState, structure_manifest::StructureManifest},
     units::goals::Goal,
