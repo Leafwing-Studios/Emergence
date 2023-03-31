@@ -1,10 +1,9 @@
 //! Asset loading for structures
 
 use crate::{
-    asset_management::hexagonal_column,
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
-    simulation::geometry::MapGeometry,
+    simulation::geometry::{hexagonal_column, MapGeometry},
     structures::{
         construction::GhostKind,
         structure_manifest::{Structure, StructureManifest},

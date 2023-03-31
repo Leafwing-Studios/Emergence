@@ -3,7 +3,7 @@
 use crate::{
     asset_management::{
         manifest::{Id, Manifest},
-        units::UnitHandles,
+        AssetCollectionExt,
     },
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
@@ -21,6 +21,7 @@ use self::{
     goals::Goal,
     impatience::ImpatiencePool,
     item_interaction::UnitInventory,
+    unit_assets::UnitHandles,
     unit_manifest::{Unit, UnitData, UnitManifest},
 };
 
@@ -32,6 +33,7 @@ pub(crate) mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 mod reproduction;
+pub(crate) mod unit_assets;
 pub(crate) mod unit_manifest;
 
 /// Controls the distribution of wandering durations on a per-unit-type basis.
@@ -150,28 +152,30 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UnitManifest>().add_systems(
-            (
-                actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
-                actions::start_actions
-                    .in_set(UnitSystem::Act)
-                    .before(actions::finish_actions),
-                actions::finish_actions
-                    .in_set(UnitSystem::Act)
-                    .after(UnitSystem::AdvanceTimers)
-                    // This must occur after MarkedForDemolition is added,
-                    // or we'll get a panic due to inserting a component on a despawned entity
-                    .after(InteractionSystem::ManagePreviews),
-                goals::choose_goal.in_set(UnitSystem::ChooseGoal),
-                actions::choose_actions
-                    .in_set(UnitSystem::ChooseNewAction)
-                    .after(UnitSystem::Act)
-                    .after(UnitSystem::ChooseGoal),
-                reproduction::hatch_ant_eggs,
-                hunger::check_for_hunger.before(UnitSystem::ChooseNewAction),
-            )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.init_resource::<UnitManifest>()
+            .add_asset_collection::<UnitHandles>()
+            .add_systems(
+                (
+                    actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
+                    actions::start_actions
+                        .in_set(UnitSystem::Act)
+                        .before(actions::finish_actions),
+                    actions::finish_actions
+                        .in_set(UnitSystem::Act)
+                        .after(UnitSystem::AdvanceTimers)
+                        // This must occur after MarkedForDemolition is added,
+                        // or we'll get a panic due to inserting a component on a despawned entity
+                        .after(InteractionSystem::ManagePreviews),
+                    goals::choose_goal.in_set(UnitSystem::ChooseGoal),
+                    actions::choose_actions
+                        .in_set(UnitSystem::ChooseNewAction)
+                        .after(UnitSystem::Act)
+                        .after(UnitSystem::ChooseGoal),
+                    reproduction::hatch_ant_eggs,
+                    hunger::check_for_hunger.before(UnitSystem::ChooseNewAction),
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }
