@@ -17,8 +17,6 @@ pub(crate) mod item;
 pub use item::*;
 pub(crate) mod recipe;
 pub use recipe::*;
-pub(crate) mod unit;
-pub use unit::*;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;

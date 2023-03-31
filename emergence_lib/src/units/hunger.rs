@@ -3,11 +3,14 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Unit, UnitManifest},
+    asset_management::manifest::{Id, Item, ItemManifest},
     organisms::energy::{Energy, EnergyPool},
 };
 
-use super::goals::Goal;
+use super::{
+    goals::Goal,
+    unit_manifest::{Unit, UnitManifest},
+};
 
 /// The item(s) that a unit must consume to gain [`Energy`].
 #[derive(Component, Clone, Debug)]

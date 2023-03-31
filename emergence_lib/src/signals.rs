@@ -4,15 +4,14 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use crate as emergence_lib;
+use crate::units::unit_manifest::{Unit, UnitManifest};
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
 
-use crate::asset_management::manifest::{
-    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
-};
+use crate::asset_management::manifest::{Id, Item, ItemManifest, Structure, StructureManifest};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;

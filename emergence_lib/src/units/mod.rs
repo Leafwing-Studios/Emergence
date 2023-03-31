@@ -2,13 +2,8 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Manifest, Unit, UnitManifest},
+        manifest::{Id, Manifest},
         units::UnitHandles,
-    },
-    organisms::{
-        energy::{Energy, EnergyPool},
-        lifecycle::Lifecycle,
-        OrganismId, OrganismVariety,
     },
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
@@ -19,12 +14,14 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
-use leafwing_abilities::prelude::Pool;
 use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng};
 
 use self::{
-    actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
+    actions::CurrentAction,
+    goals::Goal,
+    impatience::ImpatiencePool,
     item_interaction::UnitInventory,
+    unit_manifest::{Unit, UnitData, UnitManifest},
 };
 
 use crate::organisms::OrganismBundle;
@@ -35,37 +32,11 @@ pub(crate) mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 mod reproduction;
-
-/// The data associated with each variety of unit
-#[derive(Debug, Clone)]
-pub(crate) struct UnitData {
-    /// The data shared by all organisms
-    organism_variety: OrganismVariety,
-    /// What this unit type needs to eat
-    diet: Diet,
-    /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
-    max_impatience: u8,
-    /// How many actions will units of this type take while wandering before picking a new goal?
-    ///
-    /// This stores a [`WeightedIndex`] to allow for multimodal distributions.
-    wandering_behavior: WanderingBehavior,
-}
-
-impl UnitData {
-    /// Returns the [`OrganismVariety`] data for this type of unit.
-    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
-        &self.organism_variety
-    }
-
-    /// Returns the [`Diet`] for this type of unit.
-    pub(crate) fn diet(&self) -> &Diet {
-        &self.diet
-    }
-}
+pub(crate) mod unit_manifest;
 
 /// Controls the distribution of wandering durations on a per-unit-type basis.
 #[derive(Debug, Clone)]
-struct WanderingBehavior {
+pub(crate) struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
     wander_durations: Vec<u16>,
     /// The relative probability of each value in `mean_free_wander_period`.
@@ -91,29 +62,6 @@ impl FromIterator<(u16, f32)> for WanderingBehavior {
             wander_durations,
             weights: WeightedIndex::new(weights).unwrap(),
         }
-    }
-}
-
-impl Default for UnitManifest {
-    fn default() -> Self {
-        let mut manifest: UnitManifest = Manifest::new();
-
-        // TODO: load this from disk
-        manifest.insert(
-            "ant",
-            UnitData {
-                organism_variety: OrganismVariety {
-                    prototypical_form: OrganismId::Unit(Id::from_name("ant")),
-                    lifecycle: Lifecycle::STATIC,
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                },
-                diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
-                max_impatience: 10,
-                wandering_behavior: WanderingBehavior::from_iter([(1, 0.7), (8, 0.2), (16, 0.1)]),
-            },
-        );
-
-        manifest
     }
 }
 
@@ -150,7 +98,6 @@ pub(crate) struct UnitBundle {
 
 impl UnitBundle {
     /// Initializes a new unit
-    // TODO: use a UnitManifest
     pub(crate) fn new(
         unit_id: Id<Unit>,
         tile_pos: TilePos,

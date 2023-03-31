@@ -5,9 +5,7 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{
-        Id, Item, ItemManifest, Structure, Terrain, TerrainManifest, Unit, UnitManifest,
-    },
+    asset_management::manifest::{Id, Item, ItemManifest, Structure, Terrain, TerrainManifest},
     items::ItemCount,
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalStrength, SignalType, Signals},
@@ -22,7 +20,12 @@ use crate::{
     },
 };
 
-use super::{goals::Goal, impatience::ImpatiencePool, item_interaction::UnitInventory};
+use super::{
+    goals::Goal,
+    impatience::ImpatiencePool,
+    item_interaction::UnitInventory,
+    unit_manifest::{Unit, UnitManifest},
+};
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(

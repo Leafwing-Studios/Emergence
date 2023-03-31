@@ -4,8 +4,9 @@ use bevy::prelude::*;
 use leafwing_abilities::systems::regenerate_resource_pool;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest, Unit, UnitManifest},
+    asset_management::manifest::{Id, Structure, StructureManifest},
     simulation::SimulationSet,
+    units::unit_manifest::{Unit, UnitManifest},
 };
 
 use self::{

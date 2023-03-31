@@ -4,9 +4,7 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
     asset_management::{
-        manifest::{
-            ItemManifest, RecipeManifest, StructureManifest, TerrainManifest, UnitManifest,
-        },
+        manifest::{ItemManifest, RecipeManifest, StructureManifest, TerrainManifest},
         AssetState,
     },
     player_interaction::{
@@ -16,6 +14,7 @@ use crate::{
     },
     signals::Signals,
     simulation::geometry::MapGeometry,
+    units::unit_manifest::UnitManifest,
 };
 
 use self::{
@@ -496,8 +495,9 @@ mod organism_details {
     use bevy::ecs::query::WorldQuery;
 
     use crate::{
-        asset_management::manifest::{StructureManifest, UnitManifest},
+        asset_management::manifest::StructureManifest,
         organisms::{energy::EnergyPool, lifecycle::Lifecycle, OrganismId},
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`OrganismDetails`].
@@ -549,9 +549,7 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, Structure, StructureManifest, UnitManifest,
-        },
+        asset_management::manifest::{Id, ItemManifest, Structure, StructureManifest},
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
@@ -561,6 +559,7 @@ mod structure_details {
                 WorkersPresent,
             },
         },
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -693,11 +692,12 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::{
-            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest, UnitManifest,
+            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest,
         },
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -766,11 +766,15 @@ mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, StructureManifest, Unit, UnitManifest},
+        asset_management::manifest::{Id, ItemManifest, StructureManifest},
         simulation::geometry::TilePos,
         units::{
-            actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
+            actions::CurrentAction,
+            goals::Goal,
+            hunger::Diet,
+            impatience::ImpatiencePool,
             item_interaction::UnitInventory,
+            unit_manifest::{Unit, UnitManifest},
         },
     };
 

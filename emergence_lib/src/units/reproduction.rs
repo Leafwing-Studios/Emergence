@@ -5,15 +5,12 @@ use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, UnitManifest},
-        units::UnitHandles,
-    },
+    asset_management::{manifest::Id, units::UnitHandles},
     simulation::geometry::{MapGeometry, TilePos},
     structures::crafting::{ActiveRecipe, CraftingState},
 };
 
-use super::UnitBundle;
+use super::{unit_manifest::UnitManifest, UnitBundle};
 
 /// Spawn ants when eggs have hatched
 pub(super) fn hatch_ant_eggs(

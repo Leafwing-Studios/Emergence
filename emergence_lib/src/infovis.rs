@@ -11,13 +11,14 @@ use core::fmt::Display;
 
 use crate::{
     asset_management::{
-        manifest::{Id, Terrain, Unit},
+        manifest::{Id, Terrain},
         terrain::TerrainHandles,
     },
     enum_iter::IterableEnum,
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     simulation::geometry::TilePos,
+    units::unit_manifest::Unit,
 };
 
 /// Systems and reources for communicating the state of the world to the player.

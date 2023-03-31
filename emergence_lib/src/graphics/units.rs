@@ -3,8 +3,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::{Id, Unit},
-    units::item_interaction::UnitInventory,
+    asset_management::manifest::Id,
+    units::{item_interaction::UnitInventory, unit_manifest::Unit},
 };
 
 /// Shows the item that each unit is holding

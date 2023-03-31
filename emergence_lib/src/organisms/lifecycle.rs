@@ -5,7 +5,7 @@ use leafwing_abilities::prelude::Pool;
 
 use crate::{
     asset_management::{
-        manifest::{Id, StructureManifest, Terrain, Unit, UnitManifest},
+        manifest::{Id, StructureManifest, Terrain},
         units::UnitHandles,
     },
     player_interaction::clipboard::ClipboardData,
@@ -14,7 +14,10 @@ use crate::{
         time::{Days, TimePool},
     },
     structures::commands::StructureCommandsExt,
-    units::UnitBundle,
+    units::{
+        unit_manifest::{Unit, UnitManifest},
+        UnitBundle,
+    },
 };
 
 use super::{

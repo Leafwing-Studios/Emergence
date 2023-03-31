@@ -15,10 +15,10 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::manifest::Structure;
 use crate::asset_management::manifest::Terrain;
-use crate::asset_management::manifest::Unit;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
 use crate::structures::construction::Ghost;
+use crate::units::unit_manifest::Unit;
 
 use self::speed::Speed;
 

@@ -2,12 +2,13 @@
 
 use crate::{
     asset_management::{
-        manifest::{ItemManifest, StructureManifest, UnitManifest},
+        manifest::{ItemManifest, StructureManifest},
         AssetState,
     },
     infovis::{OverlayType, TileOverlay},
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
+    units::unit_manifest::UnitManifest,
 };
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
