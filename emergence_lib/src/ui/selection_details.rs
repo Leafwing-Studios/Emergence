@@ -4,7 +4,7 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
     asset_management::{
-        manifest::{ItemManifest, RecipeManifest, StructureManifest, TerrainManifest},
+        manifest::{ItemManifest, RecipeManifest, TerrainManifest},
         AssetState,
     },
     player_interaction::{
@@ -14,6 +14,7 @@ use crate::{
     },
     signals::Signals,
     simulation::geometry::MapGeometry,
+    structures::structure_manifest::StructureManifest,
     units::unit_manifest::UnitManifest,
 };
 
@@ -419,12 +420,13 @@ mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, RecipeManifest, Structure, StructureManifest,
-        },
+        asset_management::manifest::{Id, ItemManifest, RecipeManifest},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::crafting::{ActiveRecipe, CraftingState, InputInventory},
+        structures::{
+            crafting::{ActiveRecipe, CraftingState, InputInventory},
+            structure_manifest::{Structure, StructureManifest},
+        },
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -495,8 +497,8 @@ mod organism_details {
     use bevy::ecs::query::WorldQuery;
 
     use crate::{
-        asset_management::manifest::StructureManifest,
         organisms::{energy::EnergyPool, lifecycle::Lifecycle, OrganismId},
+        structures::structure_manifest::StructureManifest,
         units::unit_manifest::UnitManifest,
     };
 
@@ -549,7 +551,7 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, Structure, StructureManifest},
+        asset_management::manifest::{Id, ItemManifest},
         items::{inventory::Inventory, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
@@ -558,6 +560,7 @@ mod structure_details {
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
                 WorkersPresent,
             },
+            structure_manifest::{Structure, StructureManifest},
         },
         units::unit_manifest::UnitManifest,
     };
@@ -691,12 +694,11 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest,
-        },
+        asset_management::manifest::{Id, ItemManifest, Terrain, TerrainManifest},
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
+        structures::structure_manifest::StructureManifest,
         units::unit_manifest::UnitManifest,
     };
 
@@ -766,8 +768,9 @@ mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, StructureManifest},
+        asset_management::manifest::{Id, ItemManifest},
         simulation::geometry::TilePos,
+        structures::structure_manifest::StructureManifest,
         units::{
             actions::CurrentAction,
             goals::Goal,

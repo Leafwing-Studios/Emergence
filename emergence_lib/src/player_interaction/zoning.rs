@@ -4,12 +4,13 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest, Terrain, TerrainManifest},
+    asset_management::manifest::{Id, Terrain, TerrainManifest},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Height, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
         construction::{MarkedForDemolition, Preview},
+        structure_manifest::{Structure, StructureManifest},
     },
 };
 

@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::manifest::Id,
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
     simulation::{
         geometry::{Facing, TilePos},
@@ -18,11 +18,13 @@ use crate::{
 use self::{
     construction::{ghost_lifecycle, ghost_signals, validate_ghosts},
     crafting::CraftingPlugin,
+    structure_manifest::Structure,
 };
 
 pub(crate) mod commands;
 pub(crate) mod construction;
 pub(crate) mod crafting;
+pub(crate) mod structure_manifest;
 
 /// The systems that make structures tick.
 pub(super) struct StructuresPlugin;

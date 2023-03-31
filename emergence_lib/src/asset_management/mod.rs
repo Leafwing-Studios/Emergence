@@ -12,10 +12,12 @@
 
 use std::any::TypeId;
 
-use crate::player_interaction::terraform::TerraformingChoice;
+use crate::{
+    player_interaction::terraform::TerraformingChoice, structures::structure_manifest::Structure,
+};
 
 use self::{
-    manifest::{plugin::ManifestPlugin, Id, Structure},
+    manifest::{plugin::ManifestPlugin, Id},
     structures::StructureHandles,
     terrain::TerrainHandles,
     ui::{Icons, UiElements},

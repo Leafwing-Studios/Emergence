@@ -5,9 +5,9 @@ use hexx::{Hex, HexIterExt};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::{Id, Structure},
+    asset_management::manifest::Id,
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{construction::Preview, crafting::ActiveRecipe},
+    structures::{construction::Preview, crafting::ActiveRecipe, structure_manifest::Structure},
 };
 
 use super::{

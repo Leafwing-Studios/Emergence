@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Structure, StructureManifest},
+        manifest::Id,
         palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     },
     player_interaction::{
@@ -10,6 +10,7 @@ use crate::{
         PlayerAction,
     },
     simulation::geometry::Facing,
+    structures::structure_manifest::{Structure, StructureManifest},
 };
 
 use itertools::Itertools;

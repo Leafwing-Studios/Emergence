@@ -4,12 +4,15 @@ use std::marker::PhantomData;
 
 use bevy::prelude::*;
 
-use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
+use crate::{
+    asset_management::{AssetCollectionExt, AssetState, Loadable},
+    structures::structure_manifest::StructureManifest,
+};
 
 use super::{
     loader::RawManifestLoader,
     raw::{RawItemManifest, RawManifest},
-    Manifest, StructureManifest, TerrainManifest,
+    Manifest, TerrainManifest,
 };
 
 /// A plugin to handle the creation of all manifest resources.

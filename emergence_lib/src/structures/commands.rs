@@ -9,7 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::{
-        manifest::{structure::StructureKind, Id, ItemManifest, RecipeManifest, Terrain},
+        manifest::{Id, ItemManifest, RecipeManifest, Terrain},
         structures::StructureHandles,
     },
     graphics::InheritedMaterial,
@@ -22,7 +22,8 @@ use crate::{
 use super::{
     construction::{GhostBundle, GhostKind, PreviewBundle},
     crafting::{CraftingBundle, StorageInventory},
-    StructureBundle, StructureManifest,
+    structure_manifest::{StructureKind, StructureManifest},
+    StructureBundle,
 };
 
 /// An extension trait for [`Commands`] for working with structures.

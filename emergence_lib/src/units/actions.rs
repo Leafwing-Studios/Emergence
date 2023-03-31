@@ -5,7 +5,7 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Item, ItemManifest, Structure, Terrain, TerrainManifest},
+    asset_management::manifest::{Id, Item, ItemManifest, Terrain, TerrainManifest},
     items::ItemCount,
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalStrength, SignalType, Signals},
@@ -17,6 +17,7 @@ use crate::{
             CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
             WorkplaceQuery,
         },
+        structure_manifest::Structure,
     },
 };
 

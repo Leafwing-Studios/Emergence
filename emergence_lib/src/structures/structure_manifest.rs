@@ -1,6 +1,7 @@
 //! Data and manifest definitions for structure.
 
 use crate::{
+    asset_management::manifest::{Id, Item, Manifest, Terrain},
     items::inventory::Inventory,
     organisms::{
         energy::{Energy, EnergyPool},
@@ -19,8 +20,6 @@ use bevy::{
 };
 
 use leafwing_abilities::prelude::Pool;
-
-use super::{Id, Item, Manifest, Terrain};
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -104,7 +103,7 @@ impl StructureManifest {
     ///
     /// These should be used to populate menus and other player-facing tools.
     pub(crate) fn prototypes(&self) -> impl IntoIterator<Item = Id<Structure>> + '_ {
-        self.data_map
+        self.data_map()
             .iter()
             .filter(|(id, v)| match &v.organism_variety {
                 None => true,

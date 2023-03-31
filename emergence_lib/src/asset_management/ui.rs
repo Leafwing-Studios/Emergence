@@ -4,10 +4,13 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use core::fmt::Debug;
 use core::hash::Hash;
 
-use crate::player_interaction::terraform::TerraformingChoice;
+use crate::{
+    player_interaction::terraform::TerraformingChoice,
+    structures::structure_manifest::{Structure, StructureManifest},
+};
 
 use super::{
-    manifest::{Id, Structure, StructureManifest, TerrainManifest},
+    manifest::{Id, TerrainManifest},
     Loadable,
 };
 
