@@ -2,11 +2,12 @@
 
 use bevy::{
     prelude::*,
+    render::{mesh::Indices, render_resource::PrimitiveTopology},
     utils::{HashMap, HashSet},
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
+use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
 use rand::{rngs::ThreadRng, Rng};
 use std::{
     f32::consts::PI,
@@ -14,9 +15,8 @@ use std::{
 };
 
 use crate::{
-    asset_management::manifest::{Id, Terrain},
-    filtered_array_iter::FilteredArrayIter,
-    structures::construction::Footprint,
+    asset_management::manifest::Id, filtered_array_iter::FilteredArrayIter,
+    structures::construction::Footprint, terrain::terrain_manifest::Terrain,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -274,7 +274,7 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
-    /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
+    /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
     terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,
@@ -577,6 +577,17 @@ impl RotationDirection {
             false => RotationDirection::Right,
         }
     }
+}
+
+/// Constructs the mesh for a single hexagonal column with the specified height.
+pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
+    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, hex_height);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
+    mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
+    mesh
 }
 
 /// Rotates objects so they are facing the correct direction.

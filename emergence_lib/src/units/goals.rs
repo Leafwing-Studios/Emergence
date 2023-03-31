@@ -6,14 +6,15 @@ use rand::prelude::Distribution;
 use rand::rngs::ThreadRng;
 use rand::thread_rng;
 
-use crate::asset_management::manifest::{
-    Id, Item, ItemManifest, Structure, StructureManifest, Unit, UnitManifest,
-};
+use crate::asset_management::manifest::Id;
+use crate::items::item_manifest::{Item, ItemManifest};
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
+use crate::structures::structure_manifest::{Structure, StructureManifest};
 
 use super::impatience::ImpatiencePool;
 use super::item_interaction::UnitInventory;
+use super::unit_manifest::{Unit, UnitManifest};
 use super::WanderingBehavior;
 
 /// A unit's current goals.

@@ -1,11 +1,14 @@
 //! Generating starting terrain and organisms
-use crate::asset_management::manifest::{Id, StructureManifest, Terrain, UnitManifest};
-use crate::asset_management::units::UnitHandles;
+use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, TilePos};
 use crate::structures::commands::StructureCommandsExt;
+use crate::structures::structure_manifest::StructureManifest;
+use crate::terrain::terrain_manifest::Terrain;
 use crate::terrain::SpawnTerrainCommand;
+use crate::units::unit_assets::UnitHandles;
+use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;

@@ -3,16 +3,12 @@
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use crate::{
+    asset_management::{manifest::Id, Loadable},
     enum_iter::IterableEnum,
+    graphics::palette::environment::COLUMN_COLOR,
     player_interaction::selection::ObjectInteraction,
-    simulation::geometry::{Height, MapGeometry},
-};
-
-use super::{
-    hexagonal_column,
-    manifest::{Id, Terrain, TerrainManifest},
-    palette::environment::COLUMN_COLOR,
-    Loadable,
+    simulation::geometry::{hexagonal_column, Height, MapGeometry},
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
 /// Stores material handles for the different tile types.

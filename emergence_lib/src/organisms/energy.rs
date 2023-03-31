@@ -6,7 +6,8 @@ use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 
-use crate::asset_management::manifest::{Id, Structure};
+use crate::asset_management::manifest::Id;
+use crate::structures::structure_manifest::Structure;
 use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
 
 /// The amount of energy available to an organism.

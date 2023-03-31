@@ -6,9 +6,11 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    asset_management::manifest::{Id, Structure, Terrain, Unit},
+    asset_management::manifest::Id,
     simulation::geometry::TilePos,
-    structures::construction::Ghost,
+    structures::{construction::Ghost, structure_manifest::Structure},
+    terrain::terrain_manifest::Terrain,
+    units::unit_manifest::Unit,
 };
 
 /// Controls raycasting and cursor aethetics.

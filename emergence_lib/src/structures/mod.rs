@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
-    asset_management::manifest::{Id, Structure, StructureManifest},
+    asset_management::{manifest::Id, AssetCollectionExt},
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
     simulation::{
         geometry::{Facing, TilePos},
@@ -18,26 +18,32 @@ use crate::{
 use self::{
     construction::{ghost_lifecycle, ghost_signals, validate_ghosts},
     crafting::CraftingPlugin,
+    structure_assets::StructureHandles,
+    structure_manifest::Structure,
 };
 
 pub(crate) mod commands;
 pub(crate) mod construction;
 pub(crate) mod crafting;
+mod structure_assets;
+pub(crate) mod structure_manifest;
 
 /// The systems that make structures tick.
 pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(CraftingPlugin).add_systems(
-            (
-                validate_ghosts,
-                ghost_signals.after(validate_ghosts),
-                ghost_lifecycle.after(validate_ghosts),
-            )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.add_asset_collection::<StructureHandles>()
+            .add_plugin(CraftingPlugin)
+            .add_systems(
+                (
+                    validate_ghosts,
+                    ghost_signals.after(validate_ghosts),
+                    ghost_lifecycle.after(validate_ghosts),
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }
 

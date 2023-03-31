@@ -1,7 +1,8 @@
-//! Data and manifest definitions for structure.
+//! Defines write-only data for each variety of structure.
 
 use crate::{
-    items::inventory::Inventory,
+    asset_management::manifest::{Id, Manifest},
+    items::{inventory::Inventory, item_manifest::Item},
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{LifePath, Lifecycle},
@@ -12,12 +13,20 @@ use crate::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
     },
+    terrain::terrain_manifest::Terrain,
 };
-use bevy::utils::{Duration, HashSet};
+use bevy::{
+    reflect::{FromReflect, Reflect},
+    utils::{Duration, HashSet},
+};
 
 use leafwing_abilities::prelude::Pool;
 
-use super::{Id, Item, Manifest, Structure, StructureManifest, Terrain};
+/// The marker type for [`Id<Structure>`](super::Id).
+#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+pub struct Structure;
+/// Stores the read-only definitions for all structures.
+pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
@@ -95,7 +104,7 @@ impl StructureManifest {
     ///
     /// These should be used to populate menus and other player-facing tools.
     pub(crate) fn prototypes(&self) -> impl IntoIterator<Item = Id<Structure>> + '_ {
-        self.data_map
+        self.data_map()
             .iter()
             .filter(|(id, v)| match &v.organism_variety {
                 None => true,

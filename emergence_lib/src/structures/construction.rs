@@ -4,12 +4,9 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::asset_management::manifest::Terrain;
 use crate::simulation::geometry::MapGeometry;
-use crate::{
-    self as emergence_lib, asset_management::manifest::StructureManifest,
-    graphics::InheritedMaterial,
-};
+use crate::terrain::terrain_manifest::Terrain;
+use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::utils::{Duration, HashSet};
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_mod_raycast::RaycastMesh;
@@ -18,13 +15,14 @@ use hexx::shapes::hexagon;
 use hexx::Hex;
 
 use crate::{
-    asset_management::manifest::{Id, Structure},
+    asset_management::manifest::Id,
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
 
 use super::crafting::WorkersPresent;
+use super::structure_manifest::{Structure, StructureManifest};
 use super::{
     commands::StructureCommandsExt,
     crafting::{ActiveRecipe, CraftingState, InputInventory},
@@ -121,7 +119,7 @@ pub(crate) enum GhostKind {
 impl GhostKind {
     /// The material associated with each ghostly structure.
     pub(crate) fn material(&self) -> StandardMaterial {
-        use crate::asset_management::palette::infovis::{
+        use crate::graphics::palette::infovis::{
             FORBIDDEN_PREVIEW_COLOR, GHOST_COLOR, PREVIEW_COLOR, SELECTED_GHOST_COLOR,
         };
 

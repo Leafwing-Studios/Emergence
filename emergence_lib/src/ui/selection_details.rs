@@ -3,12 +3,8 @@
 use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
-    asset_management::{
-        manifest::{
-            ItemManifest, RecipeManifest, StructureManifest, TerrainManifest, UnitManifest,
-        },
-        AssetState,
-    },
+    asset_management::AssetState,
+    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     player_interaction::{
         camera::{CameraMode, CameraSettings},
         selection::CurrentSelection,
@@ -16,6 +12,9 @@ use crate::{
     },
     signals::Signals,
     simulation::geometry::MapGeometry,
+    structures::structure_manifest::StructureManifest,
+    terrain::terrain_manifest::TerrainManifest,
+    units::unit_manifest::UnitManifest,
 };
 
 use self::{
@@ -420,12 +419,14 @@ mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, RecipeManifest, Structure, StructureManifest,
-        },
+        asset_management::manifest::Id,
+        items::{item_manifest::ItemManifest, recipe::RecipeManifest},
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::crafting::{ActiveRecipe, CraftingState, InputInventory},
+        structures::{
+            crafting::{ActiveRecipe, CraftingState, InputInventory},
+            structure_manifest::{Structure, StructureManifest},
+        },
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -496,8 +497,9 @@ mod organism_details {
     use bevy::ecs::query::WorldQuery;
 
     use crate::{
-        asset_management::manifest::{StructureManifest, UnitManifest},
         organisms::{energy::EnergyPool, lifecycle::Lifecycle, OrganismId},
+        structures::structure_manifest::StructureManifest,
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`OrganismDetails`].
@@ -549,10 +551,8 @@ mod structure_details {
 
     use super::organism_details::OrganismDetails;
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, Structure, StructureManifest, UnitManifest,
-        },
-        items::{inventory::Inventory, recipe::RecipeData},
+        asset_management::manifest::Id,
+        items::{inventory::Inventory, item_manifest::ItemManifest, recipe::RecipeData},
         simulation::geometry::TilePos,
         structures::{
             construction::MarkedForDemolition,
@@ -560,7 +560,9 @@ mod structure_details {
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
                 WorkersPresent,
             },
+            structure_manifest::{Structure, StructureManifest},
         },
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -692,12 +694,14 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{
-            Id, ItemManifest, StructureManifest, Terrain, TerrainManifest, UnitManifest,
-        },
+        asset_management::manifest::Id,
+        items::item_manifest::ItemManifest,
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
+        structures::structure_manifest::StructureManifest,
+        terrain::terrain_manifest::{Terrain, TerrainManifest},
+        units::unit_manifest::UnitManifest,
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -766,11 +770,17 @@ mod unit_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, StructureManifest, Unit, UnitManifest},
+        asset_management::manifest::Id,
+        items::item_manifest::ItemManifest,
         simulation::geometry::TilePos,
+        structures::structure_manifest::StructureManifest,
         units::{
-            actions::CurrentAction, goals::Goal, hunger::Diet, impatience::ImpatiencePool,
+            actions::CurrentAction,
+            goals::Goal,
+            hunger::Diet,
+            impatience::ImpatiencePool,
             item_interaction::UnitInventory,
+            unit_manifest::{Unit, UnitManifest},
         },
     };
 

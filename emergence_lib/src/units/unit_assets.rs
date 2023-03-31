@@ -1,13 +1,11 @@
 //! Asset loading for units
 
-use crate::simulation::geometry::MapGeometry;
-use bevy::{asset::LoadState, prelude::*, utils::HashMap};
-
-use super::{
-    hexagonal_column,
-    manifest::{Id, Unit},
-    Loadable,
+use crate::{
+    asset_management::{manifest::Id, Loadable},
+    simulation::geometry::{hexagonal_column, MapGeometry},
+    units::unit_manifest::Unit,
 };
+use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]

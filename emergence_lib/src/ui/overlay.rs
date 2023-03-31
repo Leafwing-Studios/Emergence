@@ -1,13 +1,13 @@
 //! Controls what is being visualized on the terrain by the [`TileOverlay`].
 
 use crate::{
-    asset_management::{
-        manifest::{ItemManifest, StructureManifest, UnitManifest},
-        AssetState,
-    },
+    asset_management::AssetState,
     infovis::{OverlayType, TileOverlay},
+    items::item_manifest::ItemManifest,
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
+    structures::structure_manifest::StructureManifest,
+    units::unit_manifest::UnitManifest,
 };
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;

@@ -10,10 +10,12 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{
-        Id, Item, ItemManifest, Manifest, Recipe, RecipeManifest, Structure, StructureManifest,
+    asset_management::manifest::{Id, Manifest},
+    items::{
+        inventory::Inventory,
+        item_manifest::{Item, ItemManifest},
+        recipe::{Recipe, RecipeData, RecipeManifest},
     },
-    items::{inventory::Inventory, recipe::RecipeData},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
@@ -22,6 +24,8 @@ use crate::{
         SimulationSet,
     },
 };
+
+use super::structure_manifest::{Structure, StructureManifest};
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq)]

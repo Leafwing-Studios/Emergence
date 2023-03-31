@@ -10,14 +10,13 @@ use bevy::{
 use core::fmt::Display;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Terrain, Unit},
-        terrain::TerrainHandles,
-    },
+    asset_management::manifest::Id,
     enum_iter::IterableEnum,
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     simulation::geometry::TilePos,
+    terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
+    units::unit_manifest::Unit,
 };
 
 /// Systems and reources for communicating the state of the world to the player.

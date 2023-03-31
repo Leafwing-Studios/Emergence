@@ -8,21 +8,22 @@ use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::{
-        manifest::{structure::StructureKind, Id, ItemManifest, RecipeManifest, Terrain},
-        structures::StructureHandles,
-    },
+    asset_management::manifest::Id,
     graphics::InheritedMaterial,
+    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{Facing, MapGeometry, TilePos},
+    terrain::terrain_manifest::Terrain,
 };
 
 use super::{
     construction::{GhostBundle, GhostKind, PreviewBundle},
     crafting::{CraftingBundle, StorageInventory},
-    StructureBundle, StructureManifest,
+    structure_assets::StructureHandles,
+    structure_manifest::{StructureKind, StructureManifest},
+    StructureBundle,
 };
 
 /// An extension trait for [`Commands`] for working with structures.

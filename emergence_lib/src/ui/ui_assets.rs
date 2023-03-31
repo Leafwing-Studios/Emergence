@@ -4,11 +4,11 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use core::fmt::Debug;
 use core::hash::Hash;
 
-use crate::player_interaction::terraform::TerraformingChoice;
-
-use super::{
-    manifest::{Id, Structure, StructureManifest, TerrainManifest},
-    Loadable,
+use crate::{
+    asset_management::{manifest::Id, Loadable},
+    player_interaction::terraform::TerraformingChoice,
+    structures::structure_manifest::{Structure, StructureManifest},
+    terrain::terrain_manifest::TerrainManifest,
 };
 
 /// Stores all structural elements of the UI: buttons, frames, widgets and so on

@@ -5,15 +5,14 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::{
-        palette::ui::MENU_NEUTRAL_COLOR,
-        ui::{Icons, UiElements},
-    },
+    graphics::palette::ui::MENU_NEUTRAL_COLOR,
     player_interaction::{cursor::CursorPos, PlayerAction},
 };
 
 use core::fmt::Debug;
 use core::hash::Hash;
+
+use super::ui_assets::{Icons, UiElements};
 
 /// A marker component for any element of a hex menu.
 #[derive(Component)]

@@ -1,6 +1,14 @@
-//! Data and manifest definitions for terrain.
+//! Defines write-only data for each variety of terrain.
 
-use super::TerrainManifest;
+use bevy::reflect::{FromReflect, Reflect};
+
+use crate::asset_management::manifest::Manifest;
+
+/// The marker type for [`Id<Terrain>`](super::Id).
+#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+pub struct Terrain;
+/// Stores the read-only definitions for all items.
+pub(crate) type TerrainManifest = Manifest<Terrain, TerrainData>;
 
 /// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`](super::Id).
 #[derive(Debug)]

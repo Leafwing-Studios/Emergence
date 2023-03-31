@@ -3,12 +3,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Terrain, TerrainManifest},
-        terrain::TerrainHandles,
-    },
+    asset_management::manifest::Id,
     simulation::geometry::{Height, TilePos},
     structures::commands::StructureCommandsExt,
+    terrain::{
+        terrain_assets::TerrainHandles,
+        terrain_manifest::{Terrain, TerrainManifest},
+    },
 };
 
 use super::{zoning::Zoning, InteractionSystem};
