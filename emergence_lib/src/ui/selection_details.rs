@@ -3,7 +3,7 @@
 use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
-    asset_management::{manifest::TerrainManifest, AssetState},
+    asset_management::AssetState,
     items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     player_interaction::{
         camera::{CameraMode, CameraSettings},
@@ -13,6 +13,7 @@ use crate::{
     signals::Signals,
     simulation::geometry::MapGeometry,
     structures::structure_manifest::StructureManifest,
+    terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
 };
 
@@ -693,12 +694,13 @@ mod terrain_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, Terrain, TerrainManifest},
+        asset_management::manifest::Id,
         items::item_manifest::ItemManifest,
         player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
+        terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
     };
 

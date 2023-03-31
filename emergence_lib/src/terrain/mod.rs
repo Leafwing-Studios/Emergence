@@ -4,12 +4,16 @@ use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
-use crate::asset_management::manifest::{Id, Terrain};
+use crate::asset_management::manifest::Id;
 use crate::asset_management::terrain::TerrainHandles;
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
+
+use self::terrain_manifest::Terrain;
+
+pub(crate) mod terrain_manifest;
 
 /// All logic and initialization needed for terrain.
 pub(crate) struct TerrainPlugin;

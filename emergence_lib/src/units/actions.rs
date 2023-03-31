@@ -5,7 +5,7 @@ use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::manifest::{Id, Terrain, TerrainManifest},
+    asset_management::manifest::Id,
     items::{
         item_manifest::{Item, ItemManifest},
         ItemCount,
@@ -22,6 +22,7 @@ use crate::{
         },
         structure_manifest::Structure,
     },
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
 use super::{

@@ -6,14 +6,10 @@ use crate::{
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{Height, MapGeometry},
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{
-    hexagonal_column,
-    manifest::{Id, Terrain, TerrainManifest},
-    palette::environment::COLUMN_COLOR,
-    Loadable,
-};
+use super::{hexagonal_column, manifest::Id, palette::environment::COLUMN_COLOR, Loadable};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]

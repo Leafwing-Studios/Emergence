@@ -9,8 +9,6 @@ pub use self::identifier::*;
 mod loader;
 pub mod plugin;
 pub mod raw;
-pub(crate) mod terrain;
-pub use terrain::*;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;

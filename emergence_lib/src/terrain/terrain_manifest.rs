@@ -2,7 +2,7 @@
 
 use bevy::reflect::{FromReflect, Reflect};
 
-use super::Manifest;
+use crate::asset_management::manifest::Manifest;
 
 /// The marker type for [`Id<Terrain>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]

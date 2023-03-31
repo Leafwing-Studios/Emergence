@@ -4,8 +4,8 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::asset_management::manifest::Terrain;
 use crate::simulation::geometry::MapGeometry;
+use crate::terrain::terrain_manifest::Terrain;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::utils::{Duration, HashSet};
 use bevy::{ecs::system::SystemParam, prelude::*};

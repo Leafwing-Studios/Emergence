@@ -1,7 +1,7 @@
 //! Data and manifest definitions for structure.
 
 use crate::{
-    asset_management::manifest::{Id, Manifest, Terrain},
+    asset_management::manifest::{Id, Manifest},
     items::{inventory::Inventory, item_manifest::Item},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -13,6 +13,7 @@ use crate::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
     },
+    terrain::terrain_manifest::Terrain,
 };
 use bevy::{
     reflect::{FromReflect, Reflect},

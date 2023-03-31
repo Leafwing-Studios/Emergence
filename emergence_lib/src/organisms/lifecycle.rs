@@ -4,16 +4,14 @@ use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Terrain},
-        units::UnitHandles,
-    },
+    asset_management::{manifest::Id, units::UnitHandles},
     player_interaction::clipboard::ClipboardData,
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
         time::{Days, TimePool},
     },
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
+    terrain::terrain_manifest::Terrain,
     units::{
         unit_manifest::{Unit, UnitManifest},
         UnitBundle,

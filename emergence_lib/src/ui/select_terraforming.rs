@@ -1,11 +1,9 @@
 //! Quickly select which terraforming option to use.
 
 use crate::{
-    asset_management::{
-        manifest::TerrainManifest,
-        palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
-    },
+    asset_management::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{clipboard::Clipboard, terraform::TerraformingChoice, PlayerAction},
+    terrain::terrain_manifest::TerrainManifest,
 };
 
 use itertools::Itertools;

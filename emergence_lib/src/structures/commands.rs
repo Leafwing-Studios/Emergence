@@ -8,16 +8,14 @@ use hexx::Direction;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
-    asset_management::{
-        manifest::{Id, Terrain},
-        structures::StructureHandles,
-    },
+    asset_management::{manifest::Id, structures::StructureHandles},
     graphics::InheritedMaterial,
     items::{item_manifest::ItemManifest, recipe::RecipeManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{Facing, MapGeometry, TilePos},
+    terrain::terrain_manifest::Terrain,
 };
 
 use super::{

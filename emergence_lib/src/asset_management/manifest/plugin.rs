@@ -8,9 +8,10 @@ use crate::{
     asset_management::{AssetCollectionExt, AssetState, Loadable},
     items::item_manifest::RawItemManifest,
     structures::structure_manifest::StructureManifest,
+    terrain::terrain_manifest::TerrainManifest,
 };
 
-use super::{loader::RawManifestLoader, raw::RawManifest, Manifest, TerrainManifest};
+use super::{loader::RawManifestLoader, raw::RawManifest, Manifest};
 
 /// A plugin to handle the creation of all manifest resources.
 pub struct ManifestPlugin;
