@@ -10,12 +10,12 @@ use bevy::{
 use core::fmt::Display;
 
 use crate::{
-    asset_management::{manifest::Id, terrain::TerrainHandles},
+    asset_management::manifest::Id,
     enum_iter::IterableEnum,
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     simulation::geometry::TilePos,
-    terrain::terrain_manifest::Terrain,
+    terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
 };
 
