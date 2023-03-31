@@ -1,4 +1,4 @@
-//! Data and manifest definitions for terrain.
+//! Defines write-only data for each variety of terrain.
 
 use bevy::reflect::{FromReflect, Reflect};
 

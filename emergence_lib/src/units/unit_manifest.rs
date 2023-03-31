@@ -1,3 +1,5 @@
+//! Defines write-only data for each variety of unit.
+
 use bevy::reflect::{FromReflect, Reflect};
 use leafwing_abilities::prelude::Pool;
 

@@ -1,4 +1,4 @@
-//! Data and manifest definitions for structure.
+//! Defines write-only data for each variety of structure.
 
 use crate::{
     asset_management::manifest::{Id, Manifest},

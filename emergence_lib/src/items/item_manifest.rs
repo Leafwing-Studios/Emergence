@@ -1,3 +1,5 @@
+//! Defines write-only data for each variety of item.
+
 use bevy::{
     reflect::{FromReflect, Reflect, TypeUuid},
     utils::HashMap,
