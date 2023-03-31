@@ -1,15 +1,22 @@
 //! Instructions to craft items.
 
-use std::{fmt::Display, time::Duration};
-
+use super::{inventory::Inventory, ItemCount};
+use crate::asset_management::manifest::Manifest;
 use crate::{
     asset_management::manifest::{Id, ItemManifest},
     organisms::energy::Energy,
     simulation::light::{Illuminance, TotalLight},
     structures::crafting::{InputInventory, OutputInventory},
 };
+use bevy::reflect::{FromReflect, Reflect};
+use std::{fmt::Display, time::Duration};
 
-use super::{inventory::Inventory, ItemCount};
+/// The marker type for [`Id<Recipe>`](super::Id).
+#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+pub struct Recipe;
+
+/// Stores the read-only definitions for all recipes.
+pub(crate) type RecipeManifest = Manifest<Recipe, RecipeData>;
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone)]

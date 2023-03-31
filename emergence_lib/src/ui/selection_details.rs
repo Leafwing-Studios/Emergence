@@ -4,9 +4,10 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
     asset_management::{
-        manifest::{ItemManifest, RecipeManifest, TerrainManifest},
+        manifest::{ItemManifest, TerrainManifest},
         AssetState,
     },
+    items::recipe::RecipeManifest,
     player_interaction::{
         camera::{CameraMode, CameraSettings},
         selection::CurrentSelection,
@@ -420,7 +421,8 @@ mod ghost_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
-        asset_management::manifest::{Id, ItemManifest, RecipeManifest},
+        asset_management::manifest::{Id, ItemManifest},
+        items::recipe::RecipeManifest,
         signals::Emitter,
         simulation::geometry::TilePos,
         structures::{

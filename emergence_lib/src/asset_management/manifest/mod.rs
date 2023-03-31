@@ -13,8 +13,6 @@ pub(crate) mod terrain;
 pub use terrain::*;
 pub(crate) mod item;
 pub use item::*;
-pub(crate) mod recipe;
-pub use recipe::*;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
