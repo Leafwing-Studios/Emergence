@@ -4,16 +4,21 @@
 //! Other systems should look up the data contained here,
 //! in order to populate the properties of in-game entities.
 
-pub use self::emergence_markers::*;
-pub use self::identifier::*;
-
-mod emergence_markers;
 mod identifier;
+pub use self::identifier::*;
 mod loader;
 pub(crate) mod plugin;
 mod raw;
 pub(crate) mod structure;
+pub use structure::*;
 pub(crate) mod terrain;
+pub use terrain::*;
+pub(crate) mod item;
+pub use item::*;
+pub(crate) mod recipe;
+pub use recipe::*;
+pub(crate) mod unit;
+pub use unit::*;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;

@@ -13,11 +13,20 @@ use crate::{
         crafting::{ActiveRecipe, InputInventory},
     },
 };
-use bevy::utils::{Duration, HashSet};
+use bevy::{
+    reflect::{FromReflect, Reflect},
+    utils::{Duration, HashSet},
+};
 
 use leafwing_abilities::prelude::Pool;
 
-use super::{Id, Item, Manifest, Structure, StructureManifest, Terrain};
+use super::{Id, Item, Manifest, Terrain};
+
+/// The marker type for [`Id<Structure>`](super::Id).
+#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+pub struct Structure;
+/// Stores the read-only definitions for all structures.
+pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone)]
