@@ -1,7 +1,7 @@
 //! Code to display the status of each unit and crafting structure.
 
 use bevy::prelude::*;
-use bevy_mod_billboard::{BillboardPlugin, BillboardTextBundle};
+use bevy_mod_billboard::{prelude::BillboardPlugin, BillboardDepth, BillboardTextBundle};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -128,6 +128,7 @@ fn display_status(
                         },
                     )
                     .with_alignment(TextAlignment::Center),
+                    billboard_depth: BillboardDepth(false),
                     ..default()
                 })
                 .insert(StatusDisplay);
@@ -158,6 +159,7 @@ fn display_status(
                         },
                     )
                     .with_alignment(TextAlignment::Center),
+                    billboard_depth: BillboardDepth(false),
                     ..default()
                 })
                 .insert(StatusDisplay);
