@@ -1,6 +1,7 @@
 //! Asset loading for structures
 
 use crate::{
+    asset_management::{manifest::Id, Loadable},
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{hexagonal_column, MapGeometry},
@@ -10,8 +11,6 @@ use crate::{
     },
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
-
-use super::{manifest::Id, Loadable};
 
 /// Stores material handles for the different tile types.
 #[derive(Resource)]
