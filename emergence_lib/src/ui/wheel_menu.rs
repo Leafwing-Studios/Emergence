@@ -5,10 +5,8 @@ use hexx::{Hex, HexLayout, HexOrientation};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::{
-        palette::ui::MENU_NEUTRAL_COLOR,
-        ui::{Icons, UiElements},
-    },
+    asset_management::ui::{Icons, UiElements},
+    graphics::palette::ui::MENU_NEUTRAL_COLOR,
     player_interaction::{cursor::CursorPos, PlayerAction},
 };
 

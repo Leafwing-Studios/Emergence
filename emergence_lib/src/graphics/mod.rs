@@ -10,6 +10,7 @@ use self::{
 
 mod atmosphere;
 pub(crate) mod lighting;
+pub(crate) mod palette;
 mod structures;
 mod units;
 

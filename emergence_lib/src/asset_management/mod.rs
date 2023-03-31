@@ -25,7 +25,6 @@ use self::{
 use bevy::{asset::LoadState, prelude::*, utils::HashSet};
 
 pub mod manifest;
-pub(crate) mod palette;
 pub(crate) mod structures;
 pub(crate) mod terrain;
 pub(crate) mod ui;

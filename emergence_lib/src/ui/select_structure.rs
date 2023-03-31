@@ -1,10 +1,8 @@
 //! Quickly select which structure to place.
 
 use crate::{
-    asset_management::{
-        manifest::Id,
-        palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
-    },
+    asset_management::manifest::Id,
+    graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
         PlayerAction,

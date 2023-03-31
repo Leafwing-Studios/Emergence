@@ -119,7 +119,7 @@ pub(crate) enum GhostKind {
 impl GhostKind {
     /// The material associated with each ghostly structure.
     pub(crate) fn material(&self) -> StandardMaterial {
-        use crate::asset_management::palette::infovis::{
+        use crate::graphics::palette::infovis::{
             FORBIDDEN_PREVIEW_COLOR, GHOST_COLOR, PREVIEW_COLOR, SELECTED_GHOST_COLOR,
         };
 
