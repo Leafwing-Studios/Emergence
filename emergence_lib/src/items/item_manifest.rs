@@ -35,7 +35,7 @@ impl ItemData {
 
 /// The item data as seen in the original manifest file.
 ///
-/// This will be converted to [`crate::items::ItemData`].
+/// This will be converted to [`ItemData`].
 #[derive(Debug, Clone, Deserialize)]
 pub struct RawItemData {
     /// The maximum number of items that can fit in a stack.

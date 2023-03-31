@@ -274,7 +274,7 @@ pub struct MapGeometry {
     ///
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
-    /// Which [`Terrain`](crate::asset_management::manifest::Terrain) entity is stored at each tile position
+    /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
     terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,

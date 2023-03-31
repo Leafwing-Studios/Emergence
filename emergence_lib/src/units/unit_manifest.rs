@@ -31,7 +31,7 @@ pub(crate) struct UnitData {
     pub(super) max_impatience: u8,
     /// How many actions will units of this type take while wandering before picking a new goal?
     ///
-    /// This stores a [`WeightedIndex`] to allow for multimodal distributions.
+    /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
     pub(super) wandering_behavior: WanderingBehavior,
 }
 
