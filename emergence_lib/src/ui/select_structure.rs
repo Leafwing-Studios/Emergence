@@ -1,7 +1,7 @@
 //! Quickly select which structure to place.
 
 use crate::{
-    asset_management::manifest::Id,
+    asset_management::{manifest::Id, AssetState},
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
@@ -26,7 +26,11 @@ pub(super) struct SelectStructurePlugin;
 impl Plugin for SelectStructurePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AvailableChoices<Id<Structure>>>()
-            .add_systems((update_structure_choices, spawn_hex_menu::<Id<Structure>>).chain())
+            .add_systems(
+                (update_structure_choices, spawn_hex_menu::<Id<Structure>>)
+                    .chain()
+                    .distributive_run_if(in_state(AssetState::Ready)),
+            )
             .add_system(
                 select_hex
                     .pipe(handle_selection)

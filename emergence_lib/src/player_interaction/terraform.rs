@@ -4,7 +4,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{Height, TilePos},
+    simulation::{
+        geometry::{Height, TilePos},
+        SimulationSet,
+    },
     structures::commands::StructureCommandsExt,
     terrain::{
         terrain_assets::TerrainHandles,
@@ -19,7 +22,12 @@ pub(super) struct TerraformingPlugin;
 
 impl Plugin for TerraformingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((apply_terraforming,).in_set(InteractionSystem::ApplyTerraforming));
+        app.add_systems(
+            (apply_terraforming,)
+                .in_set(InteractionSystem::ApplyTerraforming)
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
     }
 }
 
