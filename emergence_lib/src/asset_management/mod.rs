@@ -30,6 +30,8 @@ impl Plugin for AssetManagementPlugin {
 #[derive(States, Default, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum AssetState {
     #[default]
+    /// Load manifests.
+    LoadManifests,
     /// Assets still need to be loaded.
     Loading,
     /// All assets are loaded.

@@ -17,11 +17,12 @@ pub struct ManifestPlugin;
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
         app
-            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Ready
+            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Loading
+            // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
             .add_system(
                 apply_system_buffers
                     .after(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::Loading)),
+                    .in_schedule(OnExit(AssetState::LoadManifests)),
             );
     }
 }
@@ -64,7 +65,7 @@ where
             .add_system(
                 detect_manifest_creation::<M>
                     .in_set(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::Loading)),
+                    .in_schedule(OnExit(AssetState::LoadManifests)),
             )
             .add_system(
                 detect_manifest_modification::<M>
