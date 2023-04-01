@@ -10,10 +10,13 @@
 //! - sitting just on top of the XY plane
 //! - be exported as embedded gltF files
 
-use std::any::TypeId;
+use std::{
+    any::TypeId,
+    fmt::{Display, Formatter},
+};
 
 use self::manifest::plugin::DetectManifestCreationSet;
-use bevy::{asset::LoadState, prelude::*, utils::HashSet};
+use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 pub mod manifest;
 
@@ -25,7 +28,7 @@ impl Plugin for AssetManagementPlugin {
         app.add_state::<AssetState>()
             .init_resource::<AssetsToLoad>()
             .add_system(check_manifests_loaded.run_if(in_state(AssetState::LoadManifests)))
-            .add_system(check_assets_loaded.run_if(in_state(AssetState::LoadManifests)))
+            .add_system(check_assets_loaded.run_if(in_state(AssetState::LoadAssets)))
             // This is needed to ensure that the manifest resources are actually created in time for AssetState::Loading
             // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
             .add_system(
@@ -52,20 +55,29 @@ pub enum AssetState {
 #[derive(Resource, Debug, Default)]
 pub struct AssetsToLoad {
     /// The set of [`Loadable`] types that still need to be loaded
-    set: HashSet<TypeId>,
+    remaining: HashMap<TypeId, &'static str>,
+}
+
+impl Display for AssetsToLoad {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut remaining = self.remaining.values().cloned().collect::<Vec<&str>>();
+        remaining.sort();
+
+        write!(f, "{}", remaining.join("\n"))
+    }
 }
 
 impl AssetsToLoad {
     /// Registers that `T` still needs to be loaded.
     pub fn insert<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
-        self.set.insert(type_id);
+        self.remaining.insert(type_id, std::any::type_name::<T>());
     }
 
     /// Registers that `T` is done loading.
     pub fn remove<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
-        self.set.remove(&type_id);
+        self.remaining.remove(&type_id);
     }
 }
 
@@ -73,10 +85,12 @@ fn check_manifests_loaded(
     assets_to_load: Res<AssetsToLoad>,
     mut next_state: ResMut<NextState<AssetState>>,
 ) {
-    if assets_to_load.set.is_empty() {
+    if assets_to_load.remaining.is_empty() {
         info!("All manifests loaded: transitioning to AssetState::LoadAssets");
 
         next_state.set(AssetState::LoadAssets);
+    } else {
+        info!("Waiting for manifests to load: {}", *assets_to_load);
     }
 }
 
@@ -84,10 +98,12 @@ fn check_assets_loaded(
     assets_to_load: Res<AssetsToLoad>,
     mut next_state: ResMut<NextState<AssetState>>,
 ) {
-    if assets_to_load.set.is_empty() {
+    if assets_to_load.remaining.is_empty() {
         info!("All manifests loaded: transitioning to AssetState::Ready");
 
         next_state.set(AssetState::LoadAssets);
+    } else {
+        info!("Waiting for assets to load: {}", *assets_to_load);
     }
 }
 
@@ -112,7 +128,8 @@ pub trait Loadable: Resource + Sized {
         asset_server: Res<AssetServer>,
         mut assets_to_load: ResMut<AssetsToLoad>,
     ) {
-        if asset_collection.load_state(&asset_server) == LoadState::Loaded {
+        let load_state = asset_collection.load_state(&asset_server);
+        if load_state == LoadState::Loaded {
             assets_to_load.remove::<Self>();
         }
     }
@@ -126,6 +143,8 @@ pub trait AssetCollectionExt {
 
 impl AssetCollectionExt for App {
     fn add_asset_collection<T: Loadable>(&mut self) -> &mut Self {
+        info!("Adding asset collection: {}", std::any::type_name::<T>());
+
         let mut assets_to_load = self.world.resource_mut::<AssetsToLoad>();
         assets_to_load.insert::<T>();
 
