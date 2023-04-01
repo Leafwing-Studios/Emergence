@@ -10,10 +10,10 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{Id, Manifest},
+    asset_management::manifest::{plugin::RawManifestPlugin, Id, Manifest},
     items::{
         inventory::Inventory,
-        item_manifest::{Item, ItemManifest},
+        item_manifest::{Item, ItemManifest, RawItemManifest},
         recipe::{Recipe, RecipeData, RecipeManifest},
     },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
@@ -631,16 +631,18 @@ impl Plugin for CraftingPlugin {
         recipe_manifest.insert("ant_egg_production", RecipeData::ant_egg_production());
         recipe_manifest.insert("hatch_ants", RecipeData::hatch_ants());
 
-        app.insert_resource(recipe_manifest).add_systems(
-            (
-                progress_crafting,
-                gain_energy_when_crafting_completes.after(progress_crafting),
-                set_crafting_emitter.after(progress_crafting),
-                set_storage_emitter,
-                clear_empty_storage_slots,
-            )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.insert_resource(recipe_manifest)
+            .add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+            .add_systems(
+                (
+                    progress_crafting,
+                    gain_energy_when_crafting_completes.after(progress_crafting),
+                    set_crafting_emitter.after(progress_crafting),
+                    set_storage_emitter,
+                    clear_empty_storage_slots,
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }

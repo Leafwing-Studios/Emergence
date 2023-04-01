@@ -19,7 +19,7 @@ use self::{
     construction::{ghost_lifecycle, ghost_signals, validate_ghosts},
     crafting::CraftingPlugin,
     structure_assets::StructureHandles,
-    structure_manifest::Structure,
+    structure_manifest::{Structure, StructureManifest},
 };
 
 pub(crate) mod commands;
@@ -33,7 +33,8 @@ pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset_collection::<StructureHandles>()
+        app.init_resource::<StructureManifest>()
+            .add_asset_collection::<StructureHandles>()
             .add_plugin(CraftingPlugin)
             .add_systems(
                 (

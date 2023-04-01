@@ -12,7 +12,7 @@ use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 
 use self::terrain_assets::TerrainHandles;
-use self::terrain_manifest::Terrain;
+use self::terrain_manifest::{Terrain, TerrainManifest};
 
 pub(crate) mod terrain_assets;
 pub(crate) mod terrain_manifest;
@@ -22,11 +22,13 @@ pub(crate) struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset_collection::<TerrainHandles>().add_system(
-            respond_to_height_changes
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.init_resource::<TerrainManifest>()
+            .add_asset_collection::<TerrainHandles>()
+            .add_system(
+                respond_to_height_changes
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }
 

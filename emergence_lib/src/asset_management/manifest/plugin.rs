@@ -4,12 +4,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::*;
 
-use crate::{
-    asset_management::{AssetCollectionExt, AssetState, Loadable},
-    items::item_manifest::RawItemManifest,
-    structures::structure_manifest::StructureManifest,
-    terrain::terrain_manifest::TerrainManifest,
-};
+use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
 use super::{
     loader::{RawManifest, RawManifestLoader},
@@ -21,9 +16,7 @@ pub struct ManifestPlugin;
 
 impl Plugin for ManifestPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<StructureManifest>()
-            .init_resource::<TerrainManifest>()
-            .add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+        app
             // This is needed to ensure that the manifest resources are actually created in time for AssetState::Ready
             .add_system(
                 apply_system_buffers
