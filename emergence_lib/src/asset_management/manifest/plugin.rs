@@ -88,22 +88,19 @@ where
     handle: Handle<M>,
 }
 
-impl<M> FromWorld for RawManifestHandle<M>
-where
-    M: RawManifest,
-{
-    fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
-        let handle: Handle<M> = asset_server.load(M::path());
-
-        Self { handle }
-    }
-}
-
 impl<M> Loadable for RawManifestHandle<M>
 where
     M: RawManifest,
 {
+    const STAGE: AssetState = AssetState::LoadManifests;
+
+    fn initialize(world: &mut World) {
+        let asset_server = world.resource::<AssetServer>();
+        let handle: Handle<M> = asset_server.load(M::path());
+
+        world.insert_resource(Self { handle });
+    }
+
     fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
         let load_state = asset_server.get_load_state(self.handle.clone_weak());
 

@@ -33,7 +33,7 @@ pub enum AssetState {
     /// Load manifests.
     LoadManifests,
     /// Assets still need to be loaded.
-    Loading,
+    LoadAssets,
     /// All assets are loaded.
     Ready,
 }
@@ -83,7 +83,15 @@ impl AssetsToLoad {
 /// An asset collection that must be loaded before the game can start.
 ///
 /// This asset collection should begin async asset loading in its [`FromWorld`] implementation.
-pub trait Loadable: Resource + FromWorld + Sized {
+pub trait Loadable: Resource + Sized {
+    /// The stage in which to load the assets.
+    const STAGE: AssetState;
+
+    /// Begin loading the assets.
+    ///
+    /// This system runs during [`Self::STAGE`].
+    fn initialize(world: &mut World);
+
     /// How far along are we in loading these assets?
     fn load_state(&self, asset_server: &AssetServer) -> LoadState;
 }
@@ -101,15 +109,16 @@ impl AssetCollectionExt for App {
         } else {
             // Only called for the first asset collection added.
             self.add_system(
-                AssetsToLoad::transition_when_complete.run_if(in_state(AssetState::Loading)),
+                AssetsToLoad::transition_when_complete.run_if(in_state(AssetState::LoadAssets)),
             );
             self.init_resource::<AssetsToLoad>();
         }
 
-        // Store the asset collection as a resource
-        self.init_resource::<T>();
+        // Begin the loading process
+        self.add_system(T::initialize.in_schedule(OnEnter(T::STAGE)));
+
         // Poll each asset collection
-        self.add_system(AssetsToLoad::check_loaded::<T>.run_if(in_state(AssetState::Loading)));
+        self.add_system(AssetsToLoad::check_loaded::<T>.run_if(in_state(AssetState::LoadAssets)));
 
         self
     }

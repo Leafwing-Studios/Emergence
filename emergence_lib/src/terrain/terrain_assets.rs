@@ -3,7 +3,7 @@
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
 use crate::{
-    asset_management::{manifest::Id, Loadable},
+    asset_management::{manifest::Id, AssetState, Loadable},
     enum_iter::IterableEnum,
     graphics::palette::environment::COLUMN_COLOR,
     player_interaction::selection::ObjectInteraction,
@@ -26,8 +26,10 @@ pub(crate) struct TerrainHandles {
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
 }
 
-impl FromWorld for TerrainHandles {
-    fn from_world(world: &mut World) -> Self {
+impl Loadable for TerrainHandles {
+    const STAGE: AssetState = AssetState::LoadAssets;
+
+    fn initialize(world: &mut World) {
         let names = world.resource::<TerrainManifest>().names();
         let asset_server = world.resource::<AssetServer>();
 
@@ -59,17 +61,15 @@ impl FromWorld for TerrainHandles {
             ..default()
         });
 
-        TerrainHandles {
+        world.insert_resource(TerrainHandles {
             scenes,
             topper_mesh,
             column_mesh,
             column_material,
             interaction_materials,
-        }
+        });
     }
-}
 
-impl Loadable for TerrainHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (terrain, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
