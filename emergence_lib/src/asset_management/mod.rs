@@ -101,7 +101,7 @@ fn check_assets_loaded(
     if assets_to_load.remaining.is_empty() {
         info!("All assets loaded: transitioning to AssetState::Ready");
 
-        next_state.set(AssetState::LoadAssets);
+        next_state.set(AssetState::Ready);
     } else {
         info!("Waiting for assets to load: {}", *assets_to_load);
     }
