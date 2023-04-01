@@ -11,7 +11,10 @@ use crate::{
     terrain::terrain_manifest::TerrainManifest,
 };
 
-use super::{loader::RawManifestLoader, raw::RawManifest, Manifest};
+use super::{
+    loader::{RawManifest, RawManifestLoader},
+    Manifest,
+};
 
 /// A plugin to handle the creation of all manifest resources.
 pub struct ManifestPlugin;

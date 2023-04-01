@@ -6,7 +6,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{raw::RawManifest, Manifest};
+use crate::asset_management::manifest::{loader::RawManifest, Manifest};
 
 /// The marker type for [`Id<Item>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]

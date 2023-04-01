@@ -7,7 +7,29 @@ use bevy::{
     utils::BoxedFuture,
 };
 
-use super::raw::RawManifest;
+use bevy::reflect::TypeUuid;
+use serde::Deserialize;
+
+use super::Manifest;
+
+/// The raw manifest data before it has been processed.
+///
+/// The processing will primarily remove the string IDs and replace them by numbers.
+pub trait RawManifest:
+    std::fmt::Debug + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
+{
+    /// The marker type for the manifest ID.
+    type Marker: 'static + Send + Sync;
+
+    /// The type of the processed manifest data.
+    type Data: std::fmt::Debug + Send + Sync;
+
+    /// The path of the asset.
+    fn path() -> &'static str;
+
+    /// Process the raw manifest from the asset file to the manifest data used in-game.
+    fn process(&self) -> Manifest<Self::Marker, Self::Data>;
+}
 
 /// A loader for `.manifest.json` files.
 #[derive(Debug, Clone)]

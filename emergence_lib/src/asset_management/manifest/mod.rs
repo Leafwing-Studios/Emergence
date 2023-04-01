@@ -6,9 +6,8 @@
 
 mod identifier;
 pub use self::identifier::*;
-mod loader;
+pub mod loader;
 pub mod plugin;
-pub mod raw;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
