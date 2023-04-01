@@ -34,7 +34,7 @@ impl ItemData {
     }
 }
 
-/// The item manifest as seen in the manifest file.
+/// The [`ItemManifest`] as seen in the manifest file.
 #[derive(Debug, Clone, Deserialize, TypeUuid)]
 #[uuid = "cd9f4571-b0c4-4641-8d27-1c9c5ad4c812"]
 pub(crate) struct RawItemManifest {
