@@ -15,29 +15,22 @@ pub struct Terrain;
 pub(crate) type TerrainManifest = Manifest<Terrain, TerrainData>;
 
 /// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`](super::Id).
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub(crate) struct TerrainData {
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct TerrainData {
     /// The walking speed multiplier associated with this terrain type.
     ///
     /// These values should always be strictly positive.
     /// Higher values make units walk faster.
     /// 1.0 is "normal speed".
-    walking_speed: f32,
-}
-
-impl TerrainData {
-    /// Returns the relative walking speed of units on this terrain
-    pub(crate) fn walking_speed(&self) -> f32 {
-        self.walking_speed
-    }
+    pub walking_speed: f32,
 }
 
 /// The [`TerrainManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Deserialize, TypeUuid)]
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
 #[uuid = "8d6b3b65-9b11-42a9-a795-f95b06653070"]
-pub(super) struct RawTerrainManifest {
+pub struct RawTerrainManifest {
     /// The data for each item.
-    terrain_types: HashMap<String, TerrainData>,
+    pub terrain_types: HashMap<String, TerrainData>,
 }
 
 impl RawManifest for RawTerrainManifest {

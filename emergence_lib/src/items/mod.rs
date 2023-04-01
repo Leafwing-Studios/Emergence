@@ -6,7 +6,7 @@ use self::item_manifest::{Item, ItemManifest};
 
 pub(crate) mod errors;
 pub(crate) mod inventory;
-pub(crate) mod item_manifest;
+pub mod item_manifest;
 pub(crate) mod recipe;
 pub(crate) mod slot;
 

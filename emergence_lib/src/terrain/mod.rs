@@ -16,7 +16,7 @@ use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain};
 
 pub(crate) mod terrain_assets;
-pub(crate) mod terrain_manifest;
+pub mod terrain_manifest;
 
 /// All logic and initialization needed for terrain.
 pub(crate) struct TerrainPlugin;

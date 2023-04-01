@@ -188,7 +188,7 @@ impl Inventory {
         // We can fill up the remaining space in the slots for this item...
         self.remaining_reserved_space_for_item(item_id)
             // ...and use up the remaining free slots
-            + self.free_slot_count() * item_manifest.get(item_id).stack_size()
+            + self.free_slot_count() * item_manifest.get(item_id).stack_size
     }
 
     /// Clears any inventory stacks with 0 items in them.
@@ -228,7 +228,7 @@ impl Inventory {
 
         let n_existing_slots = self.slots.len();
         let slot_to_use = n_existing_slots + 1;
-        let stack_size = item_manifest.get(item_id).stack_size();
+        let stack_size = item_manifest.get(item_id).stack_size;
         let empty_stack = ItemSlot::new(item_id, stack_size);
 
         if slot_to_use >= self.max_slot_count {
@@ -281,7 +281,7 @@ impl Inventory {
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
                 item_count.item_id(),
-                item_manifest.get(item_count.item_id()).stack_size(),
+                item_manifest.get(item_count.item_id()).stack_size,
             );
 
             match new_slot.add_until_full(items_to_add) {
@@ -363,7 +363,7 @@ impl Inventory {
         let excess_counts: Vec<ItemCount> = item_counts
             .iter()
             .filter_map(|item_count| {
-                let stack_size = item_manifest.get(item_count.item_id()).stack_size();
+                let stack_size = item_manifest.get(item_count.item_id()).stack_size;
 
                 let remaining_reserved_space =
                     self.remaining_reserved_space_for_item(item_count.item_id());
@@ -589,8 +589,8 @@ mod tests {
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut manifest = Manifest::new();
-        manifest.insert("acacia_leaf", ItemData::new(10));
-        manifest.insert("test", ItemData::new(10));
+        manifest.insert("acacia_leaf", ItemData { stack_size: 10 });
+        manifest.insert("test", ItemData { stack_size: 10 });
         manifest
     }
 
