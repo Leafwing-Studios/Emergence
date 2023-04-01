@@ -1,6 +1,9 @@
 //! A loader for manifest assets.
 
-use std::marker::PhantomData;
+use std::{
+    marker::PhantomData,
+    path::{Path, PathBuf},
+};
 
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
@@ -18,14 +21,23 @@ use super::Manifest;
 pub trait RawManifest:
     std::fmt::Debug + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
 {
+    /// The file extension of this manifest type.
+    ///
+    /// This is used to determine which manifest loader to use.
+    /// Note that this must be unique across all manifest types,
+    /// otherwise the wrong loader will be used.
+    const EXTENSION: &'static str;
+
     /// The marker type for the manifest ID.
     type Marker: 'static + Send + Sync;
 
     /// The type of the processed manifest data.
     type Data: std::fmt::Debug + Send + Sync;
 
-    /// The path of the asset.
-    fn path() -> &'static str;
+    /// Returns the path to the manifest file.
+    fn path() -> PathBuf {
+        Path::new("manifests/base_game").with_extension(Self::EXTENSION)
+    }
 
     /// Process the raw manifest from the asset file to the manifest data used in-game.
     fn process(&self) -> Manifest<Self::Marker, Self::Data>;
@@ -46,7 +58,7 @@ where
     M: RawManifest,
 {
     fn extensions(&self) -> &[&str] {
-        &["manifest.json"]
+        &[<M as RawManifest>::EXTENSION]
     }
 
     fn load<'a>(

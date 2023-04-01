@@ -57,7 +57,7 @@ where
     M: RawManifest,
 {
     fn build(&self, app: &mut App) {
-        info!("Building RawManifestPlugin for {}", M::path());
+        info!("Building RawManifestPlugin for {}", M::path().display());
 
         app.init_asset_loader::<RawManifestLoader<M>>()
             .add_asset::<M>()
@@ -119,11 +119,11 @@ fn detect_manifest_creation<M>(
     M: RawManifest,
 {
     let Some(raw_manifest) = raw_manifests.get(&raw_manifest_handle.handle) else {
-        error!("Raw manifest for {} created, but asset not available!", M::path());
+        error!("Raw manifest for {} created, but asset not available!", M::path().display());
         return;
     };
 
-    info!("Manifest asset {} loaded!", M::path());
+    info!("Manifest asset {} loaded!", M::path().display());
 
     // Create the manifest and insert it as a resource
     commands.insert_resource(raw_manifest.process());
@@ -144,7 +144,7 @@ fn detect_manifest_modification<M>(
                 continue;
             };
 
-            debug!("Manifest asset {} modified.", M::path());
+            debug!("Manifest asset {} modified.", M::path().display());
 
             // Update the manifest resource
             *manifest = raw_manifest.process();

@@ -34,12 +34,10 @@ pub struct RawTerrainManifest {
 }
 
 impl RawManifest for RawTerrainManifest {
+    const EXTENSION: &'static str = "terrain_manifest.json";
+
     type Marker = Terrain;
     type Data = TerrainData;
-
-    fn path() -> &'static str {
-        "manifests/terrain.manifest.json"
-    }
 
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();

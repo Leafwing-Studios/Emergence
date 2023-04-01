@@ -30,12 +30,10 @@ pub struct RawItemManifest {
 }
 
 impl RawManifest for RawItemManifest {
+    const EXTENSION: &'static str = "item_manifest.json";
+
     type Marker = Item;
     type Data = ItemData;
-
-    fn path() -> &'static str {
-        "manifests/items.manifest.json"
-    }
 
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
