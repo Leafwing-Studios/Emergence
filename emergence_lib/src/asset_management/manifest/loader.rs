@@ -56,7 +56,7 @@ where
     ) -> BoxedFuture<'a, anyhow::Result<(), anyhow::Error>> {
         Box::pin(async move {
             let raw_manifest = serde_json::from_slice::<M>(bytes)?;
-            load_context.set_default_asset(LoadedAsset::new(raw_manifest));
+            load_context.set_default_asset(LoadedAsset::<M>::new(raw_manifest));
             Ok(())
         })
     }
