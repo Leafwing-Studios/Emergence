@@ -99,7 +99,7 @@ fn check_assets_loaded(
     mut next_state: ResMut<NextState<AssetState>>,
 ) {
     if assets_to_load.remaining.is_empty() {
-        info!("All manifests loaded: transitioning to AssetState::Ready");
+        info!("All assets loaded: transitioning to AssetState::Ready");
 
         next_state.set(AssetState::LoadAssets);
     } else {
