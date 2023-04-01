@@ -589,8 +589,8 @@ mod tests {
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut manifest = Manifest::new();
-        manifest.insert("acacia_leaf", ItemData { stack_size: 10 });
-        manifest.insert("test", ItemData { stack_size: 10 });
+        manifest.insert("acacia_leaf", ItemData::new(10));
+        manifest.insert("test", ItemData::new(10));
         manifest
     }
 
