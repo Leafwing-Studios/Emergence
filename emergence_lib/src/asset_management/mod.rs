@@ -119,6 +119,11 @@ pub trait Loadable: Resource + Sized {
     /// This system runs during [`Self::STAGE`].
     fn initialize(world: &mut World);
 
+    /// Record that assets of type `T` still need to be loaded.
+    fn register_assets_to_load(mut assets_to_load: ResMut<AssetsToLoad>) {
+        assets_to_load.insert::<Self>();
+    }
+
     /// How far along are we in loading these assets?
     fn load_state(&self, asset_server: &AssetServer) -> LoadState;
 
@@ -145,11 +150,9 @@ impl AssetCollectionExt for App {
     fn add_asset_collection<T: Loadable>(&mut self) -> &mut Self {
         info!("Adding asset collection: {}", std::any::type_name::<T>());
 
-        let mut assets_to_load = self.world.resource_mut::<AssetsToLoad>();
-        assets_to_load.insert::<T>();
-
         // Begin the loading process
         self.add_system(T::initialize.in_schedule(OnEnter(T::STAGE)));
+        self.add_system(T::register_assets_to_load.in_schedule(OnEnter(T::STAGE)));
 
         // Poll each asset collection
         self.add_system(T::check_loaded.run_if(in_state(T::STAGE)));
