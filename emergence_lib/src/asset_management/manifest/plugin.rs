@@ -11,22 +11,6 @@ use super::{
     Manifest,
 };
 
-/// A plugin to handle the creation of all manifest resources.
-pub struct ManifestPlugin;
-
-impl Plugin for ManifestPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Loading
-            // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
-            .add_system(
-                apply_system_buffers
-                    .after(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::LoadManifests)),
-            );
-    }
-}
-
 /// A plugin to load and process raw manifest assets.
 pub(crate) struct RawManifestPlugin<M>
 where
@@ -50,7 +34,7 @@ where
 
 /// System set for all [`detect_manifest_creation`] systems
 #[derive(Debug, PartialEq, Eq, Hash, Clone, SystemSet)]
-struct DetectManifestCreationSet;
+pub struct DetectManifestCreationSet;
 
 impl<M> Plugin for RawManifestPlugin<M>
 where
