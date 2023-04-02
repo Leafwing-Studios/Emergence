@@ -187,3 +187,181 @@ fn can_serialize_recipe_manifest() {
     // Check that the deserialized version is the same as the original
     assert_eq!(raw_recipe_manifest, deserialized);
 }
+
+#[test]
+fn can_serialize_structure_manifest() {
+    // Shared data
+    let acacia_construction_strategy = ConstructionStrategy {
+        seedling: Some(Id::from_name("acacia_seed")),
+        work: Duration::ZERO,
+        materials: InputInventory {
+            inventory: Inventory::new_from_item(Id::from_name("acacia_leaf"), 1),
+        },
+        allowed_terrain_types: HashSet::from_iter([Id::from_name("loam"), Id::from_name("muddy")]),
+    };
+
+    // Create a new raw structure manifest
+    let raw_structure_manifest = RawStructureManifest {
+        structure_types: HashMap::from_iter(vec![
+            (
+                "leuco",
+                StructureData {
+                    organism_variety: Some(OrganismVariety {
+                        prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
+                        lifecycle: Lifecycle::STATIC,
+                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    }),
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("leuco_chunk_production")),
+                    },
+                    construction_strategy: ConstructionStrategy {
+                        seedling: None,
+                        work: Duration::from_secs(3),
+                        materials: InputInventory {
+                            inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
+                        },
+                        allowed_terrain_types: HashSet::from_iter([
+                            Id::from_name("loam"),
+                            Id::from_name("muddy"),
+                        ]),
+                    },
+                    max_workers: 6,
+                    footprint: Footprint::single(),
+                },
+            ),
+            (
+                "acacia_seed",
+                StructureData {
+                    organism_variety: Some(OrganismVariety {
+                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                        lifecycle: Lifecycle::new(vec![LifePath {
+                            new_form: OrganismId::Structure(Id::from_name("acacia_sprout")),
+                            energy_required: None,
+                            time_required: Some(TimePool::simple(1.)),
+                        }]),
+                        energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
+                    }),
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    },
+                    construction_strategy: acacia_construction_strategy.clone(),
+                    max_workers: 1,
+                    footprint: Footprint::single(),
+                },
+            ),
+            (
+                "acacia_sprout",
+                StructureData {
+                    organism_variety: Some(OrganismVariety {
+                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                        lifecycle: Lifecycle::new(vec![LifePath {
+                            new_form: OrganismId::Structure(Id::from_name("acacia")),
+                            energy_required: Some(EnergyPool::simple(500.)),
+                            time_required: None,
+                        }]),
+                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    }),
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    },
+                    construction_strategy: acacia_construction_strategy.clone(),
+                    max_workers: 1,
+                    footprint: Footprint::single(),
+                },
+            ),
+            (
+                "acacia",
+                StructureData {
+                    organism_variety: Some(OrganismVariety {
+                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                        lifecycle: Lifecycle::STATIC,
+                        energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
+                    }),
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    },
+                    construction_strategy: acacia_construction_strategy,
+                    max_workers: 6,
+                    footprint: Footprint::single(),
+                },
+            ),
+            (
+                "ant_hive",
+                StructureData {
+                    organism_variety: None,
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
+                    },
+                    construction_strategy: ConstructionStrategy {
+                        seedling: None,
+                        work: Duration::from_secs(10),
+                        materials: InputInventory::default(),
+                        allowed_terrain_types: HashSet::from_iter([
+                            Id::from_name("loam"),
+                            Id::from_name("muddy"),
+                            Id::from_name("rocky"),
+                        ]),
+                    },
+                    max_workers: 3,
+                    footprint: Footprint::hexagon(1),
+                },
+            ),
+            (
+                "hatchery",
+                StructureData {
+                    organism_variety: None,
+                    kind: StructureKind::Crafting {
+                        starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
+                    },
+                    construction_strategy: ConstructionStrategy {
+                        seedling: None,
+                        work: Duration::from_secs(5),
+                        materials: InputInventory::default(),
+                        allowed_terrain_types: HashSet::from_iter([
+                            Id::from_name("loam"),
+                            Id::from_name("muddy"),
+                            Id::from_name("rocky"),
+                        ]),
+                    },
+                    max_workers: 6,
+                    // Forms a crescent shape
+                    footprint: Footprint::single(),
+                },
+            ),
+            (
+                "storage",
+                StructureData {
+                    organism_variety: None,
+                    kind: StructureKind::Storage {
+                        max_slot_count: 3,
+                        reserved_for: None,
+                    },
+                    construction_strategy: ConstructionStrategy {
+                        seedling: None,
+                        work: Duration::from_secs(10),
+                        materials: InputInventory {
+                            inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
+                        },
+                        allowed_terrain_types: HashSet::from_iter([
+                            Id::from_name("loam"),
+                            Id::from_name("muddy"),
+                            Id::from_name("rocky"),
+                        ]),
+                    },
+                    max_workers: 6,
+                    footprint: Footprint::single(),
+                },
+            ),
+        ]),
+    };
+
+    // Serialize it
+    let serialized = serde_json::to_string(&raw_structure_manifest).unwrap();
+    print!("{}\n", &serialized);
+
+    // Deserialize it
+    let deserialized: RawStructureManifest = serde_json::from_str(&serialized).unwrap();
+
+    // Check that the deserialized version is the same as the original
+    assert_eq!(raw_structure_manifest, deserialized);
+}

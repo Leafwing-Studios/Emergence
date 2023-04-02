@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{Id, Manifest},
+    asset_management::manifest::{loader::RawManifest, Id, Manifest},
     items::{inventory::Inventory, item_manifest::Item},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -16,11 +16,12 @@ use crate::{
     terrain::terrain_manifest::Terrain,
 };
 use bevy::{
-    reflect::{FromReflect, Reflect},
-    utils::{Duration, HashSet},
+    reflect::{FromReflect, Reflect, TypeUuid},
+    utils::{Duration, HashMap, HashSet},
 };
 
 use leafwing_abilities::prelude::Pool;
+use serde::{Deserialize, Serialize};
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -29,7 +30,7 @@ pub struct Structure;
 pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct StructureData {
     /// Data needed for living structures
     pub(crate) organism_variety: Option<OrganismVariety>,
@@ -48,7 +49,7 @@ pub(crate) struct StructureData {
 /// How new structures of this sort can be built.
 ///
 /// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct ConstructionStrategy {
     /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
     ///
@@ -65,7 +66,7 @@ pub(crate) struct ConstructionStrategy {
 }
 
 /// What set of components should this structure have?
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) enum StructureKind {
     /// Stores items.
     Storage {
@@ -294,6 +295,32 @@ impl Default for StructureManifest {
                 footprint: Footprint::single(),
             },
         );
+
+        manifest
+    }
+}
+
+/// The [`StructureManifest`] as seen in the manifest file.
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
+#[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
+pub struct RawStructureManifest {
+    /// The data for each item.
+    pub structure_types: HashMap<String, StructureData>,
+}
+
+impl RawManifest for RawStructureManifest {
+    const EXTENSION: &'static str = "item_manifest.json";
+
+    type Marker = Structure;
+    type Data = StructureData;
+
+    fn process(&self) -> Manifest<Self::Marker, Self::Data> {
+        let mut manifest = Manifest::new();
+
+        for (name, raw_data) in &self.structure_types {
+            // No additional preprocessing is needed.
+            manifest.insert(name, raw_data.clone())
+        }
 
         manifest
     }

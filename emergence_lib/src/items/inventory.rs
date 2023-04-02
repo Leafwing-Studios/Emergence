@@ -2,6 +2,7 @@
 
 use bevy::prelude::warn;
 use itertools::rev;
+use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 
@@ -16,7 +17,7 @@ use super::{
 };
 
 /// An inventory to store multiple types of items.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct Inventory {
     /// Is this inventory reserved for a single item type?
     ///

@@ -8,6 +8,7 @@ use bevy::{
 };
 use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::{plugin::RawManifestPlugin, Id},
@@ -70,7 +71,7 @@ impl Display for CraftingState {
 }
 
 /// The input inventory for a structure.
-#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut, PartialEq, Serialize, Deserialize)]
 pub(crate) struct InputInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,
@@ -120,7 +121,7 @@ impl StorageInventory {
 }
 
 /// The recipe that is currently being crafted, if any.
-#[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
+#[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {

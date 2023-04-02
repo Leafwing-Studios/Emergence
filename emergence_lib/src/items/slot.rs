@@ -1,6 +1,7 @@
 //! A container for a single item type, with a capacity.
 
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 
@@ -12,7 +13,7 @@ use super::{
 };
 
 /// Multiple items of the same type.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct ItemSlot {
     /// The unique identifier of the item that occupies the slot.
     item_id: Id<Item>,

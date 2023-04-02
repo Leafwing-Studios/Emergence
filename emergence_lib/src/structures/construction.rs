@@ -13,6 +13,7 @@ use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
 use hexx::Hex;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -357,7 +358,7 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
 /// The set of tiles taken up by a structure.
 ///
 /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub(crate) struct Footprint {
     /// The set of tiles is taken up by this structure.
     pub(crate) set: HashSet<TilePos>,
