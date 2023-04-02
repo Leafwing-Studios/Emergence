@@ -28,6 +28,12 @@ where
     name_map: HashMap<Id<T>, String>,
 }
 
+impl<T: 'static, Data: Debug> Default for Manifest<T, Data> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, Data> Manifest<T, Data>
 where
     Data: Debug,

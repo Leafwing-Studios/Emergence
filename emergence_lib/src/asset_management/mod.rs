@@ -88,6 +88,7 @@ impl AssetsToLoad {
     }
 }
 
+/// A system that checks if all manifests are loaded.
 fn check_manifests_loaded(
     assets_to_load: Res<AssetsToLoad>,
     mut next_state: ResMut<NextState<AssetState>>,
@@ -103,6 +104,7 @@ fn check_manifests_loaded(
     }
 }
 
+/// A system that checks if all assets are loaded.
 fn check_assets_loaded(
     assets_to_load: Res<AssetsToLoad>,
     mut next_state: ResMut<NextState<AssetState>>,
