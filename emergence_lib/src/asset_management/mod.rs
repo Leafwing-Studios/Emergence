@@ -16,7 +16,11 @@ use std::{
 };
 
 use self::manifest::plugin::DetectManifestCreationSet;
-use bevy::{asset::LoadState, prelude::*, utils::HashMap};
+use bevy::{
+    asset::LoadState,
+    prelude::*,
+    utils::{get_short_name, HashMap},
+};
 
 pub mod manifest;
 
@@ -55,12 +59,12 @@ pub enum AssetState {
 #[derive(Resource, Debug, Default)]
 pub struct AssetsToLoad {
     /// The set of [`Loadable`] types that still need to be loaded
-    remaining: HashMap<TypeId, &'static str>,
+    remaining: HashMap<TypeId, String>,
 }
 
 impl Display for AssetsToLoad {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let mut remaining = self.remaining.values().cloned().collect::<Vec<&str>>();
+        let mut remaining: Vec<String> = self.remaining.values().cloned().collect();
         remaining.sort();
 
         write!(f, "{}", remaining.join("\n"))
@@ -71,7 +75,10 @@ impl AssetsToLoad {
     /// Registers that `T` still needs to be loaded.
     pub fn insert<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
-        self.remaining.insert(type_id, std::any::type_name::<T>());
+        let full_name = std::any::type_name::<T>();
+        let short_name = get_short_name(full_name);
+
+        self.remaining.insert(type_id, short_name);
     }
 
     /// Registers that `T` is done loading.
@@ -90,7 +97,7 @@ fn check_manifests_loaded(
 
         next_state.set(AssetState::LoadAssets);
     } else {
-        info!("Waiting for manifests to load: {}", *assets_to_load);
+        info!("Waiting for manifests to load:\n{}", *assets_to_load);
     }
 }
 
@@ -103,7 +110,7 @@ fn check_assets_loaded(
 
         next_state.set(AssetState::Ready);
     } else {
-        info!("Waiting for assets to load: {}", *assets_to_load);
+        info!("Waiting for assets to load:\n{}", *assets_to_load);
     }
 }
 
