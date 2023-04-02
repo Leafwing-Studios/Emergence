@@ -28,7 +28,7 @@ fn can_serialize_item_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_item_manifest).unwrap();
-    print!("{}", &serialized);
+    print!("{}\n", &serialized);
 
     // Deserialize it
     let deserialized: RawItemManifest = serde_json::from_str(&serialized).unwrap();
@@ -55,7 +55,7 @@ fn can_serialize_terrain_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_terrain_manifest).unwrap();
-    print!("{}", &serialized);
+    print!("{}\n", &serialized);
 
     // Deserialize it
     let deserialized: RawTerrainManifest = serde_json::from_str(&serialized).unwrap();
@@ -108,7 +108,7 @@ fn can_serialize_unit_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_unit_manifest).unwrap();
-    print!("{}", &serialized);
+    print!("{}\n", &serialized);
 
     // Deserialize it
     let deserialized: RawUnitManifest = serde_json::from_str(&serialized).unwrap();

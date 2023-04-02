@@ -41,33 +41,26 @@ pub mod unit_manifest;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
-    wander_durations: Vec<u16>,
-    /// The relative probability of each value in `mean_free_wander_period`.
-    weights: Vec<f32>,
+    ///
+    /// The [`f32`] represents the relative probability of each value.
+    wander_durations: Vec<(u16, f32)>,
 }
 
 impl WanderingBehavior {
     /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {
-        // We can't store a WeightedIndex directly because it's not serializable.
-        let weighted_index = WeightedIndex::new(&self.weights).unwrap();
-
-        self.wander_durations[weighted_index.sample(rng)]
+        let weights = self.wander_durations.iter().map(|(_, weight)| *weight);
+        let dist = WeightedIndex::new(weights).unwrap();
+        let index = dist.sample(rng);
+        self.wander_durations[index].0
     }
 }
 
 impl FromIterator<(u16, f32)> for WanderingBehavior {
     fn from_iter<T: IntoIterator<Item = (u16, f32)>>(iter: T) -> Self {
-        let mut wander_durations = Vec::new();
-        let mut weights = Vec::new();
-        for (duration, weight) in iter {
-            wander_durations.push(duration);
-            weights.push(weight);
-        }
-        WanderingBehavior {
-            wander_durations,
-            weights,
-        }
+        let wander_durations = Vec::from_iter(iter);
+
+        WanderingBehavior { wander_durations }
     }
 }
 
