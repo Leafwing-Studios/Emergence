@@ -1,6 +1,7 @@
 //! Logic for finding and eating food when the [`EnergyPool`] is low.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -14,8 +15,8 @@ use super::{
 };
 
 /// The item(s) that a unit must consume to gain [`Energy`].
-#[derive(Component, Clone, Debug)]
-pub(crate) struct Diet {
+#[derive(Component, Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct Diet {
     /// The item that must be eaten
     item: Id<Item>,
     /// The amount of energy restored per item destroyed
@@ -24,17 +25,17 @@ pub(crate) struct Diet {
 
 impl Diet {
     /// Creates a new [`Diet`] component.
-    pub(crate) fn new(item: Id<Item>, energy: Energy) -> Self {
+    pub fn new(item: Id<Item>, energy: Energy) -> Self {
         Diet { item, energy }
     }
 
     /// The type of item that this unit must consume.
-    pub(crate) fn item(&self) -> Id<Item> {
+    pub(super) fn item(&self) -> Id<Item> {
         self.item
     }
 
     /// The amount of [`Energy`] gained when a single item of the correct type is consumed.
-    pub(crate) fn energy(&self) -> Energy {
+    pub(super) fn energy(&self) -> Energy {
         self.energy
     }
 

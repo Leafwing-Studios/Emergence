@@ -1,8 +1,20 @@
 use bevy::utils::HashMap;
 use emergence_lib::{
+    asset_management::manifest::Id,
     items::item_manifest::{ItemData, RawItemManifest},
+    organisms::{
+        energy::{Energy, EnergyPool},
+        lifecycle::Lifecycle,
+        OrganismId, OrganismVariety,
+    },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
+    units::{
+        hunger::Diet,
+        unit_manifest::{RawUnitManifest, UnitData},
+        WanderingBehavior,
+    },
 };
+use leafwing_abilities::prelude::Pool;
 
 #[test]
 fn can_serialize_item_manifest() {
@@ -50,4 +62,57 @@ fn can_serialize_terrain_manifest() {
 
     // Check that the deserialized version is the same as the original
     assert_eq!(raw_terrain_manifest, deserialized);
+}
+
+#[test]
+fn can_serialize_unit_manifest() {
+    // Create a new raw unit manifest
+    let raw_unit_manifest = RawUnitManifest {
+        unit_types: HashMap::from_iter(vec![
+            (
+                "test_unit".to_string(),
+                UnitData {
+                    organism_variety: OrganismVariety {
+                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit")),
+                        lifecycle: Lifecycle::STATIC,
+                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    },
+                    diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
+                    max_impatience: 10,
+                    wandering_behavior: WanderingBehavior::from_iter([
+                        (1, 0.7),
+                        (8, 0.2),
+                        (16, 0.1),
+                    ]),
+                },
+            ),
+            (
+                "test_unit2".to_string(),
+                UnitData {
+                    organism_variety: OrganismVariety {
+                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit2")),
+                        lifecycle: Lifecycle::STATIC,
+                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                    },
+                    diet: Diet::new(Id::from_name("acacia_leaf"), Energy(0.)),
+                    max_impatience: 10,
+                    wandering_behavior: WanderingBehavior::from_iter([
+                        (1, 0.7),
+                        (8, 0.2),
+                        (16, 0.1),
+                    ]),
+                },
+            ),
+        ]),
+    };
+
+    // Serialize it
+    let serialized = serde_json::to_string(&raw_unit_manifest).unwrap();
+    print!("{}", &serialized);
+
+    // Deserialize it
+    let deserialized: RawUnitManifest = serde_json::from_str(&serialized).unwrap();
+
+    // Check that the deserialized version is the same as the original
+    assert_eq!(raw_unit_manifest, deserialized);
 }

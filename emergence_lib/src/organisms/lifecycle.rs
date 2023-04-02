@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -27,22 +28,22 @@ use super::{
 /// How this organism can grow, change and transform over time.
 ///
 /// This represents a local view of the graph.
-#[derive(Component, Debug, Clone)]
-pub(crate) struct Lifecycle {
+#[derive(Component, Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Lifecycle {
     /// The forms that this organism can turn into, and their triggering conditions.
     life_paths: Vec<LifePath>,
 }
 
 impl Lifecycle {
     /// The simplest lifecycle: nothing ever changes.
-    pub(crate) const STATIC: Lifecycle = Lifecycle {
+    pub const STATIC: Lifecycle = Lifecycle {
         life_paths: Vec::new(),
     };
 
     /// Creates a new [`Lifecycle`] from an ordered list of [`LifePath`].
     ///
     /// Earlier lifepaths will be prioritized for transformation if multiple conditions are met simultaneously.
-    pub(crate) fn new(life_paths: Vec<LifePath>) -> Self {
+    pub fn new(life_paths: Vec<LifePath>) -> Self {
         Lifecycle { life_paths }
     }
 
@@ -102,14 +103,14 @@ impl Default for Lifecycle {
 /// A path from one organism to another form.
 ///
 /// Units will transform once all of their non-`None` conditions are met.
-#[derive(Debug, Clone)]
-pub(crate) struct LifePath {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LifePath {
     /// The form that this organism will take once all of the conditions are met.
-    pub(crate) new_form: OrganismId,
+    pub new_form: OrganismId,
     /// The amount of energy that must be produced before we can transform.
-    pub(crate) energy_required: Option<EnergyPool>,
+    pub energy_required: Option<EnergyPool>,
     /// The amount of time that must pass before we can transform.
-    pub(crate) time_required: Option<TimePool>,
+    pub time_required: Option<TimePool>,
 }
 
 impl LifePath {

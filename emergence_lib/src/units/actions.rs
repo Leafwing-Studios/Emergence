@@ -377,7 +377,8 @@ pub(super) fn finish_actions(
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
                         let unit_data = unit_manifest.get(*unit.unit_id);
-                        let diet = unit_data.diet();
+
+                        let diet = &unit_data.diet;
 
                         if held_item == diet.item() {
                             let proposed = unit.energy_pool.current() + diet.energy();

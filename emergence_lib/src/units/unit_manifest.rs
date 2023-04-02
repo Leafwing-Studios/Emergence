@@ -1,9 +1,14 @@
 //! Defines write-only data for each variety of unit.
 
-use bevy::reflect::{FromReflect, Reflect};
+use bevy::{
+    reflect::{FromReflect, Reflect, TypeUuid},
+    utils::HashMap,
+};
 use leafwing_abilities::prelude::Pool;
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    asset_management::manifest::loader::RawManifest,
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::Lifecycle,
@@ -21,30 +26,18 @@ pub struct Unit;
 pub(crate) type UnitManifest = Manifest<Unit, UnitData>;
 
 /// The data associated with each variety of unit
-#[derive(Debug, Clone)]
-pub(crate) struct UnitData {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UnitData {
     /// The data shared by all organisms
-    pub(super) organism_variety: OrganismVariety,
+    pub organism_variety: OrganismVariety,
     /// What this unit type needs to eat
-    pub(super) diet: Diet,
+    pub diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
-    pub(super) max_impatience: u8,
+    pub max_impatience: u8,
     /// How many actions will units of this type take while wandering before picking a new goal?
     ///
     /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
-    pub(super) wandering_behavior: WanderingBehavior,
-}
-
-impl UnitData {
-    /// Returns the [`OrganismVariety`] data for this type of unit.
-    pub(crate) fn organism_variety(&self) -> &OrganismVariety {
-        &self.organism_variety
-    }
-
-    /// Returns the [`Diet`] for this type of unit.
-    pub(crate) fn diet(&self) -> &Diet {
-        &self.diet
-    }
+    pub wandering_behavior: WanderingBehavior,
 }
 
 impl Default for UnitManifest {
@@ -65,6 +58,32 @@ impl Default for UnitManifest {
                 wandering_behavior: WanderingBehavior::from_iter([(1, 0.7), (8, 0.2), (16, 0.1)]),
             },
         );
+
+        manifest
+    }
+}
+
+/// The [`UnitManifest`] as seen in the manifest file.
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
+#[uuid = "c8f6e1a1-20a0-4629-8df1-2e1fa313fcb9"]
+pub struct RawUnitManifest {
+    /// The data for each item.
+    pub unit_types: HashMap<String, UnitData>,
+}
+
+impl RawManifest for RawUnitManifest {
+    const EXTENSION: &'static str = "terrain_manifest.json";
+
+    type Marker = Unit;
+    type Data = UnitData;
+
+    fn process(&self) -> Manifest<Self::Marker, Self::Data> {
+        let mut manifest = Manifest::new();
+
+        for (name, raw_data) in &self.unit_types {
+            // No additional preprocessing is needed.
+            manifest.insert(name, raw_data.clone())
+        }
 
         manifest
     }

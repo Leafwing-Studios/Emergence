@@ -15,6 +15,7 @@ use crate::{
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng};
+use serde::{Deserialize, Serialize};
 
 use self::{
     actions::CurrentAction,
@@ -29,26 +30,29 @@ use crate::organisms::OrganismBundle;
 
 pub(crate) mod actions;
 pub(crate) mod goals;
-pub(crate) mod hunger;
+pub mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 mod reproduction;
 pub(crate) mod unit_assets;
-pub(crate) mod unit_manifest;
+pub mod unit_manifest;
 
 /// Controls the distribution of wandering durations on a per-unit-type basis.
-#[derive(Debug, Clone)]
-pub(crate) struct WanderingBehavior {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
     wander_durations: Vec<u16>,
     /// The relative probability of each value in `mean_free_wander_period`.
-    weights: WeightedIndex<f32>,
+    weights: Vec<f32>,
 }
 
 impl WanderingBehavior {
     /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {
-        self.wander_durations[self.weights.sample(rng)]
+        // We can't store a WeightedIndex directly because it's not serializable.
+        let weighted_index = WeightedIndex::new(&self.weights).unwrap();
+
+        self.wander_durations[weighted_index.sample(rng)]
     }
 }
 
@@ -62,7 +66,7 @@ impl FromIterator<(u16, f32)> for WanderingBehavior {
         }
         WanderingBehavior {
             wander_durations,
-            weights: WeightedIndex::new(weights).unwrap(),
+            weights,
         }
     }
 }
