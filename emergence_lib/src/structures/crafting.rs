@@ -11,7 +11,7 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::{plugin::RawManifestPlugin, Id},
+    asset_management::manifest::{plugin::ManifestPlugin, Id},
     items::{
         inventory::Inventory,
         item_manifest::{Item, ItemManifest, RawItemManifest},
@@ -619,8 +619,8 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new())
-            .add_plugin(RawManifestPlugin::<RawRecipeManifest>::new())
+        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
             .add_systems(
                 (
                     progress_crafting,

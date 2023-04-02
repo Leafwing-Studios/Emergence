@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{
-        manifest::{plugin::RawManifestPlugin, Id, Manifest},
+        manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
     player_interaction::InteractionSystem,
@@ -149,7 +149,7 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawUnitManifest>::new())
+        app.add_plugin(ManifestPlugin::<RawUnitManifest>::new())
             .add_asset_collection::<UnitHandles>()
             .add_systems(
                 (

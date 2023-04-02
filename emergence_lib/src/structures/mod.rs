@@ -8,7 +8,7 @@ use bevy_mod_raycast::RaycastMesh;
 
 use crate::{
     asset_management::{
-        manifest::{plugin::RawManifestPlugin, Id},
+        manifest::{plugin::ManifestPlugin, Id},
         AssetCollectionExt,
     },
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
@@ -36,7 +36,7 @@ pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawStructureManifest>::new())
+        app.add_plugin(ManifestPlugin::<RawStructureManifest>::new())
             .add_asset_collection::<StructureHandles>()
             .add_plugin(CraftingPlugin)
             .add_systems(

@@ -11,8 +11,8 @@ use super::{
     Manifest,
 };
 
-/// A plugin to load and process raw manifest assets.
-pub(crate) struct RawManifestPlugin<M>
+/// A plugin to load and process [`Manifest`] types from disk.
+pub(crate) struct ManifestPlugin<M>
 where
     M: RawManifest,
 {
@@ -20,7 +20,7 @@ where
     _phantom_data: PhantomData<M>,
 }
 
-impl<M> RawManifestPlugin<M>
+impl<M> ManifestPlugin<M>
 where
     M: RawManifest,
 {
@@ -36,7 +36,7 @@ where
 #[derive(Debug, PartialEq, Eq, Hash, Clone, SystemSet)]
 pub struct DetectManifestCreationSet;
 
-impl<M> Plugin for RawManifestPlugin<M>
+impl<M> Plugin for ManifestPlugin<M>
 where
     M: RawManifest,
 {

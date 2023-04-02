@@ -4,7 +4,7 @@ use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
-use crate::asset_management::manifest::plugin::RawManifestPlugin;
+use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::player_interaction::selection::ObjectInteraction;
@@ -23,7 +23,7 @@ pub(crate) struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RawManifestPlugin::<RawTerrainManifest>::new())
+        app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
             .add_system(
                 respond_to_height_changes
