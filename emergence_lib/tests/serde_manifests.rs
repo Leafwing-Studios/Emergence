@@ -1,19 +1,27 @@
 use std::time::Duration;
 
-use bevy::utils::HashMap;
+use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
     asset_management::manifest::Id,
     items::{
+        inventory::Inventory,
         item_manifest::{ItemData, RawItemManifest},
         recipe::{RawRecipeManifest, RecipeConditions, RecipeData, Threshold},
         ItemCount,
     },
     organisms::{
         energy::{Energy, EnergyPool},
-        lifecycle::Lifecycle,
+        lifecycle::{LifePath, Lifecycle},
         OrganismId, OrganismVariety,
     },
-    simulation::light::Illuminance,
+    simulation::{light::Illuminance, time::TimePool},
+    structures::{
+        construction::Footprint,
+        crafting::{ActiveRecipe, InputInventory},
+        structure_manifest::{
+            ConstructionStrategy, RawStructureManifest, StructureData, StructureKind,
+        },
+    },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{
         hunger::Diet,
@@ -204,7 +212,7 @@ fn can_serialize_structure_manifest() {
     let raw_structure_manifest = RawStructureManifest {
         structure_types: HashMap::from_iter(vec![
             (
-                "leuco",
+                "leuco".to_string(),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
@@ -230,7 +238,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia_seed",
+                "acacia_seed".to_string(),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -250,7 +258,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia_sprout",
+                "acacia_sprout".to_string(),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -270,7 +278,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia",
+                "acacia".to_string(),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -286,7 +294,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "ant_hive",
+                "ant_hive".to_string(),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
@@ -307,7 +315,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "hatchery",
+                "hatchery".to_string(),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
@@ -329,7 +337,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "storage",
+                "storage".to_string(),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Storage {

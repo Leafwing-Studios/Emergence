@@ -72,9 +72,9 @@ impl Display for CraftingState {
 
 /// The input inventory for a structure.
 #[derive(Component, Clone, Debug, Default, Deref, DerefMut, PartialEq, Serialize, Deserialize)]
-pub(crate) struct InputInventory {
+pub struct InputInventory {
     /// Inner storage
-    pub(crate) inventory: Inventory,
+    pub inventory: Inventory,
 }
 
 impl InputInventory {
@@ -122,19 +122,19 @@ impl StorageInventory {
 
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
+pub struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {
     /// The un-set [`ActiveRecipe`].
-    pub(crate) const NONE: ActiveRecipe = ActiveRecipe(None);
+    pub const NONE: ActiveRecipe = ActiveRecipe(None);
 
     /// Creates a new [`ActiveRecipe`], set to `recipe_id`
-    pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
+    pub fn new(recipe_id: Id<Recipe>) -> Self {
         ActiveRecipe(Some(recipe_id))
     }
 
     /// The ID of the currently active recipe, if one has been selected.
-    pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
+    pub fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
     }
 

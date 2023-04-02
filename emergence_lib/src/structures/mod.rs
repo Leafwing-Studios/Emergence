@@ -23,10 +23,10 @@ use self::{
 };
 
 pub(crate) mod commands;
-pub(crate) mod construction;
-pub(crate) mod crafting;
+pub mod construction;
+pub mod crafting;
 mod structure_assets;
-pub(crate) mod structure_manifest;
+pub mod structure_manifest;
 
 /// The systems that make structures tick.
 pub(super) struct StructuresPlugin;

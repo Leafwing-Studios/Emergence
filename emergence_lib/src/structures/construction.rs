@@ -359,21 +359,21 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
 ///
 /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub(crate) struct Footprint {
+pub struct Footprint {
     /// The set of tiles is taken up by this structure.
     pub(crate) set: HashSet<TilePos>,
 }
 
 impl Footprint {
     /// A footprint that occupies a single tile.
-    pub(crate) fn single() -> Self {
+    pub fn single() -> Self {
         Self {
             set: HashSet::from_iter(vec![TilePos::ZERO]),
         }
     }
 
     /// A footprint that occupies a set of tiles in a solid hexagon.
-    pub(crate) fn hexagon(radius: u32) -> Self {
+    pub fn hexagon(radius: u32) -> Self {
         let mut set = HashSet::new();
         for hex in hexagon(Hex::ZERO, radius) {
             set.insert(TilePos { hex });

@@ -18,7 +18,7 @@ use super::{
 
 /// An inventory to store multiple types of items.
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Inventory {
+pub struct Inventory {
     /// Is this inventory reserved for a single item type?
     ///
     /// If so, this field will be `Some(reserved_item_id)`.
@@ -64,7 +64,7 @@ impl InventoryState {
 #[allow(dead_code)]
 impl Inventory {
     /// Create an empty inventory with the given amount of slots.
-    pub(crate) fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
+    pub fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
         Self {
             reserved_for,
             slots: Vec::new(),
@@ -73,7 +73,7 @@ impl Inventory {
     }
 
     /// Creates an inventory that can store up to `max` items of the type `item_id`.
-    pub(crate) fn new_from_item(item_id: Id<Item>, max: usize) -> Self {
+    pub fn new_from_item(item_id: Id<Item>, max: usize) -> Self {
         Self {
             reserved_for: Some(item_id),
             slots: vec![ItemSlot::new(item_id, max)],

@@ -4,39 +4,39 @@ use super::ItemCount;
 
 /// Failed to add items to an inventory.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct AddOneItemError {
+pub struct AddOneItemError {
     /// The number of items that exceed the capacity.
-    pub(crate) excess_count: ItemCount,
+    pub excess_count: ItemCount,
 }
 
 /// Failed to add items to an inventory.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct AddManyItemsError {
+pub struct AddManyItemsError {
     /// The number of items that exceeded the capacity.
-    pub(crate) excess_counts: Vec<ItemCount>,
+    pub excess_counts: Vec<ItemCount>,
 }
 
 /// Failed to remove items from an item slot.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct RemoveOneItemError {
+pub struct RemoveOneItemError {
     /// The number of items that were missing from the inventory.
-    pub(crate) missing_count: ItemCount,
+    pub missing_count: ItemCount,
 }
 
 /// Failed to remove many items from an inventory.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct RemoveManyItemsError {
+pub struct RemoveManyItemsError {
     /// The number of items that were missing from the inventory.
-    pub(crate) missing_counts: Vec<ItemCount>,
+    pub missing_counts: Vec<ItemCount>,
 }
 
 /// Failed to completely transfer items from one inventory to another.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct ItemTransferError {
+pub struct ItemTransferError {
     /// The number and type of items remaining in the input that could not be transferred.
-    pub(crate) items_remaining: ItemCount,
+    pub items_remaining: ItemCount,
     /// Did this fail because the input inventory of the destination was full?
-    pub(crate) full_destination: bool,
+    pub full_destination: bool,
     /// Did this fail because the output inventory of the source was empty?
-    pub(crate) empty_source: bool,
+    pub empty_source: bool,
 }

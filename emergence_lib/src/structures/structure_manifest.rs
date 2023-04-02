@@ -31,43 +31,43 @@ pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct StructureData {
+pub struct StructureData {
     /// Data needed for living structures
-    pub(crate) organism_variety: Option<OrganismVariety>,
+    pub organism_variety: Option<OrganismVariety>,
     /// What base variety of structure is this?
     ///
     /// Determines the components that this structure gets.
-    pub(crate) kind: StructureKind,
+    pub kind: StructureKind,
     /// How new copies of this structure can be built
-    pub(crate) construction_strategy: ConstructionStrategy,
+    pub construction_strategy: ConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
-    pub(crate) max_workers: u8,
+    pub max_workers: u8,
     /// The tiles taken up by this building.
-    pub(crate) footprint: Footprint,
+    pub footprint: Footprint,
 }
 
 /// How new structures of this sort can be built.
 ///
 /// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct ConstructionStrategy {
+pub struct ConstructionStrategy {
     /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
     ///
     /// If `None`, this structure can be built directly.
-    pub(crate) seedling: Option<Id<Structure>>,
+    pub seedling: Option<Id<Structure>>,
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
-    pub(crate) work: Duration,
+    pub work: Duration,
     /// The set of items needed to create a new copy of this structure
-    pub(crate) materials: InputInventory,
+    pub materials: InputInventory,
     /// The set of terrain types that this structure can be built on
-    pub(crate) allowed_terrain_types: HashSet<Id<Terrain>>,
+    pub allowed_terrain_types: HashSet<Id<Terrain>>,
 }
 
 /// What set of components should this structure have?
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) enum StructureKind {
+pub enum StructureKind {
     /// Stores items.
     Storage {
         /// The number of slots in the inventory, controlling how large it is.
