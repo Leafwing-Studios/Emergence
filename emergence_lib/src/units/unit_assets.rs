@@ -3,7 +3,7 @@
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     simulation::geometry::{hexagonal_column, MapGeometry},
-    units::unit_manifest::Unit,
+    units::unit_manifest::{Unit, UnitManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
@@ -38,7 +38,8 @@ impl Loadable for UnitHandles {
         let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
-        let unit_names = vec!["ant"];
+        let unit_manifest = world.resource::<UnitManifest>();
+        let unit_names = unit_manifest.names();
 
         for str in unit_names {
             let structure_id = Id::from_name(str);
