@@ -97,7 +97,9 @@ fn check_manifests_loaded(
 
         next_state.set(AssetState::LoadAssets);
     } else {
-        info!("Waiting for manifests to load:\n{}", *assets_to_load);
+        if assets_to_load.is_changed() {
+            info!("Waiting for manifests to load:\n{}", *assets_to_load);
+        }
     }
 }
 
@@ -110,7 +112,9 @@ fn check_assets_loaded(
 
         next_state.set(AssetState::Ready);
     } else {
-        info!("Waiting for assets to load:\n{}", *assets_to_load);
+        if assets_to_load.is_changed() {
+            info!("Waiting for assets to load:\n{}", *assets_to_load);
+        }
     }
 }
 
