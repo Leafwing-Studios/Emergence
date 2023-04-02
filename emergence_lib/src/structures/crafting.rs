@@ -278,7 +278,7 @@ impl CraftingBundle {
             let mut output_inventory = recipe.output_inventory(item_manifest);
             output_inventory.randomize(rng);
 
-            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time());
+            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time);
             let progress = distribution.sample(rng);
             let max_workers = structure_manifest.get(structure_id).max_workers;
 
@@ -288,7 +288,7 @@ impl CraftingBundle {
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::InProgress {
                     progress,
-                    required: recipe.craft_time(),
+                    required: recipe.craft_time,
                 },
                 emitter: Emitter::default(),
                 workers_present: WorkersPresent::new(max_workers),
@@ -340,10 +340,10 @@ fn progress_crafting(
             CraftingState::NeedsInput | CraftingState::Overproduction => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
+                    match crafter.input.remove_items_all_or_nothing(&recipe.inputs) {
                         Ok(()) => CraftingState::InProgress {
                             progress: Duration::ZERO,
-                            required: recipe.craft_time(),
+                            required: recipe.craft_time,
                         },
                         Err(_) => CraftingState::NeedsInput,
                     }
@@ -388,7 +388,7 @@ fn progress_crafting(
                         Some(_) => {
                             match crafter
                                 .output
-                                .try_add_items(recipe.outputs(), &item_manifest)
+                                .try_add_items(&recipe.outputs, &item_manifest)
                             {
                                 Ok(_) => CraftingState::NeedsInput,
                                 // TODO: handle the waste products somehow
@@ -397,7 +397,7 @@ fn progress_crafting(
                         }
                         None => match crafter
                             .output
-                            .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
+                            .add_items_all_or_nothing(&recipe.outputs, &item_manifest)
                         {
                             Ok(()) => CraftingState::NeedsInput,
                             Err(_) => CraftingState::FullAndBlocked,
@@ -433,10 +433,10 @@ fn gain_energy_when_crafting_completes(
         if matches!(crafting_state, CraftingState::RecipeComplete) {
             if let Some(recipe_id) = active_recipe.recipe_id() {
                 let recipe = recipe_manifest.get(*recipe_id);
-                if let Some(energy) = recipe.energy() {
-                    let proposed = energy_pool.current() + *energy;
+                if let Some(energy) = recipe.energy {
+                    let proposed = energy_pool.current() + energy;
                     energy_pool.set_current(proposed);
-                    lifecycle.record_energy_gained(*energy);
+                    lifecycle.record_energy_gained(energy);
                 }
             }
         }

@@ -1,12 +1,19 @@
+use std::time::Duration;
+
 use bevy::utils::HashMap;
 use emergence_lib::{
     asset_management::manifest::Id,
-    items::item_manifest::{ItemData, RawItemManifest},
+    items::{
+        item_manifest::{ItemData, RawItemManifest},
+        recipe::{RawRecipeManifest, RecipeConditions, RecipeData, Threshold},
+        ItemCount,
+    },
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::Lifecycle,
         OrganismId, OrganismVariety,
     },
+    simulation::light::Illuminance,
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{
         hunger::Diet,
@@ -111,4 +118,72 @@ fn can_serialize_unit_manifest() {
 
     // Check that the deserialized version is the same as the original
     assert_eq!(raw_unit_manifest, deserialized);
+}
+
+#[test]
+fn can_serialize_recipe_manifest() {
+    // Create a new raw recipe manifest
+    let raw_recipe_manifest = RawRecipeManifest {
+        recipes: HashMap::from_iter(vec![
+            (
+                "acacia_leaf_production".to_string(),
+                RecipeData {
+                    inputs: Vec::new(),
+                    outputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
+                    craft_time: Duration::from_secs(3),
+                    conditions: RecipeConditions::new(
+                        0,
+                        Threshold::new(Illuminance(5e3), Illuminance(6e4)),
+                    ),
+                    energy: Some(Energy(20.)),
+                },
+            ),
+            (
+                "leuco_chunk_production".to_string(),
+                RecipeData {
+                    inputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
+                    outputs: vec![ItemCount::one(Id::from_name("leuco_chunk"))],
+                    craft_time: Duration::from_secs(2),
+                    conditions: RecipeConditions::NONE,
+                    energy: Some(Energy(40.)),
+                },
+            ),
+            (
+                "ant_egg_production".to_string(),
+                RecipeData {
+                    inputs: Vec::new(),
+                    outputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
+                    craft_time: Duration::from_secs(10),
+                    conditions: RecipeConditions {
+                        workers_required: 2,
+                        allowable_light_range: None,
+                    },
+                    energy: None,
+                },
+            ),
+            (
+                "hatch_ants".to_string(),
+                RecipeData {
+                    inputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
+                    outputs: Vec::new(),
+                    craft_time: Duration::from_secs(10),
+                    conditions: RecipeConditions {
+                        workers_required: 1,
+                        allowable_light_range: None,
+                    },
+                    energy: None,
+                },
+            ),
+        ]),
+    };
+
+    // Serialize it
+    let serialized = serde_json::to_string(&raw_recipe_manifest).unwrap();
+    print!("{}\n", &serialized);
+
+    // Deserialize it
+    let deserialized: RawRecipeManifest = serde_json::from_str(&serialized).unwrap();
+
+    // Check that the deserialized version is the same as the original
+    assert_eq!(raw_recipe_manifest, deserialized);
 }

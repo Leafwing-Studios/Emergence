@@ -1,18 +1,20 @@
 //! Everything related to items and crafting.
 
+use serde::{Deserialize, Serialize};
+
 use crate::asset_management::manifest::Id;
 
 use self::item_manifest::{Item, ItemManifest};
 
-pub(crate) mod errors;
-pub(crate) mod inventory;
+pub mod errors;
+pub mod inventory;
 pub mod item_manifest;
-pub(crate) mod recipe;
-pub(crate) mod slot;
+pub mod recipe;
+pub mod slot;
 
 /// A specific amount of a given item.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ItemCount {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ItemCount {
     /// The unique identifier of the item being counted.
     item_id: Id<Item>,
 
@@ -22,12 +24,12 @@ pub(crate) struct ItemCount {
 
 impl ItemCount {
     /// Create a new item count with the given number of items.
-    pub(crate) fn new(item_id: Id<Item>, count: usize) -> Self {
+    pub fn new(item_id: Id<Item>, count: usize) -> Self {
         Self { item_id, count }
     }
 
     /// A single one of the given item.
-    pub(crate) fn one(item_id: Id<Item>) -> Self {
+    pub fn one(item_id: Id<Item>) -> Self {
         Self { item_id, count: 1 }
     }
 
