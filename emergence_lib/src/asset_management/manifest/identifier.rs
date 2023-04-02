@@ -20,6 +20,7 @@ pub struct Id<T> {
 
     /// Marker to make the compiler happy
     #[reflect(ignore)]
+    #[serde(skip)]
     _phantom: PhantomData<T>,
 }
 

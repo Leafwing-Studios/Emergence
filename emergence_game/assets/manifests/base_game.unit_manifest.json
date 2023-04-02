@@ -1,11 +1,10 @@
 {
   "unit_types": {
-    "test_unit2": {
+    "test_unit": {
       "organism_variety": {
         "prototypical_form": {
           "Unit": {
-            "value": 125956192,
-            "_phantom": null
+            "value": 458638887
           }
         },
         "lifecycle": {
@@ -21,10 +20,9 @@
       },
       "diet": {
         "item": {
-          "value": 104638856,
-          "_phantom": null
+          "value": 431174645
         },
-        "energy": 0.0
+        "energy": 50.0
       },
       "max_impatience": 10,
       "wandering_behavior": {
@@ -44,12 +42,11 @@
         ]
       }
     },
-    "test_unit": {
+    "test_unit2": {
       "organism_variety": {
         "prototypical_form": {
           "Unit": {
-            "value": 458638887,
-            "_phantom": null
+            "value": 125956192
           }
         },
         "lifecycle": {
@@ -65,10 +62,9 @@
       },
       "diet": {
         "item": {
-          "value": 431174645,
-          "_phantom": null
+          "value": 104638856
         },
-        "energy": 50.0
+        "energy": 0.0
       },
       "max_impatience": 10,
       "wandering_behavior": {
