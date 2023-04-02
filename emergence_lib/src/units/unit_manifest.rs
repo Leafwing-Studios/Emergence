@@ -44,7 +44,7 @@ pub struct RawUnitManifest {
 }
 
 impl RawManifest for RawUnitManifest {
-    const EXTENSION: &'static str = "terrain_manifest.json";
+    const EXTENSION: &'static str = "unit_manifest.json";
 
     type Marker = Unit;
     type Data = UnitData;
