@@ -4,20 +4,15 @@ use bevy::{
     reflect::{FromReflect, Reflect, TypeUuid},
     utils::HashMap,
 };
-use leafwing_abilities::prelude::Pool;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::loader::RawManifest,
-    organisms::{
-        energy::{Energy, EnergyPool},
-        lifecycle::Lifecycle,
-        OrganismId, OrganismVariety,
-    },
+    organisms::OrganismVariety,
     units::{hunger::Diet, WanderingBehavior},
 };
 
-use super::{Id, Manifest};
+use super::Manifest;
 
 /// The marker type for [`Id<Unit>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -38,29 +33,6 @@ pub struct UnitData {
     ///
     /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
     pub wandering_behavior: WanderingBehavior,
-}
-
-impl Default for UnitManifest {
-    fn default() -> Self {
-        let mut manifest: UnitManifest = Manifest::new();
-
-        // TODO: load this from disk
-        manifest.insert(
-            "ant",
-            UnitData {
-                organism_variety: OrganismVariety {
-                    prototypical_form: OrganismId::Unit(Id::from_name("ant")),
-                    lifecycle: Lifecycle::STATIC,
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                },
-                diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
-                max_impatience: 10,
-                wandering_behavior: WanderingBehavior::from_iter([(1, 0.7), (8, 0.2), (16, 0.1)]),
-            },
-        );
-
-        manifest
-    }
 }
 
 /// The [`UnitManifest`] as seen in the manifest file.

@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Manifest},
+        manifest::{plugin::RawManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
     player_interaction::InteractionSystem,
@@ -23,7 +23,7 @@ use self::{
     impatience::ImpatiencePool,
     item_interaction::UnitInventory,
     unit_assets::UnitHandles,
-    unit_manifest::{Unit, UnitData, UnitManifest},
+    unit_manifest::{RawUnitManifest, Unit, UnitData},
 };
 
 use crate::organisms::OrganismBundle;
@@ -149,7 +149,7 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UnitManifest>()
+        app.add_plugin(RawManifestPlugin::<RawUnitManifest>::new())
             .add_asset_collection::<UnitHandles>()
             .add_systems(
                 (

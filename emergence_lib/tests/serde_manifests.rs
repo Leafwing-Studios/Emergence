@@ -70,10 +70,10 @@ fn can_serialize_unit_manifest() {
     let raw_unit_manifest = RawUnitManifest {
         unit_types: HashMap::from_iter(vec![
             (
-                "test_unit".to_string(),
+                "ant".to_string(),
                 UnitData {
                     organism_variety: OrganismVariety {
-                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit")),
+                        prototypical_form: OrganismId::Unit(Id::from_name("ant")),
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     },
@@ -87,20 +87,16 @@ fn can_serialize_unit_manifest() {
                 },
             ),
             (
-                "test_unit2".to_string(),
+                "test_unit".to_string(),
                 UnitData {
                     organism_variety: OrganismVariety {
-                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit2")),
+                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit")),
                         lifecycle: Lifecycle::STATIC,
-                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                        energy_pool: EnergyPool::new_full(Energy(50.), Energy(0.)),
                     },
                     diet: Diet::new(Id::from_name("acacia_leaf"), Energy(0.)),
-                    max_impatience: 10,
-                    wandering_behavior: WanderingBehavior::from_iter([
-                        (1, 0.7),
-                        (8, 0.2),
-                        (16, 0.1),
-                    ]),
+                    max_impatience: 0,
+                    wandering_behavior: WanderingBehavior::from_iter([(0, 0.7), (16, 0.1)]),
                 },
             ),
         ]),
