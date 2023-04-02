@@ -9,6 +9,7 @@ use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
 use rand::{rngs::ThreadRng, Rng};
+use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
     ops::{Add, AddAssign, Sub, SubAssign},
@@ -35,10 +36,26 @@ use crate::{
     Sub,
     AddAssign,
     SubAssign,
+    Serialize,
+    Deserialize,
 )]
 pub struct TilePos {
     /// The underlying hex coordinate
+    #[serde(with = "RemoteHex")]
     pub(crate) hex: Hex,
+}
+
+// BLOCKED: remove this workaround once https://github.com/ManevilleF/hexx/issues/70 is fixed
+/// A mimic of [`Hex`] that can be serialized and deserialized.
+///
+/// See <https://serde.rs/remote-derive.html> for how this works.
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "Hex")]
+struct RemoteHex {
+    /// The x coordinate
+    x: i32,
+    /// The y coordinate
+    y: i32,
 }
 
 impl Display for TilePos {
