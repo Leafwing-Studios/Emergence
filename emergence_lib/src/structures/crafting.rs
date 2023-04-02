@@ -10,11 +10,11 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 
 use crate::{
-    asset_management::manifest::{plugin::RawManifestPlugin, Id, Manifest},
+    asset_management::manifest::{plugin::RawManifestPlugin, Id},
     items::{
         inventory::Inventory,
         item_manifest::{Item, ItemManifest, RawItemManifest},
-        recipe::{Recipe, RecipeData, RecipeManifest},
+        recipe::{RawRecipeManifest, Recipe, RecipeManifest},
     },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -618,21 +618,8 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: Load this from an asset file
-        let mut recipe_manifest: RecipeManifest = Manifest::new();
-        recipe_manifest.insert(
-            "acacia_leaf_production",
-            RecipeData::acacia_leaf_production(),
-        );
-        recipe_manifest.insert(
-            "leuco_chunk_production",
-            RecipeData::leuco_chunk_production(),
-        );
-        recipe_manifest.insert("ant_egg_production", RecipeData::ant_egg_production());
-        recipe_manifest.insert("hatch_ants", RecipeData::hatch_ants());
-
-        app.insert_resource(recipe_manifest)
-            .add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+        app.add_plugin(RawManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(RawManifestPlugin::<RawRecipeManifest>::new())
             .add_systems(
                 (
                     progress_crafting,

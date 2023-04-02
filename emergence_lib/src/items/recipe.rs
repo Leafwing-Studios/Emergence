@@ -5,7 +5,6 @@ use super::{inventory::Inventory, ItemCount};
 use crate::asset_management::manifest::loader::RawManifest;
 use crate::asset_management::manifest::Manifest;
 use crate::{
-    asset_management::manifest::Id,
     organisms::energy::Energy,
     simulation::light::{Illuminance, TotalLight},
     structures::crafting::{InputInventory, OutputInventory},
@@ -102,62 +101,6 @@ impl RecipeData {
         };
 
         format!("[{input_str}] -> [{output_str}] | {duration_str} s{condition_str}")
-    }
-}
-
-// TODO: Remove this once we load recipes from asset files
-impl RecipeData {
-    /// An acacia plant producing leaves.
-    pub(crate) fn acacia_leaf_production() -> Self {
-        RecipeData {
-            inputs: Vec::new(),
-            outputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
-            craft_time: Duration::from_secs(3),
-            conditions: RecipeConditions::new(
-                0,
-                Threshold::new(Illuminance(5e3), Illuminance(6e4)),
-            ),
-            energy: Some(Energy(20.)),
-        }
-    }
-
-    /// A leuco mushroom processing acacia leaves
-    pub(crate) fn leuco_chunk_production() -> Self {
-        RecipeData {
-            inputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
-            outputs: vec![ItemCount::one(Id::from_name("leuco_chunk"))],
-            craft_time: Duration::from_secs(2),
-            conditions: RecipeConditions::NONE,
-            energy: Some(Energy(40.)),
-        }
-    }
-
-    /// An ant hive producing eggs.
-    pub(crate) fn ant_egg_production() -> Self {
-        RecipeData {
-            inputs: Vec::new(),
-            outputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
-            craft_time: Duration::from_secs(10),
-            conditions: RecipeConditions {
-                workers_required: 2,
-                allowable_light_range: None,
-            },
-            energy: None,
-        }
-    }
-
-    /// An ant hive producing eggs.
-    pub(crate) fn hatch_ants() -> Self {
-        RecipeData {
-            inputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
-            outputs: Vec::new(),
-            craft_time: Duration::from_secs(10),
-            conditions: RecipeConditions {
-                workers_required: 1,
-                allowable_light_range: None,
-            },
-            energy: None,
-        }
     }
 }
 
