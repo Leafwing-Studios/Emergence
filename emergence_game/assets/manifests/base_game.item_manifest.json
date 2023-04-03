@@ -9,6 +9,9 @@
     },
     "ant_egg": {
       "stack_size": 5
+    },
+    "acacia_seed": {
+      "stack_size": 100
     }
   }
 }

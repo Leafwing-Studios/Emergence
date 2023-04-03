@@ -67,7 +67,7 @@
 				]
 			}
 		},
-		"acacia_seed": {
+		"acacia_seedling": {
 			"organism_variety": {
 				"prototypical_form": {
 					"Structure": "acacia"
@@ -93,17 +93,17 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": "acacia_leaf_production"
+					"starting_recipe": null
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
+				"seedling": "acacia_seedling",
 				"work": {
 					"secs": 0,
 					"nanos": 0
 				},
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seed": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
@@ -199,13 +199,13 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
+				"seedling": "acacia_seedling",
 				"work": {
 					"secs": 0,
 					"nanos": 0
 				},
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seedling": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
@@ -242,17 +242,17 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": "acacia_leaf_production"
+					"starting_recipe": "mature_acacia_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
+				"seedling": "acacia_seedling",
 				"work": {
 					"secs": 0,
 					"nanos": 0
 				},
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seed": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
