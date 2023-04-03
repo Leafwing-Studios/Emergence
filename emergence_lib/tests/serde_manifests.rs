@@ -17,9 +17,9 @@ use emergence_lib::{
     simulation::{light::Illuminance, time::TimePool},
     structures::{
         construction::Footprint,
-        crafting::{ActiveRecipe, InputInventory},
+        crafting::{InputInventory, RawActiveRecipe},
         structure_manifest::{
-            ConstructionStrategy, RawStructureData, RawStructureManifest, StructureKind,
+            ConstructionStrategy, RawStructureData, RawStructureKind, RawStructureManifest,
         },
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
@@ -219,8 +219,8 @@ fn can_serialize_structure_manifest() {
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     }),
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("leuco_chunk_production")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("leuco_chunk_production"),
                     },
                     construction_strategy: ConstructionStrategy {
                         seedling: None,
@@ -249,8 +249,8 @@ fn can_serialize_structure_manifest() {
                         }]),
                         energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
                     }),
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
                     construction_strategy: acacia_construction_strategy.clone(),
                     max_workers: 1,
@@ -269,8 +269,8 @@ fn can_serialize_structure_manifest() {
                         }]),
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     }),
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
                     construction_strategy: acacia_construction_strategy.clone(),
                     max_workers: 1,
@@ -285,8 +285,8 @@ fn can_serialize_structure_manifest() {
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
                     }),
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
                     construction_strategy: acacia_construction_strategy,
                     max_workers: 6,
@@ -297,8 +297,8 @@ fn can_serialize_structure_manifest() {
                 RawId::new("ant_hive"),
                 RawStructureData {
                     organism_variety: None,
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("ant_egg_production"),
                     },
                     construction_strategy: ConstructionStrategy {
                         seedling: None,
@@ -318,8 +318,8 @@ fn can_serialize_structure_manifest() {
                 RawId::new("hatchery"),
                 RawStructureData {
                     organism_variety: None,
-                    kind: StructureKind::Crafting {
-                        starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
+                    kind: RawStructureKind::Crafting {
+                        starting_recipe: RawActiveRecipe::new("hatch_ants"),
                     },
                     construction_strategy: ConstructionStrategy {
                         seedling: None,
@@ -340,9 +340,9 @@ fn can_serialize_structure_manifest() {
                 RawId::new("storage"),
                 RawStructureData {
                     organism_variety: None,
-                    kind: StructureKind::Storage {
+                    kind: RawStructureKind::Storage {
                         max_slot_count: 3,
-                        reserved_for: None,
+                        reserved_for: String::new(),
                     },
                     construction_strategy: ConstructionStrategy {
                         seedling: None,

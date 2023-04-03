@@ -17,6 +17,8 @@ use bevy::{
 
 use serde::{Deserialize, Serialize};
 
+use super::crafting::RawActiveRecipe;
+
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Structure;
@@ -48,7 +50,7 @@ pub struct RawStructureData {
     /// What base variety of structure is this?
     ///
     /// Determines the components that this structure gets.
-    pub kind: StructureKind,
+    pub kind: RawStructureKind,
     /// How new copies of this structure can be built
     pub construction_strategy: ConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
@@ -61,7 +63,7 @@ impl From<RawStructureData> for StructureData {
     fn from(raw: RawStructureData) -> Self {
         Self {
             organism_variety: raw.organism_variety.map(Into::into),
-            kind: raw.kind,
+            kind: raw.kind.into(),
             construction_strategy: raw.construction_strategy,
             max_workers: raw.max_workers,
             footprint: raw.footprint,
@@ -103,6 +105,46 @@ pub enum StructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: ActiveRecipe,
     },
+}
+
+/// The unprocessed equivalent of [`StructureKind`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RawStructureKind {
+    /// Stores items.
+    Storage {
+        /// The number of slots in the inventory, controlling how large it is.
+        max_slot_count: usize,
+        /// Is any item allowed here, or just one?
+        ///
+        /// A value of [`None`] is represented by the empty string.
+        reserved_for: String,
+    },
+    /// Crafts items, turning inputs into outputs.
+    Crafting {
+        /// Does this structure start with a recipe pre-selected?
+        starting_recipe: RawActiveRecipe,
+    },
+}
+
+impl From<RawStructureKind> for StructureKind {
+    fn from(raw: RawStructureKind) -> Self {
+        match raw {
+            RawStructureKind::Storage {
+                max_slot_count,
+                reserved_for,
+            } => Self::Storage {
+                max_slot_count,
+                reserved_for: if reserved_for.is_empty() {
+                    None
+                } else {
+                    Some(Id::from_name(&reserved_for))
+                },
+            },
+            RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
+                starting_recipe: starting_recipe.into(),
+            },
+        }
+    }
 }
 
 impl StructureData {
