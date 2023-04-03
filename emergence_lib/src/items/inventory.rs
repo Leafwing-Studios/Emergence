@@ -582,6 +582,19 @@ impl Inventory {
     }
 }
 
+impl FromIterator<ItemSlot> for Inventory {
+    fn from_iter<I: IntoIterator<Item = ItemSlot>>(iter: I) -> Self {
+        let mut inventory = Inventory {
+            reserved_for: None,
+            slots: iter.into_iter().collect(),
+            max_slot_count: 0,
+        };
+
+        inventory.max_slot_count = inventory.slots.len();
+        inventory
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -590,8 +603,8 @@ mod tests {
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut manifest = Manifest::new();
-        manifest.insert("acacia_leaf", ItemData { stack_size: 10 });
-        manifest.insert("test", ItemData { stack_size: 10 });
+        manifest.insert("leaf".to_string(), ItemData { stack_size: 10 });
+        manifest.insert("mushroom".to_string(), ItemData { stack_size: 10 });
         manifest
     }
 
@@ -599,7 +612,11 @@ mod tests {
         Inventory {
             reserved_for: None,
             max_slot_count: 1,
-            slots: vec![ItemSlot::new_with_count(Id::from_name("test"), 10, 10)],
+            slots: vec![ItemSlot::new_with_count(
+                Id::from_name("mushroom".to_string()),
+                10,
+                10,
+            )],
         }
     }
 
@@ -607,7 +624,11 @@ mod tests {
         Inventory {
             reserved_for: None,
             max_slot_count: 1,
-            slots: vec![ItemSlot::new_with_count(Id::from_name("test"), 10, 7)],
+            slots: vec![ItemSlot::new_with_count(
+                Id::from_name("mushroom".to_string()),
+                10,
+                7,
+            )],
         }
     }
 
@@ -621,7 +642,7 @@ mod tests {
 
     fn transfer_count() -> ItemCount {
         ItemCount {
-            item_id: Id::from_name("test"),
+            item_id: Id::from_name("mushroom".to_string()),
             count: 10,
         }
     }
@@ -632,13 +653,13 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
-        assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 15);
+        assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 15);
     }
 
     #[test]
@@ -647,13 +668,13 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
-        assert!(inventory.has_count_of_item(&ItemCount::new(Id::from_name("acacia_leaf"), 15)));
+        assert!(inventory.has_count_of_item(&ItemCount::new(Id::from_name("leaf".to_string()), 15)));
     }
 
     #[test]
@@ -662,13 +683,15 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
-        assert!(!inventory.has_count_of_item(&ItemCount::new(Id::from_name("acacia_leaf"), 16)));
+        assert!(
+            !inventory.has_count_of_item(&ItemCount::new(Id::from_name("leaf".to_string()), 16))
+        );
     }
 
     #[test]
@@ -684,9 +707,9 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
@@ -699,10 +722,10 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
             ],
         };
 
@@ -715,9 +738,9 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
@@ -730,9 +753,9 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
@@ -745,14 +768,14 @@ mod tests {
             reserved_for: None,
             max_slot_count: 4,
             slots: vec![
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
             ],
         };
 
         assert_eq!(
-            inventory.remaining_space_for_item(Id::from_name("acacia_leaf"), &item_manifest()),
+            inventory.remaining_space_for_item(Id::from_name("leaf".to_string()), &item_manifest()),
             15
         );
     }
@@ -769,21 +792,24 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.try_add_item(
-                        &ItemCount::new(Id::from_name("acacia_leaf"), 15),
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 15),
                         &item_manifest()
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 30);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 30);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
 
             #[test]
@@ -792,26 +818,29 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.try_add_item(
-                        &ItemCount::new(Id::from_name("acacia_leaf"), 20),
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 20),
                         &item_manifest()
                     ),
                     Err(AddOneItemError {
                         excess_count: ItemCount {
-                            item_id: Id::from_name("acacia_leaf"),
+                            item_id: Id::from_name("leaf".to_string()),
                             count: 5
                         }
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 30);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 30);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
 
@@ -825,21 +854,24 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_item_all_or_nothing(
-                        &ItemCount::new(Id::from_name("acacia_leaf"), 15),
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 15),
                         &item_manifest()
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 30);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 30);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
 
             #[test]
@@ -848,23 +880,26 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_item_all_or_nothing(
-                        &ItemCount::new(Id::from_name("acacia_leaf"), 16),
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 16),
                         &item_manifest()
                     ),
                     Err(AddOneItemError {
-                        excess_count: ItemCount::new(Id::from_name("acacia_leaf"), 1)
+                        excess_count: ItemCount::new(Id::from_name("leaf".to_string()), 1)
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 15);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 15);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
 
@@ -878,24 +913,27 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_items_all_or_nothing(
                         &[
-                            ItemCount::new(Id::from_name("acacia_leaf"), 15),
-                            ItemCount::new(Id::from_name("test"), 7)
+                            ItemCount::new(Id::from_name("leaf".to_string()), 15),
+                            ItemCount::new(Id::from_name("mushroom".to_string()), 7)
                         ],
                         &item_manifest()
                     ),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 30);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 10);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 30);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    10
+                );
             }
 
             #[test]
@@ -904,26 +942,32 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.add_items_all_or_nothing(
                         &[
-                            ItemCount::new(Id::from_name("acacia_leaf"), 15),
-                            ItemCount::new(Id::from_name("test"), 8)
+                            ItemCount::new(Id::from_name("leaf".to_string()), 15),
+                            ItemCount::new(Id::from_name("mushroom".to_string()), 8)
                         ],
                         &item_manifest()
                     ),
                     Err(AddManyItemsError {
-                        excess_counts: vec![ItemCount::new(Id::from_name("test"), 1)]
+                        excess_counts: vec![ItemCount::new(
+                            Id::from_name("mushroom".to_string()),
+                            1
+                        )]
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 15);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 15);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
     }
@@ -938,18 +982,22 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory.try_remove_item(&ItemCount::new(Id::from_name("acacia_leaf"), 15)),
+                    inventory
+                        .try_remove_item(&ItemCount::new(Id::from_name("leaf".to_string()), 15)),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 0);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 0);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
 
             #[test]
@@ -958,20 +1006,24 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
-                    inventory.try_remove_item(&ItemCount::new(Id::from_name("acacia_leaf"), 20)),
+                    inventory
+                        .try_remove_item(&ItemCount::new(Id::from_name("leaf".to_string()), 20)),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(Id::from_name("acacia_leaf"), 5)
+                        missing_count: ItemCount::new(Id::from_name("leaf".to_string()), 5)
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 0);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 0);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
 
@@ -984,21 +1036,24 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_item_all_or_nothing(&ItemCount::new(
-                        Id::from_name("acacia_leaf"),
+                        Id::from_name("leaf".to_string()),
                         15
                     )),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 0);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 0);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
 
             #[test]
@@ -1007,23 +1062,26 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_item_all_or_nothing(&ItemCount::new(
-                        Id::from_name("acacia_leaf"),
+                        Id::from_name("leaf".to_string()),
                         16
                     )),
                     Err(RemoveOneItemError {
-                        missing_count: ItemCount::new(Id::from_name("acacia_leaf"), 1)
+                        missing_count: ItemCount::new(Id::from_name("leaf".to_string()), 1)
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 15);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 15);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
 
@@ -1036,21 +1094,24 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_items_all_or_nothing(&[
-                        ItemCount::new(Id::from_name("acacia_leaf"), 15),
-                        ItemCount::new(Id::from_name("test"), 3)
+                        ItemCount::new(Id::from_name("leaf".to_string()), 15),
+                        ItemCount::new(Id::from_name("mushroom".to_string()), 3)
                     ]),
                     Ok(())
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 0);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 0);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 0);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    0
+                );
             }
 
             #[test]
@@ -1059,23 +1120,29 @@ mod tests {
                     reserved_for: None,
                     max_slot_count: 4,
                     slots: vec![
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 10),
-                        ItemSlot::new_with_count(Id::from_name("acacia_leaf"), 10, 5),
-                        ItemSlot::new_with_count(Id::from_name("test"), 10, 3),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 10),
+                        ItemSlot::new_with_count(Id::from_name("leaf".to_string()), 10, 5),
+                        ItemSlot::new_with_count(Id::from_name("mushroom".to_string()), 10, 3),
                     ],
                 };
 
                 assert_eq!(
                     inventory.remove_items_all_or_nothing(&[
-                        ItemCount::new(Id::from_name("acacia_leaf"), 15),
-                        ItemCount::new(Id::from_name("test"), 4)
+                        ItemCount::new(Id::from_name("leaf".to_string()), 15),
+                        ItemCount::new(Id::from_name("mushroom".to_string()), 4)
                     ]),
                     Err(RemoveManyItemsError {
-                        missing_counts: vec![ItemCount::new(Id::from_name("test"), 1)]
+                        missing_counts: vec![ItemCount::new(
+                            Id::from_name("mushroom".to_string()),
+                            1
+                        )]
                     })
                 );
-                assert_eq!(inventory.item_count(Id::from_name("acacia_leaf")), 15);
-                assert_eq!(inventory.item_count(Id::from_name("test")), 3);
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 15);
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    3
+                );
             }
         }
     }
@@ -1103,7 +1170,7 @@ mod tests {
             assert_eq!(
                 result,
                 Err(ItemTransferError {
-                    items_remaining: ItemCount::new(Id::from_name("test"), 0),
+                    items_remaining: ItemCount::new(Id::from_name("mushroom".to_string()), 0),
                     full_destination: false,
                     empty_source: true
                 })
@@ -1137,7 +1204,7 @@ mod tests {
             assert_eq!(
                 result,
                 Err(ItemTransferError {
-                    items_remaining: ItemCount::new(Id::from_name("test"), 0),
+                    items_remaining: ItemCount::new(Id::from_name("mushroom".to_string()), 0),
                     full_destination: false,
                     empty_source: true
                 })
@@ -1155,7 +1222,7 @@ mod tests {
                 result,
                 Err(ItemTransferError {
                     items_remaining: ItemCount {
-                        item_id: Id::from_name("test"),
+                        item_id: Id::from_name("mushroom".to_string()),
                         count: 7
                     },
                     full_destination: true,

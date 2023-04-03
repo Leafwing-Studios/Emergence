@@ -7,12 +7,12 @@ use bevy::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::loader::RawManifest,
-    organisms::OrganismVariety,
+    asset_management::manifest::loader::IsRawManifest,
+    organisms::{OrganismVariety, RawOrganismVariety},
     units::{hunger::Diet, WanderingBehavior},
 };
 
-use super::Manifest;
+use super::{hunger::RawDiet, Manifest};
 
 /// The marker type for [`Id<Unit>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -35,15 +35,41 @@ pub struct UnitData {
     pub wandering_behavior: WanderingBehavior,
 }
 
+/// The unprocessed equivalent of [`UnitData`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawUnitData {
+    /// The data shared by all organisms
+    pub organism_variety: RawOrganismVariety,
+    /// What this unit type needs to eat
+    pub diet: RawDiet,
+    /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
+    pub max_impatience: u8,
+    /// How many actions will units of this type take while wandering before picking a new goal?
+    ///
+    /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
+    pub wandering_behavior: WanderingBehavior,
+}
+
+impl From<RawUnitData> for UnitData {
+    fn from(raw: RawUnitData) -> Self {
+        Self {
+            organism_variety: raw.organism_variety.into(),
+            diet: raw.diet.into(),
+            max_impatience: raw.max_impatience,
+            wandering_behavior: raw.wandering_behavior,
+        }
+    }
+}
+
 /// The [`UnitManifest`] as seen in the manifest file.
 #[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
 #[uuid = "c8f6e1a1-20a0-4629-8df1-2e1fa313fcb9"]
 pub struct RawUnitManifest {
     /// The data for each item.
-    pub unit_types: HashMap<String, UnitData>,
+    pub unit_types: HashMap<String, RawUnitData>,
 }
 
-impl RawManifest for RawUnitManifest {
+impl IsRawManifest for RawUnitManifest {
     const EXTENSION: &'static str = "unit_manifest.json";
 
     type Marker = Unit;
@@ -52,9 +78,11 @@ impl RawManifest for RawUnitManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.unit_types {
+        for (raw_id, raw_data) in self.unit_types.clone() {
+            let data = raw_data.into();
+
             // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+            manifest.insert(raw_id, data)
         }
 
         manifest

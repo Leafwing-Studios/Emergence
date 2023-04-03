@@ -64,7 +64,7 @@ impl Loadable for StructureHandles {
         let asset_server = world.resource::<AssetServer>();
 
         for name in structure_names {
-            let structure_id = Id::from_name(name);
+            let structure_id = Id::from_name(name.to_string());
             let structure_path = format!("structures/{name}.gltf#Scene0");
             let scene = asset_server.load(structure_path);
             handles.scenes.insert(structure_id, scene);

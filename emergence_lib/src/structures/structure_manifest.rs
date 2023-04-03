@@ -1,9 +1,9 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{loader::RawManifest, Id, Manifest},
-    items::item_manifest::Item,
-    organisms::{OrganismId, OrganismVariety},
+    asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
+    items::{item_manifest::Item, slot::ItemSlot},
+    organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     structures::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
@@ -16,6 +16,8 @@ use bevy::{
 };
 
 use serde::{Deserialize, Serialize};
+
+use super::crafting::RawActiveRecipe;
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +42,35 @@ pub struct StructureData {
     pub footprint: Footprint,
 }
 
+/// The unprocessed equivalent of [`StructureData`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RawStructureData {
+    /// Data needed for living structures
+    pub organism_variety: Option<RawOrganismVariety>,
+    /// What base variety of structure is this?
+    ///
+    /// Determines the components that this structure gets.
+    pub kind: RawStructureKind,
+    /// How new copies of this structure can be built
+    pub construction_strategy: RawConstructionStrategy,
+    /// The maximum number of workers that can work at this structure at once.
+    pub max_workers: u8,
+    /// The tiles taken up by this building.
+    pub footprint: Footprint,
+}
+
+impl From<RawStructureData> for StructureData {
+    fn from(raw: RawStructureData) -> Self {
+        Self {
+            organism_variety: raw.organism_variety.map(Into::into),
+            kind: raw.kind.into(),
+            construction_strategy: raw.construction_strategy.into(),
+            max_workers: raw.max_workers,
+            footprint: raw.footprint,
+        }
+    }
+}
+
 /// How new structures of this sort can be built.
 ///
 /// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
@@ -59,6 +90,46 @@ pub struct ConstructionStrategy {
     pub allowed_terrain_types: HashSet<Id<Terrain>>,
 }
 
+/// The unprocessed equivalent of [`ConstructionStrategy`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RawConstructionStrategy {
+    /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
+    ///
+    /// If this is [`None`], this structure can be built directly.
+    pub seedling: Option<String>,
+    /// The amount of work by units required to complete the construction of this building.
+    ///
+    /// If this is [`Duration::ZERO`], no work will be needed at all.
+    pub work: Duration,
+    /// The set of items needed to create a new copy of this structure
+    pub materials: HashMap<String, usize>,
+    /// The set of terrain types that this structure can be built on
+    pub allowed_terrain_types: HashSet<String>,
+}
+
+impl From<RawConstructionStrategy> for ConstructionStrategy {
+    fn from(raw: RawConstructionStrategy) -> Self {
+        let inventory = raw
+            .materials
+            .into_iter()
+            .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
+            .collect();
+
+        let materials = InputInventory { inventory };
+
+        Self {
+            seedling: raw.seedling.map(Id::from_name),
+            work: raw.work,
+            materials,
+            allowed_terrain_types: raw
+                .allowed_terrain_types
+                .into_iter()
+                .map(Id::from_name)
+                .collect(),
+        }
+    }
+}
+
 /// What set of components should this structure have?
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum StructureKind {
@@ -74,6 +145,40 @@ pub enum StructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: ActiveRecipe,
     },
+}
+
+/// The unprocessed equivalent of [`StructureKind`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RawStructureKind {
+    /// Stores items.
+    Storage {
+        /// The number of slots in the inventory, controlling how large it is.
+        max_slot_count: usize,
+        /// Is any item allowed here, or just one?
+        reserved_for: Option<String>,
+    },
+    /// Crafts items, turning inputs into outputs.
+    Crafting {
+        /// Does this structure start with a recipe pre-selected?
+        starting_recipe: RawActiveRecipe,
+    },
+}
+
+impl From<RawStructureKind> for StructureKind {
+    fn from(raw: RawStructureKind) -> Self {
+        match raw {
+            RawStructureKind::Storage {
+                max_slot_count,
+                reserved_for,
+            } => Self::Storage {
+                max_slot_count,
+                reserved_for: reserved_for.map(Id::from_name),
+            },
+            RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
+                starting_recipe: starting_recipe.into(),
+            },
+        }
+    }
 }
 
 impl StructureData {
@@ -122,10 +227,10 @@ impl StructureManifest {
 #[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
 pub struct RawStructureManifest {
     /// The data for each structure.
-    pub structure_types: HashMap<String, StructureData>,
+    pub structure_types: HashMap<String, RawStructureData>,
 }
 
-impl RawManifest for RawStructureManifest {
+impl IsRawManifest for RawStructureManifest {
     const EXTENSION: &'static str = "structure_manifest.json";
 
     type Marker = Structure;
@@ -134,9 +239,10 @@ impl RawManifest for RawStructureManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.structure_types {
-            // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+        for (raw_id, raw_data) in self.structure_types.clone() {
+            let data = raw_data.into();
+
+            manifest.insert(raw_id, data)
         }
 
         manifest

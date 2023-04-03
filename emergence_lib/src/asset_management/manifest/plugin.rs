@@ -7,14 +7,14 @@ use bevy::prelude::*;
 use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
 use super::{
-    loader::{RawManifest, RawManifestLoader},
+    loader::{IsRawManifest, RawManifestLoader},
     Manifest,
 };
 
 /// A plugin to load and process [`Manifest`] types from disk.
 pub(crate) struct ManifestPlugin<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     /// Make the compiler happy and use the generic argument.
     _phantom_data: PhantomData<M>,
@@ -22,7 +22,7 @@ where
 
 impl<M> ManifestPlugin<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     /// Create a new raw manifest plugin.
     pub(crate) fn new() -> Self {
@@ -38,7 +38,7 @@ pub struct DetectManifestCreationSet;
 
 impl<M> Plugin for ManifestPlugin<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     fn build(&self, app: &mut App) {
         info!("Building RawManifestPlugin for {}", M::path().display());
@@ -58,13 +58,13 @@ where
     }
 }
 
-/// Resource to store the handle to a [`RawManifest`] while it is being loaded.
+/// Resource to store the handle to a [`IsRawManifest`] type while it is being loaded.
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
 pub struct RawManifestHandle<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     /// The handle to the raw manifest asset.
     ///
@@ -74,7 +74,7 @@ where
 
 impl<M> Loadable for RawManifestHandle<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     const STAGE: AssetState = AssetState::LoadManifests;
 
@@ -100,7 +100,7 @@ pub fn detect_manifest_creation<M>(
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
 ) where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     let Some(raw_manifest) = raw_manifests.get(&raw_manifest_handle.handle) else {
         error!("Raw manifest for {} created, but asset not available!", M::path().display());
@@ -119,7 +119,7 @@ fn detect_manifest_modification<M>(
     raw_manifests: Res<Assets<M>>,
     mut manifest: ResMut<Manifest<M::Marker, M::Data>>,
 ) where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     for ev in ev_asset.iter() {
         if let AssetEvent::Modified { handle } = ev {

@@ -6,7 +6,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::RawManifest, Manifest};
+use crate::asset_management::manifest::{loader::IsRawManifest, Manifest};
 
 /// The marker type for [`Id<Terrain>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -33,7 +33,7 @@ pub struct RawTerrainManifest {
     pub terrain_types: HashMap<String, TerrainData>,
 }
 
-impl RawManifest for RawTerrainManifest {
+impl IsRawManifest for RawTerrainManifest {
     const EXTENSION: &'static str = "terrain_manifest.json";
 
     type Marker = Terrain;
@@ -42,9 +42,9 @@ impl RawManifest for RawTerrainManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.terrain_types {
+        for (raw_id, raw_data) in self.terrain_types.clone() {
             // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+            manifest.insert(raw_id, raw_data)
         }
 
         manifest

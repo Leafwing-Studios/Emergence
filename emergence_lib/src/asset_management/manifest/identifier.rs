@@ -47,13 +47,13 @@ impl<T> Id<T> {
     /// Creates a new ID from human-readable string identifier.
     ///
     /// This ID is created as a hash of the string.
-    pub fn from_name(str: &str) -> Self {
+    pub fn from_name(name: String) -> Self {
         // Algorithm adopted from <https://cp-algorithms.com/string/string-hashing.html>
 
         let mut value = 0;
         let mut p_pow = 1;
 
-        str.bytes().for_each(|byte| {
+        name.bytes().for_each(|byte| {
             value = (value + (byte as u64 + 1) * p_pow) % HASH_M;
             p_pow = (p_pow * HASH_P) % HASH_M;
         });

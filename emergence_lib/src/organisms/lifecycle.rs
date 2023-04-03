@@ -22,7 +22,7 @@ use crate::{
 
 use super::{
     energy::{Energy, EnergyPool},
-    OrganismId,
+    OrganismId, RawOrganismId,
 };
 
 /// How this organism can grow, change and transform over time.
@@ -100,6 +100,33 @@ impl Default for Lifecycle {
     }
 }
 
+/// The unparsed form of a [`Lifecycle`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawLifecycle {
+    /// The forms that this organism can turn into, and their triggering conditions.
+    pub life_paths: Vec<RawLifePath>,
+}
+
+impl RawLifecycle {
+    /// The simplest lifecycle: nothing ever changes.
+    pub const STATIC: RawLifecycle = RawLifecycle {
+        life_paths: Vec::new(),
+    };
+
+    /// Creates a new [`RawLifecycle`] from an ordered list of [`RawLifePath`].
+    ///
+    /// Earlier lifepaths will be prioritized for transformation if multiple conditions are met simultaneously.
+    pub fn new(life_paths: Vec<RawLifePath>) -> Self {
+        RawLifecycle { life_paths }
+    }
+}
+
+impl From<RawLifecycle> for Lifecycle {
+    fn from(raw: RawLifecycle) -> Self {
+        Lifecycle::new(raw.life_paths.into_iter().map(|raw| raw.into()).collect())
+    }
+}
+
 /// A path from one organism to another form.
 ///
 /// Units will transform once all of their non-`None` conditions are met.
@@ -111,6 +138,31 @@ pub struct LifePath {
     pub energy_required: Option<EnergyPool>,
     /// The amount of time that must pass before we can transform.
     pub time_required: Option<TimePool>,
+}
+
+/// The unparsed form of a [`LifePath`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawLifePath {
+    /// The form that this organism will take once all of the conditions are met.
+    pub new_form: RawOrganismId,
+    /// The amount of energy that must be produced before we can transform.
+    pub energy_required: Option<f32>,
+    /// The amount of time in days that must be produced before we can transform.
+    pub time_required: Option<f32>,
+}
+
+impl From<RawLifePath> for LifePath {
+    fn from(raw: RawLifePath) -> Self {
+        LifePath {
+            new_form: raw.new_form.into(),
+            energy_required: raw
+                .energy_required
+                .map(|energy| EnergyPool::new_empty(Energy(energy), Energy(0.))),
+            time_required: raw
+                .time_required
+                .map(|time| TimePool::new_empty(Days(time), Days(0.))),
+        }
+    }
 }
 
 impl LifePath {

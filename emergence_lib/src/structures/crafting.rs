@@ -124,6 +124,23 @@ impl StorageInventory {
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct ActiveRecipe(Option<Id<Recipe>>);
 
+/// The raw version of [`ActiveRecipe`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RawActiveRecipe(Option<String>);
+
+impl RawActiveRecipe {
+    /// Creates a new [`RawActiveRecipe`], set to `recipe_name`.
+    pub fn new(recipe_name: &str) -> Self {
+        RawActiveRecipe(Some(recipe_name.to_string()))
+    }
+}
+
+impl From<RawActiveRecipe> for ActiveRecipe {
+    fn from(raw: RawActiveRecipe) -> Self {
+        ActiveRecipe(raw.0.map(Id::from_name))
+    }
+}
+
 impl ActiveRecipe {
     /// The un-set [`ActiveRecipe`].
     pub const NONE: ActiveRecipe = ActiveRecipe(None);

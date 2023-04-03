@@ -18,7 +18,7 @@ use super::Manifest;
 /// The raw manifest data before it has been processed.
 ///
 /// The processing will primarily remove the string IDs and replace them by numbers.
-pub trait RawManifest:
+pub trait IsRawManifest:
     std::fmt::Debug + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
 {
     /// The file extension of this manifest type.
@@ -47,7 +47,7 @@ pub trait RawManifest:
 #[derive(Debug, Clone)]
 pub(crate) struct RawManifestLoader<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     /// Use the generic to make the compiler happy.
     _phantom_manifest: PhantomData<M>,
@@ -55,10 +55,10 @@ where
 
 impl<M> AssetLoader for RawManifestLoader<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     fn extensions(&self) -> &[&str] {
-        &[<M as RawManifest>::EXTENSION]
+        &[<M as IsRawManifest>::EXTENSION]
     }
 
     fn load<'a>(
@@ -76,7 +76,7 @@ where
 
 impl<M> Default for RawManifestLoader<M>
 where
-    M: RawManifest,
+    M: IsRawManifest,
 {
     fn default() -> Self {
         Self {
