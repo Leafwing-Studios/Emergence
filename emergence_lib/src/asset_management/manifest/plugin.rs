@@ -58,7 +58,7 @@ where
     }
 }
 
-/// Resource to store the handle to a [`RawManifest`] while it is being loaded.
+/// Resource to store the handle to a [`IsRawManifest`] type while it is being loaded.
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]

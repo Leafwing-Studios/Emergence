@@ -28,7 +28,7 @@ pub enum OrganismId {
     Unit(Id<Unit>),
 }
 
-/// The [`RawId`] of an organism.
+/// The unprocessed equivalent of [`OrganismId`].
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum RawOrganismId {
     /// Represents a [`Structure`].
