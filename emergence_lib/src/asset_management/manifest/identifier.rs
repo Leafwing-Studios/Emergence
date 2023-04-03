@@ -40,17 +40,52 @@ pub struct RawId<T> {
 
 impl<T> RawId<T> {
     /// Creates a new raw ID from the given string.
-    pub fn new(name: String) -> Self {
+    pub fn new(name: impl Into<String>) -> Self {
+        let name = name.into();
         Self {
             name,
             _phantom: PhantomData,
         }
+    }
+
+    /// Gets the string identifier of this ID.
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
 impl<T> From<RawId<T>> for Id<T> {
     fn from(raw: RawId<T>) -> Self {
         Self::from_name(&raw.name)
+    }
+}
+
+impl<T> Debug for RawId<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("RawId").field(&self.name).finish()
+    }
+}
+
+impl<T> Clone for RawId<T> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T> PartialEq for RawId<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl<T> Eq for RawId<T> {}
+
+impl<T> Hash for RawId<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
     }
 }
 

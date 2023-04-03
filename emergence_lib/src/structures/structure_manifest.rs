@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{loader::RawManifest, Id, Manifest},
+    asset_management::manifest::{loader::RawManifest, Id, Manifest, RawId},
     items::item_manifest::Item,
     organisms::{OrganismId, OrganismVariety},
     structures::{
@@ -122,7 +122,7 @@ impl StructureManifest {
 #[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
 pub struct RawStructureManifest {
     /// The data for each structure.
-    pub structure_types: HashMap<String, StructureData>,
+    pub structure_types: HashMap<RawId<Structure>, StructureData>,
 }
 
 impl RawManifest for RawStructureManifest {
@@ -134,9 +134,9 @@ impl RawManifest for RawStructureManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.structure_types {
+        for (raw_id, raw_data) in &self.structure_types {
             // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+            manifest.insert(raw_id.name(), raw_data.clone())
         }
 
         manifest

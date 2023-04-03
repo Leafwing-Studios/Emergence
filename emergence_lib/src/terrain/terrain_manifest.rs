@@ -6,7 +6,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::RawManifest, Manifest};
+use crate::asset_management::manifest::{loader::RawManifest, Manifest, RawId};
 
 /// The marker type for [`Id<Terrain>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -30,7 +30,7 @@ pub struct TerrainData {
 #[uuid = "8d6b3b65-9b11-42a9-a795-f95b06653070"]
 pub struct RawTerrainManifest {
     /// The data for each item.
-    pub terrain_types: HashMap<String, TerrainData>,
+    pub terrain_types: HashMap<RawId<Terrain>, TerrainData>,
 }
 
 impl RawManifest for RawTerrainManifest {
@@ -42,9 +42,9 @@ impl RawManifest for RawTerrainManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.terrain_types {
+        for (raw_id, raw_data) in &self.terrain_types {
             // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+            manifest.insert(raw_id.name(), raw_data.clone())
         }
 
         manifest

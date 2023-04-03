@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
-    asset_management::manifest::Id,
+    asset_management::manifest::{Id, RawId},
     items::{
         inventory::Inventory,
         item_manifest::{ItemData, RawItemManifest},
@@ -36,8 +36,8 @@ fn can_serialize_item_manifest() {
     // Create a new raw item manifest
     let raw_item_manifest = RawItemManifest {
         items: HashMap::from_iter(vec![
-            ("test_item".to_string(), ItemData { stack_size: 1 }),
-            ("test_item_2".to_string(), ItemData { stack_size: 2 }),
+            (RawId::new("test_item"), ItemData { stack_size: 1 }),
+            (RawId::new("test_item_2"), ItemData { stack_size: 2 }),
         ]),
     };
 
@@ -58,11 +58,11 @@ fn can_serialize_terrain_manifest() {
     let raw_terrain_manifest = RawTerrainManifest {
         terrain_types: HashMap::from_iter(vec![
             (
-                "test_terrain".to_string(),
+                RawId::new("test_terrain"),
                 TerrainData { walking_speed: 1.0 },
             ),
             (
-                "test_terrain2".to_string(),
+                RawId::new("test_terrain2"),
                 TerrainData { walking_speed: 2.0 },
             ),
         ]),
@@ -85,7 +85,7 @@ fn can_serialize_unit_manifest() {
     let raw_unit_manifest = RawUnitManifest {
         unit_types: HashMap::from_iter(vec![
             (
-                "ant".to_string(),
+                RawId::new("ant"),
                 UnitData {
                     organism_variety: OrganismVariety {
                         prototypical_form: OrganismId::Unit(Id::from_name("ant")),
@@ -102,7 +102,7 @@ fn can_serialize_unit_manifest() {
                 },
             ),
             (
-                "test_unit".to_string(),
+                RawId::new("test_unit"),
                 UnitData {
                     organism_variety: OrganismVariety {
                         prototypical_form: OrganismId::Unit(Id::from_name("test_unit")),
@@ -134,7 +134,7 @@ fn can_serialize_recipe_manifest() {
     let raw_recipe_manifest = RawRecipeManifest {
         recipes: HashMap::from_iter(vec![
             (
-                "acacia_leaf_production".to_string(),
+                RawId::new("acacia_leaf_production"),
                 RecipeData {
                     inputs: Vec::new(),
                     outputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
@@ -147,7 +147,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                "leuco_chunk_production".to_string(),
+                RawId::new("leuco_chunk_production"),
                 RecipeData {
                     inputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
                     outputs: vec![ItemCount::one(Id::from_name("leuco_chunk"))],
@@ -157,7 +157,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                "ant_egg_production".to_string(),
+                RawId::new("ant_egg_production"),
                 RecipeData {
                     inputs: Vec::new(),
                     outputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
@@ -170,7 +170,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                "hatch_ants".to_string(),
+                RawId::new("hatch_ants"),
                 RecipeData {
                     inputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
                     outputs: Vec::new(),
@@ -212,7 +212,7 @@ fn can_serialize_structure_manifest() {
     let raw_structure_manifest = RawStructureManifest {
         structure_types: HashMap::from_iter(vec![
             (
-                "leuco".to_string(),
+                RawId::new("leuco"),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
@@ -238,7 +238,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia_seed".to_string(),
+                RawId::new("acacia_seed"),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -258,7 +258,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia_sprout".to_string(),
+                RawId::new("acacia_sprout"),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -278,7 +278,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia".to_string(),
+                RawId::new("acacia"),
                 StructureData {
                     organism_variety: Some(OrganismVariety {
                         prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
@@ -294,7 +294,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "ant_hive".to_string(),
+                RawId::new("ant_hive"),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
@@ -315,7 +315,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "hatchery".to_string(),
+                RawId::new("hatchery"),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
@@ -337,7 +337,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "storage".to_string(),
+                RawId::new("storage"),
                 StructureData {
                     organism_variety: None,
                     kind: StructureKind::Storage {

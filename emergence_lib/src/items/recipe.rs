@@ -3,7 +3,7 @@
 use super::item_manifest::ItemManifest;
 use super::{inventory::Inventory, ItemCount};
 use crate::asset_management::manifest::loader::RawManifest;
-use crate::asset_management::manifest::Manifest;
+use crate::asset_management::manifest::{Manifest, RawId};
 use crate::{
     organisms::energy::Energy,
     simulation::light::{Illuminance, TotalLight},
@@ -186,7 +186,7 @@ impl<T: Display + PartialOrd> Display for Threshold<T> {
 #[uuid = "c711b30c-c3ff-4b86-92d0-f1aff2ec7818"]
 pub struct RawRecipeManifest {
     /// The data for each item.
-    pub recipes: HashMap<String, RecipeData>,
+    pub recipes: HashMap<RawId<Recipe>, RecipeData>,
 }
 
 impl RawManifest for RawRecipeManifest {
@@ -198,9 +198,9 @@ impl RawManifest for RawRecipeManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (name, raw_data) in &self.recipes {
+        for (raw_id, raw_data) in &self.recipes {
             // No additional preprocessing is needed.
-            manifest.insert(name, raw_data.clone())
+            manifest.insert(raw_id.name(), raw_data.clone())
         }
 
         manifest
