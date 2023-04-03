@@ -1,6 +1,7 @@
 //! Quickly select which terraforming option to use.
 
 use crate::{
+    asset_management::AssetState,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{clipboard::Clipboard, terraform::TerraformingChoice, PlayerAction},
     terrain::terrain_manifest::TerrainManifest,
@@ -26,6 +27,7 @@ impl Plugin for SelectTerraformingPlugin {
                     update_terraforming_choices,
                     spawn_hex_menu::<TerraformingChoice>,
                 )
+                    .distributive_run_if(in_state(AssetState::Ready))
                     .chain(),
             )
             .add_system(

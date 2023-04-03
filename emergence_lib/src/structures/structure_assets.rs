@@ -1,7 +1,7 @@
 //! Asset loading for structures
 
 use crate::{
-    asset_management::{manifest::Id, Loadable},
+    asset_management::{manifest::Id, AssetState, Loadable},
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{hexagonal_column, MapGeometry},
@@ -23,8 +23,10 @@ pub(crate) struct StructureHandles {
     pub(crate) picking_mesh: Handle<Mesh>,
 }
 
-impl FromWorld for StructureHandles {
-    fn from_world(world: &mut World) -> Self {
+impl Loadable for StructureHandles {
+    const STAGE: AssetState = AssetState::LoadAssets;
+
+    fn initialize(world: &mut World) {
         /// The height of the picking box for a single structure.
         ///
         /// Hex tiles always have a diameter of 1.0.
@@ -68,11 +70,9 @@ impl FromWorld for StructureHandles {
             handles.scenes.insert(structure_id, scene);
         }
 
-        handles
+        world.insert_resource(handles);
     }
-}
 
-impl Loadable for StructureHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (structure, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);

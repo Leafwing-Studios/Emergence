@@ -377,7 +377,8 @@ pub(super) fn finish_actions(
                 UnitAction::Eat => {
                     if let Some(held_item) = unit.unit_inventory.held_item {
                         let unit_data = unit_manifest.get(*unit.unit_id);
-                        let diet = unit_data.diet();
+
+                        let diet = &unit_data.diet;
 
                         if held_item == diet.item() {
                             let proposed = unit.energy_pool.current() + diet.energy();
@@ -924,7 +925,7 @@ impl CurrentAction {
         let target_tile = unit_tile_pos.neighbor(facing.direction);
         let entity_standing_on = map_geometry.get_terrain(unit_tile_pos).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
-        let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed();
+        let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed;
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
         if map_geometry.is_passable(target_tile) {

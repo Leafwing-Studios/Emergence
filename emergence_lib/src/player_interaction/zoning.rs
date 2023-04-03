@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::manifest::Id,
+    asset_management::{manifest::Id, AssetState},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Height, MapGeometry, TilePos},
     structures::{
@@ -38,6 +38,7 @@ impl Plugin for ZoningPlugin {
         .add_system(
             mark_based_on_zoning
                 .in_set(InteractionSystem::ManagePreviews)
+                .run_if(in_state(AssetState::Ready))
                 .after(InteractionSystem::ApplyZoning),
         )
         // Must run after crafting emitters in order to wipe out their signals

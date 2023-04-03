@@ -10,7 +10,7 @@ use bevy::{
 use core::fmt::Display;
 
 use crate::{
-    asset_management::manifest::Id,
+    asset_management::{manifest::Id, AssetState},
     enum_iter::IterableEnum,
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
@@ -27,11 +27,14 @@ impl Plugin for InfoVisPlugin {
         app.add_system(census)
             .init_resource::<Census>()
             .init_resource::<TileOverlay>()
-            .add_system(set_overlay_material)
-            .add_system(
-                display_tile_overlay
-                    .after(InteractionSystem::SelectTiles)
-                    .after(set_overlay_material),
+            .add_systems(
+                (
+                    set_overlay_material,
+                    display_tile_overlay
+                        .after(InteractionSystem::SelectTiles)
+                        .after(set_overlay_material),
+                )
+                    .distributive_run_if(in_state(AssetState::Ready)),
             );
     }
 }

@@ -10,10 +10,17 @@
 //! - sitting just on top of the XY plane
 //! - be exported as embedded gltF files
 
-use std::any::TypeId;
+use std::{
+    any::TypeId,
+    fmt::{Display, Formatter},
+};
 
-use self::manifest::plugin::ManifestPlugin;
-use bevy::{asset::LoadState, prelude::*, utils::HashSet};
+use self::manifest::plugin::DetectManifestCreationSet;
+use bevy::{
+    asset::LoadState,
+    prelude::*,
+    utils::{get_short_name, HashMap},
+};
 
 pub mod manifest;
 
@@ -22,7 +29,17 @@ pub struct AssetManagementPlugin;
 
 impl Plugin for AssetManagementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<AssetState>().add_plugin(ManifestPlugin);
+        app.add_state::<AssetState>()
+            .init_resource::<AssetsToLoad>()
+            .add_system(check_manifests_loaded.run_if(in_state(AssetState::LoadManifests)))
+            .add_system(check_assets_loaded.run_if(in_state(AssetState::LoadAssets)))
+            // This is needed to ensure that the manifest resources are actually created in time for AssetState::Loading
+            // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
+            .add_system(
+                apply_system_buffers
+                    .after(DetectManifestCreationSet)
+                    .in_schedule(OnExit(AssetState::LoadManifests)),
+            );
     }
 }
 
@@ -30,60 +47,106 @@ impl Plugin for AssetManagementPlugin {
 #[derive(States, Default, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum AssetState {
     #[default]
+    /// Load manifests.
+    LoadManifests,
     /// Assets still need to be loaded.
-    Loading,
+    LoadAssets,
     /// All assets are loaded.
     Ready,
 }
 
 /// The set of all assets that need to be loaded.
 #[derive(Resource, Debug, Default)]
-struct AssetsToLoad {
+pub struct AssetsToLoad {
     /// The set of [`Loadable`] types that still need to be loaded
-    set: HashSet<TypeId>,
+    remaining: HashMap<TypeId, String>,
+}
+
+impl Display for AssetsToLoad {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut remaining: Vec<String> = self.remaining.values().cloned().collect();
+        remaining.sort();
+
+        write!(f, "{}", remaining.join("\n"))
+    }
 }
 
 impl AssetsToLoad {
     /// Registers that `T` still needs to be loaded.
-    fn insert<T: Loadable>(&mut self) {
+    pub fn insert<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
-        self.set.insert(type_id);
+        let full_name = std::any::type_name::<T>();
+        let short_name = get_short_name(full_name);
+
+        self.remaining.insert(type_id, short_name);
     }
 
     /// Registers that `T` is done loading.
-    fn remove<T: Loadable>(&mut self) {
+    pub fn remove<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
-        self.set.remove(&type_id);
+        self.remaining.remove(&type_id);
     }
+}
 
-    /// A system that checks if the asset collection of type `T` loaded.
-    fn check_loaded<T: Loadable>(
-        asset_collection: Res<T>,
-        asset_server: Res<AssetServer>,
-        mut assets_to_load: ResMut<AssetsToLoad>,
-    ) {
-        if asset_collection.load_state(&asset_server) == LoadState::Loaded {
-            assets_to_load.remove::<T>();
-        }
+/// A system that checks if all manifests are loaded.
+fn check_manifests_loaded(
+    assets_to_load: Res<AssetsToLoad>,
+    mut next_state: ResMut<NextState<AssetState>>,
+) {
+    if assets_to_load.remaining.is_empty() {
+        info!("All manifests loaded: transitioning to AssetState::LoadAssets");
+
+        next_state.set(AssetState::LoadAssets);
+    } else {
+        info!("Waiting for manifests to load:\n{}", *assets_to_load);
     }
+}
 
-    /// A system that moves into [`AssetState::Ready`] when all assets are loaded.
-    fn transition_when_complete(
-        assets_to_load: Res<AssetsToLoad>,
-        mut asset_state: ResMut<NextState<AssetState>>,
-    ) {
-        if assets_to_load.set.is_empty() {
-            asset_state.set(AssetState::Ready);
-        }
+/// A system that checks if all assets are loaded.
+fn check_assets_loaded(
+    assets_to_load: Res<AssetsToLoad>,
+    mut next_state: ResMut<NextState<AssetState>>,
+) {
+    if assets_to_load.remaining.is_empty() {
+        info!("All assets loaded: transitioning to AssetState::Ready");
+
+        next_state.set(AssetState::Ready);
+    } else {
+        info!("Waiting for assets to load:\n{}", *assets_to_load);
     }
 }
 
 /// An asset collection that must be loaded before the game can start.
 ///
 /// This asset collection should begin async asset loading in its [`FromWorld`] implementation.
-pub trait Loadable: Resource + FromWorld + Sized {
+pub trait Loadable: Resource + Sized {
+    /// The stage in which to load the assets.
+    const STAGE: AssetState;
+
+    /// Begin loading the assets.
+    ///
+    /// This system runs during [`Self::STAGE`].
+    fn initialize(world: &mut World);
+
+    /// Record that assets of type `T` still need to be loaded.
+    fn register_assets_to_load(mut assets_to_load: ResMut<AssetsToLoad>) {
+        assets_to_load.insert::<Self>();
+    }
+
     /// How far along are we in loading these assets?
     fn load_state(&self, asset_server: &AssetServer) -> LoadState;
+
+    /// A system that checks if the asset collection of type `T` loaded.
+    fn check_loaded(
+        asset_collection: Res<Self>,
+        asset_server: Res<AssetServer>,
+        mut assets_to_load: ResMut<AssetsToLoad>,
+    ) {
+        let load_state = asset_collection.load_state(&asset_server);
+        if load_state == LoadState::Loaded {
+            assets_to_load.remove::<Self>();
+        }
+    }
 }
 
 /// An [`App`] extension trait to add and setup [`Loadable`] collections.
@@ -94,20 +157,14 @@ pub trait AssetCollectionExt {
 
 impl AssetCollectionExt for App {
     fn add_asset_collection<T: Loadable>(&mut self) -> &mut Self {
-        if let Some(mut assets_to_load) = self.world.get_resource_mut::<AssetsToLoad>() {
-            assets_to_load.insert::<T>();
-        } else {
-            // Only called for the first asset collection added.
-            self.add_system(
-                AssetsToLoad::transition_when_complete.run_if(in_state(AssetState::Loading)),
-            );
-            self.init_resource::<AssetsToLoad>();
-        }
+        info!("Adding asset collection: {}", std::any::type_name::<T>());
 
-        // Store the asset collection as a resource
-        self.init_resource::<T>();
+        // Begin the loading process
+        self.add_system(T::initialize.in_schedule(OnEnter(T::STAGE)));
+        self.add_system(T::register_assets_to_load.in_schedule(OnEnter(T::STAGE)));
+
         // Poll each asset collection
-        self.add_system(AssetsToLoad::check_loaded::<T>.run_if(in_state(AssetState::Loading)));
+        self.add_system(T::check_loaded.run_if(in_state(T::STAGE)));
 
         self
     }

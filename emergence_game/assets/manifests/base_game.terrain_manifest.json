@@ -1,0 +1,14 @@
+{
+  "$schema": "./schema/terrain.schema.json",
+  "terrain_types": {
+    "muddy": {
+      "walking_speed": 0.5
+    },
+    "rocky": {
+      "walking_speed": 2.0
+    },
+    "loam": {
+      "walking_speed": 1.0
+    }
+  }
+}

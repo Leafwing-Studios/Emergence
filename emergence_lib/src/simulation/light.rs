@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::{Add, AddAssign};
+use serde::{Deserialize, Serialize};
 
 use super::SimulationSet;
 use crate::graphics::lighting::CelestialBody;
@@ -42,8 +43,10 @@ impl Display for TotalLight {
 }
 
 /// Light illuminance in lux.
-#[derive(Add, AddAssign, Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
-pub(crate) struct Illuminance(pub(crate) f32);
+#[derive(
+    Add, AddAssign, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize,
+)]
+pub struct Illuminance(pub f32);
 
 impl Display for Illuminance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

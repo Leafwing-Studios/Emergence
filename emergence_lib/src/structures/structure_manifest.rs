@@ -1,14 +1,9 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{Id, Manifest},
-    items::{inventory::Inventory, item_manifest::Item},
-    organisms::{
-        energy::{Energy, EnergyPool},
-        lifecycle::{LifePath, Lifecycle},
-        OrganismId, OrganismVariety,
-    },
-    simulation::time::TimePool,
+    asset_management::manifest::{loader::RawManifest, Id, Manifest},
+    items::item_manifest::Item,
+    organisms::{OrganismId, OrganismVariety},
     structures::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
@@ -16,57 +11,57 @@ use crate::{
     terrain::terrain_manifest::Terrain,
 };
 use bevy::{
-    reflect::{FromReflect, Reflect},
-    utils::{Duration, HashSet},
+    reflect::{FromReflect, Reflect, TypeUuid},
+    utils::{Duration, HashMap, HashSet},
 };
 
-use leafwing_abilities::prelude::Pool;
+use serde::{Deserialize, Serialize};
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Structure;
 /// Stores the read-only definitions for all structures.
-pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
+pub type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
-#[derive(Debug, Clone)]
-pub(crate) struct StructureData {
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructureData {
     /// Data needed for living structures
-    pub(crate) organism_variety: Option<OrganismVariety>,
+    pub organism_variety: Option<OrganismVariety>,
     /// What base variety of structure is this?
     ///
     /// Determines the components that this structure gets.
-    pub(crate) kind: StructureKind,
+    pub kind: StructureKind,
     /// How new copies of this structure can be built
-    pub(crate) construction_strategy: ConstructionStrategy,
+    pub construction_strategy: ConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
-    pub(crate) max_workers: u8,
+    pub max_workers: u8,
     /// The tiles taken up by this building.
-    pub(crate) footprint: Footprint,
+    pub footprint: Footprint,
 }
 
 /// How new structures of this sort can be built.
 ///
 /// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
-#[derive(Debug, Clone)]
-pub(crate) struct ConstructionStrategy {
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConstructionStrategy {
     /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
     ///
     /// If `None`, this structure can be built directly.
-    pub(crate) seedling: Option<Id<Structure>>,
+    pub seedling: Option<Id<Structure>>,
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
-    pub(crate) work: Duration,
+    pub work: Duration,
     /// The set of items needed to create a new copy of this structure
-    pub(crate) materials: InputInventory,
+    pub materials: InputInventory,
     /// The set of terrain types that this structure can be built on
-    pub(crate) allowed_terrain_types: HashSet<Id<Terrain>>,
+    pub allowed_terrain_types: HashSet<Id<Terrain>>,
 }
 
 /// What set of components should this structure have?
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum StructureKind {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StructureKind {
     /// Stores items.
     Storage {
         /// The number of slots in the inventory, controlling how large it is.
@@ -122,178 +117,27 @@ impl StructureManifest {
     }
 }
 
-impl Default for StructureManifest {
-    fn default() -> Self {
-        let mut manifest: StructureManifest = Manifest::new();
+/// The [`StructureManifest`] as seen in the manifest file.
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
+#[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
+pub struct RawStructureManifest {
+    /// The data for each structure.
+    pub structure_types: HashMap<String, StructureData>,
+}
 
-        // TODO: read these from files
-        manifest.insert(
-            "leuco",
-            StructureData {
-                organism_variety: Some(OrganismVariety {
-                    prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
-                    lifecycle: Lifecycle::STATIC,
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                }),
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("leuco_chunk_production")),
-                },
-                construction_strategy: ConstructionStrategy {
-                    seedling: None,
-                    work: Duration::from_secs(3),
-                    materials: InputInventory {
-                        inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
-                    },
-                    allowed_terrain_types: HashSet::from_iter([
-                        Id::from_name("loam"),
-                        Id::from_name("muddy"),
-                    ]),
-                },
-                max_workers: 6,
-                footprint: Footprint::single(),
-            },
-        );
+impl RawManifest for RawStructureManifest {
+    const EXTENSION: &'static str = "structure_manifest.json";
 
-        let acacia_construction_strategy = ConstructionStrategy {
-            seedling: Some(Id::from_name("acacia_seed")),
-            work: Duration::ZERO,
-            materials: InputInventory {
-                inventory: Inventory::new_from_item(Id::from_name("acacia_leaf"), 1),
-            },
-            allowed_terrain_types: HashSet::from_iter([
-                Id::from_name("loam"),
-                Id::from_name("muddy"),
-            ]),
-        };
+    type Marker = Structure;
+    type Data = StructureData;
 
-        manifest.insert(
-            "acacia_seed",
-            StructureData {
-                organism_variety: Some(OrganismVariety {
-                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycle: Lifecycle::new(vec![LifePath {
-                        new_form: OrganismId::Structure(Id::from_name("acacia_sprout")),
-                        energy_required: None,
-                        time_required: Some(TimePool::simple(1.)),
-                    }]),
-                    energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
-                }),
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
-                },
-                construction_strategy: acacia_construction_strategy.clone(),
-                max_workers: 1,
-                footprint: Footprint::single(),
-            },
-        );
+    fn process(&self) -> Manifest<Self::Marker, Self::Data> {
+        let mut manifest = Manifest::new();
 
-        manifest.insert(
-            "acacia_sprout",
-            StructureData {
-                organism_variety: Some(OrganismVariety {
-                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycle: Lifecycle::new(vec![LifePath {
-                        new_form: OrganismId::Structure(Id::from_name("acacia")),
-                        energy_required: Some(EnergyPool::simple(500.)),
-                        time_required: None,
-                    }]),
-                    energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                }),
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
-                },
-                construction_strategy: acacia_construction_strategy.clone(),
-                max_workers: 1,
-                footprint: Footprint::single(),
-            },
-        );
-
-        manifest.insert(
-            "acacia",
-            StructureData {
-                organism_variety: Some(OrganismVariety {
-                    prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
-                    lifecycle: Lifecycle::STATIC,
-                    energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
-                }),
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("acacia_leaf_production")),
-                },
-                construction_strategy: acacia_construction_strategy,
-                max_workers: 6,
-                footprint: Footprint::single(),
-            },
-        );
-
-        manifest.insert(
-            "ant_hive",
-            StructureData {
-                organism_variety: None,
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
-                },
-                construction_strategy: ConstructionStrategy {
-                    seedling: None,
-                    work: Duration::from_secs(10),
-                    materials: InputInventory::default(),
-                    allowed_terrain_types: HashSet::from_iter([
-                        Id::from_name("loam"),
-                        Id::from_name("muddy"),
-                        Id::from_name("rocky"),
-                    ]),
-                },
-                max_workers: 3,
-                footprint: Footprint::hexagon(1),
-            },
-        );
-
-        manifest.insert(
-            "hatchery",
-            StructureData {
-                organism_variety: None,
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
-                },
-                construction_strategy: ConstructionStrategy {
-                    seedling: None,
-                    work: Duration::from_secs(5),
-                    materials: InputInventory::default(),
-                    allowed_terrain_types: HashSet::from_iter([
-                        Id::from_name("loam"),
-                        Id::from_name("muddy"),
-                        Id::from_name("rocky"),
-                    ]),
-                },
-                max_workers: 6,
-                // Forms a crescent shape
-                footprint: Footprint::single(),
-            },
-        );
-
-        manifest.insert(
-            "storage",
-            StructureData {
-                organism_variety: None,
-                kind: StructureKind::Storage {
-                    max_slot_count: 3,
-                    reserved_for: None,
-                },
-                construction_strategy: ConstructionStrategy {
-                    seedling: None,
-                    work: Duration::from_secs(10),
-                    materials: InputInventory {
-                        inventory: Inventory::new_from_item(Id::from_name("leuco_chunk"), 1),
-                    },
-                    allowed_terrain_types: HashSet::from_iter([
-                        Id::from_name("loam"),
-                        Id::from_name("muddy"),
-                        Id::from_name("rocky"),
-                    ]),
-                },
-                max_workers: 6,
-                footprint: Footprint::single(),
-            },
-        );
+        for (name, raw_data) in &self.structure_types {
+            // No additional preprocessing is needed.
+            manifest.insert(name, raw_data.clone())
+        }
 
         manifest
     }

@@ -9,6 +9,7 @@ use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::pool::MaxPoolLessThanZero;
 use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
+use serde::{Deserialize, Serialize};
 
 use crate::graphics::lighting::CelestialBody;
 use crate::organisms::lifecycle::Lifecycle;
@@ -46,7 +47,19 @@ pub struct InGameTime {
 }
 
 /// A duration of time, in in-game days.
-#[derive(Debug, Clone, Copy, Add, Sub, AddAssign, SubAssign, PartialEq, PartialOrd)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Add,
+    Sub,
+    AddAssign,
+    SubAssign,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 pub struct Days(pub f32);
 
 impl Div<f32> for Days {
@@ -144,8 +157,8 @@ fn pause_game(
 }
 
 /// A [`Pool`] of [`Days`], which builds up and will eventually be filled (at which point some event will occur).
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct TimePool {
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub struct TimePool {
     /// The current quantity of this pool.
     current: Days,
     /// The maximum quantity of this pool.
@@ -154,7 +167,7 @@ pub(crate) struct TimePool {
 
 impl TimePool {
     /// Creates a new [`TimePool`] with the given maximum capacity.
-    pub(crate) fn simple(max: f32) -> Self {
+    pub fn simple(max: f32) -> Self {
         Self {
             current: Days(0.),
             max: Days(max),

@@ -6,9 +6,8 @@
 
 mod identifier;
 pub use self::identifier::*;
-mod loader;
+pub mod loader;
 pub mod plugin;
-pub mod raw;
 
 use bevy::{prelude::*, utils::HashMap};
 use std::fmt::Debug;
@@ -27,6 +26,12 @@ where
 
     /// The human-readable name associated with each Id.
     name_map: HashMap<Id<T>, String>,
+}
+
+impl<T: 'static, Data: Debug> Default for Manifest<T, Data> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T, Data> Manifest<T, Data>

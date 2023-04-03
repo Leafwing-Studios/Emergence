@@ -1,0 +1,46 @@
+{
+  "unit_types": {
+    "ant": {
+      "organism_variety": {
+        "prototypical_form": {
+          "Unit": {
+            "value": 334634
+          }
+        },
+        "lifecycle": {
+          "life_paths": []
+        },
+        "energy_pool": {
+          "current": 100.0,
+          "max": 100.0,
+          "warning_threshold": 25.0,
+          "satiation_threshold": 75.0,
+          "regen_per_second": -1.0
+        }
+      },
+      "diet": {
+        "item": {
+          "value": 431174645
+        },
+        "energy": 50.0
+      },
+      "max_impatience": 10,
+      "wandering_behavior": {
+        "wander_durations": [
+          [
+            1,
+            0.7
+          ],
+          [
+            8,
+            0.2
+          ],
+          [
+            16,
+            0.1
+          ]
+        ]
+      }
+    }
+  }
+}

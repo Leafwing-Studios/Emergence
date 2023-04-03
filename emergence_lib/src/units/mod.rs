@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{
-        manifest::{Id, Manifest},
+        manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
     player_interaction::InteractionSystem,
@@ -15,6 +15,7 @@ use crate::{
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng};
+use serde::{Deserialize, Serialize};
 
 use self::{
     actions::CurrentAction,
@@ -22,48 +23,44 @@ use self::{
     impatience::ImpatiencePool,
     item_interaction::UnitInventory,
     unit_assets::UnitHandles,
-    unit_manifest::{Unit, UnitData, UnitManifest},
+    unit_manifest::{RawUnitManifest, Unit, UnitData},
 };
 
 use crate::organisms::OrganismBundle;
 
 pub(crate) mod actions;
 pub(crate) mod goals;
-pub(crate) mod hunger;
+pub mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 mod reproduction;
 pub(crate) mod unit_assets;
-pub(crate) mod unit_manifest;
+pub mod unit_manifest;
 
 /// Controls the distribution of wandering durations on a per-unit-type basis.
-#[derive(Debug, Clone)]
-pub(crate) struct WanderingBehavior {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WanderingBehavior {
     /// How many actions will units take while wandering before picking a new goal?
-    wander_durations: Vec<u16>,
-    /// The relative probability of each value in `mean_free_wander_period`.
-    weights: WeightedIndex<f32>,
+    ///
+    /// The [`f32`] represents the relative probability of each value.
+    wander_durations: Vec<(u16, f32)>,
 }
 
 impl WanderingBehavior {
     /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {
-        self.wander_durations[self.weights.sample(rng)]
+        let weights = self.wander_durations.iter().map(|(_, weight)| *weight);
+        let dist = WeightedIndex::new(weights).unwrap();
+        let index = dist.sample(rng);
+        self.wander_durations[index].0
     }
 }
 
 impl FromIterator<(u16, f32)> for WanderingBehavior {
     fn from_iter<T: IntoIterator<Item = (u16, f32)>>(iter: T) -> Self {
-        let mut wander_durations = Vec::new();
-        let mut weights = Vec::new();
-        for (duration, weight) in iter {
-            wander_durations.push(duration);
-            weights.push(weight);
-        }
-        WanderingBehavior {
-            wander_durations,
-            weights: WeightedIndex::new(weights).unwrap(),
-        }
+        let wander_durations = Vec::from_iter(iter);
+
+        WanderingBehavior { wander_durations }
     }
 }
 
@@ -152,7 +149,7 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UnitManifest>()
+        app.add_plugin(ManifestPlugin::<RawUnitManifest>::new())
             .add_asset_collection::<UnitHandles>()
             .add_systems(
                 (

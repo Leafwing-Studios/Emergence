@@ -2,6 +2,7 @@
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
 use leafwing_abilities::systems::regenerate_resource_pool;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -15,12 +16,12 @@ use self::{
     lifecycle::{transform_when_lifecycle_complete, Lifecycle},
 };
 
-pub(crate) mod energy;
-pub(crate) mod lifecycle;
+pub mod energy;
+pub mod lifecycle;
 
 /// The [`Id`] of an organism.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum OrganismId {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum OrganismId {
     /// Represents a [`Structure`].
     Structure(Id<Structure>),
     /// Represents a [`Unit`].
@@ -66,14 +67,14 @@ impl OrganismBundle {
 }
 
 /// Information about a variety of organism.
-#[derive(Debug, Clone)]
-pub(crate) struct OrganismVariety {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct OrganismVariety {
     /// The "base" form that we should display to players in menus and for ghosts?
-    pub(crate) prototypical_form: OrganismId,
+    pub prototypical_form: OrganismId,
     /// The lifecycle of this organism, which reflect how and why it can change form.
-    pub(crate) lifecycle: Lifecycle,
+    pub lifecycle: Lifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
-    pub(crate) energy_pool: EnergyPool,
+    pub energy_pool: EnergyPool,
 }
 
 /// A living part of the game ecosystem.

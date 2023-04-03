@@ -5,7 +5,7 @@ use core::fmt::Debug;
 use core::hash::Hash;
 
 use crate::{
-    asset_management::{manifest::Id, Loadable},
+    asset_management::{manifest::Id, AssetState, Loadable},
     player_interaction::terraform::TerraformingChoice,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
@@ -18,16 +18,16 @@ pub(crate) struct UiElements {
     pub(crate) hex_menu_background: Handle<Image>,
 }
 
-impl FromWorld for UiElements {
-    fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
-        UiElements {
-            hex_menu_background: asset_server.load("ui/hex-menu-background.png"),
-        }
-    }
-}
-
 impl Loadable for UiElements {
+    const STAGE: AssetState = AssetState::LoadAssets;
+
+    fn initialize(world: &mut World) {
+        let asset_server = world.resource::<AssetServer>();
+        world.insert_resource(UiElements {
+            hex_menu_background: asset_server.load("ui/hex-menu-background.png"),
+        });
+    }
+
     fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
         asset_server.get_load_state(&self.hex_menu_background)
     }
@@ -100,6 +100,13 @@ impl<D: Send + Sync + Debug + 'static> Loadable for Icons<D>
 where
     Icons<D>: FromWorld,
 {
+    const STAGE: AssetState = AssetState::LoadAssets;
+
+    fn initialize(world: &mut World) {
+        let icons = Self::from_world(world);
+        world.insert_resource(icons);
+    }
+
     fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
         for (data, icon_handle) in &self.map {
             let load_state = asset_server.get_load_state(icon_handle);

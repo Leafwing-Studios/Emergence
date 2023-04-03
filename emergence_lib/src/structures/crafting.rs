@@ -8,13 +8,14 @@ use bevy::{
 };
 use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::{Id, Manifest},
+    asset_management::manifest::{plugin::ManifestPlugin, Id},
     items::{
         inventory::Inventory,
-        item_manifest::{Item, ItemManifest},
-        recipe::{Recipe, RecipeData, RecipeManifest},
+        item_manifest::{Item, ItemManifest, RawItemManifest},
+        recipe::{RawRecipeManifest, Recipe, RecipeManifest},
     },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -70,10 +71,10 @@ impl Display for CraftingState {
 }
 
 /// The input inventory for a structure.
-#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
-pub(crate) struct InputInventory {
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut, PartialEq, Serialize, Deserialize)]
+pub struct InputInventory {
     /// Inner storage
-    pub(crate) inventory: Inventory,
+    pub inventory: Inventory,
 }
 
 impl InputInventory {
@@ -120,20 +121,20 @@ impl StorageInventory {
 }
 
 /// The recipe that is currently being crafted, if any.
-#[derive(Component, Debug, Default, PartialEq, Eq, Clone)]
-pub(crate) struct ActiveRecipe(Option<Id<Recipe>>);
+#[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct ActiveRecipe(Option<Id<Recipe>>);
 
 impl ActiveRecipe {
     /// The un-set [`ActiveRecipe`].
-    pub(crate) const NONE: ActiveRecipe = ActiveRecipe(None);
+    pub const NONE: ActiveRecipe = ActiveRecipe(None);
 
     /// Creates a new [`ActiveRecipe`], set to `recipe_id`
-    pub(crate) fn new(recipe_id: Id<Recipe>) -> Self {
+    pub fn new(recipe_id: Id<Recipe>) -> Self {
         ActiveRecipe(Some(recipe_id))
     }
 
     /// The ID of the currently active recipe, if one has been selected.
-    pub(crate) fn recipe_id(&self) -> &Option<Id<Recipe>> {
+    pub fn recipe_id(&self) -> &Option<Id<Recipe>> {
         &self.0
     }
 
@@ -278,7 +279,7 @@ impl CraftingBundle {
             let mut output_inventory = recipe.output_inventory(item_manifest);
             output_inventory.randomize(rng);
 
-            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time());
+            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time);
             let progress = distribution.sample(rng);
             let max_workers = structure_manifest.get(structure_id).max_workers;
 
@@ -288,7 +289,7 @@ impl CraftingBundle {
                 active_recipe: ActiveRecipe(Some(recipe_id)),
                 craft_state: CraftingState::InProgress {
                     progress,
-                    required: recipe.craft_time(),
+                    required: recipe.craft_time,
                 },
                 emitter: Emitter::default(),
                 workers_present: WorkersPresent::new(max_workers),
@@ -340,10 +341,10 @@ fn progress_crafting(
             CraftingState::NeedsInput | CraftingState::Overproduction => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    match crafter.input.remove_items_all_or_nothing(recipe.inputs()) {
+                    match crafter.input.remove_items_all_or_nothing(&recipe.inputs) {
                         Ok(()) => CraftingState::InProgress {
                             progress: Duration::ZERO,
-                            required: recipe.craft_time(),
+                            required: recipe.craft_time,
                         },
                         Err(_) => CraftingState::NeedsInput,
                     }
@@ -388,7 +389,7 @@ fn progress_crafting(
                         Some(_) => {
                             match crafter
                                 .output
-                                .try_add_items(recipe.outputs(), &item_manifest)
+                                .try_add_items(&recipe.outputs, &item_manifest)
                             {
                                 Ok(_) => CraftingState::NeedsInput,
                                 // TODO: handle the waste products somehow
@@ -397,7 +398,7 @@ fn progress_crafting(
                         }
                         None => match crafter
                             .output
-                            .add_items_all_or_nothing(recipe.outputs(), &item_manifest)
+                            .add_items_all_or_nothing(&recipe.outputs, &item_manifest)
                         {
                             Ok(()) => CraftingState::NeedsInput,
                             Err(_) => CraftingState::FullAndBlocked,
@@ -433,10 +434,10 @@ fn gain_energy_when_crafting_completes(
         if matches!(crafting_state, CraftingState::RecipeComplete) {
             if let Some(recipe_id) = active_recipe.recipe_id() {
                 let recipe = recipe_manifest.get(*recipe_id);
-                if let Some(energy) = recipe.energy() {
-                    let proposed = energy_pool.current() + *energy;
+                if let Some(energy) = recipe.energy {
+                    let proposed = energy_pool.current() + energy;
                     energy_pool.set_current(proposed);
-                    lifecycle.record_energy_gained(*energy);
+                    lifecycle.record_energy_gained(energy);
                 }
             }
         }
@@ -618,29 +619,18 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: Load this from an asset file
-        let mut recipe_manifest: RecipeManifest = Manifest::new();
-        recipe_manifest.insert(
-            "acacia_leaf_production",
-            RecipeData::acacia_leaf_production(),
-        );
-        recipe_manifest.insert(
-            "leuco_chunk_production",
-            RecipeData::leuco_chunk_production(),
-        );
-        recipe_manifest.insert("ant_egg_production", RecipeData::ant_egg_production());
-        recipe_manifest.insert("hatch_ants", RecipeData::hatch_ants());
-
-        app.insert_resource(recipe_manifest).add_systems(
-            (
-                progress_crafting,
-                gain_energy_when_crafting_completes.after(progress_crafting),
-                set_crafting_emitter.after(progress_crafting),
-                set_storage_emitter,
-                clear_empty_storage_slots,
-            )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
+            .add_systems(
+                (
+                    progress_crafting,
+                    gain_energy_when_crafting_completes.after(progress_crafting),
+                    set_crafting_emitter.after(progress_crafting),
+                    set_storage_emitter,
+                    clear_empty_storage_slots,
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }

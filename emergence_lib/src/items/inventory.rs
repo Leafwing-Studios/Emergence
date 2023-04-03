@@ -2,6 +2,7 @@
 
 use bevy::prelude::warn;
 use itertools::rev;
+use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 
@@ -16,8 +17,8 @@ use super::{
 };
 
 /// An inventory to store multiple types of items.
-#[derive(Debug, Default, Clone)]
-pub(crate) struct Inventory {
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Inventory {
     /// Is this inventory reserved for a single item type?
     ///
     /// If so, this field will be `Some(reserved_item_id)`.
@@ -63,7 +64,7 @@ impl InventoryState {
 #[allow(dead_code)]
 impl Inventory {
     /// Create an empty inventory with the given amount of slots.
-    pub(crate) fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
+    pub fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
         Self {
             reserved_for,
             slots: Vec::new(),
@@ -72,7 +73,7 @@ impl Inventory {
     }
 
     /// Creates an inventory that can store up to `max` items of the type `item_id`.
-    pub(crate) fn new_from_item(item_id: Id<Item>, max: usize) -> Self {
+    pub fn new_from_item(item_id: Id<Item>, max: usize) -> Self {
         Self {
             reserved_for: Some(item_id),
             slots: vec![ItemSlot::new(item_id, max)],
@@ -188,7 +189,7 @@ impl Inventory {
         // We can fill up the remaining space in the slots for this item...
         self.remaining_reserved_space_for_item(item_id)
             // ...and use up the remaining free slots
-            + self.free_slot_count() * item_manifest.get(item_id).stack_size()
+            + self.free_slot_count() * item_manifest.get(item_id).stack_size
     }
 
     /// Clears any inventory stacks with 0 items in them.
@@ -228,7 +229,7 @@ impl Inventory {
 
         let n_existing_slots = self.slots.len();
         let slot_to_use = n_existing_slots + 1;
-        let stack_size = item_manifest.get(item_id).stack_size();
+        let stack_size = item_manifest.get(item_id).stack_size;
         let empty_stack = ItemSlot::new(item_id, stack_size);
 
         if slot_to_use >= self.max_slot_count {
@@ -281,7 +282,7 @@ impl Inventory {
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
                 item_count.item_id(),
-                item_manifest.get(item_count.item_id()).stack_size(),
+                item_manifest.get(item_count.item_id()).stack_size,
             );
 
             match new_slot.add_until_full(items_to_add) {
@@ -363,7 +364,7 @@ impl Inventory {
         let excess_counts: Vec<ItemCount> = item_counts
             .iter()
             .filter_map(|item_count| {
-                let stack_size = item_manifest.get(item_count.item_id()).stack_size();
+                let stack_size = item_manifest.get(item_count.item_id()).stack_size;
 
                 let remaining_reserved_space =
                     self.remaining_reserved_space_for_item(item_count.item_id());

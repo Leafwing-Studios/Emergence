@@ -1,9 +1,9 @@
 //! Asset loading for units
 
 use crate::{
-    asset_management::{manifest::Id, Loadable},
+    asset_management::{manifest::Id, AssetState, Loadable},
     simulation::geometry::{hexagonal_column, MapGeometry},
-    units::unit_manifest::Unit,
+    units::unit_manifest::{Unit, UnitManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
@@ -16,8 +16,10 @@ pub(crate) struct UnitHandles {
     pub(crate) picking_mesh: Handle<Mesh>,
 }
 
-impl FromWorld for UnitHandles {
-    fn from_world(world: &mut World) -> Self {
+impl Loadable for UnitHandles {
+    const STAGE: AssetState = AssetState::LoadAssets;
+
+    fn initialize(world: &mut World) {
         /// The height of the picking box for a single unit.
         ///
         /// Hex tiles always have a diameter of 1.0.
@@ -36,7 +38,8 @@ impl FromWorld for UnitHandles {
         let asset_server = world.resource::<AssetServer>();
 
         // TODO: discover this from the file directory
-        let unit_names = vec!["ant"];
+        let unit_manifest = world.resource::<UnitManifest>();
+        let unit_names = unit_manifest.names();
 
         for str in unit_names {
             let structure_id = Id::from_name(str);
@@ -45,11 +48,9 @@ impl FromWorld for UnitHandles {
             handles.scenes.insert(structure_id, scene);
         }
 
-        handles
+        world.insert_resource(handles);
     }
-}
 
-impl Loadable for UnitHandles {
     fn load_state(&self, asset_server: &AssetServer) -> LoadState {
         for (unit, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);

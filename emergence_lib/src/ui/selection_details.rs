@@ -38,7 +38,8 @@ impl Plugin for SelectionDetailsPlugin {
                 get_details
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
-                    .before(update_selection_details),
+                    .before(update_selection_details)
+                    .run_if(in_state(AssetState::Ready)),
             )
             .add_system(change_camera_mode.after(update_selection_details))
             .add_system(update_selection_details.run_if(in_state(AssetState::Ready)));
@@ -376,7 +377,7 @@ fn get_details(
             let organism_details = OrganismDetails {
                 prototypical_form: unit_manifest
                     .get(*unit_query_item.unit_id)
-                    .organism_variety()
+                    .organism_variety
                     .prototypical_form,
                 lifecycle: organism_query_item.lifecycle.clone(),
                 energy_pool: organism_query_item.energy_pool.clone(),
@@ -387,7 +388,7 @@ fn get_details(
             SelectionDetails::Unit(UnitDetails {
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
-                diet: unit_data.diet().clone(),
+                diet: unit_data.diet.clone(),
                 tile_pos: *unit_query_item.tile_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),

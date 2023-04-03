@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 use crate::structures::structure_manifest::Structure;
@@ -12,8 +13,8 @@ use crate::{simulation::geometry::TilePos, structures::commands::StructureComman
 
 /// The amount of energy available to an organism.
 /// If they run out, they die.
-#[derive(Debug, Clone, PartialEq, Component, Resource)]
-pub(crate) struct EnergyPool {
+#[derive(Debug, Clone, PartialEq, Component, Resource, Serialize, Deserialize)]
+pub struct EnergyPool {
     /// The current amount of stored energy.
     current: Energy,
     /// The maximum energy that can be stored.
@@ -28,7 +29,7 @@ pub(crate) struct EnergyPool {
 
 impl EnergyPool {
     /// Quickly construct a new empty energy pool with a max energy of `max` and no regeneration.
-    pub(crate) fn simple(max: f32) -> Self {
+    pub fn simple(max: f32) -> Self {
         EnergyPool::new_empty(Energy(max), Energy(0.))
     }
 
@@ -62,8 +63,21 @@ impl Display for EnergyPool {
 /// A quantity of energy, used to modify a [`EnergyPool`].
 ///
 /// Organisms produce energy by crafting recipes.
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default, Add, Sub, AddAssign, SubAssign)]
-pub(crate) struct Energy(pub f32);
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Default,
+    Add,
+    Sub,
+    AddAssign,
+    SubAssign,
+    Serialize,
+    Deserialize,
+)]
+pub struct Energy(pub f32);
 
 impl Display for Energy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
