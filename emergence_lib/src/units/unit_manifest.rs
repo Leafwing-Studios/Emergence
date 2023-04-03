@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, RawId},
-    organisms::OrganismVariety,
+    organisms::{OrganismVariety, RawOrganismVariety},
     units::{hunger::Diet, WanderingBehavior},
 };
 
@@ -35,12 +35,38 @@ pub struct UnitData {
     pub wandering_behavior: WanderingBehavior,
 }
 
+/// The unprocessed equivalent of [`UnitData`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawUnitData {
+    /// The data shared by all organisms
+    pub organism_variety: RawOrganismVariety,
+    /// What this unit type needs to eat
+    pub diet: Diet,
+    /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
+    pub max_impatience: u8,
+    /// How many actions will units of this type take while wandering before picking a new goal?
+    ///
+    /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
+    pub wandering_behavior: WanderingBehavior,
+}
+
+impl From<RawUnitData> for UnitData {
+    fn from(raw: RawUnitData) -> Self {
+        Self {
+            organism_variety: raw.organism_variety.into(),
+            diet: raw.diet,
+            max_impatience: raw.max_impatience,
+            wandering_behavior: raw.wandering_behavior,
+        }
+    }
+}
+
 /// The [`UnitManifest`] as seen in the manifest file.
 #[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
 #[uuid = "c8f6e1a1-20a0-4629-8df1-2e1fa313fcb9"]
 pub struct RawUnitManifest {
     /// The data for each item.
-    pub unit_types: HashMap<RawId<Unit>, UnitData>,
+    pub unit_types: HashMap<RawId<Unit>, RawUnitData>,
 }
 
 impl IsRawManifest for RawUnitManifest {
@@ -52,9 +78,11 @@ impl IsRawManifest for RawUnitManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (raw_id, raw_data) in &self.unit_types {
+        for (raw_id, raw_data) in self.unit_types.clone() {
+            let data = raw_data.into();
+
             // No additional preprocessing is needed.
-            manifest.insert(raw_id.name(), raw_data.clone())
+            manifest.insert(raw_id.name(), data)
         }
 
         manifest

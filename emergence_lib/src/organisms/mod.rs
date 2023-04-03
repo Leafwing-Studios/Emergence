@@ -5,7 +5,7 @@ use leafwing_abilities::systems::regenerate_resource_pool;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::Id,
+    asset_management::manifest::{Id, RawId},
     simulation::SimulationSet,
     structures::structure_manifest::{Structure, StructureManifest},
     units::unit_manifest::{Unit, UnitManifest},
@@ -26,6 +26,27 @@ pub enum OrganismId {
     Structure(Id<Structure>),
     /// Represents a [`Unit`].
     Unit(Id<Unit>),
+}
+
+/// The [`RawId`] of an organism.
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum RawOrganismId {
+    /// Represents a [`Structure`].
+    Structure(RawId<Structure>),
+    /// Represents a [`Unit`].
+    Unit(RawId<Unit>),
+}
+
+impl RawOrganismId {
+    /// Creates a new unit-based [`RawOrganismId`] from a string.
+    pub fn unit(name: &str) -> RawOrganismId {
+        RawOrganismId::Unit(RawId::new(name))
+    }
+
+    /// Creates a new structure-based [`RawOrganismId`] from a string.
+    pub fn structure(name: &str) -> RawOrganismId {
+        RawOrganismId::Structure(RawId::new(name))
+    }
 }
 
 impl OrganismId {
@@ -75,6 +96,32 @@ pub struct OrganismVariety {
     pub lifecycle: Lifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
     pub energy_pool: EnergyPool,
+}
+
+/// The unprocessed form of an [`OrganismVariety`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawOrganismVariety {
+    /// The "base" form that we should display to players in menus and for ghosts?
+    pub prototypical_form: RawOrganismId,
+    /// The lifecycle of this organism, which reflect how and why it can change form.
+    pub lifecycle: Lifecycle,
+    /// Controls the maximum energy, and the rate at which it drains.
+    pub energy_pool: EnergyPool,
+}
+
+impl From<RawOrganismVariety> for OrganismVariety {
+    fn from(raw: RawOrganismVariety) -> Self {
+        OrganismVariety {
+            prototypical_form: match raw.prototypical_form {
+                RawOrganismId::Structure(structure_id) => {
+                    OrganismId::Structure(structure_id.into())
+                }
+                RawOrganismId::Unit(unit_id) => OrganismId::Unit(unit_id.into()),
+            },
+            lifecycle: raw.lifecycle,
+            energy_pool: raw.energy_pool,
+        }
+    }
 }
 
 /// A living part of the game ecosystem.

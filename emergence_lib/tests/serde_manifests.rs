@@ -12,7 +12,7 @@ use emergence_lib::{
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{LifePath, Lifecycle},
-        OrganismId, OrganismVariety,
+        OrganismId, OrganismVariety, RawOrganismId, RawOrganismVariety,
     },
     simulation::{light::Illuminance, time::TimePool},
     structures::{
@@ -25,7 +25,7 @@ use emergence_lib::{
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{
         hunger::Diet,
-        unit_manifest::{RawUnitManifest, UnitData},
+        unit_manifest::{RawUnitData, RawUnitManifest},
         WanderingBehavior,
     },
 };
@@ -86,9 +86,9 @@ fn can_serialize_unit_manifest() {
         unit_types: HashMap::from_iter(vec![
             (
                 RawId::new("ant"),
-                UnitData {
-                    organism_variety: OrganismVariety {
-                        prototypical_form: OrganismId::Unit(Id::from_name("ant")),
+                RawUnitData {
+                    organism_variety: RawOrganismVariety {
+                        prototypical_form: RawOrganismId::unit("ant"),
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     },
@@ -103,9 +103,9 @@ fn can_serialize_unit_manifest() {
             ),
             (
                 RawId::new("test_unit"),
-                UnitData {
-                    organism_variety: OrganismVariety {
-                        prototypical_form: OrganismId::Unit(Id::from_name("test_unit")),
+                RawUnitData {
+                    organism_variety: RawOrganismVariety {
+                        prototypical_form: RawOrganismId::unit("test_unit"),
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(50.), Energy(0.)),
                     },
