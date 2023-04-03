@@ -2185,6 +2185,7 @@ checksum = "51b6f98afa248722abf405fc7047b23ae778e8ba2f3f459aed1f7eb5b931d3d9"
 dependencies = [
  "glam",
  "itertools",
+ "serde",
 ]
 
 [[package]]
