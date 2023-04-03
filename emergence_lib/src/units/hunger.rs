@@ -23,6 +23,34 @@ pub struct Diet {
     energy: Energy,
 }
 
+/// The unprocessed equivalent of [`Diet`].
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RawDiet {
+    /// The item that must be eaten
+    item: String,
+    /// The amount of energy restored per item destroyed
+    energy: Energy,
+}
+
+impl RawDiet {
+    /// Creates a new [`RawDiet`].
+    pub fn new(item: &str, energy: f32) -> Self {
+        Self {
+            item: item.to_string(),
+            energy: Energy(energy),
+        }
+    }
+}
+
+impl From<RawDiet> for Diet {
+    fn from(raw_diet: RawDiet) -> Self {
+        Diet {
+            item: Id::from_name(&raw_diet.item),
+            energy: raw_diet.energy,
+        }
+    }
+}
+
 impl Diet {
     /// Creates a new [`Diet`] component.
     pub fn new(item: Id<Item>, energy: Energy) -> Self {

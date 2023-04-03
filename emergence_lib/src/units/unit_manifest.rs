@@ -12,7 +12,7 @@ use crate::{
     units::{hunger::Diet, WanderingBehavior},
 };
 
-use super::Manifest;
+use super::{hunger::RawDiet, Manifest};
 
 /// The marker type for [`Id<Unit>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -41,7 +41,7 @@ pub struct RawUnitData {
     /// The data shared by all organisms
     pub organism_variety: RawOrganismVariety,
     /// What this unit type needs to eat
-    pub diet: Diet,
+    pub diet: RawDiet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     pub max_impatience: u8,
     /// How many actions will units of this type take while wandering before picking a new goal?
@@ -54,7 +54,7 @@ impl From<RawUnitData> for UnitData {
     fn from(raw: RawUnitData) -> Self {
         Self {
             organism_variety: raw.organism_variety.into(),
-            diet: raw.diet,
+            diet: raw.diet.into(),
             max_impatience: raw.max_impatience,
             wandering_behavior: raw.wandering_behavior,
         }

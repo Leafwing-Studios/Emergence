@@ -24,7 +24,7 @@ use emergence_lib::{
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{
-        hunger::Diet,
+        hunger::RawDiet,
         unit_manifest::{RawUnitData, RawUnitManifest},
         WanderingBehavior,
     },
@@ -92,7 +92,7 @@ fn can_serialize_unit_manifest() {
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     },
-                    diet: Diet::new(Id::from_name("leuco_chunk"), Energy(50.)),
+                    diet: RawDiet::new("leuco_chunk", 50.),
                     max_impatience: 10,
                     wandering_behavior: WanderingBehavior::from_iter([
                         (1, 0.7),
@@ -109,7 +109,7 @@ fn can_serialize_unit_manifest() {
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(50.), Energy(0.)),
                     },
-                    diet: Diet::new(Id::from_name("acacia_leaf"), Energy(0.)),
+                    diet: RawDiet::new("acacia_leaf", 0.),
                     max_impatience: 0,
                     wandering_behavior: WanderingBehavior::from_iter([(0, 0.7), (16, 0.1)]),
                 },
