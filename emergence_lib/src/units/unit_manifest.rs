@@ -18,7 +18,7 @@ use super::Manifest;
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Unit;
 /// Stores the read-only definitions for all units.
-pub(crate) type UnitManifest = Manifest<Unit, UnitData>;
+pub type UnitManifest = Manifest<Unit, UnitData>;
 
 /// The data associated with each variety of unit
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

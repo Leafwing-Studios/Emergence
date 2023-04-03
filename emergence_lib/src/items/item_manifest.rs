@@ -12,7 +12,7 @@ use crate::asset_management::manifest::{loader::RawManifest, Manifest};
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Item;
 /// Stores the read-only definitions for all items.
-pub(crate) type ItemManifest = Manifest<Item, ItemData>;
+pub type ItemManifest = Manifest<Item, ItemData>;
 
 /// The data associated with each item.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Structure;
 /// Stores the read-only definitions for all structures.
-pub(crate) type StructureManifest = Manifest<Structure, StructureData>;
+pub type StructureManifest = Manifest<Structure, StructureData>;
 
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

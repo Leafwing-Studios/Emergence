@@ -19,7 +19,7 @@ use std::{fmt::Display, time::Duration};
 pub struct Recipe;
 
 /// Stores the read-only definitions for all recipes.
-pub(crate) type RecipeManifest = Manifest<Recipe, RecipeData>;
+pub type RecipeManifest = Manifest<Recipe, RecipeData>;
 
 /// A recipe to turn a set of items into different items.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

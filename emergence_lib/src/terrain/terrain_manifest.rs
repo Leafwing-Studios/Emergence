@@ -12,7 +12,7 @@ use crate::asset_management::manifest::{loader::RawManifest, Manifest};
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
 pub struct Terrain;
 /// Stores the read-only definitions for all items.
-pub(crate) type TerrainManifest = Manifest<Terrain, TerrainData>;
+pub type TerrainManifest = Manifest<Terrain, TerrainData>;
 
 /// Data stored in a [`TerrainManifest`] for each [`Id<Terrain>`](super::Id).
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

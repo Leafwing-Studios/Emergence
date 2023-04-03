@@ -62,7 +62,7 @@ where
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
-struct RawManifestHandle<M>
+pub struct RawManifestHandle<M>
 where
     M: RawManifest,
 {
@@ -95,7 +95,7 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-fn detect_manifest_creation<M>(
+pub fn detect_manifest_creation<M>(
     mut commands: Commands,
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
