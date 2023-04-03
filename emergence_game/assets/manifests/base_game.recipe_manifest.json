@@ -1,35 +1,10 @@
 {
 	"recipes": {
-		"ant_egg_production": {
-			"inputs": [],
-			"outputs": [
-				{
-					"item_id": {
-						"value": 405323435
-					},
-					"count": 1
-				}
-			],
-			"craft_time": {
-				"secs": 10,
-				"nanos": 0
-			},
-			"conditions": {
-				"workers_required": 2,
-				"allowable_light_range": null
-			},
-			"energy": null
-		},
 		"hatch_ants": {
-			"inputs": [
-				{
-					"item_id": {
-						"value": 405323435
-					},
-					"count": 1
-				}
-			],
-			"outputs": [],
+			"inputs": {
+				"ant_egg": 1
+			},
+			"outputs": {},
 			"craft_time": {
 				"secs": 10,
 				"nanos": 0
@@ -41,22 +16,12 @@
 			"energy": null
 		},
 		"leuco_chunk_production": {
-			"inputs": [
-				{
-					"item_id": {
-						"value": 104638856
-					},
-					"count": 1
-				}
-			],
-			"outputs": [
-				{
-					"item_id": {
-						"value": 431174645
-					},
-					"count": 1
-				}
-			],
+			"inputs": {
+				"acacia_leaf": 1
+			},
+			"outputs": {
+				"leuco_chunk": 1
+			},
 			"craft_time": {
 				"secs": 2,
 				"nanos": 0
@@ -68,15 +33,10 @@
 			"energy": 40.0
 		},
 		"acacia_leaf_production": {
-			"inputs": [],
-			"outputs": [
-				{
-					"item_id": {
-						"value": 104638856
-					},
-					"count": 1
-				}
-			],
+			"inputs": {},
+			"outputs": {
+				"acacia_leaf": 1
+			},
 			"craft_time": {
 				"secs": 3,
 				"nanos": 0
@@ -89,6 +49,23 @@
 				}
 			},
 			"energy": 20.0
+		},
+		"ant_egg_production": {
+			"inputs": {
+				"leuco_chunk": 1
+			},
+			"outputs": {
+				"ant_egg": 1
+			},
+			"craft_time": {
+				"secs": 10,
+				"nanos": 0
+			},
+			"conditions": {
+				"workers_required": 2,
+				"allowable_light_range": null
+			},
+			"energy": null
 		}
 	}
 }

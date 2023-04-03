@@ -4,105 +4,20 @@
 			"organism_variety": null,
 			"kind": {
 				"Crafting": {
-					"starting_recipe": {
-						"value": 949872641
-					}
+					"starting_recipe": "hatch_ants"
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
+				"seedling": "",
 				"work": {
 					"secs": 5,
 					"nanos": 0
 				},
-				"materials": {
-					"inventory": {
-						"reserved_for": null,
-						"slots": [],
-						"max_slot_count": 0
-					}
-				},
+				"materials": {},
 				"allowed_terrain_types": [
-					{
-						"value": 16657797
-					},
-					{
-						"value": 977965332
-					},
-					{
-						"value": 979004349
-					}
-				]
-			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
-		},
-		"acacia": {
-			"organism_variety": {
-				"prototypical_form": {
-					"Structure": {
-						"value": 834717311
-					}
-				},
-				"lifecycle": {
-					"life_paths": []
-				},
-				"energy_pool": {
-					"current": 300.0,
-					"max": 300.0,
-					"warning_threshold": 75.0,
-					"satiation_threshold": 225.0,
-					"regen_per_second": -1.0
-				}
-			},
-			"kind": {
-				"Crafting": {
-					"starting_recipe": {
-						"value": 99960785
-					}
-				}
-			},
-			"construction_strategy": {
-				"seedling": {
-					"value": 747909098
-				},
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
-				"materials": {
-					"inventory": {
-						"reserved_for": {
-							"value": 104638856
-						},
-						"slots": [
-							{
-								"item_id": {
-									"value": 104638856
-								},
-								"max_item_count": 1,
-								"count": 0
-							}
-						],
-						"max_slot_count": 1
-					}
-				},
-				"allowed_terrain_types": [
-					{
-						"value": 16657797
-					},
-					{
-						"value": 977965332
-					}
+					"muddy",
+					"loam",
+					"rocky"
 				]
 			},
 			"max_workers": 6,
@@ -120,9 +35,7 @@
 		"leuco": {
 			"organism_variety": {
 				"prototypical_form": {
-					"Structure": {
-						"value": 898958549
-					}
+					"Structure": "leuco"
 				},
 				"lifecycle": {
 					"life_paths": []
@@ -137,41 +50,56 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": {
-						"value": 426496574
-					}
+					"starting_recipe": "leuco_chunk_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
+				"seedling": "",
 				"work": {
 					"secs": 3,
 					"nanos": 0
 				},
 				"materials": {
-					"inventory": {
-						"reserved_for": {
-							"value": 431174645
-						},
-						"slots": [
-							{
-								"item_id": {
-									"value": 431174645
-								},
-								"max_item_count": 1,
-								"count": 0
-							}
-						],
-						"max_slot_count": 1
-					}
+					"leuco_chunk": 1
 				},
 				"allowed_terrain_types": [
+					"loam",
+					"muddy"
+				]
+			},
+			"max_workers": 6,
+			"footprint": {
+				"set": [
 					{
-						"value": 16657797
-					},
-					{
-						"value": 977965332
+						"hex": {
+							"x": 0,
+							"y": 0
+						}
 					}
+				]
+			}
+		},
+		"storage": {
+			"organism_variety": null,
+			"kind": {
+				"Storage": {
+					"max_slot_count": 3,
+					"reserved_for": ""
+				}
+			},
+			"construction_strategy": {
+				"seedling": "",
+				"work": {
+					"secs": 10,
+					"nanos": 0
+				},
+				"materials": {
+					"leuco_chunk": 1
+				},
+				"allowed_terrain_types": [
+					"rocky",
+					"muddy",
+					"loam"
 				]
 			},
 			"max_workers": 6,
@@ -189,23 +117,16 @@
 		"acacia_seed": {
 			"organism_variety": {
 				"prototypical_form": {
-					"Structure": {
-						"value": 834717311
-					}
+					"Structure": "acacia"
 				},
 				"lifecycle": {
 					"life_paths": [
 						{
 							"new_form": {
-								"Structure": {
-									"value": 891516253
-								}
+								"Structure": "acacia_sprout"
 							},
 							"energy_required": null,
-							"time_required": {
-								"current": 0.0,
-								"max": 1.0
-							}
+							"time_required": 1.0
 						}
 					]
 				},
@@ -219,43 +140,21 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": {
-						"value": 99960785
-					}
+					"starting_recipe": "acacia_leaf_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": {
-					"value": 747909098
-				},
+				"seedling": "acacia_seed",
 				"work": {
 					"secs": 0,
 					"nanos": 0
 				},
 				"materials": {
-					"inventory": {
-						"reserved_for": {
-							"value": 104638856
-						},
-						"slots": [
-							{
-								"item_id": {
-									"value": 104638856
-								},
-								"max_item_count": 1,
-								"count": 0
-							}
-						],
-						"max_slot_count": 1
-					}
+					"acacia_leaf": 1
 				},
 				"allowed_terrain_types": [
-					{
-						"value": 16657797
-					},
-					{
-						"value": 977965332
-					}
+					"muddy",
+					"loam"
 				]
 			},
 			"max_workers": 1,
@@ -273,25 +172,15 @@
 		"acacia_sprout": {
 			"organism_variety": {
 				"prototypical_form": {
-					"Structure": {
-						"value": 834717311
-					}
+					"Structure": "acacia"
 				},
 				"lifecycle": {
 					"life_paths": [
 						{
 							"new_form": {
-								"Structure": {
-									"value": 834717311
-								}
+								"Structure": "acacia"
 							},
-							"energy_required": {
-								"current": 0.0,
-								"max": 500.0,
-								"warning_threshold": 125.0,
-								"satiation_threshold": 375.0,
-								"regen_per_second": 0.0
-							},
+							"energy_required": 500.0,
 							"time_required": null
 						}
 					]
@@ -306,46 +195,71 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": {
-						"value": 99960785
-					}
+					"starting_recipe": "acacia_leaf_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": {
-					"value": 747909098
-				},
+				"seedling": "acacia_seed",
 				"work": {
 					"secs": 0,
 					"nanos": 0
 				},
 				"materials": {
-					"inventory": {
-						"reserved_for": {
-							"value": 104638856
-						},
-						"slots": [
-							{
-								"item_id": {
-									"value": 104638856
-								},
-								"max_item_count": 1,
-								"count": 0
-							}
-						],
-						"max_slot_count": 1
-					}
+					"acacia_leaf": 1
 				},
 				"allowed_terrain_types": [
-					{
-						"value": 16657797
-					},
-					{
-						"value": 977965332
-					}
+					"muddy",
+					"loam"
 				]
 			},
 			"max_workers": 1,
+			"footprint": {
+				"set": [
+					{
+						"hex": {
+							"x": 0,
+							"y": 0
+						}
+					}
+				]
+			}
+		},
+		"acacia": {
+			"organism_variety": {
+				"prototypical_form": {
+					"Structure": "acacia"
+				},
+				"lifecycle": {
+					"life_paths": []
+				},
+				"energy_pool": {
+					"current": 300.0,
+					"max": 300.0,
+					"warning_threshold": 75.0,
+					"satiation_threshold": 225.0,
+					"regen_per_second": -1.0
+				}
+			},
+			"kind": {
+				"Crafting": {
+					"starting_recipe": "acacia_leaf_production"
+				}
+			},
+			"construction_strategy": {
+				"seedling": "acacia_seed",
+				"work": {
+					"secs": 0,
+					"nanos": 0
+				},
+				"materials": {
+					"acacia_leaf": 1
+				},
+				"allowed_terrain_types": [
+					"muddy",
+					"loam"
+				]
+			},
+			"max_workers": 6,
 			"footprint": {
 				"set": [
 					{
@@ -361,34 +275,20 @@
 			"organism_variety": null,
 			"kind": {
 				"Crafting": {
-					"starting_recipe": {
-						"value": 961071435
-					}
+					"starting_recipe": "ant_egg_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
+				"seedling": "",
 				"work": {
 					"secs": 10,
 					"nanos": 0
 				},
-				"materials": {
-					"inventory": {
-						"reserved_for": null,
-						"slots": [],
-						"max_slot_count": 0
-					}
-				},
+				"materials": {},
 				"allowed_terrain_types": [
-					{
-						"value": 977965332
-					},
-					{
-						"value": 16657797
-					},
-					{
-						"value": 979004349
-					}
+					"rocky",
+					"loam",
+					"muddy"
 				]
 			},
 			"max_workers": 3,
@@ -396,32 +296,8 @@
 				"set": [
 					{
 						"hex": {
-							"x": 0,
-							"y": -1
-						}
-					},
-					{
-						"hex": {
 							"x": -1,
 							"y": 0
-						}
-					},
-					{
-						"hex": {
-							"x": -1,
-							"y": 1
-						}
-					},
-					{
-						"hex": {
-							"x": 0,
-							"y": 1
-						}
-					},
-					{
-						"hex": {
-							"x": 1,
-							"y": -1
 						}
 					},
 					{
@@ -435,60 +311,29 @@
 							"x": 1,
 							"y": 0
 						}
-					}
-				]
-			}
-		},
-		"storage": {
-			"organism_variety": null,
-			"kind": {
-				"Storage": {
-					"max_slot_count": 3,
-					"reserved_for": null
-				}
-			},
-			"construction_strategy": {
-				"seedling": null,
-				"work": {
-					"secs": 10,
-					"nanos": 0
-				},
-				"materials": {
-					"inventory": {
-						"reserved_for": {
-							"value": 431174645
-						},
-						"slots": [
-							{
-								"item_id": {
-									"value": 431174645
-								},
-								"max_item_count": 1,
-								"count": 0
-							}
-						],
-						"max_slot_count": 1
-					}
-				},
-				"allowed_terrain_types": [
-					{
-						"value": 16657797
 					},
-					{
-						"value": 979004349
-					},
-					{
-						"value": 977965332
-					}
-				]
-			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
 					{
 						"hex": {
 							"x": 0,
-							"y": 0
+							"y": -1
+						}
+					},
+					{
+						"hex": {
+							"x": 1,
+							"y": -1
+						}
+					},
+					{
+						"hex": {
+							"x": 0,
+							"y": 1
+						}
+					},
+					{
+						"hex": {
+							"x": -1,
+							"y": 1
 						}
 					}
 				]

@@ -3,9 +3,7 @@
     "ant": {
       "organism_variety": {
         "prototypical_form": {
-          "Unit": {
-            "value": 334634
-          }
+          "Unit": "ant"
         },
         "lifecycle": {
           "life_paths": []
@@ -19,9 +17,7 @@
         }
       },
       "diet": {
-        "item": {
-          "value": 431174645
-        },
+        "item": "leuco_chunk",
         "energy": 50.0
       },
       "max_impatience": 10,
