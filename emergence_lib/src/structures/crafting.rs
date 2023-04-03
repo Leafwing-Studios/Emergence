@@ -125,27 +125,19 @@ impl StorageInventory {
 pub struct ActiveRecipe(Option<Id<Recipe>>);
 
 /// The raw version of [`ActiveRecipe`].
-///
-/// A value of `None` is represented as "".
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RawActiveRecipe(String);
+pub struct RawActiveRecipe(Option<String>);
 
 impl RawActiveRecipe {
     /// Creates a new [`RawActiveRecipe`], set to `recipe_name`.
-    ///
-    /// If `recipe_name` is `""`, the recipe will be set to `None`.
     pub fn new(recipe_name: &str) -> Self {
-        RawActiveRecipe(recipe_name.to_string())
+        RawActiveRecipe(Some(recipe_name.to_string()))
     }
 }
 
 impl From<RawActiveRecipe> for ActiveRecipe {
     fn from(raw: RawActiveRecipe) -> Self {
-        if raw.0.is_empty() {
-            ActiveRecipe::NONE
-        } else {
-            ActiveRecipe::new(Id::from_name(raw.0))
-        }
+        ActiveRecipe(raw.0.map(|name| Id::from_name(name)))
     }
 }
 

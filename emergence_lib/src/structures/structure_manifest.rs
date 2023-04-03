@@ -95,8 +95,8 @@ pub struct ConstructionStrategy {
 pub struct RawConstructionStrategy {
     /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
     ///
-    /// If this is the empty string, this structure can be built directly.
-    pub seedling: String,
+    /// If this is [`None`], this structure can be built directly.
+    pub seedling: Option<String>,
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
@@ -118,11 +118,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
         let materials = InputInventory { inventory };
 
         Self {
-            seedling: if raw.seedling.is_empty() {
-                None
-            } else {
-                Some(Id::from_name(raw.seedling))
-            },
+            seedling: raw.seedling.map(|name| Id::from_name(name)),
             work: raw.work,
             materials,
             allowed_terrain_types: raw
@@ -159,9 +155,7 @@ pub enum RawStructureKind {
         /// The number of slots in the inventory, controlling how large it is.
         max_slot_count: usize,
         /// Is any item allowed here, or just one?
-        ///
-        /// A value of [`None`] is represented by the empty string.
-        reserved_for: String,
+        reserved_for: Option<String>,
     },
     /// Crafts items, turning inputs into outputs.
     Crafting {
@@ -178,11 +172,7 @@ impl From<RawStructureKind> for StructureKind {
                 reserved_for,
             } => Self::Storage {
                 max_slot_count,
-                reserved_for: if reserved_for.is_empty() {
-                    None
-                } else {
-                    Some(Id::from_name(reserved_for))
-                },
+                reserved_for: reserved_for.map(|name| Id::from_name(name)),
             },
             RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
                 starting_recipe: starting_recipe.into(),

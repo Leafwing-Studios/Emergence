@@ -197,7 +197,7 @@ fn can_serialize_recipe_manifest() {
 fn can_serialize_structure_manifest() {
     // Shared data
     let acacia_construction_strategy = RawConstructionStrategy {
-        seedling: "acacia_seed".to_string(),
+        seedling: Some("acacia_seed".to_string()),
         work: Duration::ZERO,
         materials: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
         allowed_terrain_types: HashSet::from_iter(["loam".to_string(), "muddy".to_string()]),
@@ -218,7 +218,7 @@ fn can_serialize_structure_manifest() {
                         starting_recipe: RawActiveRecipe::new("leuco_chunk_production"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: String::new(),
+                        seedling: None,
                         work: Duration::from_secs(3),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
@@ -294,7 +294,7 @@ fn can_serialize_structure_manifest() {
                         starting_recipe: RawActiveRecipe::new("ant_egg_production"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: String::new(),
+                        seedling: None,
                         work: Duration::from_secs(10),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
@@ -315,7 +315,7 @@ fn can_serialize_structure_manifest() {
                         starting_recipe: RawActiveRecipe::new("hatch_ants"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: String::new(),
+                        seedling: None,
                         work: Duration::from_secs(5),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
@@ -335,10 +335,10 @@ fn can_serialize_structure_manifest() {
                     organism_variety: None,
                     kind: RawStructureKind::Storage {
                         max_slot_count: 3,
-                        reserved_for: String::new(),
+                        reserved_for: None,
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: String::new(),
+                        seedling: None,
                         work: Duration::from_secs(10),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([

@@ -8,61 +8,14 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "",
+				"seedling": null,
 				"work": {
 					"secs": 5,
 					"nanos": 0
 				},
 				"materials": {},
 				"allowed_terrain_types": [
-					"muddy",
-					"loam",
-					"rocky"
-				]
-			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
-		},
-		"leuco": {
-			"organism_variety": {
-				"prototypical_form": {
-					"Structure": "leuco"
-				},
-				"lifecycle": {
-					"life_paths": []
-				},
-				"energy_pool": {
-					"current": 100.0,
-					"max": 100.0,
-					"warning_threshold": 25.0,
-					"satiation_threshold": 75.0,
-					"regen_per_second": -1.0
-				}
-			},
-			"kind": {
-				"Crafting": {
-					"starting_recipe": "leuco_chunk_production"
-				}
-			},
-			"construction_strategy": {
-				"seedling": "",
-				"work": {
-					"secs": 3,
-					"nanos": 0
-				},
-				"materials": {
-					"leuco_chunk": 1
-				},
-				"allowed_terrain_types": [
+					"rocky",
 					"loam",
 					"muddy"
 				]
@@ -84,11 +37,11 @@
 			"kind": {
 				"Storage": {
 					"max_slot_count": 3,
-					"reserved_for": ""
+					"reserved_for": null
 				}
 			},
 			"construction_strategy": {
-				"seedling": "",
+				"seedling": null,
 				"work": {
 					"secs": 10,
 					"nanos": 0
@@ -97,9 +50,9 @@
 					"leuco_chunk": 1
 				},
 				"allowed_terrain_types": [
+					"loam",
 					"rocky",
-					"muddy",
-					"loam"
+					"muddy"
 				]
 			},
 			"max_workers": 6,
@@ -153,11 +106,58 @@
 					"acacia_leaf": 1
 				},
 				"allowed_terrain_types": [
+					"loam",
+					"muddy"
+				]
+			},
+			"max_workers": 1,
+			"footprint": {
+				"set": [
+					{
+						"hex": {
+							"x": 0,
+							"y": 0
+						}
+					}
+				]
+			}
+		},
+		"leuco": {
+			"organism_variety": {
+				"prototypical_form": {
+					"Structure": "leuco"
+				},
+				"lifecycle": {
+					"life_paths": []
+				},
+				"energy_pool": {
+					"current": 100.0,
+					"max": 100.0,
+					"warning_threshold": 25.0,
+					"satiation_threshold": 75.0,
+					"regen_per_second": -1.0
+				}
+			},
+			"kind": {
+				"Crafting": {
+					"starting_recipe": "leuco_chunk_production"
+				}
+			},
+			"construction_strategy": {
+				"seedling": null,
+				"work": {
+					"secs": 3,
+					"nanos": 0
+				},
+				"materials": {
+					"leuco_chunk": 1
+				},
+				"allowed_terrain_types": [
 					"muddy",
 					"loam"
 				]
 			},
-			"max_workers": 1,
+			"max_workers": 6,
 			"footprint": {
 				"set": [
 					{
@@ -208,8 +208,8 @@
 					"acacia_leaf": 1
 				},
 				"allowed_terrain_types": [
-					"muddy",
-					"loam"
+					"loam",
+					"muddy"
 				]
 			},
 			"max_workers": 1,
@@ -255,8 +255,8 @@
 					"acacia_leaf": 1
 				},
 				"allowed_terrain_types": [
-					"muddy",
-					"loam"
+					"loam",
+					"muddy"
 				]
 			},
 			"max_workers": 6,
@@ -279,7 +279,7 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "",
+				"seedling": null,
 				"work": {
 					"secs": 10,
 					"nanos": 0
@@ -296,14 +296,14 @@
 				"set": [
 					{
 						"hex": {
-							"x": -1,
-							"y": 0
+							"x": 0,
+							"y": 1
 						}
 					},
 					{
 						"hex": {
-							"x": 0,
-							"y": 0
+							"x": 1,
+							"y": -1
 						}
 					},
 					{
@@ -315,25 +315,25 @@
 					{
 						"hex": {
 							"x": 0,
-							"y": -1
+							"y": 0
 						}
 					},
 					{
 						"hex": {
-							"x": 1,
-							"y": -1
-						}
-					},
-					{
-						"hex": {
-							"x": 0,
-							"y": 1
+							"x": -1,
+							"y": 0
 						}
 					},
 					{
 						"hex": {
 							"x": -1,
 							"y": 1
+						}
+					},
+					{
+						"hex": {
+							"x": 0,
+							"y": -1
 						}
 					}
 				]
