@@ -6,7 +6,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::RawManifest, Manifest, RawId};
+use crate::asset_management::manifest::{loader::IsRawManifest, Manifest, RawId};
 
 /// The marker type for [`Id<Terrain>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -33,7 +33,7 @@ pub struct RawTerrainManifest {
     pub terrain_types: HashMap<RawId<Terrain>, TerrainData>,
 }
 
-impl RawManifest for RawTerrainManifest {
+impl IsRawManifest for RawTerrainManifest {
     const EXTENSION: &'static str = "terrain_manifest.json";
 
     type Marker = Terrain;

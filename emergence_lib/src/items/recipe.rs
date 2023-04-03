@@ -2,7 +2,7 @@
 
 use super::item_manifest::ItemManifest;
 use super::{inventory::Inventory, ItemCount};
-use crate::asset_management::manifest::loader::RawManifest;
+use crate::asset_management::manifest::loader::IsRawManifest;
 use crate::asset_management::manifest::{Manifest, RawId};
 use crate::{
     organisms::energy::Energy,
@@ -189,7 +189,7 @@ pub struct RawRecipeManifest {
     pub recipes: HashMap<RawId<Recipe>, RecipeData>,
 }
 
-impl RawManifest for RawRecipeManifest {
+impl IsRawManifest for RawRecipeManifest {
     const EXTENSION: &'static str = "recipe_manifest.json";
 
     type Marker = Recipe;

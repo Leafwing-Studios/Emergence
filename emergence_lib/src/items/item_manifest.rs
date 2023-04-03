@@ -6,7 +6,7 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::RawManifest, Manifest, RawId};
+use crate::asset_management::manifest::{loader::IsRawManifest, Manifest, RawId};
 
 /// The marker type for [`Id<Item>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -29,7 +29,7 @@ pub struct RawItemManifest {
     pub items: HashMap<RawId<Item>, ItemData>,
 }
 
-impl RawManifest for RawItemManifest {
+impl IsRawManifest for RawItemManifest {
     const EXTENSION: &'static str = "item_manifest.json";
 
     type Marker = Item;

@@ -7,7 +7,7 @@ use bevy::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::{loader::RawManifest, RawId},
+    asset_management::manifest::{loader::IsRawManifest, RawId},
     organisms::OrganismVariety,
     units::{hunger::Diet, WanderingBehavior},
 };
@@ -43,7 +43,7 @@ pub struct RawUnitManifest {
     pub unit_types: HashMap<RawId<Unit>, UnitData>,
 }
 
-impl RawManifest for RawUnitManifest {
+impl IsRawManifest for RawUnitManifest {
     const EXTENSION: &'static str = "unit_manifest.json";
 
     type Marker = Unit;

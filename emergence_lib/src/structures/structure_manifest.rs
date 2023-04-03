@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{loader::RawManifest, Id, Manifest, RawId},
+    asset_management::manifest::{loader::IsRawManifest, Id, Manifest, RawId},
     items::item_manifest::Item,
     organisms::{OrganismId, OrganismVariety},
     structures::{
@@ -125,7 +125,7 @@ pub struct RawStructureManifest {
     pub structure_types: HashMap<RawId<Structure>, StructureData>,
 }
 
-impl RawManifest for RawStructureManifest {
+impl IsRawManifest for RawStructureManifest {
     const EXTENSION: &'static str = "structure_manifest.json";
 
     type Marker = Structure;
