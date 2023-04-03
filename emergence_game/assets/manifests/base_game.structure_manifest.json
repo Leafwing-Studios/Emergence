@@ -9,10 +9,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 5,
-					"nanos": 0
-				},
+				"work": 5,
 				"materials": {},
 				"allowed_terrain_types": [
 					"rocky",
@@ -42,10 +39,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 10,
-					"nanos": 0
-				},
+				"work": 10,
 				"materials": {
 					"leuco_chunk": 1
 				},
@@ -98,10 +92,7 @@
 			},
 			"construction_strategy": {
 				"seedling": "acacia_seedling",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"work": null,
 				"materials": {
 					"acacia_seed": 1
 				},
@@ -145,10 +136,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 3,
-					"nanos": 0
-				},
+				"work": null,
 				"materials": {
 					"leuco_chunk": 1
 				},
@@ -200,10 +188,7 @@
 			},
 			"construction_strategy": {
 				"seedling": "acacia_seedling",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"work": null,
 				"materials": {
 					"acacia_seedling": 1
 				},
@@ -247,10 +232,7 @@
 			},
 			"construction_strategy": {
 				"seedling": "acacia_seedling",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"work": null,
 				"materials": {
 					"acacia_seed": 1
 				},
@@ -280,10 +262,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 10,
-					"nanos": 0
-				},
+				"work": 10,
 				"materials": {},
 				"allowed_terrain_types": [
 					"rocky",

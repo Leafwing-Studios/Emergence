@@ -198,7 +198,7 @@ fn can_serialize_structure_manifest() {
     // Shared data
     let acacia_construction_strategy = RawConstructionStrategy {
         seedling: Some("acacia_seed".to_string()),
-        work: Duration::ZERO,
+        work: None,
         materials: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
         allowed_terrain_types: HashSet::from_iter(["loam".to_string(), "muddy".to_string()]),
     };
@@ -219,7 +219,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(3),
+                        work: Some(3.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -295,7 +295,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(10),
+                        work: Some(10.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -316,7 +316,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(5),
+                        work: Some(5.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -339,7 +339,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(10),
+                        work: Some(10.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),

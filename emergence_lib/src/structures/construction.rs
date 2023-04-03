@@ -272,7 +272,10 @@ pub(super) fn ghost_lifecycle(
                         let structure_details = structure_manifest.get(structure_id);
                         CraftingState::InProgress {
                             progress: Duration::ZERO,
-                            required: structure_details.construction_strategy.work,
+                            required: structure_details
+                                .construction_strategy
+                                .work
+                                .unwrap_or_default(),
                         }
                     }
                     false => CraftingState::NeedsInput,
