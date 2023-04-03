@@ -2,16 +2,16 @@
   "$schema": "./schema/items.schema.json",
   "items": {
     "acacia_leaf": {
-      "stack_size": 10
+      "stack_size": 8
     },
     "leuco_chunk": {
-      "stack_size": 5
+      "stack_size": 6
     },
     "ant_egg": {
-      "stack_size": 5
+      "stack_size": 3
     },
     "acacia_seed": {
-      "stack_size": 100
+      "stack_size": 12
     }
   }
 }
