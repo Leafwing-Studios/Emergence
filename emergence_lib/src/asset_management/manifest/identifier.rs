@@ -38,6 +38,22 @@ pub struct RawId<T> {
     _phantom: PhantomData<T>,
 }
 
+impl<T> RawId<T> {
+    /// Creates a new raw ID from the given string.
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T> From<RawId<T>> for Id<T> {
+    fn from(raw: RawId<T>) -> Self {
+        Self::from_name(&raw.name)
+    }
+}
+
 /// A constant used in the hashing algorithm of the IDs.
 ///
 /// This should be a positive prime number, roughly equal to the number of characters in the input alphabet.
