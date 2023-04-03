@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
     items::{
@@ -135,7 +133,7 @@ fn can_serialize_recipe_manifest() {
                 RawRecipeData {
                     inputs: HashMap::new(),
                     outputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
-                    craft_time: Duration::from_secs(3),
+                    craft_time: 3.,
                     conditions: RecipeConditions::new(
                         0,
                         Threshold::new(Illuminance(5e3), Illuminance(6e4)),
@@ -148,7 +146,7 @@ fn can_serialize_recipe_manifest() {
                 RawRecipeData {
                     inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                    craft_time: Duration::from_secs(2),
+                    craft_time: 2.,
                     conditions: RecipeConditions::NONE,
                     energy: Some(Energy(40.)),
                 },
@@ -158,7 +156,7 @@ fn can_serialize_recipe_manifest() {
                 RawRecipeData {
                     inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                     outputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
-                    craft_time: Duration::from_secs(10),
+                    craft_time: 10.,
                     conditions: RecipeConditions {
                         workers_required: 2,
                         allowable_light_range: None,
@@ -171,7 +169,7 @@ fn can_serialize_recipe_manifest() {
                 RawRecipeData {
                     inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
                     outputs: HashMap::new(),
-                    craft_time: Duration::from_secs(10),
+                    craft_time: 10.,
                     conditions: RecipeConditions {
                         workers_required: 1,
                         allowable_light_range: None,

@@ -52,7 +52,7 @@ pub struct RawRecipeData {
     pub outputs: HashMap<String, usize>,
 
     /// The time needed to craft the recipe.
-    pub craft_time: Duration,
+    pub craft_time: f32,
 
     /// The conditions that must be met to craft the recipe.
     pub conditions: RecipeConditions,
@@ -82,7 +82,7 @@ impl From<RawRecipeData> for RecipeData {
                     count,
                 })
                 .collect(),
-            craft_time: raw.craft_time,
+            craft_time: Duration::from_secs_f32(raw.craft_time),
             conditions: raw.conditions,
             energy: raw.energy,
         }
