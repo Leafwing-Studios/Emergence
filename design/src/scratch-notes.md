@@ -1,0 +1,36 @@
+# Kremling worldbuilding scratch notes
+
+- units
+  - kremling
+    - artificial basket on back
+    - arthroprod-like
+    - smart and slow
+    - can get flipped upside-down!
+    - young have no shells
+    - cannot climb: short hops only
+  - water striders
+  - rolling beetles
+  - web spinner
+  - flyers
+- wholesome, not nasty
+- tide pools!
+  - tides probably slower: weekly?
+- seasons
+  - repeating and predictable
+  - all have upside and downside
+  - which season you start in is randomized
+- scarred but healing Earth, quite a while in the future after humanity's extinction
+  - unusable land that must be crossed (thematic + encourages distinct bases and logistics)
+- structure / item ideas
+  - cliff to smash stuff
+  - floating things down rivers
+  - highly buoyant plant
+  - slides for goods and units downhill
+  - fungi to compost still
+- avoid human-like vibes
+  - absolutely no "human tech but in wood"
+  - no fire or heated food
+  - no electricity (except maybe shockers)
+  - avoid humanoid body plans and postures
+- factory builder, not colony sim: complex production, simple unit needs and preferences
+- predators!
