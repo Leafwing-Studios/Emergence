@@ -24,6 +24,20 @@ pub struct Id<T> {
     _phantom: PhantomData<T>,
 }
 
+/// An unprocessed [`Id`] that stores the string identifier.
+#[derive(Reflect, Serialize, Deserialize)]
+pub struct RawId<T> {
+    /// The string identifier.
+    ///
+    /// This is used to create the [`Id`] when the manifest is loaded.
+    name: String,
+
+    /// Marker to make the compiler happy
+    #[reflect(ignore)]
+    #[serde(skip)]
+    _phantom: PhantomData<T>,
+}
+
 /// A constant used in the hashing algorithm of the IDs.
 ///
 /// This should be a positive prime number, roughly equal to the number of characters in the input alphabet.
