@@ -5,7 +5,7 @@ use leafwing_abilities::systems::regenerate_resource_pool;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::{Id, RawId},
+    asset_management::manifest::Id,
     simulation::SimulationSet,
     structures::structure_manifest::{Structure, StructureManifest},
     units::unit_manifest::{Unit, UnitManifest},
@@ -32,20 +32,20 @@ pub enum OrganismId {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum RawOrganismId {
     /// Represents a [`Structure`].
-    Structure(RawId<Structure>),
+    Structure(String),
     /// Represents a [`Unit`].
-    Unit(RawId<Unit>),
+    Unit(String),
 }
 
 impl RawOrganismId {
     /// Creates a new unit-based [`RawOrganismId`] from a string.
     pub fn unit(name: &str) -> RawOrganismId {
-        RawOrganismId::Unit(RawId::new(name))
+        RawOrganismId::Unit(name.to_string())
     }
 
     /// Creates a new structure-based [`RawOrganismId`] from a string.
     pub fn structure(name: &str) -> RawOrganismId {
-        RawOrganismId::Structure(RawId::new(name))
+        RawOrganismId::Structure(name.to_string())
     }
 }
 
@@ -53,9 +53,9 @@ impl From<RawOrganismId> for OrganismId {
     fn from(raw_organism_id: RawOrganismId) -> Self {
         match raw_organism_id {
             RawOrganismId::Structure(raw_structure_id) => {
-                OrganismId::Structure(Id::from(raw_structure_id))
+                OrganismId::Structure(Id::from_name(&raw_structure_id))
             }
-            RawOrganismId::Unit(raw_unit_id) => OrganismId::Unit(Id::from(raw_unit_id)),
+            RawOrganismId::Unit(raw_unit_id) => OrganismId::Unit(Id::from_name(&raw_unit_id)),
         }
     }
 }

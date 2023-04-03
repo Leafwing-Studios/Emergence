@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
-    asset_management::manifest::RawId,
     items::{
         item_manifest::{ItemData, RawItemManifest},
         recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
@@ -34,8 +33,8 @@ fn can_serialize_item_manifest() {
     // Create a new raw item manifest
     let raw_item_manifest = RawItemManifest {
         items: HashMap::from_iter(vec![
-            (RawId::new("test_item"), ItemData { stack_size: 1 }),
-            (RawId::new("test_item_2"), ItemData { stack_size: 2 }),
+            ("test_item".to_string(), ItemData { stack_size: 1 }),
+            ("test_item_2".to_string(), ItemData { stack_size: 2 }),
         ]),
     };
 
@@ -56,11 +55,11 @@ fn can_serialize_terrain_manifest() {
     let raw_terrain_manifest = RawTerrainManifest {
         terrain_types: HashMap::from_iter(vec![
             (
-                RawId::new("test_terrain"),
+                "test_terrain".to_string(),
                 TerrainData { walking_speed: 1.0 },
             ),
             (
-                RawId::new("test_terrain2"),
+                "test_terrain2".to_string(),
                 TerrainData { walking_speed: 2.0 },
             ),
         ]),
@@ -83,7 +82,7 @@ fn can_serialize_unit_manifest() {
     let raw_unit_manifest = RawUnitManifest {
         unit_types: HashMap::from_iter(vec![
             (
-                RawId::new("ant"),
+                "ant".to_string(),
                 RawUnitData {
                     organism_variety: RawOrganismVariety {
                         prototypical_form: RawOrganismId::unit("ant"),
@@ -100,7 +99,7 @@ fn can_serialize_unit_manifest() {
                 },
             ),
             (
-                RawId::new("test_unit"),
+                "test_unit".to_string(),
                 RawUnitData {
                     organism_variety: RawOrganismVariety {
                         prototypical_form: RawOrganismId::unit("test_unit"),
@@ -132,7 +131,7 @@ fn can_serialize_recipe_manifest() {
     let raw_recipe_manifest = RawRecipeManifest {
         recipes: HashMap::from_iter(vec![
             (
-                RawId::new("acacia_leaf_production"),
+                "acacia_leaf_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::new(),
                     outputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
@@ -145,7 +144,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                RawId::new("leuco_chunk_production"),
+                "leuco_chunk_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
@@ -155,7 +154,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                RawId::new("ant_egg_production"),
+                "ant_egg_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                     outputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
@@ -168,7 +167,7 @@ fn can_serialize_recipe_manifest() {
                 },
             ),
             (
-                RawId::new("hatch_ants"),
+                "hatch_ants".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
                     outputs: HashMap::new(),
@@ -198,17 +197,17 @@ fn can_serialize_recipe_manifest() {
 fn can_serialize_structure_manifest() {
     // Shared data
     let acacia_construction_strategy = RawConstructionStrategy {
-        seedling: Some(RawId::new("acacia_seed")),
+        seedling: "acacia_seed".to_string(),
         work: Duration::ZERO,
-        materials: HashMap::from_iter([(RawId::new("acacia_leaf".to_string()), 1)]),
-        allowed_terrain_types: HashSet::from_iter([RawId::new("loam"), RawId::new("muddy")]),
+        materials: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
+        allowed_terrain_types: HashSet::from_iter(["loam".to_string(), "muddy".to_string()]),
     };
 
     // Create a new raw structure manifest
     let raw_structure_manifest = RawStructureManifest {
         structure_types: HashMap::from_iter(vec![
             (
-                RawId::new("leuco"),
+                "leuco".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("leuco"),
@@ -219,12 +218,12 @@ fn can_serialize_structure_manifest() {
                         starting_recipe: RawActiveRecipe::new("leuco_chunk_production"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                        seedling: String::new(),
                         work: Duration::from_secs(3),
-                        materials: HashMap::from_iter([(RawId::new("leuco_chunk".to_string()), 1)]),
+                        materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
-                            RawId::new("loam"),
-                            RawId::new("muddy"),
+                            "loam".to_string(),
+                            "muddy".to_string(),
                         ]),
                     },
                     max_workers: 6,
@@ -232,7 +231,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("acacia_seed"),
+                "acacia_seed".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("acacia"),
@@ -252,7 +251,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("acacia_sprout"),
+                "acacia_sprout".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("acacia"),
@@ -272,7 +271,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("acacia"),
+                "acacia".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("acacia"),
@@ -288,20 +287,20 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("ant_hive"),
+                "ant_hive".to_string(),
                 RawStructureData {
                     organism_variety: None,
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("ant_egg_production"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                        seedling: String::new(),
                         work: Duration::from_secs(10),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
-                            RawId::new("loam"),
-                            RawId::new("muddy"),
-                            RawId::new("rocky"),
+                            "loam".to_string(),
+                            "muddy".to_string(),
+                            "rocky".to_string(),
                         ]),
                     },
                     max_workers: 3,
@@ -309,20 +308,20 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("hatchery"),
+                "hatchery".to_string(),
                 RawStructureData {
                     organism_variety: None,
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("hatch_ants"),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                        seedling: String::new(),
                         work: Duration::from_secs(5),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
-                            RawId::new("loam"),
-                            RawId::new("muddy"),
-                            RawId::new("rocky"),
+                            "loam".to_string(),
+                            "muddy".to_string(),
+                            "rocky".to_string(),
                         ]),
                     },
                     max_workers: 6,
@@ -331,7 +330,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                RawId::new("storage"),
+                "storage".to_string(),
                 RawStructureData {
                     organism_variety: None,
                     kind: RawStructureKind::Storage {
@@ -339,13 +338,13 @@ fn can_serialize_structure_manifest() {
                         reserved_for: String::new(),
                     },
                     construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                        seedling: String::new(),
                         work: Duration::from_secs(10),
-                        materials: HashMap::from_iter([(RawId::new("leuco_chunk".to_string()), 1)]),
+                        materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
-                            RawId::new("loam"),
-                            RawId::new("muddy"),
-                            RawId::new("rocky"),
+                            "loam".to_string(),
+                            "muddy".to_string(),
+                            "rocky".to_string(),
                         ]),
                     },
                     max_workers: 6,

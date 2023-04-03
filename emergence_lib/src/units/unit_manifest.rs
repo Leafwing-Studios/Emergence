@@ -7,7 +7,7 @@ use bevy::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::{loader::IsRawManifest, RawId},
+    asset_management::manifest::loader::IsRawManifest,
     organisms::{OrganismVariety, RawOrganismVariety},
     units::{hunger::Diet, WanderingBehavior},
 };
@@ -66,7 +66,7 @@ impl From<RawUnitData> for UnitData {
 #[uuid = "c8f6e1a1-20a0-4629-8df1-2e1fa313fcb9"]
 pub struct RawUnitManifest {
     /// The data for each item.
-    pub unit_types: HashMap<RawId<Unit>, RawUnitData>,
+    pub unit_types: HashMap<String, RawUnitData>,
 }
 
 impl IsRawManifest for RawUnitManifest {
@@ -82,7 +82,7 @@ impl IsRawManifest for RawUnitManifest {
             let data = raw_data.into();
 
             // No additional preprocessing is needed.
-            manifest.insert(raw_id.name(), data)
+            manifest.insert(&raw_id, data)
         }
 
         manifest

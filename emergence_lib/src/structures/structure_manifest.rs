@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of structure.
 
 use crate::{
-    asset_management::manifest::{loader::IsRawManifest, Id, Manifest, RawId},
+    asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     items::{item_manifest::Item, slot::ItemSlot},
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     structures::{
@@ -95,16 +95,16 @@ pub struct ConstructionStrategy {
 pub struct RawConstructionStrategy {
     /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
     ///
-    /// If `None`, this structure can be built directly.
-    pub seedling: Option<RawId<Structure>>,
+    /// If this is the empty string, this structure can be built directly.
+    pub seedling: String,
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`Duration::ZERO`], no work will be needed at all.
     pub work: Duration,
     /// The set of items needed to create a new copy of this structure
-    pub materials: HashMap<RawId<Item>, usize>,
+    pub materials: HashMap<String, usize>,
     /// The set of terrain types that this structure can be built on
-    pub allowed_terrain_types: HashSet<RawId<Terrain>>,
+    pub allowed_terrain_types: HashSet<String>,
 }
 
 impl From<RawConstructionStrategy> for ConstructionStrategy {
@@ -112,19 +112,23 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
         let inventory = raw
             .materials
             .into_iter()
-            .map(|(item_name, count)| ItemSlot::new(item_name.into(), count))
+            .map(|(item_name, count)| ItemSlot::new(Id::from_name(&item_name), count))
             .collect();
 
         let materials = InputInventory { inventory };
 
         Self {
-            seedling: raw.seedling.map(Into::into),
+            seedling: if raw.seedling.is_empty() {
+                None
+            } else {
+                Some(Id::from_name(&raw.seedling))
+            },
             work: raw.work,
             materials,
             allowed_terrain_types: raw
                 .allowed_terrain_types
                 .into_iter()
-                .map(Into::into)
+                .map(|name| Id::from_name(&name))
                 .collect(),
         }
     }
@@ -233,7 +237,7 @@ impl StructureManifest {
 #[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
 pub struct RawStructureManifest {
     /// The data for each structure.
-    pub structure_types: HashMap<RawId<Structure>, RawStructureData>,
+    pub structure_types: HashMap<String, RawStructureData>,
 }
 
 impl IsRawManifest for RawStructureManifest {
@@ -248,7 +252,7 @@ impl IsRawManifest for RawStructureManifest {
         for (raw_id, raw_data) in self.structure_types.clone() {
             let data = raw_data.into();
 
-            manifest.insert(raw_id.name(), data)
+            manifest.insert(&raw_id, data)
         }
 
         manifest
