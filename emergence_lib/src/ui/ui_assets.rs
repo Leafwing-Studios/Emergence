@@ -56,7 +56,7 @@ impl FromWorld for Icons<Id<Structure>> {
         let mut map = HashMap::new();
 
         for id in structure_names {
-            let structure_id = Id::from_name(id);
+            let structure_id = Id::from_name(id.to_string());
             let structure_path = format!("icons/structures/{id}.png");
             let icon = asset_server.load(structure_path);
             map.insert(structure_id, icon);
@@ -74,7 +74,7 @@ impl FromWorld for Icons<TerraformingChoice> {
         let terrain_names = world.resource::<TerrainManifest>().names();
 
         for id in terrain_names {
-            let terrain_id = Id::from_name(id);
+            let terrain_id = Id::from_name(id.to_string());
             let terrain_path = format!("icons/terrain/{id}.png");
             let icon = asset_server.load(terrain_path);
 

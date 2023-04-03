@@ -82,7 +82,7 @@ impl IsRawManifest for RawUnitManifest {
             let data = raw_data.into();
 
             // No additional preprocessing is needed.
-            manifest.insert(&raw_id, data)
+            manifest.insert(raw_id, data)
         }
 
         manifest

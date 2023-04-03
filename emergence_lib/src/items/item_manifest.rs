@@ -38,9 +38,9 @@ impl IsRawManifest for RawItemManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (raw_id, raw_data) in &self.items {
+        for (raw_id, raw_data) in self.items.clone() {
             // No additional preprocessing is needed.
-            manifest.insert(raw_id, raw_data.clone())
+            manifest.insert(raw_id, raw_data)
         }
 
         manifest

@@ -37,7 +37,7 @@ impl Loadable for TerrainHandles {
         for name in names {
             let path_string = format!("terrain/{name}.gltf#Scene0");
             let scene = asset_server.load(path_string);
-            scenes.insert(Id::from_name(name), scene);
+            scenes.insert(Id::from_name(name.to_string()), scene);
         }
 
         let map_geometry = world.resource::<MapGeometry>();

@@ -557,11 +557,11 @@ mod tests {
     use super::*;
 
     fn test_item() -> Id<Item> {
-        Id::from_name("12345")
+        Id::from_name("12345".to_string())
     }
 
     fn test_structure() -> Id<Structure> {
-        Id::from_name("67890")
+        Id::from_name("67890".to_string())
     }
 
     #[test]

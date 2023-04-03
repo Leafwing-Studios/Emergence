@@ -141,9 +141,10 @@ impl RawActiveRecipe {
 
 impl From<RawActiveRecipe> for ActiveRecipe {
     fn from(raw: RawActiveRecipe) -> Self {
-        match raw.0.as_str() {
-            "" => ActiveRecipe::NONE,
-            recipe_name => ActiveRecipe::new(Id::from_name(recipe_name)),
+        if raw.0.is_empty() {
+            ActiveRecipe::NONE
+        } else {
+            ActiveRecipe::new(Id::from_name(raw.0))
         }
     }
 }

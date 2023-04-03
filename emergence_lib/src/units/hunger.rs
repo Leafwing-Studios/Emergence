@@ -45,7 +45,7 @@ impl RawDiet {
 impl From<RawDiet> for Diet {
     fn from(raw_diet: RawDiet) -> Self {
         Diet {
-            item: Id::from_name(&raw_diet.item),
+            item: Id::from_name(raw_diet.item),
             energy: raw_diet.energy,
         }
     }

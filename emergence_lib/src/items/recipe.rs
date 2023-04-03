@@ -70,7 +70,7 @@ impl From<RawRecipeData> for RecipeData {
                 .inputs
                 .into_iter()
                 .map(|(item_name, count)| ItemCount {
-                    item_id: Id::from_name(&item_name),
+                    item_id: Id::from_name(item_name),
                     count,
                 })
                 .collect(),
@@ -78,7 +78,7 @@ impl From<RawRecipeData> for RecipeData {
                 .outputs
                 .into_iter()
                 .map(|(item_name, count)| ItemCount {
-                    item_id: Id::from_name(&item_name),
+                    item_id: Id::from_name(item_name),
                     count,
                 })
                 .collect(),
@@ -248,7 +248,7 @@ impl IsRawManifest for RawRecipeManifest {
         for (raw_id, raw_data) in self.recipes.clone() {
             let data = raw_data.into();
 
-            manifest.insert(&raw_id, data)
+            manifest.insert(raw_id, data)
         }
 
         manifest

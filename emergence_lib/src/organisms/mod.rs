@@ -53,9 +53,9 @@ impl From<RawOrganismId> for OrganismId {
     fn from(raw_organism_id: RawOrganismId) -> Self {
         match raw_organism_id {
             RawOrganismId::Structure(raw_structure_id) => {
-                OrganismId::Structure(Id::from_name(&raw_structure_id))
+                OrganismId::Structure(Id::from_name(raw_structure_id))
             }
-            RawOrganismId::Unit(raw_unit_id) => OrganismId::Unit(Id::from_name(&raw_unit_id)),
+            RawOrganismId::Unit(raw_unit_id) => OrganismId::Unit(Id::from_name(raw_unit_id)),
         }
     }
 }

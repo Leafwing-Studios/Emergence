@@ -59,8 +59,8 @@ where
     /// Adds an entry to the manifest by supplying the `name` associated with the [`Id`] type to be constructed.
     ///
     /// Returns any existing `Data` entry if this overwrote the data.
-    pub fn insert(&mut self, name: &str, data: Data) {
-        let id = Id::from_name(name);
+    pub fn insert(&mut self, name: String, data: Data) {
+        let id = Id::from_name(name.clone());
 
         self.data_map.insert(id, data);
         self.name_map.insert(id, name.to_string());

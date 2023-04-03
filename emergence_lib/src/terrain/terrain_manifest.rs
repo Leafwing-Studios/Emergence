@@ -42,9 +42,9 @@ impl IsRawManifest for RawTerrainManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (raw_id, raw_data) in &self.terrain_types {
+        for (raw_id, raw_data) in self.terrain_types.clone() {
             // No additional preprocessing is needed.
-            manifest.insert(raw_id, raw_data.clone())
+            manifest.insert(raw_id, raw_data)
         }
 
         manifest

@@ -112,7 +112,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
         let inventory = raw
             .materials
             .into_iter()
-            .map(|(item_name, count)| ItemSlot::new(Id::from_name(&item_name), count))
+            .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
             .collect();
 
         let materials = InputInventory { inventory };
@@ -121,14 +121,14 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
             seedling: if raw.seedling.is_empty() {
                 None
             } else {
-                Some(Id::from_name(&raw.seedling))
+                Some(Id::from_name(raw.seedling))
             },
             work: raw.work,
             materials,
             allowed_terrain_types: raw
                 .allowed_terrain_types
                 .into_iter()
-                .map(|name| Id::from_name(&name))
+                .map(|name| Id::from_name(name))
                 .collect(),
         }
     }
@@ -181,7 +181,7 @@ impl From<RawStructureKind> for StructureKind {
                 reserved_for: if reserved_for.is_empty() {
                     None
                 } else {
-                    Some(Id::from_name(&reserved_for))
+                    Some(Id::from_name(reserved_for))
                 },
             },
             RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
@@ -252,7 +252,7 @@ impl IsRawManifest for RawStructureManifest {
         for (raw_id, raw_data) in self.structure_types.clone() {
             let data = raw_data.into();
 
-            manifest.insert(&raw_id, data)
+            manifest.insert(raw_id, data)
         }
 
         manifest
