@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest, RawId},
-    items::item_manifest::Item,
+    items::{item_manifest::Item, slot::ItemSlot},
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     structures::{
         construction::Footprint,
@@ -52,7 +52,7 @@ pub struct RawStructureData {
     /// Determines the components that this structure gets.
     pub kind: RawStructureKind,
     /// How new copies of this structure can be built
-    pub construction_strategy: ConstructionStrategy,
+    pub construction_strategy: RawConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
     /// The tiles taken up by this building.
@@ -64,7 +64,7 @@ impl From<RawStructureData> for StructureData {
         Self {
             organism_variety: raw.organism_variety.map(Into::into),
             kind: raw.kind.into(),
-            construction_strategy: raw.construction_strategy,
+            construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
             footprint: raw.footprint,
         }
@@ -88,6 +88,46 @@ pub struct ConstructionStrategy {
     pub materials: InputInventory,
     /// The set of terrain types that this structure can be built on
     pub allowed_terrain_types: HashSet<Id<Terrain>>,
+}
+
+/// The unprocessed equivalent of [`ConstructionStrategy`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RawConstructionStrategy {
+    /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
+    ///
+    /// If `None`, this structure can be built directly.
+    pub seedling: Option<RawId<Structure>>,
+    /// The amount of work by units required to complete the construction of this building.
+    ///
+    /// If this is [`Duration::ZERO`], no work will be needed at all.
+    pub work: Duration,
+    /// The set of items needed to create a new copy of this structure
+    pub materials: HashMap<RawId<Item>, usize>,
+    /// The set of terrain types that this structure can be built on
+    pub allowed_terrain_types: HashSet<RawId<Terrain>>,
+}
+
+impl From<RawConstructionStrategy> for ConstructionStrategy {
+    fn from(raw: RawConstructionStrategy) -> Self {
+        let inventory = raw
+            .materials
+            .into_iter()
+            .map(|(item_name, count)| ItemSlot::new(item_name.into(), count))
+            .collect();
+
+        let materials = InputInventory { inventory };
+
+        Self {
+            seedling: raw.seedling.map(Into::into),
+            work: raw.work,
+            materials,
+            allowed_terrain_types: raw
+                .allowed_terrain_types
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+        }
+    }
 }
 
 /// What set of components should this structure have?

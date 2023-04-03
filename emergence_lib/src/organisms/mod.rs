@@ -13,7 +13,7 @@ use crate::{
 
 use self::{
     energy::{kill_organisms_when_out_of_energy, EnergyPool},
-    lifecycle::{transform_when_lifecycle_complete, Lifecycle},
+    lifecycle::{transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
 };
 
 pub mod energy;
@@ -46,6 +46,17 @@ impl RawOrganismId {
     /// Creates a new structure-based [`RawOrganismId`] from a string.
     pub fn structure(name: &str) -> RawOrganismId {
         RawOrganismId::Structure(RawId::new(name))
+    }
+}
+
+impl From<RawOrganismId> for OrganismId {
+    fn from(raw_organism_id: RawOrganismId) -> Self {
+        match raw_organism_id {
+            RawOrganismId::Structure(raw_structure_id) => {
+                OrganismId::Structure(Id::from(raw_structure_id))
+            }
+            RawOrganismId::Unit(raw_unit_id) => OrganismId::Unit(Id::from(raw_unit_id)),
+        }
     }
 }
 
@@ -104,7 +115,7 @@ pub struct RawOrganismVariety {
     /// The "base" form that we should display to players in menus and for ghosts?
     pub prototypical_form: RawOrganismId,
     /// The lifecycle of this organism, which reflect how and why it can change form.
-    pub lifecycle: Lifecycle,
+    pub lifecycle: RawLifecycle,
     /// Controls the maximum energy, and the rate at which it drains.
     pub energy_pool: EnergyPool,
 }
@@ -112,13 +123,8 @@ pub struct RawOrganismVariety {
 impl From<RawOrganismVariety> for OrganismVariety {
     fn from(raw: RawOrganismVariety) -> Self {
         OrganismVariety {
-            prototypical_form: match raw.prototypical_form {
-                RawOrganismId::Structure(structure_id) => {
-                    OrganismId::Structure(structure_id.into())
-                }
-                RawOrganismId::Unit(unit_id) => OrganismId::Unit(unit_id.into()),
-            },
-            lifecycle: raw.lifecycle,
+            prototypical_form: raw.prototypical_form.into(),
+            lifecycle: raw.lifecycle.into(),
             energy_pool: raw.energy_pool,
         }
     }

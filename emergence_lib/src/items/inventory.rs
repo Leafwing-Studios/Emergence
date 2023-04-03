@@ -582,6 +582,19 @@ impl Inventory {
     }
 }
 
+impl FromIterator<ItemSlot> for Inventory {
+    fn from_iter<I: IntoIterator<Item = ItemSlot>>(iter: I) -> Self {
+        let mut inventory = Inventory {
+            reserved_for: None,
+            slots: iter.into_iter().collect(),
+            max_slot_count: 0,
+        };
+
+        inventory.max_slot_count = inventory.slots.iter().count();
+        inventory
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
