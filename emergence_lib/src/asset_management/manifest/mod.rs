@@ -63,7 +63,7 @@ where
         let id = Id::from_name(name.clone());
 
         self.data_map.insert(id, data);
-        self.name_map.insert(id, name.to_string());
+        self.name_map.insert(id, name);
     }
 
     /// Get the data entry for the given ID.

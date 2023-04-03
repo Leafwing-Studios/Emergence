@@ -118,13 +118,13 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
         let materials = InputInventory { inventory };
 
         Self {
-            seedling: raw.seedling.map(|name| Id::from_name(name)),
+            seedling: raw.seedling.map(Id::from_name),
             work: raw.work,
             materials,
             allowed_terrain_types: raw
                 .allowed_terrain_types
                 .into_iter()
-                .map(|name| Id::from_name(name))
+                .map(Id::from_name)
                 .collect(),
         }
     }
@@ -172,7 +172,7 @@ impl From<RawStructureKind> for StructureKind {
                 reserved_for,
             } => Self::Storage {
                 max_slot_count,
-                reserved_for: reserved_for.map(|name| Id::from_name(name)),
+                reserved_for: reserved_for.map(Id::from_name),
             },
             RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
                 starting_recipe: starting_recipe.into(),

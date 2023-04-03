@@ -590,7 +590,7 @@ impl FromIterator<ItemSlot> for Inventory {
             max_slot_count: 0,
         };
 
-        inventory.max_slot_count = inventory.slots.iter().count();
+        inventory.max_slot_count = inventory.slots.len();
         inventory
     }
 }

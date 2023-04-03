@@ -137,7 +137,7 @@ impl RawActiveRecipe {
 
 impl From<RawActiveRecipe> for ActiveRecipe {
     fn from(raw: RawActiveRecipe) -> Self {
-        ActiveRecipe(raw.0.map(|name| Id::from_name(name)))
+        ActiveRecipe(raw.0.map(Id::from_name))
     }
 }
 
