@@ -12,14 +12,14 @@ use emergence_lib::{
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{LifePath, Lifecycle},
-        OrganismId, OrganismVariety, RawOrganismId, RawOrganismVariety,
+        OrganismId, RawOrganismId, RawOrganismVariety,
     },
     simulation::{light::Illuminance, time::TimePool},
     structures::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
         structure_manifest::{
-            ConstructionStrategy, RawStructureManifest, StructureData, StructureKind,
+            ConstructionStrategy, RawStructureData, RawStructureManifest, StructureKind,
         },
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
@@ -213,9 +213,9 @@ fn can_serialize_structure_manifest() {
         structure_types: HashMap::from_iter(vec![
             (
                 RawId::new("leuco"),
-                StructureData {
-                    organism_variety: Some(OrganismVariety {
-                        prototypical_form: OrganismId::Structure(Id::from_name("leuco")),
+                RawStructureData {
+                    organism_variety: Some(RawOrganismVariety {
+                        prototypical_form: RawOrganismId::structure("leuco"),
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
                     }),
@@ -239,9 +239,9 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("acacia_seed"),
-                StructureData {
-                    organism_variety: Some(OrganismVariety {
-                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                RawStructureData {
+                    organism_variety: Some(RawOrganismVariety {
+                        prototypical_form: RawOrganismId::structure("acacia"),
                         lifecycle: Lifecycle::new(vec![LifePath {
                             new_form: OrganismId::Structure(Id::from_name("acacia_sprout")),
                             energy_required: None,
@@ -259,9 +259,9 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("acacia_sprout"),
-                StructureData {
-                    organism_variety: Some(OrganismVariety {
-                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                RawStructureData {
+                    organism_variety: Some(RawOrganismVariety {
+                        prototypical_form: RawOrganismId::structure("acacia"),
                         lifecycle: Lifecycle::new(vec![LifePath {
                             new_form: OrganismId::Structure(Id::from_name("acacia")),
                             energy_required: Some(EnergyPool::simple(500.)),
@@ -279,9 +279,9 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("acacia"),
-                StructureData {
-                    organism_variety: Some(OrganismVariety {
-                        prototypical_form: OrganismId::Structure(Id::from_name("acacia")),
+                RawStructureData {
+                    organism_variety: Some(RawOrganismVariety {
+                        prototypical_form: RawOrganismId::structure("acacia"),
                         lifecycle: Lifecycle::STATIC,
                         energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
                     }),
@@ -295,7 +295,7 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("ant_hive"),
-                StructureData {
+                RawStructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
                         starting_recipe: ActiveRecipe::new(Id::from_name("ant_egg_production")),
@@ -316,7 +316,7 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("hatchery"),
-                StructureData {
+                RawStructureData {
                     organism_variety: None,
                     kind: StructureKind::Crafting {
                         starting_recipe: ActiveRecipe::new(Id::from_name("hatch_ants")),
@@ -338,7 +338,7 @@ fn can_serialize_structure_manifest() {
             ),
             (
                 RawId::new("storage"),
-                StructureData {
+                RawStructureData {
                     organism_variety: None,
                     kind: StructureKind::Storage {
                         max_slot_count: 3,

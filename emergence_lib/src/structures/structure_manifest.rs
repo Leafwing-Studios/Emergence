@@ -3,7 +3,7 @@
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest, RawId},
     items::item_manifest::Item,
-    organisms::{OrganismId, OrganismVariety},
+    organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     structures::{
         construction::Footprint,
         crafting::{ActiveRecipe, InputInventory},
@@ -38,6 +38,35 @@ pub struct StructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
+}
+
+/// The unprocessed equivalent of [`StructureData`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RawStructureData {
+    /// Data needed for living structures
+    pub organism_variety: Option<RawOrganismVariety>,
+    /// What base variety of structure is this?
+    ///
+    /// Determines the components that this structure gets.
+    pub kind: StructureKind,
+    /// How new copies of this structure can be built
+    pub construction_strategy: ConstructionStrategy,
+    /// The maximum number of workers that can work at this structure at once.
+    pub max_workers: u8,
+    /// The tiles taken up by this building.
+    pub footprint: Footprint,
+}
+
+impl From<RawStructureData> for StructureData {
+    fn from(raw: RawStructureData) -> Self {
+        Self {
+            organism_variety: raw.organism_variety.map(Into::into),
+            kind: raw.kind,
+            construction_strategy: raw.construction_strategy,
+            max_workers: raw.max_workers,
+            footprint: raw.footprint,
+        }
+    }
 }
 
 /// How new structures of this sort can be built.
@@ -122,7 +151,7 @@ impl StructureManifest {
 #[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
 pub struct RawStructureManifest {
     /// The data for each structure.
-    pub structure_types: HashMap<RawId<Structure>, StructureData>,
+    pub structure_types: HashMap<RawId<Structure>, RawStructureData>,
 }
 
 impl IsRawManifest for RawStructureManifest {
@@ -134,9 +163,10 @@ impl IsRawManifest for RawStructureManifest {
     fn process(&self) -> Manifest<Self::Marker, Self::Data> {
         let mut manifest = Manifest::new();
 
-        for (raw_id, raw_data) in &self.structure_types {
-            // No additional preprocessing is needed.
-            manifest.insert(raw_id.name(), raw_data.clone())
+        for (raw_id, raw_data) in self.structure_types.clone() {
+            let data = raw_data.into();
+
+            manifest.insert(raw_id.name(), data)
         }
 
         manifest
