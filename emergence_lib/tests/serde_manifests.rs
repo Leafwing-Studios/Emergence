@@ -6,8 +6,7 @@ use emergence_lib::{
     items::{
         inventory::Inventory,
         item_manifest::{ItemData, RawItemManifest},
-        recipe::{RawRecipeManifest, RecipeConditions, RecipeData, Threshold},
-        ItemCount,
+        recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
     },
     organisms::{
         energy::{Energy, EnergyPool},
@@ -135,9 +134,9 @@ fn can_serialize_recipe_manifest() {
         recipes: HashMap::from_iter(vec![
             (
                 RawId::new("acacia_leaf_production"),
-                RecipeData {
-                    inputs: Vec::new(),
-                    outputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
+                RawRecipeData {
+                    inputs: HashMap::new(),
+                    outputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
                     craft_time: Duration::from_secs(3),
                     conditions: RecipeConditions::new(
                         0,
@@ -148,9 +147,9 @@ fn can_serialize_recipe_manifest() {
             ),
             (
                 RawId::new("leuco_chunk_production"),
-                RecipeData {
-                    inputs: vec![ItemCount::one(Id::from_name("acacia_leaf"))],
-                    outputs: vec![ItemCount::one(Id::from_name("leuco_chunk"))],
+                RawRecipeData {
+                    inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
+                    outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                     craft_time: Duration::from_secs(2),
                     conditions: RecipeConditions::NONE,
                     energy: Some(Energy(40.)),
@@ -158,9 +157,9 @@ fn can_serialize_recipe_manifest() {
             ),
             (
                 RawId::new("ant_egg_production"),
-                RecipeData {
-                    inputs: Vec::new(),
-                    outputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
+                RawRecipeData {
+                    inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
+                    outputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
                     craft_time: Duration::from_secs(10),
                     conditions: RecipeConditions {
                         workers_required: 2,
@@ -171,9 +170,9 @@ fn can_serialize_recipe_manifest() {
             ),
             (
                 RawId::new("hatch_ants"),
-                RecipeData {
-                    inputs: vec![ItemCount::one(Id::from_name("ant_egg"))],
-                    outputs: Vec::new(),
+                RawRecipeData {
+                    inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
+                    outputs: HashMap::new(),
                     craft_time: Duration::from_secs(10),
                     conditions: RecipeConditions {
                         workers_required: 1,
