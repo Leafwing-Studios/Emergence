@@ -220,7 +220,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -247,7 +247,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 1,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -269,7 +269,7 @@ fn can_serialize_structure_manifest() {
                         "acacia_seedling".to_string(),
                     ),
                     max_workers: 1,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -287,7 +287,7 @@ fn can_serialize_structure_manifest() {
                         "acacia_seedling".to_string(),
                     ),
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -307,7 +307,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 3,
-                    footprint: Footprint::hexagon(1),
+                    footprint: Some(Footprint::hexagon(1)),
                 },
             ),
             (
@@ -328,7 +328,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     // Forms a crescent shape
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -349,7 +349,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
         ]),
