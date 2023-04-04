@@ -197,14 +197,6 @@ fn can_serialize_recipe_manifest() {
 
 #[test]
 fn can_serialize_structure_manifest() {
-    // Shared data
-    let acacia_construction_strategy = RawConstructionStrategy {
-        seedling: Some("acacia_seed".to_string()),
-        work: None,
-        materials: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
-        allowed_terrain_types: HashSet::from_iter(["loam".to_string(), "muddy".to_string()]),
-    };
-
     // Create a new raw structure manifest
     let raw_structure_manifest = RawStructureManifest {
         structure_types: HashMap::from_iter(vec![
@@ -219,8 +211,7 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("leuco_chunk_production"),
                     },
-                    construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                    construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(3.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
@@ -233,7 +224,7 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
-                "acacia_seed".to_string(),
+                "acacia_seedling".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("acacia"),
@@ -247,7 +238,14 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
-                    construction_strategy: acacia_construction_strategy.clone(),
+                    construction_strategy: RawConstructionStrategy::Direct {
+                        work: None,
+                        materials: HashMap::from_iter([("acacia_seed".to_string(), 1)]),
+                        allowed_terrain_types: HashSet::from_iter([
+                            "loam".to_string(),
+                            "muddy".to_string(),
+                        ]),
+                    },
                     max_workers: 1,
                     footprint: Footprint::single(),
                 },
@@ -267,7 +265,9 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
-                    construction_strategy: acacia_construction_strategy.clone(),
+                    construction_strategy: RawConstructionStrategy::Seedling(
+                        "acacia_seedling".to_string(),
+                    ),
                     max_workers: 1,
                     footprint: Footprint::single(),
                 },
@@ -283,7 +283,9 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
                     },
-                    construction_strategy: acacia_construction_strategy,
+                    construction_strategy: RawConstructionStrategy::Seedling(
+                        "acacia_seedling".to_string(),
+                    ),
                     max_workers: 6,
                     footprint: Footprint::single(),
                 },
@@ -295,8 +297,7 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("ant_egg_production"),
                     },
-                    construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                    construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(10.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
@@ -316,8 +317,7 @@ fn can_serialize_structure_manifest() {
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("hatch_ants"),
                     },
-                    construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                    construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(5.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
@@ -339,8 +339,7 @@ fn can_serialize_structure_manifest() {
                         max_slot_count: 3,
                         reserved_for: None,
                     },
-                    construction_strategy: RawConstructionStrategy {
-                        seedling: None,
+                    construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(10.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([

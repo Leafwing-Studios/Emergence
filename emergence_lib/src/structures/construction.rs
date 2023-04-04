@@ -23,7 +23,7 @@ use crate::{
 };
 
 use super::crafting::WorkersPresent;
-use super::structure_manifest::{Structure, StructureManifest};
+use super::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
 use super::{
     commands::StructureCommandsExt,
     crafting::{ActiveRecipe, CraftingState, InputInventory},
@@ -80,14 +80,14 @@ impl GhostBundle {
         world_pos: Vec3,
     ) -> Self {
         let structure_id = clipboard_data.structure_id;
-        let structure_data = structure_manifest.get(structure_id);
+        let construction_strategy = structure_manifest.construction_data(structure_id);
 
         GhostBundle {
             ghost: Ghost,
             tile_pos,
             structure_id,
             facing: clipboard_data.facing,
-            construction_materials: structure_data.construction_strategy.materials.clone(),
+            construction_materials: construction_strategy.materials.clone(),
             workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
             active_recipe: clipboard_data.active_recipe,
@@ -265,19 +265,15 @@ pub(super) fn ghost_lifecycle(
         workers_present,
     ) in ghost_query.iter_mut()
     {
+        let construction_data = structure_manifest.construction_data(structure_id);
+
         match *crafting_state {
             CraftingState::NeedsInput => {
                 *crafting_state = match input_inventory.is_full() {
-                    true => {
-                        let structure_details = structure_manifest.get(structure_id);
-                        CraftingState::InProgress {
-                            progress: Duration::ZERO,
-                            required: structure_details
-                                .construction_strategy
-                                .work
-                                .unwrap_or_default(),
-                        }
-                    }
+                    true => CraftingState::InProgress {
+                        progress: Duration::ZERO,
+                        required: construction_data.work.unwrap_or_default(),
+                    },
                     false => CraftingState::NeedsInput,
                 };
             }
@@ -301,10 +297,8 @@ pub(super) fn ghost_lifecycle(
                 commands.despawn_ghost(tile_pos);
 
                 // Spawn the seedling form of a structure if any
-                if let Some(seedling) = structure_manifest
-                    .get(structure_id)
-                    .construction_strategy
-                    .seedling
+                if let ConstructionStrategy::Seedling(seedling) =
+                    structure_manifest.get(structure_id).construction_strategy
                 {
                     commands.spawn_structure(
                         tile_pos,
@@ -420,7 +414,9 @@ pub(super) fn validate_ghosts(
     for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
         let footprint = structure_details.footprint.rotated(facing);
-        let allowed_terrain_types = structure_details.allowed_terrain_types();
+        let construction_data = structure_manifest.construction_data(structure_id);
+        let allowed_terrain_types = &construction_data.allowed_terrain_types;
+
         if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
             commands.despawn_ghost(tile_pos);
         }

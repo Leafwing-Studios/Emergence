@@ -220,9 +220,10 @@ pub(super) fn transform_when_lifecycle_complete(
         for new_form in lifecycle.new_forms() {
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
+                let construction_data = structure_manifest.construction_data(structure_id);
                 let variety = structure_manifest.get(structure_id);
                 let footprint = variety.footprint.rotated(facing);
-                let allowed_terrain_types = &variety.allowed_terrain_types();
+                let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
                 if map_geometry.can_build(
                     tile_pos,

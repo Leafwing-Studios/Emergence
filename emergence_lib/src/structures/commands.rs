@@ -135,13 +135,15 @@ impl Command for SpawnStructureCommand {
 
         let (terrain_query, geometry, manifest) = system_state.get(world);
         let structure_variety = manifest.get(structure_id).clone();
+        let construction_data = manifest.construction_data(structure_id);
+        let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
             structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
-            structure_variety.allowed_terrain_types(),
+            allowed_terrain_types,
         ) {
             return;
         }
@@ -275,13 +277,15 @@ impl Command for SpawnGhostCommand {
 
         let (terrain_query, geometry, manifest) = system_state.get(world);
         let structure_variety = manifest.get(structure_id).clone();
+        let construction_data = manifest.construction_data(structure_id);
+        let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
             structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
-            structure_variety.allowed_terrain_types(),
+            allowed_terrain_types,
         ) {
             return;
         }
@@ -388,13 +392,15 @@ impl Command for SpawnPreviewCommand {
 
         let (terrain_query, geometry, manifest) = system_state.get(world);
         let structure_variety = manifest.get(structure_id).clone();
+        let construction_data = manifest.construction_data(structure_id);
+        let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
             structure_variety.footprint.rotated(self.data.facing),
             &terrain_query,
-            structure_variety.allowed_terrain_types(),
+            allowed_terrain_types,
         );
 
         // Fetch the scene and material to use
