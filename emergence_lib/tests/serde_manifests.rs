@@ -1,7 +1,9 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
     crafting::components::RawActiveRecipe,
-    crafting::recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
+    crafting::recipe::{
+        RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold,
+    },
     items::item_manifest::{ItemData, RawItemManifest},
     organisms::{
         energy::{Energy, EnergyPool},
@@ -141,7 +143,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "mature_acacia_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::new(),
+                    inputs: RawRecipeInput::empty(),
                     outputs: HashMap::from_iter([
                         ("acacia_leaf".to_string(), 1.),
                         // Output can be stochastic
@@ -158,7 +160,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "leuco_chunk_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
+                    inputs: RawRecipeInput::single("acacia_leaf", 1),
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
                     craft_time: 2.,
                     conditions: None,
@@ -168,7 +170,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "ant_egg_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
+                    inputs: RawRecipeInput::single("leuco_chunk", 1),
                     outputs: HashMap::from_iter([("ant_egg".to_string(), 1.)]),
                     craft_time: 10.,
                     conditions: Some(RecipeConditions {
@@ -181,7 +183,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "hatch_ants".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
+                    inputs: RawRecipeInput::single("ant_egg", 1),
                     outputs: HashMap::new(),
                     craft_time: 10.,
                     conditions: Some(RecipeConditions {
