@@ -29,8 +29,20 @@ fn can_serialize_item_manifest() {
     // Create a new raw item manifest
     let raw_item_manifest = RawItemManifest {
         items: HashMap::from_iter(vec![
-            ("test_item".to_string(), ItemData { stack_size: 1 }),
-            ("test_item_2".to_string(), ItemData { stack_size: 2 }),
+            (
+                "test_item".to_string(),
+                ItemData {
+                    stack_size: 1,
+                    compostable: true,
+                },
+            ),
+            (
+                "test_item_2".to_string(),
+                ItemData {
+                    stack_size: 2,
+                    compostable: false,
+                },
+            ),
         ]),
     };
 

@@ -607,8 +607,20 @@ mod tests {
     /// Create a simple item manifest for testing purposes.
     fn item_manifest() -> ItemManifest {
         let mut manifest = Manifest::new();
-        manifest.insert("leaf".to_string(), ItemData { stack_size: 10 });
-        manifest.insert("mushroom".to_string(), ItemData { stack_size: 10 });
+        manifest.insert(
+            "leaf".to_string(),
+            ItemData {
+                stack_size: 10,
+                compostable: true,
+            },
+        );
+        manifest.insert(
+            "mushroom".to_string(),
+            ItemData {
+                stack_size: 10,
+                compostable: false,
+            },
+        );
         manifest
     }
 

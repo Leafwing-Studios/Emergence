@@ -19,6 +19,8 @@ pub type ItemManifest = Manifest<Item, ItemData>;
 pub struct ItemData {
     /// The number of items that can fit in a single item slot.
     pub stack_size: usize,
+    /// Can this item be composted?
+    pub compostable: bool,
 }
 
 /// The [`ItemManifest`] as seen in the manifest file.
