@@ -113,7 +113,7 @@ pub struct RawRecipeData {
     pub craft_time: f32,
 
     /// The conditions that must be met to craft the recipe.
-    pub conditions: RecipeConditions,
+    pub conditions: Option<RecipeConditions>,
 
     /// The amount of [`Energy`] produced by making this recipe, if any.
     ///
@@ -134,7 +134,7 @@ impl From<RawRecipeData> for RecipeData {
                 .collect(),
             outputs: RecipeOutput::from_raw(raw.outputs),
             craft_time: Duration::from_secs_f32(raw.craft_time),
-            conditions: raw.conditions,
+            conditions: raw.conditions.unwrap_or_default(),
             energy: raw.energy,
         }
     }
@@ -193,7 +193,7 @@ impl RecipeData {
 
         let duration_str = format!("{:.2}", self.craft_time.as_secs_f32());
 
-        let condition_str = if self.conditions == RecipeConditions::NONE {
+        let condition_str = if self.conditions == RecipeConditions::default() {
             String::new()
         } else {
             format!("\nwhen {}", self.conditions)
@@ -204,7 +204,7 @@ impl RecipeData {
 }
 
 /// The environmental conditions needed for work to be done on a recipe.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RecipeConditions {
     /// The number of workers required to advance this recipe.
     pub workers_required: u8,
@@ -225,12 +225,6 @@ impl Display for RecipeConditions {
 }
 
 impl RecipeConditions {
-    /// No special conditions are needed for this recipe.
-    pub const NONE: RecipeConditions = RecipeConditions {
-        workers_required: 0,
-        allowable_light_range: None,
-    };
-
     /// Creates a new [`RecipeConditions`].
     pub const fn new(workers_required: u8, allowable_light_range: Threshold<Illuminance>) -> Self {
         Self {

@@ -67,7 +67,7 @@ pub struct RawStructureData {
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
     /// The tiles taken up by this building.
-    pub footprint: Footprint,
+    pub footprint: Option<Footprint>,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -77,7 +77,7 @@ impl From<RawStructureData> for StructureData {
             kind: raw.kind.into(),
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
-            footprint: raw.footprint,
+            footprint: raw.footprint.unwrap_or_default(),
         }
     }
 }

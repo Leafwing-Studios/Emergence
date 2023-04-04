@@ -355,10 +355,16 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
 /// The set of tiles taken up by a structure.
 ///
 /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Footprint {
     /// The set of tiles is taken up by this structure.
     pub(crate) set: HashSet<TilePos>,
+}
+
+impl Default for Footprint {
+    fn default() -> Self {
+        Self::single()
+    }
 }
 
 impl Footprint {

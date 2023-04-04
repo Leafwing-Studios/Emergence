@@ -138,10 +138,10 @@ fn can_serialize_recipe_manifest() {
                         ("acacia_seed".to_string(), 0.1),
                     ]),
                     craft_time: 3.,
-                    conditions: RecipeConditions::new(
+                    conditions: Some(RecipeConditions::new(
                         0,
                         Threshold::new(Illuminance(5e3), Illuminance(6e4)),
-                    ),
+                    )),
                     energy: Some(Energy(20.)),
                 },
             ),
@@ -151,7 +151,7 @@ fn can_serialize_recipe_manifest() {
                     inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
                     craft_time: 2.,
-                    conditions: RecipeConditions::NONE,
+                    conditions: None,
                     energy: Some(Energy(40.)),
                 },
             ),
@@ -161,10 +161,10 @@ fn can_serialize_recipe_manifest() {
                     inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                     outputs: HashMap::from_iter([("ant_egg".to_string(), 1.)]),
                     craft_time: 10.,
-                    conditions: RecipeConditions {
+                    conditions: Some(RecipeConditions {
                         workers_required: 2,
                         allowable_light_range: None,
-                    },
+                    }),
                     energy: None,
                 },
             ),
@@ -174,10 +174,10 @@ fn can_serialize_recipe_manifest() {
                     inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
                     outputs: HashMap::new(),
                     craft_time: 10.,
-                    conditions: RecipeConditions {
+                    conditions: Some(RecipeConditions {
                         workers_required: 1,
                         allowable_light_range: None,
-                    },
+                    }),
                     energy: None,
                 },
             ),
@@ -220,7 +220,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -247,7 +247,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 1,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -269,7 +269,7 @@ fn can_serialize_structure_manifest() {
                         "acacia_seedling".to_string(),
                     ),
                     max_workers: 1,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -287,7 +287,7 @@ fn can_serialize_structure_manifest() {
                         "acacia_seedling".to_string(),
                     ),
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -307,7 +307,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 3,
-                    footprint: Footprint::hexagon(1),
+                    footprint: Some(Footprint::hexagon(1)),
                 },
             ),
             (
@@ -328,7 +328,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     // Forms a crescent shape
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
             (
@@ -349,7 +349,7 @@ fn can_serialize_structure_manifest() {
                         ]),
                     },
                     max_workers: 6,
-                    footprint: Footprint::single(),
+                    footprint: Some(Footprint::single()),
                 },
             ),
         ]),

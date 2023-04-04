@@ -1,7 +1,6 @@
 {
 	"structure_types": {
 		"hatchery": {
-			"organism_variety": null,
 			"kind": {
 				"Crafting": {
 					"starting_recipe": "hatch_ants"
@@ -18,24 +17,12 @@
 					]
 				}
 			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 6
 		},
 		"storage": {
-			"organism_variety": null,
 			"kind": {
 				"Storage": {
-					"max_slot_count": 3,
-					"reserved_for": null
+					"max_slot_count": 3
 				}
 			},
 			"construction_strategy": {
@@ -51,17 +38,7 @@
 					]
 				}
 			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 6
 		},
 		"acacia_seedling": {
 			"organism_variety": {
@@ -74,7 +51,6 @@
 							"new_form": {
 								"Structure": "acacia_sprout"
 							},
-							"energy_required": null,
 							"time_required": 1.0
 						}
 					]
@@ -104,17 +80,7 @@
 					]
 				}
 			},
-			"max_workers": 1,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 1
 		},
 		"leuco": {
 			"organism_variety": {
@@ -139,7 +105,6 @@
 			},
 			"construction_strategy": {
 				"Direct": {
-					"work": null,
 					"materials": {
 						"leuco_chunk": 1
 					},
@@ -149,17 +114,7 @@
 					]
 				}
 			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 6
 		},
 		"acacia_sprout": {
 			"organism_variety": {
@@ -172,8 +127,7 @@
 							"new_form": {
 								"Structure": "acacia"
 							},
-							"energy_required": 500.0,
-							"time_required": null
+							"energy_required": 500.0
 						}
 					]
 				},
@@ -193,17 +147,7 @@
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
-			"max_workers": 1,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 1
 		},
 		"acacia": {
 			"organism_variety": {
@@ -229,20 +173,9 @@
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
-			"max_workers": 6,
-			"footprint": {
-				"set": [
-					{
-						"hex": {
-							"x": 0,
-							"y": 0
-						}
-					}
-				]
-			}
+			"max_workers": 6
 		},
 		"ant_hive": {
-			"organism_variety": null,
 			"kind": {
 				"Crafting": {
 					"starting_recipe": "ant_egg_production"

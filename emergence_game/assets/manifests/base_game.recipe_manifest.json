@@ -7,10 +7,8 @@
 			"outputs": {},
 			"craft_time": 10,
 			"conditions": {
-				"workers_required": 1,
-				"allowable_light_range": null
-			},
-			"energy": null
+				"workers_required": 1
+			}
 		},
 		"leuco_chunk_production": {
 			"inputs": {
@@ -20,10 +18,6 @@
 				"leuco_chunk": 1
 			},
 			"craft_time": 2,
-			"conditions": {
-				"workers_required": 0,
-				"allowable_light_range": null
-			},
 			"energy": 40.0
 		},
 		"acacia_leaf_production": {
@@ -66,10 +60,8 @@
 			},
 			"craft_time": 10,
 			"conditions": {
-				"workers_required": 2,
-				"allowable_light_range": null
-			},
-			"energy": null
+				"workers_required": 2
+			}
 		}
 	}
 }
