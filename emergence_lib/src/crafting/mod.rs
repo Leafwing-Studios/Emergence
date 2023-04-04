@@ -8,20 +8,13 @@ use crate::{
     items::item_manifest::{ItemManifest, RawItemManifest},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::{
-        geometry::{MapGeometry, TilePos},
-        light::TotalLight,
-        SimulationSet,
-    },
+    simulation::{light::TotalLight, SimulationSet},
     structures::structure_manifest::Structure,
 };
 
 use std::time::Duration;
 
-use bevy::{
-    ecs::{query::WorldQuery, system::SystemParam},
-    prelude::*,
-};
+use bevy::{ecs::query::WorldQuery, prelude::*};
 
 use self::components::{
     ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
@@ -301,56 +294,5 @@ pub(crate) fn set_storage_emitter(
 fn clear_empty_storage_slots(mut query: Query<&mut StorageInventory>) {
     for mut storage_inventory in query.iter_mut() {
         storage_inventory.clear_empty_slots();
-    }
-}
-
-/// A query about the [`CraftingState`] of a structure that might need work done.
-#[derive(SystemParam)]
-pub(crate) struct WorkplaceQuery<'w, 's> {
-    /// The contained query type.
-    query: Query<
-        'w,
-        's,
-        (
-            &'static CraftingState,
-            &'static Id<Structure>,
-            &'static WorkersPresent,
-        ),
-    >,
-}
-
-impl<'w, 's> WorkplaceQuery<'w, 's> {
-    /// Is there a structure of type `structure_id` at `structure_pos` that needs work done by a unit?
-    ///
-    /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
-    pub(crate) fn needs_work(
-        &self,
-        structure_pos: TilePos,
-        structure_id: Id<Structure>,
-        map_geometry: &MapGeometry,
-    ) -> Option<Entity> {
-        // Prioritize ghosts over structures to allow for replacing structures by building
-        let entity = if let Some(ghost_entity) = map_geometry.get_ghost(structure_pos) {
-            ghost_entity
-        } else {
-            map_geometry.get_structure(structure_pos)?
-        };
-
-        let (found_crafting_state, found_structure_id, workers_present) =
-            self.query.get(entity).ok()?;
-
-        if *found_structure_id != structure_id {
-            return None;
-        }
-
-        if let CraftingState::InProgress { .. } = found_crafting_state {
-            if workers_present.needs_more() {
-                Some(entity)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
     }
 }
