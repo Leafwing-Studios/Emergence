@@ -31,7 +31,7 @@ impl StructureManifest {
         let initial_strategy = &self.get(structure_id).construction_strategy;
         match initial_strategy {
             ConstructionStrategy::Seedling(seedling_id) => self.construction_data(*seedling_id),
-            ConstructionStrategy::Direct(data) => &data,
+            ConstructionStrategy::Direct(data) => data,
         }
     }
 }
