@@ -2,22 +2,17 @@
 
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
+    crafting::{ActiveRecipe, InputInventory, RawActiveRecipe},
     items::{item_manifest::Item, slot::ItemSlot},
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
-    structures::{
-        construction::Footprint,
-        crafting::{ActiveRecipe, InputInventory},
-    },
+    structures::construction::Footprint,
     terrain::terrain_manifest::Terrain,
 };
 use bevy::{
     reflect::{FromReflect, Reflect, TypeUuid},
     utils::{Duration, HashMap, HashSet},
 };
-
 use serde::{Deserialize, Serialize};
-
-use super::crafting::RawActiveRecipe;
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]

@@ -4,7 +4,8 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
     asset_management::AssetState,
-    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
+    crafting::recipe::RecipeManifest,
+    items::item_manifest::ItemManifest,
     player_interaction::{
         camera::{CameraMode, CameraSettings},
         selection::CurrentSelection,
@@ -421,13 +422,11 @@ mod ghost_details {
 
     use crate::{
         asset_management::manifest::Id,
-        items::{item_manifest::ItemManifest, recipe::RecipeManifest},
+        crafting::{recipe::RecipeManifest, ActiveRecipe, CraftingState, InputInventory},
+        items::item_manifest::ItemManifest,
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::{
-            crafting::{ActiveRecipe, CraftingState, InputInventory},
-            structure_manifest::{Structure, StructureManifest},
-        },
+        structures::structure_manifest::{Structure, StructureManifest},
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -553,14 +552,14 @@ mod structure_details {
     use super::organism_details::OrganismDetails;
     use crate::{
         asset_management::manifest::Id,
-        items::{inventory::Inventory, item_manifest::ItemManifest, recipe::RecipeData},
+        crafting::{
+            recipe::RecipeData, ActiveRecipe, CraftingState, InputInventory, OutputInventory,
+            StorageInventory, WorkersPresent,
+        },
+        items::{inventory::Inventory, item_manifest::ItemManifest},
         simulation::geometry::TilePos,
         structures::{
             construction::MarkedForDemolition,
-            crafting::{
-                ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
-                WorkersPresent,
-            },
             structure_manifest::{Structure, StructureManifest},
         },
         units::unit_manifest::UnitManifest,

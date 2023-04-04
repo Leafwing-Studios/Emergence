@@ -6,6 +6,10 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::{
+        CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+        WorkplaceQuery,
+    },
     items::{
         item_manifest::{Item, ItemManifest},
         ItemCount,
@@ -16,10 +20,6 @@ use crate::{
     structures::{
         commands::StructureCommandsExt,
         construction::{DemolitionQuery, MarkedForDemolition},
-        crafting::{
-            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
-            WorkplaceQuery,
-        },
         structure_manifest::Structure,
     },
     terrain::terrain_manifest::{Terrain, TerrainManifest},

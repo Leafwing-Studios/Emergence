@@ -1,9 +1,8 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
-    items::{
-        item_manifest::{ItemData, RawItemManifest},
-        recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
-    },
+    crafting::recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
+    crafting::RawActiveRecipe,
+    items::item_manifest::{ItemData, RawItemManifest},
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
@@ -12,7 +11,6 @@ use emergence_lib::{
     simulation::light::Illuminance,
     structures::{
         construction::Footprint,
-        crafting::RawActiveRecipe,
         structure_manifest::{
             RawConstructionStrategy, RawStructureData, RawStructureKind, RawStructureManifest,
         },

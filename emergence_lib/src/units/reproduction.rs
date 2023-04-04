@@ -6,8 +6,8 @@ use rand::thread_rng;
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::{ActiveRecipe, CraftingState},
     simulation::geometry::{MapGeometry, TilePos},
-    structures::crafting::{ActiveRecipe, CraftingState},
 };
 
 use super::{unit_assets::UnitHandles, unit_manifest::UnitManifest, UnitBundle};

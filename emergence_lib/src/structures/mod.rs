@@ -20,14 +20,12 @@ use crate::{
 
 use self::{
     construction::{ghost_lifecycle, ghost_signals, validate_ghosts},
-    crafting::CraftingPlugin,
     structure_assets::StructureHandles,
     structure_manifest::{RawStructureManifest, Structure},
 };
 
 pub(crate) mod commands;
 pub mod construction;
-pub mod crafting;
 mod structure_assets;
 pub mod structure_manifest;
 
@@ -38,7 +36,6 @@ impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ManifestPlugin::<RawStructureManifest>::new())
             .add_asset_collection::<StructureHandles>()
-            .add_plugin(CraftingPlugin)
             .add_systems(
                 (
                     validate_ghosts,

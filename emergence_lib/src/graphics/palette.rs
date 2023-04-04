@@ -4,7 +4,7 @@
 pub(crate) mod infovis {
     use bevy::prelude::Color;
 
-    use crate::{signals::SignalKind, structures::crafting::CraftingState, units::goals::Goal};
+    use crate::{crafting::CraftingState, signals::SignalKind, units::goals::Goal};
 
     /// The alpha value used for selection/hovering/other UI overlay
     const OVERLAY_ALPHA: f32 = 0.5;

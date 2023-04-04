@@ -42,7 +42,7 @@ impl Plugin for ZoningPlugin {
                 .after(InteractionSystem::ApplyZoning),
         )
         // Must run after crafting emitters in order to wipe out their signals
-        .add_system(keep_tiles_clear.after(crate::structures::crafting::set_crafting_emitter));
+        .add_system(keep_tiles_clear.after(crate::crafting::set_crafting_emitter));
     }
 }
 

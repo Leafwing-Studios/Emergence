@@ -9,8 +9,9 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::{recipe::RecipeManifest, CraftingBundle, StorageInventory},
     graphics::InheritedMaterial,
-    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
+    items::item_manifest::ItemManifest,
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
@@ -20,7 +21,6 @@ use crate::{
 
 use super::{
     construction::{GhostBundle, GhostKind, PreviewBundle},
-    crafting::{CraftingBundle, StorageInventory},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     StructureBundle,

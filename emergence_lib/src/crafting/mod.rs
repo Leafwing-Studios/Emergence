@@ -1,4 +1,24 @@
-//! Everything needed to make structures able to craft things.
+//! Crafting and recipes.
+
+use recipe::{RawRecipeManifest, Recipe, RecipeData, RecipeManifest, RecipeOutput};
+
+use crate::{
+    asset_management::manifest::{plugin::ManifestPlugin, Id},
+    items::{
+        errors::{AddManyItemsError, AddOneItemError},
+        inventory::Inventory,
+        item_manifest::{Item, ItemManifest, RawItemManifest},
+        ItemCount,
+    },
+    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
+    signals::{Emitter, SignalStrength, SignalType},
+    simulation::{
+        geometry::{MapGeometry, TilePos},
+        light::TotalLight,
+        SimulationSet,
+    },
+    structures::structure_manifest::{Structure, StructureManifest},
+};
 
 use std::{fmt::Display, time::Duration};
 
@@ -10,25 +30,28 @@ use leafwing_abilities::prelude::Pool;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    asset_management::manifest::{plugin::ManifestPlugin, Id},
-    items::{
-        errors::{AddManyItemsError, AddOneItemError},
-        inventory::Inventory,
-        item_manifest::{Item, ItemManifest, RawItemManifest},
-        recipe::{RawRecipeManifest, Recipe, RecipeData, RecipeManifest, RecipeOutput},
-        ItemCount,
-    },
-    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
-    signals::{Emitter, SignalStrength, SignalType},
-    simulation::{
-        geometry::{MapGeometry, TilePos},
-        light::TotalLight,
-        SimulationSet,
-    },
-};
+pub mod recipe;
 
-use super::structure_manifest::{Structure, StructureManifest};
+/// Add crafting capabilities to structures.
+pub(crate) struct CraftingPlugin;
+
+impl Plugin for CraftingPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
+            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
+            .add_systems(
+                (
+                    progress_crafting,
+                    gain_energy_when_crafting_completes.after(progress_crafting),
+                    set_crafting_emitter.after(progress_crafting),
+                    set_storage_emitter,
+                    clear_empty_storage_slots,
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
+    }
+}
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
@@ -675,26 +698,5 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
         } else {
             None
         }
-    }
-}
-
-/// Add crafting capabilities to structures.
-pub(crate) struct CraftingPlugin;
-
-impl Plugin for CraftingPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
-            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
-            .add_systems(
-                (
-                    progress_crafting,
-                    gain_energy_when_crafting_completes.after(progress_crafting),
-                    set_crafting_emitter.after(progress_crafting),
-                    set_storage_emitter,
-                    clear_empty_storage_slots,
-                )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            );
     }
 }

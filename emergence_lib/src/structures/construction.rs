@@ -4,6 +4,7 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::crafting::WorkersPresent;
 use crate::simulation::geometry::MapGeometry;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
@@ -17,17 +18,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::{ActiveRecipe, CraftingState, InputInventory},
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
 
-use super::crafting::WorkersPresent;
+use super::commands::StructureCommandsExt;
 use super::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
-use super::{
-    commands::StructureCommandsExt,
-    crafting::{ActiveRecipe, CraftingState, InputInventory},
-};
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
 #[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]

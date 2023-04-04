@@ -140,7 +140,7 @@ impl Inventory {
 
     /// Determine if the inventory holds enough of the given item.
     pub(crate) fn has_count_of_item(&self, item_count: &ItemCount) -> bool {
-        self.item_count(item_count.item_id()) >= item_count.count()
+        self.item_count(item_count.item_id) >= item_count.count
     }
 
     /// Returns `true` if there are no items in the inventory.
@@ -265,35 +265,35 @@ impl Inventory {
             });
         }
 
-        let mut items_to_add = item_count.count();
+        let mut items_to_add = item_count.count;
 
         // Fill up the slots of this item
         for slot in self
             .slots
             .iter_mut()
-            .filter(|slot| slot.is_for_item(item_count.item_id()))
+            .filter(|slot| slot.is_for_item(item_count.item_id))
         {
             match slot.add_until_full(items_to_add) {
                 Ok(_) => {
                     items_to_add = 0;
                     break;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count,
             }
         }
 
         // Fill up the remaining free slots
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
             let mut new_slot = ItemSlot::new(
-                item_count.item_id(),
-                item_manifest.get(item_count.item_id()).stack_size,
+                item_count.item_id,
+                item_manifest.get(item_count.item_id).stack_size,
             );
 
             match new_slot.add_until_full(items_to_add) {
                 Ok(_) => {
                     items_to_add = 0;
                 }
-                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count(),
+                Err(AddOneItemError { excess_count }) => items_to_add = excess_count.count,
             }
 
             self.slots.push(new_slot);
@@ -304,7 +304,7 @@ impl Inventory {
 
         if items_to_add > 0 {
             Err(AddOneItemError {
-                excess_count: ItemCount::new(item_count.item_id(), items_to_add),
+                excess_count: ItemCount::new(item_count.item_id, items_to_add),
             })
         } else {
             Ok(())
@@ -326,13 +326,13 @@ impl Inventory {
             });
         }
 
-        let remaining_space = self.remaining_space_for_item(item_count.item_id(), item_manifest);
+        let remaining_space = self.remaining_space_for_item(item_count.item_id, item_manifest);
 
-        if remaining_space < item_count.count() {
+        if remaining_space < item_count.count {
             Err(AddOneItemError {
                 excess_count: ItemCount::new(
-                    item_count.item_id(),
-                    item_count.count() - remaining_space,
+                    item_count.item_id,
+                    item_count.count - remaining_space,
                 ),
             })
         } else {
@@ -368,27 +368,27 @@ impl Inventory {
         let excess_counts: Vec<ItemCount> = item_counts
             .iter()
             .filter_map(|item_count| {
-                let stack_size = item_manifest.get(item_count.item_id()).stack_size;
+                let stack_size = item_manifest.get(item_count.item_id).stack_size;
 
                 let remaining_reserved_space =
-                    self.remaining_reserved_space_for_item(item_count.item_id());
+                    self.remaining_reserved_space_for_item(item_count.item_id);
                 let remaining_free_space = free_slot_count * stack_size;
 
                 let excess = item_count
-                    .count()
+                    .count
                     .saturating_sub(remaining_reserved_space + remaining_free_space);
 
-                if item_count.count() > remaining_reserved_space {
+                if item_count.count > remaining_reserved_space {
                     // Update the count of the remaining free slots
                     free_slot_count = free_slot_count.saturating_sub(
-                        (item_count.count().saturating_sub(remaining_reserved_space) as f32
+                        (item_count.count.saturating_sub(remaining_reserved_space) as f32
                             / stack_size as f32)
                             .ceil() as usize,
                     );
                 }
 
                 if excess > 0 {
-                    Some(ItemCount::new(item_count.item_id(), excess))
+                    Some(ItemCount::new(item_count.item_id, excess))
                 } else {
                     None
                 }
@@ -436,12 +436,12 @@ impl Inventory {
     /// - If the slot has enough items, they are all removed and `Ok` is returned.
     /// - Otherwise, all items that are included are removed and `Err` is returned.
     pub fn try_remove_item(&mut self, item_count: &ItemCount) -> Result<(), RemoveOneItemError> {
-        let mut items_to_remove = item_count.count();
+        let mut items_to_remove = item_count.count;
 
         for slot in self
             .slots
             .iter_mut()
-            .filter(|slot| slot.is_for_item(item_count.item_id()))
+            .filter(|slot| slot.is_for_item(item_count.item_id))
             .rev()
         {
             match slot.remove_until_empty(items_to_remove) {
@@ -450,14 +450,14 @@ impl Inventory {
                     break;
                 }
                 Err(RemoveOneItemError { missing_count }) => {
-                    items_to_remove = missing_count.count();
+                    items_to_remove = missing_count.count;
                 }
             }
         }
 
         if items_to_remove > 0 {
             Err(RemoveOneItemError {
-                missing_count: ItemCount::new(item_count.item_id(), items_to_remove),
+                missing_count: ItemCount::new(item_count.item_id, items_to_remove),
             })
         } else {
             Ok(())
@@ -472,11 +472,11 @@ impl Inventory {
         &mut self,
         item_count: &ItemCount,
     ) -> Result<(), RemoveOneItemError> {
-        let cur_count = self.item_count(item_count.item_id());
+        let cur_count = self.item_count(item_count.item_id);
 
-        if cur_count < item_count.count() {
+        if cur_count < item_count.count {
             Err(RemoveOneItemError {
-                missing_count: ItemCount::new(item_count.item_id(), item_count.count() - cur_count),
+                missing_count: ItemCount::new(item_count.item_id, item_count.count - cur_count),
             })
         } else {
             // If this unwrap panics the removal or the item counting must be wrong
@@ -497,11 +497,11 @@ impl Inventory {
             .iter()
             .filter_map(|item_count| {
                 let missing = item_count
-                    .count()
-                    .saturating_sub(self.item_count(item_count.item_id()));
+                    .count
+                    .saturating_sub(self.item_count(item_count.item_id));
 
                 if missing > 0 {
-                    Some(ItemCount::new(item_count.item_id(), missing))
+                    Some(ItemCount::new(item_count.item_id, missing))
                 } else {
                     None
                 }
@@ -537,9 +537,9 @@ impl Inventory {
             });
         }
 
-        let item_id = item_count.item_id();
+        let item_id = item_count.item_id;
 
-        let requested = item_count.count();
+        let requested = item_count.count;
         let available = self.item_count(item_id);
         let free = other.remaining_space_for_item(item_id, item_manifest);
 
@@ -562,7 +562,7 @@ impl Inventory {
         } else {
             Err(ItemTransferError {
                 items_remaining: ItemCount::new(
-                    item_count.item_id(),
+                    item_count.item_id,
                     available.saturating_sub(actual),
                 ),
                 full_destination: proposed > free,
