@@ -13,9 +13,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     items::{
+        errors::{AddManyItemsError, AddOneItemError},
         inventory::Inventory,
         item_manifest::{Item, ItemManifest, RawItemManifest},
-        recipe::{RawRecipeManifest, Recipe, RecipeManifest},
+        recipe::{RawRecipeManifest, Recipe, RecipeData, RecipeManifest, RecipeOutput},
+        ItemCount,
     },
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -98,6 +100,55 @@ impl OutputInventory {
     pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
         for item_slot in self.iter_mut() {
             item_slot.randomize(rng);
+        }
+    }
+
+    /// Produces the items specified by `recipe` and adds them to the inventory.
+    pub(super) fn craft(
+        &mut self,
+        recipe: &RecipeData,
+        item_manifest: &ItemManifest,
+        rng: &mut ThreadRng,
+    ) -> Result<(), AddManyItemsError> {
+        let mut overflow: Vec<ItemCount> = Vec::new();
+
+        match &recipe.outputs {
+            RecipeOutput::Deterministic(outputs) => {
+                for output in outputs {
+                    let result = self.try_add_item(output, item_manifest);
+                    if let Err(AddOneItemError { excess_count }) = result {
+                        overflow.push(excess_count);
+                    }
+                }
+            }
+            RecipeOutput::Stochastic(outputs) => {
+                let distribution = Uniform::new(0.0, 1.0);
+                for (item_id, number) in outputs {
+                    // Always produce items equal to quotient,
+                    // and then produce one extra items with probability remainder.
+                    let (quotient, remainder) = (number / 1.0, number % 1.0);
+                    let count = if remainder == 0. || distribution.sample(rng) > remainder {
+                        quotient as usize
+                    } else {
+                        quotient as usize + 1
+                    };
+
+                    let output = ItemCount::new(*item_id, count);
+
+                    let result = self.try_add_item(&output, item_manifest);
+                    if let Err(AddOneItemError { excess_count }) = result {
+                        overflow.push(excess_count);
+                    }
+                }
+            }
+        };
+
+        if overflow.is_empty() {
+            Ok(())
+        } else {
+            Err(AddManyItemsError {
+                excess_counts: overflow,
+            })
         }
     }
 }
@@ -349,6 +400,8 @@ fn progress_crafting(
     total_light: Res<TotalLight>,
     mut crafting_query: Query<CraftingQuery>,
 ) {
+    let rng = &mut rand::thread_rng();
+
     for mut crafter in crafting_query.iter_mut() {
         *crafter.state = match *crafter.state {
             CraftingState::NoRecipe => match crafter.active_recipe.recipe_id() {
@@ -404,19 +457,13 @@ fn progress_crafting(
                     let recipe = recipe_manifest.get(*recipe_id);
                     match crafter.maybe_organism {
                         Some(_) => {
-                            match crafter
-                                .output
-                                .try_add_items(&recipe.outputs, &item_manifest)
-                            {
+                            match crafter.output.craft(recipe, &item_manifest, rng) {
                                 Ok(_) => CraftingState::NeedsInput,
                                 // TODO: handle the waste products somehow
                                 Err(_) => CraftingState::Overproduction,
                             }
                         }
-                        None => match crafter
-                            .output
-                            .add_items_all_or_nothing(&recipe.outputs, &item_manifest)
-                        {
+                        None => match crafter.output.craft(recipe, &item_manifest, rng) {
                             Ok(()) => CraftingState::NeedsInput,
                             Err(_) => CraftingState::FullAndBlocked,
                         },

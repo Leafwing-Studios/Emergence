@@ -9,10 +9,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 5,
-					"nanos": 0
-				},
+				"work": 5,
 				"materials": {},
 				"allowed_terrain_types": [
 					"rocky",
@@ -42,10 +39,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 10,
-					"nanos": 0
-				},
+				"work": 10,
 				"materials": {
 					"leuco_chunk": 1
 				},
@@ -67,7 +61,7 @@
 				]
 			}
 		},
-		"acacia_seed": {
+		"acacia_seedling": {
 			"organism_variety": {
 				"prototypical_form": {
 					"Structure": "acacia"
@@ -93,17 +87,14 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": "acacia_leaf_production"
+					"starting_recipe": null
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"seedling": "acacia_seedling",
+				"work": null,
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seed": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
@@ -145,10 +136,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 3,
-					"nanos": 0
-				},
+				"work": null,
 				"materials": {
 					"leuco_chunk": 1
 				},
@@ -199,13 +187,10 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"seedling": "acacia_seedling",
+				"work": null,
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seedling": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
@@ -242,17 +227,14 @@
 			},
 			"kind": {
 				"Crafting": {
-					"starting_recipe": "acacia_leaf_production"
+					"starting_recipe": "mature_acacia_production"
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seed",
-				"work": {
-					"secs": 0,
-					"nanos": 0
-				},
+				"seedling": "acacia_seedling",
+				"work": null,
 				"materials": {
-					"acacia_leaf": 1
+					"acacia_seed": 1
 				},
 				"allowed_terrain_types": [
 					"loam",
@@ -280,10 +262,7 @@
 			},
 			"construction_strategy": {
 				"seedling": null,
-				"work": {
-					"secs": 10,
-					"nanos": 0
-				},
+				"work": 10,
 				"materials": {},
 				"allowed_terrain_types": [
 					"rocky",

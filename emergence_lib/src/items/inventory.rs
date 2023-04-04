@@ -227,17 +227,21 @@ impl Inventory {
             self.reserved_for = None;
         }
 
-        let n_existing_slots = self.slots.len();
-        let slot_to_use = n_existing_slots + 1;
         let stack_size = item_manifest.get(item_id).stack_size;
         let empty_stack = ItemSlot::new(item_id, stack_size);
 
-        if slot_to_use >= self.max_slot_count {
-            self.max_slot_count = slot_to_use;
-            self.slots.push(empty_stack);
-        } else {
-            self.slots[slot_to_use] = empty_stack
+        // Suppose we have a 3 slot inventory, of which 2 are filled.
+        // The length is 2, and the max slot count is 3.
+        // We want to add a new slot, so we need to find the first unallocated slot.
+        // In this case, it's the 3rd slot, which is at index 2.
+        // This is always equal to the length, as the 0-indexing and "1 past the end" behavior cancel out.
+        let first_unallocated_slot = self.slots.len();
+        if first_unallocated_slot >= self.max_slot_count {
+            self.max_slot_count = first_unallocated_slot;
         }
+
+        // By definition we're at the end of the slots, so we need to add a new one.
+        self.slots.push(empty_stack);
     }
 
     /// Try to add as many items to the inventory as possible, up to the given count.

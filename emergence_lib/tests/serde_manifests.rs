@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
     items::{
@@ -131,11 +129,15 @@ fn can_serialize_recipe_manifest() {
     let raw_recipe_manifest = RawRecipeManifest {
         recipes: HashMap::from_iter(vec![
             (
-                "acacia_leaf_production".to_string(),
+                "mature_acacia_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::new(),
-                    outputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
-                    craft_time: Duration::from_secs(3),
+                    outputs: HashMap::from_iter([
+                        ("acacia_leaf".to_string(), 1.),
+                        // Output can be stochastic
+                        ("acacia_seed".to_string(), 0.1),
+                    ]),
+                    craft_time: 3.,
                     conditions: RecipeConditions::new(
                         0,
                         Threshold::new(Illuminance(5e3), Illuminance(6e4)),
@@ -147,8 +149,8 @@ fn can_serialize_recipe_manifest() {
                 "leuco_chunk_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
-                    outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                    craft_time: Duration::from_secs(2),
+                    outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
+                    craft_time: 2.,
                     conditions: RecipeConditions::NONE,
                     energy: Some(Energy(40.)),
                 },
@@ -157,8 +159,8 @@ fn can_serialize_recipe_manifest() {
                 "ant_egg_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                    outputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
-                    craft_time: Duration::from_secs(10),
+                    outputs: HashMap::from_iter([("ant_egg".to_string(), 1.)]),
+                    craft_time: 10.,
                     conditions: RecipeConditions {
                         workers_required: 2,
                         allowable_light_range: None,
@@ -171,7 +173,7 @@ fn can_serialize_recipe_manifest() {
                 RawRecipeData {
                     inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
                     outputs: HashMap::new(),
-                    craft_time: Duration::from_secs(10),
+                    craft_time: 10.,
                     conditions: RecipeConditions {
                         workers_required: 1,
                         allowable_light_range: None,
@@ -198,7 +200,7 @@ fn can_serialize_structure_manifest() {
     // Shared data
     let acacia_construction_strategy = RawConstructionStrategy {
         seedling: Some("acacia_seed".to_string()),
-        work: Duration::ZERO,
+        work: None,
         materials: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
         allowed_terrain_types: HashSet::from_iter(["loam".to_string(), "muddy".to_string()]),
     };
@@ -219,7 +221,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(3),
+                        work: Some(3.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -295,7 +297,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(10),
+                        work: Some(10.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -316,7 +318,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(5),
+                        work: Some(5.),
                         materials: HashMap::new(),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),
@@ -339,7 +341,7 @@ fn can_serialize_structure_manifest() {
                     },
                     construction_strategy: RawConstructionStrategy {
                         seedling: None,
-                        work: Duration::from_secs(10),
+                        work: Some(10.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
                         allowed_terrain_types: HashSet::from_iter([
                             "loam".to_string(),

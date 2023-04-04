@@ -82,8 +82,8 @@ pub struct ConstructionStrategy {
     pub seedling: Option<Id<Structure>>,
     /// The amount of work by units required to complete the construction of this building.
     ///
-    /// If this is [`Duration::ZERO`], no work will be needed at all.
-    pub work: Duration,
+    /// If this is [`None`], no work will be needed at all.
+    pub work: Option<Duration>,
     /// The set of items needed to create a new copy of this structure
     pub materials: InputInventory,
     /// The set of terrain types that this structure can be built on
@@ -99,8 +99,8 @@ pub struct RawConstructionStrategy {
     pub seedling: Option<String>,
     /// The amount of work by units required to complete the construction of this building.
     ///
-    /// If this is [`Duration::ZERO`], no work will be needed at all.
-    pub work: Duration,
+    /// If this is [`None`], no work will be needed at all.
+    pub work: Option<f32>,
     /// The set of items needed to create a new copy of this structure
     pub materials: HashMap<String, usize>,
     /// The set of terrain types that this structure can be built on
@@ -119,7 +119,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
 
         Self {
             seedling: raw.seedling.map(Id::from_name),
-            work: raw.work,
+            work: raw.work.map(Duration::from_secs_f32),
             materials,
             allowed_terrain_types: raw
                 .allowed_terrain_types
