@@ -86,6 +86,11 @@ impl RecipeOutput {
         }
     }
 
+    /// Are there any outputs produced by this recipe?
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// The [`Id<Item>`]s of the items produced by this recipe.
     pub fn item_ids(&self) -> Vec<Id<Item>> {
         match self {

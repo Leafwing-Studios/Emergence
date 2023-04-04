@@ -127,14 +127,10 @@ impl OutputInventory {
                     // Always produce items equal to quotient,
                     // and then produce one extra items with probability remainder.
                     let (quotient, remainder) = (number / 1.0, number % 1.0);
-                    let count = if remainder == 0. {
+                    let count = if remainder == 0. || distribution.sample(rng) > remainder {
                         quotient as usize
                     } else {
-                        if distribution.sample(rng) < remainder {
-                            quotient as usize + 1
-                        } else {
-                            quotient as usize
-                        }
+                        quotient as usize + 1
                     };
 
                     let output = ItemCount::new(*item_id, count);
