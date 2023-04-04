@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
-    crafting::item_tags::ItemTag,
+    crafting::item_tags::{ItemKind, ItemTag},
 };
 
 /// The marker type for [`Id<Item>`](super::Id).
@@ -25,6 +25,31 @@ impl ItemManifest {
         match tag {
             ItemTag::Compostable => data.compostable,
         }
+    }
+
+    /// Returns the complete list of tags that the given item belongs to.
+    pub fn tags(&self, item_id: Id<Item>) -> Vec<ItemTag> {
+        let data = self.get(item_id);
+
+        let mut tags = Vec::new();
+
+        if data.compostable {
+            tags.push(ItemTag::Compostable);
+        }
+
+        tags
+    }
+
+    /// Returns the complete list of [`ItemKind`] that this item belongs to.
+    pub fn kinds(&self, item_id: Id<Item>) -> Vec<ItemKind> {
+        let mut kinds = Vec::new();
+        kinds.push(ItemKind::Single(item_id));
+
+        for tag in self.tags(item_id) {
+            kinds.push(ItemKind::Tag(tag));
+        }
+
+        kinds
     }
 }
 
