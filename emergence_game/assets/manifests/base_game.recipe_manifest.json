@@ -52,7 +52,7 @@
 				"workers_required": 0,
 				"allowable_light_range": {
 					"min": 5000.0,
-					"max": 60000.0
+					"max": 80000.0
 				}
 			},
 			"energy": 20.0
