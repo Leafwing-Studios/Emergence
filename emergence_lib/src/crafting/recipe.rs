@@ -5,7 +5,7 @@ use crate::asset_management::manifest::{Id, Manifest};
 use crate::items::item_manifest::{Item, ItemManifest};
 use crate::items::{inventory::Inventory, ItemCount};
 use crate::{
-    crafting::{InputInventory, OutputInventory},
+    crafting::components::{InputInventory, OutputInventory},
     organisms::energy::Energy,
     simulation::light::{Illuminance, TotalLight},
 };

@@ -6,7 +6,7 @@ use rand::thread_rng;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::{ActiveRecipe, CraftingState},
+    crafting::components::{ActiveRecipe, CraftingState},
     simulation::geometry::{MapGeometry, TilePos},
 };
 

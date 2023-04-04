@@ -1,7 +1,7 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
+    crafting::components::RawActiveRecipe,
     crafting::recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
-    crafting::RawActiveRecipe,
     items::item_manifest::{ItemData, RawItemManifest},
     organisms::{
         energy::{Energy, EnergyPool},

@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
-    crafting::{ActiveRecipe, InputInventory, RawActiveRecipe},
+    crafting::components::{ActiveRecipe, InputInventory, RawActiveRecipe},
     items::{item_manifest::Item, slot::ItemSlot},
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     structures::construction::Footprint,

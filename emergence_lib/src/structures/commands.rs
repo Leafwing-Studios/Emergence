@@ -9,7 +9,10 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::{recipe::RecipeManifest, CraftingBundle, StorageInventory},
+    crafting::{
+        components::{CraftingBundle, StorageInventory},
+        recipe::RecipeManifest,
+    },
     graphics::InheritedMaterial,
     items::item_manifest::ItemManifest,
     organisms::OrganismBundle,

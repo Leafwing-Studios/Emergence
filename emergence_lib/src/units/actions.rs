@@ -7,7 +7,9 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 use crate::{
     asset_management::manifest::Id,
     crafting::{
-        CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+        components::{
+            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+        },
         WorkplaceQuery,
     },
     items::{

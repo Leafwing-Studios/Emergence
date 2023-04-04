@@ -422,7 +422,10 @@ mod ghost_details {
 
     use crate::{
         asset_management::manifest::Id,
-        crafting::{recipe::RecipeManifest, ActiveRecipe, CraftingState, InputInventory},
+        crafting::{
+            components::{ActiveRecipe, CraftingState, InputInventory},
+            recipe::RecipeManifest,
+        },
         items::item_manifest::ItemManifest,
         signals::Emitter,
         simulation::geometry::TilePos,
@@ -553,8 +556,11 @@ mod structure_details {
     use crate::{
         asset_management::manifest::Id,
         crafting::{
-            recipe::RecipeData, ActiveRecipe, CraftingState, InputInventory, OutputInventory,
-            StorageInventory, WorkersPresent,
+            components::{
+                ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
+                WorkersPresent,
+            },
+            recipe::RecipeData,
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
         simulation::geometry::TilePos,
