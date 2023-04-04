@@ -233,8 +233,11 @@ fn mark_based_on_zoning(
         // Reborrowing here would trigger change detection, causing this system to constantly check
         match zoning.bypass_change_detection() {
             Zoning::Structure(clipboard_data) => {
-                let structure_data = structure_manifest.get(clipboard_data.structure_id);
-                if structure_data.allowed_terrain_types().contains(&terrain) {
+                let construction_data =
+                    structure_manifest.construction_data(clipboard_data.structure_id);
+                let allowed_terrain_types = &construction_data.allowed_terrain_types;
+
+                if allowed_terrain_types.contains(&terrain) {
                     commands.spawn_ghost(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

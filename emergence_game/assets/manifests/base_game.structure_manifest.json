@@ -8,14 +8,15 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
-				"work": 5,
-				"materials": {},
-				"allowed_terrain_types": [
-					"rocky",
-					"loam",
-					"muddy"
-				]
+				"Direct": {
+					"work": 5,
+					"materials": {},
+					"allowed_terrain_types": [
+						"rocky",
+						"loam",
+						"muddy"
+					]
+				}
 			},
 			"max_workers": 6,
 			"footprint": {
@@ -38,16 +39,17 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
-				"work": 10,
-				"materials": {
-					"leuco_chunk": 1
-				},
-				"allowed_terrain_types": [
-					"loam",
-					"rocky",
-					"muddy"
-				]
+				"Direct": {
+					"work": 7,
+					"materials": {
+						"leuco_chunk": 1
+					},
+					"allowed_terrain_types": [
+						"rocky",
+						"loam",
+						"muddy"
+					]
+				}
 			},
 			"max_workers": 6,
 			"footprint": {
@@ -91,15 +93,16 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seedling",
-				"work": null,
-				"materials": {
-					"acacia_seed": 1
-				},
-				"allowed_terrain_types": [
-					"loam",
-					"muddy"
-				]
+				"Direct": {
+					"work": null,
+					"materials": {
+						"acacia_seed": 1
+					},
+					"allowed_terrain_types": [
+						"loam",
+						"muddy"
+					]
+				}
 			},
 			"max_workers": 1,
 			"footprint": {
@@ -135,15 +138,16 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
-				"work": null,
-				"materials": {
-					"leuco_chunk": 1
-				},
-				"allowed_terrain_types": [
-					"muddy",
-					"loam"
-				]
+				"Direct": {
+					"work": null,
+					"materials": {
+						"leuco_chunk": 1
+					},
+					"allowed_terrain_types": [
+						"loam",
+						"muddy"
+					]
+				}
 			},
 			"max_workers": 6,
 			"footprint": {
@@ -187,15 +191,7 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seedling",
-				"work": null,
-				"materials": {
-					"acacia_seedling": 1
-				},
-				"allowed_terrain_types": [
-					"loam",
-					"muddy"
-				]
+				"Seedling": "acacia_seedling"
 			},
 			"max_workers": 1,
 			"footprint": {
@@ -231,15 +227,7 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": "acacia_seedling",
-				"work": null,
-				"materials": {
-					"acacia_seed": 1
-				},
-				"allowed_terrain_types": [
-					"loam",
-					"muddy"
-				]
+				"Seedling": "acacia_seedling"
 			},
 			"max_workers": 6,
 			"footprint": {
@@ -261,14 +249,15 @@
 				}
 			},
 			"construction_strategy": {
-				"seedling": null,
-				"work": 10,
-				"materials": {},
-				"allowed_terrain_types": [
-					"rocky",
-					"loam",
-					"muddy"
-				]
+				"Direct": {
+					"work": 5.0,
+					"materials": {},
+					"allowed_terrain_types": [
+						"loam",
+						"muddy",
+						"rocky"
+					]
+				}
 			},
 			"max_workers": 3,
 			"footprint": {

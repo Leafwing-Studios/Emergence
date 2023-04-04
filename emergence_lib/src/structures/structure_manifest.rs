@@ -25,6 +25,17 @@ pub struct Structure;
 /// Stores the read-only definitions for all structures.
 pub type StructureManifest = Manifest<Structure, StructureData>;
 
+impl StructureManifest {
+    /// Fetches the [`ConstructionData`] for a given structure type.
+    pub fn construction_data(&self, structure_id: Id<Structure>) -> &ConstructionData {
+        let initial_strategy = &self.get(structure_id).construction_strategy;
+        match initial_strategy {
+            ConstructionStrategy::Seedling(seedling_id) => self.construction_data(*seedling_id),
+            ConstructionStrategy::Direct(data) => data,
+        }
+    }
+}
+
 /// Information about a single [`Id<Structure>`] variety of structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructureData {
@@ -75,11 +86,16 @@ impl From<RawStructureData> for StructureData {
 ///
 /// For structures that are part of a `Lifecycle`, this should generally be the same for all of them.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ConstructionStrategy {
-    /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
-    ///
-    /// If `None`, this structure can be built directly.
-    pub seedling: Option<Id<Structure>>,
+pub enum ConstructionStrategy {
+    /// Follows the construction strategy of another structure.
+    Seedling(Id<Structure>),
+    /// This structure can be built directly.
+    Direct(ConstructionData),
+}
+
+/// The data contained in a [`ConstructionStrategy::Direct`] variant.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConstructionData {
     /// The amount of work by units required to complete the construction of this building.
     ///
     /// If this is [`None`], no work will be needed at all.
@@ -92,40 +108,48 @@ pub struct ConstructionStrategy {
 
 /// The unprocessed equivalent of [`ConstructionStrategy`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct RawConstructionStrategy {
-    /// The "seedling" or "baby" form of this structure that should be built when we attempt to build a structure of this type.
-    ///
-    /// If this is [`None`], this structure can be built directly.
-    pub seedling: Option<String>,
-    /// The amount of work by units required to complete the construction of this building.
-    ///
-    /// If this is [`None`], no work will be needed at all.
-    pub work: Option<f32>,
-    /// The set of items needed to create a new copy of this structure
-    pub materials: HashMap<String, usize>,
-    /// The set of terrain types that this structure can be built on
-    pub allowed_terrain_types: HashSet<String>,
+pub enum RawConstructionStrategy {
+    /// Follows the construction strategy of another structure.
+    Seedling(String),
+    /// This structure can be built directly.
+    Direct {
+        /// The amount of work (in seconds) by units required to complete the construction of this building.
+        ///
+        /// If this is [`None`], no work will be needed at all.
+        work: Option<f32>,
+        /// The set of items needed to create a new copy of this structure
+        materials: HashMap<String, usize>,
+        /// The set of terrain types that this structure can be built on
+        allowed_terrain_types: HashSet<String>,
+    },
 }
 
 impl From<RawConstructionStrategy> for ConstructionStrategy {
     fn from(raw: RawConstructionStrategy) -> Self {
-        let inventory = raw
-            .materials
-            .into_iter()
-            .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
-            .collect();
+        match raw {
+            RawConstructionStrategy::Seedling(seedling_name) => {
+                ConstructionStrategy::Seedling(Id::from_name(seedling_name))
+            }
+            RawConstructionStrategy::Direct {
+                work,
+                materials,
+                allowed_terrain_types,
+            } => {
+                let inventory = materials
+                    .into_iter()
+                    .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
+                    .collect();
 
-        let materials = InputInventory { inventory };
-
-        Self {
-            seedling: raw.seedling.map(Id::from_name),
-            work: raw.work.map(Duration::from_secs_f32),
-            materials,
-            allowed_terrain_types: raw
-                .allowed_terrain_types
-                .into_iter()
-                .map(Id::from_name)
-                .collect(),
+                let materials = InputInventory { inventory };
+                ConstructionStrategy::Direct(ConstructionData {
+                    work: work.map(Duration::from_secs_f32),
+                    materials,
+                    allowed_terrain_types: allowed_terrain_types
+                        .into_iter()
+                        .map(Id::from_name)
+                        .collect(),
+                })
+            }
         }
     }
 }
@@ -191,11 +215,6 @@ impl StructureData {
         } else {
             &ActiveRecipe::NONE
         }
-    }
-
-    /// Returns the set of terrain types that this structure can be built on
-    pub fn allowed_terrain_types(&self) -> &HashSet<Id<Terrain>> {
-        &self.construction_strategy.allowed_terrain_types
     }
 }
 
