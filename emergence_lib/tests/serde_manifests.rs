@@ -129,10 +129,14 @@ fn can_serialize_recipe_manifest() {
     let raw_recipe_manifest = RawRecipeManifest {
         recipes: HashMap::from_iter(vec![
             (
-                "acacia_leaf_production".to_string(),
+                "mature_acacia_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::new(),
-                    outputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
+                    outputs: HashMap::from_iter([
+                        ("acacia_leaf".to_string(), 1.),
+                        // Output can be stochastic
+                        ("acacia_seed".to_string(), 0.1),
+                    ]),
                     craft_time: 3.,
                     conditions: RecipeConditions::new(
                         0,
@@ -145,7 +149,7 @@ fn can_serialize_recipe_manifest() {
                 "leuco_chunk_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
-                    outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
+                    outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
                     craft_time: 2.,
                     conditions: RecipeConditions::NONE,
                     energy: Some(Energy(40.)),
@@ -155,7 +159,7 @@ fn can_serialize_recipe_manifest() {
                 "ant_egg_production".to_string(),
                 RawRecipeData {
                     inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                    outputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
+                    outputs: HashMap::from_iter([("ant_egg".to_string(), 1.)]),
                     craft_time: 10.,
                     conditions: RecipeConditions {
                         workers_required: 2,
