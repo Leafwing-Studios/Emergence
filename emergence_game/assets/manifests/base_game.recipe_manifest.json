@@ -20,10 +20,7 @@
 				"leuco_chunk": 1
 			},
 			"craft_time": 2,
-			"conditions": {
-				"workers_required": 0,
-				"allowable_light_range": null
-			},
+			"conditions": null,
 			"energy": 40.0
 		},
 		"acacia_leaf_production": {
