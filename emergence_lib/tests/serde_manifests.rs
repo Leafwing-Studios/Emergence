@@ -1,8 +1,9 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
     crafting::components::RawActiveRecipe,
-    crafting::recipe::{
-        RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold,
+    crafting::{
+        item_tags::ItemTag,
+        recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
     },
     items::item_manifest::{ItemData, RawItemManifest},
     organisms::{
@@ -160,7 +161,10 @@ fn can_serialize_recipe_manifest() {
             (
                 "leuco_chunk_production".to_string(),
                 RawRecipeData {
-                    inputs: RawRecipeInput::single("acacia_leaf", 1),
+                    inputs: RawRecipeInput::Flexible {
+                        tag: ItemTag::Compostable,
+                        count: 1,
+                    },
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
                     craft_time: 2.,
                     conditions: None,
