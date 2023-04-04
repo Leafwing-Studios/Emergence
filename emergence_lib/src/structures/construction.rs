@@ -267,7 +267,7 @@ pub(super) fn ghost_lifecycle(
 
         match *crafting_state {
             CraftingState::NeedsInput => {
-                *crafting_state = match input_inventory.is_full() {
+                *crafting_state = match input_inventory.inventory().is_full() {
                     true => CraftingState::InProgress {
                         progress: Duration::ZERO,
                         required: construction_data.work.unwrap_or_default(),

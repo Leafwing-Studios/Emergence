@@ -318,7 +318,7 @@ fn get_details(
                         maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
                     Some(CraftingDetails {
-                        input_inventory: input.inventory.clone(),
+                        input_inventory: input.inventory().clone(),
                         output_inventory: output.inventory.clone(),
                         recipe,
                         workers_present: workers_present.clone(),

@@ -21,6 +21,7 @@ use self::components::{
 };
 
 pub mod components;
+pub mod item_tags;
 pub mod recipe;
 
 /// Add crafting capabilities to structures.
@@ -81,7 +82,7 @@ fn progress_crafting(
             CraftingState::NeedsInput | CraftingState::Overproduction => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    match crafter.input.remove_items_all_or_nothing(&recipe.inputs) {
+                    match crafter.input.consume_items(&recipe.inputs, &item_manifest) {
                         Ok(()) => CraftingState::InProgress {
                             progress: Duration::ZERO,
                             required: recipe.craft_time,

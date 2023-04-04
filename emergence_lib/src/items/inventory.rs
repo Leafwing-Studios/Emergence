@@ -35,7 +35,7 @@ pub struct Inventory {
 
 /// The fullness of an inventory
 #[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
-pub(crate) enum InventoryState {
+pub enum InventoryState {
     /// Fully empty.
     Empty,
     /// Neither empty nor full.
@@ -51,7 +51,7 @@ impl InventoryState {
     /// Empty + Empty = Empty
     /// Full + Full = Full
     /// Otherwise, Partial
-    fn combine(&self, other: InventoryState) -> Self {
+    pub fn combine(&self, other: InventoryState) -> Self {
         use InventoryState::*;
         match (self, other) {
             (Empty, Empty) => Empty,
@@ -73,7 +73,7 @@ impl Inventory {
     }
 
     /// Creates an inventory that can store up to `max` items of the type `item_id`.
-    pub fn new_from_item(item_id: Id<Item>, max: usize) -> Self {
+    pub fn new_from_item(item_id: Id<Item>, max: u32) -> Self {
         Self {
             reserved_for: Some(item_id),
             slots: vec![ItemSlot::new(item_id, max)],
@@ -125,7 +125,7 @@ impl Inventory {
     }
 
     /// Determine how many items of the given type are in the inventory.
-    pub(crate) fn item_count(&self, item_id: Id<Item>) -> usize {
+    pub(crate) fn item_count(&self, item_id: Id<Item>) -> u32 {
         self.slots
             .iter()
             .filter_map(|slot| {
@@ -159,7 +159,7 @@ impl Inventory {
     }
 
     /// The remaining space for the item in the slots that it already occupies.
-    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: Id<Item>) -> usize {
+    pub(crate) fn remaining_reserved_space_for_item(&self, item_id: Id<Item>) -> u32 {
         if !self.permits(item_id) {
             return 0;
         }
@@ -173,7 +173,7 @@ impl Inventory {
                     None
                 }
             })
-            .sum::<usize>()
+            .sum()
     }
 
     /// The number of items of the given type that can still fit in the inventory.
@@ -181,7 +181,7 @@ impl Inventory {
         &self,
         item_id: Id<Item>,
         item_manifest: &ItemManifest,
-    ) -> usize {
+    ) -> u32 {
         if !self.permits(item_id) {
             return 0;
         }
@@ -189,7 +189,7 @@ impl Inventory {
         // We can fill up the remaining space in the slots for this item...
         self.remaining_reserved_space_for_item(item_id)
             // ...and use up the remaining free slots
-            + self.free_slot_count() * item_manifest.get(item_id).stack_size
+            + self.free_slot_count() as u32 * item_manifest.get(item_id).stack_size
     }
 
     /// Clears any inventory stacks with 0 items in them.
@@ -372,7 +372,7 @@ impl Inventory {
 
                 let remaining_reserved_space =
                     self.remaining_reserved_space_for_item(item_count.item_id);
-                let remaining_free_space = free_slot_count * stack_size;
+                let remaining_free_space = free_slot_count as u32 * stack_size;
 
                 let excess = item_count
                     .count

@@ -113,7 +113,7 @@ pub enum RawConstructionStrategy {
         /// If this is [`None`], no work will be needed at all.
         work: Option<f32>,
         /// The set of items needed to create a new copy of this structure
-        materials: HashMap<String, usize>,
+        materials: HashMap<String, u32>,
         /// The set of terrain types that this structure can be built on
         allowed_terrain_types: HashSet<String>,
     },
@@ -135,7 +135,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
                     .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
                     .collect();
 
-                let materials = InputInventory { inventory };
+                let materials = InputInventory::Exact { inventory };
                 ConstructionStrategy::Direct(ConstructionData {
                     work: work.map(Duration::from_secs_f32),
                     materials,

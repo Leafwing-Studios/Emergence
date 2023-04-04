@@ -18,12 +18,12 @@ pub struct ItemCount {
     pub item_id: Id<Item>,
 
     /// The number of items.
-    pub count: usize,
+    pub count: u32,
 }
 
 impl ItemCount {
     /// Create a new item count with the given number of items.
-    pub fn new(item_id: Id<Item>, count: usize) -> Self {
+    pub fn new(item_id: Id<Item>, count: u32) -> Self {
         Self { item_id, count }
     }
 

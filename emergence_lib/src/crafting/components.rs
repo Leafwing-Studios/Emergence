@@ -1,6 +1,9 @@
 //! The components needed to create a [`CraftingBundle`].
 
-use super::recipe::{Recipe, RecipeData, RecipeManifest, RecipeOutput};
+use super::{
+    item_tags::ItemTag,
+    recipe::{Recipe, RecipeData, RecipeInput, RecipeManifest, RecipeOutput},
+};
 
 use crate::{
     asset_management::manifest::Id,
@@ -8,6 +11,7 @@ use crate::{
         errors::{AddManyItemsError, AddOneItemError},
         inventory::Inventory,
         item_manifest::{Item, ItemManifest},
+        slot::ItemSlot,
         ItemCount,
     },
     signals::Emitter,
@@ -85,19 +89,181 @@ impl Display for CraftingState {
 }
 
 /// The input inventory for a structure.
-#[derive(Component, Clone, Debug, Default, Deref, DerefMut, PartialEq, Serialize, Deserialize)]
-pub struct InputInventory {
-    /// Inner storage
-    pub inventory: Inventory,
+#[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum InputInventory {
+    /// Accepts precisely the provided inputs
+    Exact {
+        /// The required items per batch of this recipe.
+        inventory: Inventory,
+    },
+    /// Accepts any input that has the correct tags
+    Tagged {
+        /// The required tag to use this recipe.
+        tag: ItemTag,
+        /// The currently stored items
+        inventory: Inventory,
+    },
 }
 
 impl InputInventory {
-    /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
-        for item_slot in self.iter_mut() {
-            item_slot.randomize(rng);
+    /// Returns a reference the underlying [`Inventory`].
+    pub fn inventory(&self) -> &Inventory {
+        match self {
+            InputInventory::Exact { inventory } => inventory,
+            InputInventory::Tagged { inventory, .. } => inventory,
         }
     }
+
+    /// Returns a mutable reference the underlying [`Inventory`].
+    fn inventory_mut(&mut self) -> &mut Inventory {
+        match self {
+            InputInventory::Exact { inventory } => inventory,
+            InputInventory::Tagged { inventory, .. } => inventory,
+        }
+    }
+
+    /// Returns an iterator over the items currently in this inventory.
+    pub fn iter(&self) -> impl Iterator<Item = &ItemSlot> {
+        self.inventory().iter()
+    }
+
+    /// Returns the number of items in this inventory.
+    pub fn len(&self) -> usize {
+        // PERF: this is slow and lazy
+        self.iter().count()
+    }
+
+    /// Is this inventory empty?
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Does this inventory have space for at least one item of the given type?
+    pub fn currently_accepts(&self, item_id: Id<Item>, item_manifest: &ItemManifest) -> bool {
+        match self {
+            InputInventory::Exact { inventory } => {
+                inventory.remaining_reserved_space_for_item(item_id) > 0
+            }
+            InputInventory::Tagged { tag, inventory } => {
+                item_manifest.has_tag(item_id, *tag)
+                    && inventory.remaining_space_for_item(item_id, item_manifest) > 0
+            }
+        }
+    }
+
+    /// Try to add items to this inventory.
+    pub fn fill_with_items(
+        &mut self,
+        item_count: &ItemCount,
+        item_manifest: &ItemManifest,
+    ) -> Result<(), AddToInputError> {
+        if let InputInventory::Tagged { tag, .. } = self {
+            if !item_manifest.has_tag(item_count.item_id, *tag) {
+                return Err(AddToInputError::IncorrectItemTags);
+            }
+        };
+
+        match self
+            .inventory_mut()
+            .add_item_all_or_nothing(item_count, item_manifest)
+        {
+            Ok(()) => Ok(()),
+            Err(AddOneItemError { excess_count }) => {
+                Err(AddToInputError::NotEnoughSpace { excess_count })
+            }
+        }
+    }
+
+    /// Try to remove the items specified by `recipe` from the inventory.
+    pub fn consume_items(
+        &mut self,
+        recipe_input: &RecipeInput,
+        item_manifest: &ItemManifest,
+    ) -> Result<(), ConsumeInputError> {
+        let inventory = self.inventory_mut();
+
+        match recipe_input {
+            RecipeInput::Exact(item_counts) => {
+                match inventory.remove_items_all_or_nothing(item_counts) {
+                    Ok(()) => Ok(()),
+                    Err(_) => Err(ConsumeInputError::NotEnoughItems),
+                }
+            }
+            RecipeInput::Flexible { tag, count } => {
+                let mut remaining_to_remove = *count;
+                let mut proposed_removal: Vec<ItemCount> = Vec::new();
+
+                for item_slot in inventory.iter() {
+                    // Verify that all items in the inventory are correct
+                    if !item_manifest.has_tag(item_slot.item_id(), *tag) {
+                        return Err(ConsumeInputError::IncorrectItemTags);
+                    }
+
+                    // Remove items from the inventory, beginning at the start of the inventory
+                    let n = item_slot.count();
+                    let removed_from_this_stack = std::cmp::min(n, remaining_to_remove);
+                    proposed_removal.push(ItemCount {
+                        item_id: item_slot.item_id(),
+                        count: removed_from_this_stack,
+                    });
+                    remaining_to_remove -= removed_from_this_stack;
+
+                    if remaining_to_remove == 0 {
+                        break;
+                    }
+                }
+
+                if remaining_to_remove > 0 {
+                    return Err(ConsumeInputError::NotEnoughItems);
+                }
+
+                match inventory.remove_items_all_or_nothing(&proposed_removal) {
+                    Ok(()) => Ok(()),
+                    Err(_) => panic!("Inventory should have had enough items to remove"),
+                }
+            }
+        }
+    }
+
+    /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
+    ///
+    /// Note that this only works for [`InputInventory::Exact`].
+    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
+        if let InputInventory::Exact { inventory } = self {
+            for item_slot in inventory.iter_mut() {
+                item_slot.randomize(rng);
+            }
+        }
+    }
+
+    /// The pretty formatting for this type.
+    pub fn display(&self, item_manifest: &ItemManifest) -> String {
+        match self {
+            InputInventory::Exact { inventory } => inventory.display(item_manifest),
+            InputInventory::Tagged { tag, inventory } => {
+                format!("{}: {}", tag, inventory.display(item_manifest))
+            }
+        }
+    }
+}
+
+/// An error that can occur when trying to consume items from an [`InputInventory`].
+pub enum ConsumeInputError {
+    /// Not enough items in the inventory.
+    NotEnoughItems,
+    /// The items in the inventory did not match the provided recipe.
+    IncorrectItemTags,
+}
+
+/// An error that can occur when trying to add items to an [`InputInventory`].
+pub enum AddToInputError {
+    /// Not enough space in the inventory.
+    NotEnoughSpace {
+        /// The items that could not be added.
+        excess_count: ItemCount,
+    },
+    /// The items in the inventory did not match the provided recipe.
+    IncorrectItemTags,
 }
 
 /// The output inventory for a structure.
@@ -140,9 +306,9 @@ impl OutputInventory {
                     // and then produce one extra items with probability remainder.
                     let (quotient, remainder) = (number / 1.0, number % 1.0);
                     let count = if remainder == 0. || distribution.sample(rng) > remainder {
-                        quotient as usize
+                        quotient as u32
                     } else {
-                        quotient as usize + 1
+                        quotient as u32 + 1
                     };
 
                     let output = ItemCount::new(*item_id, count);
@@ -306,7 +472,7 @@ impl CraftingBundle {
             }
         } else {
             Self {
-                input_inventory: InputInventory {
+                input_inventory: InputInventory::Exact {
                     inventory: Inventory::new(0, None),
                 },
                 output_inventory: OutputInventory {

@@ -6,7 +6,10 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::IsRawManifest, Manifest};
+use crate::{
+    asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
+    crafting::item_tags::ItemTag,
+};
 
 /// The marker type for [`Id<Item>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -14,11 +17,22 @@ pub struct Item;
 /// Stores the read-only definitions for all items.
 pub type ItemManifest = Manifest<Item, ItemData>;
 
+impl ItemManifest {
+    /// Does the provided `item_id` meet the requirements of the given `tag`?
+    pub fn has_tag(&self, item_id: Id<Item>, tag: ItemTag) -> bool {
+        let data = self.get(item_id);
+
+        match tag {
+            ItemTag::Compostable => data.compostable,
+        }
+    }
+}
+
 /// The data associated with each item.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ItemData {
     /// The number of items that can fit in a single item slot.
-    pub stack_size: usize,
+    pub stack_size: u32,
     /// Can this item be composted?
     pub compostable: bool,
 }

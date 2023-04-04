@@ -10,9 +10,11 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 use crate::{
     asset_management::manifest::Id,
     crafting::components::{
-        CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+        AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
+        WorkersPresent,
     },
     items::{
+        errors::AddOneItemError,
         item_manifest::{Item, ItemManifest},
         ItemCount,
     },
@@ -133,6 +135,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &signals,
                             rng,
+                            &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
                             map_geometry,
@@ -309,18 +312,26 @@ pub(super) fn finish_actions(
                             Some(held_item_id) => {
                                 if held_item_id == *item_id {
                                     let item_count = ItemCount::new(held_item_id, 1);
-                                    let transfer_result =
-                                        if let Some(mut input_inventory) = maybe_input_inventory {
-                                            input_inventory
-                                                .add_item_all_or_nothing(&item_count, item_manifest)
-                                        } else if let Some(mut storage_inventory) =
-                                            maybe_storage_inventory
-                                        {
-                                            storage_inventory
-                                                .add_item_all_or_nothing(&item_count, item_manifest)
-                                        } else {
-                                            unreachable!()
-                                        };
+                                    let transfer_result = if let Some(mut input_inventory) =
+                                        maybe_input_inventory
+                                    {
+                                        input_inventory.fill_with_items(&item_count, item_manifest)
+                                    } else if let Some(mut storage_inventory) =
+                                        maybe_storage_inventory
+                                    {
+                                        let storage_result = storage_inventory
+                                            .add_item_all_or_nothing(&item_count, item_manifest);
+                                        match storage_result {
+                                            Ok(()) => Ok(()),
+                                            Err(AddOneItemError { excess_count }) => {
+                                                Err(AddToInputError::NotEnoughSpace {
+                                                    excess_count,
+                                                })
+                                            }
+                                        }
+                                    } else {
+                                        unreachable!()
+                                    };
 
                                     // If our unit is unloaded, swap to wandering to find something else to do
                                     match transfer_result {
@@ -640,7 +651,7 @@ impl CurrentAction {
             if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_id, item_manifest) {
                             receptacles.push((ghost_entity, tile_pos));
                         }
                     }
@@ -653,7 +664,7 @@ impl CurrentAction {
                     input_inventory_query.get(structure_entity)
                 {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_id, item_manifest) {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
@@ -702,6 +713,7 @@ impl CurrentAction {
         >,
         signals: &Signals,
         rng: &mut ThreadRng,
+        item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
@@ -714,7 +726,7 @@ impl CurrentAction {
             if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_id, item_manifest) {
                             receptacles.push((ghost_entity, tile_pos));
                         }
                     }
@@ -728,7 +740,7 @@ impl CurrentAction {
                     input_inventory_query.get(structure_entity)
                 {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_id, item_manifest) {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     }

@@ -14,23 +14,23 @@ use super::{
 
 /// Multiple items of the same type.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) struct ItemSlot {
+pub struct ItemSlot {
     /// The unique identifier of the item that occupies the slot.
     item_id: Id<Item>,
 
     /// The maximum number of items that fit in the slot.
-    max_item_count: usize,
+    max_item_count: u32,
 
     /// The number of items in the slot.
     ///
     /// This is guaranteed to be smaller than or equal to the `max_item_count`.
-    count: usize,
+    count: u32,
 }
 
 #[allow(dead_code)]
 impl ItemSlot {
     /// Create an empty slot for the given item.
-    pub(crate) fn new(item_id: Id<Item>, max_item_count: usize) -> Self {
+    pub fn new(item_id: Id<Item>, max_item_count: u32) -> Self {
         Self {
             item_id,
             max_item_count,
@@ -44,7 +44,7 @@ impl ItemSlot {
     ///
     /// It must be `count <= max_item_count` or this function will panic.
     #[cfg(test)]
-    pub(crate) fn new_with_count(item_id: Id<Item>, max_item_count: usize, count: usize) -> Self {
+    pub fn new_with_count(item_id: Id<Item>, max_item_count: u32, count: u32) -> Self {
         assert!(count <= max_item_count);
 
         Self {
@@ -55,7 +55,7 @@ impl ItemSlot {
     }
 
     /// How full is this item slot?
-    pub(crate) fn state(&self) -> InventoryState {
+    pub fn state(&self) -> InventoryState {
         if self.is_empty() {
             InventoryState::Empty
         } else if self.is_full() {
@@ -66,37 +66,37 @@ impl ItemSlot {
     }
 
     /// The unique identifier of the item in the slot.
-    pub(crate) fn item_id(&self) -> Id<Item> {
+    pub fn item_id(&self) -> Id<Item> {
         self.item_id
     }
 
     /// The number of items in this slot.
-    pub(crate) fn count(&self) -> usize {
+    pub fn count(&self) -> u32 {
         self.count
     }
 
     /// The maximum number of items that can fit in this slot.
-    pub(crate) fn max_item_count(&self) -> usize {
+    pub fn max_item_count(&self) -> u32 {
         self.max_item_count
     }
 
     /// The number of items that can still fit in the item slot.
-    pub(crate) fn remaining_space(&self) -> usize {
+    pub fn remaining_space(&self) -> u32 {
         self.max_item_count - self.count
     }
 
     /// Returns `true` if there are no items stored in this slot.
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.count == 0
     }
 
     /// Returns `true` if the maximum item count of this slot has been reached.
-    pub(crate) fn is_full(&self) -> bool {
+    pub fn is_full(&self) -> bool {
         self.count == self.max_item_count
     }
 
     /// Determine if this slot can hold items of the given type.
-    pub(crate) fn is_for_item(&self, item_id: Id<Item>) -> bool {
+    pub fn is_for_item(&self, item_id: Id<Item>) -> bool {
         self.item_id == item_id
     }
 
@@ -104,7 +104,7 @@ impl ItemSlot {
     ///
     /// - If all items can fit in the slot, they are all added and `Ok` is returned.
     /// - Otherwise, all items that can fit are added and `Err` is returned.
-    pub(crate) fn add_until_full(&mut self, count: usize) -> Result<(), AddOneItemError> {
+    pub fn add_until_full(&mut self, count: u32) -> Result<(), AddOneItemError> {
         let new_count = self.count + count;
 
         if new_count > self.max_item_count {
@@ -123,7 +123,7 @@ impl ItemSlot {
     ///
     /// - If the items can fit in the slot, they are all added and `Ok` is returned.
     /// - If at least one of the items does not fit, _no_ items are added and `Err` is returned.
-    pub(crate) fn add_all_or_nothing(&mut self, count: usize) -> Result<(), AddOneItemError> {
+    pub fn add_all_or_nothing(&mut self, count: u32) -> Result<(), AddOneItemError> {
         if self.remaining_space() < count {
             Err(AddOneItemError {
                 excess_count: ItemCount::new(
@@ -141,7 +141,7 @@ impl ItemSlot {
     ///
     /// - If the slot has enough items, they are all removed and `Ok` is returned.
     /// - Otherwise, all items that are included are removed and `Err` is returned.
-    pub(crate) fn remove_until_empty(&mut self, count: usize) -> Result<(), RemoveOneItemError> {
+    pub fn remove_until_empty(&mut self, count: u32) -> Result<(), RemoveOneItemError> {
         if count > self.count {
             let missing_count = ItemCount::new(self.item_id(), count - self.count);
             self.count = 0;
@@ -157,7 +157,7 @@ impl ItemSlot {
     ///
     /// - If there are enough items in the slot, they are all removed and `Ok` is returned.
     /// - If there are not enough items, _no_ item is removed and `Err` is returned.
-    pub(crate) fn remove_all_or_nothing(&mut self, count: usize) -> Result<(), RemoveOneItemError> {
+    pub fn remove_all_or_nothing(&mut self, count: u32) -> Result<(), RemoveOneItemError> {
         if count > self.count {
             let missing_count = ItemCount::new(self.item_id(), count - self.count);
             Err(RemoveOneItemError { missing_count })
@@ -170,7 +170,7 @@ impl ItemSlot {
     /// Randomizes the quantity of items in this slot, return `self`.
     ///
     /// The new value will be chosen uniformly between 0 and `max_item_count`.
-    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub fn randomize(&mut self, rng: &mut ThreadRng) {
         let distribution = Uniform::new(0, self.max_item_count);
         self.count = distribution.sample(rng);
     }
