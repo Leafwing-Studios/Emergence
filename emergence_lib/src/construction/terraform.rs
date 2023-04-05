@@ -37,7 +37,7 @@ impl Plugin for TerraformingPlugin {
 /// These are generally higher level than the actual [`TerraformingAction`]s,
 /// which represent the actual changes to the terrain that can be performed by units.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum TerraformingChoice {
+pub(crate) enum TerraformingTool {
     /// Raise the height of this tile once
     Raise,
     /// Lower the height of this tile once
@@ -47,7 +47,7 @@ pub(crate) enum TerraformingChoice {
 }
 
 /// When `Zoning` is set, this is added  as a component added to terrain ghosts, causing them to be manipulated by units.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) enum TerraformingAction {
     /// Raise the height of this tile once
     Raise,
@@ -68,12 +68,12 @@ impl TerraformingAction {
     }
 }
 
-impl From<TerraformingChoice> for TerraformingAction {
-    fn from(choice: TerraformingChoice) -> Self {
+impl From<TerraformingTool> for TerraformingAction {
+    fn from(choice: TerraformingTool) -> Self {
         match choice {
-            TerraformingChoice::Raise => Self::Raise,
-            TerraformingChoice::Lower => Self::Lower,
-            TerraformingChoice::Change(terrain) => Self::Change(terrain),
+            TerraformingTool::Raise => Self::Raise,
+            TerraformingTool::Lower => Self::Lower,
+            TerraformingTool::Change(terrain) => Self::Change(terrain),
         }
     }
 }

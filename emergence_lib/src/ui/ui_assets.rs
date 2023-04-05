@@ -6,7 +6,7 @@ use core::hash::Hash;
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    construction::terraform::TerraformingChoice,
+    construction::terraform::TerraformingTool,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
 };
@@ -66,7 +66,7 @@ impl FromWorld for Icons<Id<Structure>> {
     }
 }
 
-impl FromWorld for Icons<TerraformingChoice> {
+impl FromWorld for Icons<TerraformingTool> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         let mut map = HashMap::new();
@@ -78,17 +78,17 @@ impl FromWorld for Icons<TerraformingChoice> {
             let terrain_path = format!("icons/terrain/{id}.png");
             let icon = asset_server.load(terrain_path);
 
-            let choice = TerraformingChoice::Change(terrain_id);
+            let choice = TerraformingTool::Change(terrain_id);
             map.insert(choice, icon);
         }
 
         map.insert(
-            TerraformingChoice::Lower,
+            TerraformingTool::Lower,
             asset_server.load("icons/terraforming/lower.png"),
         );
 
         map.insert(
-            TerraformingChoice::Raise,
+            TerraformingTool::Raise,
             asset_server.load("icons/terraforming/raise.png"),
         );
 

@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::AssetState,
-    construction::terraform::TerraformingChoice,
+    construction::terraform::TerraformingTool,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{clipboard::Clipboard, PlayerAction},
     terrain::terrain_manifest::TerrainManifest,
@@ -22,11 +22,11 @@ pub(super) struct SelectTerraformingPlugin;
 
 impl Plugin for SelectTerraformingPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AvailableChoices<TerraformingChoice>>()
+        app.init_resource::<AvailableChoices<TerraformingTool>>()
             .add_systems(
                 (
                     update_terraforming_choices,
-                    spawn_hex_menu::<TerraformingChoice>,
+                    spawn_hex_menu::<TerraformingTool>,
                 )
                     .distributive_run_if(in_state(AssetState::Ready))
                     .chain(),
@@ -34,22 +34,22 @@ impl Plugin for SelectTerraformingPlugin {
             .add_system(
                 select_hex
                     .pipe(handle_selection)
-                    .run_if(resource_exists::<HexMenuArrangement<TerraformingChoice>>()),
+                    .run_if(resource_exists::<HexMenuArrangement<TerraformingTool>>()),
             );
     }
 }
 
-impl Choice for TerraformingChoice {
+impl Choice for TerraformingTool {
     const ACTIVATION: PlayerAction = PlayerAction::SelectTerraform;
 }
 
 /// Update the set of choices available to build whenever the terrain manifest is updated
 fn update_terraforming_choices(
-    mut available_choices: ResMut<AvailableChoices<TerraformingChoice>>,
+    mut available_choices: ResMut<AvailableChoices<TerraformingTool>>,
     terrain_manifest: Res<TerrainManifest>,
 ) {
     if terrain_manifest.is_changed() {
-        available_choices.choices = vec![TerraformingChoice::Raise, TerraformingChoice::Lower];
+        available_choices.choices = vec![TerraformingTool::Raise, TerraformingTool::Lower];
 
         // Sort to ensure a stable ordering
         // The lint here is just wrong
@@ -58,19 +58,19 @@ fn update_terraforming_choices(
             .variants()
             .into_iter()
             .sorted()
-            .map(|terrain_id| TerraformingChoice::Change(terrain_id));
+            .map(|terrain_id| TerraformingTool::Change(terrain_id));
         available_choices.choices.extend(terrain_choices);
     }
 }
 
 /// Set the selected terraforming choice based on the results of the hex menu.
 fn handle_selection(
-    In(result): In<Result<HexMenuElement<TerraformingChoice>, HexMenuError>>,
+    In(result): In<Result<HexMenuElement<TerraformingTool>, HexMenuError>>,
     mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     menu_query: Query<Entity, With<HexMenu>>,
     mut clipboard: ResMut<Clipboard>,
     commands: Commands,
-    arrangement: Res<HexMenuArrangement<TerraformingChoice>>,
+    arrangement: Res<HexMenuArrangement<TerraformingTool>>,
 ) {
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
@@ -78,7 +78,7 @@ fn handle_selection(
             commands.entity(entity).despawn_recursive();
         }
 
-        commands.remove_resource::<HexMenuArrangement<TerraformingChoice>>();
+        commands.remove_resource::<HexMenuArrangement<TerraformingTool>>();
     }
 
     match result {

@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::manifest::Id,
-    construction::{ghosts::Preview, terraform::TerraformingChoice},
+    construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::components::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::structure_manifest::Structure,
@@ -41,7 +41,7 @@ impl Plugin for ClipboardPlugin {
 #[derive(Default, Resource, Debug)]
 pub(crate) enum Clipboard {
     /// The clipboard is set to terraform terrain.
-    Terraform(TerraformingChoice),
+    Terraform(TerraformingTool),
     /// The clipboard contains a structure.
     Structures(HashMap<TilePos, ClipboardData>),
     /// The clipboard is empty.

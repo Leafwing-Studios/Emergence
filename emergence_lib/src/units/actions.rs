@@ -12,6 +12,7 @@ use crate::{
     construction::{
         demolition::{DemolitionQuery, MarkedForDemolition},
         ghosts::WorkplaceId,
+        terraform::TerraformingAction,
     },
     crafting::{
         components::{
@@ -1124,7 +1125,7 @@ pub(crate) struct WorkplaceQuery<'w, 's> {
         's,
         (
             &'static CraftingState,
-            AnyOf<(&'static Id<Structure>, &'static Id<Terrain>)>,
+            AnyOf<(&'static Id<Structure>, &'static TerraformingAction)>,
             &'static WorkersPresent,
         ),
     >,

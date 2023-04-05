@@ -25,6 +25,8 @@ use crate::{
     simulation::geometry::{Facing, TilePos},
 };
 
+use super::terraform::TerraformingAction;
+
 pub struct GhostPlugin;
 
 impl Plugin for GhostPlugin {
@@ -218,7 +220,7 @@ impl StructurePreviewBundle {
 pub(super) fn ghost_signals(
     mut ghost_query: Query<
         (
-            AnyOf<(&Id<Structure>, &Id<Terrain>)>,
+            AnyOf<(&Id<Structure>, &TerraformingAction)>,
             &mut Emitter,
             Ref<CraftingState>,
             &InputInventory,
@@ -279,7 +281,7 @@ pub(crate) enum WorkplaceId {
     /// This workplace is a structure
     Structure(Id<Structure>),
     /// This workplace is a terrain modification
-    Terrain(Id<Terrain>),
+    Terrain(TerraformingAction),
 }
 
 impl WorkplaceId {
@@ -289,10 +291,10 @@ impl WorkplaceId {
     ///
     /// # Panics
     /// Panics if both `structure_id` and `terrain_id` are `Some`.
-    pub(crate) fn new(ids: (Option<&Id<Structure>>, Option<&Id<Terrain>>)) -> Self {
+    pub(crate) fn new(ids: (Option<&Id<Structure>>, Option<&TerraformingAction>)) -> Self {
         match ids {
             (Some(structure_id), None) => WorkplaceId::Structure(*structure_id),
-            (None, Some(terrain_id)) => WorkplaceId::Terrain(*terrain_id),
+            (None, Some(terraforming_choice)) => WorkplaceId::Terrain(*terraforming_choice),
             _ => panic!("Workplace must be either a terrain XOR a structure"),
         }
     }
@@ -302,9 +304,10 @@ impl WorkplaceId {
         WorkplaceId::Structure(structure_id)
     }
 
-    /// Creates a new [`WorkplaceId`] from a [`Id<Terrain>`].
-    pub(crate) fn terrain(terrain_id: Id<Terrain>) -> Self {
-        WorkplaceId::Terrain(terrain_id)
+    /// Creates a new [`WorkplaceId`] from a [`TerraformingAction`].
+    #[allow(dead_code)]
+    pub(crate) fn terrain(terraforming_choice: TerraformingAction) -> Self {
+        WorkplaceId::Terrain(terraforming_choice)
     }
 
     /// Returns the pretty name of this workplace.
@@ -315,7 +318,9 @@ impl WorkplaceId {
     ) -> &str {
         match self {
             WorkplaceId::Structure(structure_id) => structure_manifest.name(*structure_id),
-            WorkplaceId::Terrain(terrain_id) => terrain_manifest.name(*terrain_id),
+            WorkplaceId::Terrain(terraforming_action) => {
+                &terraforming_action.display(terrain_manifest)
+            }
         }
     }
 }
