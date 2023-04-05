@@ -605,6 +605,8 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 
 #[cfg(test)]
 mod tests {
+    use crate::items::item_manifest::ItemData;
+
     use super::*;
 
     fn test_item() -> ItemKind {
@@ -613,6 +615,18 @@ mod tests {
 
     fn test_structure() -> Id<Structure> {
         Id::from_name("67890".to_string())
+    }
+
+    fn test_manifest() -> ItemManifest {
+        let mut manifest = ItemManifest::new();
+        manifest.insert(
+            "12345".to_string(),
+            ItemData {
+                stack_size: 1,
+                compostable: false,
+            },
+        );
+        manifest
     }
 
     #[test]
@@ -644,7 +658,7 @@ mod tests {
     fn upstream_returns_none_with_no_signals() {
         let signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         assert_eq!(
             signals.upstream(
@@ -688,7 +702,7 @@ mod tests {
     fn upstream_returns_none_at_trivial_peak() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
@@ -711,7 +725,7 @@ mod tests {
     fn upstream_returns_none_at_peak() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Push(test_item()),
@@ -739,7 +753,7 @@ mod tests {
     fn upstream_returns_none_at_peak_dropoff() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
@@ -766,7 +780,7 @@ mod tests {
     fn upstream_returns_some_at_trivial_valley() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -786,7 +800,7 @@ mod tests {
     fn upstream_returns_some_at_valley() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
-        let item_manifest = ItemManifest::new();
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
