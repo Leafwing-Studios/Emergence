@@ -167,7 +167,7 @@ fn set_zoning(
                         }
                         false => {
                             for &tile_pos in relevant_tiles.selection().iter() {
-                                commands.spawn_preview(tile_pos, clipboard_item.clone());
+                                commands.spawn_preview_structure(tile_pos, clipboard_item.clone());
                             }
                         }
                     }
@@ -187,7 +187,7 @@ fn set_zoning(
                                 }
                             }
                             false => {
-                                commands.spawn_preview(tile_pos, clipboard_item);
+                                commands.spawn_preview_structure(tile_pos, clipboard_item);
                             }
                         }
                     }
@@ -233,7 +233,7 @@ fn mark_based_on_zoning(
                 let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
                 if allowed_terrain_types.contains(&terrain) {
-                    commands.spawn_ghost(tile_pos, clipboard_data.clone())
+                    commands.spawn_ghost_structure(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;
                     // We bypassed change detection above, so need to manually trigger it here.
@@ -243,9 +243,9 @@ fn mark_based_on_zoning(
             Zoning::Terraform(mark) => {
                 commands.entity(terrain_entity).insert(*mark);
             }
-            Zoning::None => commands.despawn_ghost(tile_pos),
+            Zoning::None => commands.despawn_ghost_structure(tile_pos),
             Zoning::KeepClear => {
-                commands.despawn_ghost(tile_pos);
+                commands.despawn_ghost_structure(tile_pos);
                 if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                     commands
                         .entity(structure_entity)

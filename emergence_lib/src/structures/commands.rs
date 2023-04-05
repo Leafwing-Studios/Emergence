@@ -55,17 +55,17 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a ghost with data defined by `data` at `tile_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Despawns any ghost at the provided `tile_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_ghost(&mut self, tile_pos: TilePos);
+    fn despawn_ghost_structure(&mut self, tile_pos: TilePos);
 
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
@@ -97,15 +97,15 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnStructureCommand { tile_pos });
     }
 
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnGhostCommand { tile_pos, data });
     }
 
-    fn despawn_ghost(&mut self, tile_pos: TilePos) {
+    fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
         self.add(SpawnPreviewCommand { tile_pos, data });
     }
 }

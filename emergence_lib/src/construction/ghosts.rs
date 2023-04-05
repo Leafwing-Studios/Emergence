@@ -384,7 +384,7 @@ pub(super) fn ghost_lifecycle(
                 }
             }
             CraftingState::RecipeComplete => {
-                commands.despawn_ghost(tile_pos);
+                commands.despawn_ghost_structure(tile_pos);
 
                 // Spawn the seedling form of a structure if any
                 if let ConstructionStrategy::Seedling(seedling) =
@@ -434,7 +434,7 @@ pub(super) fn validate_ghosts(
         let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
         if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
-            commands.despawn_ghost(tile_pos);
+            commands.despawn_ghost_structure(tile_pos);
         }
     }
 }
