@@ -22,6 +22,7 @@ use self::{
         WorkersPresent,
     },
     item_tags::ItemKind,
+    recipe::RecipeInput,
 };
 
 pub mod components;
@@ -130,6 +131,11 @@ fn progress_crafting(
             CraftingState::RecipeComplete => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
+                    // If this is crafting with flexible inputs, clear the input slots
+                    if matches!(recipe.inputs, RecipeInput::Flexible { .. }) {
+                        crafter.input.clear_empty_slots();
+                    }
+
                     match crafter.maybe_organism {
                         Some(_) => {
                             match crafter.output.craft(recipe, &item_manifest, rng) {

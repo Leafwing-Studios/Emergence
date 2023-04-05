@@ -228,6 +228,11 @@ impl InputInventory {
         }
     }
 
+    /// Clears all empty items slots, allowing flexible recipes to accept any item when their stack empties.
+    pub fn clear_empty_slots(&mut self) {
+        self.inventory_mut().clear_empty_slots();
+    }
+
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
     ///
     /// Note that this only works for [`InputInventory::Exact`].
