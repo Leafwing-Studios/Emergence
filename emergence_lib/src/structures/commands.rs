@@ -9,7 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
-    construction::ghosts::{GhostBundle, GhostKind, PreviewBundle},
+    construction::ghosts::{GhostKind, GhostStructureBundle, StructurePreviewBundle},
     crafting::{
         components::{CraftingBundle, StorageInventory},
         recipe::RecipeManifest,
@@ -321,7 +321,7 @@ impl Command for SpawnGhostCommand {
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
 
         let ghost_entity = world
-            .spawn(GhostBundle::new(
+            .spawn(GhostStructureBundle::new(
                 self.tile_pos,
                 self.data,
                 structure_manifest,
@@ -423,7 +423,7 @@ impl Command for SpawnPreviewCommand {
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview
-        world.spawn(PreviewBundle::new(
+        world.spawn(StructurePreviewBundle::new(
             self.tile_pos,
             self.data,
             scene_handle,

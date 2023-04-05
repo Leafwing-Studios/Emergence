@@ -41,7 +41,7 @@ impl Plugin for GhostPlugin {
     }
 }
 
-/// A marker component that indicates that this structure is planned to be built, rather than actually existing.
+/// A marker component that indicates that a structure or terrain element is planned to be built, rather than actually existing.
 #[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
 pub(crate) struct Ghost;
 
@@ -49,25 +49,19 @@ pub(crate) struct Ghost;
 #[derive(Component, Clone, Copy, Debug)]
 pub(crate) struct Ghostly;
 
-/// The set of components needed to spawn a ghost.
+/// The components needed to create a functioning ghost of any kind.
 #[derive(Bundle)]
 pub(crate) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
     /// The location of the ghost
     tile_pos: TilePos,
-    /// The variety of structure
-    structure_id: Id<Structure>,
-    /// The direction the ghost is facing
-    facing: Facing,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
     /// The number of workers that are present / allowed to build this structure.
     workers_present: WorkersPresent,
     /// Tracks work that needs to be done on this building
     crafting_state: CraftingState,
-    /// What should the structure craft when it is first built?
-    active_recipe: ActiveRecipe,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<Ghost>,
     /// The mesh used for raycasting
@@ -80,8 +74,21 @@ pub(crate) struct GhostBundle {
     emitter: Emitter,
 }
 
-impl GhostBundle {
-    /// Creates a new [`GhostBundle`].
+/// The set of components needed to spawn a ghost of a [`Structure`].
+#[derive(Bundle)]
+pub(crate) struct GhostStructureBundle {
+    /// Shared components across all ghosts
+    ghost_bundle: GhostBundle,
+    /// The variety of structure
+    structure_id: Id<Structure>,
+    /// What should the structure craft when it is first built?
+    active_recipe: ActiveRecipe,
+    /// The direction the ghost is facing
+    facing: Facing,
+}
+
+impl GhostStructureBundle {
+    /// Creates a new [`GhostStructureBundle`].
     pub(crate) fn new(
         tile_pos: TilePos,
         clipboard_data: ClipboardData,
@@ -94,29 +101,31 @@ impl GhostBundle {
         let structure_id = clipboard_data.structure_id;
         let construction_strategy = structure_manifest.construction_data(structure_id);
 
-        GhostBundle {
-            ghost: Ghost,
-            tile_pos,
-            structure_id,
-            facing: clipboard_data.facing,
-            construction_materials: construction_strategy.materials.clone(),
-            workers_present: WorkersPresent::new(6),
-            crafting_state: CraftingState::NeedsInput,
-            active_recipe: clipboard_data.active_recipe,
-            raycast_mesh: RaycastMesh::default(),
-            picking_mesh,
-            inherited_material,
-            scene_bundle: SceneBundle {
-                scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(world_pos),
-                ..default()
+        GhostStructureBundle {
+            ghost_bundle: GhostBundle {
+                ghost: Ghost,
+                tile_pos,
+                construction_materials: construction_strategy.materials.clone(),
+                workers_present: WorkersPresent::new(6),
+                crafting_state: CraftingState::NeedsInput,
+                raycast_mesh: RaycastMesh::default(),
+                picking_mesh,
+                inherited_material,
+                scene_bundle: SceneBundle {
+                    scene: scene_handle.clone_weak(),
+                    transform: Transform::from_translation(world_pos),
+                    ..default()
+                },
+                emitter: Emitter::default(),
             },
-            emitter: Emitter::default(),
+            facing: clipboard_data.facing,
+            structure_id,
+            active_recipe: clipboard_data.active_recipe,
         }
     }
 }
 
-/// The variety of ghostly structure.
+/// The variety of ghost: this controls how it is rendered.
 #[derive(IterableEnum, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum GhostKind {
     /// A structure that is going to be built.
@@ -130,7 +139,7 @@ pub(crate) enum GhostKind {
 }
 
 impl GhostKind {
-    /// The material associated with each ghostly structure.
+    /// The material associated with each variety of ghost.
     pub(crate) fn material(&self) -> StandardMaterial {
         use crate::graphics::palette::infovis::{
             FORBIDDEN_PREVIEW_COLOR, GHOST_COLOR, PREVIEW_COLOR, SELECTED_GHOST_COLOR,
@@ -151,29 +160,36 @@ impl GhostKind {
     }
 }
 
-/// A marker component that indicates that this structure is planned to be built, rather than actually existing.
+/// A marker component that indicates that this structure or terrain modification is planned to be built, rather than actually existing.
 #[derive(Component, Clone, Copy, Debug)]
 pub(crate) struct Preview;
 
-/// The set of components needed to spawn a structure preview.
+/// The set of components needed to spawn a structure or terraforming preview.
 #[derive(Bundle)]
 pub(crate) struct PreviewBundle {
     /// Marker component
     preview: Preview,
     /// The location of the preview
     tile_pos: TilePos,
-    /// The variety of structure
-    structure_id: Id<Structure>,
-    /// The direction the preview is facing
-    facing: Facing,
     /// The material to be used by all children in the scene
     inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
     scene_bundle: SceneBundle,
 }
 
-impl PreviewBundle {
-    /// Creates a new [`PreviewBundle`].
+/// The components needed to create a preview of a [`Structure`].
+#[derive(Bundle)]
+pub(crate) struct StructurePreviewBundle {
+    /// Shared components for all previews
+    preview_bundle: PreviewBundle,
+    /// The variety of structure
+    structure_id: Id<Structure>,
+    /// The direction the preview is facing
+    facing: Facing,
+}
+
+impl StructurePreviewBundle {
+    /// Creates a new [`StructurePreviewBundle`].
     pub(crate) fn new(
         tile_pos: TilePos,
         data: ClipboardData,
@@ -181,17 +197,19 @@ impl PreviewBundle {
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
     ) -> Self {
-        PreviewBundle {
-            preview: Preview,
-            tile_pos,
+        StructurePreviewBundle {
+            preview_bundle: PreviewBundle {
+                preview: Preview,
+                tile_pos,
+                inherited_material,
+                scene_bundle: SceneBundle {
+                    scene: scene_handle.clone_weak(),
+                    transform: Transform::from_translation(world_pos),
+                    ..default()
+                },
+            },
             structure_id: data.structure_id,
             facing: data.facing,
-            inherited_material,
-            scene_bundle: SceneBundle {
-                scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(world_pos),
-                ..default()
-            },
         }
     }
 }
