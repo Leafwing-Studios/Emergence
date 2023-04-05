@@ -281,8 +281,10 @@ pub struct MapGeometry {
     terrain_index: HashMap<TilePos, Entity>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,
-    /// Which [`Ghost`](crate::structures::construction::Ghost) entity is stored at each tile position
-    ghost_index: HashMap<TilePos, Entity>,
+    /// Which [`Ghost`](crate::construction::ghosts::Ghost) structure entity is stored at each tile position
+    ghost_structure_index: HashMap<TilePos, Entity>,
+    /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
+    ghost_terrain_index: HashMap<TilePos, Entity>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -304,7 +306,8 @@ impl MapGeometry {
             radius,
             terrain_index: HashMap::default(),
             structure_index: HashMap::default(),
-            ghost_index: HashMap::default(),
+            ghost_structure_index: HashMap::default(),
+            ghost_terrain_index: HashMap::default(),
             height_index: HashMap::default(),
         }
     }
@@ -417,9 +420,12 @@ impl MapGeometry {
 
     /// Gets the ghost or structure [`Entity`] at the provided `tile_pos`, if any.
     ///
-    /// Ghosts will take priority over structures.
+    /// Priority:
+    /// - ghost terrain
+    /// - ghost structure
+    /// - structure
     pub(crate) fn get_ghost_or_structure(&self, tile_pos: TilePos) -> Option<Entity> {
-        if let Some(&ghost_entity) = self.ghost_index.get(&tile_pos) {
+        if let Some(&ghost_entity) = self.ghost_structure_index.get(&tile_pos) {
             Some(ghost_entity)
         } else if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
             Some(structure_entity)
@@ -470,33 +476,62 @@ impl MapGeometry {
         removed
     }
 
-    /// Gets the ghost [`Entity`] at the provided `tile_pos`, if any.
-    pub(crate) fn get_ghost(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.ghost_index.get(&tile_pos).copied()
+    /// Gets the ghost structure [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_ghost_structure(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.ghost_structure_index.get(&tile_pos).copied()
     }
 
-    /// Adds the provided `ghost_entity` to the structure index at the provided `center`.
-    pub(crate) fn add_ghost(
+    /// Adds the provided `ghost_structure_entity` to the ghost structure index at the provided `center`.
+    pub(crate) fn add_ghost_structure(
         &mut self,
         center: TilePos,
         footprint: &Footprint,
-        ghost_entity: Entity,
+        ghost_structure_entity: Entity,
     ) {
         for tile_pos in footprint.in_world_space(center) {
-            self.ghost_index.insert(tile_pos, ghost_entity);
+            self.ghost_structure_index
+                .insert(tile_pos, ghost_structure_entity);
         }
     }
 
-    /// Removes any ghost entity found at the provided `tile_pos` from the ghost index.
+    /// Removes any ghost structure entity found at the provided `tile_pos` from the ghost structure index.
     ///
     /// Returns the removed entity, if any.
-    pub(crate) fn remove_ghost(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.ghost_index.remove(&tile_pos);
+    pub(crate) fn remove_ghost_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        let removed = self.ghost_structure_index.remove(&tile_pos);
 
         // Iterate through all of the entries, removing any other entries that point to the same entity
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
-            self.ghost_index.retain(|_k, v| *v != removed_entity);
+            self.ghost_structure_index
+                .retain(|_k, v| *v != removed_entity);
+        };
+
+        removed
+    }
+
+    /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
+    pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
+        self.ghost_terrain_index.get(&tile_pos).copied()
+    }
+
+    /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `tile_pos`.
+    pub(crate) fn add_ghost_terrain(&mut self, ghost_terrain_entity: Entity, tile_pos: TilePos) {
+        self.ghost_terrain_index
+            .insert(tile_pos, ghost_terrain_entity);
+    }
+
+    /// Removes any ghost terrain entity found at the provided `tile_pos` from the ghost terrain index.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_ghost_terrain(&mut self, tile_pos: TilePos) -> Option<Entity> {
+        let removed = self.ghost_terrain_index.remove(&tile_pos);
+
+        // Iterate through all of the entries, removing any other entries that point to the same entity
+        // PERF: this could be faster, but would require a different data structure.
+        if let Some(removed_entity) = removed {
+            self.ghost_terrain_index
+                .retain(|_k, v| *v != removed_entity);
         };
 
         removed

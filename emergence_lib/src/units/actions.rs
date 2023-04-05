@@ -681,7 +681,7 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             // Ghosts
-            if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
+            if let Some(ghost_entity) = map_geometry.get_ghost_structure(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
                         if input_inventory.currently_accepts(item_kind, item_manifest) {
@@ -758,7 +758,7 @@ impl CurrentAction {
 
         for tile_pos in neighboring_tiles {
             // Ghosts
-            if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
+            if let Some(ghost_entity) = map_geometry.get_ghost_structure(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
                         if input_inventory.currently_accepts(item_kind, item_manifest) {
@@ -1142,7 +1142,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
         // Prioritize ghosts over structures to allow for replacing structures by building
-        let entity = if let Some(ghost_entity) = map_geometry.get_ghost(structure_pos) {
+        let entity = if let Some(ghost_entity) = map_geometry.get_ghost_structure(structure_pos) {
             ghost_entity
         } else {
             map_geometry.get_structure(structure_pos)?

@@ -295,7 +295,7 @@ impl Command for SpawnGhostCommand {
 
         // Remove any existing ghosts
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_existing_ghost = geometry.remove_ghost(self.tile_pos);
+        let maybe_existing_ghost = geometry.remove_ghost_structure(self.tile_pos);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
             world.entity_mut(existing_ghost).despawn_recursive();
@@ -338,7 +338,7 @@ impl Command for SpawnGhostCommand {
             let structure_variety = structure_manifest.get(structure_id);
             let footprint = &structure_variety.footprint;
 
-            map_geometry.add_ghost(self.tile_pos, footprint, ghost_entity);
+            map_geometry.add_ghost_structure(self.tile_pos, footprint, ghost_entity);
         });
     }
 }
@@ -352,7 +352,7 @@ struct DespawnGhostCommand {
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost(self.tile_pos);
+        let maybe_entity = geometry.remove_ghost_structure(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
