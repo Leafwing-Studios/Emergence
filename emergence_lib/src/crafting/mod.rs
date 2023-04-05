@@ -87,11 +87,19 @@ fn progress_crafting(
             CraftingState::NeedsInput | CraftingState::Overproduction => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
+                    // Check if we have enough items, and if so, start crafting
                     match crafter.input.consume_items(&recipe.inputs, &item_manifest) {
-                        Ok(()) => CraftingState::InProgress {
-                            progress: Duration::ZERO,
-                            required: recipe.craft_time,
-                        },
+                        Ok(()) => {
+                            // If this is crafting with flexible inputs, clear the input slots
+                            if matches!(recipe.inputs, RecipeInput::Flexible { .. }) {
+                                crafter.input.clear_empty_slots();
+                            }
+
+                            CraftingState::InProgress {
+                                progress: Duration::ZERO,
+                                required: recipe.craft_time,
+                            }
+                        }
                         Err(_) => CraftingState::NeedsInput,
                     }
                 } else {
@@ -102,6 +110,7 @@ fn progress_crafting(
                 let mut updated_progress = progress;
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
+                    // Check if we can make progress
                     if recipe.satisfied(crafter.workers_present.current(), &total_light) {
                         // Many hands make light work!
                         if recipe.workers_required() > 0 {
@@ -131,11 +140,7 @@ fn progress_crafting(
             CraftingState::RecipeComplete => {
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    // If this is crafting with flexible inputs, clear the input slots
-                    if matches!(recipe.inputs, RecipeInput::Flexible { .. }) {
-                        crafter.input.clear_empty_slots();
-                    }
-
+                    // Actually produce the items
                     match crafter.maybe_organism {
                         Some(_) => {
                             match crafter.output.craft(recipe, &item_manifest, rng) {
