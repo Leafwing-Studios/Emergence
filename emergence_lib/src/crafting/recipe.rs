@@ -67,6 +67,14 @@ impl RecipeInput {
             Self::Flexible { .. } => 1,
         }
     }
+
+    /// Is anything needed to craft this recipe?
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Self::Exact(inputs) => inputs.is_empty(),
+            Self::Flexible { .. } => false,
+        }
+    }
 }
 
 /// The unprocessed equivalent of [`RecipeInput`].
@@ -256,7 +264,7 @@ impl RecipeData {
                 .iter()
                 .map(|input| input.display(item_manifest))
                 .join(", "),
-            RecipeInput::Flexible { tag, count } => format!("{}x {}", count, tag),
+            RecipeInput::Flexible { tag, count } => format!("{count}x {tag}"),
         };
 
         let output_strings: Vec<String> = self

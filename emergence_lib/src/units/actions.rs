@@ -306,7 +306,7 @@ pub(super) fn finish_actions(
                                         Ok(()) => {
                                             unit.unit_inventory.held_item = Some(item_id);
                                             if signals.detectable(
-                                                SignalType::store(*item_kind, &item_manifest),
+                                                SignalType::store(*item_kind, item_manifest),
                                                 *unit.tile_pos,
                                             ) {
                                                 // If we can see any `Pull` signals of the right type, deliver the item.
@@ -339,7 +339,7 @@ pub(super) fn finish_actions(
                             // We should be holding something, if we're not find something else to do
                             None => Goal::default(),
                             Some(held_item_id) => {
-                                if item_kind.matches(held_item_id, &item_manifest) {
+                                if item_kind.matches(held_item_id, item_manifest) {
                                     let item_count = ItemCount::new(held_item_id, 1);
                                     let transfer_result = if let Some(mut input_inventory) =
                                         maybe_input_inventory
@@ -422,7 +422,7 @@ pub(super) fn finish_actions(
 
                         let diet = &unit_data.diet;
 
-                        if diet.item_kind().matches(held_item, &item_manifest) {
+                        if diet.item_kind().matches(held_item, item_manifest) {
                             let proposed = unit.energy_pool.current() + diet.energy();
                             unit.energy_pool.set_current(proposed);
                             unit.lifecycle.record_energy_gained(diet.energy());
@@ -619,11 +619,11 @@ impl CurrentAction {
                     output_inventory_query.get(structure_entity)
                 {
                     if let Some(output_inventory) = maybe_output_inventory {
-                        if output_inventory.contains_kind(item_kind, &item_manifest) {
+                        if output_inventory.contains_kind(item_kind, item_manifest) {
                             sources.push((structure_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
-                        if storage_inventory.contains_kind(item_kind, &item_manifest) {
+                        if storage_inventory.contains_kind(item_kind, item_manifest) {
                             sources.push((structure_entity, tile_pos));
                         }
                     } else {
