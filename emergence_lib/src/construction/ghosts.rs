@@ -215,13 +215,12 @@ impl StructurePreviewBundle {
 }
 
 /// Computes the correct signals for ghosts to send throughout their lifecycle
-// TODO: use a `Ref` instead of &mut in Bevy 0.10
 pub(super) fn ghost_signals(
     mut ghost_query: Query<
         (
             &Id<Structure>,
             &mut Emitter,
-            &mut CraftingState,
+            Ref<CraftingState>,
             &InputInventory,
             &WorkersPresent,
         ),
