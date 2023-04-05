@@ -1,4 +1,4 @@
-//! The components needed to create a [`CraftingBundle`].
+//! The components needed to create a `CraftingBundle`.
 
 use super::{
     item_tags::{ItemKind, ItemTag},
