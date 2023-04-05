@@ -5,6 +5,7 @@
 //! in order to populate the properties of in-game entities.
 
 mod identifier;
+
 pub use self::identifier::*;
 pub mod loader;
 pub mod plugin;

@@ -4,7 +4,8 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 
 use crate::{
     asset_management::AssetState,
-    items::{item_manifest::ItemManifest, recipe::RecipeManifest},
+    crafting::recipe::RecipeManifest,
+    items::item_manifest::ItemManifest,
     player_interaction::{
         camera::{CameraMode, CameraSettings},
         selection::CurrentSelection,
@@ -317,7 +318,7 @@ fn get_details(
                         maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
 
                     Some(CraftingDetails {
-                        input_inventory: input.inventory.clone(),
+                        input_inventory: input.inventory().clone(),
                         output_inventory: output.inventory.clone(),
                         recipe,
                         workers_present: workers_present.clone(),
@@ -421,13 +422,14 @@ mod ghost_details {
 
     use crate::{
         asset_management::manifest::Id,
-        items::{item_manifest::ItemManifest, recipe::RecipeManifest},
+        crafting::{
+            components::{ActiveRecipe, CraftingState, InputInventory},
+            recipe::RecipeManifest,
+        },
+        items::item_manifest::ItemManifest,
         signals::Emitter,
         simulation::geometry::TilePos,
-        structures::{
-            crafting::{ActiveRecipe, CraftingState, InputInventory},
-            structure_manifest::{Structure, StructureManifest},
-        },
+        structures::structure_manifest::{Structure, StructureManifest},
     };
 
     /// Data needed to populate [`GhostDetails`].
@@ -553,14 +555,17 @@ mod structure_details {
     use super::organism_details::OrganismDetails;
     use crate::{
         asset_management::manifest::Id,
-        items::{inventory::Inventory, item_manifest::ItemManifest, recipe::RecipeData},
-        simulation::geometry::TilePos,
-        structures::{
-            construction::MarkedForDemolition,
-            crafting::{
+        crafting::{
+            components::{
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
                 WorkersPresent,
             },
+            recipe::RecipeData,
+        },
+        items::{inventory::Inventory, item_manifest::ItemManifest},
+        simulation::geometry::TilePos,
+        structures::{
+            construction::MarkedForDemolition,
             structure_manifest::{Structure, StructureManifest},
         },
         units::unit_manifest::UnitManifest,

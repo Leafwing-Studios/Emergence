@@ -9,6 +9,7 @@
 #![allow(clippy::too_many_arguments)]
 
 pub mod asset_management;
+pub mod crafting;
 pub mod curves;
 pub mod enum_iter;
 pub mod filtered_array_iter;

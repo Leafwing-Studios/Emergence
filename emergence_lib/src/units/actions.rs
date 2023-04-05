@@ -1,25 +1,28 @@
 //! What are units currently doing?
 
-use bevy::{ecs::query::WorldQuery, prelude::*};
+use bevy::{
+    ecs::{query::WorldQuery, system::SystemParam},
+    prelude::*,
+};
 use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
-    items::{
-        item_manifest::{Item, ItemManifest},
-        ItemCount,
+    crafting::{
+        components::{
+            AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
+            WorkersPresent,
+        },
+        item_tags::ItemKind,
     },
+    items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
-    signals::{SignalStrength, SignalType, Signals},
+    signals::{SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
         construction::{DemolitionQuery, MarkedForDemolition},
-        crafting::{
-            CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
-            WorkplaceQuery,
-        },
         structure_manifest::Structure,
     },
     terrain::terrain_manifest::{Terrain, TerrainManifest},
@@ -82,30 +85,35 @@ pub(super) fn choose_actions(
                     ),
                     _ => CurrentAction::random_spin(rng),
                 },
-                Goal::Pickup(item_id) => {
-                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
+                Goal::Pickup(item_kind) => {
+                    if unit_inventory.is_some()
+                        && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
+                    {
                         CurrentAction::abandon()
                     } else {
                         CurrentAction::find_item(
-                            *item_id,
+                            *item_kind,
                             unit_tile_pos,
                             facing,
                             goal,
                             &output_inventory_query,
                             &signals,
                             rng,
+                            &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
                             map_geometry,
                         )
                     }
                 }
-                Goal::Store(item_id) => {
-                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
+                Goal::Store(item_kind) => {
+                    if unit_inventory.is_some()
+                        && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
+                    {
                         CurrentAction::abandon()
                     } else {
                         CurrentAction::find_storage(
-                            *item_id,
+                            *item_kind,
                             unit_tile_pos,
                             facing,
                             goal,
@@ -119,40 +127,44 @@ pub(super) fn choose_actions(
                         )
                     }
                 }
-                Goal::Deliver(item_id) => {
-                    if unit_inventory.is_some() && unit_inventory.unwrap() != *item_id {
+                Goal::Deliver(item_kind) => {
+                    if unit_inventory.is_some()
+                        && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
+                    {
                         CurrentAction::abandon()
                     } else {
                         CurrentAction::find_delivery(
-                            *item_id,
+                            *item_kind,
                             unit_tile_pos,
                             facing,
                             goal,
                             &input_inventory_query,
                             &signals,
                             rng,
+                            &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
                             map_geometry,
                         )
                     }
                 }
-                Goal::Eat(item_id) => {
+                Goal::Eat(item_kind) => {
                     if let Some(held_item) = unit_inventory.held_item {
-                        if held_item == *item_id {
+                        if item_kind.matches(held_item, &item_manifest) {
                             CurrentAction::eat()
                         } else {
                             CurrentAction::abandon()
                         }
                     } else {
                         CurrentAction::find_item(
-                            *item_id,
+                            *item_kind,
                             unit_tile_pos,
                             facing,
                             goal,
                             &output_inventory_query,
                             &signals,
                             rng,
+                            &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
                             map_geometry,
@@ -168,6 +180,7 @@ pub(super) fn choose_actions(
                     rng,
                     &terrain_query,
                     &terrain_manifest,
+                    &item_manifest,
                     map_geometry,
                 ),
                 Goal::Demolish(structure_id) => CurrentAction::find_demolition_site(
@@ -177,6 +190,7 @@ pub(super) fn choose_actions(
                     &demolition_query,
                     &signals,
                     rng,
+                    &item_manifest,
                     &terrain_query,
                     &terrain_manifest,
                     map_geometry,
@@ -249,43 +263,63 @@ pub(super) fn finish_actions(
                     unit.impatience.increment();
                 }
                 UnitAction::PickUp {
-                    item_id,
+                    item_kind,
                     output_entity,
                 } => {
-                    if let Ok((_, maybe_output_inventory, maybe_storage_inventory)) =
+                    if let Ok((_, mut maybe_output_inventory, mut maybe_storage_inventory)) =
                         inventory_query.get_mut(*output_entity)
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
-                            Some(held_item_id) => Goal::Store(held_item_id),
+                            Some(held_item_id) => Goal::Store(ItemKind::Single(held_item_id)),
                             None => {
-                                let item_count = ItemCount::new(*item_id, 1);
-                                let transfer_result = if let Some(mut output_inventory) =
+                                let maybe_item_id = if let Some(ref output_inventory) =
                                     maybe_output_inventory
                                 {
-                                    output_inventory.remove_item_all_or_nothing(&item_count)
-                                } else if let Some(mut storage_inventory) = maybe_storage_inventory
+                                    output_inventory.matching_item_id(*item_kind, item_manifest)
+                                } else if let Some(ref storage_inventory) = maybe_storage_inventory
                                 {
-                                    storage_inventory.remove_item_all_or_nothing(&item_count)
+                                    storage_inventory.matching_item_id(*item_kind, item_manifest)
                                 } else {
+                                    // The entity must have either an output or storage inventory
                                     unreachable!()
                                 };
 
-                                // If our unit's all loaded, swap to delivering it
-                                match transfer_result {
-                                    Ok(()) => {
-                                        unit.unit_inventory.held_item = Some(*item_id);
-                                        if signals.get(SignalType::Pull(*item_id), *unit.tile_pos)
-                                            > SignalStrength::ZERO
-                                        {
-                                            // If we can see any `Pull` signals of the right type, deliver the item.
-                                            Goal::Deliver(*item_id)
-                                        } else {
-                                            // Otherwise, simply store it
-                                            Goal::Store(*item_id)
+                                if let Some(item_id) = maybe_item_id {
+                                    let item_count = ItemCount::new(item_id, 1);
+
+                                    let transfer_result = match (
+                                        &mut maybe_output_inventory,
+                                        &mut maybe_storage_inventory,
+                                    ) {
+                                        (Some(ref mut output_inventory), _) => {
+                                            output_inventory.remove_item_all_or_nothing(&item_count)
                                         }
+                                        (_, Some(ref mut storage_inventory)) => storage_inventory
+                                            .remove_item_all_or_nothing(&item_count),
+                                        // The entity must have either an output or storage inventory
+                                        _ => unreachable!(),
+                                    };
+
+                                    // If our unit's all loaded, swap to delivering it
+                                    match transfer_result {
+                                        Ok(()) => {
+                                            unit.unit_inventory.held_item = Some(item_id);
+                                            if signals.detectable(
+                                                SignalType::store(*item_kind, item_manifest),
+                                                *unit.tile_pos,
+                                            ) {
+                                                // If we can see any `Pull` signals of the right type, deliver the item.
+                                                Goal::Deliver(*item_kind)
+                                            } else {
+                                                // Otherwise, simply store it
+                                                Goal::Store(*item_kind)
+                                            }
+                                        }
+                                        Err(..) => Goal::Pickup(*item_kind),
                                     }
-                                    Err(..) => Goal::Pickup(*item_id),
+                                } else {
+                                    Goal::Pickup(*item_kind)
                                 }
                             }
                         }
@@ -295,7 +329,7 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::DropOff {
-                    item_id,
+                    item_kind,
                     input_entity,
                 } => {
                     if let Ok((maybe_input_inventory, _, maybe_storage_inventory)) =
@@ -305,20 +339,28 @@ pub(super) fn finish_actions(
                             // We should be holding something, if we're not find something else to do
                             None => Goal::default(),
                             Some(held_item_id) => {
-                                if held_item_id == *item_id {
+                                if item_kind.matches(held_item_id, item_manifest) {
                                     let item_count = ItemCount::new(held_item_id, 1);
-                                    let transfer_result =
-                                        if let Some(mut input_inventory) = maybe_input_inventory {
-                                            input_inventory
-                                                .add_item_all_or_nothing(&item_count, item_manifest)
-                                        } else if let Some(mut storage_inventory) =
-                                            maybe_storage_inventory
-                                        {
-                                            storage_inventory
-                                                .add_item_all_or_nothing(&item_count, item_manifest)
-                                        } else {
-                                            unreachable!()
-                                        };
+                                    let transfer_result = if let Some(mut input_inventory) =
+                                        maybe_input_inventory
+                                    {
+                                        input_inventory.fill_with_items(&item_count, item_manifest)
+                                    } else if let Some(mut storage_inventory) =
+                                        maybe_storage_inventory
+                                    {
+                                        let storage_result = storage_inventory
+                                            .add_item_all_or_nothing(&item_count, item_manifest);
+                                        match storage_result {
+                                            Ok(()) => Ok(()),
+                                            Err(AddOneItemError { excess_count }) => {
+                                                Err(AddToInputError::NotEnoughSpace {
+                                                    excess_count,
+                                                })
+                                            }
+                                        }
+                                    } else {
+                                        unreachable!()
+                                    };
 
                                     // If our unit is unloaded, swap to wandering to find something else to do
                                     match transfer_result {
@@ -326,11 +368,11 @@ pub(super) fn finish_actions(
                                             unit.unit_inventory.held_item = None;
                                             Goal::default()
                                         }
-                                        Err(..) => Goal::Store(held_item_id),
+                                        Err(..) => Goal::Store(ItemKind::Single(held_item_id)),
                                     }
                                 } else {
                                     // Somehow we're holding the wrong thing
-                                    Goal::Store(held_item_id)
+                                    Goal::Store(ItemKind::Single(held_item_id))
                                 }
                             }
                         }
@@ -380,7 +422,7 @@ pub(super) fn finish_actions(
 
                         let diet = &unit_data.diet;
 
-                        if held_item == diet.item() {
+                        if diet.item_kind().matches(held_item, item_manifest) {
                             let proposed = unit.energy_pool.current() + diet.energy();
                             unit.energy_pool.set_current(proposed);
                             unit.lifecycle.record_energy_gained(diet.energy());
@@ -430,17 +472,17 @@ pub(super) enum UnitAction {
     /// Do nothing for now
     #[default]
     Idle,
-    /// Pick up the `item_id` from the `output_entity.
+    /// Pick up an item that mathes `item_kind` from the `output_entity.
     PickUp {
         /// The item to pickup.
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         /// The entity to grab it from, which must have an [`OutputInventory`] or [`StorageInventory`] component.
         output_entity: Entity,
     },
-    /// Drops off the `item_id` at the `output_entity`.
+    /// Drops off an item that mathes `item_kind` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         /// The entity to drop it off at, which must have an [`InputInventory`] or [`StorageInventory`] component.
         input_entity: Entity,
     },
@@ -474,11 +516,11 @@ impl UnitAction {
             UnitAction::Work { structure_entity }
             | UnitAction::Demolish { structure_entity }
             | UnitAction::DropOff {
-                item_id: _,
+                item_kind: _,
                 input_entity: structure_entity,
             }
             | UnitAction::PickUp {
-                item_id: _,
+                item_kind: _,
                 output_entity: structure_entity,
             } => Some(*structure_entity),
             _ => None,
@@ -490,18 +532,18 @@ impl UnitAction {
         match self {
             UnitAction::Idle => "Idling".to_string(),
             UnitAction::PickUp {
-                item_id,
+                item_kind,
                 output_entity,
             } => format!(
                 "Picking up {} from {output_entity:?}",
-                item_manifest.name(*item_id)
+                item_manifest.name_of_kind(*item_kind)
             ),
             UnitAction::DropOff {
-                item_id,
+                item_kind,
                 input_entity,
             } => format!(
                 "Dropping off {} at {input_entity:?}",
-                item_manifest.name(*item_id)
+                item_manifest.name_of_kind(*item_kind)
             ),
             UnitAction::Work { structure_entity } => format!("Working at {structure_entity:?}"),
             UnitAction::Demolish { structure_entity } => {
@@ -556,13 +598,14 @@ impl CurrentAction {
 
     /// Attempt to locate a source of the provided `item_id`.
     fn find_item(
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
         output_inventory_query: &Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
         signals: &Signals,
         rng: &mut ThreadRng,
+        item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
@@ -576,11 +619,11 @@ impl CurrentAction {
                     output_inventory_query.get(structure_entity)
                 {
                     if let Some(output_inventory) = maybe_output_inventory {
-                        if output_inventory.item_count(item_id) > 0 {
+                        if output_inventory.contains_kind(item_kind, item_manifest) {
                             sources.push((structure_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
-                        if storage_inventory.item_count(item_id) > 0 {
+                        if storage_inventory.contains_kind(item_kind, item_manifest) {
                             sources.push((structure_entity, tile_pos));
                         }
                     } else {
@@ -592,13 +635,15 @@ impl CurrentAction {
 
         if let Some((output_entity, output_tile_pos)) = sources.choose(rng) {
             CurrentAction::pickup(
-                item_id,
+                item_kind,
                 *output_entity,
                 facing,
                 unit_tile_pos,
                 *output_tile_pos,
             )
-        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+        } else if let Some(upstream) =
+            signals.upstream(unit_tile_pos, goal, item_manifest, map_geometry)
+        {
             CurrentAction::move_or_spin(
                 unit_tile_pos,
                 upstream,
@@ -615,7 +660,7 @@ impl CurrentAction {
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::collapsible_match)]
     fn find_storage(
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
@@ -638,7 +683,7 @@ impl CurrentAction {
             if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_kind, item_manifest) {
                             receptacles.push((ghost_entity, tile_pos));
                         }
                     }
@@ -651,11 +696,11 @@ impl CurrentAction {
                     input_inventory_query.get(structure_entity)
                 {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_kind, item_manifest) {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
-                        if storage_inventory.remaining_space_for_item(item_id, item_manifest) > 0 {
+                        if storage_inventory.currently_accepts(item_kind, item_manifest) {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     } else {
@@ -667,13 +712,15 @@ impl CurrentAction {
 
         if let Some((input_entity, input_tile_pos)) = receptacles.choose(rng) {
             CurrentAction::dropoff(
-                item_id,
+                item_kind,
                 *input_entity,
                 facing,
                 unit_tile_pos,
                 *input_tile_pos,
             )
-        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+        } else if let Some(upstream) =
+            signals.upstream(unit_tile_pos, goal, item_manifest, map_geometry)
+        {
             CurrentAction::move_or_spin(
                 unit_tile_pos,
                 upstream,
@@ -690,7 +737,7 @@ impl CurrentAction {
     /// Attempt to locate a place to put an item of type `item_id`.
     #[allow(clippy::collapsible_match)]
     fn find_delivery(
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         unit_tile_pos: TilePos,
         facing: &Facing,
         goal: &Goal,
@@ -700,6 +747,7 @@ impl CurrentAction {
         >,
         signals: &Signals,
         rng: &mut ThreadRng,
+        item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
@@ -712,7 +760,7 @@ impl CurrentAction {
             if let Some(ghost_entity) = map_geometry.get_ghost(tile_pos) {
                 if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_kind, item_manifest) {
                             receptacles.push((ghost_entity, tile_pos));
                         }
                     }
@@ -726,7 +774,7 @@ impl CurrentAction {
                     input_inventory_query.get(structure_entity)
                 {
                     if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.remaining_reserved_space_for_item(item_id) > 0 {
+                        if input_inventory.currently_accepts(item_kind, item_manifest) {
                             receptacles.push((structure_entity, tile_pos));
                         }
                     }
@@ -736,13 +784,15 @@ impl CurrentAction {
 
         if let Some((input_entity, input_tile_pos)) = receptacles.choose(rng) {
             CurrentAction::dropoff(
-                item_id,
+                item_kind,
                 *input_entity,
                 facing,
                 unit_tile_pos,
                 *input_tile_pos,
             )
-        } else if let Some(upstream) = signals.upstream(unit_tile_pos, goal, map_geometry) {
+        } else if let Some(upstream) =
+            signals.upstream(unit_tile_pos, goal, item_manifest, map_geometry)
+        {
             CurrentAction::move_or_spin(
                 unit_tile_pos,
                 upstream,
@@ -766,6 +816,7 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
+        item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
@@ -798,9 +849,12 @@ impl CurrentAction {
                     terrain_manifest,
                     map_geometry,
                 )
-            } else if let Some(upstream) =
-                signals.upstream(unit_tile_pos, &Goal::Work(structure_id), map_geometry)
-            {
+            } else if let Some(upstream) = signals.upstream(
+                unit_tile_pos,
+                &Goal::Work(structure_id),
+                item_manifest,
+                map_geometry,
+            ) {
                 CurrentAction::move_or_spin(
                     unit_tile_pos,
                     upstream,
@@ -823,6 +877,7 @@ impl CurrentAction {
         demolition_query: &DemolitionQuery,
         signals: &Signals,
         rng: &mut ThreadRng,
+        item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
@@ -857,9 +912,12 @@ impl CurrentAction {
                     terrain_manifest,
                     map_geometry,
                 )
-            } else if let Some(upstream) =
-                signals.upstream(unit_tile_pos, &Goal::Demolish(structure_id), map_geometry)
-            {
+            } else if let Some(upstream) = signals.upstream(
+                unit_tile_pos,
+                &Goal::Demolish(structure_id),
+                item_manifest,
+                map_geometry,
+            ) {
                 CurrentAction::move_or_spin(
                     unit_tile_pos,
                     upstream,
@@ -974,7 +1032,7 @@ impl CurrentAction {
 
     /// Picks up the `item_id` at the `output_entity`.
     pub(super) fn pickup(
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         output_entity: Entity,
         facing: &Facing,
         unit_tile_pos: TilePos,
@@ -985,7 +1043,7 @@ impl CurrentAction {
         if required_direction == facing.direction {
             CurrentAction {
                 action: UnitAction::PickUp {
-                    item_id,
+                    item_kind,
                     output_entity,
                 },
                 timer: Timer::from_seconds(0.5, TimerMode::Once),
@@ -998,7 +1056,7 @@ impl CurrentAction {
 
     /// Drops off the `item_id` at the `input_entity`.
     pub(super) fn dropoff(
-        item_id: Id<Item>,
+        item_kind: ItemKind,
         input_entity: Entity,
         facing: &Facing,
         unit_tile_pos: TilePos,
@@ -1009,7 +1067,7 @@ impl CurrentAction {
         if required_direction == facing.direction {
             CurrentAction {
                 action: UnitAction::DropOff {
-                    item_id,
+                    item_kind,
                     input_entity,
                 },
                 timer: Timer::from_seconds(0.2, TimerMode::Once),
@@ -1053,6 +1111,57 @@ impl CurrentAction {
             action: UnitAction::Abandon,
             timer: Timer::from_seconds(0.1, TimerMode::Once),
             just_started: true,
+        }
+    }
+}
+
+/// A query about the [`CraftingState`] of a structure that might need work done.
+#[derive(SystemParam)]
+pub(crate) struct WorkplaceQuery<'w, 's> {
+    /// The contained query type.
+    query: Query<
+        'w,
+        's,
+        (
+            &'static CraftingState,
+            &'static Id<Structure>,
+            &'static WorkersPresent,
+        ),
+    >,
+}
+
+impl<'w, 's> WorkplaceQuery<'w, 's> {
+    /// Is there a structure of type `structure_id` at `structure_pos` that needs work done by a unit?
+    ///
+    /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
+    pub(crate) fn needs_work(
+        &self,
+        structure_pos: TilePos,
+        structure_id: Id<Structure>,
+        map_geometry: &MapGeometry,
+    ) -> Option<Entity> {
+        // Prioritize ghosts over structures to allow for replacing structures by building
+        let entity = if let Some(ghost_entity) = map_geometry.get_ghost(structure_pos) {
+            ghost_entity
+        } else {
+            map_geometry.get_structure(structure_pos)?
+        };
+
+        let (found_crafting_state, found_structure_id, workers_present) =
+            self.query.get(entity).ok()?;
+
+        if *found_structure_id != structure_id {
+            return None;
+        }
+
+        if let CraftingState::InProgress { .. } = found_crafting_state {
+            if workers_present.needs_more() {
+                Some(entity)
+            } else {
+                None
+            }
+        } else {
+            None
         }
     }
 }

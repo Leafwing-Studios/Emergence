@@ -1,9 +1,11 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
-    items::{
-        item_manifest::{ItemData, RawItemManifest},
-        recipe::{RawRecipeData, RawRecipeManifest, RecipeConditions, Threshold},
+    crafting::components::RawActiveRecipe,
+    crafting::{
+        item_tags::ItemTag,
+        recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
     },
+    items::item_manifest::{ItemData, RawItemManifest},
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
@@ -12,7 +14,6 @@ use emergence_lib::{
     simulation::light::Illuminance,
     structures::{
         construction::Footprint,
-        crafting::RawActiveRecipe,
         structure_manifest::{
             RawConstructionStrategy, RawStructureData, RawStructureKind, RawStructureManifest,
         },
@@ -31,14 +32,26 @@ fn can_serialize_item_manifest() {
     // Create a new raw item manifest
     let raw_item_manifest = RawItemManifest {
         items: HashMap::from_iter(vec![
-            ("test_item".to_string(), ItemData { stack_size: 1 }),
-            ("test_item_2".to_string(), ItemData { stack_size: 2 }),
+            (
+                "test_item".to_string(),
+                ItemData {
+                    stack_size: 1,
+                    compostable: true,
+                },
+            ),
+            (
+                "test_item_2".to_string(),
+                ItemData {
+                    stack_size: 2,
+                    compostable: false,
+                },
+            ),
         ]),
     };
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_item_manifest).unwrap();
-    print!("{}\n", &serialized);
+    println!("{}", &serialized);
 
     // Deserialize it
     let deserialized: RawItemManifest = serde_json::from_str(&serialized).unwrap();
@@ -65,7 +78,7 @@ fn can_serialize_terrain_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_terrain_manifest).unwrap();
-    print!("{}\n", &serialized);
+    println!("{}", &serialized);
 
     // Deserialize it
     let deserialized: RawTerrainManifest = serde_json::from_str(&serialized).unwrap();
@@ -114,7 +127,7 @@ fn can_serialize_unit_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_unit_manifest).unwrap();
-    print!("{}\n", &serialized);
+    println!("{}", &serialized);
 
     // Deserialize it
     let deserialized: RawUnitManifest = serde_json::from_str(&serialized).unwrap();
@@ -131,7 +144,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "mature_acacia_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::new(),
+                    inputs: RawRecipeInput::empty(),
                     outputs: HashMap::from_iter([
                         ("acacia_leaf".to_string(), 1.),
                         // Output can be stochastic
@@ -148,7 +161,10 @@ fn can_serialize_recipe_manifest() {
             (
                 "leuco_chunk_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("acacia_leaf".to_string(), 1)]),
+                    inputs: RawRecipeInput::Flexible {
+                        tag: ItemTag::Compostable,
+                        count: 1,
+                    },
                     outputs: HashMap::from_iter([("leuco_chunk".to_string(), 1.)]),
                     craft_time: 2.,
                     conditions: None,
@@ -158,7 +174,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "ant_egg_production".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
+                    inputs: RawRecipeInput::single("leuco_chunk", 1),
                     outputs: HashMap::from_iter([("ant_egg".to_string(), 1.)]),
                     craft_time: 10.,
                     conditions: Some(RecipeConditions {
@@ -171,7 +187,7 @@ fn can_serialize_recipe_manifest() {
             (
                 "hatch_ants".to_string(),
                 RawRecipeData {
-                    inputs: HashMap::from_iter([("ant_egg".to_string(), 1)]),
+                    inputs: RawRecipeInput::single("ant_egg", 1),
                     outputs: HashMap::new(),
                     craft_time: 10.,
                     conditions: Some(RecipeConditions {
@@ -186,7 +202,7 @@ fn can_serialize_recipe_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_recipe_manifest).unwrap();
-    print!("{}\n", &serialized);
+    println!("{}", &serialized);
 
     // Deserialize it
     let deserialized: RawRecipeManifest = serde_json::from_str(&serialized).unwrap();
@@ -357,7 +373,7 @@ fn can_serialize_structure_manifest() {
 
     // Serialize it
     let serialized = serde_json::to_string(&raw_structure_manifest).unwrap();
-    print!("{}\n", &serialized);
+    println!("{}", &serialized);
 
     // Deserialize it
     let deserialized: RawStructureManifest = serde_json::from_str(&serialized).unwrap();

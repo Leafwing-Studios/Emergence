@@ -4,6 +4,8 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
+use crate::crafting::components::WorkersPresent;
+use crate::crafting::item_tags::ItemKind;
 use crate::simulation::geometry::MapGeometry;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
@@ -17,17 +19,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::components::{ActiveRecipe, CraftingState, InputInventory},
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},
 };
 
-use super::crafting::WorkersPresent;
+use super::commands::StructureCommandsExt;
 use super::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
-use super::{
-    commands::StructureCommandsExt,
-    crafting::{ActiveRecipe, CraftingState, InputInventory},
-};
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
 #[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
@@ -209,11 +208,22 @@ pub(super) fn ghost_signals(
         if crafting_state.is_changed() {
             match *crafting_state {
                 CraftingState::NeedsInput => {
-                    // Emit signals to cause workers to bring the correct item to this ghost
-                    for item_slot in input_inventory.iter() {
-                        let signal_type = SignalType::Pull(item_slot.item_id());
-                        let signal_strength = SignalStrength::new(10.);
-                        emitter.signals.push((signal_type, signal_strength))
+                    match input_inventory {
+                        InputInventory::Exact { inventory } => {
+                            // Emit signals to cause workers to bring the correct item to this ghost
+                            for item_slot in inventory.iter() {
+                                let signal_type =
+                                    SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                                let signal_strength = SignalStrength::new(10.);
+                                emitter.signals.push((signal_type, signal_strength))
+                            }
+                        }
+                        InputInventory::Tagged { tag, .. } => {
+                            // Emit signals to cause workers to bring the correct item to this ghost
+                            let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
+                            let signal_strength = SignalStrength::new(10.);
+                            emitter.signals.push((signal_type, signal_strength))
+                        }
                     }
                 }
                 CraftingState::InProgress {
@@ -269,7 +279,7 @@ pub(super) fn ghost_lifecycle(
 
         match *crafting_state {
             CraftingState::NeedsInput => {
-                *crafting_state = match input_inventory.is_full() {
+                *crafting_state = match input_inventory.inventory().is_full() {
                     true => CraftingState::InProgress {
                         progress: Duration::ZERO,
                         required: construction_data.work.unwrap_or_default(),

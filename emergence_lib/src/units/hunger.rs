@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::item_tags::ItemKind,
     items::item_manifest::{Item, ItemManifest},
     organisms::energy::{Energy, EnergyPool},
 };
@@ -18,7 +19,7 @@ use super::{
 #[derive(Component, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Diet {
     /// The item that must be eaten
-    item: Id<Item>,
+    item_kind: ItemKind,
     /// The amount of energy restored per item destroyed
     energy: Energy,
 }
@@ -45,7 +46,7 @@ impl RawDiet {
 impl From<RawDiet> for Diet {
     fn from(raw_diet: RawDiet) -> Self {
         Diet {
-            item: Id::from_name(raw_diet.item),
+            item_kind: ItemKind::Single(Id::from_name(raw_diet.item)),
             energy: raw_diet.energy,
         }
     }
@@ -54,12 +55,15 @@ impl From<RawDiet> for Diet {
 impl Diet {
     /// Creates a new [`Diet`] component.
     pub fn new(item: Id<Item>, energy: Energy) -> Self {
-        Diet { item, energy }
+        Diet {
+            item_kind: ItemKind::Single(item),
+            energy,
+        }
     }
 
-    /// The type of item that this unit must consume.
-    pub(super) fn item(&self) -> Id<Item> {
-        self.item
+    /// The kind of item that this unit must consume.
+    pub(super) fn item_kind(&self) -> ItemKind {
+        self.item_kind
     }
 
     /// The amount of [`Energy`] gained when a single item of the correct type is consumed.
@@ -71,7 +75,7 @@ impl Diet {
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         format!(
             "{} -> {} energy",
-            item_manifest.name(self.item),
+            item_manifest.name_of_kind(self.item_kind),
             self.energy
         )
     }
@@ -85,7 +89,7 @@ pub(super) fn check_for_hunger(
     for (mut goal, energy_pool, unit_id) in unit_query.iter_mut() {
         if energy_pool.is_hungry() {
             let diet = &unit_manifest.get(*unit_id).diet;
-            *goal = Goal::Eat(diet.item);
+            *goal = Goal::Eat(diet.item_kind);
         } else if matches!(*goal, Goal::Eat(..)) && energy_pool.is_satiated() {
             *goal = Goal::Wander {
                 remaining_actions: None,

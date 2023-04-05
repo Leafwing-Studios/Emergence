@@ -5,11 +5,9 @@ use bevy_mod_billboard::{prelude::BillboardPlugin, BillboardDepth, BillboardText
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::AssetState,
-    items::item_manifest::ItemManifest,
-    player_interaction::PlayerAction,
-    structures::{crafting::CraftingState, structure_manifest::StructureManifest},
-    units::goals::Goal,
+    asset_management::AssetState, crafting::components::CraftingState,
+    items::item_manifest::ItemManifest, player_interaction::PlayerAction,
+    structures::structure_manifest::StructureManifest, units::goals::Goal,
 };
 
 use super::FiraSansFontFamily;

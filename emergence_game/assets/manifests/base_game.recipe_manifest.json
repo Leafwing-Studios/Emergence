@@ -2,7 +2,9 @@
 	"recipes": {
 		"hatch_ants": {
 			"inputs": {
-				"ant_egg": 1
+				"Exact": {
+					"ant_egg": 1
+				}
 			},
 			"outputs": {},
 			"craft_time": 10,
@@ -12,7 +14,10 @@
 		},
 		"leuco_chunk_production": {
 			"inputs": {
-				"acacia_leaf": 1
+				"Flexible": {
+					"tag": "Compostable",
+					"count": 1
+				}
 			},
 			"outputs": {
 				"leuco_chunk": 1
@@ -21,7 +26,9 @@
 			"energy": 40.0
 		},
 		"acacia_leaf_production": {
-			"inputs": {},
+			"inputs": {
+				"Exact": {}
+			},
 			"outputs": {
 				"acacia_leaf": 1
 			},
@@ -36,7 +43,9 @@
 			"energy": 20.0
 		},
 		"mature_acacia_production": {
-			"inputs": {},
+			"inputs": {
+				"Exact": {}
+			},
 			"outputs": {
 				"acacia_leaf": 1,
 				"acacia_seed": 0.1
@@ -53,7 +62,9 @@
 		},
 		"ant_egg_production": {
 			"inputs": {
-				"leuco_chunk": 1
+				"Exact": {
+					"leuco_chunk": 1
+				}
 			},
 			"outputs": {
 				"ant_egg": 1

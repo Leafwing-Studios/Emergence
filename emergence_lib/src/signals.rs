@@ -4,7 +4,8 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use crate as emergence_lib;
-use crate::items::item_manifest::{Item, ItemManifest};
+use crate::crafting::item_tags::ItemKind;
+use crate::items::item_manifest::ItemManifest;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use bevy::{prelude::*, utils::HashMap};
@@ -57,6 +58,13 @@ impl Signals {
             Some(map) => map.get(tile_pos),
             None => SignalStrength::ZERO,
         }
+    }
+
+    /// Returns `true` if any of the provided `signal_types` are detectable at the given `tile_pos`.
+    pub fn detectable(&self, signal_types: Vec<SignalType>, tile_pos: TilePos) -> bool {
+        signal_types
+            .iter()
+            .any(|signal_type| self.get(*signal_type, tile_pos) > SignalStrength::ZERO)
     }
 
     /// Adds `signal_strength` of `signal_type` at `tile_pos`.
@@ -119,6 +127,7 @@ impl Signals {
         &self,
         tile_pos: TilePos,
         goal: &Goal,
+        item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> Option<TilePos> {
         let mut best_choice: Option<TilePos> = None;
@@ -126,45 +135,41 @@ impl Signals {
 
         let neighboring_signals = match goal {
             Goal::Wander { .. } => return None,
-            Goal::Pickup(item_id) | Goal::Eat(item_id) => {
-                let push_signals =
-                    self.neighboring_signals(SignalType::Push(*item_id), tile_pos, map_geometry);
-                let contains_signals = self.neighboring_signals(
-                    SignalType::Contains(*item_id),
-                    tile_pos,
-                    map_geometry,
-                );
-                let mut total_signals = push_signals;
+            Goal::Pickup(item_kind) | Goal::Eat(item_kind) => {
+                let relevant_signal_types = SignalType::find(*item_kind, item_manifest);
+                let mut total_signals = HashMap::new();
 
-                for (tile_pos, signal_strength) in contains_signals {
-                    if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
-                        *existing_signal_strength += signal_strength;
-                    } else {
-                        total_signals.insert(tile_pos, signal_strength);
+                for signal_type in relevant_signal_types {
+                    let signals = self.neighboring_signals(signal_type, tile_pos, map_geometry);
+                    for (tile_pos, signal_strength) in signals {
+                        if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                            *existing_signal_strength += signal_strength;
+                        } else {
+                            total_signals.insert(tile_pos, signal_strength);
+                        }
                     }
                 }
-
                 total_signals
             }
-            Goal::Store(item_id) => {
-                let pull_signals =
-                    self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry);
-                let stores_signals =
-                    self.neighboring_signals(SignalType::Stores(*item_id), tile_pos, map_geometry);
-                let mut total_signals = pull_signals;
+            Goal::Store(item_kind) => {
+                let relevant_signal_types = SignalType::store(*item_kind, item_manifest);
 
-                for (tile_pos, signal_strength) in stores_signals {
-                    if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
-                        *existing_signal_strength += signal_strength;
-                    } else {
-                        total_signals.insert(tile_pos, signal_strength);
+                let mut total_signals = HashMap::new();
+
+                for signal_type in relevant_signal_types {
+                    let signals = self.neighboring_signals(signal_type, tile_pos, map_geometry);
+                    for (tile_pos, signal_strength) in signals {
+                        if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                            *existing_signal_strength += signal_strength;
+                        } else {
+                            total_signals.insert(tile_pos, signal_strength);
+                        }
                     }
                 }
-
                 total_signals
             }
-            Goal::Deliver(item_id) => {
-                self.neighboring_signals(SignalType::Pull(*item_id), tile_pos, map_geometry)
+            Goal::Deliver(item_kind) => {
+                self.neighboring_signals(SignalType::Pull(*item_kind), tile_pos, map_geometry)
             }
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
@@ -337,9 +342,9 @@ impl SignalMap {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SignalType {
     /// Take this item away from here.
-    Push(Id<Item>),
+    Push(ItemKind),
     /// Bring me an item of this type.
-    Pull(Id<Item>),
+    Pull(ItemKind),
     /// Perform work at this type of structure.
     Work(Id<Structure>),
     /// Destroy a structure of this type
@@ -347,16 +352,54 @@ pub enum SignalType {
     /// Has an item of this type, in case you were looking.
     ///
     /// The passive form of `Push`.
-    Contains(Id<Item>),
+    Contains(ItemKind),
     /// Stores items of this type, in case you were looking.
     ///
     /// The passive form of `Pull`.
-    Stores(Id<Item>),
+    Stores(ItemKind),
     /// Has a unit of this type.
     Unit(Id<Unit>),
 }
 
 impl SignalType {
+    /// Returns a list of all signals that are relevant to find items of the provided [`ItemKind`].
+    ///
+    /// This is used to determine which signals to follow upstream.
+    pub(crate) fn find(item_kind: ItemKind, item_manifest: &ItemManifest) -> Vec<SignalType> {
+        let kinds = match item_kind {
+            ItemKind::Single(item_id) => item_manifest.kinds(item_id),
+            ItemKind::Tag(tag) => item_manifest.kinds_with_tag(tag),
+        };
+
+        let mut signal_types = Vec::new();
+
+        for kind in kinds {
+            signal_types.push(SignalType::Push(kind));
+            signal_types.push(SignalType::Contains(kind));
+        }
+
+        signal_types
+    }
+
+    /// Returns a list of all signals that are relevant to storing items of the provided [`ItemKind`].
+    ///
+    /// This is used to determine which signals to follow upstream.
+    pub(crate) fn store(item_kind: ItemKind, item_manifest: &ItemManifest) -> Vec<SignalType> {
+        let kinds = match item_kind {
+            ItemKind::Single(item_id) => item_manifest.kinds(item_id),
+            ItemKind::Tag(tag) => item_manifest.kinds_with_tag(tag),
+        };
+
+        let mut signal_types = Vec::new();
+
+        for kind in kinds {
+            signal_types.push(SignalType::Pull(kind));
+            signal_types.push(SignalType::Stores(kind));
+        }
+
+        signal_types
+    }
+
     /// The pretty formatting for this type
     pub(crate) fn display(
         &self,
@@ -365,16 +408,24 @@ impl SignalType {
         unit_manifest: &UnitManifest,
     ) -> String {
         match self {
-            SignalType::Push(item_id) => format!("Push({})", item_manifest.name(*item_id)),
-            SignalType::Pull(item_id) => format!("Pull({})", item_manifest.name(*item_id)),
+            SignalType::Push(item_kind) => {
+                format!("Push({})", item_manifest.name_of_kind(*item_kind))
+            }
+            SignalType::Pull(item_kind) => {
+                format!("Pull({})", item_manifest.name_of_kind(*item_kind))
+            }
             SignalType::Work(structure_id) => {
                 format!("Work({})", structure_manifest.name(*structure_id))
             }
             SignalType::Demolish(structure_id) => {
                 format!("Demolish({})", structure_manifest.name(*structure_id))
             }
-            SignalType::Contains(item_id) => format!("Contains({})", item_manifest.name(*item_id)),
-            SignalType::Stores(item_id) => format!("Stores({})", item_manifest.name(*item_id)),
+            SignalType::Contains(item_kind) => {
+                format!("Contains({})", item_manifest.name_of_kind(*item_kind))
+            }
+            SignalType::Stores(item_kind) => {
+                format!("Stores({})", item_manifest.name_of_kind(*item_kind))
+            }
             SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
         }
     }
@@ -554,14 +605,28 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
 
 #[cfg(test)]
 mod tests {
+    use crate::items::item_manifest::ItemData;
+
     use super::*;
 
-    fn test_item() -> Id<Item> {
-        Id::from_name("12345".to_string())
+    fn test_item() -> ItemKind {
+        ItemKind::Single(Id::from_name("12345".to_string()))
     }
 
     fn test_structure() -> Id<Structure> {
         Id::from_name("67890".to_string())
+    }
+
+    fn test_manifest() -> ItemManifest {
+        let mut manifest = ItemManifest::new();
+        manifest.insert(
+            "12345".to_string(),
+            ItemData {
+                stack_size: 1,
+                compostable: false,
+            },
+        );
+        manifest
     }
 
     #[test]
@@ -593,21 +658,42 @@ mod tests {
     fn upstream_returns_none_with_no_signals() {
         let signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Store(test_item()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Store(test_item()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Pickup(test_item()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Pickup(test_item()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Work(test_structure()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Work(test_structure()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::default(), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::default(),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
     }
@@ -616,6 +702,7 @@ mod tests {
     fn upstream_returns_none_at_trivial_peak() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
@@ -624,7 +711,12 @@ mod tests {
         );
 
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Store(test_item()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Store(test_item()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
     }
@@ -633,6 +725,7 @@ mod tests {
     fn upstream_returns_none_at_peak() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Push(test_item()),
@@ -645,7 +738,12 @@ mod tests {
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Pickup(test_item()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Pickup(test_item()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
     }
@@ -655,6 +753,7 @@ mod tests {
     fn upstream_returns_none_at_peak_dropoff() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
@@ -667,7 +766,12 @@ mod tests {
         }
 
         assert_eq!(
-            signals.upstream(TilePos::ZERO, &Goal::Store(test_item()), &map_geometry),
+            signals.upstream(
+                TilePos::ZERO,
+                &Goal::Store(test_item()),
+                &item_manifest,
+                &map_geometry
+            ),
             None
         );
     }
@@ -676,13 +780,19 @@ mod tests {
     fn upstream_returns_some_at_trivial_valley() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert!(signals
-            .upstream(TilePos::ZERO, &Goal::Store(test_item()), &map_geometry)
+            .upstream(
+                TilePos::ZERO,
+                &Goal::Store(test_item()),
+                &item_manifest,
+                &map_geometry
+            )
             .is_some());
     }
 
@@ -690,6 +800,7 @@ mod tests {
     fn upstream_returns_some_at_valley() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
+        let item_manifest = test_manifest();
 
         signals.add_signal(
             SignalType::Pull(test_item()),
@@ -702,7 +813,12 @@ mod tests {
         }
 
         assert!(signals
-            .upstream(TilePos::ZERO, &Goal::Store(test_item()), &map_geometry)
+            .upstream(
+                TilePos::ZERO,
+                &Goal::Store(test_item()),
+                &item_manifest,
+                &map_geometry
+            )
             .is_some());
     }
 }

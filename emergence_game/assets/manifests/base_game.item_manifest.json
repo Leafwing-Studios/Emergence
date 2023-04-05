@@ -2,16 +2,20 @@
   "$schema": "./schema/items.schema.json",
   "items": {
     "acacia_leaf": {
-      "stack_size": 8
+      "stack_size": 8,
+      "compostable": true
     },
     "leuco_chunk": {
-      "stack_size": 6
+      "stack_size": 6,
+      "compostable": false
     },
     "ant_egg": {
-      "stack_size": 3
+      "stack_size": 3,
+      "compostable": false
     },
     "acacia_seed": {
-      "stack_size": 12
+      "stack_size": 12,
+      "compostable": true
     }
   }
 }

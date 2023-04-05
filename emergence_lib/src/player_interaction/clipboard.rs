@@ -6,8 +6,9 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::components::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{construction::Preview, crafting::ActiveRecipe, structure_manifest::Structure},
+    structures::{construction::Preview, structure_manifest::Structure},
 };
 
 use super::{
