@@ -9,6 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
+    construction::ghosts::{GhostBundle, GhostKind, PreviewBundle},
     crafting::{
         components::{CraftingBundle, StorageInventory},
         recipe::RecipeManifest,
@@ -23,7 +24,6 @@ use crate::{
 };
 
 use super::{
-    construction::{GhostBundle, GhostKind, PreviewBundle},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     StructureBundle,

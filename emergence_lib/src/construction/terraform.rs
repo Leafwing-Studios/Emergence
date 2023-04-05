@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
+    player_interaction::InteractionSystem,
     simulation::{
         geometry::{Height, TilePos},
         SimulationSet,
@@ -15,7 +16,7 @@ use crate::{
     },
 };
 
-use super::{zoning::Zoning, InteractionSystem};
+use super::zoning::Zoning;
 
 /// Systems that handle terraforming.
 pub(super) struct TerraformingPlugin;

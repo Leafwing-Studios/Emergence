@@ -16,8 +16,8 @@ use std::{
 };
 
 use crate::{
-    asset_management::manifest::Id, filtered_array_iter::FilteredArrayIter,
-    structures::construction::Footprint, terrain::terrain_manifest::Terrain,
+    asset_management::manifest::Id, filtered_array_iter::FilteredArrayIter, structures::Footprint,
+    terrain::terrain_manifest::Terrain,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.

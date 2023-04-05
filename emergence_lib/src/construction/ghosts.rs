@@ -7,15 +7,15 @@
 use crate::crafting::components::WorkersPresent;
 use crate::crafting::item_tags::ItemKind;
 use crate::simulation::geometry::MapGeometry;
+use crate::simulation::SimulationSet;
+use crate::structures::commands::StructureCommandsExt;
+use crate::structures::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
 use crate::terrain::terrain_manifest::Terrain;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
-use bevy::utils::{Duration, HashSet};
-use bevy::{ecs::system::SystemParam, prelude::*};
+use bevy::prelude::*;
+use bevy::utils::Duration;
 use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
-use hexx::shapes::hexagon;
-use hexx::Hex;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -25,8 +25,21 @@ use crate::{
     simulation::geometry::{Facing, TilePos},
 };
 
-use super::commands::StructureCommandsExt;
-use super::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
+pub struct GhostPlugin;
+
+impl Plugin for GhostPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            (
+                validate_ghosts,
+                ghost_signals.after(validate_ghosts),
+                ghost_lifecycle.after(validate_ghosts),
+            )
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
+    }
+}
 
 /// A marker component that indicates that this structure is planned to be built, rather than actually existing.
 #[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
@@ -38,7 +51,7 @@ pub(crate) struct Ghostly;
 
 /// The set of components needed to spawn a ghost.
 #[derive(Bundle)]
-pub(super) struct GhostBundle {
+pub(crate) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
     /// The location of the ghost
@@ -69,7 +82,7 @@ pub(super) struct GhostBundle {
 
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
-    pub(super) fn new(
+    pub(crate) fn new(
         tile_pos: TilePos,
         clipboard_data: ClipboardData,
         structure_manifest: &StructureManifest,
@@ -144,7 +157,7 @@ pub(crate) struct Preview;
 
 /// The set of components needed to spawn a structure preview.
 #[derive(Bundle)]
-pub(super) struct PreviewBundle {
+pub(crate) struct PreviewBundle {
     /// Marker component
     preview: Preview,
     /// The location of the preview
@@ -161,7 +174,7 @@ pub(super) struct PreviewBundle {
 
 impl PreviewBundle {
     /// Creates a new [`PreviewBundle`].
-    pub(super) fn new(
+    pub(crate) fn new(
         tile_pos: TilePos,
         data: ClipboardData,
         scene_handle: Handle<Scene>,
@@ -182,10 +195,6 @@ impl PreviewBundle {
         }
     }
 }
-
-/// Marker component for structures that are intended to be deconstructed
-#[derive(Component, Debug)]
-pub(crate) struct MarkedForDemolition;
 
 /// Computes the correct signals for ghosts to send throughout their lifecycle
 // TODO: use a `Ref` instead of &mut in Bevy 0.10
@@ -331,86 +340,6 @@ pub(super) fn ghost_lifecycle(
             }
             _ => unreachable!(),
         }
-    }
-}
-
-/// A query for.
-#[derive(SystemParam)]
-pub(crate) struct DemolitionQuery<'w, 's> {
-    /// The contained query type.
-    query: Query<'w, 's, &'static Id<Structure>, With<MarkedForDemolition>>,
-}
-
-impl<'w, 's> DemolitionQuery<'w, 's> {
-    /// Is there a structure of type `structure_id` at `structure_pos` that needs to be demolished?
-    ///
-    /// If so, returns `Some(matching_structure_entity_that_needs_to_be_demolished)`.
-    pub(crate) fn needs_demolition(
-        &self,
-        structure_pos: TilePos,
-        structure_id: Id<Structure>,
-        map_geometry: &MapGeometry,
-    ) -> Option<Entity> {
-        let entity = map_geometry.get_structure(structure_pos)?;
-
-        let &found_structure_id = self.query.get(entity).ok()?;
-
-        match found_structure_id == structure_id {
-            true => Some(entity),
-            false => None,
-        }
-    }
-}
-
-/// The set of tiles taken up by a structure.
-///
-/// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Footprint {
-    /// The set of tiles is taken up by this structure.
-    pub(crate) set: HashSet<TilePos>,
-}
-
-impl Default for Footprint {
-    fn default() -> Self {
-        Self::single()
-    }
-}
-
-impl Footprint {
-    /// A footprint that occupies a single tile.
-    pub fn single() -> Self {
-        Self {
-            set: HashSet::from_iter(vec![TilePos::ZERO]),
-        }
-    }
-
-    /// A footprint that occupies a set of tiles in a solid hexagon.
-    pub fn hexagon(radius: u32) -> Self {
-        let mut set = HashSet::new();
-        for hex in hexagon(Hex::ZERO, radius) {
-            set.insert(TilePos { hex });
-        }
-
-        Footprint { set }
-    }
-
-    /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
-    pub(crate) fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
-        self.set
-            .iter()
-            .map(|&offset| center + offset)
-            .collect::<HashSet<_>>()
-    }
-
-    /// Rotates the footprint by the provided [`Facing`].
-    pub(crate) fn rotated(&self, facing: Facing) -> Self {
-        let mut set = HashSet::new();
-        for &tile_pos in self.set.iter() {
-            set.insert(tile_pos.rotated(facing));
-        }
-
-        Footprint { set }
     }
 }
 

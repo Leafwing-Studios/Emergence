@@ -555,6 +555,7 @@ mod structure_details {
     use super::organism_details::OrganismDetails;
     use crate::{
         asset_management::manifest::Id,
+        construction::demolition::MarkedForDemolition,
         crafting::{
             components::{
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
@@ -564,10 +565,7 @@ mod structure_details {
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
         simulation::geometry::TilePos,
-        structures::{
-            construction::MarkedForDemolition,
-            structure_manifest::{Structure, StructureManifest},
-        },
+        structures::structure_manifest::{Structure, StructureManifest},
         units::unit_manifest::UnitManifest,
     };
 
@@ -701,8 +699,8 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::Id,
+        construction::zoning::Zoning,
         items::item_manifest::ItemManifest,
-        player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,

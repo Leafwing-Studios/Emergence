@@ -3,6 +3,7 @@
 //! All plugins in this module should work without rendering.
 
 use crate::asset_management::AssetState;
+use crate::construction::ConstructionPlugin;
 use crate::crafting::CraftingPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
@@ -55,6 +56,7 @@ impl Plugin for SimulationPlugin {
                 config: self.gen_config.clone(),
             })
             .add_plugin(CraftingPlugin)
+            .add_plugin(ConstructionPlugin)
             .add_plugin(StructuresPlugin)
             .add_plugin(TerrainPlugin)
             .add_plugin(OrganismPlugin)

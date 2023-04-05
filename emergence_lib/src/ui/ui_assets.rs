@@ -6,7 +6,7 @@ use core::hash::Hash;
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    player_interaction::terraform::TerraformingChoice,
+    construction::terraform::TerraformingChoice,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
 };

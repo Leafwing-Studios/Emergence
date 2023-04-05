@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetCollectionExt},
-    player_interaction::terraform::TerraformingChoice,
+    construction::terraform::TerraformingChoice,
     structures::structure_manifest::Structure,
     ui::{
         overlay::OverlayMenuPlugin,

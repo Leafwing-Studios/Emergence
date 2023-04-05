@@ -13,8 +13,6 @@ pub(crate) mod clipboard;
 pub(crate) mod cursor;
 pub(crate) mod intent;
 pub(crate) mod selection;
-pub(crate) mod terraform;
-pub(crate) mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
 pub struct InteractionPlugin;
@@ -29,9 +27,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(selection::SelectionPlugin)
-            .add_plugin(terraform::TerraformingPlugin)
-            .add_plugin(clipboard::ClipboardPlugin)
-            .add_plugin(zoning::ZoningPlugin);
+            .add_plugin(clipboard::ClipboardPlugin);
 
         #[cfg(feature = "debug_tools")]
         app.add_plugin(debug_tools::DebugToolsPlugin);

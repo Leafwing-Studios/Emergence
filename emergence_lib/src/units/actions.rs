@@ -9,6 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
+    construction::demolition::{DemolitionQuery, MarkedForDemolition},
     crafting::{
         components::{
             AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
@@ -20,11 +21,7 @@ use crate::{
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
     simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
-    structures::{
-        commands::StructureCommandsExt,
-        construction::{DemolitionQuery, MarkedForDemolition},
-        structure_manifest::Structure,
-    },
+    structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 

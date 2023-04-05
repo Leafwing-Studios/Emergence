@@ -13,10 +13,10 @@ use emergence_lib::{
     },
     simulation::light::Illuminance,
     structures::{
-        construction::Footprint,
         structure_manifest::{
             RawConstructionStrategy, RawStructureData, RawStructureKind, RawStructureManifest,
         },
+        Footprint,
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{

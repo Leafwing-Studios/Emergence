@@ -5,23 +5,23 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::{manifest::Id, AssetState},
+    construction::{demolition::MarkedForDemolition, ghosts::Preview},
+    player_interaction::{
+        clipboard::{Clipboard, ClipboardData},
+        cursor::CursorPos,
+        selection::CurrentSelection,
+        InteractionSystem, PlayerAction,
+    },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Height, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
-        construction::{MarkedForDemolition, Preview},
         structure_manifest::{Structure, StructureManifest},
     },
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{
-    clipboard::{Clipboard, ClipboardData},
-    cursor::CursorPos,
-    selection::CurrentSelection,
-    terraform::MarkedForTerraforming,
-    InteractionSystem, PlayerAction,
-};
+use super::terraform::MarkedForTerraforming;
 
 /// Code and data for setting zoning of areas for construction.
 pub(super) struct ZoningPlugin;

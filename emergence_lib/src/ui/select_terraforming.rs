@@ -2,8 +2,9 @@
 
 use crate::{
     asset_management::AssetState,
+    construction::terraform::TerraformingChoice,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
-    player_interaction::{clipboard::Clipboard, terraform::TerraformingChoice, PlayerAction},
+    player_interaction::{clipboard::Clipboard, PlayerAction},
     terrain::terrain_manifest::TerrainManifest,
 };
 

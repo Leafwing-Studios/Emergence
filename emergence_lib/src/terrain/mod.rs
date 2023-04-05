@@ -7,8 +7,8 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
+use crate::construction::zoning::Zoning;
 use crate::player_interaction::selection::ObjectInteraction;
-use crate::player_interaction::zoning::Zoning;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 

@@ -2,13 +2,11 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
+    construction::ghosts::GhostKind,
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{hexagonal_column, MapGeometry},
-    structures::{
-        construction::GhostKind,
-        structure_manifest::{Structure, StructureManifest},
-    },
+    structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 

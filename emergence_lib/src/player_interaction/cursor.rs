@@ -6,10 +6,8 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    asset_management::manifest::Id,
-    simulation::geometry::TilePos,
-    structures::{construction::Ghost, structure_manifest::Structure},
-    terrain::terrain_manifest::Terrain,
+    asset_management::manifest::Id, construction::ghosts::Ghost, simulation::geometry::TilePos,
+    structures::structure_manifest::Structure, terrain::terrain_manifest::Terrain,
     units::unit_manifest::Unit,
 };
 

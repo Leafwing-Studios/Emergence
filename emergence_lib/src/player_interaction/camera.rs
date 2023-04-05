@@ -13,9 +13,9 @@ use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::asset_management::manifest::Id;
+use crate::construction::ghosts::Ghost;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
-use crate::structures::construction::Ghost;
 use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;

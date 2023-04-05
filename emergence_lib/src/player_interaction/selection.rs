@@ -295,7 +295,7 @@ pub(crate) enum CurrentSelection {
 
 impl CurrentSelection {
     /// Returns the set of terrain tiles that should be affected by actions.
-    pub(super) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
+    pub(crate) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
         match self {
             CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
                 true => {

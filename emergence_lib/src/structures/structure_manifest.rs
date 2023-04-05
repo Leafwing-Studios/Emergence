@@ -5,7 +5,6 @@ use crate::{
     crafting::components::{ActiveRecipe, InputInventory, RawActiveRecipe},
     items::{item_manifest::Item, slot::ItemSlot},
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
-    structures::construction::Footprint,
     terrain::terrain_manifest::Terrain,
 };
 use bevy::{
@@ -13,6 +12,8 @@ use bevy::{
     utils::{Duration, HashMap, HashSet},
 };
 use serde::{Deserialize, Serialize};
+
+use super::Footprint;
 
 /// The marker type for [`Id<Structure>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
