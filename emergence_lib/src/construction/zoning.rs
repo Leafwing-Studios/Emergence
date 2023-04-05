@@ -13,7 +13,7 @@ use crate::{
         InteractionSystem, PlayerAction,
     },
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},
@@ -21,7 +21,7 @@ use crate::{
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::terraform::MarkedForTerraforming;
+use super::terraform::TerraformingAction;
 
 /// Code and data for setting zoning of areas for construction.
 pub(super) struct ZoningPlugin;
@@ -52,7 +52,7 @@ pub(crate) enum Zoning {
     /// The provided structure should be built on this tile.
     Structure(ClipboardData),
     /// The provided terraforming should be applied to this tile.
-    Terraform(MarkedForTerraforming),
+    Terraform(TerraformingAction),
     /// No zoning is set.
     None,
     /// Zoning is set to keep the tile clear.
@@ -70,7 +70,7 @@ impl Zoning {
             Zoning::Structure(clipboard_data) => structure_manifest
                 .name(clipboard_data.structure_id)
                 .to_string(),
-            Zoning::Terraform(mark) => mark.display(terrain_manifest),
+            Zoning::Terraform(action) => action.display(terrain_manifest),
             Zoning::None => "None".to_string(),
             Zoning::KeepClear => "Keep Clear".to_string(),
         }
@@ -105,7 +105,7 @@ fn set_zoning(
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
     clipboard: Res<Clipboard>,
-    mut terrain_query: Query<(&mut Zoning, &Height, &Id<Terrain>)>,
+    mut terrain_query: Query<&mut Zoning>,
     current_selection: Res<CurrentSelection>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
@@ -116,7 +116,7 @@ fn set_zoning(
     // Try to remove everything at the location
     if actions.pressed(PlayerAction::KeepClear) {
         for terrain_entity in relevant_terrain_entities {
-            let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
+            let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
             *zoning = Zoning::KeepClear;
         }
 
@@ -127,7 +127,7 @@ fn set_zoning(
     // Explicitly clear the selection
     if actions.pressed(PlayerAction::ClearZoning) {
         for terrain_entity in relevant_terrain_entities {
-            let (mut zoning, ..) = terrain_query.get_mut(terrain_entity).unwrap();
+            let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
             *zoning = Zoning::None;
         }
 
@@ -144,11 +144,8 @@ fn set_zoning(
             for terrain_entity in relevant_terrain_entities {
                 match apply_zoning {
                     true => {
-                        let (mut zoning, &current_height, &current_material) =
-                            terrain_query.get_mut(terrain_entity).unwrap();
-                        *zoning = Zoning::Terraform(
-                            terraform_choice.into_mark(current_height, current_material),
-                        );
+                        let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                        *zoning = Zoning::Terraform((*terraform_choice).into());
                     }
                     // TODO: Previews for terraforming are not yet implemented
                     false => (),
@@ -164,8 +161,7 @@ fn set_zoning(
                     match apply_zoning {
                         true => {
                             for terrain_entity in relevant_terrain_entities {
-                                let (mut zoning, ..) =
-                                    terrain_query.get_mut(terrain_entity).unwrap();
+                                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                                 *zoning = Zoning::Structure(clipboard_item.clone());
                             }
                         }
@@ -186,8 +182,7 @@ fn set_zoning(
                             true => {
                                 // Avoid trying to operate on terrain that doesn't exist
                                 if let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) {
-                                    let (mut zoning, ..) =
-                                        terrain_query.get_mut(terrain_entity).unwrap();
+                                    let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
                                     *zoning = Zoning::Structure(clipboard_item.clone());
                                 }
                             }
