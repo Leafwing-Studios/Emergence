@@ -16,8 +16,12 @@ use std::time::Duration;
 
 use bevy::{ecs::query::WorldQuery, prelude::*};
 
-use self::components::{
-    ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory, WorkersPresent,
+use self::{
+    components::{
+        ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
+        WorkersPresent,
+    },
+    item_tags::ItemKind,
 };
 
 pub mod components;
@@ -206,22 +210,33 @@ pub(crate) fn set_crafting_emitter(
         emitter.signals.clear();
 
         // Input signals
-        for item_slot in input_inventory.iter() {
-            if !item_slot.is_full() {
-                let signal_type = SignalType::Pull(item_slot.item_id());
-                let signal_strength = SignalStrength::new(10.);
-                emitter.signals.push((signal_type, signal_strength));
+        match input_inventory {
+            InputInventory::Exact { inventory } => {
+                for item_slot in inventory.iter() {
+                    if !item_slot.is_full() {
+                        let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                        let signal_strength = SignalStrength::new(10.);
+                        emitter.signals.push((signal_type, signal_strength));
+                    }
+                }
+            }
+            InputInventory::Tagged { tag, inventory } => {
+                if !inventory.is_full() {
+                    let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength));
+                }
             }
         }
 
         // Output signals
         for item_slot in output_inventory.iter() {
             if item_slot.is_full() {
-                let signal_type = SignalType::Push(item_slot.item_id());
+                let signal_type = SignalType::Push(ItemKind::Single(item_slot.item_id()));
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
             } else if !item_slot.is_empty() {
-                let signal_type = SignalType::Contains(item_slot.item_id());
+                let signal_type = SignalType::Contains(ItemKind::Single(item_slot.item_id()));
                 let signal_strength = SignalStrength::new(10.);
                 emitter.signals.push((signal_type, signal_strength));
             }
@@ -256,14 +271,14 @@ pub(crate) fn set_storage_emitter(
             Some(item_id) => {
                 // If there's space, signal that
                 if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
-                    let signal_type = SignalType::Stores(item_id);
+                    let signal_type = SignalType::Stores(ItemKind::Single(item_id));
                     let signal_strength = SignalStrength::new(10.);
                     emitter.signals.push((signal_type, signal_strength));
                 }
 
                 // If there's any inventory, signal that
                 if storage_inventory.item_count(item_id) > 0 {
-                    let signal_type = SignalType::Contains(item_id);
+                    let signal_type = SignalType::Contains(ItemKind::Single(item_id));
                     let signal_strength = SignalStrength::new(10.);
                     emitter.signals.push((signal_type, signal_strength));
                 }
@@ -274,14 +289,14 @@ pub(crate) fn set_storage_emitter(
                 for item_id in item_manifest.variants() {
                     // If there's space, signal that
                     if storage_inventory.remaining_space_for_item(item_id, &item_manifest) > 0 {
-                        let signal_type = SignalType::Stores(item_id);
+                        let signal_type = SignalType::Stores(ItemKind::Single(item_id));
                         let signal_strength = SignalStrength::new(10.);
                         emitter.signals.push((signal_type, signal_strength));
                     }
 
                     // If there's any inventory, signal that
                     if storage_inventory.item_count(item_id) > 0 {
-                        let signal_type = SignalType::Contains(item_id);
+                        let signal_type = SignalType::Contains(ItemKind::Single(item_id));
                         let signal_strength = SignalStrength::new(10.);
                         emitter.signals.push((signal_type, signal_strength));
                     }

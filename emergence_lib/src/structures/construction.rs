@@ -5,6 +5,7 @@
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
 use crate::crafting::components::WorkersPresent;
+use crate::crafting::item_tags::ItemKind;
 use crate::simulation::geometry::MapGeometry;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
@@ -207,11 +208,22 @@ pub(super) fn ghost_signals(
         if crafting_state.is_changed() {
             match *crafting_state {
                 CraftingState::NeedsInput => {
-                    // Emit signals to cause workers to bring the correct item to this ghost
-                    for item_slot in input_inventory.iter() {
-                        let signal_type = SignalType::Pull(item_slot.item_id());
-                        let signal_strength = SignalStrength::new(10.);
-                        emitter.signals.push((signal_type, signal_strength))
+                    match input_inventory {
+                        InputInventory::Exact { inventory } => {
+                            // Emit signals to cause workers to bring the correct item to this ghost
+                            for item_slot in inventory.iter() {
+                                let signal_type =
+                                    SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                                let signal_strength = SignalStrength::new(10.);
+                                emitter.signals.push((signal_type, signal_strength))
+                            }
+                        }
+                        InputInventory::Tagged { tag, .. } => {
+                            // Emit signals to cause workers to bring the correct item to this ghost
+                            let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
+                            let signal_strength = SignalStrength::new(10.);
+                            emitter.signals.push((signal_type, signal_strength))
+                        }
                     }
                 }
                 CraftingState::InProgress {

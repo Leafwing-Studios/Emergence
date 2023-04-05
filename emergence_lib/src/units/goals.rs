@@ -7,7 +7,8 @@ use rand::rngs::ThreadRng;
 use rand::thread_rng;
 
 use crate::asset_management::manifest::Id;
-use crate::items::item_manifest::{Item, ItemManifest};
+use crate::crafting::item_tags::ItemKind;
+use crate::items::item_manifest::ItemManifest;
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
@@ -33,21 +34,17 @@ pub(crate) enum Goal {
         remaining_actions: Option<u16>,
     },
     /// Attempting to pick up an object
-    #[allow(dead_code)]
-    Pickup(Id<Item>),
+    Pickup(ItemKind),
     /// Attempting to drop off an object
     ///
     /// This can place the object in storage or a structure that actively needs it.
-    #[allow(dead_code)]
-    Store(Id<Item>),
+    Store(ItemKind),
     /// Attempting to drop off an object to a structure that actively needs it.
-    #[allow(dead_code)]
-    Deliver(Id<Item>),
+    Deliver(ItemKind),
     /// Attempting to perform work at a structure
-    #[allow(dead_code)]
     Work(Id<Structure>),
     /// Attempt to feed self
-    Eat(Id<Item>),
+    Eat(ItemKind),
     /// Attempting to destroy a structure
     Demolish(Id<Structure>),
 }
@@ -67,9 +64,9 @@ impl TryFrom<SignalType> for Goal {
     fn try_from(value: SignalType) -> Result<Goal, Self::Error> {
         match value {
             // Go grab the item, so you can later take it away
-            SignalType::Push(item_id) => Ok(Goal::Pickup(item_id)),
+            SignalType::Push(item_kind) => Ok(Goal::Pickup(item_kind)),
             // Go grab the item, so you can bring it to me
-            SignalType::Pull(item_id) => Ok(Goal::Pickup(item_id)),
+            SignalType::Pull(item_kind) => Ok(Goal::Pickup(item_kind)),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
             SignalType::Contains(_) => Err(()),
@@ -91,14 +88,16 @@ impl Goal {
                 "Wander ({} actions remaining)",
                 remaining_actions.unwrap_or(0)
             ),
-            Goal::Pickup(item) => format!("Pickup {}", item_manifest.name(*item)),
-            Goal::Store(item) => format!("Store {}", item_manifest.name(*item)),
-            Goal::Deliver(item) => format!("Deliver {}", item_manifest.name(*item)),
+            Goal::Pickup(item_kind) => format!("Pickup {}", item_manifest.name_of_kind(*item_kind)),
+            Goal::Store(item_kind) => format!("Store {}", item_manifest.name_of_kind(*item_kind)),
+            Goal::Deliver(item_kind) => {
+                format!("Deliver {}", item_manifest.name_of_kind(*item_kind))
+            }
             Goal::Work(structure) => format!("Work at {}", structure_manifest.name(*structure)),
             Goal::Demolish(structure) => {
                 format!("Demolish {}", structure_manifest.name(*structure))
             }
-            Goal::Eat(item) => format!("Eat {}", item_manifest.name(*item)),
+            Goal::Eat(item_kind) => format!("Eat {}", item_manifest.name_of_kind(*item_kind)),
         }
     }
 }
@@ -114,6 +113,7 @@ pub(super) fn choose_goal(
         &Id<Unit>,
     )>,
     unit_manifest: Res<UnitManifest>,
+    item_manifest: Res<ItemManifest>,
     signals: Res<Signals>,
 ) {
     let rng = &mut thread_rng();
@@ -125,14 +125,20 @@ pub(super) fn choose_goal(
         if impatience_pool.is_full() {
             // If you're holding something, try to put it away nicely
             *goal = if let Some(held_item) = unit_inventory.held_item {
-                // Don't get stuck trying to do a hopeless storage task forever
-                if !matches!(*goal, Goal::Store(..) | Goal::Wander { .. }) {
-                    Goal::Store(held_item)
-                } else {
-                    Goal::Wander {
-                        remaining_actions: None,
+                match &*goal {
+                    Goal::Store(item_kind) | Goal::Deliver(item_kind) => {
+                        // If we ran out of patience while trying to store something, we should just give up and drop it
+                        if item_kind.matches(held_item, &item_manifest) {
+                            Goal::Wander {
+                                remaining_actions: None,
+                            }
+                        } else {
+                            Goal::Store(ItemKind::Single(held_item))
+                        }
                     }
+                    _ => Goal::Store(ItemKind::Single(held_item)),
                 }
+            // If you're not holding anything, you can't store it!
             } else {
                 Goal::Wander {
                     remaining_actions: None,

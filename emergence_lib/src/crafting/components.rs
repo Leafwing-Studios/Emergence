@@ -1,7 +1,7 @@
 //! The components needed to create a [`CraftingBundle`].
 
 use super::{
-    item_tags::ItemTag,
+    item_tags::{ItemKind, ItemTag},
     recipe::{Recipe, RecipeData, RecipeInput, RecipeManifest, RecipeOutput},
 };
 
@@ -138,16 +138,19 @@ impl InputInventory {
         self.len() == 0
     }
 
-    /// Does this inventory have space for at least one item of the given type?
-    pub fn currently_accepts(&self, item_id: Id<Item>, item_manifest: &ItemManifest) -> bool {
+    /// Does this inventory have space for at least one item of the given kind?
+    pub fn currently_accepts(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
         match self {
-            InputInventory::Exact { inventory } => {
-                inventory.remaining_reserved_space_for_item(item_id) > 0
-            }
-            InputInventory::Tagged { tag, inventory } => {
-                item_manifest.has_tag(item_id, *tag)
-                    && inventory.remaining_space_for_item(item_id, item_manifest) > 0
-            }
+            InputInventory::Exact { inventory } => match item_kind {
+                ItemKind::Single(item_id) => {
+                    inventory.remaining_reserved_space_for_item(item_id) > 0
+                }
+                ItemKind::Tag(_) => false,
+            },
+            InputInventory::Tagged { tag, inventory } => match item_kind {
+                ItemKind::Tag(item_tag) => *tag == item_tag && !inventory.is_full(),
+                ItemKind::Single(item_id) => item_manifest.has_tag(item_id, *tag),
+            },
         }
     }
 
@@ -267,7 +270,7 @@ pub enum AddToInputError {
 }
 
 /// The output inventory for a structure.
-#[derive(Component, Debug, Default, Deref, DerefMut)]
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut)]
 pub(crate) struct OutputInventory {
     /// Inner storage
     pub(crate) inventory: Inventory,
@@ -345,6 +348,22 @@ impl StorageInventory {
     pub(crate) fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
         StorageInventory {
             inventory: Inventory::new(max_slot_count, reserved_for),
+        }
+    }
+
+    /// Does this inventory have space for at least one item of the given kind?
+    pub fn currently_accepts(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
+        match self.reserved_for() {
+            Some(reserved_for) => match item_kind {
+                ItemKind::Single(item_id) => !self.is_full() && item_id == reserved_for,
+                ItemKind::Tag(_) => false,
+            },
+            None => match item_kind {
+                ItemKind::Single(item_id) => self.remaining_reserved_space_for_item(item_id) > 0,
+                ItemKind::Tag(tag) => {
+                    !self.is_full() && item_kind.is_compatible_with(tag, item_manifest)
+                }
+            },
         }
     }
 }

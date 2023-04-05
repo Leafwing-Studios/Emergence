@@ -51,6 +51,33 @@ impl ItemManifest {
 
         kinds
     }
+
+    /// Returns the complete list of [`ItemKind`] that match the given `tag`.
+    pub fn kinds_with_tag(&self, tag: ItemTag) -> Vec<ItemKind> {
+        let mut kinds = Vec::new();
+
+        for item_id in self.variants() {
+            if self.has_tag(item_id, tag) {
+                kinds.push(ItemKind::Single(item_id));
+            }
+        }
+
+        kinds.push(ItemKind::Tag(tag));
+
+        kinds
+    }
+
+    /// Returns the human-readable name associated with the provided `item_kind`.
+    ///
+    /// # Panics
+    /// This function panics when the given ID does not exist in the manifest.
+    /// We assume that all IDs are valid and the manifests are complete.
+    pub fn name_of_kind(&self, item_kind: ItemKind) -> &str {
+        match item_kind {
+            ItemKind::Single(id) => self.name(id),
+            ItemKind::Tag(tag) => tag.name(),
+        }
+    }
 }
 
 /// The data associated with each item.

@@ -11,22 +11,29 @@ use crate::{
 };
 
 /// A category of items.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ItemTag {
     /// Items that can be composted.
     Compostable,
 }
 
-impl Display for ItemTag {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl ItemTag {
+    /// Returns the human-readable name associated with this tag.
+    pub fn name(&self) -> &'static str {
         match self {
-            ItemTag::Compostable => write!(f, "Compostable"),
+            ItemTag::Compostable => "Compostable",
         }
     }
 }
 
+impl Display for ItemTag {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
 /// An item or collection of items that shares a property.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Serialize, Deserialize)]
 pub enum ItemKind {
     /// Exactly one type of item.
     Single(Id<Item>),
@@ -40,6 +47,14 @@ impl ItemKind {
         match self {
             ItemKind::Single(id) => *id == item_id,
             ItemKind::Tag(tag) => item_manifest.has_tag(item_id, *tag),
+        }
+    }
+
+    /// Returns true if this kind is compatible with the provided tag.
+    pub fn is_compatible_with(&self, tag: ItemTag, item_manifest: &ItemManifest) -> bool {
+        match self {
+            ItemKind::Single(item_id) => item_manifest.has_tag(*item_id, tag),
+            ItemKind::Tag(self_tag) => *self_tag == tag,
         }
     }
 }

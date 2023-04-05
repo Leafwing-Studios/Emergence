@@ -4,7 +4,7 @@ use bevy::prelude::warn;
 use itertools::rev;
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::Id;
+use crate::{asset_management::manifest::Id, crafting::item_tags::ItemKind};
 
 use super::{
     errors::{
@@ -141,6 +141,38 @@ impl Inventory {
     /// Determine if the inventory holds enough of the given item.
     pub(crate) fn has_count_of_item(&self, item_count: &ItemCount) -> bool {
         self.item_count(item_count.item_id) >= item_count.count
+    }
+
+    /// Does this inventory contain at least one of the given item?
+    pub(crate) fn contains(&self, item_id: Id<Item>) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.is_for_item(item_id) && !slot.is_empty())
+    }
+
+    /// Does this inventory contain at least one matching item?
+    pub fn contains_kind(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
+        match item_kind {
+            ItemKind::Single(item_id) => self.contains(item_id),
+            ItemKind::Tag(tag) => self
+                .iter()
+                .any(|item_slot| item_manifest.has_tag(item_slot.item_id(), tag)),
+        }
+    }
+
+    /// Returns the first [`Id<Item>`] that matches the given [`ItemKind`], if any.
+    pub fn matching_item_id(
+        &self,
+        item_kind: ItemKind,
+        item_manifest: &ItemManifest,
+    ) -> Option<Id<Item>> {
+        match item_kind {
+            ItemKind::Single(item_id) => Some(item_id),
+            ItemKind::Tag(tag) => self
+                .iter()
+                .find(|item_slot| item_manifest.has_tag(item_slot.item_id(), tag))
+                .map(|item_slot| item_slot.item_id()),
+        }
     }
 
     /// Returns `true` if there are no items in the inventory.
