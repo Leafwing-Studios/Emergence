@@ -9,7 +9,10 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
-    construction::demolition::{DemolitionQuery, MarkedForDemolition},
+    construction::{
+        demolition::{DemolitionQuery, MarkedForDemolition},
+        ghosts::WorkplaceId,
+    },
     crafting::{
         components::{
             AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
@@ -805,7 +808,7 @@ impl CurrentAction {
 
     /// Attempt to find a structure of type `structure_id` to perform work
     fn find_workplace(
-        structure_id: Id<Structure>,
+        workplace_id: WorkplaceId,
         unit_tile_pos: TilePos,
         facing: &Facing,
         workplace_query: &WorkplaceQuery,
@@ -817,12 +820,12 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
-        if let Some(workplace) = workplace_query.needs_work(ahead, structure_id, map_geometry) {
+        if let Some(workplace) = workplace_query.needs_work(ahead, workplace_id, map_geometry) {
             CurrentAction::work(workplace)
         // Let units work even if they're standing on the structure
         // This is particularly relevant in the case of ghosts, where it's easy enough to end up on top of the structure trying to work on it
         } else if let Some(workplace) =
-            workplace_query.needs_work(unit_tile_pos, structure_id, map_geometry)
+            workplace_query.needs_work(unit_tile_pos, workplace_id, map_geometry)
         {
             CurrentAction::work(workplace)
         } else {
@@ -831,7 +834,7 @@ impl CurrentAction {
 
             for neighbor in neighboring_tiles {
                 if let Some(workplace) =
-                    workplace_query.needs_work(neighbor, structure_id, map_geometry)
+                    workplace_query.needs_work(neighbor, workplace_id, map_geometry)
                 {
                     workplaces.push((workplace, neighbor));
                 }
@@ -848,7 +851,7 @@ impl CurrentAction {
                 )
             } else if let Some(upstream) = signals.upstream(
                 unit_tile_pos,
-                &Goal::Work(structure_id),
+                &Goal::Work(workplace_id),
                 item_manifest,
                 map_geometry,
             ) {
@@ -1121,7 +1124,7 @@ pub(crate) struct WorkplaceQuery<'w, 's> {
         's,
         (
             &'static CraftingState,
-            &'static Id<Structure>,
+            AnyOf<(&'static Id<Structure>, &'static Id<Terrain>)>,
             &'static WorkersPresent,
         ),
     >,
@@ -1134,7 +1137,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
     pub(crate) fn needs_work(
         &self,
         structure_pos: TilePos,
-        structure_id: Id<Structure>,
+        workplace_id: WorkplaceId,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
         // Prioritize ghosts over structures to allow for replacing structures by building
@@ -1144,10 +1147,11 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
             map_geometry.get_structure(structure_pos)?
         };
 
-        let (found_crafting_state, found_structure_id, workers_present) =
-            self.query.get(entity).ok()?;
+        let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 
-        if *found_structure_id != structure_id {
+        let found_id = WorkplaceId::new(ids);
+
+        if found_id != workplace_id {
             return None;
         }
 

@@ -10,7 +10,7 @@ use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
-use crate::terrain::terrain_manifest::Terrain;
+use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
 use bevy::utils::Duration;
@@ -218,7 +218,7 @@ impl StructurePreviewBundle {
 pub(super) fn ghost_signals(
     mut ghost_query: Query<
         (
-            &Id<Structure>,
+            AnyOf<(&Id<Structure>, &Id<Terrain>)>,
             &mut Emitter,
             Ref<CraftingState>,
             &InputInventory,
@@ -228,7 +228,7 @@ pub(super) fn ghost_signals(
     >,
 ) {
     // Ghosts that are ignored will slowly become more important to build.
-    for (&structure_id, mut emitter, crafting_state, input_inventory, workers_present) in
+    for (ids, mut emitter, crafting_state, input_inventory, workers_present) in
         ghost_query.iter_mut()
     {
         if crafting_state.is_changed() {
@@ -260,13 +260,62 @@ pub(super) fn ghost_signals(
                     emitter.signals.clear();
 
                     if workers_present.needs_more() {
-                        let signal_type = SignalType::Work(structure_id);
+                        let workplace_id = WorkplaceId::new(ids);
+
+                        let signal_type = SignalType::Work(workplace_id);
                         let signal_strength = SignalStrength::new(10.);
                         emitter.signals.push((signal_type, signal_strength))
                     }
                 }
                 _ => (),
             }
+        }
+    }
+}
+
+/// An identifier for a workplace.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub(crate) enum WorkplaceId {
+    /// This workplace is a structure
+    Structure(Id<Structure>),
+    /// This workplace is a terrain modification
+    Terrain(Id<Terrain>),
+}
+
+impl WorkplaceId {
+    /// Creates a new [`WorkplaceId`].
+    ///
+    /// This is typically constructed via an [`AnyOf`] query.
+    ///
+    /// # Panics
+    /// Panics if both `structure_id` and `terrain_id` are `Some`.
+    pub(crate) fn new(ids: (Option<&Id<Structure>>, Option<&Id<Terrain>>)) -> Self {
+        match ids {
+            (Some(structure_id), None) => WorkplaceId::Structure(*structure_id),
+            (None, Some(terrain_id)) => WorkplaceId::Terrain(*terrain_id),
+            _ => panic!("Workplace must be either a terrain XOR a structure"),
+        }
+    }
+
+    /// Creates a new [`WorkplaceId`] from a [`Id<Structure>`].
+    pub(crate) fn structure(structure_id: Id<Structure>) -> Self {
+        WorkplaceId::Structure(structure_id)
+    }
+
+    /// Creates a new [`WorkplaceId`] from a [`Id<Terrain>`].
+    pub(crate) fn terrain(terrain_id: Id<Terrain>) -> Self {
+        WorkplaceId::Terrain(terrain_id)
+    }
+
+    /// Returns the pretty name of this workplace.
+    pub(crate) fn name(
+        &self,
+        structure_manifest: &StructureManifest,
+        terrain_manifest: &TerrainManifest,
+    ) -> &str {
+        match self {
+            WorkplaceId::Structure(structure_id) => structure_manifest.name(*structure_id),
+            WorkplaceId::Terrain(terrain_id) => terrain_manifest.name(*terrain_id),
         }
     }
 }

@@ -5,6 +5,7 @@ use recipe::{RawRecipeManifest, RecipeManifest};
 
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
+    construction::ghosts::WorkplaceId,
     items::item_manifest::{ItemManifest, RawItemManifest},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     signals::{Emitter, SignalStrength, SignalType},
@@ -259,9 +260,10 @@ pub(crate) fn set_crafting_emitter(
                 let recipe = recipe_manifest.get(*recipe_id);
                 if workers_present.needs_more() && recipe.needs_workers() {
                     let signal_strength = SignalStrength::new(100.);
-                    emitter
-                        .signals
-                        .push((SignalType::Work(structure_id), signal_strength));
+                    emitter.signals.push((
+                        SignalType::Work(WorkplaceId::structure(structure_id)),
+                        signal_strength,
+                    ));
                 }
             }
         }

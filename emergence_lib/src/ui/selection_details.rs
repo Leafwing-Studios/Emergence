@@ -233,8 +233,12 @@ fn update_selection_details(
             );
         }
         SelectionDetails::Unit(details) => {
-            unit_text.sections[0].value =
-                details.display(&unit_manifest, &item_manifest, &structure_manifest);
+            unit_text.sections[0].value = details.display(
+                &unit_manifest,
+                &item_manifest,
+                &structure_manifest,
+                &terrain_manifest,
+            );
         }
         SelectionDetails::None => (),
     };
@@ -751,9 +755,12 @@ mod terrain_details {
             let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
-            let signals = self
-                .signals
-                .display(item_manifest, structure_manifest, unit_manifest);
+            let signals = self.signals.display(
+                item_manifest,
+                structure_manifest,
+                terrain_manifest,
+                unit_manifest,
+            );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
             format!(
@@ -778,6 +785,7 @@ mod unit_details {
         items::item_manifest::ItemManifest,
         simulation::geometry::TilePos,
         structures::structure_manifest::StructureManifest,
+        terrain::terrain_manifest::TerrainManifest,
         units::{
             actions::CurrentAction,
             goals::Goal,
@@ -839,13 +847,16 @@ mod unit_details {
             unit_manifest: &UnitManifest,
             item_manifest: &ItemManifest,
             structure_manifest: &StructureManifest,
+            terrain_manifest: &TerrainManifest,
         ) -> String {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
             let diet = self.diet.display(item_manifest);
             let tile_pos = &self.tile_pos;
             let held_item = self.held_item.display(item_manifest);
-            let goal = self.goal.display(item_manifest, structure_manifest);
+            let goal = self
+                .goal
+                .display(item_manifest, structure_manifest, terrain_manifest);
             let action = &self.action.display(item_manifest);
             let impatience_pool = &self.impatience_pool;
             let organism_details = self
