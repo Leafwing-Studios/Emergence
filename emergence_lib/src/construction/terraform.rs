@@ -127,23 +127,23 @@ fn apply_terraforming_when_ghosts_complete(
     for (crafting_state, &tile_pos, terraforming_action) in ghost_query.iter() {
         // FIXME: ensure that terraforming only progresses when no structures are present
         if matches!(*crafting_state, CraftingState::RecipeComplete) {
-            commands.despawn_ghost_terrain(tile_pos)
+            commands.despawn_ghost_terrain(tile_pos);
+
+            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+            let (mut zoning, mut terrain, mut height, mut scene_handle) =
+                terrain_query.get_mut(terrain_entity).unwrap();
+
+            match terraforming_action {
+                TerraformingAction::Raise => *height += Height(1),
+                TerraformingAction::Lower => *height -= Height(1),
+                TerraformingAction::Change(terrain_id) => {
+                    *terrain = *terrain_id;
+                    *scene_handle = terrain_handles.scenes.get(terrain_id).unwrap().clone_weak();
+                }
+            };
+
+            map_geometry.update_height(tile_pos, *height);
+            *zoning = Zoning::None;
         }
-
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let (mut zoning, mut terrain, mut height, mut scene_handle) =
-            terrain_query.get_mut(terrain_entity).unwrap();
-
-        match terraforming_action {
-            TerraformingAction::Raise => *height += Height(1),
-            TerraformingAction::Lower => *height -= Height(1),
-            TerraformingAction::Change(terrain_id) => {
-                *terrain = *terrain_id;
-                *scene_handle = terrain_handles.scenes.get(terrain_id).unwrap().clone_weak();
-            }
-        };
-
-        map_geometry.update_height(tile_pos, *height);
-        *zoning = Zoning::None;
     }
 }
