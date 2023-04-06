@@ -108,7 +108,8 @@ fn set_zoning(
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
     clipboard: Res<Clipboard>,
-    mut terrain_query: Query<&mut Zoning>,
+    mut zoning_query: Query<&mut Zoning>,
+    terrain_preview_query: Query<(&Id<Terrain>, &TilePos)>,
     current_selection: Res<CurrentSelection>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
@@ -119,7 +120,7 @@ fn set_zoning(
     // Try to remove everything at the location
     if actions.pressed(PlayerAction::KeepClear) {
         for terrain_entity in relevant_terrain_entities {
-            let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+            let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
             *zoning = Zoning::KeepClear;
         }
 
@@ -130,7 +131,7 @@ fn set_zoning(
     // Explicitly clear the selection
     if actions.pressed(PlayerAction::ClearZoning) {
         for terrain_entity in relevant_terrain_entities {
-            let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+            let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
             *zoning = Zoning::None;
         }
 
@@ -143,18 +144,23 @@ fn set_zoning(
         || actions.pressed(PlayerAction::Select) && !clipboard.is_empty();
 
     match &*clipboard {
-        Clipboard::Terraform(terraform_choice) => {
-            for terrain_entity in relevant_terrain_entities {
-                match apply_zoning {
-                    true => {
-                        let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
-                        *zoning = Zoning::Terraform((*terraform_choice).into());
-                    }
-                    // TODO: Previews for terraforming are not yet implemented
-                    false => (),
+        Clipboard::Terraform(terraform_tool) => match apply_zoning {
+            true => {
+                for terrain_entity in relevant_terrain_entities {
+                    let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
+                    *zoning = Zoning::Terraform((*terraform_tool).into());
                 }
             }
-        }
+            false => {
+                for terrain_entity in relevant_terrain_entities {
+                    let (&terrain_id, &tile_pos) =
+                        terrain_preview_query.get(terrain_entity).unwrap();
+                    let terraforming_action = TerraformingAction::from(*terraform_tool);
+
+                    commands.spawn_preview_terrain(tile_pos, terrain_id, terraforming_action);
+                }
+            }
+        },
         Clipboard::Structures(map) => {
             // Zone using the single selected structure
             match map.len() {
@@ -164,7 +170,7 @@ fn set_zoning(
                     match apply_zoning {
                         true => {
                             for terrain_entity in relevant_terrain_entities {
-                                let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                                let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
                                 *zoning = Zoning::Structure(clipboard_item.clone());
                             }
                         }
@@ -185,7 +191,7 @@ fn set_zoning(
                             true => {
                                 // Avoid trying to operate on terrain that doesn't exist
                                 if let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) {
-                                    let mut zoning = terrain_query.get_mut(terrain_entity).unwrap();
+                                    let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
                                     *zoning = Zoning::Structure(clipboard_item.clone());
                                 }
                             }
