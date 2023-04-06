@@ -46,7 +46,7 @@ struct StructureBundle {
     /// The location of this structure
     tile_pos: TilePos,
     /// Makes structures pickable
-    raycast_mesh: RaycastMesh<Id<Structure>>,
+    raycast_mesh: RaycastMesh<Structure>,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
     /// The mesh used for raycasting

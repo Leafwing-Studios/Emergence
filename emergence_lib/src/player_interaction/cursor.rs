@@ -18,9 +18,9 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Id<Structure>>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Id<Unit>>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Ghost>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Structure>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
+            .add_plugin(DefaultRaycastingPlugin::<(Ghost, Structure)>::default())
             .add_system(
                 update_raycast_with_cursor
                     .before(RaycastSystem::BuildRays::<Terrain>)
@@ -99,9 +99,9 @@ fn update_raycast_with_cursor(
     mut query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Id<Structure>>,
-            &mut RaycastSource<Id<Unit>>,
-            &mut RaycastSource<Ghost>,
+            &mut RaycastSource<Structure>,
+            &mut RaycastSource<Unit>,
+            &mut RaycastSource<(Ghost, Structure)>,
         ),
         With<Camera>,
     >,
@@ -128,9 +128,9 @@ fn update_cursor_pos(
     camera_query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Id<Structure>>,
-            &mut RaycastSource<Id<Unit>>,
-            &mut RaycastSource<Ghost>,
+            &mut RaycastSource<Structure>,
+            &mut RaycastSource<Unit>,
+            &mut RaycastSource<(Ghost, Structure)>,
         ),
         With<Camera>,
     >,

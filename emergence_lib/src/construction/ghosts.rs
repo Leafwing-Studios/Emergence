@@ -91,8 +91,6 @@ struct GhostBundle {
     workers_present: WorkersPresent,
     /// Tracks work that needs to be done on this building
     crafting_state: CraftingState,
-    /// Makes structures pickable
-    raycast_mesh: RaycastMesh<Ghost>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
     /// The material to be used by all children in the scene
@@ -118,7 +116,6 @@ impl GhostBundle {
             construction_materials,
             workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
-            raycast_mesh: RaycastMesh::default(),
             picking_mesh,
             inherited_material,
             scene_bundle: SceneBundle {
@@ -142,6 +139,8 @@ pub(crate) struct GhostStructureBundle {
     active_recipe: ActiveRecipe,
     /// The direction the ghost is facing
     facing: Facing,
+    /// Makes ghost structures pickable
+    raycast_mesh: RaycastMesh<(Ghost, Structure)>,
 }
 
 impl GhostStructureBundle {
@@ -171,6 +170,7 @@ impl GhostStructureBundle {
             facing: clipboard_data.facing,
             structure_id,
             active_recipe: clipboard_data.active_recipe,
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

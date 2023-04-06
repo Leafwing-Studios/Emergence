@@ -88,7 +88,7 @@ pub(crate) struct UnitBundle {
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
-    raycast_mesh: RaycastMesh<Id<Unit>>,
+    raycast_mesh: RaycastMesh<Unit>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
     /// The child scene that contains the gltF model used

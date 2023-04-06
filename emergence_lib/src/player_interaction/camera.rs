@@ -12,7 +12,6 @@ use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::asset_management::manifest::Id;
 use crate::construction::ghosts::Ghost;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
@@ -80,9 +79,9 @@ fn setup_camera(mut commands: Commands) {
         .insert(settings)
         .insert(focus)
         .insert(RaycastSource::<Terrain>::new())
-        .insert(RaycastSource::<Id<Structure>>::new())
-        .insert(RaycastSource::<Id<Unit>>::new())
-        .insert(RaycastSource::<Ghost>::new());
+        .insert(RaycastSource::<Structure>::new())
+        .insert(RaycastSource::<Unit>::new())
+        .insert(RaycastSource::<(Ghost, Structure)>::new());
 }
 
 /// The position that the camera is looking at.
