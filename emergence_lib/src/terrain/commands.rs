@@ -209,7 +209,11 @@ impl Command for SpawnTerrainGhostCommand {
 
         // Remove any existing ghost terrain
         if let Some(ghost_entity) = map_geometry.get_ghost_terrain(self.tile_pos) {
-            world.entity_mut(ghost_entity).despawn_recursive();
+            if world.entities().contains(ghost_entity) && self.ghost_kind == GhostKind::Ghost {
+                world.entity_mut(ghost_entity).despawn_recursive();
+                let mut map_geometry = world.resource_mut::<MapGeometry>();
+                map_geometry.remove_ghost_terrain(self.tile_pos);
+            }
         }
 
         let map_geometry = world.resource::<MapGeometry>();
