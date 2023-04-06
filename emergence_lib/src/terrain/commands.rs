@@ -217,7 +217,6 @@ impl Command for SpawnTerrainGhostCommand {
             GhostKind::Ghost => {
                 let ghost_entity = world
                     .spawn(GhostTerrainBundle::new(
-                        self.terrain_id,
                         self.terraforming_action,
                         self.tile_pos,
                         picking_mesh,
@@ -235,7 +234,6 @@ impl Command for SpawnTerrainGhostCommand {
                 // Previews are not indexed, and are instead just spawned and despawned as needed
                 world.spawn(TerrainPreviewBundle::new(
                     self.tile_pos,
-                    self.terrain_id,
                     self.terraforming_action,
                     scene_handle,
                     inherited_material,

@@ -178,15 +178,12 @@ impl GhostStructureBundle {
 pub(crate) struct GhostTerrainBundle {
     /// Shared components across all ghosts
     ghost_bundle: GhostBundle,
-    /// The variety of terrain
-    terrain_id: Id<Terrain>,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
 }
 
 impl GhostTerrainBundle {
     pub(crate) fn new(
-        terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
         tile_pos: TilePos,
         picking_mesh: Handle<Mesh>,
@@ -208,7 +205,6 @@ impl GhostTerrainBundle {
                 inherited_material,
                 world_pos,
             ),
-            terrain_id,
             terraforming_action,
         }
     }
@@ -308,8 +304,6 @@ impl StructurePreviewBundle {
 pub(crate) struct TerrainPreviewBundle {
     /// Shared components for all previews
     preview_bundle: PreviewBundle,
-    /// The variety of terrain
-    terrain_id: Id<Terrain>,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
 }
@@ -317,7 +311,6 @@ pub(crate) struct TerrainPreviewBundle {
 impl TerrainPreviewBundle {
     pub(crate) fn new(
         tile_pos: TilePos,
-        terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
@@ -334,7 +327,6 @@ impl TerrainPreviewBundle {
                     ..default()
                 },
             },
-            terrain_id,
             terraforming_action,
         }
     }
