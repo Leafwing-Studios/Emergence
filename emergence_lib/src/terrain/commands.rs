@@ -11,7 +11,7 @@ use bevy::{
 use crate::{
     asset_management::manifest::Id,
     construction::{
-        ghosts::{GhostHandles, GhostKind, GhostTerrainBundle},
+        ghosts::{GhostHandles, GhostKind, GhostTerrainBundle, TerrainPreviewBundle},
         terraform::TerraformingAction,
     },
     graphics::InheritedMaterial,
@@ -232,7 +232,15 @@ impl Command for SpawnTerrainGhostCommand {
                 map_geometry.add_ghost_terrain(ghost_entity, self.tile_pos);
             }
             GhostKind::Preview => {
-                todo!("Spawn preview ghost");
+                // Previews are not indexed, and are instead just spawned and despawned as needed
+                world.spawn(TerrainPreviewBundle::new(
+                    self.tile_pos,
+                    self.terrain_id,
+                    self.terraforming_action,
+                    scene_handle,
+                    inherited_material,
+                    world_pos,
+                ));
             }
             _ => unreachable!("Invalid ghost kind provided."),
         }

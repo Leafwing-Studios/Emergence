@@ -304,6 +304,7 @@ impl StructurePreviewBundle {
 }
 
 /// The components needed to create a preview of a [`Terrain`].
+#[derive(Bundle)]
 pub(crate) struct TerrainPreviewBundle {
     /// Shared components for all previews
     preview_bundle: PreviewBundle,
@@ -311,6 +312,32 @@ pub(crate) struct TerrainPreviewBundle {
     terrain_id: Id<Terrain>,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
+}
+
+impl TerrainPreviewBundle {
+    pub(crate) fn new(
+        tile_pos: TilePos,
+        terrain_id: Id<Terrain>,
+        terraforming_action: TerraformingAction,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        TerrainPreviewBundle {
+            preview_bundle: PreviewBundle {
+                preview: Preview,
+                tile_pos,
+                inherited_material,
+                scene_bundle: SceneBundle {
+                    scene: scene_handle.clone_weak(),
+                    transform: Transform::from_translation(world_pos),
+                    ..default()
+                },
+            },
+            terrain_id,
+            terraforming_action,
+        }
+    }
 }
 
 /// Computes the correct signals for ghosts to send throughout their lifecycle
