@@ -299,7 +299,7 @@ fn get_details(
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
-        CurrentSelection::Ghost(ghost_entity) => {
+        CurrentSelection::GhostStructure(ghost_entity) => {
             let ghost_query_item = ghost_query.get(*ghost_entity)?;
             SelectionDetails::GhostStructure(GhostStructureDetails {
                 entity: *ghost_entity,

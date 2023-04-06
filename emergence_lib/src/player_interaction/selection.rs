@@ -280,8 +280,8 @@ fn update_selection_radius(
 /// The game object(s) currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 pub(crate) enum CurrentSelection {
-    /// A ghost is selected
-    Ghost(Entity),
+    /// A ghost structure is selected
+    GhostStructure(Entity),
     /// A structure is selected
     Structure(Entity),
     /// One or more tile is selected
@@ -374,7 +374,7 @@ impl CurrentSelection {
                 if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
                 } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
+                    CurrentSelection::GhostStructure(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
@@ -385,7 +385,7 @@ impl CurrentSelection {
                     CurrentSelection::None
                 }
             }
-            CurrentSelection::Ghost(_) => {
+            CurrentSelection::GhostStructure(_) => {
                 if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
@@ -395,7 +395,7 @@ impl CurrentSelection {
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
                 } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
+                    CurrentSelection::GhostStructure(ghost_entity)
                 } else {
                     CurrentSelection::None
                 }
@@ -408,7 +408,7 @@ impl CurrentSelection {
                 } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
                 } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
+                    CurrentSelection::GhostStructure(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else {
@@ -419,7 +419,7 @@ impl CurrentSelection {
                 if let Some(unit_entity) = cursor_pos.maybe_unit() {
                     CurrentSelection::Unit(unit_entity)
                 } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
+                    CurrentSelection::GhostStructure(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
@@ -435,7 +435,7 @@ impl CurrentSelection {
             }
             CurrentSelection::Unit(_) => {
                 if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
+                    CurrentSelection::GhostStructure(ghost_entity)
                 } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
                     CurrentSelection::Structure(structure_entity)
                 } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {

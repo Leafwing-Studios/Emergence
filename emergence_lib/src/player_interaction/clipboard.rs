@@ -194,7 +194,7 @@ fn copy_selection(
         let mut map = HashMap::new();
 
         match &*current_selection {
-            CurrentSelection::Structure(entity) | CurrentSelection::Ghost(entity) => {
+            CurrentSelection::Structure(entity) | CurrentSelection::GhostStructure(entity) => {
                 let query_item = structure_query.get(*entity).unwrap();
                 let tile_pos = query_item.tile_pos;
                 let clipboard_data = query_item.into();

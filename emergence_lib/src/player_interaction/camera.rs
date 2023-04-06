@@ -327,7 +327,7 @@ fn set_camera_focus(
         || settings.camera_mode == CameraMode::FollowUnit
     {
         let tile_to_snap_to = match &*selection {
-            CurrentSelection::Ghost(entity)
+            CurrentSelection::GhostStructure(entity)
             | CurrentSelection::Unit(entity)
             | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
             CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
