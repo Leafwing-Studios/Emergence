@@ -254,8 +254,6 @@ pub(super) fn finish_actions(
                     let (.., mut workers_present) = workplace;
                     // FIXME: this isn't robust to units dying
                     workers_present.remove_worker();
-                } else {
-                    warn!("Unit was working at an entity that is not a workplace!");
                 }
             }
 
