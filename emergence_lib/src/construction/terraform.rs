@@ -6,21 +6,19 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::components::CraftingState,
     player_interaction::InteractionSystem,
     simulation::{
-        geometry::{Height, MapGeometry, TilePos},
+        geometry::{MapGeometry, TilePos},
         SimulationSet,
     },
     structures::structure_manifest::ConstructionData,
     terrain::{
         commands::TerrainCommandsExt,
-        terrain_assets::TerrainHandles,
         terrain_manifest::{Terrain, TerrainManifest},
     },
 };
 
-use super::{demolition::MarkedForDemolition, ghosts::Ghost, zoning::Zoning};
+use super::{demolition::MarkedForDemolition, zoning::Zoning};
 
 /// Systems that handle terraforming.
 pub(super) struct TerraformingPlugin;
@@ -28,10 +26,7 @@ pub(super) struct TerraformingPlugin;
 impl Plugin for TerraformingPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (
-                spawn_terraforming_ghosts,
-                apply_terraforming_when_ghosts_complete,
-            )
+            (spawn_terraforming_ghosts,)
                 .in_set(InteractionSystem::ApplyTerraforming)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -129,43 +124,6 @@ fn spawn_terraforming_ghosts(
                         .insert(MarkedForDemolition);
                 }
             }
-        }
-    }
-}
-
-/// Changes the terrain to match the [`MarkedForTerraforming`] component
-fn apply_terraforming_when_ghosts_complete(
-    mut terrain_query: Query<(
-        &mut Zoning,
-        &mut Id<Terrain>,
-        &mut Height,
-        &mut Handle<Scene>,
-    )>,
-    ghost_query: Query<(Ref<CraftingState>, &TilePos, &TerraformingAction), With<Ghost>>,
-    terrain_handles: Res<TerrainHandles>,
-    mut map_geometry: ResMut<MapGeometry>,
-    mut commands: Commands,
-) {
-    for (crafting_state, &tile_pos, terraforming_action) in ghost_query.iter() {
-        // FIXME: ensure that terraforming only progresses when no structures are present
-        if matches!(*crafting_state, CraftingState::RecipeComplete) {
-            commands.despawn_ghost_terrain(tile_pos);
-
-            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-            let (mut zoning, mut terrain, mut height, mut scene_handle) =
-                terrain_query.get_mut(terrain_entity).unwrap();
-
-            match terraforming_action {
-                TerraformingAction::Raise => *height += Height(1),
-                TerraformingAction::Lower => *height -= Height(1),
-                TerraformingAction::Change(terrain_id) => {
-                    *terrain = *terrain_id;
-                    *scene_handle = terrain_handles.scenes.get(terrain_id).unwrap().clone_weak();
-                }
-            };
-
-            map_geometry.update_height(tile_pos, *height);
-            *zoning = Zoning::None;
         }
     }
 }

@@ -1,11 +1,12 @@
 //! Methods to use [`Commands`] to manipulate terrain.
 
 use bevy::{
-    ecs::system::Command,
+    ecs::system::{Command, SystemState},
     prelude::{
-        BuildWorldChildren, Commands, DespawnRecursiveExt, PbrBundle, Transform, Vec3, Visibility,
-        World,
+        BuildWorldChildren, Commands, DespawnRecursiveExt, Handle, PbrBundle, Query, Res, ResMut,
+        Transform, Vec3, Visibility, World,
     },
+    scene::Scene,
 };
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
     construction::{
         ghosts::{GhostHandles, GhostKind, GhostTerrainBundle, TerrainPreviewBundle},
         terraform::TerraformingAction,
+        zoning::Zoning,
     },
     graphics::InheritedMaterial,
     simulation::geometry::{Height, MapGeometry, TilePos},
@@ -50,6 +52,9 @@ pub(crate) trait TerrainCommandsExt {
         terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
     );
+
+    /// Applies the given `terraforming_action` to the terrain at `tile_pos`.
+    fn apply_terraforming_action(&mut self, tile_pos: TilePos, action: TerraformingAction);
 }
 
 impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
@@ -90,6 +95,17 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
             terrain_id,
             terraforming_action,
             ghost_kind: GhostKind::Preview,
+        });
+    }
+
+    fn apply_terraforming_action(
+        &mut self,
+        tile_pos: TilePos,
+        terraforming_action: TerraformingAction,
+    ) {
+        self.add(ApplyTerraformingCommand {
+            tile_pos,
+            terraforming_action,
         });
     }
 }
@@ -263,5 +279,56 @@ impl Command for DespawnGhostCommand {
 
         // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
         world.entity_mut(ghost_entity).despawn_recursive();
+    }
+}
+
+/// A [`Command`] used to apply [`TerraformingAction`]s to a tile.
+struct ApplyTerraformingCommand {
+    /// The tile position at which the terrain to be despawned is found.
+    tile_pos: TilePos,
+    /// The action to apply to the tile.
+    terraforming_action: TerraformingAction,
+}
+
+impl Command for ApplyTerraformingCommand {
+    fn write(self, world: &mut World) {
+        // Just using system state makes satisfying the borrow checker a lot easier
+        let mut system_state = SystemState::<(
+            ResMut<MapGeometry>,
+            Res<TerrainHandles>,
+            Query<(
+                &mut Id<Terrain>,
+                &mut Zoning,
+                &mut Height,
+                &mut Handle<Scene>,
+            )>,
+        )>::new(world);
+
+        let (mut map_geometry, terrain_handles, mut terrain_query) = system_state.get_mut(world);
+
+        let terrain_entity = map_geometry.get_terrain(self.tile_pos).unwrap();
+
+        let (mut current_terrain_id, mut zoning, mut height, mut scene_handle) =
+            terrain_query.get_mut(terrain_entity).unwrap();
+
+        match self.terraforming_action {
+            TerraformingAction::Raise => *height += Height(1),
+            TerraformingAction::Lower => *height -= Height(1),
+            TerraformingAction::Change(changed_terrain_id) => {
+                *current_terrain_id = changed_terrain_id;
+            }
+        };
+
+        // We can't do this above, as we need to drop the previous query before borrowing from the world again
+        if let TerraformingAction::Change(changed_terrain_id) = self.terraforming_action {
+            *scene_handle = terrain_handles
+                .scenes
+                .get(&changed_terrain_id)
+                .unwrap()
+                .clone_weak();
+        }
+
+        map_geometry.update_height(self.tile_pos, *height);
+        *zoning = Zoning::None;
     }
 }
