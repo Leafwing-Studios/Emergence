@@ -207,6 +207,12 @@ impl Command for SpawnTerrainGhostCommand {
             return;
         }
 
+        // Remove any existing ghost terrain
+        if let Some(ghost_entity) = map_geometry.get_ghost_terrain(self.tile_pos) {
+            world.entity_mut(ghost_entity).despawn_recursive();
+        }
+
+        let map_geometry = world.resource::<MapGeometry>();
         let picking_mesh = world.resource::<TerrainHandles>().topper_mesh.clone_weak();
         let scene_handle = world
             .resource::<TerrainHandles>()
