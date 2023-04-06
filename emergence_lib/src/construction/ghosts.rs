@@ -540,7 +540,6 @@ pub(super) fn ghost_lifecycle(
                         }
                     }
                     (None, Some(terraforming_action)) => {
-                        commands.despawn_ghost_terrain(tile_pos);
                         commands.apply_terraforming_action(tile_pos, *terraforming_action)
                     }
                     _ => unreachable!(),

@@ -276,8 +276,12 @@ fn mark_based_on_zoning(
                         .insert(MarkedForDemolition);
                 }
             }
-            Zoning::None => commands.despawn_ghost_structure(tile_pos),
+            Zoning::None => {
+                commands.despawn_ghost_terrain(tile_pos);
+                commands.despawn_ghost_structure(tile_pos);
+            }
             Zoning::KeepClear => {
+                commands.despawn_ghost_terrain(tile_pos);
                 commands.despawn_ghost_structure(tile_pos);
                 if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
                     commands
