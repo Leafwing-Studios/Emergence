@@ -161,6 +161,8 @@ impl Inventory {
     }
 
     /// Returns the first [`Id<Item>`] that matches the given [`ItemKind`], if any.
+    ///
+    /// Empty slots will be skipped.
     pub fn matching_item_id(
         &self,
         item_kind: ItemKind,
@@ -170,7 +172,9 @@ impl Inventory {
             ItemKind::Single(item_id) => Some(item_id),
             ItemKind::Tag(tag) => self
                 .iter()
-                .find(|item_slot| item_manifest.has_tag(item_slot.item_id(), tag))
+                .find(|item_slot| {
+                    item_manifest.has_tag(item_slot.item_id(), tag) && !item_slot.is_empty()
+                })
                 .map(|item_slot| item_slot.item_id()),
         }
     }
