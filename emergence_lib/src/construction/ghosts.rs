@@ -11,7 +11,7 @@ use crate::items::inventory::Inventory;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
-use crate::structures::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
+use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
@@ -29,6 +29,7 @@ use crate::{
 };
 
 use super::terraform::TerraformingAction;
+use super::ConstructionStrategy;
 
 pub struct GhostPlugin;
 

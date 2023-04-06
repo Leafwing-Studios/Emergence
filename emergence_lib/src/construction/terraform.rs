@@ -11,14 +11,13 @@ use crate::{
         geometry::{MapGeometry, TilePos},
         SimulationSet,
     },
-    structures::structure_manifest::ConstructionData,
     terrain::{
         commands::TerrainCommandsExt,
         terrain_manifest::{Terrain, TerrainManifest},
     },
 };
 
-use super::{demolition::MarkedForDemolition, zoning::Zoning};
+use super::{demolition::MarkedForDemolition, zoning::Zoning, ConstructionData};
 
 /// Systems that handle terraforming.
 pub(super) struct TerraformingPlugin;
