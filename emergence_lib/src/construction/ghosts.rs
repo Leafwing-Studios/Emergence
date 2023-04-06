@@ -35,9 +35,9 @@ impl Plugin for GhostPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GhostHandles>().add_systems(
             (
-                validate_ghosts,
-                ghost_signals.after(validate_ghosts),
-                ghost_lifecycle.after(validate_ghosts),
+                validate_ghost_structures,
+                ghost_signals.after(validate_ghost_structures),
+                ghost_lifecycle.after(validate_ghost_structures),
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -533,7 +533,7 @@ pub(super) fn ghost_lifecycle(
 }
 
 /// Ensures that all ghosts can be built.
-pub(super) fn validate_ghosts(
+pub(super) fn validate_ghost_structures(
     map_geometry: Res<MapGeometry>,
     ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
     structure_manifest: Res<StructureManifest>,
