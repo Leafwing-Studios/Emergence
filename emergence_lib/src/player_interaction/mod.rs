@@ -102,7 +102,7 @@ pub(crate) enum PlayerAction {
     ClearZoning,
     /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](zoning::Zoning::KeepClear).
     KeepClear,
-    /// Rotates the conents of the clipboard counterclockwise.
+    /// Rotates the contents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
     RotateClipboardRight,

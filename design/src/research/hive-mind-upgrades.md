@@ -46,7 +46,7 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - this is a special creative mode, used to test designs quickly and at no cost
   - time is paused while in this mode
   - further upgrades unlock the ability to further modify environmental conditions, speed up time, get more space and so on
-  - production planner capabilties belong in this tree
+  - production planner capabilities belong in this tree
 - [quality-of-life](../glossary.md#quality-of-life) upgrades
   - [blueprints](../glossary.md#blueprint)
   - customizable [alerts](../glossary.md#alert)

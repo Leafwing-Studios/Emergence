@@ -18,7 +18,7 @@ The mechanics for assigning mutations are fairly simple:
 1. There are some number of slots for each species, typically corresponding to some visible part of their body.
 2. Each strain may select up to 1 mutation for each slot.
 
-To unlock mutations, you must accquire resources, and perform research at a dedicated species-specific facility.
+To unlock mutations, you must acquire resources, and perform research at a dedicated species-specific facility.
 
 Creating strains and changing strain-level settings (other than to select the first mutation for each slot) comes with some cost to avoid thoughtless twiddling.
 
