@@ -33,7 +33,7 @@ pub struct GhostPlugin;
 
 impl Plugin for GhostPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_resource::<GhostHandles>().add_systems(
             (
                 validate_ghosts,
                 ghost_signals.after(validate_ghosts),
