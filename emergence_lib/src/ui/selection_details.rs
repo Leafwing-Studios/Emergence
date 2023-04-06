@@ -19,7 +19,7 @@ use crate::{
 };
 
 use self::{
-    ghost_details::{GhostDetails, GhostDetailsQuery},
+    ghost_structure_details::{GhostDetailsQuery, GhostStructureDetails},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
     structure_details::{CraftingDetails, StructureDetails, StructureDetailsQuery},
     terrain_details::{TerrainDetails, TerrainDetailsQuery},
@@ -181,7 +181,7 @@ fn update_selection_details(
     let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
 
     match *selection_details {
-        SelectionDetails::Ghost(_) => {
+        SelectionDetails::GhostStructure(_) => {
             *parent_visibility = Visibility::Visible;
             ghost_style.display = Display::Flex;
             structure_style.display = Display::None;
@@ -216,7 +216,7 @@ fn update_selection_details(
     }
 
     match &*selection_details {
-        SelectionDetails::Ghost(details) => {
+        SelectionDetails::GhostStructure(details) => {
             ghost_text.sections[0].value =
                 details.display(&item_manifest, &structure_manifest, &recipe_manifest);
         }
@@ -270,8 +270,8 @@ fn populate_details<T: Component + Default>(
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
 pub(crate) enum SelectionDetails {
-    /// A ghost is selected
-    Ghost(GhostDetails),
+    /// A ghost of a structure is selected
+    GhostStructure(GhostStructureDetails),
     /// A structure is selected
     Structure(StructureDetails),
     /// A tile is selected.
@@ -301,7 +301,7 @@ fn get_details(
     *selection_details = match &*selection_type {
         CurrentSelection::Ghost(ghost_entity) => {
             let ghost_query_item = ghost_query.get(*ghost_entity)?;
-            SelectionDetails::Ghost(GhostDetails {
+            SelectionDetails::GhostStructure(GhostStructureDetails {
                 entity: *ghost_entity,
                 tile_pos: *ghost_query_item.tile_pos,
                 structure_id: *ghost_query_item.structure_id,
@@ -420,8 +420,8 @@ pub(crate) fn clear_details_on_error(
     }
 }
 
-/// Details for ghosts
-mod ghost_details {
+/// Details for ghost structures
+mod ghost_structure_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
@@ -457,7 +457,7 @@ mod ghost_details {
 
     /// Detailed info about a given ghost.
     #[derive(Debug)]
-    pub(crate) struct GhostDetails {
+    pub(crate) struct GhostStructureDetails {
         /// The root entity
         pub(super) entity: Entity,
         /// The tile position of this structure
@@ -472,7 +472,7 @@ mod ghost_details {
         pub(super) active_recipe: ActiveRecipe,
     }
 
-    impl GhostDetails {
+    impl GhostStructureDetails {
         /// The pretty formatting for this type
         pub(crate) fn display(
             &self,
