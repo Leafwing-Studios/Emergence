@@ -6,32 +6,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    player_interaction::InteractionSystem,
-    simulation::{
-        geometry::{MapGeometry, TilePos},
-        SimulationSet,
-    },
-    terrain::{
-        commands::TerrainCommandsExt,
-        terrain_manifest::{Terrain, TerrainManifest},
-    },
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{demolition::MarkedForDemolition, zoning::Zoning, ConstructionData};
-
-/// Systems that handle terraforming.
-pub(super) struct TerraformingPlugin;
-
-impl Plugin for TerraformingPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            (spawn_terraforming_ghosts,)
-                .in_set(InteractionSystem::ApplyTerraforming)
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
-    }
-}
+use super::ConstructionData;
 
 /// An option presented to players for how to terraform the world.
 ///
@@ -94,35 +72,6 @@ impl From<TerraformingTool> for TerraformingAction {
             TerraformingTool::Raise => Self::Raise,
             TerraformingTool::Lower => Self::Lower,
             TerraformingTool::Change(terrain) => Self::Change(terrain),
-        }
-    }
-}
-
-/// Changes the terrain to match the [`MarkedForTerraforming`] component
-fn spawn_terraforming_ghosts(
-    mut terrain_query: Query<(&TilePos, Ref<Zoning>, &Id<Terrain>)>,
-    map_geometry: Res<MapGeometry>,
-    mut commands: Commands,
-) {
-    for (&tile_pos, zoning, current_terrain_id) in terrain_query.iter_mut() {
-        if zoning.is_changed() {
-            if let Zoning::Terraform(terraforming_action) = *zoning {
-                // We neeed to use the model for the terrain we're changing to, not the current one
-                let terrain_id = match terraforming_action {
-                    TerraformingAction::Change(terrain_id) => terrain_id,
-                    _ => *current_terrain_id,
-                };
-
-                commands.spawn_ghost_terrain(tile_pos, terrain_id, terraforming_action);
-
-                // Mark any structures that are here as needing to be demolished
-                // Terraforming can't be done with roots growing into stuff!
-                if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
-                    commands
-                        .entity(structure_entity)
-                        .insert(MarkedForDemolition);
-                }
-            }
         }
     }
 }

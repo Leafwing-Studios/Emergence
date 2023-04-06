@@ -49,8 +49,6 @@ pub(crate) enum InteractionSystem {
     ReplenishIntent,
     /// Apply zoning to tiles
     ApplyZoning,
-    /// Apply terraforming to tiles
-    ApplyTerraforming,
     /// Use intent-spending abilities
     UseAbilities,
     /// Spawn and despawn ghosts

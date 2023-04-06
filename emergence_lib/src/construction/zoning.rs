@@ -18,7 +18,10 @@ use crate::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},
     },
-    terrain::terrain_manifest::{Terrain, TerrainManifest},
+    terrain::{
+        commands::TerrainCommandsExt,
+        terrain_manifest::{Terrain, TerrainManifest},
+    },
 };
 
 use super::terraform::TerraformingAction;
@@ -219,13 +222,13 @@ fn mark_for_demolition(
 
 /// Spawn and despawn ghosts and apply other markings based on zoning.
 fn mark_based_on_zoning(
-    mut terrain_query: Query<(Entity, &mut Zoning, &TilePos), Changed<Zoning>>,
+    mut terrain_query: Query<(Entity, &mut Zoning, &TilePos, &Id<Terrain>), Changed<Zoning>>,
     can_build_query: Query<&Id<Terrain>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (terrain_entity, mut zoning, &tile_pos) in terrain_query.iter_mut() {
+    for (terrain_entity, mut zoning, &tile_pos, current_terrain_id) in terrain_query.iter_mut() {
         // Reborrowing here would trigger change detection, causing this system to constantly check
         match zoning.bypass_change_detection() {
             Zoning::Structure(clipboard_data) => {
@@ -250,6 +253,22 @@ fn mark_based_on_zoning(
             }
             Zoning::Terraform(terraforming_action) => {
                 commands.entity(terrain_entity).insert(*terraforming_action);
+
+                // We neeed to use the model for the terrain we're changing to, not the current one
+                let terrain_id = match terraforming_action {
+                    TerraformingAction::Change(terrain_id) => *terrain_id,
+                    _ => *current_terrain_id,
+                };
+
+                commands.spawn_ghost_terrain(tile_pos, terrain_id, *terraforming_action);
+
+                // Mark any structures that are here as needing to be demolished
+                // Terraforming can't be done with roots growing into stuff!
+                if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
+                    commands
+                        .entity(structure_entity)
+                        .insert(MarkedForDemolition);
+                }
             }
             Zoning::None => commands.despawn_ghost_structure(tile_pos),
             Zoning::KeepClear => {

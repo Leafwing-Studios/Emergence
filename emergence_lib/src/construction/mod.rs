@@ -21,7 +21,6 @@ pub(crate) struct ConstructionPlugin;
 impl Plugin for ConstructionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ghosts::GhostPlugin)
-            .add_plugin(terraform::TerraformingPlugin)
             .add_plugin(zoning::ZoningPlugin);
     }
 }
