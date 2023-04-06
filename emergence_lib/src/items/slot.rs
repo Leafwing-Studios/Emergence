@@ -38,7 +38,7 @@ impl ItemSlot {
         }
     }
 
-    /// Create a slot fro the given item with the given count.
+    /// Create a slot for the given item with the given count.
     ///
     /// # Panics
     ///

@@ -48,8 +48,8 @@ These are optional, but commonly included in some form.
   - Typically modelled as electricity
   - Often something that is revisited, scaled up, and upgraded through the course of a playthrough
 - **Fluids**
-  - Requires a parallel distribution and storage network (in constrast to solid items)
-  - Ex: using pipes and tanks intead of belts and chests
+  - Requires a parallel distribution and storage network (in contrast to solid items)
+  - Ex: using pipes and tanks instead of belts and chests
 - **Filters**
   - Splits mixed streams of goods
   - Belt splitters, liquid filters and inserters (via selective pickup) can serve this purpose

@@ -311,7 +311,7 @@ struct SignalMap {
 }
 
 impl SignalMap {
-    /// Returns the signal strenth at the given [`TilePos`].
+    /// Returns the signal strength at the given [`TilePos`].
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
     fn get(&self, tile_pos: TilePos) -> SignalStrength {

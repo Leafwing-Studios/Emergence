@@ -15,7 +15,7 @@ We can also **color** this recipe graph into three parts that roughly correspond
 Raw resources have no parents, end products have no children*, and intermediates have both.
 
 As an aside, these are actually directed hypergraphs.
-Hypergraphs may sound scary, but they're pretty simple: they're simply graphs that connect **nodes** to each other via **edges**, but the edges map betweeen groups of nodes rather than individual nodes.
+Hypergraphs may sound scary, but they're pretty simple: they're simply graphs that connect **nodes** to each other via **edges**, but the edges map between groups of nodes rather than individual nodes.
 "Directed" simply means that the edges have a direction to them: you can't turn electricity back into coal!
 
 Unsurprisingly, this gets quite intimidating for most games!

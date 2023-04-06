@@ -1,6 +1,6 @@
 # Life Cycles
 
-As organisms grows and responds to its environement, it will change between life forms.
+As organisms grows and responds to its environment, it will change between life forms.
 A blade of grass may (in gameplay terms) begin as a seed, become a sprout, and then finally become an adult plant, which is capable of producing more seeds.
 A dragonfly may begin as an egg, hatch into a larvae, become a nymph and finally become an adult before laying more eggs.
 A tulip may begin as a bulb, become a sprout, flower, produce other seeds, and then return to its bulb form over winter.

@@ -74,7 +74,7 @@ Animations of inserters, moving belts, and sounds of assembling machines are sta
 
 ## [Stardew Valley](https://store.steampowered.com/app/413150/Stardew_Valley/)
 
-**Conclusion:** Decent creativity, very limited automation with no diverse paths and weak secondary goals. No good resouce transformation chains. Everything just turns into money.
+**Conclusion:** Decent creativity, very limited automation with no diverse paths and weak secondary goals. No good resource transformation chains. Everything just turns into money.
 
 ### Interesting Goals
 

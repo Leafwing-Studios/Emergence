@@ -65,7 +65,7 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
 - compelling and unique thematics
   - opportunities for subtle political/moral storytelling on importance of sustainability and dangers of pollution
 - disruptions offer a unique opportunity for players to explore more robust factory designs
-- disruptions can create much more intresting emotional pacing in a genre that struggles with flatness
+- disruptions can create much more interesting emotional pacing in a genre that struggles with flatness
 - tiny scale offers interesting mechanical and experiential possibilities that will feel new and interesting
 - emphasis on sustainability pushes designers and players towards more interesting resource refinement pathways
 - assimilating new species offers a natural and high impact path to adding more options for players

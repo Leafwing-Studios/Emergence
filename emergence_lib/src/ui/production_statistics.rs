@@ -23,7 +23,7 @@ impl Plugin for ProductionStatisticsPlugin {
 #[derive(Component)]
 struct ProductionStats;
 
-/// Intializes the production statistics menu
+/// Initializes the production statistics menu
 fn spawn_production_statistics_menu(
     mut commands: Commands,
     left_panel_query: Query<Entity, With<LeftPanel>>,

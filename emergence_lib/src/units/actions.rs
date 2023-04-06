@@ -472,14 +472,14 @@ pub(super) enum UnitAction {
     /// Do nothing for now
     #[default]
     Idle,
-    /// Pick up an item that mathes `item_kind` from the `output_entity.
+    /// Pick up an item that matches `item_kind` from the `output_entity.
     PickUp {
         /// The item to pickup.
         item_kind: ItemKind,
         /// The entity to grab it from, which must have an [`OutputInventory`] or [`StorageInventory`] component.
         output_entity: Entity,
     },
-    /// Drops off an item that mathes `item_kind` at the `output_entity`.
+    /// Drops off an item that matches `item_kind` at the `output_entity`.
     DropOff {
         /// The item that this unit is carrying that we should drop off.
         item_kind: ItemKind,

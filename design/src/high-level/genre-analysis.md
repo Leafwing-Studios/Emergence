@@ -47,7 +47,7 @@ This list is roughly ordered by the closeness to the genre.
 
 - Zachlike puzzles (automation heavy puzzle games)
   - Opus Magnum, Incredible machine
-  - Greater focus on additional (seconday) optimization constraints (which are provided by the game)
+  - Greater focus on additional (secondary) optimization constraints (which are provided by the game)
   - Micro-optimization as an entire game
 - Base and city builders
   - Sim City, The Sims, Cities: Skylines, Dragon Quest Builders
@@ -118,7 +118,7 @@ Note that many of these design tensions are not unique to factory builders.
 
 - mechanical complexity vs meaningful richness
 - helpful innovations vs trivializing the game
-  - unlocking new tech can sometimes remove interesting challenges intead of creating interesting opporutnity for improvement
+  - unlocking new tech can sometimes remove interesting challenges instead of creating interesting opportunity for improvement
   - (insert roast of Factorio's logistics robots here)
 - disruption forces interesting changes vs frustration and sadness to see your stuff get wrecked
 - long play time vs tedious waiting around
