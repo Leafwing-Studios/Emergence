@@ -1137,16 +1137,13 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
     /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
     pub(crate) fn needs_work(
         &self,
-        structure_pos: TilePos,
+        tile_pos: TilePos,
         workplace_id: WorkplaceId,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
         // Prioritize ghosts over structures to allow for replacing structures by building
-        let entity = if let Some(ghost_entity) = map_geometry.get_ghost_structure(structure_pos) {
-            ghost_entity
-        } else {
-            map_geometry.get_structure(structure_pos)?
-        };
+        // Prioritize terrain ghosts over structure ghosts to encourage terraforming to complete before structures are built on top
+        let entity = map_geometry.get_ghost_or_structure(tile_pos)?;
 
         let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 
