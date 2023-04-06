@@ -6,6 +6,8 @@
 
 use crate::crafting::components::WorkersPresent;
 use crate::crafting::item_tags::ItemKind;
+use crate::enum_iter::IterableEnum;
+use crate::items::inventory::Inventory;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
@@ -13,7 +15,7 @@ use crate::structures::structure_manifest::{ConstructionStrategy, Structure, Str
 use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
-use bevy::utils::Duration;
+use bevy::utils::{Duration, HashMap};
 use bevy_mod_raycast::RaycastMesh;
 use emergence_macros::IterableEnum;
 
@@ -43,6 +45,29 @@ impl Plugin for GhostPlugin {
     }
 }
 
+#[derive(Debug, Resource)]
+pub(crate) struct GhostHandles {
+    map: HashMap<GhostKind, Handle<StandardMaterial>>,
+}
+
+impl GhostHandles {
+    pub fn get(&self, kind: GhostKind) -> Handle<StandardMaterial> {
+        self.map[&kind].clone()
+    }
+}
+
+impl FromWorld for GhostHandles {
+    fn from_world(world: &mut World) -> Self {
+        let mut map = HashMap::new();
+        let mut assets = world.resource_mut::<Assets<StandardMaterial>>();
+        for kind in GhostKind::variants() {
+            let material = assets.add(kind.material());
+            map.insert(kind, material);
+        }
+        GhostHandles { map }
+    }
+}
+
 /// A marker component that indicates that a structure or terrain element is planned to be built, rather than actually existing.
 #[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
 pub(crate) struct Ghost;
@@ -53,7 +78,7 @@ pub(crate) struct Ghostly;
 
 /// The components needed to create a functioning ghost of any kind.
 #[derive(Bundle)]
-pub(crate) struct GhostBundle {
+struct GhostBundle {
     /// Marker component
     ghost: Ghost,
     /// The location of the ghost
@@ -74,6 +99,34 @@ pub(crate) struct GhostBundle {
     scene_bundle: SceneBundle,
     /// Emits signals, drawing units towards this ghost to build it
     emitter: Emitter,
+}
+
+impl GhostBundle {
+    fn new(
+        tile_pos: TilePos,
+        construction_materials: InputInventory,
+        picking_mesh: Handle<Mesh>,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        GhostBundle {
+            ghost: Ghost,
+            tile_pos,
+            construction_materials,
+            workers_present: WorkersPresent::new(6),
+            crafting_state: CraftingState::NeedsInput,
+            raycast_mesh: RaycastMesh::default(),
+            picking_mesh,
+            inherited_material,
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
+            emitter: Emitter::default(),
+        }
+    }
 }
 
 /// The set of components needed to spawn a ghost of a [`Structure`].
@@ -102,24 +155,17 @@ impl GhostStructureBundle {
     ) -> Self {
         let structure_id = clipboard_data.structure_id;
         let construction_strategy = structure_manifest.construction_data(structure_id);
+        let construction_materials = construction_strategy.materials.clone();
 
         GhostStructureBundle {
-            ghost_bundle: GhostBundle {
-                ghost: Ghost,
+            ghost_bundle: GhostBundle::new(
                 tile_pos,
-                construction_materials: construction_strategy.materials.clone(),
-                workers_present: WorkersPresent::new(6),
-                crafting_state: CraftingState::NeedsInput,
-                raycast_mesh: RaycastMesh::default(),
+                construction_materials,
                 picking_mesh,
+                scene_handle,
                 inherited_material,
-                scene_bundle: SceneBundle {
-                    scene: scene_handle.clone_weak(),
-                    transform: Transform::from_translation(world_pos),
-                    ..default()
-                },
-                emitter: Emitter::default(),
-            },
+                world_pos,
+            ),
             facing: clipboard_data.facing,
             structure_id,
             active_recipe: clipboard_data.active_recipe,
@@ -127,8 +173,49 @@ impl GhostStructureBundle {
     }
 }
 
+/// The set of components needed to spawn a ghost of a [`Terrain`].
+#[derive(Bundle)]
+pub(crate) struct GhostTerrainBundle {
+    /// Shared components across all ghosts
+    ghost_bundle: GhostBundle,
+    /// The variety of terrain
+    terrain_id: Id<Terrain>,
+    /// The action that will be performed when this terrain is built
+    terraforming_action: TerraformingAction,
+}
+
+impl GhostTerrainBundle {
+    pub(crate) fn new(
+        terrain_id: Id<Terrain>,
+        terraforming_action: TerraformingAction,
+        tile_pos: TilePos,
+        picking_mesh: Handle<Mesh>,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        // TODO: actually require materials to build terrain
+        let construction_materials = InputInventory::Exact {
+            inventory: Inventory::new(0, None),
+        };
+
+        GhostTerrainBundle {
+            ghost_bundle: GhostBundle::new(
+                tile_pos,
+                construction_materials,
+                picking_mesh,
+                scene_handle,
+                inherited_material,
+                world_pos,
+            ),
+            terrain_id,
+            terraforming_action,
+        }
+    }
+}
+
 /// The variety of ghost: this controls how it is rendered.
-#[derive(IterableEnum, Debug, PartialEq, Eq, Hash)]
+#[derive(IterableEnum, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub(crate) enum GhostKind {
     /// A structure that is going to be built.
     Ghost,
@@ -216,6 +303,16 @@ impl StructurePreviewBundle {
     }
 }
 
+/// The components needed to create a preview of a [`Terrain`].
+pub(crate) struct TerrainPreviewBundle {
+    /// Shared components for all previews
+    preview_bundle: PreviewBundle,
+    /// The variety of terrain
+    terrain_id: Id<Terrain>,
+    /// The action that will be performed when this terrain is built
+    terraforming_action: TerraformingAction,
+}
+
 /// Computes the correct signals for ghosts to send throughout their lifecycle
 pub(super) fn ghost_signals(
     mut ghost_query: Query<
@@ -277,7 +374,7 @@ pub(super) fn ghost_signals(
 
 /// An identifier for a workplace.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) enum WorkplaceId {
+pub enum WorkplaceId {
     /// This workplace is a structure
     Structure(Id<Structure>),
     /// This workplace is a terrain modification
@@ -315,11 +412,13 @@ impl WorkplaceId {
         &self,
         structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
-    ) -> &str {
+    ) -> String {
         match self {
-            WorkplaceId::Structure(structure_id) => structure_manifest.name(*structure_id),
+            WorkplaceId::Structure(structure_id) => {
+                structure_manifest.name(*structure_id).to_string()
+            }
             WorkplaceId::Terrain(terraforming_action) => {
-                &terraforming_action.display(terrain_manifest)
+                terraforming_action.display(terrain_manifest)
             }
         }
     }

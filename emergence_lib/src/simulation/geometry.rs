@@ -510,11 +510,6 @@ impl MapGeometry {
         removed
     }
 
-    /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
-    pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.ghost_terrain_index.get(&tile_pos).copied()
-    }
-
     /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `tile_pos`.
     pub(crate) fn add_ghost_terrain(&mut self, ghost_terrain_entity: Entity, tile_pos: TilePos) {
         self.ghost_terrain_index

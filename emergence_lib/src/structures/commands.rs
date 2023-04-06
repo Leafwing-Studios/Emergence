@@ -9,7 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
-    construction::ghosts::{GhostKind, GhostStructureBundle, StructurePreviewBundle},
+    construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
     crafting::{
         components::{CraftingBundle, StorageInventory},
         recipe::RecipeManifest,
@@ -98,7 +98,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     }
 
     fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnGhostCommand { tile_pos, data });
+        self.add(SpawnStructureGhostCommand { tile_pos, data });
     }
 
     fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
@@ -106,7 +106,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     }
 
     fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnPreviewCommand { tile_pos, data });
+        self.add(SpawnStructurePreviewCommand { tile_pos, data });
     }
 }
 
@@ -255,14 +255,14 @@ impl Command for DespawnStructureCommand {
 }
 
 /// A [`Command`] used to spawn a ghost via [`StructureCommandsExt`].
-struct SpawnGhostCommand {
+struct SpawnStructureGhostCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
 
-impl Command for SpawnGhostCommand {
+impl Command for SpawnStructureGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
@@ -304,6 +304,7 @@ impl Command for SpawnGhostCommand {
         let structure_manifest = world.resource::<StructureManifest>();
 
         // Spawn a ghost
+        let ghost_handles = world.resource::<GhostHandles>();
         let structure_handles = world.resource::<StructureHandles>();
 
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
@@ -312,10 +313,7 @@ impl Command for SpawnGhostCommand {
             .get(&structure_id)
             .unwrap()
             .clone_weak();
-        let ghostly_handle = structure_handles
-            .ghost_materials
-            .get(&GhostKind::Ghost)
-            .unwrap();
+        let ghostly_handle = ghost_handles.get(GhostKind::Ghost);
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
@@ -366,14 +364,14 @@ impl Command for DespawnGhostCommand {
 }
 
 /// A [`Command`] used to spawn a preview via [`StructureCommandsExt`].
-struct SpawnPreviewCommand {
+struct SpawnStructurePreviewCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
 
-impl Command for SpawnPreviewCommand {
+impl Command for SpawnStructurePreviewCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
@@ -419,7 +417,9 @@ impl Command for SpawnPreviewCommand {
             false => GhostKind::Preview,
         };
 
-        let preview_handle = structure_handles.ghost_materials.get(&ghost_kind).unwrap();
+        let ghost_handles = world.resource::<GhostHandles>();
+
+        let preview_handle = ghost_handles.get(ghost_kind);
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview

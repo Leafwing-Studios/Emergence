@@ -11,6 +11,7 @@ use crate::{
         SimulationSet,
     },
     terrain::{
+        commands::TerrainCommandsExt,
         terrain_assets::TerrainHandles,
         terrain_manifest::{Terrain, TerrainManifest},
     },
@@ -24,7 +25,10 @@ pub(super) struct TerraformingPlugin;
 impl Plugin for TerraformingPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (spawn_terraforming_ghosts,)
+            (
+                spawn_terraforming_ghosts,
+                apply_terraforming_when_ghosts_complete,
+            )
                 .in_set(InteractionSystem::ApplyTerraforming)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -48,7 +52,7 @@ pub(crate) enum TerraformingTool {
 
 /// When `Zoning` is set, this is added  as a component added to terrain ghosts, causing them to be manipulated by units.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) enum TerraformingAction {
+pub enum TerraformingAction {
     /// Raise the height of this tile once
     Raise,
     /// Lower the height of this tile once
@@ -80,15 +84,20 @@ impl From<TerraformingTool> for TerraformingAction {
 
 /// Changes the terrain to match the [`MarkedForTerraforming`] component
 fn spawn_terraforming_ghosts(
-    mut terrain_query: Query<(&TilePos, Ref<Zoning>), With<Id<Terrain>>>,
-    terrain_handles: Res<TerrainHandles>,
+    mut terrain_query: Query<(&TilePos, Ref<Zoning>, &Id<Terrain>)>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    for (&tile_pos, zoning) in terrain_query.iter_mut() {
+    for (&tile_pos, zoning, current_terrain_id) in terrain_query.iter_mut() {
         if zoning.is_changed() {
             if let Zoning::Terraform(terraforming_action) = *zoning {
-                commands.spawn_ghost_terrain(tile_pos, terraforming_action);
+                // We neeed to use the model for the terrain we're changing to, not the current one
+                let terrain_id = match terraforming_action {
+                    TerraformingAction::Change(terrain_id) => terrain_id,
+                    _ => *current_terrain_id,
+                };
+
+                commands.spawn_ghost_terrain(tile_pos, terrain_id, terraforming_action);
 
                 // Mark any structures that are here as needing to be demolished
                 // Terraforming can't be done with roots growing into stuff!
@@ -105,9 +114,6 @@ fn spawn_terraforming_ghosts(
 /// Changes the terrain to match the [`MarkedForTerraforming`] component
 fn apply_terraforming_when_ghosts_complete(
     mut terrain_query: Query<(
-        Entity,
-        &TerraformingAction,
-        &TilePos,
         &mut Zoning,
         &mut Id<Terrain>,
         &mut Height,
@@ -115,7 +121,7 @@ fn apply_terraforming_when_ghosts_complete(
     )>,
     ghost_query: Query<(Ref<CraftingState>, &TilePos, &TerraformingAction), With<Ghost>>,
     terrain_handles: Res<TerrainHandles>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
     mut commands: Commands,
 ) {
     for (crafting_state, &tile_pos, terraforming_action) in ghost_query.iter() {
@@ -125,15 +131,8 @@ fn apply_terraforming_when_ghosts_complete(
         }
 
         let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let (
-            entity,
-            terraforming_action,
-            tile_pos,
-            mut zoning,
-            mut terrain,
-            mut height,
-            mut scene_handle,
-        ) = terrain_query.get_mut(terrain_entity).unwrap();
+        let (mut zoning, mut terrain, mut height, mut scene_handle) =
+            terrain_query.get_mut(terrain_entity).unwrap();
 
         match terraforming_action {
             TerraformingAction::Raise => *height += Height(1),
@@ -144,6 +143,7 @@ fn apply_terraforming_when_ghosts_complete(
             }
         };
 
+        map_geometry.update_height(tile_pos, *height);
         *zoning = Zoning::None;
     }
 }

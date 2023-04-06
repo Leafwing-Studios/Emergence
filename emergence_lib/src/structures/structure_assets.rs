@@ -2,7 +2,6 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    construction::ghosts::GhostKind,
     enum_iter::IterableEnum,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{hexagonal_column, MapGeometry},
@@ -15,8 +14,6 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<Id<Structure>, Handle<Scene>>,
-    /// The materials used for tiles when they are selected or otherwise interacted with
-    pub(crate) ghost_materials: HashMap<GhostKind, Handle<StandardMaterial>>,
     /// The raycasting mesh used to select structures
     pub(crate) picking_mesh: Handle<Mesh>,
 }
@@ -45,15 +42,8 @@ impl Loadable for StructureHandles {
             }
         }
 
-        let mut ghost_materials = HashMap::new();
-        for variant in GhostKind::variants() {
-            let material_handle = material_assets.add(variant.material());
-            ghost_materials.insert(variant, material_handle);
-        }
-
         let mut handles = StructureHandles {
             scenes: HashMap::default(),
-            ghost_materials,
             picking_mesh,
         };
 

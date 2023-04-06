@@ -1,6 +1,5 @@
 //! Generating and representing terrain as game objects.
 
-use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
 
@@ -15,6 +14,7 @@ use crate::simulation::SimulationSet;
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain};
 
+pub(crate) mod commands;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 
@@ -100,81 +100,5 @@ fn respond_to_height_changes(
             let mut column_transform = column_query.get_mut(column_child).unwrap();
             *column_transform = height.column_transform();
         }
-    }
-}
-
-/// Constructs a new [`Terrain`] entity.
-///
-/// The order of the chidlren *must* be:
-/// 0: column
-/// 1: overlay
-/// 2: scene root
-pub(crate) struct SpawnTerrainCommand {
-    /// The position to spawn the tile
-    pub(crate) tile_pos: TilePos,
-    /// The height of the tile
-    pub(crate) height: Height,
-    /// The type of tile
-    pub(crate) terrain_id: Id<Terrain>,
-}
-
-impl Command for SpawnTerrainCommand {
-    fn write(self, world: &mut World) {
-        let handles = world.resource::<TerrainHandles>();
-        let scene_handle = handles.scenes.get(&self.terrain_id).unwrap().clone_weak();
-        let mesh = handles.topper_mesh.clone_weak();
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
-
-        // Store the height, so it can be used below
-        map_geometry.update_height(self.tile_pos, self.height);
-
-        // Drop the borrow so the borrow checker is happy
-        let map_geometry = world.resource::<MapGeometry>();
-
-        // Spawn the terrain entity
-        let terrain_entity = world
-            .spawn(TerrainBundle::new(
-                self.terrain_id,
-                self.tile_pos,
-                scene_handle,
-                mesh,
-                map_geometry,
-            ))
-            .id();
-
-        // Spawn the column as the 0th child of the tile entity
-        // The scene bundle will be added as the first child
-        let handles = world.resource::<TerrainHandles>();
-        let column_bundle = PbrBundle {
-            mesh: handles.column_mesh.clone_weak(),
-            material: handles.column_material.clone_weak(),
-            ..Default::default()
-        };
-
-        let hex_column = world.spawn(column_bundle).id();
-        world.entity_mut(terrain_entity).add_child(hex_column);
-
-        let handles = world.resource::<TerrainHandles>();
-        /// Makes the overlays ever so slightly larger than their base to avoid z-fighting.
-        ///
-        /// This value should be very slightly larger than 1.0
-        const OVERLAY_OVERSIZE_SCALE: f32 = 1.001;
-
-        let overlay_bundle = PbrBundle {
-            mesh: handles.topper_mesh.clone_weak(),
-            visibility: Visibility::Hidden,
-            transform: Transform::from_scale(Vec3 {
-                x: OVERLAY_OVERSIZE_SCALE,
-                y: OVERLAY_OVERSIZE_SCALE,
-                z: OVERLAY_OVERSIZE_SCALE,
-            }),
-            ..Default::default()
-        };
-        let overlay = world.spawn(overlay_bundle).id();
-        world.entity_mut(terrain_entity).add_child(overlay);
-
-        // Update the index of what terrain is where
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
-        map_geometry.add_terrain(self.tile_pos, terrain_entity);
     }
 }
