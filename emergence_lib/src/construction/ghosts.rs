@@ -488,9 +488,8 @@ pub(super) fn ghost_lifecycle(
             CraftingState::InProgress { progress, required } => {
                 let mut updated_progress = progress;
 
-                if workers_present.needs_more() {
-                    updated_progress += time.period;
-                }
+                // Scale construction speed linearly with the number of workers present
+                updated_progress += workers_present.current() as u32 * time.period;
 
                 *crafting_state = if updated_progress >= required {
                     CraftingState::RecipeComplete
