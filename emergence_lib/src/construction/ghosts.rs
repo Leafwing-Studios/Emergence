@@ -12,6 +12,7 @@ use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{ConstructionStrategy, Structure, StructureManifest};
+use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
@@ -445,14 +446,14 @@ impl WorkplaceId {
 
 /// Manages the progression of ghosts from input needed -> work needed -> built.
 ///
-/// Transforms ghosts into structures once all of their construction materials have been supplied and enough work has been performed.
+/// Transforms ghosts into structures / terrain once all of their construction materials have been supplied and enough work has been performed.
 pub(super) fn ghost_lifecycle(
     mut ghost_query: Query<
         (
             &mut CraftingState,
             &InputInventory,
             &TilePos,
-            &Id<Structure>,
+            AnyOf<(&Id<Structure>, &TerraformingAction)>,
             &Facing,
             &ActiveRecipe,
             &WorkersPresent,
@@ -467,13 +468,19 @@ pub(super) fn ghost_lifecycle(
         mut crafting_state,
         input_inventory,
         &tile_pos,
-        &structure_id,
+        ids,
         &facing,
         active_recipe,
         workers_present,
     ) in ghost_query.iter_mut()
     {
-        let construction_data = structure_manifest.construction_data(structure_id);
+        let construction_data = match ids {
+            (Some(structure_id), None) => {
+                structure_manifest.construction_data(*structure_id).clone()
+            }
+            (None, Some(terraforming_action)) => terraforming_action.construction_data(),
+            _ => panic!("Workplace must be either a terrain XOR a structure"),
+        };
 
         match *crafting_state {
             CraftingState::NeedsInput => {
@@ -501,29 +508,37 @@ pub(super) fn ghost_lifecycle(
                 }
             }
             CraftingState::RecipeComplete => {
-                commands.despawn_ghost_structure(tile_pos);
+                match ids {
+                    (Some(structure_id), None) => {
+                        commands.despawn_ghost_structure(tile_pos);
 
-                // Spawn the seedling form of a structure if any
-                if let ConstructionStrategy::Seedling(seedling) =
-                    structure_manifest.get(structure_id).construction_strategy
-                {
-                    commands.spawn_structure(
-                        tile_pos,
-                        ClipboardData {
-                            structure_id: seedling,
-                            facing,
-                            active_recipe: active_recipe.clone(),
-                        },
-                    );
-                } else {
-                    commands.spawn_structure(
-                        tile_pos,
-                        ClipboardData {
-                            structure_id,
-                            facing,
-                            active_recipe: active_recipe.clone(),
-                        },
-                    );
+                        // Spawn the seedling form of a structure if any
+                        if let ConstructionStrategy::Seedling(seedling) =
+                            structure_manifest.get(*structure_id).construction_strategy
+                        {
+                            commands.spawn_structure(
+                                tile_pos,
+                                ClipboardData {
+                                    structure_id: seedling,
+                                    facing,
+                                    active_recipe: active_recipe.clone(),
+                                },
+                            );
+                        } else {
+                            commands.spawn_structure(
+                                tile_pos,
+                                ClipboardData {
+                                    structure_id: *structure_id,
+                                    facing,
+                                    active_recipe: active_recipe.clone(),
+                                },
+                            );
+                        }
+                    }
+                    (None, Some(terraforming_action)) => {
+                        commands.despawn_ghost_terrain(tile_pos);
+                    }
+                    _ => unreachable!(),
                 }
             }
             _ => unreachable!(),

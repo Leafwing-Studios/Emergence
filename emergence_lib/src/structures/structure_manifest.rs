@@ -90,7 +90,7 @@ pub enum ConstructionStrategy {
 }
 
 /// The data contained in a [`ConstructionStrategy::Direct`] variant.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConstructionData {
     /// The amount of work by units required to complete the construction of this building.
     ///

@@ -1,5 +1,7 @@
 //! Tools to alter the terrain type and height.
 
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::{
@@ -10,6 +12,7 @@ use crate::{
         geometry::{Height, MapGeometry, TilePos},
         SimulationSet,
     },
+    structures::structure_manifest::ConstructionData,
     terrain::{
         commands::TerrainCommandsExt,
         terrain_assets::TerrainHandles,
@@ -62,6 +65,25 @@ pub enum TerraformingAction {
 }
 
 impl TerraformingAction {
+    /// The construction requirements for this action.
+    // TODO: actually require materials
+    pub(crate) fn construction_data(&self) -> ConstructionData {
+        match self {
+            Self::Raise => ConstructionData {
+                work: Some(Duration::from_secs(5)),
+                ..Default::default()
+            },
+            Self::Lower => ConstructionData {
+                work: Some(Duration::from_secs(5)),
+                ..Default::default()
+            },
+            Self::Change(_) => ConstructionData {
+                work: Some(Duration::from_secs(5)),
+                ..Default::default()
+            },
+        }
+    }
+
     /// The pretty formatted name of this action.
     pub(crate) fn display(&self, terrain_manifest: &TerrainManifest) -> String {
         match self {
