@@ -431,7 +431,9 @@ impl MapGeometry {
     /// - ghost structure
     /// - structure
     pub(crate) fn get_ghost_or_structure(&self, tile_pos: TilePos) -> Option<Entity> {
-        if let Some(&ghost_entity) = self.ghost_structure_index.get(&tile_pos) {
+        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+            Some(ghost_terrain_entity)
+        } else if let Some(&ghost_entity) = self.ghost_structure_index.get(&tile_pos) {
             Some(ghost_entity)
         } else if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
             Some(structure_entity)

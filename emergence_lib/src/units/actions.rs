@@ -1147,9 +1147,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
 
         let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 
-        let found_id = WorkplaceId::new(ids);
-
-        if found_id != workplace_id {
+        if workplace_id != WorkplaceId::new(ids) {
             return None;
         }
 
