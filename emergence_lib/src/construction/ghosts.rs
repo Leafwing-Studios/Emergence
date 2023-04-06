@@ -455,7 +455,7 @@ pub(super) fn ghost_lifecycle(
             &InputInventory,
             &TilePos,
             AnyOf<(&Id<Structure>, &TerraformingAction)>,
-            &Facing,
+            Option<&Facing>,
             &ActiveRecipe,
             &WorkersPresent,
         ),
@@ -470,7 +470,7 @@ pub(super) fn ghost_lifecycle(
         input_inventory,
         &tile_pos,
         ids,
-        &facing,
+        maybe_facing,
         active_recipe,
         workers_present,
     ) in ghost_query.iter_mut()
@@ -512,6 +512,7 @@ pub(super) fn ghost_lifecycle(
                 match ids {
                     (Some(structure_id), None) => {
                         commands.despawn_ghost_structure(tile_pos);
+                        let facing = *maybe_facing.expect("Structure ghosts must have a facing");
 
                         // Spawn the seedling form of a structure if any
                         if let ConstructionStrategy::Seedling(seedling) =
