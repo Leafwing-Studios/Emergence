@@ -3,7 +3,7 @@
 use bevy::{
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology},
-    utils::{HashMap, HashSet},
+    utils::HashMap,
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
@@ -16,7 +16,8 @@ use std::{
 };
 
 use crate::{
-    asset_management::manifest::Id, filtered_array_iter::FilteredArrayIter, structures::Footprint,
+    asset_management::manifest::Id, construction::AllowedTerrainTypes,
+    filtered_array_iter::FilteredArrayIter, structures::Footprint,
     terrain::terrain_manifest::Terrain,
 };
 
@@ -347,13 +348,18 @@ impl MapGeometry {
         center: TilePos,
         footprint: &Footprint,
         terrain_query: &Query<&Id<Terrain>>,
-        allowed_terrain_types: &HashSet<Id<Terrain>>,
+        allowed_terrain_types: &AllowedTerrainTypes,
     ) -> bool {
-        footprint.in_world_space(center).iter().all(|tile_pos| {
-            let terrain_entity = self.terrain_index.get(tile_pos).unwrap();
-            let terrain_id = terrain_query.get(*terrain_entity).unwrap();
-            allowed_terrain_types.contains(terrain_id)
-        })
+        match allowed_terrain_types {
+            AllowedTerrainTypes::Any => true,
+            AllowedTerrainTypes::Only(allowed_terrain_types) => {
+                footprint.in_world_space(center).iter().all(|tile_pos| {
+                    let terrain_entity = self.terrain_index.get(tile_pos).unwrap();
+                    let terrain_id = terrain_query.get(*terrain_entity).unwrap();
+                    allowed_terrain_types.contains(terrain_id)
+                })
+            }
+        }
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
@@ -381,7 +387,7 @@ impl MapGeometry {
         center: TilePos,
         footprint: Footprint,
         terrain_query: &Query<&Id<Terrain>>,
-        allowed_terrain_types: &HashSet<Id<Terrain>>,
+        allowed_terrain_types: &AllowedTerrainTypes,
     ) -> bool {
         self.is_footprint_valid(center, &footprint)
             && self.is_terrain_flat(center, &footprint)

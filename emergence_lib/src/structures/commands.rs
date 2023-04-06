@@ -279,14 +279,14 @@ impl Command for SpawnStructureGhostCommand {
         )> = SystemState::new(world);
 
         let (terrain_query, geometry, manifest) = system_state.get(world);
-        let structure_variety = manifest.get(structure_id).clone();
         let construction_data = manifest.construction_data(structure_id);
         let allowed_terrain_types = &construction_data.allowed_terrain_types;
+        let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            structure_variety.footprint.rotated(self.data.facing),
+            construction_footprint.rotated(self.data.facing),
             &terrain_query,
             allowed_terrain_types,
         ) {

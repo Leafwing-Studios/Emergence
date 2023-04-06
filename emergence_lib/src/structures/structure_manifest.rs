@@ -30,6 +30,17 @@ impl StructureManifest {
             ConstructionStrategy::Direct(data) => data,
         }
     }
+
+    /// Fetches the [`Footprint`] for the initial form of a given structure type.
+    pub fn construction_footprint(&self, structure_id: Id<Structure>) -> &Footprint {
+        let strategy = &self.get(structure_id).construction_strategy;
+        match strategy {
+            ConstructionStrategy::Seedling(seedling_id) => {
+                self.construction_footprint(*seedling_id)
+            }
+            ConstructionStrategy::Direct(_data) => &self.get(structure_id).footprint,
+        }
+    }
 }
 
 /// Information about a single [`Id<Structure>`] variety of structure.

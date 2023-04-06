@@ -47,7 +47,17 @@ pub struct ConstructionData {
     /// The set of items needed to create a new copy of this structure
     pub materials: InputInventory,
     /// The set of terrain types that this structure can be built on
-    pub allowed_terrain_types: HashSet<Id<Terrain>>,
+    pub allowed_terrain_types: AllowedTerrainTypes,
+}
+
+/// The set of terrain types that this structure can be built on.
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+pub enum AllowedTerrainTypes {
+    /// Any terrain type is allowed.
+    #[default]
+    Any,
+    /// Only the provided terrain types are allowed.
+    Only(HashSet<Id<Terrain>>),
 }
 
 /// The unprocessed equivalent of [`ConstructionStrategy`].
@@ -64,6 +74,8 @@ pub enum RawConstructionStrategy {
         /// The set of items needed to create a new copy of this structure
         materials: HashMap<String, u32>,
         /// The set of terrain types that this structure can be built on
+        ///
+        /// If this is empty, any terrain type is allowed.
         allowed_terrain_types: HashSet<String>,
     },
 }
@@ -88,10 +100,16 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
                 ConstructionStrategy::Direct(ConstructionData {
                     work: work.map(Duration::from_secs_f32),
                     materials,
-                    allowed_terrain_types: allowed_terrain_types
-                        .into_iter()
-                        .map(Id::from_name)
-                        .collect(),
+                    allowed_terrain_types: if allowed_terrain_types.is_empty() {
+                        AllowedTerrainTypes::Any
+                    } else {
+                        AllowedTerrainTypes::Only(
+                            allowed_terrain_types
+                                .into_iter()
+                                .map(Id::from_name)
+                                .collect(),
+                        )
+                    },
                 })
             }
         }
