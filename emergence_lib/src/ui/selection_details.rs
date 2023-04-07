@@ -287,7 +287,7 @@ pub(crate) enum SelectionDetails {
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
-    ghost_query: Query<GhostDetailsQuery>,
+    ghost_structure_query: Query<GhostDetailsQuery>,
     organism_query: Query<OrganismDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
@@ -299,10 +299,21 @@ fn get_details(
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
-        CurrentSelection::GhostStructure(ghost_entity) => {
-            let ghost_query_item = ghost_query.get(*ghost_entity)?;
+        CurrentSelection::GhostStructure(ghost_structure_entity) => {
+            let ghost_query_item = ghost_structure_query.get(*ghost_structure_entity)?;
             SelectionDetails::GhostStructure(GhostStructureDetails {
-                entity: *ghost_entity,
+                entity: *ghost_structure_entity,
+                tile_pos: *ghost_query_item.tile_pos,
+                structure_id: *ghost_query_item.structure_id,
+                input_inventory: ghost_query_item.input_inventory.clone(),
+                crafting_state: ghost_query_item.crafting_state.clone(),
+                active_recipe: ghost_query_item.active_recipe.clone(),
+            })
+        }
+        CurrentSelection::GhostTerrain(ghost_terrain_entity) => {
+            let ghost_query_item = ghost_terrain_query.get(*ghost_terrain_entity)?;
+            SelectionDetails::GhostTerrain(GhostTerrainDetails {
+                entity: *ghost_structure_entity,
                 tile_pos: *ghost_query_item.tile_pos,
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),

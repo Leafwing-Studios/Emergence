@@ -282,6 +282,8 @@ fn update_selection_radius(
 pub(crate) enum CurrentSelection {
     /// A ghost structure is selected
     GhostStructure(Entity),
+    /// A ghost terrain (used to indicate planned terraforming) is selected
+    GhostTerrain(Entity),
     /// A structure is selected
     Structure(Entity),
     /// One or more tile is selected
@@ -360,7 +362,7 @@ impl CurrentSelection {
 
     /// Cycles through game objects on the same tile.
     ///
-    /// The order is units -> ghosts -> structures -> terrain -> units.
+    /// The order is units -> ghost structure -> ghost terrain -> structures -> terrain -> units.
     /// If a higher priority option is missing, later options in the chain are searched.
     /// If none of the options can be found, the selection is cleared completely.
     fn cycle_selection(
@@ -369,86 +371,7 @@ impl CurrentSelection {
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
-        *self = match self {
-            CurrentSelection::None => {
-                if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::GhostStructure(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else {
-                    CurrentSelection::None
-                }
-            }
-            CurrentSelection::GhostStructure(_) => {
-                if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::GhostStructure(ghost_entity)
-                } else {
-                    CurrentSelection::None
-                }
-            }
-            CurrentSelection::Structure(_) => {
-                if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::GhostStructure(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else {
-                    CurrentSelection::None
-                }
-            }
-            CurrentSelection::Terrain(existing_selection) => {
-                if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::GhostStructure(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    existing_selection.add_to_selection(
-                        hovered_tile,
-                        selection_state,
-                        map_geometry,
-                    );
-                    CurrentSelection::Terrain(existing_selection.clone())
-                } else {
-                    CurrentSelection::None
-                }
-            }
-            CurrentSelection::Unit(_) => {
-                if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::GhostStructure(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else {
-                    CurrentSelection::None
-                }
-            }
-        }
+        todo!()
     }
 }
 

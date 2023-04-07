@@ -182,6 +182,8 @@ pub(crate) struct GhostTerrainBundle {
     ghost_bundle: GhostBundle,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
+    /// Makes ghost terrain pickable
+    raycast_mesh: RaycastMesh<(Ghost, Terrain)>,
 }
 
 impl GhostTerrainBundle {
@@ -208,6 +210,7 @@ impl GhostTerrainBundle {
                 world_pos,
             ),
             terraforming_action,
+            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

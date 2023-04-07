@@ -81,7 +81,8 @@ fn setup_camera(mut commands: Commands) {
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<Structure>::new())
         .insert(RaycastSource::<Unit>::new())
-        .insert(RaycastSource::<(Ghost, Structure)>::new());
+        .insert(RaycastSource::<(Ghost, Structure)>::new())
+        .insert(RaycastSource::<(Ghost, Terrain)>::new());
 }
 
 /// The position that the camera is looking at.
@@ -327,6 +328,7 @@ fn set_camera_focus(
     {
         let tile_to_snap_to = match &*selection {
             CurrentSelection::GhostStructure(entity)
+            | CurrentSelection::GhostTerrain(entity)
             | CurrentSelection::Unit(entity)
             | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
             CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),

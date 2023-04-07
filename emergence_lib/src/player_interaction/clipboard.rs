@@ -223,6 +223,9 @@ fn copy_selection(
                     clipboard.normalize_positions();
                 }
             }
+            CurrentSelection::GhostTerrain(entity) => {
+                todo!()
+            }
             // Otherwise, just grab whatever's under the cursor
             CurrentSelection::None | CurrentSelection::Unit(_) => {
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
