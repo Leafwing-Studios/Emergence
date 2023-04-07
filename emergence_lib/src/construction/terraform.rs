@@ -75,3 +75,13 @@ impl From<TerraformingTool> for TerraformingAction {
         }
     }
 }
+
+impl From<TerraformingAction> for TerraformingTool {
+    fn from(action: TerraformingAction) -> Self {
+        match action {
+            TerraformingAction::Raise => Self::Raise,
+            TerraformingAction::Lower => Self::Lower,
+            TerraformingAction::Change(terrain) => Self::Change(terrain),
+        }
+    }
+}

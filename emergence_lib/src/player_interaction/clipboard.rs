@@ -6,7 +6,10 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::manifest::Id,
-    construction::{ghosts::Preview, terraform::TerraformingTool},
+    construction::{
+        ghosts::Preview,
+        terraform::{TerraformingAction, TerraformingTool},
+    },
     crafting::components::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::structure_manifest::Structure,
@@ -187,6 +190,7 @@ fn copy_selection(
     cursor_pos: Res<CursorPos>,
     current_selection: Res<CurrentSelection>,
     structure_query: Query<ClipboardQuery, Without<Preview>>,
+    ghost_terrain_query: Query<&TerraformingAction>,
     map_geometry: Res<MapGeometry>,
 ) {
     if actions.just_pressed(PlayerAction::Copy) {
@@ -224,7 +228,8 @@ fn copy_selection(
                 }
             }
             CurrentSelection::GhostTerrain(entity) => {
-                todo!()
+                let terraforming_action = ghost_terrain_query.get(*entity).unwrap();
+                *clipboard = Clipboard::Terraform(terraforming_action.clone().into());
             }
             // Otherwise, just grab whatever's under the cursor
             CurrentSelection::None | CurrentSelection::Unit(_) => {
