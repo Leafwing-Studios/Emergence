@@ -21,7 +21,6 @@ impl Plugin for CursorPlugin {
             .add_plugin(DefaultRaycastingPlugin::<Structure>::default())
             .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
             .add_plugin(DefaultRaycastingPlugin::<(Ghost, Structure)>::default())
-            .add_plugin(DefaultRaycastingPlugin::<(Ghost, Terrain)>::default())
             .add_system(
                 update_raycast_with_cursor
                     .before(RaycastSystem::BuildRays::<Terrain>)
@@ -51,8 +50,6 @@ pub(crate) struct CursorPos {
     hovered_structure: Option<Entity>,
     /// The first ghost structure hit by a cursor raycast, if any.
     hovered_ghost_structure: Option<Entity>,
-    /// The first ghost terrain hit by a cursor raycast, if any.
-    hovered_ghost_terrain: Option<Entity>,
 }
 
 impl CursorPos {
@@ -90,11 +87,6 @@ impl CursorPos {
     /// The hovered ghost structure, if available.
     pub(crate) fn maybe_ghost_structure(&self) -> Option<Entity> {
         self.hovered_ghost_structure
-    }
-
-    /// The hovered ghost terrain, if available.
-    pub(crate) fn maybe_ghost_terrain(&self) -> Option<Entity> {
-        self.hovered_ghost_terrain
     }
 }
 
@@ -139,7 +131,6 @@ fn update_cursor_pos(
             &mut RaycastSource<Structure>,
             &mut RaycastSource<Unit>,
             &mut RaycastSource<(Ghost, Structure)>,
-            &mut RaycastSource<(Ghost, Terrain)>,
         ),
         With<Camera>,
     >,
@@ -149,13 +140,8 @@ fn update_cursor_pos(
     ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let (
-        terrain_raycast,
-        structure_raycast,
-        unit_raycast,
-        ghost_structure_raycast,
-        ghost_terrain_raycast,
-    ) = camera_query.single();
+    let (terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast) =
+        camera_query.single();
 
     cursor_pos.tile_pos = if let Some((terrain_entity, _intersection_data)) =
         terrain_raycast.get_nearest_intersection()
@@ -182,14 +168,6 @@ fn update_cursor_pos(
 
     cursor_pos.hovered_ghost_structure = if let Some((ghost_entity, _intersection_data)) =
         ghost_structure_raycast.get_nearest_intersection()
-    {
-        ghost_query.get(ghost_entity).ok()
-    } else {
-        None
-    };
-
-    cursor_pos.hovered_ghost_terrain = if let Some((ghost_entity, _intersection_data)) =
-        ghost_terrain_raycast.get_nearest_intersection()
     {
         ghost_query.get(ghost_entity).ok()
     } else {

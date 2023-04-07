@@ -91,8 +91,6 @@ struct GhostBundle {
     workers_present: WorkersPresent,
     /// Tracks work that needs to be done on this building
     crafting_state: CraftingState,
-    /// The mesh used for raycasting
-    picking_mesh: Handle<Mesh>,
     /// The material to be used by all children in the scene
     inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
@@ -105,7 +103,6 @@ impl GhostBundle {
     fn new(
         tile_pos: TilePos,
         construction_materials: InputInventory,
-        picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
@@ -116,7 +113,6 @@ impl GhostBundle {
             construction_materials,
             workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
-            picking_mesh,
             inherited_material,
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
@@ -141,6 +137,8 @@ pub(crate) struct GhostStructureBundle {
     facing: Facing,
     /// Makes ghost structures pickable
     raycast_mesh: RaycastMesh<(Ghost, Structure)>,
+    /// The mesh used for raycasting
+    picking_mesh: Handle<Mesh>,
 }
 
 impl GhostStructureBundle {
@@ -162,7 +160,6 @@ impl GhostStructureBundle {
             ghost_bundle: GhostBundle::new(
                 tile_pos,
                 construction_materials,
-                picking_mesh,
                 scene_handle,
                 inherited_material,
                 world_pos,
@@ -171,6 +168,7 @@ impl GhostStructureBundle {
             structure_id,
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
+            picking_mesh,
         }
     }
 }
@@ -182,15 +180,12 @@ pub(crate) struct GhostTerrainBundle {
     ghost_bundle: GhostBundle,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
-    /// Makes ghost terrain pickable
-    raycast_mesh: RaycastMesh<(Ghost, Terrain)>,
 }
 
 impl GhostTerrainBundle {
     pub(crate) fn new(
         terraforming_action: TerraformingAction,
         tile_pos: TilePos,
-        picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
@@ -204,13 +199,11 @@ impl GhostTerrainBundle {
             ghost_bundle: GhostBundle::new(
                 tile_pos,
                 construction_materials,
-                picking_mesh,
                 scene_handle,
                 inherited_material,
                 world_pos,
             ),
             terraforming_action,
-            raycast_mesh: RaycastMesh::default(),
         }
     }
 }

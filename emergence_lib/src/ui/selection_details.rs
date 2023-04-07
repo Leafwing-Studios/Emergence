@@ -20,10 +20,11 @@ use crate::{
 
 use self::{
     ghost_structure_details::{GhostStructureDetails, GhostStructureDetailsQuery},
-    ghost_terrain_details::{GhostTerrainDetails, GhostTerrainDetailsQuery},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
     structure_details::{CraftingDetails, StructureDetails, StructureDetailsQuery},
-    terrain_details::{TerrainDetails, TerrainDetailsQuery},
+    terrain_details::{
+        GhostTerrainDetailsQuery, TerraformingDetails, TerrainDetails, TerrainDetailsQuery,
+    },
     unit_details::{UnitDetails, UnitDetailsQuery},
 };
 
@@ -55,10 +56,6 @@ struct SelectionPanel;
 /// The UI node that stores all ghost structure details.
 #[derive(Component, Default)]
 struct GhostStructureDetailsMarker;
-
-/// The UI node that stores all ghost terrain details.
-#[derive(Component, Default)]
-struct GhostTerrainDetailsMarker;
 
 /// The UI node that stores all structure details.
 #[derive(Component, Default)]
@@ -105,8 +102,6 @@ fn populate_selection_panel(
 
     let ghost_structure_details =
         populate_details::<GhostStructureDetailsMarker>(&mut commands, &key_text_style);
-    let ghost_terrain_details =
-        populate_details::<GhostTerrainDetailsMarker>(&mut commands, &key_text_style);
     let structure_details =
         populate_details::<StructureDetailsMarker>(&mut commands, &key_text_style);
     let terrain_details = populate_details::<TerrainDetailsMarker>(&mut commands, &key_text_style);
@@ -116,7 +111,6 @@ fn populate_selection_panel(
     commands
         .entity(selection)
         .add_child(ghost_structure_details)
-        .add_child(ghost_terrain_details)
         .add_child(structure_details)
         .add_child(terrain_details)
         .add_child(unit_details);
@@ -145,17 +139,6 @@ fn update_selection_details(
         (&mut Style, &mut Text),
         (
             With<GhostStructureDetailsMarker>,
-            Without<GhostTerrainDetailsMarker>,
-            Without<StructureDetailsMarker>,
-            Without<TerrainDetailsMarker>,
-            Without<UnitDetailsMarker>,
-        ),
-    >,
-    mut ghost_terrain_details_query: Query<
-        (&mut Style, &mut Text),
-        (
-            With<GhostTerrainDetailsMarker>,
-            Without<GhostStructureDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<TerrainDetailsMarker>,
             Without<UnitDetailsMarker>,
@@ -166,7 +149,6 @@ fn update_selection_details(
         (
             With<StructureDetailsMarker>,
             Without<GhostStructureDetailsMarker>,
-            Without<GhostTerrainDetailsMarker>,
             Without<TerrainDetailsMarker>,
             Without<UnitDetailsMarker>,
         ),
@@ -176,7 +158,6 @@ fn update_selection_details(
         (
             With<UnitDetailsMarker>,
             Without<GhostStructureDetailsMarker>,
-            Without<GhostTerrainDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<TerrainDetailsMarker>,
         ),
@@ -186,7 +167,6 @@ fn update_selection_details(
         (
             With<TerrainDetailsMarker>,
             Without<GhostStructureDetailsMarker>,
-            Without<GhostTerrainDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<UnitDetailsMarker>,
         ),
@@ -200,8 +180,6 @@ fn update_selection_details(
     let mut parent_visibility = selection_panel_query.single_mut();
     let (mut ghost_structure_style, mut ghost_structure_text) =
         ghost_structures_details_query.single_mut();
-    let (mut ghost_terrain_style, mut ghost_terrain_text) =
-        ghost_terrain_details_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
     let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
@@ -210,15 +188,6 @@ fn update_selection_details(
         SelectionDetails::GhostStructure(_) => {
             *parent_visibility = Visibility::Visible;
             ghost_structure_style.display = Display::Flex;
-            ghost_terrain_style.display = Display::None;
-            structure_style.display = Display::None;
-            terrain_style.display = Display::None;
-            unit_style.display = Display::None;
-        }
-        SelectionDetails::GhostTerrain(_) => {
-            *parent_visibility = Visibility::Visible;
-            ghost_terrain_style.display = Display::Flex;
-            ghost_structure_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
@@ -226,7 +195,6 @@ fn update_selection_details(
         SelectionDetails::Structure(_) => {
             *parent_visibility = Visibility::Visible;
             ghost_structure_style.display = Display::None;
-            ghost_terrain_style.display = Display::None;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
@@ -234,7 +202,6 @@ fn update_selection_details(
         SelectionDetails::Terrain(_) => {
             *parent_visibility = Visibility::Visible;
             ghost_structure_style.display = Display::None;
-            ghost_terrain_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
@@ -242,7 +209,6 @@ fn update_selection_details(
         SelectionDetails::Unit(_) => {
             *parent_visibility = Visibility::Visible;
             ghost_structure_style.display = Display::None;
-            ghost_terrain_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::Flex;
@@ -257,10 +223,6 @@ fn update_selection_details(
         SelectionDetails::GhostStructure(details) => {
             ghost_structure_text.sections[0].value =
                 details.display(&item_manifest, &structure_manifest, &recipe_manifest);
-        }
-        SelectionDetails::GhostTerrain(details) => {
-            ghost_terrain_text.sections[0].value =
-                details.display(&item_manifest, &terrain_manifest);
         }
         SelectionDetails::Structure(details) => {
             structure_text.sections[0].value =
@@ -314,8 +276,6 @@ fn populate_details<T: Component + Default>(
 pub(crate) enum SelectionDetails {
     /// A ghost of a structure is selected
     GhostStructure(GhostStructureDetails),
-    /// A ghost of a terraforming action is selected
-    GhostTerrain(GhostTerrainDetails),
     /// A structure is selected
     Structure(StructureDetails),
     /// A tile is selected.
@@ -353,16 +313,6 @@ fn get_details(
                 input_inventory: ghost_query_item.input_inventory.clone(),
                 crafting_state: ghost_query_item.crafting_state.clone(),
                 active_recipe: ghost_query_item.active_recipe.clone(),
-            })
-        }
-        CurrentSelection::GhostTerrain(ghost_terrain_entity) => {
-            let ghost_query_item = ghost_terrain_query.get(*ghost_terrain_entity)?;
-            SelectionDetails::GhostTerrain(GhostTerrainDetails {
-                entity: *ghost_terrain_entity,
-                tile_pos: *ghost_query_item.tile_pos,
-                terraforming_action: *ghost_query_item.terraforming_action,
-                input_inventory: ghost_query_item.input_inventory.clone(),
-                crafting_state: ghost_query_item.crafting_state.clone(),
             })
         }
         CurrentSelection::Structure(structure_entity) => {
@@ -418,6 +368,19 @@ fn get_details(
                 let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
+                let maybe_terraforming_details = if let Some(ghost_terrain_entity) =
+                    map_geometry.get_ghost_terrain(*tile_pos)
+                {
+                    let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
+                    Some(TerraformingDetails {
+                        terraforming_action: ghost_terrain_query_item.terraforming_action.clone(),
+                        input_inventory: ghost_terrain_query_item.input_inventory.clone(),
+                        crafting_state: ghost_terrain_query_item.crafting_state.clone(),
+                    })
+                } else {
+                    None
+                };
+
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
@@ -425,6 +388,7 @@ fn get_details(
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
                     zoning: terrain_query_item.zoning.clone(),
+                    maybe_terraforming_details,
                 })
             } else {
                 SelectionDetails::None
@@ -547,72 +511,6 @@ mod ghost_structure_details {
 Tile: {tile_pos}
 Ghost structure type: {structure_id}
 Recipe: {recipe}
-Construction materials: {construction_materials}
-{crafting_state}"
-            )
-        }
-    }
-}
-
-/// Details for ghost terrain
-mod ghost_terrain_details {
-    use bevy::ecs::{prelude::*, query::WorldQuery};
-
-    use crate::{
-        construction::terraform::TerraformingAction,
-        crafting::components::{CraftingState, InputInventory},
-        items::item_manifest::ItemManifest,
-        simulation::geometry::TilePos,
-        terrain::terrain_manifest::TerrainManifest,
-    };
-
-    /// Data needed to populate [`GhostStructureDetails`].
-    #[derive(WorldQuery)]
-    pub(super) struct GhostTerrainDetailsQuery {
-        /// The root entity
-        pub(super) entity: Entity,
-        /// The terraforming action being performed
-        pub(super) terraforming_action: &'static TerraformingAction,
-        /// The tile position of this ghost
-        pub(crate) tile_pos: &'static TilePos,
-        /// The inputs that must be added to construct this ghost
-        pub(super) input_inventory: &'static InputInventory,
-        /// The ghost's progress through construction
-        pub(crate) crafting_state: &'static CraftingState,
-    }
-
-    /// Detailed info about a given ghost.
-    #[derive(Debug)]
-    pub(crate) struct GhostTerrainDetails {
-        /// The root entity
-        pub(super) entity: Entity,
-        /// The terraforming action being performed
-        pub(super) terraforming_action: TerraformingAction,
-        /// The tile position of this ghost
-        pub(crate) tile_pos: TilePos,
-        /// The inputs that must be added to construct this ghost
-        pub(super) input_inventory: InputInventory,
-        /// The ghost's progress through construction
-        pub(crate) crafting_state: CraftingState,
-    }
-
-    impl GhostTerrainDetails {
-        /// The pretty formatting for this type
-        pub(crate) fn display(
-            &self,
-            item_manifest: &ItemManifest,
-            terrain_manifest: &TerrainManifest,
-        ) -> String {
-            let entity = self.entity;
-            let terraforming_action = self.terraforming_action.display(terrain_manifest);
-            let tile_pos = &self.tile_pos;
-            let crafting_state = &self.crafting_state;
-            let construction_materials = self.input_inventory.display(item_manifest);
-
-            format!(
-                "Entity: {entity:?}
-Tile: {tile_pos}
-Terraforming: {terraforming_action}
 Construction materials: {construction_materials}
 {crafting_state}"
             )
@@ -824,7 +722,8 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::Id,
-        construction::zoning::Zoning,
+        construction::{terraform::TerraformingAction, zoning::Zoning},
+        crafting::components::{CraftingState, InputInventory},
         items::item_manifest::ItemManifest,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
@@ -846,6 +745,47 @@ mod terrain_details {
         pub(super) zoning: &'static Zoning,
     }
 
+    /// Data needed to populate [`TerraformingDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct GhostTerrainDetailsQuery {
+        /// The terraforming action being performed
+        pub(super) terraforming_action: &'static TerraformingAction,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: &'static InputInventory,
+        /// The ghost's progress through construction
+        pub(crate) crafting_state: &'static CraftingState,
+    }
+
+    /// Detailed info about a given terraforming ghost.
+    #[derive(Debug)]
+    pub(crate) struct TerraformingDetails {
+        /// The terraforming action being performed
+        pub(super) terraforming_action: TerraformingAction,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: InputInventory,
+        /// The ghost's progress through construction
+        pub(crate) crafting_state: CraftingState,
+    }
+
+    impl TerraformingDetails {
+        /// The pretty formatting for this type
+        pub(crate) fn display(
+            &self,
+            item_manifest: &ItemManifest,
+            terrain_manifest: &TerrainManifest,
+        ) -> String {
+            let terraforming_action = self.terraforming_action.display(terrain_manifest);
+            let crafting_state = &self.crafting_state;
+            let construction_materials = self.input_inventory.display(item_manifest);
+
+            format!(
+                "Terraforming: {terraforming_action}
+Construction materials: {construction_materials}
+{crafting_state}"
+            )
+        }
+    }
+
     /// Detailed info about a given piece of terrain.
     #[derive(Debug)]
     pub(crate) struct TerrainDetails {
@@ -861,6 +801,8 @@ mod terrain_details {
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
+        /// The details about the terraforming process, if any
+        pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
 
     impl TerrainDetails {
@@ -884,15 +826,21 @@ mod terrain_details {
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
-            format!(
+            let base_string = format!(
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
-Zoning: {zoning}
-Signals:
-{signals}"
-            )
+Zoning: {zoning}"
+            );
+
+            if let Some(terraforming_details) = &self.maybe_terraforming_details {
+                let terraforming_details =
+                    terraforming_details.display(item_manifest, terrain_manifest);
+                format!("{base_string}\n\n{terraforming_details}\n\nSignals:\n{signals}")
+            } else {
+                format!("{base_string}\n\nSignals:\n{signals}")
+            }
         }
     }
 }

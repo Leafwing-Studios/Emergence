@@ -217,7 +217,6 @@ impl Command for SpawnTerrainGhostCommand {
         }
 
         let map_geometry = world.resource::<MapGeometry>();
-        let picking_mesh = world.resource::<TerrainHandles>().topper_mesh.clone_weak();
         let scene_handle = world
             .resource::<TerrainHandles>()
             .scenes
@@ -245,7 +244,6 @@ impl Command for SpawnTerrainGhostCommand {
                     .spawn(GhostTerrainBundle::new(
                         self.terraforming_action,
                         self.tile_pos,
-                        picking_mesh,
                         scene_handle,
                         inherited_material,
                         world_pos,

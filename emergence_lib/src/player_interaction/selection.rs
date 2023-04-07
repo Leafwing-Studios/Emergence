@@ -282,11 +282,11 @@ fn update_selection_radius(
 pub(crate) enum CurrentSelection {
     /// A ghost structure is selected
     GhostStructure(Entity),
-    /// A ghost terrain (used to indicate planned terraforming) is selected
-    GhostTerrain(Entity),
     /// A structure is selected
     Structure(Entity),
-    /// One or more tile is selected
+    /// One or more tile is selected.
+    ///
+    /// Note that terraforming details are also displayed on the basis of the selected terrain.
     Terrain(SelectedTiles),
     /// A unit is selected
     Unit(Entity),
@@ -402,9 +402,6 @@ impl CurrentSelection {
             SelectionVariant::Unit => cursor_pos
                 .maybe_unit()
                 .map(|unit_entity| CurrentSelection::Unit(unit_entity)),
-            SelectionVariant::GhostTerrain => cursor_pos
-                .maybe_ghost_terrain()
-                .map(|ghost_terrain_entity| CurrentSelection::GhostTerrain(ghost_terrain_entity)),
             SelectionVariant::GhostStructure => {
                 cursor_pos
                     .maybe_ghost_structure()
@@ -429,11 +426,17 @@ impl CurrentSelection {
 /// The dataless enum that tracks the variety of [`CurrentSelection`].
 #[derive(IterableEnum, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum SelectionVariant {
+    /// A unit.
     Unit,
-    GhostTerrain,
+    /// A ghost structure.
     GhostStructure,
+    /// A structure.
     Structure,
+    /// Terrain.
+    ///
+    /// Note that terraforming details are also stored in the [`CurrentSelection::Terrain`] variant.
     Terrain,
+    /// No selection.
     None,
 }
 
@@ -445,8 +448,7 @@ impl SelectionVariant {
     fn next(&self) -> Self {
         match self {
             Self::None => Self::Unit,
-            Self::Unit => Self::GhostTerrain,
-            Self::GhostTerrain => Self::GhostStructure,
+            Self::Unit => Self::GhostStructure,
             Self::GhostStructure => Self::Structure,
             Self::Structure => Self::Terrain,
             Self::Terrain => Self::Unit,
@@ -476,7 +478,6 @@ impl SelectionVariant {
 impl From<&CurrentSelection> for SelectionVariant {
     fn from(selection: &CurrentSelection) -> Self {
         match selection {
-            CurrentSelection::GhostTerrain(_) => Self::GhostTerrain,
             CurrentSelection::GhostStructure(_) => Self::GhostStructure,
             CurrentSelection::Structure(_) => Self::Structure,
             CurrentSelection::Terrain(_) => Self::Terrain,
