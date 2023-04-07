@@ -384,9 +384,9 @@ impl CurrentSelection {
         *self = CurrentSelection::None;
     }
 
-    /// Try to select the next object in the selection chain.
+    /// Try to select an object of a type corresponding to the `selection_variant`.
     ///
-    /// If there is no next object, the selection is cleared.
+    /// If it cannot be found, [`None`] is returned.
     fn get(
         &self,
         selection_variant: SelectionVariant,
@@ -423,7 +423,7 @@ impl CurrentSelection {
 }
 
 /// The dataless enum that tracks the variety of [`CurrentSelection`].
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(IterableEnum, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum SelectionVariant {
     Unit,
     GhostTerrain,
@@ -451,6 +451,10 @@ impl SelectionVariant {
 
     /// Returns the cycle order for the given `start`.
     fn cycle(&self) -> Vec<Self> {
+        if self == &Self::None {
+            return vec![];
+        }
+
         let mut cycle = vec![*self];
         let mut next = self.next();
         while next != *self {
@@ -707,9 +711,15 @@ pub(super) fn set_tile_interactions(
 
 #[cfg(test)]
 mod tests {
+    use bevy::utils::HashSet;
+
     use super::SelectedTiles;
     use crate::{
-        player_interaction::{cursor::CursorPos, selection::CurrentSelection},
+        enum_iter::IterableEnum,
+        player_interaction::{
+            cursor::CursorPos,
+            selection::{CurrentSelection, SelectionVariant},
+        },
         simulation::geometry::TilePos,
     };
 
@@ -769,5 +779,62 @@ mod tests {
             CurrentSelection::Terrain(SelectedTiles::default()).relevant_tiles(&cursor_pos),
             cursor_pos_selected
         );
+    }
+
+    #[test]
+    fn next_never_returns_none() {
+        for variant in SelectionVariant::variants() {
+            assert!(variant.next() != SelectionVariant::None);
+        }
+    }
+
+    #[test]
+    fn next_returns_all_variants_exactly_once() {
+        let mut seen = HashSet::new();
+        for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
+            assert!(!seen.contains(&variant));
+            seen.insert(variant);
+        }
+        assert_eq!(seen.len(), SelectionVariant::variants().len() - 1);
+    }
+
+    #[test]
+    fn next_cycles_back_to_start() {
+        for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
+            let mut working_variant = variant;
+            for _ in 0..(SelectionVariant::variants().len() - 1) {
+                dbg!(working_variant);
+                working_variant = working_variant.next();
+            }
+
+            assert_eq!(variant, working_variant);
+        }
+    }
+
+    #[test]
+    fn next_never_returns_self() {
+        for variant in SelectionVariant::variants() {
+            assert!(variant.next() != variant);
+        }
+    }
+
+    #[test]
+    fn cycle_is_right_length() {
+        for variant in SelectionVariant::variants() {
+            let cycle = variant.cycle();
+            if variant == SelectionVariant::None {
+                assert_eq!(cycle.len(), 0);
+            } else {
+                assert_eq!(cycle.len(), SelectionVariant::variants().len() - 1);
+            }
+        }
     }
 }
