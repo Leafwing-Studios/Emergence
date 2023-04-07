@@ -105,6 +105,14 @@ pub enum InputInventory {
     },
 }
 
+impl Default for InputInventory {
+    fn default() -> Self {
+        Self::Exact {
+            inventory: Inventory::default(),
+        }
+    }
+}
+
 impl InputInventory {
     /// Returns a reference the underlying [`Inventory`].
     pub fn inventory(&self) -> &Inventory {

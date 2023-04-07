@@ -280,11 +280,13 @@ fn update_selection_radius(
 /// The game object(s) currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 pub(crate) enum CurrentSelection {
-    /// A ghost is selected
-    Ghost(Entity),
+    /// A ghost structure is selected
+    GhostStructure(Entity),
     /// A structure is selected
     Structure(Entity),
-    /// One or more tile is selected
+    /// One or more tile is selected.
+    ///
+    /// Note that terraforming details are also displayed on the basis of the selected terrain.
     Terrain(SelectedTiles),
     /// A unit is selected
     Unit(Entity),
@@ -295,7 +297,7 @@ pub(crate) enum CurrentSelection {
 
 impl CurrentSelection {
     /// Returns the set of terrain tiles that should be affected by actions.
-    pub(super) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
+    pub(crate) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
         match self {
             CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
                 true => {
@@ -360,7 +362,7 @@ impl CurrentSelection {
 
     /// Cycles through game objects on the same tile.
     ///
-    /// The order is units -> ghosts -> structures -> terrain -> units.
+    /// The order is units -> ghost structure -> ghost terrain -> structures -> terrain -> units.
     /// If a higher priority option is missing, later options in the chain are searched.
     /// If none of the options can be found, the selection is cleared completely.
     fn cycle_selection(
@@ -369,85 +371,116 @@ impl CurrentSelection {
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
-        *self = match self {
-            CurrentSelection::None => {
-                if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else {
-                    CurrentSelection::None
-                }
+        let start = SelectionVariant::from(&*self);
+        let cycle = start.cycle();
+
+        info!("Starting with {:?}", start);
+
+        for variant in cycle {
+            info!("Trying {:?}", variant);
+            if let Some(selection) = self.get(variant, selection_state, cursor_pos, map_geometry) {
+                info!("Found {:?}", selection);
+                *self = selection;
+                return;
             }
-            CurrentSelection::Ghost(_) => {
-                if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
-                } else {
-                    CurrentSelection::None
-                }
+        }
+
+        *self = CurrentSelection::None;
+    }
+
+    /// Try to select an object of a type corresponding to the `selection_variant`.
+    ///
+    /// If it cannot be found, [`None`] is returned.
+    fn get(
+        &self,
+        selection_variant: SelectionVariant,
+        selection_state: &SelectionState,
+        cursor_pos: &CursorPos,
+        map_geometry: &MapGeometry,
+    ) -> Option<Self> {
+        match selection_variant {
+            SelectionVariant::Unit => cursor_pos.maybe_unit().map(CurrentSelection::Unit),
+            SelectionVariant::GhostStructure => {
+                cursor_pos
+                    .maybe_ghost_structure()
+                    .map(|ghost_structure_entity| {
+                        CurrentSelection::GhostStructure(ghost_structure_entity)
+                    })
             }
-            CurrentSelection::Structure(_) => {
-                if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else {
-                    CurrentSelection::None
-                }
+            SelectionVariant::Structure => cursor_pos
+                .maybe_structure()
+                .map(CurrentSelection::Structure),
+            SelectionVariant::Terrain => {
+                let hovered_tile = cursor_pos.maybe_tile_pos()?;
+                let mut selected_tiles = SelectedTiles::default();
+                selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
+                Some(CurrentSelection::Terrain(selected_tiles))
             }
-            CurrentSelection::Terrain(existing_selection) => {
-                if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    existing_selection.add_to_selection(
-                        hovered_tile,
-                        selection_state,
-                        map_geometry,
-                    );
-                    CurrentSelection::Terrain(existing_selection.clone())
-                } else {
-                    CurrentSelection::None
-                }
-            }
-            CurrentSelection::Unit(_) => {
-                if let Some(ghost_entity) = cursor_pos.maybe_ghost() {
-                    CurrentSelection::Ghost(ghost_entity)
-                } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-                    CurrentSelection::Structure(structure_entity)
-                } else if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                    let mut selected_tiles = SelectedTiles::default();
-                    selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                    CurrentSelection::Terrain(selected_tiles)
-                } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
-                    CurrentSelection::Unit(unit_entity)
-                } else {
-                    CurrentSelection::None
-                }
-            }
+            SelectionVariant::None => None,
+        }
+    }
+}
+
+/// The dataless enum that tracks the variety of [`CurrentSelection`].
+#[derive(IterableEnum, Debug, PartialEq, Eq, Hash, Clone, Copy)]
+enum SelectionVariant {
+    /// A unit.
+    Unit,
+    /// A ghost structure.
+    GhostStructure,
+    /// A structure.
+    Structure,
+    /// Terrain.
+    ///
+    /// Note that terraforming details are also stored in the [`CurrentSelection::Terrain`] variant.
+    Terrain,
+    /// No selection.
+    None,
+}
+
+impl SelectionVariant {
+    /// Get the next selection mode in the chain.
+    ///
+    /// The order is units -> ghost structure -> ghost terrain -> structures -> terrain -> units.
+    /// No path leads to None: it is instead the fallback if nothing can be found.
+    fn next(&self) -> Self {
+        match self {
+            Self::None => Self::Unit,
+            Self::Unit => Self::GhostStructure,
+            Self::GhostStructure => Self::Structure,
+            Self::Structure => Self::Terrain,
+            Self::Terrain => Self::Unit,
+        }
+    }
+
+    /// Returns the cycle order for the given `start`.
+    fn cycle(&self) -> Vec<Self> {
+        if self == &Self::None {
+            return vec![];
+        }
+
+        let mut cycle = Vec::new();
+        let mut next = self.next();
+        while next != *self {
+            cycle.push(next);
+            next = next.next();
+        }
+
+        // Fallback to self if nothing else is found
+        cycle.push(*self);
+
+        cycle
+    }
+}
+
+impl From<&CurrentSelection> for SelectionVariant {
+    fn from(selection: &CurrentSelection) -> Self {
+        match selection {
+            CurrentSelection::GhostStructure(_) => Self::GhostStructure,
+            CurrentSelection::Structure(_) => Self::Structure,
+            CurrentSelection::Terrain(_) => Self::Terrain,
+            CurrentSelection::Unit(_) => Self::Unit,
+            CurrentSelection::None => Self::None,
         }
     }
 }
@@ -617,6 +650,7 @@ fn set_selection(
                 && !selection_state.multiple
                 && actions.just_pressed(PlayerAction::Select)
             {
+                info!("Cycling selection");
                 current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {
                 current_selection.update_from_cursor_pos(
@@ -685,9 +719,15 @@ pub(super) fn set_tile_interactions(
 
 #[cfg(test)]
 mod tests {
+    use bevy::utils::HashSet;
+
     use super::SelectedTiles;
     use crate::{
-        player_interaction::{cursor::CursorPos, selection::CurrentSelection},
+        enum_iter::IterableEnum,
+        player_interaction::{
+            cursor::CursorPos,
+            selection::{CurrentSelection, SelectionVariant},
+        },
         simulation::geometry::TilePos,
     };
 
@@ -747,5 +787,79 @@ mod tests {
             CurrentSelection::Terrain(SelectedTiles::default()).relevant_tiles(&cursor_pos),
             cursor_pos_selected
         );
+    }
+
+    #[test]
+    fn next_never_returns_none() {
+        for variant in SelectionVariant::variants() {
+            assert!(variant.next() != SelectionVariant::None);
+        }
+    }
+
+    #[test]
+    fn next_returns_all_variants_exactly_once() {
+        let mut seen = HashSet::new();
+        for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
+            assert!(!seen.contains(&variant));
+            seen.insert(variant);
+        }
+        assert_eq!(seen.len(), SelectionVariant::variants().len() - 1);
+    }
+
+    #[test]
+    fn next_cycles_back_to_start() {
+        for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
+            let mut working_variant = variant;
+            for _ in 0..(SelectionVariant::variants().len() - 1) {
+                dbg!(working_variant);
+                working_variant = working_variant.next();
+            }
+
+            assert_eq!(variant, working_variant);
+        }
+    }
+
+    #[test]
+    fn next_never_returns_self() {
+        for variant in SelectionVariant::variants() {
+            assert!(variant.next() != variant);
+        }
+    }
+
+    #[test]
+    fn cycle_end_with_self() {
+        for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
+            let cycle = variant.cycle();
+            assert_eq!(
+                cycle.iter().last().copied().unwrap(),
+                variant,
+                "{variant:?}'s cycle was {cycle:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn cycle_is_right_length() {
+        for variant in SelectionVariant::variants() {
+            let cycle = variant.cycle();
+            if variant == SelectionVariant::None {
+                assert_eq!(cycle.len(), 0);
+            } else {
+                // -1 for None
+                assert_eq!(cycle.len(), SelectionVariant::variants().len() - 1);
+            }
+        }
     }
 }

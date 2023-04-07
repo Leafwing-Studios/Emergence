@@ -7,11 +7,13 @@ use rand::rngs::ThreadRng;
 use rand::thread_rng;
 
 use crate::asset_management::manifest::Id;
+use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
 use crate::signals::{SignalType, Signals};
 use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
+use crate::terrain::terrain_manifest::TerrainManifest;
 
 use super::impatience::ImpatiencePool;
 use super::item_interaction::UnitInventory;
@@ -42,7 +44,7 @@ pub(crate) enum Goal {
     /// Attempting to drop off an object to a structure that actively needs it.
     Deliver(ItemKind),
     /// Attempting to perform work at a structure
-    Work(Id<Structure>),
+    Work(WorkplaceId),
     /// Attempt to feed self
     Eat(ItemKind),
     /// Attempting to destroy a structure
@@ -82,6 +84,7 @@ impl Goal {
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
+        terrain_manifest: &TerrainManifest,
     ) -> String {
         match self {
             Goal::Wander { remaining_actions } => format!(
@@ -93,7 +96,10 @@ impl Goal {
             Goal::Deliver(item_kind) => {
                 format!("Deliver {}", item_manifest.name_of_kind(*item_kind))
             }
-            Goal::Work(structure) => format!("Work at {}", structure_manifest.name(*structure)),
+            Goal::Work(workplace) => format!(
+                "Work at {}",
+                workplace.name(structure_manifest, terrain_manifest)
+            ),
             Goal::Demolish(structure) => {
                 format!("Demolish {}", structure_manifest.name(*structure))
             }

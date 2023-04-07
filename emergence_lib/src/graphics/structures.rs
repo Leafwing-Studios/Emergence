@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::structures::construction::{Ghost, Preview};
+use crate::construction::ghosts::{Ghost, Preview};
 
 /// Adds [`NotShadowCaster`] and [`NotShadowReceiver`] to all ghosts and previews
 pub(super) fn remove_ghostly_shadows(

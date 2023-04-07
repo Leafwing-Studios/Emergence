@@ -5,8 +5,8 @@ use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::StructureManifest;
+use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::Terrain;
-use crate::terrain::SpawnTerrainCommand;
 use crate::units::unit_assets::UnitHandles;
 use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
@@ -152,11 +152,9 @@ pub(crate) fn generate_terrain(
                 * AMPLITUDE_SCALE)
                 .abs();
 
-        commands.add(SpawnTerrainCommand {
-            tile_pos,
-            height: Height::from_world_pos(hex_height),
-            terrain_id,
-        })
+        let height = Height::from_world_pos(hex_height);
+
+        commands.spawn_terrain(tile_pos, height, terrain_id);
     }
 }
 

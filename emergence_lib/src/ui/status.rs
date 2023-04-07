@@ -7,7 +7,8 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::AssetState, crafting::components::CraftingState,
     items::item_manifest::ItemManifest, player_interaction::PlayerAction,
-    structures::structure_manifest::StructureManifest, units::goals::Goal,
+    structures::structure_manifest::StructureManifest, terrain::terrain_manifest::TerrainManifest,
+    units::goals::Goal,
 };
 
 use super::FiraSansFontFamily;
@@ -93,6 +94,7 @@ fn display_status(
     fonts: Res<FiraSansFontFamily>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
+    terrain_manifest: Res<TerrainManifest>,
     mut commands: Commands,
 ) {
     // PERF: immediate mode for now
@@ -147,7 +149,7 @@ fn display_status(
                 .spawn(BillboardTextBundle {
                     transform,
                     text: Text::from_section(
-                        goal.display(&item_manifest, &structure_manifest),
+                        goal.display(&item_manifest, &structure_manifest, &terrain_manifest),
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),

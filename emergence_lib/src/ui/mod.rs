@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetCollectionExt},
-    player_interaction::terraform::TerraformingChoice,
+    construction::terraform::TerraformingTool,
     structures::structure_manifest::Structure,
     ui::{
         overlay::OverlayMenuPlugin,
@@ -50,7 +50,7 @@ impl Plugin for UiPlugin {
         })
         .add_asset_collection::<UiElements>()
         .add_asset_collection::<Icons<Id<Structure>>>()
-        .add_asset_collection::<Icons<TerraformingChoice>>()
+        .add_asset_collection::<Icons<TerraformingTool>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)

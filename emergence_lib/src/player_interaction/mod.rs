@@ -13,8 +13,6 @@ pub(crate) mod clipboard;
 pub(crate) mod cursor;
 pub(crate) mod intent;
 pub(crate) mod selection;
-pub(crate) mod terraform;
-pub(crate) mod zoning;
 
 /// All of the code needed for users to interact with the simulation.
 pub struct InteractionPlugin;
@@ -29,9 +27,7 @@ impl Plugin for InteractionPlugin {
             .add_plugin(cursor::CursorPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(selection::SelectionPlugin)
-            .add_plugin(terraform::TerraformingPlugin)
-            .add_plugin(clipboard::ClipboardPlugin)
-            .add_plugin(zoning::ZoningPlugin);
+            .add_plugin(clipboard::ClipboardPlugin);
 
         #[cfg(feature = "debug_tools")]
         app.add_plugin(debug_tools::DebugToolsPlugin);
@@ -53,8 +49,6 @@ pub(crate) enum InteractionSystem {
     ReplenishIntent,
     /// Apply zoning to tiles
     ApplyZoning,
-    /// Apply terraforming to tiles
-    ApplyTerraforming,
     /// Use intent-spending abilities
     UseAbilities,
     /// Spawn and despawn ghosts
@@ -96,11 +90,11 @@ pub(crate) enum PlayerAction {
     Copy,
     /// Sets the zoning of all currently selected tiles to the currently selected structure.
     ///
-    /// If no structure is selected to build, zoning will be set to [`Zoning::None`](zoning::Zoning::None).
+    /// If no structure is selected to build, zoning will be set to [`Zoning::None`](crate::construction::zoning::Zoning::None).
     Paste,
-    /// Sets the zoning of all currently selected tiles to [`Zoning::None`](zoning::Zoning::None).
+    /// Sets the zoning of all currently selected tiles to [`Zoning::None`](crate::construction::zoning::Zoning::None).
     ClearZoning,
-    /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](zoning::Zoning::KeepClear).
+    /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](crate::construction::zoning::Zoning::KeepClear).
     KeepClear,
     /// Rotates the contents of the clipboard counterclockwise.
     RotateClipboardLeft,

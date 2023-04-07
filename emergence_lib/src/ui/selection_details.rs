@@ -19,10 +19,12 @@ use crate::{
 };
 
 use self::{
-    ghost_details::{GhostDetails, GhostDetailsQuery},
+    ghost_structure_details::{GhostStructureDetails, GhostStructureDetailsQuery},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
     structure_details::{CraftingDetails, StructureDetails, StructureDetailsQuery},
-    terrain_details::{TerrainDetails, TerrainDetailsQuery},
+    terrain_details::{
+        GhostTerrainDetailsQuery, TerraformingDetails, TerrainDetails, TerrainDetailsQuery,
+    },
     unit_details::{UnitDetails, UnitDetailsQuery},
 };
 
@@ -51,9 +53,9 @@ impl Plugin for SelectionDetailsPlugin {
 #[derive(Component)]
 struct SelectionPanel;
 
-/// The UI node that stores all ghost details.
+/// The UI node that stores all ghost structure details.
 #[derive(Component, Default)]
-struct GhostDetailsMarker;
+struct GhostStructureDetailsMarker;
 
 /// The UI node that stores all structure details.
 #[derive(Component, Default)]
@@ -98,7 +100,8 @@ fn populate_selection_panel(
         ))
         .id();
 
-    let ghost_details = populate_details::<GhostDetailsMarker>(&mut commands, &key_text_style);
+    let ghost_structure_details =
+        populate_details::<GhostStructureDetailsMarker>(&mut commands, &key_text_style);
     let structure_details =
         populate_details::<StructureDetailsMarker>(&mut commands, &key_text_style);
     let terrain_details = populate_details::<TerrainDetailsMarker>(&mut commands, &key_text_style);
@@ -107,7 +110,7 @@ fn populate_selection_panel(
     commands.entity(right_panel).add_child(selection);
     commands
         .entity(selection)
-        .add_child(ghost_details)
+        .add_child(ghost_structure_details)
         .add_child(structure_details)
         .add_child(terrain_details)
         .add_child(unit_details);
@@ -132,10 +135,10 @@ fn change_camera_mode(
 fn update_selection_details(
     selection_details: Res<SelectionDetails>,
     mut selection_panel_query: Query<&mut Visibility, With<SelectionPanel>>,
-    mut ghost_details_query: Query<
+    mut ghost_structures_details_query: Query<
         (&mut Style, &mut Text),
         (
-            With<GhostDetailsMarker>,
+            With<GhostStructureDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<TerrainDetailsMarker>,
             Without<UnitDetailsMarker>,
@@ -145,7 +148,7 @@ fn update_selection_details(
         (&mut Style, &mut Text),
         (
             With<StructureDetailsMarker>,
-            Without<GhostDetailsMarker>,
+            Without<GhostStructureDetailsMarker>,
             Without<TerrainDetailsMarker>,
             Without<UnitDetailsMarker>,
         ),
@@ -154,7 +157,7 @@ fn update_selection_details(
         (&mut Style, &mut Text),
         (
             With<UnitDetailsMarker>,
-            Without<GhostDetailsMarker>,
+            Without<GhostStructureDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<TerrainDetailsMarker>,
         ),
@@ -163,7 +166,7 @@ fn update_selection_details(
         (&mut Style, &mut Text),
         (
             With<TerrainDetailsMarker>,
-            Without<GhostDetailsMarker>,
+            Without<GhostStructureDetailsMarker>,
             Without<StructureDetailsMarker>,
             Without<UnitDetailsMarker>,
         ),
@@ -175,36 +178,37 @@ fn update_selection_details(
     item_manifest: Res<ItemManifest>,
 ) {
     let mut parent_visibility = selection_panel_query.single_mut();
-    let (mut ghost_style, mut ghost_text) = ghost_details_query.single_mut();
+    let (mut ghost_structure_style, mut ghost_structure_text) =
+        ghost_structures_details_query.single_mut();
     let (mut structure_style, mut structure_text) = structure_details_query.single_mut();
     let (mut unit_style, mut unit_text) = unit_details_query.single_mut();
     let (mut terrain_style, mut terrain_text) = terrain_details_query.single_mut();
 
     match *selection_details {
-        SelectionDetails::Ghost(_) => {
+        SelectionDetails::GhostStructure(_) => {
             *parent_visibility = Visibility::Visible;
-            ghost_style.display = Display::Flex;
+            ghost_structure_style.display = Display::Flex;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Structure(_) => {
             *parent_visibility = Visibility::Visible;
-            ghost_style.display = Display::None;
+            ghost_structure_style.display = Display::None;
             structure_style.display = Display::Flex;
             terrain_style.display = Display::None;
             unit_style.display = Display::None;
         }
         SelectionDetails::Terrain(_) => {
             *parent_visibility = Visibility::Visible;
-            ghost_style.display = Display::None;
+            ghost_structure_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::Flex;
             unit_style.display = Display::None;
         }
         SelectionDetails::Unit(_) => {
             *parent_visibility = Visibility::Visible;
-            ghost_style.display = Display::None;
+            ghost_structure_style.display = Display::None;
             structure_style.display = Display::None;
             terrain_style.display = Display::None;
             unit_style.display = Display::Flex;
@@ -216,8 +220,8 @@ fn update_selection_details(
     }
 
     match &*selection_details {
-        SelectionDetails::Ghost(details) => {
-            ghost_text.sections[0].value =
+        SelectionDetails::GhostStructure(details) => {
+            ghost_structure_text.sections[0].value =
                 details.display(&item_manifest, &structure_manifest, &recipe_manifest);
         }
         SelectionDetails::Structure(details) => {
@@ -233,8 +237,12 @@ fn update_selection_details(
             );
         }
         SelectionDetails::Unit(details) => {
-            unit_text.sections[0].value =
-                details.display(&unit_manifest, &item_manifest, &structure_manifest);
+            unit_text.sections[0].value = details.display(
+                &unit_manifest,
+                &item_manifest,
+                &structure_manifest,
+                &terrain_manifest,
+            );
         }
         SelectionDetails::None => (),
     };
@@ -266,8 +274,8 @@ fn populate_details<T: Component + Default>(
 /// Detailed info about the selected organism.
 #[derive(Debug, Resource, Default)]
 pub(crate) enum SelectionDetails {
-    /// A ghost is selected
-    Ghost(GhostDetails),
+    /// A ghost of a structure is selected
+    GhostStructure(GhostStructureDetails),
     /// A structure is selected
     Structure(StructureDetails),
     /// A tile is selected.
@@ -283,7 +291,8 @@ pub(crate) enum SelectionDetails {
 fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
-    ghost_query: Query<GhostDetailsQuery>,
+    ghost_structure_query: Query<GhostStructureDetailsQuery>,
+    ghost_terrain_query: Query<GhostTerrainDetailsQuery>,
     organism_query: Query<OrganismDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
@@ -295,10 +304,10 @@ fn get_details(
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
-        CurrentSelection::Ghost(ghost_entity) => {
-            let ghost_query_item = ghost_query.get(*ghost_entity)?;
-            SelectionDetails::Ghost(GhostDetails {
-                entity: *ghost_entity,
+        CurrentSelection::GhostStructure(ghost_structure_entity) => {
+            let ghost_query_item = ghost_structure_query.get(*ghost_structure_entity)?;
+            SelectionDetails::GhostStructure(GhostStructureDetails {
+                entity: *ghost_structure_entity,
                 tile_pos: *ghost_query_item.tile_pos,
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
@@ -359,6 +368,19 @@ fn get_details(
                 let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
+                let maybe_terraforming_details = if let Some(ghost_terrain_entity) =
+                    map_geometry.get_ghost_terrain(*tile_pos)
+                {
+                    let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
+                    Some(TerraformingDetails {
+                        terraforming_action: *ghost_terrain_query_item.terraforming_action,
+                        input_inventory: ghost_terrain_query_item.input_inventory.clone(),
+                        crafting_state: ghost_terrain_query_item.crafting_state.clone(),
+                    })
+                } else {
+                    None
+                };
+
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
@@ -366,6 +388,7 @@ fn get_details(
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
                     zoning: terrain_query_item.zoning.clone(),
+                    maybe_terraforming_details,
                 })
             } else {
                 SelectionDetails::None
@@ -416,8 +439,8 @@ pub(crate) fn clear_details_on_error(
     }
 }
 
-/// Details for ghosts
-mod ghost_details {
+/// Details for ghost structures
+mod ghost_structure_details {
     use bevy::ecs::{prelude::*, query::WorldQuery};
 
     use crate::{
@@ -432,9 +455,9 @@ mod ghost_details {
         structures::structure_manifest::{Structure, StructureManifest},
     };
 
-    /// Data needed to populate [`GhostDetails`].
+    /// Data needed to populate [`GhostStructureDetails`].
     #[derive(WorldQuery)]
-    pub(super) struct GhostDetailsQuery {
+    pub(super) struct GhostStructureDetailsQuery {
         /// The root entity
         pub(super) entity: Entity,
         /// The type of structure
@@ -453,7 +476,7 @@ mod ghost_details {
 
     /// Detailed info about a given ghost.
     #[derive(Debug)]
-    pub(crate) struct GhostDetails {
+    pub(crate) struct GhostStructureDetails {
         /// The root entity
         pub(super) entity: Entity,
         /// The tile position of this structure
@@ -468,7 +491,7 @@ mod ghost_details {
         pub(super) active_recipe: ActiveRecipe,
     }
 
-    impl GhostDetails {
+    impl GhostStructureDetails {
         /// The pretty formatting for this type
         pub(crate) fn display(
             &self,
@@ -555,6 +578,7 @@ mod structure_details {
     use super::organism_details::OrganismDetails;
     use crate::{
         asset_management::manifest::Id,
+        construction::demolition::MarkedForDemolition,
         crafting::{
             components::{
                 ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
@@ -564,10 +588,7 @@ mod structure_details {
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
         simulation::geometry::TilePos,
-        structures::{
-            construction::MarkedForDemolition,
-            structure_manifest::{Structure, StructureManifest},
-        },
+        structures::structure_manifest::{Structure, StructureManifest},
         units::unit_manifest::UnitManifest,
     };
 
@@ -701,8 +722,9 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::Id,
+        construction::{terraform::TerraformingAction, zoning::Zoning},
+        crafting::components::{CraftingState, InputInventory},
         items::item_manifest::ItemManifest,
-        player_interaction::zoning::Zoning,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
@@ -723,6 +745,47 @@ mod terrain_details {
         pub(super) zoning: &'static Zoning,
     }
 
+    /// Data needed to populate [`TerraformingDetails`].
+    #[derive(WorldQuery)]
+    pub(super) struct GhostTerrainDetailsQuery {
+        /// The terraforming action being performed
+        pub(super) terraforming_action: &'static TerraformingAction,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: &'static InputInventory,
+        /// The ghost's progress through construction
+        pub(crate) crafting_state: &'static CraftingState,
+    }
+
+    /// Detailed info about a given terraforming ghost.
+    #[derive(Debug)]
+    pub(crate) struct TerraformingDetails {
+        /// The terraforming action being performed
+        pub(super) terraforming_action: TerraformingAction,
+        /// The inputs that must be added to construct this ghost
+        pub(super) input_inventory: InputInventory,
+        /// The ghost's progress through construction
+        pub(crate) crafting_state: CraftingState,
+    }
+
+    impl TerraformingDetails {
+        /// The pretty formatting for this type
+        pub(crate) fn display(
+            &self,
+            item_manifest: &ItemManifest,
+            terrain_manifest: &TerrainManifest,
+        ) -> String {
+            let terraforming_action = self.terraforming_action.display(terrain_manifest);
+            let crafting_state = &self.crafting_state;
+            let construction_materials = self.input_inventory.display(item_manifest);
+
+            format!(
+                "Terraforming: {terraforming_action}
+Construction materials: {construction_materials}
+{crafting_state}"
+            )
+        }
+    }
+
     /// Detailed info about a given piece of terrain.
     #[derive(Debug)]
     pub(crate) struct TerrainDetails {
@@ -738,6 +801,8 @@ mod terrain_details {
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
+        /// The details about the terraforming process, if any
+        pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
 
     impl TerrainDetails {
@@ -753,20 +818,29 @@ mod terrain_details {
             let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
-            let signals = self
-                .signals
-                .display(item_manifest, structure_manifest, unit_manifest);
+            let signals = self.signals.display(
+                item_manifest,
+                structure_manifest,
+                terrain_manifest,
+                unit_manifest,
+            );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
-            format!(
+            let base_string = format!(
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
-Zoning: {zoning}
-Signals:
-{signals}"
-            )
+Zoning: {zoning}"
+            );
+
+            if let Some(terraforming_details) = &self.maybe_terraforming_details {
+                let terraforming_details =
+                    terraforming_details.display(item_manifest, terrain_manifest);
+                format!("{base_string}\n\n{terraforming_details}\n\nSignals:\n{signals}")
+            } else {
+                format!("{base_string}\n\nSignals:\n{signals}")
+            }
         }
     }
 }
@@ -780,6 +854,7 @@ mod unit_details {
         items::item_manifest::ItemManifest,
         simulation::geometry::TilePos,
         structures::structure_manifest::StructureManifest,
+        terrain::terrain_manifest::TerrainManifest,
         units::{
             actions::CurrentAction,
             goals::Goal,
@@ -841,13 +916,16 @@ mod unit_details {
             unit_manifest: &UnitManifest,
             item_manifest: &ItemManifest,
             structure_manifest: &StructureManifest,
+            terrain_manifest: &TerrainManifest,
         ) -> String {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
             let diet = self.diet.display(item_manifest);
             let tile_pos = &self.tile_pos;
             let held_item = self.held_item.display(item_manifest);
-            let goal = self.goal.display(item_manifest, structure_manifest);
+            let goal = self
+                .goal
+                .display(item_manifest, structure_manifest, terrain_manifest);
             let action = &self.action.display(item_manifest);
             let impatience_pool = &self.impatience_pool;
             let organism_details = self

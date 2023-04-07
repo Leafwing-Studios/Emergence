@@ -1,5 +1,6 @@
 use bevy::utils::{HashMap, HashSet};
 use emergence_lib::{
+    construction::RawConstructionStrategy,
     crafting::components::RawActiveRecipe,
     crafting::{
         item_tags::ItemTag,
@@ -13,10 +14,8 @@ use emergence_lib::{
     },
     simulation::light::Illuminance,
     structures::{
-        construction::Footprint,
-        structure_manifest::{
-            RawConstructionStrategy, RawStructureData, RawStructureKind, RawStructureManifest,
-        },
+        structure_manifest::{RawStructureData, RawStructureKind, RawStructureManifest},
+        Footprint,
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{

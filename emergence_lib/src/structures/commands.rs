@@ -9,6 +9,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
+    construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
     crafting::{
         components::{CraftingBundle, StorageInventory},
         recipe::RecipeManifest,
@@ -23,7 +24,6 @@ use crate::{
 };
 
 use super::{
-    construction::{GhostBundle, GhostKind, PreviewBundle},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     StructureBundle,
@@ -55,17 +55,17 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a ghost with data defined by `data` at `tile_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
 
     /// Despawns any ghost at the provided `tile_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_ghost(&mut self, tile_pos: TilePos);
+    fn despawn_ghost_structure(&mut self, tile_pos: TilePos);
 
     /// Spawns a preview with data defined by `item` at `tile_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
@@ -97,16 +97,16 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(DespawnStructureCommand { tile_pos });
     }
 
-    fn spawn_ghost(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnGhostCommand { tile_pos, data });
+    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+        self.add(SpawnStructureGhostCommand { tile_pos, data });
     }
 
-    fn despawn_ghost(&mut self, tile_pos: TilePos) {
+    fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
         self.add(DespawnGhostCommand { tile_pos });
     }
 
-    fn spawn_preview(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnPreviewCommand { tile_pos, data });
+    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+        self.add(SpawnStructurePreviewCommand { tile_pos, data });
     }
 }
 
@@ -255,14 +255,14 @@ impl Command for DespawnStructureCommand {
 }
 
 /// A [`Command`] used to spawn a ghost via [`StructureCommandsExt`].
-struct SpawnGhostCommand {
+struct SpawnStructureGhostCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
 
-impl Command for SpawnGhostCommand {
+impl Command for SpawnStructureGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
@@ -279,14 +279,14 @@ impl Command for SpawnGhostCommand {
         )> = SystemState::new(world);
 
         let (terrain_query, geometry, manifest) = system_state.get(world);
-        let structure_variety = manifest.get(structure_id).clone();
         let construction_data = manifest.construction_data(structure_id);
         let allowed_terrain_types = &construction_data.allowed_terrain_types;
+        let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            structure_variety.footprint.rotated(self.data.facing),
+            construction_footprint.rotated(self.data.facing),
             &terrain_query,
             allowed_terrain_types,
         ) {
@@ -295,7 +295,7 @@ impl Command for SpawnGhostCommand {
 
         // Remove any existing ghosts
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_existing_ghost = geometry.remove_ghost(self.tile_pos);
+        let maybe_existing_ghost = geometry.remove_ghost_structure(self.tile_pos);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
             world.entity_mut(existing_ghost).despawn_recursive();
@@ -304,6 +304,7 @@ impl Command for SpawnGhostCommand {
         let structure_manifest = world.resource::<StructureManifest>();
 
         // Spawn a ghost
+        let ghost_handles = world.resource::<GhostHandles>();
         let structure_handles = world.resource::<StructureHandles>();
 
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
@@ -312,16 +313,13 @@ impl Command for SpawnGhostCommand {
             .get(&structure_id)
             .unwrap()
             .clone_weak();
-        let ghostly_handle = structure_handles
-            .ghost_materials
-            .get(&GhostKind::Ghost)
-            .unwrap();
+        let ghostly_handle = ghost_handles.get_material(GhostKind::Ghost);
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
 
         let ghost_entity = world
-            .spawn(GhostBundle::new(
+            .spawn(GhostStructureBundle::new(
                 self.tile_pos,
                 self.data,
                 structure_manifest,
@@ -338,7 +336,7 @@ impl Command for SpawnGhostCommand {
             let structure_variety = structure_manifest.get(structure_id);
             let footprint = &structure_variety.footprint;
 
-            map_geometry.add_ghost(self.tile_pos, footprint, ghost_entity);
+            map_geometry.add_ghost_structure(self.tile_pos, footprint, ghost_entity);
         });
     }
 }
@@ -352,7 +350,7 @@ struct DespawnGhostCommand {
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost(self.tile_pos);
+        let maybe_entity = geometry.remove_ghost_structure(self.tile_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -366,14 +364,14 @@ impl Command for DespawnGhostCommand {
 }
 
 /// A [`Command`] used to spawn a preview via [`StructureCommandsExt`].
-struct SpawnPreviewCommand {
+struct SpawnStructurePreviewCommand {
     /// The tile position at which to spawn the structure.
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
 
-impl Command for SpawnPreviewCommand {
+impl Command for SpawnStructurePreviewCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
@@ -419,11 +417,13 @@ impl Command for SpawnPreviewCommand {
             false => GhostKind::Preview,
         };
 
-        let preview_handle = structure_handles.ghost_materials.get(&ghost_kind).unwrap();
+        let ghost_handles = world.resource::<GhostHandles>();
+
+        let preview_handle = ghost_handles.get_material(ghost_kind);
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview
-        world.spawn(PreviewBundle::new(
+        world.spawn(StructurePreviewBundle::new(
             self.tile_pos,
             self.data,
             scene_handle,

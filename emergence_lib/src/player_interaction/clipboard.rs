@@ -6,15 +6,13 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::manifest::Id,
+    construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::components::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::{construction::Preview, structure_manifest::Structure},
+    structures::structure_manifest::Structure,
 };
 
-use super::{
-    cursor::CursorPos, selection::CurrentSelection, terraform::TerraformingChoice,
-    InteractionSystem, PlayerAction,
-};
+use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;
@@ -43,7 +41,7 @@ impl Plugin for ClipboardPlugin {
 #[derive(Default, Resource, Debug)]
 pub(crate) enum Clipboard {
     /// The clipboard is set to terraform terrain.
-    Terraform(TerraformingChoice),
+    Terraform(TerraformingTool),
     /// The clipboard contains a structure.
     Structures(HashMap<TilePos, ClipboardData>),
     /// The clipboard is empty.
@@ -111,7 +109,7 @@ impl Clipboard {
     /// Apply a tile-position shift to the items on the clipboard.
     ///
     /// Used to place items in the correct location relative to the cursor.
-    pub(super) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardData)> {
+    pub(crate) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardData)> {
         if let Clipboard::Structures(map) = self {
             map.iter()
                 .map(|(k, v)| ((*k + origin), v.clone()))
@@ -196,7 +194,7 @@ fn copy_selection(
         let mut map = HashMap::new();
 
         match &*current_selection {
-            CurrentSelection::Structure(entity) | CurrentSelection::Ghost(entity) => {
+            CurrentSelection::Structure(entity) | CurrentSelection::GhostStructure(entity) => {
                 let query_item = structure_query.get(*entity).unwrap();
                 let tile_pos = query_item.tile_pos;
                 let clipboard_data = query_item.into();

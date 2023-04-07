@@ -6,10 +6,8 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    asset_management::manifest::Id,
-    simulation::geometry::TilePos,
-    structures::{construction::Ghost, structure_manifest::Structure},
-    terrain::terrain_manifest::Terrain,
+    asset_management::manifest::Id, construction::ghosts::Ghost, simulation::geometry::TilePos,
+    structures::structure_manifest::Structure, terrain::terrain_manifest::Terrain,
     units::unit_manifest::Unit,
 };
 
@@ -20,9 +18,9 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Id<Structure>>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Id<Unit>>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Ghost>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Structure>::default())
+            .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
+            .add_plugin(DefaultRaycastingPlugin::<(Ghost, Structure)>::default())
             .add_system(
                 update_raycast_with_cursor
                     .before(RaycastSystem::BuildRays::<Terrain>)
@@ -50,8 +48,8 @@ pub(crate) struct CursorPos {
     hovered_unit: Option<Entity>,
     /// The first structure hit by a cursor raycast, if any.
     hovered_structure: Option<Entity>,
-    /// The first ghost hit by a cursor raycast, if any.
-    hovered_ghost: Option<Entity>,
+    /// The first ghost structure hit by a cursor raycast, if any.
+    hovered_ghost_structure: Option<Entity>,
 }
 
 impl CursorPos {
@@ -86,9 +84,9 @@ impl CursorPos {
         self.hovered_structure
     }
 
-    /// The hovered ghost, if available.
-    pub(crate) fn maybe_ghost(&self) -> Option<Entity> {
-        self.hovered_ghost
+    /// The hovered ghost structure, if available.
+    pub(crate) fn maybe_ghost_structure(&self) -> Option<Entity> {
+        self.hovered_ghost_structure
     }
 }
 
@@ -101,9 +99,9 @@ fn update_raycast_with_cursor(
     mut query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Id<Structure>>,
-            &mut RaycastSource<Id<Unit>>,
-            &mut RaycastSource<Ghost>,
+            &mut RaycastSource<Structure>,
+            &mut RaycastSource<Unit>,
+            &mut RaycastSource<(Ghost, Structure)>,
         ),
         With<Camera>,
     >,
@@ -130,9 +128,9 @@ fn update_cursor_pos(
     camera_query: Query<
         (
             &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Id<Structure>>,
-            &mut RaycastSource<Id<Unit>>,
-            &mut RaycastSource<Ghost>,
+            &mut RaycastSource<Structure>,
+            &mut RaycastSource<Unit>,
+            &mut RaycastSource<(Ghost, Structure)>,
         ),
         With<Camera>,
     >,
@@ -142,7 +140,8 @@ fn update_cursor_pos(
     ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let (terrain_raycast, structure_raycast, unit_raycast, ghost_raycast) = camera_query.single();
+    let (terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast) =
+        camera_query.single();
 
     cursor_pos.tile_pos = if let Some((terrain_entity, _intersection_data)) =
         terrain_raycast.get_nearest_intersection()
@@ -167,8 +166,8 @@ fn update_cursor_pos(
             None
         };
 
-    cursor_pos.hovered_ghost = if let Some((ghost_entity, _intersection_data)) =
-        ghost_raycast.get_nearest_intersection()
+    cursor_pos.hovered_ghost_structure = if let Some((ghost_entity, _intersection_data)) =
+        ghost_structure_raycast.get_nearest_intersection()
     {
         ghost_query.get(ghost_entity).ok()
     } else {

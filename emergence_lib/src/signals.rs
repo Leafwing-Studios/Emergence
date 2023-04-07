@@ -4,9 +4,11 @@
 //! we can scale path-finding and decisionmaking in a clear and comprehensible way.
 
 use crate as emergence_lib;
+use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
+use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
@@ -284,6 +286,7 @@ impl LocalSignals {
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
+        terrain_manifest: &TerrainManifest,
         unit_manifest: &UnitManifest,
     ) -> String {
         let mut string = String::default();
@@ -293,7 +296,12 @@ impl LocalSignals {
 
             let substring = format!(
                 "{}: {signal_strength:.3}\n",
-                signal_type.display(item_manifest, structure_manifest, unit_manifest)
+                signal_type.display(
+                    item_manifest,
+                    structure_manifest,
+                    terrain_manifest,
+                    unit_manifest
+                )
             );
 
             string += &substring;
@@ -346,7 +354,7 @@ pub enum SignalType {
     /// Bring me an item of this type.
     Pull(ItemKind),
     /// Perform work at this type of structure.
-    Work(Id<Structure>),
+    Work(WorkplaceId),
     /// Destroy a structure of this type
     Demolish(Id<Structure>),
     /// Has an item of this type, in case you were looking.
@@ -405,6 +413,7 @@ impl SignalType {
         &self,
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
+        terrain_manifest: &TerrainManifest,
         unit_manifest: &UnitManifest,
     ) -> String {
         match self {
@@ -414,8 +423,11 @@ impl SignalType {
             SignalType::Pull(item_kind) => {
                 format!("Pull({})", item_manifest.name_of_kind(*item_kind))
             }
-            SignalType::Work(structure_id) => {
-                format!("Work({})", structure_manifest.name(*structure_id))
+            SignalType::Work(workplace_id) => {
+                format!(
+                    "Work({})",
+                    workplace_id.name(structure_manifest, terrain_manifest)
+                )
             }
             SignalType::Demolish(structure_id) => {
                 format!("Demolish({})", structure_manifest.name(*structure_id))
@@ -681,7 +693,7 @@ mod tests {
         assert_eq!(
             signals.upstream(
                 TilePos::ZERO,
-                &Goal::Work(test_structure()),
+                &Goal::Work(WorkplaceId::structure(test_structure())),
                 &item_manifest,
                 &map_geometry
             ),

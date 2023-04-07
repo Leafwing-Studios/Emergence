@@ -10,11 +10,7 @@
 				"Direct": {
 					"work": 5,
 					"materials": {},
-					"allowed_terrain_types": [
-						"rocky",
-						"loam",
-						"muddy"
-					]
+					"allowed_terrain_types": []
 				}
 			},
 			"max_workers": 6
@@ -31,11 +27,7 @@
 					"materials": {
 						"leuco_chunk": 1
 					},
-					"allowed_terrain_types": [
-						"rocky",
-						"loam",
-						"muddy"
-					]
+					"allowed_terrain_types": []
 				}
 			},
 			"max_workers": 6
@@ -185,11 +177,7 @@
 				"Direct": {
 					"work": 5.0,
 					"materials": {},
-					"allowed_terrain_types": [
-						"loam",
-						"muddy",
-						"rocky"
-					]
+					"allowed_terrain_types": []
 				}
 			},
 			"max_workers": 3,

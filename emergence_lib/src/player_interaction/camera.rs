@@ -12,10 +12,9 @@ use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::asset_management::manifest::Id;
+use crate::construction::ghosts::Ghost;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::geometry::TilePos;
-use crate::structures::construction::Ghost;
 use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
@@ -80,9 +79,9 @@ fn setup_camera(mut commands: Commands) {
         .insert(settings)
         .insert(focus)
         .insert(RaycastSource::<Terrain>::new())
-        .insert(RaycastSource::<Id<Structure>>::new())
-        .insert(RaycastSource::<Id<Unit>>::new())
-        .insert(RaycastSource::<Ghost>::new());
+        .insert(RaycastSource::<Structure>::new())
+        .insert(RaycastSource::<Unit>::new())
+        .insert(RaycastSource::<(Ghost, Structure)>::new());
 }
 
 /// The position that the camera is looking at.
@@ -327,7 +326,7 @@ fn set_camera_focus(
         || settings.camera_mode == CameraMode::FollowUnit
     {
         let tile_to_snap_to = match &*selection {
-            CurrentSelection::Ghost(entity)
+            CurrentSelection::GhostStructure(entity)
             | CurrentSelection::Unit(entity)
             | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
             CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),

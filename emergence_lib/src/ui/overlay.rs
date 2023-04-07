@@ -7,6 +7,7 @@ use crate::{
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
     structures::structure_manifest::StructureManifest,
+    terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
 };
 use bevy::prelude::*;
@@ -112,6 +113,7 @@ fn update_signal_type_display(
     tile_overlay: Res<TileOverlay>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
+    terrain_manifest: Res<TerrainManifest>,
     unit_manifest: Res<UnitManifest>,
 ) {
     let mut text = text_query.get_mut(overlay_menu.signal_type_entity).unwrap();
@@ -135,7 +137,12 @@ fn update_signal_type_display(
             let signal_kind: SignalKind = (*signal_type).into();
 
             text.sections = vec![TextSection {
-                value: signal_type.display(&item_manifest, &structure_manifest, &unit_manifest),
+                value: signal_type.display(
+                    &item_manifest,
+                    &structure_manifest,
+                    &terrain_manifest,
+                    &unit_manifest,
+                ),
                 style: TextStyle {
                     font: fonts.regular.clone_weak(),
                     font_size,
