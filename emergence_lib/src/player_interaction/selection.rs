@@ -371,7 +371,106 @@ impl CurrentSelection {
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
-        todo!()
+        let start = SelectionVariant::from(&*self);
+        let cycle = start.cycle();
+
+        for variant in cycle {
+            if let Some(selection) = self.get(variant, selection_state, cursor_pos, map_geometry) {
+                *self = selection;
+                return;
+            }
+        }
+
+        *self = CurrentSelection::None;
+    }
+
+    /// Try to select the next object in the selection chain.
+    ///
+    /// If there is no next object, the selection is cleared.
+    fn get(
+        &self,
+        selection_variant: SelectionVariant,
+        selection_state: &SelectionState,
+        cursor_pos: &CursorPos,
+        map_geometry: &MapGeometry,
+    ) -> Option<Self> {
+        match selection_variant {
+            SelectionVariant::Unit => cursor_pos
+                .maybe_unit()
+                .map(|unit_entity| CurrentSelection::Unit(unit_entity)),
+            SelectionVariant::GhostTerrain => cursor_pos
+                .maybe_ghost_terrain()
+                .map(|ghost_terrain_entity| CurrentSelection::GhostTerrain(ghost_terrain_entity)),
+            SelectionVariant::GhostStructure => {
+                cursor_pos
+                    .maybe_ghost_structure()
+                    .map(|ghost_structure_entity| {
+                        CurrentSelection::GhostStructure(ghost_structure_entity)
+                    })
+            }
+            SelectionVariant::Structure => cursor_pos
+                .maybe_structure()
+                .map(|structure_entity| CurrentSelection::Structure(structure_entity)),
+            SelectionVariant::Terrain => {
+                let hovered_tile = cursor_pos.maybe_tile_pos()?;
+                let mut selected_tiles = SelectedTiles::default();
+                selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
+                Some(CurrentSelection::Terrain(selected_tiles))
+            }
+            SelectionVariant::None => None,
+        }
+    }
+}
+
+/// The dataless enum that tracks the variety of [`CurrentSelection`].
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum SelectionVariant {
+    Unit,
+    GhostTerrain,
+    GhostStructure,
+    Structure,
+    Terrain,
+    None,
+}
+
+impl SelectionVariant {
+    /// Get the next selection mode in the chain.
+    ///
+    /// The order is units -> ghost structure -> ghost terrain -> structures -> terrain -> units.
+    /// No path leads to None: it is instead the fallback if nothing can be found.
+    fn next(&self) -> Self {
+        match self {
+            Self::None => Self::Unit,
+            Self::Unit => Self::GhostTerrain,
+            Self::GhostTerrain => Self::GhostStructure,
+            Self::GhostStructure => Self::Structure,
+            Self::Structure => Self::Terrain,
+            Self::Terrain => Self::Unit,
+        }
+    }
+
+    /// Returns the cycle order for the given `start`.
+    fn cycle(&self) -> Vec<Self> {
+        let mut cycle = vec![*self];
+        let mut next = self.next();
+        while next != *self {
+            cycle.push(next);
+            next = next.next();
+        }
+        cycle
+    }
+}
+
+impl From<&CurrentSelection> for SelectionVariant {
+    fn from(selection: &CurrentSelection) -> Self {
+        match selection {
+            CurrentSelection::GhostTerrain(_) => Self::GhostTerrain,
+            CurrentSelection::GhostStructure(_) => Self::GhostStructure,
+            CurrentSelection::Structure(_) => Self::Structure,
+            CurrentSelection::Terrain(_) => Self::Terrain,
+            CurrentSelection::Unit(_) => Self::Unit,
+            CurrentSelection::None => Self::None,
+        }
     }
 }
 
