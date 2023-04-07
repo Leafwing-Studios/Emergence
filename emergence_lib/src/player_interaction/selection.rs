@@ -374,8 +374,12 @@ impl CurrentSelection {
         let start = SelectionVariant::from(&*self);
         let cycle = start.cycle();
 
+        info!("Starting with {:?}", start);
+
         for variant in cycle {
+            info!("Trying {:?}", variant);
             if let Some(selection) = self.get(variant, selection_state, cursor_pos, map_geometry) {
+                info!("Found {:?}", selection);
                 *self = selection;
                 return;
             }
@@ -455,12 +459,16 @@ impl SelectionVariant {
             return vec![];
         }
 
-        let mut cycle = vec![*self];
+        let mut cycle = Vec::new();
         let mut next = self.next();
         while next != *self {
             cycle.push(next);
             next = next.next();
         }
+
+        // Fallback to self if nothing else is found
+        cycle.push(self.clone());
+
         cycle
     }
 }
@@ -643,6 +651,7 @@ fn set_selection(
                 && !selection_state.multiple
                 && actions.just_pressed(PlayerAction::Select)
             {
+                info!("Cycling selection");
                 current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {
                 current_selection.update_from_cursor_pos(
@@ -827,12 +836,27 @@ mod tests {
     }
 
     #[test]
+    fn cycle_end_with_self() {
+        for variant in SelectionVariant::variants() {
+            let cycle = variant.cycle();
+            assert_eq!(
+                cycle.iter().last().copied().unwrap(),
+                variant,
+                "{:?}'s cycle was {:?}",
+                variant,
+                cycle
+            );
+        }
+    }
+
+    #[test]
     fn cycle_is_right_length() {
         for variant in SelectionVariant::variants() {
             let cycle = variant.cycle();
             if variant == SelectionVariant::None {
                 assert_eq!(cycle.len(), 0);
             } else {
+                // -1 for None
                 assert_eq!(cycle.len(), SelectionVariant::variants().len() - 1);
             }
         }
