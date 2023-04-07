@@ -31,6 +31,7 @@ use crate::{
 use super::terraform::TerraformingAction;
 use super::ConstructionStrategy;
 
+/// Systems and resources for working with ghosts.
 pub struct GhostPlugin;
 
 impl Plugin for GhostPlugin {
@@ -47,14 +48,17 @@ impl Plugin for GhostPlugin {
     }
 }
 
+/// Stores the assets needed to render ghosts.
 #[derive(Debug, Resource)]
 pub(crate) struct GhostHandles {
-    map: HashMap<GhostKind, Handle<StandardMaterial>>,
+    /// The materials used to render ghosts.
+    materials: HashMap<GhostKind, Handle<StandardMaterial>>,
 }
 
 impl GhostHandles {
-    pub fn get(&self, kind: GhostKind) -> Handle<StandardMaterial> {
-        self.map[&kind].clone()
+    /// Gets the material handle for the given [`GhostKind`].
+    pub fn get_material(&self, kind: GhostKind) -> Handle<StandardMaterial> {
+        self.materials[&kind].clone()
     }
 }
 
@@ -66,7 +70,7 @@ impl FromWorld for GhostHandles {
             let material = assets.add(kind.material());
             map.insert(kind, material);
         }
-        GhostHandles { map }
+        GhostHandles { materials: map }
     }
 }
 
@@ -100,6 +104,7 @@ struct GhostBundle {
 }
 
 impl GhostBundle {
+    /// Creates a new [`GhostBundle`].
     fn new(
         tile_pos: TilePos,
         construction_materials: InputInventory,
@@ -183,6 +188,7 @@ pub(crate) struct GhostTerrainBundle {
 }
 
 impl GhostTerrainBundle {
+    /// Creates a new [`GhostTerrainBundle`].
     pub(crate) fn new(
         terraforming_action: TerraformingAction,
         tile_pos: TilePos,
@@ -307,6 +313,7 @@ pub(crate) struct TerrainPreviewBundle {
 }
 
 impl TerrainPreviewBundle {
+    /// Creates a new [`TerrainPreviewBundle`].
     pub(crate) fn new(
         tile_pos: TilePos,
         terraforming_action: TerraformingAction,

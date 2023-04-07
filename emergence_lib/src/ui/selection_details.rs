@@ -373,7 +373,7 @@ fn get_details(
                 {
                     let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
                     Some(TerraformingDetails {
-                        terraforming_action: ghost_terrain_query_item.terraforming_action.clone(),
+                        terraforming_action: *ghost_terrain_query_item.terraforming_action,
                         input_inventory: ghost_terrain_query_item.input_inventory.clone(),
                         crafting_state: ghost_terrain_query_item.crafting_state.clone(),
                     })

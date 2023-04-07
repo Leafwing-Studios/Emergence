@@ -399,9 +399,7 @@ impl CurrentSelection {
         map_geometry: &MapGeometry,
     ) -> Option<Self> {
         match selection_variant {
-            SelectionVariant::Unit => cursor_pos
-                .maybe_unit()
-                .map(|unit_entity| CurrentSelection::Unit(unit_entity)),
+            SelectionVariant::Unit => cursor_pos.maybe_unit().map(CurrentSelection::Unit),
             SelectionVariant::GhostStructure => {
                 cursor_pos
                     .maybe_ghost_structure()
@@ -411,7 +409,7 @@ impl CurrentSelection {
             }
             SelectionVariant::Structure => cursor_pos
                 .maybe_structure()
-                .map(|structure_entity| CurrentSelection::Structure(structure_entity)),
+                .map(CurrentSelection::Structure),
             SelectionVariant::Terrain => {
                 let hovered_tile = cursor_pos.maybe_tile_pos()?;
                 let mut selected_tiles = SelectedTiles::default();
@@ -469,7 +467,7 @@ impl SelectionVariant {
         }
 
         // Fallback to self if nothing else is found
-        cycle.push(self.clone());
+        cycle.push(*self);
 
         cycle
     }
@@ -839,13 +837,15 @@ mod tests {
     #[test]
     fn cycle_end_with_self() {
         for variant in SelectionVariant::variants() {
+            if variant == SelectionVariant::None {
+                continue;
+            }
+
             let cycle = variant.cycle();
             assert_eq!(
                 cycle.iter().last().copied().unwrap(),
                 variant,
-                "{:?}'s cycle was {:?}",
-                variant,
-                cycle
+                "{variant:?}'s cycle was {cycle:?}"
             );
         }
     }

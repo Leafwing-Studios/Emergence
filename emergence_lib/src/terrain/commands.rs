@@ -225,7 +225,7 @@ impl Command for SpawnTerrainGhostCommand {
             .clone_weak();
 
         let ghost_handles = world.resource::<GhostHandles>();
-        let ghost_material = ghost_handles.get(self.ghost_kind);
+        let ghost_material = ghost_handles.get_material(self.ghost_kind);
 
         let inherited_material = InheritedMaterial(ghost_material);
         let current_height = map_geometry.get_height(self.tile_pos).unwrap();

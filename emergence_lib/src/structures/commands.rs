@@ -313,7 +313,7 @@ impl Command for SpawnStructureGhostCommand {
             .get(&structure_id)
             .unwrap()
             .clone_weak();
-        let ghostly_handle = ghost_handles.get(GhostKind::Ghost);
+        let ghostly_handle = ghost_handles.get_material(GhostKind::Ghost);
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
@@ -419,7 +419,7 @@ impl Command for SpawnStructurePreviewCommand {
 
         let ghost_handles = world.resource::<GhostHandles>();
 
-        let preview_handle = ghost_handles.get(ghost_kind);
+        let preview_handle = ghost_handles.get_material(ghost_kind);
         let inherited_material = InheritedMaterial(preview_handle.clone_weak());
 
         // Spawn a preview
