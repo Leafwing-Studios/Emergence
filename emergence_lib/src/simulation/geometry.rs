@@ -167,6 +167,28 @@ impl TilePos {
         iter
     }
 
+    /// All adjacent tiles that are passable.
+    ///
+    /// This is distinct from [`reachable_neighbors`](Self::reachable_neighbors), which includes tiles filled with litter.
+    pub(crate) fn passable_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        if !map_geometry.is_valid(*self) {
+            let null_array = [TilePos::ZERO; 6];
+            let mut null_iter = FilteredArrayIter::from(null_array);
+            null_iter.filter(|_| false);
+            return null_iter;
+        }
+
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&target_pos| {
+            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
+        });
+        iter
+    }
+
     /// All adjacent tiles that are on the map and free of structures.
     pub(crate) fn empty_neighbors(
         &self,
