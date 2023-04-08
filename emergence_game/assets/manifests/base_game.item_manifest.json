@@ -16,6 +16,10 @@
     "acacia_seed": {
       "stack_size": 12,
       "compostable": true
+    },
+    "soil": {
+      "stack_size": 10,
+      "compostable": false
     }
   }
 }
