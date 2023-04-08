@@ -119,7 +119,12 @@ fn set_terrain_emitters(
         if storage_inventory.is_changed() {
             emitter.signals.clear();
             for item_slot in storage_inventory.iter() {
-                let signal_type = SignalType::Contains(ItemKind::Single(item_slot.item_id()));
+                let item_kind = ItemKind::Single(item_slot.item_id());
+
+                let signal_type = match storage_inventory.is_full() {
+                    true => SignalType::Push(item_kind),
+                    false => SignalType::Contains(item_kind),
+                };
                 let signal_strength = SignalStrength::new(10.);
 
                 emitter.signals.push((signal_type, signal_strength));
