@@ -45,7 +45,7 @@ impl TerraformingAction {
                 inventory: Inventory::new_from_item(soil_id, 10),
             },
             Self::Lower => InputInventory::default(),
-            Self::Change(terrain) => InputInventory::Exact {
+            Self::Change(_terrain) => InputInventory::Exact {
                 inventory: Inventory::new_from_item(soil_id, 10),
             },
         }
@@ -61,7 +61,7 @@ impl TerraformingAction {
             Self::Lower => OutputInventory {
                 inventory: Inventory::new_from_item(soil_id, 10),
             },
-            Self::Change(terrain) => OutputInventory {
+            Self::Change(_terrain) => OutputInventory {
                 inventory: Inventory::new_from_item(soil_id, 10),
             },
         }
