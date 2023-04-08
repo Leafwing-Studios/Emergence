@@ -323,6 +323,10 @@ impl MapGeometry {
     ///
     /// All indexes will be empty.
     pub fn new(radius: u32) -> Self {
+        let tiles = hexagon(Hex::ZERO, radius).map(|hex| TilePos { hex });
+        // We can start with the minimum height everywhere as no entities need to be spawned.
+        let height_index = tiles.map(|tile_pos| (tile_pos, Height::MIN)).collect();
+
         MapGeometry {
             layout: HexLayout::default(),
             radius,
@@ -330,7 +334,7 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
-            height_index: HashMap::default(),
+            height_index,
         }
     }
 
