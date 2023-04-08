@@ -108,7 +108,7 @@ pub(super) fn choose_actions(
                             rng,
                         )
                     } else {
-                        CurrentAction::find_place_for_item(
+                        CurrentAction::find(
                             *item_kind,
                             goal.delivery_mode().unwrap(),
                             goal.purpose(),
@@ -146,7 +146,7 @@ pub(super) fn choose_actions(
                             )
                         }
                     } else {
-                        CurrentAction::find_place_for_item(
+                        CurrentAction::find(
                             *item_kind,
                             DeliveryMode::PickUp,
                             Purpose::Instrumental,
@@ -613,7 +613,7 @@ impl CurrentAction {
     /// Atempts to find a place to pick up or drop off an item.
     ///
     /// If the `purpose` is [`Purpose::Primary`], items will not be picked up from or dropped off at a [`StorageInventory`].
-    fn find_place_for_item(
+    fn find(
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
         purpose: Purpose,
