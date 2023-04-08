@@ -4,7 +4,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{Height, MapGeometry, TilePos},
     structures::structure_manifest::Structure,
 };
 
@@ -25,11 +25,18 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
     /// If so, returns `Some(matching_structure_entity_that_needs_to_be_demolished)`.
     pub(crate) fn needs_demolition(
         &self,
-        structure_pos: TilePos,
+        current: TilePos,
+        target: TilePos,
         structure_id: Id<Structure>,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
-        let entity = map_geometry.get_structure(structure_pos)?;
+        // This is only a viable target if the unit can reach it!
+        let height_difference = map_geometry.height_difference(current, target).ok()?;
+        if height_difference > Height::MAX_STEP {
+            return None;
+        }
+
+        let entity = map_geometry.get_structure(target)?;
 
         let &found_structure_id = self.query.get(entity).ok()?;
 
