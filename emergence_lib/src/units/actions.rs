@@ -613,17 +613,17 @@ impl CurrentAction {
         let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
-            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
+            if let Some(output_entity) = map_geometry.get_ghost_or_structure(tile_pos) {
                 if let Ok((maybe_output_inventory, maybe_storage_inventory)) =
-                    output_inventory_query.get(structure_entity)
+                    output_inventory_query.get(output_entity)
                 {
                     if let Some(output_inventory) = maybe_output_inventory {
                         if output_inventory.contains_kind(item_kind, item_manifest) {
-                            sources.push((structure_entity, tile_pos));
+                            sources.push((output_entity, tile_pos));
                         }
                     } else if let Some(storage_inventory) = maybe_storage_inventory {
                         if storage_inventory.contains_kind(item_kind, item_manifest) {
-                            sources.push((structure_entity, tile_pos));
+                            sources.push((output_entity, tile_pos));
                         }
                     } else {
                         error!("output_inventory_query contained an object with neither an output nor storage inventory.")
@@ -678,19 +678,7 @@ impl CurrentAction {
         let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
-            // Ghosts
-            if let Some(ghost_entity) = map_geometry.get_ghost_structure(tile_pos) {
-                if let Ok((maybe_input_inventory, ..)) = input_inventory_query.get(ghost_entity) {
-                    if let Some(input_inventory) = maybe_input_inventory {
-                        if input_inventory.currently_accepts(item_kind, item_manifest) {
-                            receptacles.push((ghost_entity, tile_pos));
-                        }
-                    }
-                }
-            }
-
-            // Structures
-            if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
+            if let Some(structure_entity) = map_geometry.get_ghost_or_structure(tile_pos) {
                 if let Ok((maybe_input_inventory, maybe_storage_inventory)) =
                     input_inventory_query.get(structure_entity)
                 {
