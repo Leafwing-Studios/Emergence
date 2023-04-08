@@ -609,7 +609,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -674,7 +674,7 @@ impl CurrentAction {
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -751,7 +751,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -828,7 +828,7 @@ impl CurrentAction {
         {
             CurrentAction::work(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {
@@ -891,7 +891,7 @@ impl CurrentAction {
         {
             CurrentAction::demolish(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {

@@ -149,6 +149,27 @@ impl TilePos {
         iter
     }
 
+    /// All adjacent tiles that are at most [`Height::MAX_STEP`] higher or lower than `self`.
+    pub(crate) fn reachable_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        if !map_geometry.is_valid(*self) {
+            let null_array = [TilePos::ZERO; 6];
+            let mut null_iter = FilteredArrayIter::from(null_array);
+            null_iter.filter(|_| false);
+            return null_iter;
+        }
+
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&target_pos| {
+            map_geometry.is_valid(target_pos)
+                && map_geometry.height_difference(*self, target_pos).unwrap() <= Height::MAX_STEP
+        });
+        iter
+    }
+
     /// All adjacent tiles that are on the map and free of structures.
     pub(crate) fn empty_neighbors(
         &self,
@@ -335,23 +356,24 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`.
     /// Tiles that have a structure will return `false`.
     /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
-    pub(crate) fn is_passable(&self, current_tile: TilePos, target_tile: TilePos) -> bool {
-        if !self.is_valid(current_tile) {
+    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(starting_pos) {
             return false;
         }
 
-        if !self.is_valid(target_tile) {
+        if !self.is_valid(ending_pos) {
             return false;
         }
 
-        if self.get_structure(target_tile).is_some() {
+        if self.get_structure(ending_pos).is_some() {
             return false;
         }
 
-        let current_height = self.get_height(current_tile).unwrap();
-        let target_height = self.get_height(target_tile).unwrap();
-        let height_difference = Height(current_height.abs_diff(target_height.0));
-        height_difference <= Height::MAX_STEP
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
@@ -442,6 +464,17 @@ impl MapGeometry {
             });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
+    }
+
+    /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
+    pub(crate) fn height_difference(
+        &self,
+        starting_pos: TilePos,
+        ending_pos: TilePos,
+    ) -> Result<Height, IndexError> {
+        let starting_height = self.get_height(starting_pos)?;
+        let ending_height = self.get_height(ending_pos)?;
+        Ok(Height(starting_height.abs_diff(ending_height.0)))
     }
 
     /// Gets the ghost or structure [`Entity`] at the provided `tile_pos`, if any.
