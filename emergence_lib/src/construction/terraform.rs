@@ -1,13 +1,11 @@
 //! Tools to alter the terrain type and height.
 
-use std::time::Duration;
-
 use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::recipe::{RecipeConditions, RecipeData, RecipeInput, RecipeOutput},
-    items::{item_manifest::Item, ItemCount},
+    crafting::components::{InputInventory, OutputInventory},
+    items::{inventory::Inventory, item_manifest::Item},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
@@ -37,35 +35,35 @@ pub enum TerraformingAction {
 }
 
 impl TerraformingAction {
-    /// The recipe data for this action.
-    pub(crate) fn recipe(&self) -> RecipeData {
-        // All of this construction is so tightly coupled to the core game mechanics
-        // that it seems very hard to store this in a data-driven way using the recipe manifest.
-        // Fundmantally, terraforming doesn't seem to work the same way as other crafting recipes.
+    /// The items needed to perform this action.
+    pub(crate) fn input_inventory(&self) -> InputInventory {
+        // TODO: vary these inventories based on the terrain type
         let soil_id = Id::<Item>::from_name("soil".to_string());
 
+        match self {
+            Self::Raise => InputInventory::Exact {
+                inventory: Inventory::new_from_item(soil_id, 10),
+            },
+            Self::Lower => InputInventory::default(),
+            Self::Change(terrain) => InputInventory::Exact {
+                inventory: Inventory::new_from_item(soil_id, 10),
+            },
+        }
+    }
+
+    /// The items that must be taken away to perform this action.
+    pub(crate) fn output_inventory(&self) -> OutputInventory {
         // TODO: vary these inventories based on the terrain type
-        let input_counts = vec![ItemCount::new(soil_id, 10)];
-        let ouput_counts = vec![ItemCount::new(soil_id, 10)];
+        let soil_id = Id::<Item>::from_name("soil".to_string());
 
-        let inputs = match self {
-            TerraformingAction::Raise => RecipeInput::Exact(input_counts),
-            TerraformingAction::Lower => RecipeInput::EMPTY,
-            TerraformingAction::Change(terrain) => RecipeInput::Exact(input_counts),
-        };
-
-        let outputs = match self {
-            TerraformingAction::Raise => RecipeOutput::EMPTY,
-            TerraformingAction::Lower => RecipeOutput::Deterministic(ouput_counts),
-            TerraformingAction::Change(terrain) => RecipeOutput::Deterministic(ouput_counts),
-        };
-
-        RecipeData {
-            inputs,
-            outputs,
-            craft_time: Duration::ZERO,
-            conditions: RecipeConditions::NONE,
-            energy: None,
+        match self {
+            Self::Raise => OutputInventory::default(),
+            Self::Lower => OutputInventory {
+                inventory: Inventory::new_from_item(soil_id, 10),
+            },
+            Self::Change(terrain) => OutputInventory {
+                inventory: Inventory::new_from_item(soil_id, 10),
+            },
         }
     }
 

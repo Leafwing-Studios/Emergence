@@ -199,8 +199,6 @@ impl GhostTerrainBundle {
         input_inventory: InputInventory,
         output_inventory: OutputInventory,
     ) -> Self {
-        let recipe = terraforming_action.recipe();
-
         GhostTerrainBundle {
             ghost_bundle: GhostBundle::new(
                 tile_pos,
