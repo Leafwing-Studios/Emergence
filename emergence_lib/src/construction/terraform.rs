@@ -59,10 +59,10 @@ impl TerraformingAction {
         match self {
             Self::Raise => OutputInventory::default(),
             Self::Lower => OutputInventory {
-                inventory: Inventory::new_from_item(soil_id, 10),
+                inventory: Inventory::full_from_item(soil_id, 10),
             },
             Self::Change(_terrain) => OutputInventory {
-                inventory: Inventory::new_from_item(soil_id, 10),
+                inventory: Inventory::full_from_item(soil_id, 10),
             },
         }
     }

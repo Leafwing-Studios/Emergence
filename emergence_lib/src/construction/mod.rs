@@ -92,7 +92,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
             } => {
                 let inventory = materials
                     .into_iter()
-                    .map(|(item_name, count)| ItemSlot::new(Id::from_name(item_name), count))
+                    .map(|(item_name, count)| ItemSlot::empty(Id::from_name(item_name), count))
                     .collect();
 
                 let materials = InputInventory::Exact { inventory };
