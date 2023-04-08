@@ -7,7 +7,10 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
+use crate::crafting::components::StorageInventory;
+use crate::crafting::item_tags::ItemKind;
 use crate::player_interaction::selection::ObjectInteraction;
+use crate::signals::{Emitter, SignalStrength, SignalType};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 
@@ -25,8 +28,8 @@ impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
-            .add_system(
-                respond_to_height_changes
+            .add_systems(
+                (respond_to_height_changes, set_terrain_emitters)
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
@@ -52,6 +55,10 @@ struct TerrainBundle {
     zoning: Zoning,
     /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
+    /// Controls the signals produced by this terrain tile.
+    emitter: Emitter,
+    /// Stores dropped items
+    storage_inventory: StorageInventory,
 }
 
 impl TerrainBundle {
@@ -81,6 +88,8 @@ impl TerrainBundle {
             object_interaction: ObjectInteraction::None,
             zoning: Zoning::None,
             scene_bundle,
+            emitter: Emitter::default(),
+            storage_inventory: StorageInventory::new(3, None),
         }
     }
 }
@@ -99,6 +108,22 @@ fn respond_to_height_changes(
             let column_child = children[0];
             let mut column_transform = column_query.get_mut(column_child).unwrap();
             *column_transform = height.column_transform();
+        }
+    }
+}
+
+fn set_terrain_emitters(
+    mut query: Query<(&mut Emitter, Ref<StorageInventory>), With<Id<Terrain>>>,
+) {
+    for (mut emitter, storage_inventory) in query.iter_mut() {
+        if storage_inventory.is_changed() {
+            emitter.signals.clear();
+            for item_slot in storage_inventory.iter() {
+                let signal_type = SignalType::Contains(ItemKind::Single(item_slot.item_id()));
+                let signal_strength = SignalStrength::new(10.);
+
+                emitter.signals.push((signal_type, signal_strength));
+            }
         }
     }
 }
