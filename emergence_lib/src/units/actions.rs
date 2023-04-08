@@ -66,31 +66,45 @@ pub(super) fn choose_actions(
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
+    terrain_storage_query: Query<&StorageInventory, With<Id<Terrain>>>,
     terrain_manifest: Res<TerrainManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
     let rng = &mut thread_rng();
     let map_geometry = map_geometry.into_inner();
 
-    for (&unit_tile_pos, facing, goal, mut action, unit_inventory) in units_query.iter_mut() {
-        if action.finished() {
-            *action = match goal {
+    for (&unit_tile_pos, facing, goal, mut current_action, unit_inventory) in units_query.iter_mut()
+    {
+        if current_action.finished() {
+            let previous_action = current_action.action.clone();
+
+            *current_action = match goal {
                 // Alternate between spinning and moving forward.
-                Goal::Wander { .. } => match action.action() {
-                    UnitAction::Spin { .. } => CurrentAction::move_forward(
-                        unit_tile_pos,
-                        facing,
-                        map_geometry,
-                        &terrain_query,
-                        &terrain_manifest,
-                    ),
-                    _ => CurrentAction::random_spin(rng),
-                },
+                Goal::Wander { .. } => CurrentAction::wander(
+                    previous_action,
+                    unit_tile_pos,
+                    facing,
+                    map_geometry,
+                    &terrain_query,
+                    &terrain_manifest,
+                    rng,
+                ),
                 Goal::Pickup(item_kind) => {
                     if unit_inventory.is_some()
                         && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
                     {
-                        CurrentAction::abandon()
+                        CurrentAction::abandon(
+                            previous_action,
+                            unit_tile_pos,
+                            unit_inventory,
+                            map_geometry,
+                            &item_manifest,
+                            &terrain_storage_query,
+                            &terrain_manifest,
+                            &terrain_query,
+                            facing,
+                            rng,
+                        )
                     } else {
                         CurrentAction::find_item(
                             *item_kind,
@@ -111,7 +125,18 @@ pub(super) fn choose_actions(
                     if unit_inventory.is_some()
                         && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
                     {
-                        CurrentAction::abandon()
+                        CurrentAction::abandon(
+                            previous_action,
+                            unit_tile_pos,
+                            unit_inventory,
+                            map_geometry,
+                            &item_manifest,
+                            &terrain_storage_query,
+                            &terrain_manifest,
+                            &terrain_query,
+                            facing,
+                            rng,
+                        )
                     } else {
                         CurrentAction::find_storage(
                             *item_kind,
@@ -132,7 +157,18 @@ pub(super) fn choose_actions(
                     if unit_inventory.is_some()
                         && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
                     {
-                        CurrentAction::abandon()
+                        CurrentAction::abandon(
+                            previous_action,
+                            unit_tile_pos,
+                            unit_inventory,
+                            map_geometry,
+                            &item_manifest,
+                            &terrain_storage_query,
+                            &terrain_manifest,
+                            &terrain_query,
+                            facing,
+                            rng,
+                        )
                     } else {
                         CurrentAction::find_delivery(
                             *item_kind,
@@ -154,7 +190,18 @@ pub(super) fn choose_actions(
                         if item_kind.matches(held_item, &item_manifest) {
                             CurrentAction::eat()
                         } else {
-                            CurrentAction::abandon()
+                            CurrentAction::abandon(
+                                previous_action,
+                                unit_tile_pos,
+                                unit_inventory,
+                                map_geometry,
+                                &item_manifest,
+                                &terrain_storage_query,
+                                &terrain_manifest,
+                                &terrain_query,
+                                facing,
+                                rng,
+                            )
                         }
                     } else {
                         CurrentAction::find_item(
@@ -431,8 +478,23 @@ pub(super) fn finish_actions(
                     unit.unit_inventory.held_item = None;
                 }
                 UnitAction::Abandon => {
-                    // TODO: actually put these dropped items somewhere
-                    unit.unit_inventory.held_item = None;
+                    let terrain_entity = map_geometry.get_terrain(*unit.tile_pos).unwrap();
+
+                    let (_input, _output, maybe_storage) =
+                        inventory_query.get_mut(terrain_entity).unwrap();
+
+                    let mut terrain_storage_inventory = maybe_storage.unwrap();
+
+                    if let Some(held_item) = unit.unit_inventory.held_item {
+                        let item_count = ItemCount::new(held_item, 1);
+                        // Try to transfer the item to the terrain storage
+                        if terrain_storage_inventory
+                            .add_item_all_or_nothing(&item_count, item_manifest)
+                            .is_ok()
+                        {
+                            unit.unit_inventory.held_item = None;
+                        }
+                    }
                 }
             }
         }
@@ -504,7 +566,7 @@ pub(super) enum UnitAction {
     MoveForward,
     /// Eats one of the currently held object
     Eat,
-    /// Abandon whatever you are currently holding
+    /// Abandon whatever you are currently holding, dropping it on the ground
     Abandon,
 }
 
@@ -1073,7 +1135,7 @@ impl CurrentAction {
         }
     }
 
-    /// Eats one of the currently held item.
+    /// Eats the currently held item.
     pub(super) fn eat() -> Self {
         CurrentAction {
             action: UnitAction::Eat,
@@ -1100,12 +1162,67 @@ impl CurrentAction {
         }
     }
 
-    /// Eats one of the currently held item.
-    pub(super) fn abandon() -> Self {
-        CurrentAction {
-            action: UnitAction::Abandon,
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
-            just_started: true,
+    /// Drops the currently held item on the ground.
+    ///
+    /// If we cannot, wander around instead.
+    pub(super) fn abandon(
+        previous_action: UnitAction,
+        unit_tile_pos: TilePos,
+        unit_inventory: &UnitInventory,
+        map_geometry: &MapGeometry,
+        item_manifest: &ItemManifest,
+        terrain_storage_query: &Query<&StorageInventory, With<Id<Terrain>>>,
+        terrain_manifest: &TerrainManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        facing: &Facing,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        let terrain_entity = map_geometry.get_terrain(unit_tile_pos).unwrap();
+        let terrain_storage_inventory = terrain_storage_query.get(terrain_entity).unwrap();
+
+        if let Some(item_id) = unit_inventory.held_item {
+            let item_kind = ItemKind::Single(item_id);
+            if terrain_storage_inventory.currently_accepts(item_kind, item_manifest) {
+                return CurrentAction {
+                    action: UnitAction::Abandon,
+                    timer: Timer::from_seconds(0.1, TimerMode::Once),
+                    just_started: true,
+                };
+            }
+        }
+
+        CurrentAction::wander(
+            previous_action,
+            unit_tile_pos,
+            facing,
+            map_geometry,
+            terrain_query,
+            terrain_manifest,
+            rng,
+        )
+    }
+
+    /// Wander around randomly.
+    ///
+    /// This will alternate between moving forward and spinning.
+    pub(super) fn wander(
+        previous_action: UnitAction,
+        unit_tile_pos: TilePos,
+        facing: &Facing,
+        map_geometry: &MapGeometry,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        match previous_action {
+            UnitAction::Spin { .. } => CurrentAction::move_forward(
+                unit_tile_pos,
+                facing,
+                map_geometry,
+                &terrain_query,
+                &terrain_manifest,
+            ),
+            _ => CurrentAction::random_spin(rng),
         }
     }
 }
