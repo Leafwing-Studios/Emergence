@@ -17,8 +17,8 @@ use std::{
 
 use crate::{
     asset_management::manifest::Id, construction::AllowedTerrainTypes,
-    filtered_array_iter::FilteredArrayIter, structures::Footprint,
-    terrain::terrain_manifest::Terrain,
+    filtered_array_iter::FilteredArrayIter, items::inventory::InventoryState,
+    structures::Footprint, terrain::terrain_manifest::Terrain,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -307,6 +307,8 @@ pub struct MapGeometry {
     ghost_structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
     ghost_terrain_index: HashMap<TilePos, Entity>,
+    /// The amount of litter at each tile position
+    litter_index: HashMap<TilePos, InventoryState>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -334,6 +336,7 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
+            litter_index: HashMap::default(),
             height_index,
         }
     }
@@ -357,6 +360,7 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`.
     /// Tiles that have a structure will return `false`.
     /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
+    /// Tiles that are completely full of litter will return `false`.
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
@@ -367,6 +371,10 @@ impl MapGeometry {
         }
 
         if self.get_structure(ending_pos).is_some() {
+            return false;
+        }
+
+        if self.get_litter_state(ending_pos) == InventoryState::Full {
             return false;
         }
 
@@ -625,6 +633,19 @@ impl MapGeometry {
     /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
     pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
         self.ghost_terrain_index.get(&tile_pos).copied()
+    }
+
+    /// Sets the amount of litter at the provided `tile_pos`.
+    pub(crate) fn set_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
+        self.litter_index.insert(tile_pos, litter_state);
+    }
+
+    /// Gets the amount of litter at the provided `tile_pos`.
+    pub(crate) fn get_litter_state(&self, tile_pos: TilePos) -> InventoryState {
+        self.litter_index
+            .get(&tile_pos)
+            .copied()
+            .unwrap_or(InventoryState::Empty)
     }
 }
 

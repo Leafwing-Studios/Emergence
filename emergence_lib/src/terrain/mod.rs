@@ -29,7 +29,11 @@ impl Plugin for TerrainPlugin {
         app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
             .add_systems(
-                (respond_to_height_changes, set_terrain_emitters)
+                (
+                    respond_to_height_changes,
+                    set_terrain_emitters,
+                    update_litter_index,
+                )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
@@ -130,5 +134,15 @@ fn set_terrain_emitters(
                 emitter.signals.push((signal_type, signal_strength));
             }
         }
+    }
+}
+
+/// Tracks how much litter is on the ground on each tile.
+fn update_litter_index(
+    query: Query<(&TilePos, &StorageInventory), (With<Id<Terrain>>, Changed<StorageInventory>)>,
+    mut map_geometry: ResMut<MapGeometry>,
+) {
+    for (&tile_pos, litter) in query.iter() {
+        map_geometry.set_litter_state(tile_pos, litter.state());
     }
 }
