@@ -211,7 +211,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in tile_pos.all_neighbors(map_geometry) {
+        for neighbor in tile_pos.reachable_neighbors(map_geometry) {
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 
@@ -234,7 +234,7 @@ impl Signals {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
                 let mut num_neighbors = 0.0;
-                for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
+                for neighboring_tile in occupied_tile.reachable_neighbors(map_geometry) {
                     num_neighbors += 1.0;
                     addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                 }

@@ -24,7 +24,7 @@ use crate::{
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
-    simulation::geometry::{Facing, MapGeometry, RotationDirection, TilePos},
+    simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
@@ -609,7 +609,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut sources: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -674,7 +674,7 @@ impl CurrentAction {
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -751,7 +751,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut receptacles: Vec<(Entity, TilePos)> = Vec::new();
 
         for tile_pos in neighboring_tiles {
@@ -819,21 +819,23 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
-        if let Some(workplace) = workplace_query.needs_work(ahead, workplace_id, map_geometry) {
+        if let Some(workplace) =
+            workplace_query.needs_work(unit_tile_pos, ahead, workplace_id, map_geometry)
+        {
             CurrentAction::work(workplace)
         // Let units work even if they're standing on the structure
         // This is particularly relevant in the case of ghosts, where it's easy enough to end up on top of the structure trying to work on it
         } else if let Some(workplace) =
-            workplace_query.needs_work(unit_tile_pos, workplace_id, map_geometry)
+            workplace_query.needs_work(unit_tile_pos, unit_tile_pos, workplace_id, map_geometry)
         {
             CurrentAction::work(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {
                 if let Some(workplace) =
-                    workplace_query.needs_work(neighbor, workplace_id, map_geometry)
+                    workplace_query.needs_work(unit_tile_pos, neighbor, workplace_id, map_geometry)
                 {
                     workplaces.push((workplace, neighbor));
                 }
@@ -883,21 +885,27 @@ impl CurrentAction {
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) =
-            demolition_query.needs_demolition(ahead, structure_id, map_geometry)
+            demolition_query.needs_demolition(unit_tile_pos, ahead, structure_id, map_geometry)
         {
             CurrentAction::demolish(workplace)
-        } else if let Some(workplace) =
-            demolition_query.needs_demolition(unit_tile_pos, structure_id, map_geometry)
-        {
+        } else if let Some(workplace) = demolition_query.needs_demolition(
+            unit_tile_pos,
+            unit_tile_pos,
+            structure_id,
+            map_geometry,
+        ) {
             CurrentAction::demolish(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.all_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {
-                if let Some(demo_site) =
-                    demolition_query.needs_demolition(neighbor, structure_id, map_geometry)
-                {
+                if let Some(demo_site) = demolition_query.needs_demolition(
+                    unit_tile_pos,
+                    neighbor,
+                    structure_id,
+                    map_geometry,
+                ) {
                     demo_sites.push((demo_site, neighbor));
                 }
             }
@@ -970,7 +978,7 @@ impl CurrentAction {
 
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
-        unit_tile_pos: TilePos,
+        current_tile: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -979,13 +987,13 @@ impl CurrentAction {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
         const BASE_WALKING_DURATION: f32 = 0.5;
 
-        let target_tile = unit_tile_pos.neighbor(facing.direction);
-        let entity_standing_on = map_geometry.get_terrain(unit_tile_pos).unwrap();
+        let target_tile = current_tile.neighbor(facing.direction);
+        let entity_standing_on = map_geometry.get_terrain(current_tile).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
         let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed;
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
-        if map_geometry.is_passable(target_tile) {
+        if map_geometry.is_passable(current_tile, target_tile) {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
@@ -1135,13 +1143,20 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
     /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
     pub(crate) fn needs_work(
         &self,
-        tile_pos: TilePos,
+        current: TilePos,
+        target: TilePos,
         workplace_id: WorkplaceId,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
+        // This is only a viable target if the unit can reach it!
+        let height_difference = map_geometry.height_difference(current, target).ok()?;
+        if height_difference > Height::MAX_STEP {
+            return None;
+        }
+
         // Prioritize ghosts over structures to allow for replacing structures by building
         // Prioritize terrain ghosts over structure ghosts to encourage terraforming to complete before structures are built on top
-        let entity = map_geometry.get_ghost_or_structure(tile_pos)?;
+        let entity = map_geometry.get_ghost_or_structure(target)?;
 
         let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 

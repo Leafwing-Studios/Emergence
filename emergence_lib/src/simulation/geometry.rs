@@ -139,13 +139,31 @@ impl TilePos {
     }
 
     /// All adjacent tiles that are on the map.
-    pub(crate) fn all_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
+    pub fn all_neighbors(&self, map_geometry: &MapGeometry) -> impl IntoIterator<Item = TilePos> {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&pos| map_geometry.is_valid(pos));
+        iter
+    }
+
+    /// All adjacent tiles that are at most [`Height::MAX_STEP`] higher or lower than `self`.
+    pub(crate) fn reachable_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        if !map_geometry.is_valid(*self) {
+            let null_array = [TilePos::ZERO; 6];
+            let mut null_iter = FilteredArrayIter::from(null_array);
+            null_iter.filter(|_| false);
+            return null_iter;
+        }
+
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&target_pos| {
+            map_geometry.is_valid(target_pos)
+                && map_geometry.height_difference(*self, target_pos).unwrap() <= Height::MAX_STEP
+        });
         iter
     }
 
@@ -186,6 +204,9 @@ impl Height {
 
     /// The maximum allowable height
     pub(crate) const MAX: Height = Height(u8::MAX);
+
+    /// The maximum height difference that units can traverse in a single step.
+    pub(crate) const MAX_STEP: Height = Height(1);
 
     /// The thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
@@ -302,6 +323,10 @@ impl MapGeometry {
     ///
     /// All indexes will be empty.
     pub fn new(radius: u32) -> Self {
+        let tiles = hexagon(Hex::ZERO, radius).map(|hex| TilePos { hex });
+        // We can start with the minimum height everywhere as no entities need to be spawned.
+        let height_index = tiles.map(|tile_pos| (tile_pos, Height::MIN)).collect();
+
         MapGeometry {
             layout: HexLayout::default(),
             radius,
@@ -309,7 +334,7 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
-            height_index: HashMap::default(),
+            height_index,
         }
     }
 
@@ -329,9 +354,27 @@ impl MapGeometry {
 
     /// Is the provided `tile_pos` passable?
     ///
-    /// Tiles that are not part of the map will return `false`
-    pub(crate) fn is_passable(&self, tile_pos: TilePos) -> bool {
-        self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
+    /// Tiles that are not part of the map will return `false`.
+    /// Tiles that have a structure will return `false`.
+    /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
+    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(starting_pos) {
+            return false;
+        }
+
+        if !self.is_valid(ending_pos) {
+            return false;
+        }
+
+        if self.get_structure(ending_pos).is_some() {
+            return false;
+        }
+
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
@@ -422,6 +465,17 @@ impl MapGeometry {
             });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
+    }
+
+    /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
+    pub(crate) fn height_difference(
+        &self,
+        starting_pos: TilePos,
+        ending_pos: TilePos,
+    ) -> Result<Height, IndexError> {
+        let starting_height = self.get_height(starting_pos)?;
+        let ending_height = self.get_height(ending_pos)?;
+        Ok(Height(starting_height.abs_diff(ending_height.0)))
     }
 
     /// Gets the ghost or structure [`Entity`] at the provided `tile_pos`, if any.
