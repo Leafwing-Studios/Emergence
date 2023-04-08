@@ -30,11 +30,20 @@ pub struct ItemSlot {
 #[allow(dead_code)]
 impl ItemSlot {
     /// Create an empty slot for the given item.
-    pub fn new(item_id: Id<Item>, max_item_count: u32) -> Self {
+    pub fn empty(item_id: Id<Item>, max_item_count: u32) -> Self {
         Self {
             item_id,
             max_item_count,
             count: 0,
+        }
+    }
+
+    /// Create a full slot for the given item.
+    pub fn full(item_id: Id<Item>, max_item_count: u32) -> Self {
+        Self {
+            item_id,
+            max_item_count,
+            count: max_item_count,
         }
     }
 

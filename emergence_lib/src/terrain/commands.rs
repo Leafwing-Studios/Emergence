@@ -240,6 +240,9 @@ impl Command for SpawnTerrainGhostCommand {
 
         match self.ghost_kind {
             GhostKind::Ghost => {
+                let input_inventory = self.terraforming_action.input_inventory();
+                let output_inventory = self.terraforming_action.output_inventory();
+
                 let ghost_entity = world
                     .spawn(GhostTerrainBundle::new(
                         self.terraforming_action,
@@ -247,6 +250,8 @@ impl Command for SpawnTerrainGhostCommand {
                         scene_handle,
                         inherited_material,
                         world_pos,
+                        input_inventory,
+                        output_inventory,
                     ))
                     .id();
 

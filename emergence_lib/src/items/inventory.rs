@@ -76,7 +76,16 @@ impl Inventory {
     pub fn new_from_item(item_id: Id<Item>, max: u32) -> Self {
         Self {
             reserved_for: Some(item_id),
-            slots: vec![ItemSlot::new(item_id, max)],
+            slots: vec![ItemSlot::empty(item_id, max)],
+            max_slot_count: 1,
+        }
+    }
+
+    /// Creates a full inventory that can store up to `max` items of the type `item_id`.
+    pub fn full_from_item(item_id: Id<Item>, max: u32) -> Self {
+        Self {
+            reserved_for: Some(item_id),
+            slots: vec![ItemSlot::full(item_id, max)],
             max_slot_count: 1,
         }
     }
@@ -264,7 +273,7 @@ impl Inventory {
         }
 
         let stack_size = item_manifest.get(item_id).stack_size;
-        let empty_stack = ItemSlot::new(item_id, stack_size);
+        let empty_stack = ItemSlot::empty(item_id, stack_size);
 
         // Suppose we have a 3 slot inventory, of which 2 are filled.
         // The length is 2, and the max slot count is 3.
@@ -320,7 +329,7 @@ impl Inventory {
 
         // Fill up the remaining free slots
         while items_to_add > 0 && self.slots.len() < self.max_slot_count {
-            let mut new_slot = ItemSlot::new(
+            let mut new_slot = ItemSlot::empty(
                 item_count.item_id,
                 item_manifest.get(item_count.item_id).stack_size,
             );

@@ -4,10 +4,9 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::crafting::components::WorkersPresent;
+use crate::crafting::components::{OutputInventory, WorkersPresent};
 use crate::crafting::item_tags::ItemKind;
 use crate::enum_iter::IterableEnum;
-use crate::items::inventory::Inventory;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
@@ -39,8 +38,10 @@ impl Plugin for GhostPlugin {
         app.init_resource::<GhostHandles>().add_systems(
             (
                 validate_ghost_structures,
-                ghost_signals.after(validate_ghost_structures),
-                ghost_lifecycle.after(validate_ghost_structures),
+                ghost_structure_signals.after(validate_ghost_structures),
+                ghost_structure_lifecycle.after(validate_ghost_structures),
+                ghost_terrain_signals,
+                terraforming_lifecycle,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -91,10 +92,6 @@ struct GhostBundle {
     tile_pos: TilePos,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
-    /// The number of workers that are present / allowed to build this structure.
-    workers_present: WorkersPresent,
-    /// Tracks work that needs to be done on this building
-    crafting_state: CraftingState,
     /// The material to be used by all children in the scene
     inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
@@ -116,8 +113,6 @@ impl GhostBundle {
             ghost: Ghost,
             tile_pos,
             construction_materials,
-            workers_present: WorkersPresent::new(6),
-            crafting_state: CraftingState::NeedsInput,
             inherited_material,
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
@@ -144,6 +139,10 @@ pub(crate) struct GhostStructureBundle {
     raycast_mesh: RaycastMesh<(Ghost, Structure)>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
+    /// The number of workers that are present / allowed to build this structure.
+    workers_present: WorkersPresent,
+    /// Tracks work that needs to be done on this building
+    crafting_state: CraftingState,
 }
 
 impl GhostStructureBundle {
@@ -174,6 +173,8 @@ impl GhostStructureBundle {
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
             picking_mesh,
+            workers_present: WorkersPresent::new(6),
+            crafting_state: CraftingState::NeedsInput,
         }
     }
 }
@@ -185,6 +186,8 @@ pub(crate) struct GhostTerrainBundle {
     ghost_bundle: GhostBundle,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
+    /// The inventory that holds any material that needs to be taken away
+    output_inventory: OutputInventory,
 }
 
 impl GhostTerrainBundle {
@@ -195,21 +198,19 @@ impl GhostTerrainBundle {
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
+        input_inventory: InputInventory,
+        output_inventory: OutputInventory,
     ) -> Self {
-        // TODO: actually require materials to build terrain
-        let construction_materials = InputInventory::Exact {
-            inventory: Inventory::new(0, None),
-        };
-
         GhostTerrainBundle {
             ghost_bundle: GhostBundle::new(
                 tile_pos,
-                construction_materials,
+                input_inventory,
                 scene_handle,
                 inherited_material,
                 world_pos,
             ),
             terraforming_action,
+            output_inventory,
         }
     }
 }
@@ -337,11 +338,11 @@ impl TerrainPreviewBundle {
     }
 }
 
-/// Computes the correct signals for ghosts to send throughout their lifecycle
-pub(super) fn ghost_signals(
+/// Computes the correct signals for ghost structures to send throughout their lifecycle
+pub(super) fn ghost_structure_signals(
     mut ghost_query: Query<
         (
-            AnyOf<(&Id<Structure>, &TerraformingAction)>,
+            &Id<Structure>,
             &mut Emitter,
             Ref<CraftingState>,
             &InputInventory,
@@ -351,7 +352,7 @@ pub(super) fn ghost_signals(
     >,
 ) {
     // Ghosts that are ignored will slowly become more important to build.
-    for (ids, mut emitter, crafting_state, input_inventory, workers_present) in
+    for (&structure_id, mut emitter, crafting_state, input_inventory, workers_present) in
         ghost_query.iter_mut()
     {
         if crafting_state.is_changed() {
@@ -383,7 +384,7 @@ pub(super) fn ghost_signals(
                     emitter.signals.clear();
 
                     if workers_present.needs_more() {
-                        let workplace_id = WorkplaceId::new(ids);
+                        let workplace_id = WorkplaceId::structure(structure_id);
 
                         let signal_type = SignalType::Work(workplace_id);
                         let signal_strength = SignalStrength::new(10.);
@@ -392,6 +393,44 @@ pub(super) fn ghost_signals(
                 }
                 _ => (),
             }
+        }
+    }
+}
+
+/// Computes the correct signals for ghost terrain to send throughout their lifecycle
+fn ghost_terrain_signals(
+    mut query: Query<
+        (&InputInventory, &OutputInventory, &mut Emitter),
+        (With<Ghost>, With<TerraformingAction>),
+    >,
+) {
+    for (input_inventory, output_inventory, mut emitter) in query.iter_mut() {
+        // Reset all emitters
+        emitter.signals.clear();
+
+        // If the input inventory is not full, emit a pull signal for the item
+        match input_inventory {
+            InputInventory::Exact { inventory } => {
+                // Emit signals to cause workers to bring the correct item to this ghost
+                for item_slot in inventory.iter() {
+                    let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                    let signal_strength = SignalStrength::new(10.);
+                    emitter.signals.push((signal_type, signal_strength))
+                }
+            }
+            InputInventory::Tagged { tag, .. } => {
+                // Emit signals to cause workers to bring the correct item to this ghost
+                let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
+                let signal_strength = SignalStrength::new(10.);
+                emitter.signals.push((signal_type, signal_strength))
+            }
+        }
+
+        // If the output inventory is not empty, emit a push signal for the item
+        for item_slot in output_inventory.iter() {
+            let signal_type = SignalType::Push(ItemKind::Single(item_slot.item_id()));
+            let signal_strength = SignalStrength::new(10.);
+            emitter.signals.push((signal_type, signal_strength))
         }
     }
 }
@@ -448,18 +487,18 @@ impl WorkplaceId {
     }
 }
 
-/// Manages the progression of ghosts from input needed -> work needed -> built.
+/// Manages the progression of structure ghosts from input needed -> work needed -> built.
 ///
-/// Transforms ghosts into structures / terrain once all of their construction materials have been supplied and enough work has been performed.
-pub(super) fn ghost_lifecycle(
+/// Transforms ghosts into structures once all of their construction materials have been supplied and enough work has been performed.
+pub(super) fn ghost_structure_lifecycle(
     mut ghost_query: Query<
         (
             &mut CraftingState,
             &InputInventory,
             &TilePos,
-            AnyOf<(&Id<Structure>, &TerraformingAction)>,
-            Option<&Facing>,
-            Option<&ActiveRecipe>,
+            &Id<Structure>,
+            &Facing,
+            &ActiveRecipe,
             &WorkersPresent,
         ),
         With<Ghost>,
@@ -472,19 +511,13 @@ pub(super) fn ghost_lifecycle(
         mut crafting_state,
         input_inventory,
         &tile_pos,
-        ids,
-        maybe_facing,
-        maybe_active_recipe,
+        &structure_id,
+        &facing,
+        active_recipe,
         workers_present,
     ) in ghost_query.iter_mut()
     {
-        let construction_data = match ids {
-            (Some(structure_id), None) => {
-                structure_manifest.construction_data(*structure_id).clone()
-            }
-            (None, Some(terraforming_action)) => terraforming_action.construction_data(),
-            _ => panic!("Workplace must be either a terrain XOR a structure"),
-        };
+        let construction_data = structure_manifest.construction_data(structure_id);
 
         match *crafting_state {
             CraftingState::NeedsInput => {
@@ -512,43 +545,57 @@ pub(super) fn ghost_lifecycle(
                 }
             }
             CraftingState::RecipeComplete => {
-                match ids {
-                    (Some(structure_id), None) => {
-                        commands.despawn_ghost_structure(tile_pos);
-                        let facing = *maybe_facing.expect("Structure ghosts must have a facing");
-                        let active_recipe = maybe_active_recipe
-                            .expect("Structure ghosts must have an active recipe");
+                commands.despawn_ghost_structure(tile_pos);
 
-                        // Spawn the seedling form of a structure if any
-                        if let ConstructionStrategy::Seedling(seedling) =
-                            structure_manifest.get(*structure_id).construction_strategy
-                        {
-                            commands.spawn_structure(
-                                tile_pos,
-                                ClipboardData {
-                                    structure_id: seedling,
-                                    facing,
-                                    active_recipe: active_recipe.clone(),
-                                },
-                            );
-                        } else {
-                            commands.spawn_structure(
-                                tile_pos,
-                                ClipboardData {
-                                    structure_id: *structure_id,
-                                    facing,
-                                    active_recipe: active_recipe.clone(),
-                                },
-                            );
-                        }
-                    }
-                    (None, Some(terraforming_action)) => {
-                        commands.apply_terraforming_action(tile_pos, *terraforming_action)
-                    }
-                    _ => unreachable!(),
+                // Spawn the seedling form of a structure if any
+                if let ConstructionStrategy::Seedling(seedling) =
+                    structure_manifest.get(structure_id).construction_strategy
+                {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id: seedling,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
+                } else {
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData {
+                            structure_id,
+                            facing,
+                            active_recipe: active_recipe.clone(),
+                        },
+                    );
                 }
             }
             _ => unreachable!(),
+        }
+    }
+}
+
+/// Manages the progression of terraforming ghosts.
+///
+/// Transforms ghosts into terrain once all of their inputs and outputs have been met.
+pub(super) fn terraforming_lifecycle(
+    mut terraforming_ghost_query: Query<
+        (
+            &InputInventory,
+            &OutputInventory,
+            &TilePos,
+            &TerraformingAction,
+        ),
+        With<Ghost>,
+    >,
+    mut commands: Commands,
+) {
+    for (input_inventory, output_inventory, &tile_pos, &terraforming_action) in
+        terraforming_ghost_query.iter_mut()
+    {
+        if input_inventory.inventory().is_full() && output_inventory.is_empty() {
+            commands.despawn_ghost_terrain(tile_pos);
+            commands.apply_terraforming_action(tile_pos, terraforming_action);
         }
     }
 }

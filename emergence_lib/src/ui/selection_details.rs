@@ -375,7 +375,7 @@ fn get_details(
                     Some(TerraformingDetails {
                         terraforming_action: *ghost_terrain_query_item.terraforming_action,
                         input_inventory: ghost_terrain_query_item.input_inventory.clone(),
-                        crafting_state: ghost_terrain_query_item.crafting_state.clone(),
+                        output_inventory: ghost_terrain_query_item.output_inventory.clone(),
                     })
                 } else {
                     None
@@ -723,7 +723,7 @@ mod terrain_details {
     use crate::{
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
-        crafting::components::{CraftingState, InputInventory},
+        crafting::components::{InputInventory, OutputInventory},
         items::item_manifest::ItemManifest,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
@@ -750,10 +750,10 @@ mod terrain_details {
     pub(super) struct GhostTerrainDetailsQuery {
         /// The terraforming action being performed
         pub(super) terraforming_action: &'static TerraformingAction,
-        /// The inputs that must be added to construct this ghost
+        /// The inputs that must be added to complete this terraforming action
         pub(super) input_inventory: &'static InputInventory,
-        /// The ghost's progress through construction
-        pub(crate) crafting_state: &'static CraftingState,
+        /// The outputs that must be removed to complete this terraforming action
+        pub(super) output_inventory: &'static OutputInventory,
     }
 
     /// Detailed info about a given terraforming ghost.
@@ -761,10 +761,10 @@ mod terrain_details {
     pub(crate) struct TerraformingDetails {
         /// The terraforming action being performed
         pub(super) terraforming_action: TerraformingAction,
-        /// The inputs that must be added to construct this ghost
+        /// The inputs that must be added to complete this terraforming action
         pub(super) input_inventory: InputInventory,
-        /// The ghost's progress through construction
-        pub(crate) crafting_state: CraftingState,
+        /// The outputs that must be removed to complete this terraforming action
+        pub(super) output_inventory: OutputInventory,
     }
 
     impl TerraformingDetails {
@@ -775,13 +775,13 @@ mod terrain_details {
             terrain_manifest: &TerrainManifest,
         ) -> String {
             let terraforming_action = self.terraforming_action.display(terrain_manifest);
-            let crafting_state = &self.crafting_state;
-            let construction_materials = self.input_inventory.display(item_manifest);
+            let input = self.input_inventory.display(item_manifest);
+            let output = self.output_inventory.display(item_manifest);
 
             format!(
                 "Terraforming: {terraforming_action}
-Construction materials: {construction_materials}
-{crafting_state}"
+Input: {input}
+Output: {output}"
             )
         }
     }

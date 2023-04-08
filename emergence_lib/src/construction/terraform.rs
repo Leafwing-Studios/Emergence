@@ -1,15 +1,13 @@
 //! Tools to alter the terrain type and height.
 
-use std::time::Duration;
-
 use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::components::{InputInventory, OutputInventory},
+    items::{inventory::Inventory, item_manifest::Item},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
-
-use super::ConstructionData;
 
 /// An option presented to players for how to terraform the world.
 ///
@@ -37,21 +35,34 @@ pub enum TerraformingAction {
 }
 
 impl TerraformingAction {
-    /// The construction requirements for this action.
-    // TODO: actually require materials
-    pub(crate) fn construction_data(&self) -> ConstructionData {
+    /// The items needed to perform this action.
+    pub(crate) fn input_inventory(&self) -> InputInventory {
+        // TODO: vary these inventories based on the terrain type
+        let soil_id = Id::<Item>::from_name("soil".to_string());
+
         match self {
-            Self::Raise => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
+            Self::Raise => InputInventory::Exact {
+                inventory: Inventory::new_from_item(soil_id, 10),
             },
-            Self::Lower => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
+            Self::Lower => InputInventory::default(),
+            Self::Change(_terrain) => InputInventory::Exact {
+                inventory: Inventory::new_from_item(soil_id, 10),
             },
-            Self::Change(_) => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
+        }
+    }
+
+    /// The items that must be taken away to perform this action.
+    pub(crate) fn output_inventory(&self) -> OutputInventory {
+        // TODO: vary these inventories based on the terrain type
+        let soil_id = Id::<Item>::from_name("soil".to_string());
+
+        match self {
+            Self::Raise => OutputInventory::default(),
+            Self::Lower => OutputInventory {
+                inventory: Inventory::full_from_item(soil_id, 10),
+            },
+            Self::Change(_terrain) => OutputInventory {
+                inventory: Inventory::full_from_item(soil_id, 10),
             },
         }
     }

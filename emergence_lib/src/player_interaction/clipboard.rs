@@ -206,17 +206,22 @@ fn copy_selection(
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_tiles.is_empty() {
                     if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
-                        if let Some(entity) = map_geometry.get_ghost_or_structure(hovered_tile) {
+                        if let Some(entity) = map_geometry.get_ghost_structure(hovered_tile) {
+                            let clipboard_data = structure_query.get(entity).unwrap().into();
+                            map.insert(TilePos::default(), clipboard_data);
+                        } else if let Some(entity) = map_geometry.get_structure(hovered_tile) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(TilePos::default(), clipboard_data);
                         }
                     }
                 } else {
                     for &selected_tile_pos in selected_tiles.selection().iter() {
-                        if let Some(entity) = map_geometry.get_ghost_or_structure(selected_tile_pos)
-                        {
+                        if let Some(entity) = map_geometry.get_ghost_structure(selected_tile_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
-                            map.insert(selected_tile_pos, clipboard_data);
+                            map.insert(TilePos::default(), clipboard_data);
+                        } else if let Some(entity) = map_geometry.get_structure(selected_tile_pos) {
+                            let clipboard_data = structure_query.get(entity).unwrap().into();
+                            map.insert(TilePos::default(), clipboard_data);
                         }
                     }
                     *clipboard = Clipboard::Structures(map);
