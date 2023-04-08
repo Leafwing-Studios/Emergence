@@ -2,8 +2,6 @@
 
 use bevy::prelude::*;
 
-use crate::asset_management::AssetState;
-
 use self::{
     atmosphere::AtmospherePlugin, lighting::LightingPlugin, structures::remove_ghostly_shadows,
 };
@@ -23,7 +21,6 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
-            .add_system(units::display_held_item.run_if(in_state(AssetState::Ready)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
