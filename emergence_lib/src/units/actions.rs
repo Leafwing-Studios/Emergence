@@ -208,8 +208,6 @@ pub(super) fn start_actions(
                     if result.is_err() {
                         *action = CurrentAction::idle();
                     }
-                } else {
-                    warn!("Unit tried to start working at an entity that is not a workplace!");
                 }
             }
 
