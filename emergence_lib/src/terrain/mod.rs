@@ -57,7 +57,7 @@ struct TerrainBundle {
     scene_bundle: SceneBundle,
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
-    /// Stores dropped items
+    /// Stores littered items
     storage_inventory: StorageInventory,
 }
 

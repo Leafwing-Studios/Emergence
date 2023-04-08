@@ -388,6 +388,7 @@ fn get_details(
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
                     zoning: terrain_query_item.zoning.clone(),
+                    storage_inventory: terrain_query_item.storage_inventory.clone(),
                     maybe_terraforming_details,
                 })
             } else {
@@ -723,7 +724,7 @@ mod terrain_details {
     use crate::{
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
-        crafting::components::{InputInventory, OutputInventory},
+        crafting::components::{InputInventory, OutputInventory, StorageInventory},
         items::item_manifest::ItemManifest,
         signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
@@ -743,6 +744,8 @@ mod terrain_details {
         pub(super) terrain_id: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
+        /// Any littered items on this tile
+        pub(super) storage_inventory: &'static StorageInventory,
     }
 
     /// Data needed to populate [`TerraformingDetails`].
@@ -801,6 +804,8 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
+        /// Any littered items on this tile
+        pub(super) storage_inventory: StorageInventory,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
@@ -825,13 +830,15 @@ Output: {output}"
                 unit_manifest,
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
+            let litter = self.storage_inventory.display(item_manifest);
 
             let base_string = format!(
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
-Zoning: {zoning}"
+Zoning: {zoning}
+Litter: {litter}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {
