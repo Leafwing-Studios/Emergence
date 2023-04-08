@@ -492,13 +492,13 @@ impl MapGeometry {
         Ok(Height(starting_height.abs_diff(ending_height.0)))
     }
 
-    /// Gets the list of ghost or structure [`Entity`]s at the provided `tile_pos`.
+    /// Gets the list of [`Entity`]s at the provided `tile_pos` that might want an item.
     ///
     /// Priority:
     /// - ghost terrain
     /// - ghost structure
     /// - structure
-    pub(crate) fn ghosts_or_structures(&self, tile_pos: TilePos) -> Vec<Entity> {
+    pub(crate) fn might_want_items(&self, tile_pos: TilePos) -> Vec<Entity> {
         let mut entities = Vec::new();
         if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
             entities.push(ghost_terrain_entity)
@@ -506,6 +506,29 @@ impl MapGeometry {
 
         if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
             entities.push(ghost_structure_entity)
+        }
+
+        if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+            entities.push(structure_entity)
+        }
+
+        entities
+    }
+
+    /// Gets the list of [`Entity`]s at the provided `tile_pos` that might have an item.
+    ///
+    /// Priority:
+    /// - ghost terrain (terraforming)
+    /// - terrain (litter)
+    /// - structure
+    pub(crate) fn might_have_items(&self, tile_pos: TilePos) -> Vec<Entity> {
+        let mut entities = Vec::new();
+        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+            entities.push(ghost_terrain_entity)
+        }
+
+        if let Some(&terrain_entity) = self.terrain_index.get(&tile_pos) {
+            entities.push(terrain_entity)
         }
 
         if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
