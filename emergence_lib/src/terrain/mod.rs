@@ -89,7 +89,7 @@ impl TerrainBundle {
             zoning: Zoning::None,
             scene_bundle,
             emitter: Emitter::default(),
-            storage_inventory: StorageInventory::new(3, None),
+            storage_inventory: StorageInventory::new(1, None),
         }
     }
 }
