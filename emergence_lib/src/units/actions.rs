@@ -365,6 +365,7 @@ pub(super) fn finish_actions(
                                         Err(..) => Goal::Pickup(*item_kind),
                                     }
                                 } else {
+                                    unit.impatience.increment();
                                     Goal::Pickup(*item_kind)
                                 }
                             }
@@ -414,7 +415,10 @@ pub(super) fn finish_actions(
                                             unit.unit_inventory.held_item = None;
                                             Goal::default()
                                         }
-                                        Err(..) => Goal::Store(ItemKind::Single(held_item_id)),
+                                        Err(..) => {
+                                            unit.impatience.increment();
+                                            Goal::Store(ItemKind::Single(held_item_id))
+                                        }
                                     }
                                 } else {
                                     // Somehow we're holding the wrong thing
