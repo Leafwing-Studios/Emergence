@@ -1144,7 +1144,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
 
         // Prioritize ghosts over structures to allow for replacing structures by building
         // Prioritize terrain ghosts over structure ghosts to encourage terraforming to complete before structures are built on top
-        let entity = *map_geometry.ghosts_or_structures(target).iter().next()?;
+        let entity = *map_geometry.ghosts_or_structures(target).first()?;
 
         let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 
