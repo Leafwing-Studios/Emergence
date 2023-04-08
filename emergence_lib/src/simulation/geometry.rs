@@ -18,7 +18,7 @@ use std::{
 use crate::{
     asset_management::manifest::Id, construction::AllowedTerrainTypes,
     filtered_array_iter::FilteredArrayIter, items::inventory::InventoryState,
-    structures::Footprint, terrain::terrain_manifest::Terrain,
+    structures::Footprint, terrain::terrain_manifest::Terrain, units::actions::DeliveryMode,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -486,43 +486,57 @@ impl MapGeometry {
         Ok(Height(starting_height.abs_diff(ending_height.0)))
     }
 
-    /// Gets the list of [`Entity`]s at the provided `tile_pos` that might want an item.
+    /// Gets the [`Entity`] at the provided `tile_pos` that might have or want an item.
     ///
-    /// Priority:
-    /// - ghost terrain
-    /// - ghost structure
-    /// - structure
-    pub(crate) fn might_want_items(&self, tile_pos: TilePos) -> Vec<Entity> {
+    /// If the `delivery_mode` is [`DeliveryMode::PickUp`], looks for litter, ghost terrain, or structures.
+    /// If the `delivery_mode` is [`DeliveryMode::DropOff`], looks for ghost structures, ghost terrain or structures.
+    pub(crate) fn get_candidates(
+        &self,
+        tile_pos: TilePos,
+        delivery_mode: DeliveryMode,
+    ) -> Vec<Entity> {
         let mut entities = Vec::new();
-        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-            entities.push(ghost_terrain_entity)
-        }
 
-        if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
-            entities.push(ghost_structure_entity)
-        }
+        match delivery_mode {
+            DeliveryMode::DropOff => {
+                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+                    entities.push(structure_entity)
+                }
 
-        if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
-            entities.push(structure_entity)
+                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+                    entities.push(ghost_terrain_entity)
+                }
+
+                if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
+                    entities.push(ghost_structure_entity)
+                }
+            }
+            DeliveryMode::PickUp => {
+                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+                    entities.push(structure_entity)
+                }
+
+                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+                    entities.push(ghost_terrain_entity)
+                }
+
+                if let Some(&litter_entity) = self.terrain_index.get(&tile_pos) {
+                    entities.push(litter_entity)
+                }
+            }
         }
 
         entities
     }
 
-    /// Gets the list of [`Entity`]s at the provided `tile_pos` that might have an item.
+    /// Gets entities that units might work at, at the provided `tile_pos`.
     ///
-    /// Priority:
-    /// - ghost terrain (terraforming)
-    /// - terrain (litter)
-    /// - structure
-    pub(crate) fn might_have_items(&self, tile_pos: TilePos) -> Vec<Entity> {
+    /// Prioritizes ghosts over structures if both are present to allow for replacing structures.
+    pub(crate) fn get_workplaces(&self, tile_pos: TilePos) -> Vec<Entity> {
         let mut entities = Vec::new();
-        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-            entities.push(ghost_terrain_entity)
-        }
 
-        if let Some(&terrain_entity) = self.terrain_index.get(&tile_pos) {
-            entities.push(terrain_entity)
+        if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
+            entities.push(ghost_structure_entity)
         }
 
         if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
