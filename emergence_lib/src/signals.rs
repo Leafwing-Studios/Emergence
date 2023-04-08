@@ -823,4 +823,47 @@ mod tests {
             )
             .is_some());
     }
+
+    #[test]
+    fn item_signal_types_are_correct() {
+        let item_kind = test_item();
+        let item_manifest = test_manifest();
+
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::PickUp,
+                Purpose::Intrinsic
+            ),
+            vec![SignalType::Push(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::PickUp,
+                Purpose::Instrumental
+            ),
+            vec![SignalType::Push(item_kind), SignalType::Contains(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::DropOff,
+                Purpose::Intrinsic
+            ),
+            vec![SignalType::Pull(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::DropOff,
+                Purpose::Instrumental
+            ),
+            vec![SignalType::Pull(item_kind), SignalType::Stores(item_kind)]
+        );
+    }
 }
