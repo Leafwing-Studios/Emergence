@@ -87,7 +87,11 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     rng,
                 ),
-                Goal::Pickup(item_kind) => {
+                Goal::Fetch(item_kind)
+                | Goal::Deliver(item_kind)
+                | Goal::Store(item_kind)
+                | Goal::Remove(item_kind) => {
+                    // If we're holding the wrong thing, drop it.
                     if unit_inventory.is_some()
                         && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
                     {
@@ -106,80 +110,8 @@ pub(super) fn choose_actions(
                     } else {
                         CurrentAction::find_place_for_item(
                             *item_kind,
-                            DeliveryMode::PickUp,
-                            Purpose::Primary,
-                            unit_tile_pos,
-                            facing,
-                            goal,
-                            &input_inventory_query,
-                            &output_inventory_query,
-                            &storage_inventory_query,
-                            &signals,
-                            rng,
-                            &item_manifest,
-                            &terrain_query,
-                            &terrain_manifest,
-                            map_geometry,
-                        )
-                    }
-                }
-                Goal::Store(item_kind) => {
-                    if unit_inventory.is_some()
-                        && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
-                    {
-                        CurrentAction::abandon(
-                            previous_action,
-                            unit_tile_pos,
-                            unit_inventory,
-                            map_geometry,
-                            &item_manifest,
-                            &terrain_storage_query,
-                            &terrain_manifest,
-                            &terrain_query,
-                            facing,
-                            rng,
-                        )
-                    } else {
-                        CurrentAction::find_place_for_item(
-                            *item_kind,
-                            DeliveryMode::DropOff,
-                            Purpose::Secondary,
-                            unit_tile_pos,
-                            facing,
-                            goal,
-                            &input_inventory_query,
-                            &output_inventory_query,
-                            &storage_inventory_query,
-                            &signals,
-                            rng,
-                            &item_manifest,
-                            &terrain_query,
-                            &terrain_manifest,
-                            map_geometry,
-                        )
-                    }
-                }
-                Goal::Deliver(item_kind) => {
-                    if unit_inventory.is_some()
-                        && !item_kind.matches(unit_inventory.unwrap(), &item_manifest)
-                    {
-                        CurrentAction::abandon(
-                            previous_action,
-                            unit_tile_pos,
-                            unit_inventory,
-                            map_geometry,
-                            &item_manifest,
-                            &terrain_storage_query,
-                            &terrain_manifest,
-                            &terrain_query,
-                            facing,
-                            rng,
-                        )
-                    } else {
-                        CurrentAction::find_place_for_item(
-                            *item_kind,
-                            DeliveryMode::DropOff,
-                            Purpose::Primary,
+                            goal.delivery_mode().unwrap(),
+                            goal.purpose(),
                             unit_tile_pos,
                             facing,
                             goal,
@@ -217,7 +149,7 @@ pub(super) fn choose_actions(
                         CurrentAction::find_place_for_item(
                             *item_kind,
                             DeliveryMode::PickUp,
-                            Purpose::Secondary,
+                            Purpose::Instrumental,
                             unit_tile_pos,
                             facing,
                             goal,
@@ -366,7 +298,12 @@ pub(super) fn finish_actions(
                                         Ok(()) => {
                                             unit.unit_inventory.held_item = Some(item_id);
                                             if signals.detectable(
-                                                SignalType::store(*item_kind, item_manifest),
+                                                SignalType::item_signal_types(
+                                                    *item_kind,
+                                                    item_manifest,
+                                                    DeliveryMode::DropOff,
+                                                    Purpose::Instrumental,
+                                                ),
                                                 *unit.tile_pos,
                                             ) {
                                                 // If we can see any `Pull` signals of the right type, deliver the item.
@@ -376,11 +313,11 @@ pub(super) fn finish_actions(
                                                 Goal::Store(*item_kind)
                                             }
                                         }
-                                        Err(..) => Goal::Pickup(*item_kind),
+                                        Err(..) => Goal::Fetch(*item_kind),
                                     }
                                 } else {
                                     unit.impatience.increment();
-                                    Goal::Pickup(*item_kind)
+                                    Goal::Fetch(*item_kind)
                                 }
                             }
                         }
@@ -701,14 +638,14 @@ impl CurrentAction {
         for tile_pos in neighboring_tiles {
             for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
-                    (DeliveryMode::PickUp, Purpose::Primary) => {
+                    (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
                     }
-                    (DeliveryMode::PickUp, Purpose::Secondary) => {
+                    (DeliveryMode::PickUp, Purpose::Instrumental) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
@@ -721,14 +658,14 @@ impl CurrentAction {
                             }
                         }
                     }
-                    (DeliveryMode::DropOff, Purpose::Primary) => {
+                    (DeliveryMode::DropOff, Purpose::Intrinsic) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
                             if input_inventory.currently_accepts(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
                     }
-                    (DeliveryMode::DropOff, Purpose::Secondary) => {
+                    (DeliveryMode::DropOff, Purpose::Instrumental) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
                             if input_inventory.currently_accepts(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
@@ -1203,15 +1140,15 @@ pub(crate) enum DeliveryMode {
     DropOff,
 }
 
-/// Is this action essential to the goal, or can we be flexible?
+/// Is this action essential to our ultimate goal, or can we be flexible?
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Purpose {
     /// This action is essential to the goal.
     ///
     /// This will only take / place items from active sources of signals.
-    Primary,
+    Intrinsic,
     /// This action is not essential to the goal.
     ///
     /// This will take / place items from storage.
-    Secondary,
+    Instrumental,
 }

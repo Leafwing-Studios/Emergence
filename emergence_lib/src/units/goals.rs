@@ -15,6 +15,7 @@ use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 
+use super::actions::{DeliveryMode, Purpose};
 use super::impatience::ImpatiencePool;
 use super::item_interaction::UnitInventory;
 use super::unit_manifest::{Unit, UnitManifest};
@@ -35,20 +36,28 @@ pub(crate) enum Goal {
         /// How many actions will this unit take before picking a new goal?
         remaining_actions: Option<u16>,
     },
-    /// Attempting to pick up an object
-    Pickup(ItemKind),
-    /// Attempting to drop off an object
+    /// Attempting to pick up an object, so it can be taken away from a structure that actively rejects it.
     ///
-    /// This can place the object in storage or a structure that actively needs it.
-    Store(ItemKind),
+    /// This is [`DeliveryMode::PickUp`] and [`Purpose::Intrinsic`].
+    Remove(ItemKind),
+    /// Attempting to pick up an object wherever we can, so it can be delivered to a structure.
+    ///
+    /// This is [`DeliveryMode::PickUp`] and [`Purpose::Instrumental`].
+    Fetch(ItemKind),
     /// Attempting to drop off an object to a structure that actively needs it.
+    ///
+    /// This is [`DeliveryMode::DropOff`] and [`Purpose::Intrinsic`].
     Deliver(ItemKind),
+    /// Attempting to drop off an object wherever we can.
+    ///
+    /// This is [`DeliveryMode::DropOff`] and [`Purpose::Instrumental`].
+    Store(ItemKind),
     /// Attempting to perform work at a structure
     Work(WorkplaceId),
-    /// Attempt to feed self
-    Eat(ItemKind),
     /// Attempting to destroy a structure
     Demolish(Id<Structure>),
+    /// Attempt to feed self
+    Eat(ItemKind),
 }
 
 impl Default for Goal {
@@ -66,9 +75,9 @@ impl TryFrom<SignalType> for Goal {
     fn try_from(value: SignalType) -> Result<Goal, Self::Error> {
         match value {
             // Go grab the item, so you can later take it away
-            SignalType::Push(item_kind) => Ok(Goal::Pickup(item_kind)),
+            SignalType::Push(item_kind) => Ok(Goal::Remove(item_kind)),
             // Go grab the item, so you can bring it to me
-            SignalType::Pull(item_kind) => Ok(Goal::Pickup(item_kind)),
+            SignalType::Pull(item_kind) => Ok(Goal::Fetch(item_kind)),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
             SignalType::Contains(_) => Err(()),
@@ -79,6 +88,34 @@ impl TryFrom<SignalType> for Goal {
 }
 
 impl Goal {
+    /// Returns whether the goal is to drop off an item, pick up an item or neither.
+    pub(crate) fn delivery_mode(&self) -> Option<DeliveryMode> {
+        match self {
+            Goal::Wander { .. } => None,
+            Goal::Remove(_) => Some(DeliveryMode::PickUp),
+            Goal::Fetch(_) => Some(DeliveryMode::PickUp),
+            Goal::Deliver(_) => Some(DeliveryMode::DropOff),
+            Goal::Store(_) => Some(DeliveryMode::DropOff),
+            Goal::Work(_) => None,
+            Goal::Demolish(_) => None,
+            Goal::Eat(_) => Some(DeliveryMode::PickUp),
+        }
+    }
+
+    /// Returns whether the goal is active or passive.
+    pub(crate) fn purpose(&self) -> Purpose {
+        match self {
+            Goal::Wander { .. } => Purpose::Instrumental,
+            Goal::Remove(_) => Purpose::Intrinsic,
+            Goal::Fetch(_) => Purpose::Instrumental,
+            Goal::Deliver(_) => Purpose::Intrinsic,
+            Goal::Store(_) => Purpose::Instrumental,
+            Goal::Work(_) => Purpose::Intrinsic,
+            Goal::Demolish(_) => Purpose::Intrinsic,
+            Goal::Eat(_) => Purpose::Instrumental,
+        }
+    }
+
     /// Pretty formatting for this type
     pub(crate) fn display(
         &self,
@@ -91,7 +128,8 @@ impl Goal {
                 "Wander ({} actions remaining)",
                 remaining_actions.unwrap_or(0)
             ),
-            Goal::Pickup(item_kind) => format!("Pickup {}", item_manifest.name_of_kind(*item_kind)),
+            Goal::Fetch(item_kind) => format!("Fetch {}", item_manifest.name_of_kind(*item_kind)),
+            Goal::Remove(item_kind) => format!("Remove {}", item_manifest.name_of_kind(*item_kind)),
             Goal::Store(item_kind) => format!("Store {}", item_manifest.name_of_kind(*item_kind)),
             Goal::Deliver(item_kind) => {
                 format!("Deliver {}", item_manifest.name_of_kind(*item_kind))
