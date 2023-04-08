@@ -187,6 +187,9 @@ impl Height {
     /// The maximum allowable height
     pub(crate) const MAX: Height = Height(u8::MAX);
 
+    /// The maximum height difference that units can traverse in a single step.
+    pub(crate) const MAX_STEP: Height = Height(1);
+
     /// The thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
     pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
@@ -329,9 +332,26 @@ impl MapGeometry {
 
     /// Is the provided `tile_pos` passable?
     ///
-    /// Tiles that are not part of the map will return `false`
-    pub(crate) fn is_passable(&self, tile_pos: TilePos) -> bool {
-        self.is_valid(tile_pos) && !self.structure_index.contains_key(&tile_pos)
+    /// Tiles that are not part of the map will return `false`.
+    /// Tiles that have a structure will return `false`.
+    /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
+    pub(crate) fn is_passable(&self, current_tile: TilePos, target_tile: TilePos) -> bool {
+        if !self.is_valid(current_tile) {
+            return false;
+        }
+
+        if !self.is_valid(target_tile) {
+            return false;
+        }
+
+        if self.get_structure(target_tile).is_some() {
+            return false;
+        }
+
+        let current_height = self.get_height(current_tile).unwrap();
+        let target_height = self.get_height(target_tile).unwrap();
+        let height_difference = Height(current_height.abs_diff(target_height.0));
+        height_difference <= Height::MAX_STEP
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?

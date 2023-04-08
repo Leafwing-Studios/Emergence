@@ -970,7 +970,7 @@ impl CurrentAction {
 
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
-        unit_tile_pos: TilePos,
+        current_tile: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -979,13 +979,13 @@ impl CurrentAction {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
         const BASE_WALKING_DURATION: f32 = 0.5;
 
-        let target_tile = unit_tile_pos.neighbor(facing.direction);
-        let entity_standing_on = map_geometry.get_terrain(unit_tile_pos).unwrap();
+        let target_tile = current_tile.neighbor(facing.direction);
+        let entity_standing_on = map_geometry.get_terrain(current_tile).unwrap();
         let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
         let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed;
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
-        if map_geometry.is_passable(target_tile) {
+        if map_geometry.is_passable(current_tile, target_tile) {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
