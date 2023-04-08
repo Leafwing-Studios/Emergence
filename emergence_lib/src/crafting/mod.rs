@@ -272,7 +272,7 @@ pub(crate) fn set_crafting_emitter(
 
 /// Causes storage structures to emit signals based on the items they have and accept.
 pub(crate) fn set_storage_emitter(
-    mut crafting_query: Query<(&mut Emitter, &StorageInventory)>,
+    mut crafting_query: Query<(&mut Emitter, &StorageInventory), With<Id<Structure>>>,
     item_manifest: Res<ItemManifest>,
 ) {
     for (mut emitter, storage_inventory) in crafting_query.iter_mut() {
