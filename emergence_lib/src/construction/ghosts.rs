@@ -92,10 +92,6 @@ struct GhostBundle {
     tile_pos: TilePos,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
-    /// The number of workers that are present / allowed to build this structure.
-    workers_present: WorkersPresent,
-    /// Tracks work that needs to be done on this building
-    crafting_state: CraftingState,
     /// The material to be used by all children in the scene
     inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
@@ -117,8 +113,6 @@ impl GhostBundle {
             ghost: Ghost,
             tile_pos,
             construction_materials,
-            workers_present: WorkersPresent::new(6),
-            crafting_state: CraftingState::NeedsInput,
             inherited_material,
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
@@ -145,6 +139,10 @@ pub(crate) struct GhostStructureBundle {
     raycast_mesh: RaycastMesh<(Ghost, Structure)>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
+    /// The number of workers that are present / allowed to build this structure.
+    workers_present: WorkersPresent,
+    /// Tracks work that needs to be done on this building
+    crafting_state: CraftingState,
 }
 
 impl GhostStructureBundle {
@@ -175,6 +173,8 @@ impl GhostStructureBundle {
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
             picking_mesh,
+            workers_present: WorkersPresent::new(6),
+            crafting_state: CraftingState::NeedsInput,
         }
     }
 }
