@@ -17,8 +17,8 @@ use std::{
 
 use crate::{
     asset_management::manifest::Id, construction::AllowedTerrainTypes,
-    crafting::components::StorageInventory, filtered_array_iter::FilteredArrayIter,
-    structures::Footprint, terrain::terrain_manifest::Terrain,
+    filtered_array_iter::FilteredArrayIter, structures::Footprint,
+    terrain::terrain_manifest::Terrain,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -357,13 +357,7 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`.
     /// Tiles that have a structure will return `false`.
     /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
-    /// Tiles that are full on liter will return `false`.
-    pub(crate) fn is_passable(
-        &self,
-        starting_pos: TilePos,
-        ending_pos: TilePos,
-        litter_query: &Query<&StorageInventory>,
-    ) -> bool {
+    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -373,14 +367,6 @@ impl MapGeometry {
         }
 
         if self.get_structure(ending_pos).is_some() {
-            return false;
-        }
-
-        let storage_inventory = litter_query
-            .get(self.get_terrain(ending_pos).unwrap())
-            .unwrap();
-
-        if storage_inventory.is_full() {
             return false;
         }
 

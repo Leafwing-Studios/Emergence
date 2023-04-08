@@ -66,7 +66,7 @@ pub(super) fn choose_actions(
     map_geometry: Res<MapGeometry>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
-    litter_query: Query<&StorageInventory>,
+    terrain_storage_query: Query<&StorageInventory, With<Id<Terrain>>>,
     terrain_manifest: Res<TerrainManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -86,7 +86,6 @@ pub(super) fn choose_actions(
                     facing,
                     map_geometry,
                     &terrain_query,
-                    &litter_query,
                     &terrain_manifest,
                     rng,
                 ),
@@ -100,7 +99,7 @@ pub(super) fn choose_actions(
                             unit_inventory,
                             map_geometry,
                             &item_manifest,
-                            &litter_query,
+                            &terrain_storage_query,
                             &terrain_manifest,
                             &terrain_query,
                             facing,
@@ -113,7 +112,6 @@ pub(super) fn choose_actions(
                             facing,
                             goal,
                             &output_inventory_query,
-                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -133,7 +131,7 @@ pub(super) fn choose_actions(
                             unit_inventory,
                             map_geometry,
                             &item_manifest,
-                            &litter_query,
+                            &terrain_storage_query,
                             &terrain_manifest,
                             &terrain_query,
                             facing,
@@ -146,7 +144,6 @@ pub(super) fn choose_actions(
                             facing,
                             goal,
                             &input_inventory_query,
-                            &litter_query,
                             &signals,
                             rng,
                             &terrain_query,
@@ -166,7 +163,7 @@ pub(super) fn choose_actions(
                             unit_inventory,
                             map_geometry,
                             &item_manifest,
-                            &litter_query,
+                            &terrain_storage_query,
                             &terrain_manifest,
                             &terrain_query,
                             facing,
@@ -183,7 +180,6 @@ pub(super) fn choose_actions(
                             rng,
                             &item_manifest,
                             &terrain_query,
-                            &litter_query,
                             &terrain_manifest,
                             map_geometry,
                         )
@@ -200,7 +196,7 @@ pub(super) fn choose_actions(
                                 unit_inventory,
                                 map_geometry,
                                 &item_manifest,
-                                &litter_query,
+                                &terrain_storage_query,
                                 &terrain_manifest,
                                 &terrain_query,
                                 facing,
@@ -214,7 +210,6 @@ pub(super) fn choose_actions(
                             facing,
                             goal,
                             &output_inventory_query,
-                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -232,7 +227,6 @@ pub(super) fn choose_actions(
                     &signals,
                     rng,
                     &terrain_query,
-                    &litter_query,
                     &terrain_manifest,
                     &item_manifest,
                     map_geometry,
@@ -246,7 +240,6 @@ pub(super) fn choose_actions(
                     rng,
                     &item_manifest,
                     &terrain_query,
-                    &litter_query,
                     &terrain_manifest,
                     map_geometry,
                 ),
@@ -671,7 +664,6 @@ impl CurrentAction {
         facing: &Facing,
         goal: &Goal,
         output_inventory_query: &Query<AnyOf<(&OutputInventory, &StorageInventory)>>,
-        litter_query: &Query<&StorageInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
@@ -718,7 +710,6 @@ impl CurrentAction {
                 upstream,
                 facing,
                 terrain_query,
-                &litter_query,
                 terrain_manifest,
                 map_geometry,
             )
@@ -738,7 +729,6 @@ impl CurrentAction {
             AnyOf<(&InputInventory, &StorageInventory)>,
             Without<MarkedForDemolition>,
         >,
-        litter_query: &Query<&StorageInventory>,
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
@@ -785,7 +775,6 @@ impl CurrentAction {
                 upstream,
                 facing,
                 terrain_query,
-                &litter_query,
                 terrain_manifest,
                 map_geometry,
             )
@@ -809,7 +798,6 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
@@ -859,7 +847,6 @@ impl CurrentAction {
                 upstream,
                 facing,
                 terrain_query,
-                litter_query,
                 terrain_manifest,
                 map_geometry,
             )
@@ -877,7 +864,6 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
@@ -911,7 +897,6 @@ impl CurrentAction {
                     chosen_workplace.1,
                     facing,
                     terrain_query,
-                    &litter_query,
                     terrain_manifest,
                     map_geometry,
                 )
@@ -926,7 +911,6 @@ impl CurrentAction {
                     upstream,
                     facing,
                     terrain_query,
-                    &litter_query,
                     terrain_manifest,
                     map_geometry,
                 )
@@ -946,7 +930,6 @@ impl CurrentAction {
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
@@ -983,7 +966,6 @@ impl CurrentAction {
                     chosen_demo_site.1,
                     facing,
                     terrain_query,
-                    litter_query,
                     terrain_manifest,
                     map_geometry,
                 )
@@ -998,7 +980,6 @@ impl CurrentAction {
                     upstream,
                     facing,
                     terrain_query,
-                    &litter_query,
                     terrain_manifest,
                     map_geometry,
                 )
@@ -1051,7 +1032,6 @@ impl CurrentAction {
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
     ) -> Self {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
@@ -1063,7 +1043,7 @@ impl CurrentAction {
         let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed;
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
-        if map_geometry.is_passable(current_tile, target_tile, &litter_query) {
+        if map_geometry.is_passable(current_tile, target_tile) {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
@@ -1080,7 +1060,6 @@ impl CurrentAction {
         target_tile_pos: TilePos,
         facing: &Facing,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
@@ -1092,7 +1071,6 @@ impl CurrentAction {
                 facing,
                 map_geometry,
                 terrain_query,
-                litter_query,
                 terrain_manifest,
             )
         } else {
@@ -1193,14 +1171,14 @@ impl CurrentAction {
         unit_inventory: &UnitInventory,
         map_geometry: &MapGeometry,
         item_manifest: &ItemManifest,
-        litter_query: &Query<&StorageInventory>,
+        terrain_storage_query: &Query<&StorageInventory, With<Id<Terrain>>>,
         terrain_manifest: &TerrainManifest,
         terrain_query: &Query<&Id<Terrain>>,
         facing: &Facing,
         rng: &mut ThreadRng,
     ) -> Self {
         let terrain_entity = map_geometry.get_terrain(unit_tile_pos).unwrap();
-        let terrain_storage_inventory = litter_query.get(terrain_entity).unwrap();
+        let terrain_storage_inventory = terrain_storage_query.get(terrain_entity).unwrap();
 
         if let Some(item_id) = unit_inventory.held_item {
             let item_kind = ItemKind::Single(item_id);
@@ -1219,7 +1197,6 @@ impl CurrentAction {
             facing,
             map_geometry,
             terrain_query,
-            &litter_query,
             terrain_manifest,
             rng,
         )
@@ -1234,7 +1211,6 @@ impl CurrentAction {
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
-        litter_query: &Query<&StorageInventory>,
         terrain_manifest: &TerrainManifest,
         rng: &mut ThreadRng,
     ) -> Self {
@@ -1244,7 +1220,6 @@ impl CurrentAction {
                 facing,
                 map_geometry,
                 &terrain_query,
-                &litter_query,
                 &terrain_manifest,
             ),
             _ => CurrentAction::random_spin(rng),
