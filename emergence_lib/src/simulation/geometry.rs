@@ -139,10 +139,7 @@ impl TilePos {
     }
 
     /// All adjacent tiles that are on the map.
-    pub(crate) fn all_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
+    pub fn all_neighbors(&self, map_geometry: &MapGeometry) -> impl IntoIterator<Item = TilePos> {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&pos| map_geometry.is_valid(pos));
