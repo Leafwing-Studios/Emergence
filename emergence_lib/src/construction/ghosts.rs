@@ -4,10 +4,9 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::crafting::components::WorkersPresent;
+use crate::crafting::components::{OutputInventory, WorkersPresent};
 use crate::crafting::item_tags::ItemKind;
 use crate::enum_iter::IterableEnum;
-use crate::items::inventory::Inventory;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
@@ -185,6 +184,8 @@ pub(crate) struct GhostTerrainBundle {
     ghost_bundle: GhostBundle,
     /// The action that will be performed when this terrain is built
     terraforming_action: TerraformingAction,
+    /// The inventory that holds any material that needs to be taken away
+    output_inventory: OutputInventory,
 }
 
 impl GhostTerrainBundle {
@@ -195,21 +196,21 @@ impl GhostTerrainBundle {
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
+        input_inventory: InputInventory,
+        output_inventory: OutputInventory,
     ) -> Self {
-        // TODO: actually require materials to build terrain
-        let construction_materials = InputInventory::Exact {
-            inventory: Inventory::new(0, None),
-        };
+        let recipe = terraforming_action.recipe();
 
         GhostTerrainBundle {
             ghost_bundle: GhostBundle::new(
                 tile_pos,
-                construction_materials,
+                input_inventory,
                 scene_handle,
                 inherited_material,
                 world_pos,
             ),
             terraforming_action,
+            output_inventory,
         }
     }
 }

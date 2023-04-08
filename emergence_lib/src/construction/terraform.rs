@@ -6,10 +6,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::recipe::{RecipeConditions, RecipeData, RecipeInput, RecipeOutput},
+    items::{item_manifest::Item, ItemCount},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
-
-use super::ConstructionData;
 
 /// An option presented to players for how to terraform the world.
 ///
@@ -37,22 +37,35 @@ pub enum TerraformingAction {
 }
 
 impl TerraformingAction {
-    /// The construction requirements for this action.
-    // TODO: actually require materials
-    pub(crate) fn construction_data(&self) -> ConstructionData {
-        match self {
-            Self::Raise => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
-            },
-            Self::Lower => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
-            },
-            Self::Change(_) => ConstructionData {
-                work: Some(Duration::from_secs(5)),
-                ..Default::default()
-            },
+    /// The recipe data for this action.
+    pub(crate) fn recipe(&self) -> RecipeData {
+        // All of this construction is so tightly coupled to the core game mechanics
+        // that it seems very hard to store this in a data-driven way using the recipe manifest.
+        // Fundmantally, terraforming doesn't seem to work the same way as other crafting recipes.
+        let soil_id = Id::<Item>::from_name("soil".to_string());
+
+        // TODO: vary these inventories based on the terrain type
+        let input_counts = vec![ItemCount::new(soil_id, 10)];
+        let ouput_counts = vec![ItemCount::new(soil_id, 10)];
+
+        let inputs = match self {
+            TerraformingAction::Raise => RecipeInput::Exact(input_counts),
+            TerraformingAction::Lower => RecipeInput::EMPTY,
+            TerraformingAction::Change(terrain) => RecipeInput::Exact(input_counts),
+        };
+
+        let outputs = match self {
+            TerraformingAction::Raise => RecipeOutput::EMPTY,
+            TerraformingAction::Lower => RecipeOutput::Deterministic(ouput_counts),
+            TerraformingAction::Change(terrain) => RecipeOutput::Deterministic(ouput_counts),
+        };
+
+        RecipeData {
+            inputs,
+            outputs,
+            craft_time: Duration::ZERO,
+            conditions: RecipeConditions::NONE,
+            energy: None,
         }
     }
 

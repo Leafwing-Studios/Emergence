@@ -17,6 +17,7 @@ use crate::{
         zoning::Zoning,
     },
     graphics::InheritedMaterial,
+    items::item_manifest::ItemManifest,
     simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
@@ -240,6 +241,12 @@ impl Command for SpawnTerrainGhostCommand {
 
         match self.ghost_kind {
             GhostKind::Ghost => {
+                let item_manifest = world.resource::<ItemManifest>();
+
+                let recipe = self.terraforming_action.recipe();
+                let input_inventory = recipe.input_inventory(item_manifest);
+                let output_inventory = recipe.output_inventory(item_manifest);
+
                 let ghost_entity = world
                     .spawn(GhostTerrainBundle::new(
                         self.terraforming_action,
@@ -247,6 +254,8 @@ impl Command for SpawnTerrainGhostCommand {
                         scene_handle,
                         inherited_material,
                         world_pos,
+                        input_inventory,
+                        output_inventory,
                     ))
                     .id();
 

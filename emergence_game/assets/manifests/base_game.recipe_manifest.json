@@ -73,21 +73,6 @@
 			"conditions": {
 				"workers_required": 2
 			}
-		},
-		"terraform_raise": {
-			"inputs": {
-				"Exact": {
-					"soil": 10
-				}
-			},
-			"outputs": {},
-			"craft_time": 0
-		},
-		"terraform_lower": {
-			"outputs": {
-				"soil": 10
-			},
-			"craft_time": 0
 		}
 	}
 }

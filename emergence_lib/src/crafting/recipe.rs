@@ -60,6 +60,9 @@ pub enum RecipeInput {
 }
 
 impl RecipeInput {
+    /// No inputs are needed.
+    pub const EMPTY: RecipeInput = RecipeInput::Exact(Vec::new());
+
     /// The number of slots needed to craft this recipe.
     pub fn len(&self) -> usize {
         match self {
@@ -132,6 +135,9 @@ pub enum RecipeOutput {
 }
 
 impl RecipeOutput {
+    /// Nothing is produced.
+    pub const EMPTY: RecipeOutput = RecipeOutput::Deterministic(Vec::new());
+
     /// Convert the raw data into a [`RecipeOutput`].
     ///
     /// If all the counts are integers, then the recipe is deterministic.
@@ -309,6 +315,12 @@ impl Display for RecipeConditions {
 }
 
 impl RecipeConditions {
+    /// No conditions are required to craft this recipe.
+    pub const NONE: RecipeConditions = RecipeConditions {
+        workers_required: 0,
+        allowable_light_range: None,
+    };
+
     /// Creates a new [`RecipeConditions`].
     pub const fn new(workers_required: u8, allowable_light_range: Threshold<Illuminance>) -> Self {
         Self {
