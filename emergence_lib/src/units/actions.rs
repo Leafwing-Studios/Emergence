@@ -469,13 +469,13 @@ pub(super) fn finish_actions(
                         let diet = &unit_data.diet;
 
                         if diet.item_kind().matches(held_item, item_manifest) {
+                            unit.unit_inventory.held_item = None;
+
                             let proposed = unit.energy_pool.current() + diet.energy();
                             unit.energy_pool.set_current(proposed);
                             unit.lifecycle.record_energy_gained(diet.energy());
                         }
                     }
-
-                    unit.unit_inventory.held_item = None;
                 }
                 UnitAction::Abandon => {
                     let terrain_entity = map_geometry.get_terrain(*unit.tile_pos).unwrap();
