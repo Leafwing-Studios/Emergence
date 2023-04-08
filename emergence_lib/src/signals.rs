@@ -234,7 +234,7 @@ impl Signals {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
                 let mut num_neighbors = 0.0;
-                for neighboring_tile in occupied_tile.empty_neighbors(map_geometry) {
+                for neighboring_tile in occupied_tile.reachable_neighbors(map_geometry) {
                     num_neighbors += 1.0;
                     addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                 }
