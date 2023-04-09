@@ -374,12 +374,8 @@ impl CurrentSelection {
         let start = SelectionVariant::from(&*self);
         let cycle = start.cycle();
 
-        info!("Starting with {:?}", start);
-
         for variant in cycle {
-            info!("Trying {:?}", variant);
             if let Some(selection) = self.get(variant, selection_state, cursor_pos, map_geometry) {
-                info!("Found {:?}", selection);
                 *self = selection;
                 return;
             }
@@ -650,7 +646,6 @@ fn set_selection(
                 && !selection_state.multiple
                 && actions.just_pressed(PlayerAction::Select)
             {
-                info!("Cycling selection");
                 current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {
                 current_selection.update_from_cursor_pos(

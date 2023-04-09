@@ -17,8 +17,8 @@ use std::{
 
 use crate::{
     asset_management::manifest::Id, construction::AllowedTerrainTypes,
-    filtered_array_iter::FilteredArrayIter, structures::Footprint,
-    terrain::terrain_manifest::Terrain,
+    filtered_array_iter::FilteredArrayIter, items::inventory::InventoryState,
+    structures::Footprint, terrain::terrain_manifest::Terrain, units::actions::DeliveryMode,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -167,6 +167,28 @@ impl TilePos {
         iter
     }
 
+    /// All adjacent tiles that are passable.
+    ///
+    /// This is distinct from [`reachable_neighbors`](Self::reachable_neighbors), which includes tiles filled with litter.
+    pub(crate) fn passable_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        if !map_geometry.is_valid(*self) {
+            let null_array = [TilePos::ZERO; 6];
+            let mut null_iter = FilteredArrayIter::from(null_array);
+            null_iter.filter(|_| false);
+            return null_iter;
+        }
+
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&target_pos| {
+            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
+        });
+        iter
+    }
+
     /// All adjacent tiles that are on the map and free of structures.
     pub(crate) fn empty_neighbors(
         &self,
@@ -307,6 +329,8 @@ pub struct MapGeometry {
     ghost_structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
     ghost_terrain_index: HashMap<TilePos, Entity>,
+    /// The amount of litter at each tile position
+    litter_index: HashMap<TilePos, InventoryState>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -334,6 +358,7 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
+            litter_index: HashMap::default(),
             height_index,
         }
     }
@@ -357,6 +382,7 @@ impl MapGeometry {
     /// Tiles that are not part of the map will return `false`.
     /// Tiles that have a structure will return `false`.
     /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
+    /// Tiles that are completely full of litter will return `false`.
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
@@ -367,6 +393,10 @@ impl MapGeometry {
         }
 
         if self.get_structure(ending_pos).is_some() {
+            return false;
+        }
+
+        if self.get_litter_state(ending_pos) == InventoryState::Full {
             return false;
         }
 
@@ -478,17 +508,54 @@ impl MapGeometry {
         Ok(Height(starting_height.abs_diff(ending_height.0)))
     }
 
-    /// Gets the list of ghost or structure [`Entity`]s at the provided `tile_pos`.
+    /// Gets the [`Entity`] at the provided `tile_pos` that might have or want an item.
     ///
-    /// Priority:
-    /// - ghost terrain
-    /// - ghost structure
-    /// - structure
-    pub(crate) fn ghosts_or_structures(&self, tile_pos: TilePos) -> Vec<Entity> {
+    /// If the `delivery_mode` is [`DeliveryMode::PickUp`], looks for litter, ghost terrain, or structures.
+    /// If the `delivery_mode` is [`DeliveryMode::DropOff`], looks for ghost structures, ghost terrain or structures.
+    pub(crate) fn get_candidates(
+        &self,
+        tile_pos: TilePos,
+        delivery_mode: DeliveryMode,
+    ) -> Vec<Entity> {
         let mut entities = Vec::new();
-        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-            entities.push(ghost_terrain_entity)
+
+        match delivery_mode {
+            DeliveryMode::DropOff => {
+                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+                    entities.push(structure_entity)
+                }
+
+                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+                    entities.push(ghost_terrain_entity)
+                }
+
+                if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
+                    entities.push(ghost_structure_entity)
+                }
+            }
+            DeliveryMode::PickUp => {
+                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
+                    entities.push(structure_entity)
+                }
+
+                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
+                    entities.push(ghost_terrain_entity)
+                }
+
+                if let Some(&litter_entity) = self.terrain_index.get(&tile_pos) {
+                    entities.push(litter_entity)
+                }
+            }
         }
+
+        entities
+    }
+
+    /// Gets entities that units might work at, at the provided `tile_pos`.
+    ///
+    /// Prioritizes ghosts over structures if both are present to allow for replacing structures.
+    pub(crate) fn get_workplaces(&self, tile_pos: TilePos) -> Vec<Entity> {
+        let mut entities = Vec::new();
 
         if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
             entities.push(ghost_structure_entity)
@@ -602,6 +669,19 @@ impl MapGeometry {
     /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
     pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
         self.ghost_terrain_index.get(&tile_pos).copied()
+    }
+
+    /// Sets the amount of litter at the provided `tile_pos`.
+    pub(crate) fn set_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
+        self.litter_index.insert(tile_pos, litter_state);
+    }
+
+    /// Gets the amount of litter at the provided `tile_pos`.
+    pub(crate) fn get_litter_state(&self, tile_pos: TilePos) -> InventoryState {
+        self.litter_index
+            .get(&tile_pos)
+            .copied()
+            .unwrap_or(InventoryState::Empty)
     }
 }
 

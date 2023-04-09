@@ -35,6 +35,9 @@ pub enum TerraformingAction {
 }
 
 impl TerraformingAction {
+    /// The number of items needed to perform each action.
+    const N_ITEMS: u32 = 3;
+
     /// The items needed to perform this action.
     pub(crate) fn input_inventory(&self) -> InputInventory {
         // TODO: vary these inventories based on the terrain type
@@ -42,11 +45,11 @@ impl TerraformingAction {
 
         match self {
             Self::Raise => InputInventory::Exact {
-                inventory: Inventory::new_from_item(soil_id, 10),
+                inventory: Inventory::new_from_item(soil_id, Self::N_ITEMS),
             },
             Self::Lower => InputInventory::default(),
             Self::Change(_terrain) => InputInventory::Exact {
-                inventory: Inventory::new_from_item(soil_id, 10),
+                inventory: Inventory::new_from_item(soil_id, Self::N_ITEMS),
             },
         }
     }
@@ -59,10 +62,10 @@ impl TerraformingAction {
         match self {
             Self::Raise => OutputInventory::default(),
             Self::Lower => OutputInventory {
-                inventory: Inventory::full_from_item(soil_id, 10),
+                inventory: Inventory::full_from_item(soil_id, Self::N_ITEMS),
             },
             Self::Change(_terrain) => OutputInventory {
-                inventory: Inventory::full_from_item(soil_id, 10),
+                inventory: Inventory::full_from_item(soil_id, Self::N_ITEMS),
             },
         }
     }

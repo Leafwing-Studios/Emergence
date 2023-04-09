@@ -372,7 +372,9 @@ impl StorageInventory {
                 ItemKind::Tag(_) => false,
             },
             None => match item_kind {
-                ItemKind::Single(item_id) => self.remaining_reserved_space_for_item(item_id) > 0,
+                ItemKind::Single(item_id) => {
+                    self.remaining_space_for_item(item_id, item_manifest) > 0
+                }
                 ItemKind::Tag(tag) => {
                     !self.is_full() && item_kind.is_compatible_with(tag, item_manifest)
                 }

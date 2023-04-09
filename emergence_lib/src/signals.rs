@@ -9,6 +9,7 @@ use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
+use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
@@ -137,8 +138,17 @@ impl Signals {
 
         let neighboring_signals = match goal {
             Goal::Wander { .. } => return None,
-            Goal::Pickup(item_kind) | Goal::Eat(item_kind) => {
-                let relevant_signal_types = SignalType::find(*item_kind, item_manifest);
+            Goal::Fetch(item_kind)
+            | Goal::Eat(item_kind)
+            | Goal::Store(item_kind)
+            | Goal::Deliver(item_kind)
+            | Goal::Remove(item_kind) => {
+                let relevant_signal_types = SignalType::item_signal_types(
+                    *item_kind,
+                    item_manifest,
+                    goal.delivery_mode().unwrap(),
+                    goal.purpose(),
+                );
                 let mut total_signals = HashMap::new();
 
                 for signal_type in relevant_signal_types {
@@ -152,26 +162,6 @@ impl Signals {
                     }
                 }
                 total_signals
-            }
-            Goal::Store(item_kind) => {
-                let relevant_signal_types = SignalType::store(*item_kind, item_manifest);
-
-                let mut total_signals = HashMap::new();
-
-                for signal_type in relevant_signal_types {
-                    let signals = self.neighboring_signals(signal_type, tile_pos, map_geometry);
-                    for (tile_pos, signal_strength) in signals {
-                        if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
-                            *existing_signal_strength += signal_strength;
-                        } else {
-                            total_signals.insert(tile_pos, signal_strength);
-                        }
-                    }
-                }
-                total_signals
-            }
-            Goal::Deliver(item_kind) => {
-                self.neighboring_signals(SignalType::Pull(*item_kind), tile_pos, map_geometry)
             }
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
@@ -211,7 +201,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in tile_pos.reachable_neighbors(map_geometry) {
+        for neighbor in tile_pos.passable_neighbors(map_geometry) {
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 
@@ -234,7 +224,7 @@ impl Signals {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
                 let mut num_neighbors = 0.0;
-                for neighboring_tile in occupied_tile.reachable_neighbors(map_geometry) {
+                for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
                     num_neighbors += 1.0;
                     addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                 }
@@ -370,41 +360,41 @@ pub enum SignalType {
 }
 
 impl SignalType {
-    /// Returns a list of all signals that are relevant to find items of the provided [`ItemKind`].
+    /// Returns a list of all signals that are relevant to the provided [`ItemKind`].
     ///
-    /// This is used to determine which signals to follow upstream.
-    pub(crate) fn find(item_kind: ItemKind, item_manifest: &ItemManifest) -> Vec<SignalType> {
+    /// If `delivery_mode` is [`DeliveryMode::PickUp`], this will return [`SignalType::Push`] and [`SignalType::Contains`].
+    /// If `delivery_mode` is [`DeliveryMode::DropOff`], this will return [`SignalType::Pull`] and [`SignalType::Stores`].
+    /// If `purpose` is [`Purpose::Intrinsic`], [`SignalType::Stores`] and [`SignalType::Contains`] are excluded.
+    pub(crate) fn item_signal_types(
+        item_kind: ItemKind,
+        item_manifest: &ItemManifest,
+        delivery_mode: DeliveryMode,
+        purpose: Purpose,
+    ) -> Vec<SignalType> {
+        let mut signal_types = Vec::new();
         let kinds = match item_kind {
             ItemKind::Single(item_id) => item_manifest.kinds(item_id),
             ItemKind::Tag(tag) => item_manifest.kinds_with_tag(tag),
         };
 
-        let mut signal_types = Vec::new();
-
-        for kind in kinds {
-            signal_types.push(SignalType::Push(kind));
-            signal_types.push(SignalType::Contains(kind));
+        for item_kind in kinds {
+            match (delivery_mode, purpose) {
+                (DeliveryMode::PickUp, Purpose::Intrinsic) => {
+                    signal_types.push(SignalType::Push(item_kind));
+                }
+                (DeliveryMode::PickUp, Purpose::Instrumental) => {
+                    signal_types.push(SignalType::Push(item_kind));
+                    signal_types.push(SignalType::Contains(item_kind));
+                }
+                (DeliveryMode::DropOff, Purpose::Intrinsic) => {
+                    signal_types.push(SignalType::Pull(item_kind));
+                }
+                (DeliveryMode::DropOff, Purpose::Instrumental) => {
+                    signal_types.push(SignalType::Pull(item_kind));
+                    signal_types.push(SignalType::Stores(item_kind));
+                }
+            }
         }
-
-        signal_types
-    }
-
-    /// Returns a list of all signals that are relevant to storing items of the provided [`ItemKind`].
-    ///
-    /// This is used to determine which signals to follow upstream.
-    pub(crate) fn store(item_kind: ItemKind, item_manifest: &ItemManifest) -> Vec<SignalType> {
-        let kinds = match item_kind {
-            ItemKind::Single(item_id) => item_manifest.kinds(item_id),
-            ItemKind::Tag(tag) => item_manifest.kinds_with_tag(tag),
-        };
-
-        let mut signal_types = Vec::new();
-
-        for kind in kinds {
-            signal_types.push(SignalType::Pull(kind));
-            signal_types.push(SignalType::Stores(kind));
-        }
-
         signal_types
     }
 
@@ -684,7 +674,7 @@ mod tests {
         assert_eq!(
             signals.upstream(
                 TilePos::ZERO,
-                &Goal::Pickup(test_item()),
+                &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
             ),
@@ -752,7 +742,7 @@ mod tests {
         assert_eq!(
             signals.upstream(
                 TilePos::ZERO,
-                &Goal::Pickup(test_item()),
+                &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
             ),
@@ -832,5 +822,48 @@ mod tests {
                 &map_geometry
             )
             .is_some());
+    }
+
+    #[test]
+    fn item_signal_types_are_correct() {
+        let item_kind = test_item();
+        let item_manifest = test_manifest();
+
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::PickUp,
+                Purpose::Intrinsic
+            ),
+            vec![SignalType::Push(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::PickUp,
+                Purpose::Instrumental
+            ),
+            vec![SignalType::Push(item_kind), SignalType::Contains(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::DropOff,
+                Purpose::Intrinsic
+            ),
+            vec![SignalType::Pull(item_kind)]
+        );
+        assert_eq!(
+            SignalType::item_signal_types(
+                item_kind,
+                &item_manifest,
+                DeliveryMode::DropOff,
+                Purpose::Instrumental
+            ),
+            vec![SignalType::Pull(item_kind), SignalType::Stores(item_kind)]
+        );
     }
 }

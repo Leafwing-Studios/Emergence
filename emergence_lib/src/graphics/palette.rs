@@ -146,8 +146,14 @@ pub(crate) mod infovis {
                     lightness: 0.9,
                     alpha: 1.0,
                 },
-                Goal::Pickup(_) => Color::Hsla {
+                Goal::Fetch(_) => Color::Hsla {
                     hue: SignalKind::Pull.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Remove(_) => Color::Hsla {
+                    hue: SignalKind::Push.hue(),
                     saturation: 0.7,
                     lightness: 0.7,
                     alpha: 1.0,
