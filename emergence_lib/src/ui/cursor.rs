@@ -13,7 +13,8 @@ pub(super) struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
+        app.add_system(track_cursor.pipe(ignore))
+            .add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
     }
 }
 
@@ -63,4 +64,20 @@ fn set_cursor(
             Cursor::default(),
         ));
     }
+}
+
+/// Moves the cursor to follow the mouse position
+fn track_cursor(
+    mut cursor_query: Query<&mut Style, With<Cursor>>,
+    window_query: Query<&Window>,
+) -> Option<()> {
+    let window = window_query.get_single().ok()?;
+    let mut cursor_style = cursor_query.get_single_mut().ok()?;
+    let mouse_position = window.cursor_position()?;
+    cursor_style.position = UiRect {
+        left: Val::Px(mouse_position.x - 32.0),
+        bottom: Val::Px(mouse_position.y - 32.0),
+        ..Default::default()
+    };
+    Some(())
 }
