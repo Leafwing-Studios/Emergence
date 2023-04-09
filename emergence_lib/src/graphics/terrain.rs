@@ -4,7 +4,7 @@ use crate::{
     asset_management::manifest::Id,
     crafting::components::StorageInventory,
     items::inventory::InventoryState,
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::TilePos,
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
 use bevy::{prelude::*, utils::HashMap};
@@ -14,11 +14,10 @@ pub(super) fn manage_litter_piles(
     terrain_handles: Res<TerrainHandles>,
     // A simple cache of the current litter piles.
     mut current_litter_piles: Local<HashMap<TilePos, (InventoryState, Entity)>>,
-    terrain_query: Query<(&TilePos, Ref<StorageInventory>), With<Id<Terrain>>>,
+    terrain_query: Query<(Entity, &TilePos, Ref<StorageInventory>), With<Id<Terrain>>>,
     mut commands: Commands,
-    map_geometry: Res<MapGeometry>,
 ) {
-    for (&tile_pos, storage_inventory) in terrain_query.iter() {
+    for (terrain_entity, &tile_pos, storage_inventory) in terrain_query.iter() {
         if !storage_inventory.is_changed() {
             continue;
         }
@@ -48,10 +47,10 @@ pub(super) fn manage_litter_piles(
         let litter_entity = commands
             .spawn(SceneBundle {
                 scene: scene_handle.clone(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
                 ..Default::default()
             })
             .id();
+        commands.entity(terrain_entity).add_child(litter_entity);
         current_litter_piles.insert(tile_pos, (current_inventory_state, litter_entity));
     }
 }
