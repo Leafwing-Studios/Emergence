@@ -200,6 +200,10 @@ fn display_status(
                 ..Default::default()
             };
 
+            // Clippy is wrong.
+            // The semantics here are different: an empty inventory has no items currently,
+            // but an inventory with zero length is a placeholder for an inventory that does not accept items.
+            #[allow(clippy::len_zero)]
             let string = match (input_inventory.len() > 0, output_inventory.len() > 0) {
                 (true, true) => format!(
                     "Deliver {} + Remove {}",
