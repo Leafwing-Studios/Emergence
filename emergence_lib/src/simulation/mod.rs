@@ -49,7 +49,7 @@ impl Plugin for SimulationPlugin {
                 schedule.configure_set(
                     SimulationSet
                         .run_if(in_state(PauseState::Playing))
-                        .run_if(in_state(AssetState::Ready)),
+                        .run_if(in_state(AssetState::FullyLoaded)),
                 );
             })
             .add_plugin(GenerationPlugin {
@@ -82,6 +82,6 @@ enum PauseState {
 /// These:
 /// - are run in [`CoreSchedule::FixedUpdate`]
 /// - only run in [`PauseState::Playing`]
-/// - only run in [`AssetState::Ready`]
+/// - only run in [`AssetState::FullyLoaded`]
 #[derive(SystemSet, PartialEq, Eq, Hash, Debug, Clone)]
 pub(crate) struct SimulationSet;

@@ -52,7 +52,7 @@ pub enum AssetState {
     /// Assets still need to be loaded.
     LoadAssets,
     /// All assets are loaded.
-    Ready,
+    FullyLoaded,
 }
 
 /// The set of all assets that need to be loaded.
@@ -110,7 +110,7 @@ fn check_assets_loaded(
     if assets_to_load.remaining.is_empty() {
         info!("All assets loaded: transitioning to AssetState::Ready");
 
-        next_state.set(AssetState::Ready);
+        next_state.set(AssetState::FullyLoaded);
     } else {
         info!("Waiting for assets to load:\n{}", *assets_to_load);
     }

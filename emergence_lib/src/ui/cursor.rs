@@ -1,0 +1,85 @@
+//! Controls the appearance of the player's cursor.
+
+use bevy::prelude::*;
+
+use crate::{
+    asset_management::AssetState, construction::terraform::TerraformingTool,
+    player_interaction::clipboard::Clipboard, ui::ui_assets::CHOICE_ICON_SIZE,
+};
+
+use super::ui_assets::Icons;
+
+/// The plugin that adds the cursor to the UI and controls its appearance.
+pub(super) struct CursorPlugin;
+
+impl Plugin for CursorPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(track_cursor.pipe(ignore))
+            .add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
+    }
+}
+
+/// Marker component for the cursor entity
+#[derive(Component, Debug, Default, Clone, Copy)]
+struct Cursor;
+
+/// Changes the cursor's UI element based on the current [`Clipboard`] contents
+fn set_cursor(
+    clipboard: Res<Clipboard>,
+    mut cursor_query: Query<&mut UiImage, With<Cursor>>,
+    terraforming_icons: Res<Icons<TerraformingTool>>,
+    mut commands: Commands,
+) {
+    if let Ok(mut cursor_image) = cursor_query.get_single_mut() {
+        if clipboard.is_changed() {
+            info!("Changing cursor image");
+
+            *cursor_image = match *clipboard {
+                // Use the matching icon for the terraforming tool
+                Clipboard::Terraform(terraforming_tool) => {
+                    terraforming_icons.get(terraforming_tool)
+                }
+                // Ghosts are used instead for structures
+                Clipboard::Structures(_) => Handle::default(),
+                // No need to show a custom cursor if we have nothing selected
+                Clipboard::Empty => Handle::default(),
+            }
+            .into()
+        }
+    } else {
+        info!("Spawning cursor entity");
+
+        commands.spawn((
+            ImageBundle {
+                style: Style {
+                    size: Size::new(Val::Px(CHOICE_ICON_SIZE), Val::Px(CHOICE_ICON_SIZE)),
+                    position_type: PositionType::Absolute,
+                    ..Default::default()
+                },
+                image: UiImage {
+                    texture: Handle::default(),
+                    ..default()
+                },
+                ..Default::default()
+            },
+            Cursor::default(),
+        ));
+    }
+}
+
+/// Moves the cursor to follow the mouse position
+fn track_cursor(
+    mut cursor_query: Query<&mut Style, With<Cursor>>,
+    window_query: Query<&Window>,
+) -> Option<()> {
+    let window = window_query.get_single().ok()?;
+    let mut cursor_style = cursor_query.get_single_mut().ok()?;
+    let mouse_position = window.cursor_position()?;
+    cursor_style.position = UiRect {
+        // Center the cursor icon on the mouse position
+        left: Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.),
+        bottom: Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.),
+        ..Default::default()
+    };
+    Some(())
+}

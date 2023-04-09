@@ -12,7 +12,7 @@ use crate::simulation::geometry::TilePos;
 use crate as emergence_lib;
 
 use super::clipboard::Clipboard;
-use super::{cursor::CursorPos, InteractionSystem, PlayerAction};
+use super::{picking::CursorPos, InteractionSystem, PlayerAction};
 
 /// Code and data for selecting groups of tiles
 pub(super) struct SelectionPlugin;
@@ -720,7 +720,7 @@ mod tests {
     use crate::{
         enum_iter::IterableEnum,
         player_interaction::{
-            cursor::CursorPos,
+            picking::CursorPos,
             selection::{CurrentSelection, SelectionVariant},
         },
         simulation::geometry::TilePos,

@@ -102,7 +102,7 @@ impl Plugin for GenerationPlugin {
         app.insert_resource(self.config.clone()).add_systems(
             (generate_terrain, apply_system_buffers, generate_organisms)
                 .chain()
-                .in_schedule(OnEnter(AssetState::Ready)),
+                .in_schedule(OnEnter(AssetState::FullyLoaded)),
         );
     }
 }

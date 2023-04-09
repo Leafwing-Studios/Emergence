@@ -25,7 +25,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
-            .add_system(manage_litter_piles.run_if(in_state(AssetState::Ready)))
+            .add_system(manage_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),

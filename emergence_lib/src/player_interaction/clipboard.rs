@@ -12,7 +12,7 @@ use crate::{
     structures::structure_manifest::Structure,
 };
 
-use super::{cursor::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
+use super::{picking::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;

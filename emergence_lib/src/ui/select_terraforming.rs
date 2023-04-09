@@ -28,7 +28,7 @@ impl Plugin for SelectTerraformingPlugin {
                     update_terraforming_choices,
                     spawn_hex_menu::<TerraformingTool>,
                 )
-                    .distributive_run_if(in_state(AssetState::Ready))
+                    .distributive_run_if(in_state(AssetState::FullyLoaded))
                     .chain(),
             )
             .add_system(

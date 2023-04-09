@@ -29,7 +29,7 @@ impl Plugin for SelectStructurePlugin {
             .add_systems(
                 (update_structure_choices, spawn_hex_menu::<Id<Structure>>)
                     .chain()
-                    .distributive_run_if(in_state(AssetState::Ready)),
+                    .distributive_run_if(in_state(AssetState::FullyLoaded)),
             )
             .add_system(
                 select_hex

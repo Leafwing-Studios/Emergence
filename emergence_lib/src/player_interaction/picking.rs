@@ -11,10 +11,10 @@ use crate::{
     units::unit_manifest::Unit,
 };
 
-/// Controls raycasting and cursor aethetics.
-pub(super) struct CursorPlugin;
+/// Controls raycasting.
+pub(super) struct PickingPlugin;
 
-impl Plugin for CursorPlugin {
+impl Plugin for PickingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
