@@ -77,16 +77,30 @@ pub(super) fn choose_actions(
             let previous_action = current_action.action.clone();
 
             *current_action = match goal {
-                // Alternate between spinning and moving forward.
-                Goal::Wander { .. } => CurrentAction::wander(
-                    previous_action,
-                    unit_tile_pos,
-                    facing,
-                    map_geometry,
-                    &terrain_query,
-                    &terrain_manifest,
-                    rng,
-                ),
+                // Drop whatever you're holding before wandering further
+                Goal::Wander { .. } => match unit_inventory.held_item {
+                    Some(_) => CurrentAction::abandon(
+                        previous_action,
+                        unit_tile_pos,
+                        unit_inventory,
+                        map_geometry,
+                        &item_manifest,
+                        &terrain_storage_query,
+                        &terrain_manifest,
+                        &terrain_query,
+                        facing,
+                        rng,
+                    ),
+                    None => CurrentAction::wander(
+                        previous_action,
+                        unit_tile_pos,
+                        facing,
+                        map_geometry,
+                        &terrain_query,
+                        &terrain_manifest,
+                        rng,
+                    ),
+                },
                 Goal::Fetch(item_kind)
                 | Goal::Deliver(item_kind)
                 | Goal::Store(item_kind)
@@ -613,6 +627,7 @@ impl CurrentAction {
     /// Atempts to find a place to pick up or drop off an item.
     ///
     /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
+    /// The only exception is if the storage inventory is full, in which case the unit will pick up items from there.
     fn find(
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
@@ -639,6 +654,14 @@ impl CurrentAction {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
+                                candidates.push((candidate, tile_pos));
+                            }
+                        }
+
+                        if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
+                            if storage_inventory.is_full()
+                                && storage_inventory.contains_kind(item_kind, item_manifest)
+                            {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
