@@ -34,7 +34,7 @@ impl Plugin for InfoVisPlugin {
                         .after(InteractionSystem::SelectTiles)
                         .after(set_overlay_material),
                 )
-                    .distributive_run_if(in_state(AssetState::Ready)),
+                    .distributive_run_if(in_state(AssetState::FullyLoaded)),
             );
     }
 }

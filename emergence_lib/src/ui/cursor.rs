@@ -13,7 +13,7 @@ pub(super) struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(set_cursor.run_if(in_state(AssetState::Ready)));
+        app.add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
     }
 }
 

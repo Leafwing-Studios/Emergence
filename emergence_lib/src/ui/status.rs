@@ -24,7 +24,7 @@ impl Plugin for StatusPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StatusVisualization>()
             .add_system(cycle_status_visualization.before(display_status))
-            .add_system(display_status.run_if(in_state(AssetState::Ready)))
+            .add_system(display_status.run_if(in_state(AssetState::FullyLoaded)))
             .add_plugin(BillboardPlugin);
     }
 }

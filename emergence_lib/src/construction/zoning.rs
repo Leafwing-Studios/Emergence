@@ -41,7 +41,7 @@ impl Plugin for ZoningPlugin {
         .add_system(
             mark_based_on_zoning
                 .in_set(InteractionSystem::ManagePreviews)
-                .run_if(in_state(AssetState::Ready))
+                .run_if(in_state(AssetState::FullyLoaded))
                 .after(InteractionSystem::ApplyZoning),
         )
         // Must run after crafting emitters in order to wipe out their signals

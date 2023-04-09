@@ -42,10 +42,10 @@ impl Plugin for SelectionDetailsPlugin {
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
                     .before(update_selection_details)
-                    .run_if(in_state(AssetState::Ready)),
+                    .run_if(in_state(AssetState::FullyLoaded)),
             )
             .add_system(change_camera_mode.after(update_selection_details))
-            .add_system(update_selection_details.run_if(in_state(AssetState::Ready)));
+            .add_system(update_selection_details.run_if(in_state(AssetState::FullyLoaded)));
     }
 }
 
