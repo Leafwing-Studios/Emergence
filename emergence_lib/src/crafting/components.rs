@@ -290,6 +290,11 @@ pub(crate) struct OutputInventory {
 }
 
 impl OutputInventory {
+    /// The number of item slots in this inventory.
+    pub(crate) fn len(&self) -> usize {
+        self.inventory.iter().count()
+    }
+
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
     pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
         for item_slot in self.iter_mut() {

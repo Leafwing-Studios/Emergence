@@ -5,9 +5,13 @@ use bevy_mod_billboard::{prelude::BillboardPlugin, BillboardDepth, BillboardText
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::AssetState, crafting::components::CraftingState,
-    items::item_manifest::ItemManifest, player_interaction::PlayerAction,
-    structures::structure_manifest::StructureManifest, terrain::terrain_manifest::TerrainManifest,
+    asset_management::AssetState,
+    construction::terraform::TerraformingAction,
+    crafting::components::{CraftingState, InputInventory, OutputInventory},
+    items::item_manifest::ItemManifest,
+    player_interaction::PlayerAction,
+    structures::structure_manifest::StructureManifest,
+    terrain::terrain_manifest::TerrainManifest,
     units::goals::Goal,
 };
 
@@ -36,21 +40,24 @@ enum StatusVisualization {
     #[default]
     Off,
     /// Only display the status of structures.
-    StructuresOnly,
+    Structures,
     /// Only display the status of units.
-    UnitsOnly,
-    /// Display the status of both units and structures.
-    StructuresAndUnits,
+    Units,
+    /// Only display the status of terraforming actions.
+    Terraforming,
+    /// Display all statuses.
+    All,
 }
 
 impl StatusVisualization {
     /// Cycles to the next option.
     fn cycle(&mut self) {
         *self = match self {
-            StatusVisualization::Off => StatusVisualization::StructuresOnly,
-            StatusVisualization::StructuresOnly => StatusVisualization::UnitsOnly,
-            StatusVisualization::UnitsOnly => StatusVisualization::StructuresAndUnits,
-            StatusVisualization::StructuresAndUnits => StatusVisualization::Off,
+            StatusVisualization::Off => StatusVisualization::Structures,
+            StatusVisualization::Structures => StatusVisualization::Units,
+            StatusVisualization::Units => StatusVisualization::Terraforming,
+            StatusVisualization::Terraforming => StatusVisualization::All,
+            StatusVisualization::All => StatusVisualization::Off,
         };
     }
 
@@ -58,9 +65,10 @@ impl StatusVisualization {
     fn structures_enabled(&self) -> bool {
         match self {
             StatusVisualization::Off => false,
-            StatusVisualization::StructuresOnly => true,
-            StatusVisualization::UnitsOnly => false,
-            StatusVisualization::StructuresAndUnits => true,
+            StatusVisualization::Structures => true,
+            StatusVisualization::Units => false,
+            StatusVisualization::Terraforming => false,
+            StatusVisualization::All => true,
         }
     }
 
@@ -68,9 +76,21 @@ impl StatusVisualization {
     fn units_enabled(&self) -> bool {
         match self {
             StatusVisualization::Off => false,
-            StatusVisualization::StructuresOnly => false,
-            StatusVisualization::UnitsOnly => true,
-            StatusVisualization::StructuresAndUnits => true,
+            StatusVisualization::Structures => false,
+            StatusVisualization::Units => true,
+            StatusVisualization::Terraforming => false,
+            StatusVisualization::All => true,
+        }
+    }
+
+    /// Returns true if the status of terraforming actions should be displayed.
+    fn terraforming_enabled(&self) -> bool {
+        match self {
+            StatusVisualization::Off => false,
+            StatusVisualization::Structures => false,
+            StatusVisualization::Units => false,
+            StatusVisualization::Terraforming => true,
+            StatusVisualization::All => true,
         }
     }
 }
@@ -90,6 +110,10 @@ fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Transform, &Goal)>,
     crafting_query: Query<(&Transform, &CraftingState)>,
+    terraforming_query: Query<
+        (&Transform, &InputInventory, &OutputInventory),
+        With<TerraformingAction>,
+    >,
     status_display_query: Query<Entity, With<StatusDisplay>>,
     fonts: Res<FiraSansFontFamily>,
     item_manifest: Res<ItemManifest>,
@@ -154,6 +178,48 @@ fn display_status(
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),
                             color: goal.color(),
+                        },
+                    )
+                    .with_alignment(TextAlignment::Center),
+                    billboard_depth: BillboardDepth(false),
+                    ..default()
+                })
+                .insert(StatusDisplay);
+        }
+    }
+
+    if status_visualization.terraforming_enabled() {
+        for (unit_transform, input_inventory, output_inventory) in terraforming_query.iter() {
+            let transform = Transform {
+                translation: Vec3::new(
+                    unit_transform.translation.x,
+                    unit_transform.translation.y + 0.5,
+                    unit_transform.translation.z,
+                ),
+                scale: Vec3::splat(0.0085),
+                ..Default::default()
+            };
+
+            let string = match (input_inventory.len() > 0, output_inventory.len() > 0) {
+                (true, true) => format!(
+                    "Deliver {} + Remove {}",
+                    input_inventory.display(&item_manifest),
+                    output_inventory.display(&item_manifest)
+                ),
+                (true, false) => format!("Deliver {}", input_inventory.display(&item_manifest)),
+                (false, true) => format!("Remove {}", output_inventory.display(&item_manifest)),
+                (false, false) => format!(""),
+            };
+
+            commands
+                .spawn(BillboardTextBundle {
+                    transform,
+                    text: Text::from_section(
+                        string,
+                        TextStyle {
+                            font_size: 60.0,
+                            font: fonts.regular.clone_weak(),
+                            color: Color::WHITE,
                         },
                     )
                     .with_alignment(TextAlignment::Center),
