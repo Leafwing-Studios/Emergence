@@ -11,6 +11,9 @@ use crate::{
     terrain::terrain_manifest::TerrainManifest,
 };
 
+/// The size of icons used to represent choices in menus
+pub(crate) const CHOICE_ICON_SIZE: f32 = 64.0;
+
 /// Stores all structural elements of the UI: buttons, frames, widgets and so on
 #[derive(Resource)]
 pub(crate) struct UiElements {

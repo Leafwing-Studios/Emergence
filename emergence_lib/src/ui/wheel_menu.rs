@@ -12,7 +12,7 @@ use crate::{
 use core::fmt::Debug;
 use core::hash::Hash;
 
-use super::ui_assets::{Icons, UiElements};
+use super::ui_assets::{Icons, UiElements, CHOICE_ICON_SIZE};
 
 /// A marker component for any element of a hex menu.
 #[derive(Component)]
@@ -151,8 +151,6 @@ pub(super) fn spawn_hex_menu<D: Choice>(
     available_choices: Res<AvailableChoices<D>>,
     icons: Res<Icons<D>>,
 ) {
-    /// The size of the hexes used in this menu.
-    const HEX_SIZE: f32 = 64.0;
     if actions.just_pressed(D::ACTIVATION) {
         if let Some(cursor_pos) = cursor_pos.maybe_screen_pos() {
             let mut arrangement = HexMenuArrangement {
@@ -163,8 +161,8 @@ pub(super) fn spawn_hex_menu<D: Choice>(
                     orientation: HexOrientation::pointy(),
                     origin: cursor_pos,
                     hex_size: Vec2 {
-                        x: HEX_SIZE,
-                        y: HEX_SIZE,
+                        x: CHOICE_ICON_SIZE,
+                        y: CHOICE_ICON_SIZE,
                     },
                 },
             };

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::AssetState, construction::terraform::TerraformingTool,
-    player_interaction::clipboard::Clipboard,
+    player_interaction::clipboard::Clipboard, ui::ui_assets::CHOICE_ICON_SIZE,
 };
 
 use super::ui_assets::Icons;
@@ -51,7 +51,7 @@ fn set_cursor(
         commands.spawn((
             ImageBundle {
                 style: Style {
-                    size: Size::new(Val::Px(64.0), Val::Px(64.0)),
+                    size: Size::new(Val::Px(CHOICE_ICON_SIZE), Val::Px(CHOICE_ICON_SIZE)),
                     position_type: PositionType::Absolute,
                     ..Default::default()
                 },
@@ -75,8 +75,9 @@ fn track_cursor(
     let mut cursor_style = cursor_query.get_single_mut().ok()?;
     let mouse_position = window.cursor_position()?;
     cursor_style.position = UiRect {
-        left: Val::Px(mouse_position.x - 32.0),
-        bottom: Val::Px(mouse_position.y - 32.0),
+        // Center the cursor icon on the mouse position
+        left: Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.),
+        bottom: Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.),
         ..Default::default()
     };
     Some(())
