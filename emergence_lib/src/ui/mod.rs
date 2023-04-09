@@ -17,6 +17,7 @@ use crate::{
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 
+mod cursor;
 mod intent;
 mod overlay;
 mod production_statistics;
