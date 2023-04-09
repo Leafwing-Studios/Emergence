@@ -613,6 +613,7 @@ impl CurrentAction {
     /// Atempts to find a place to pick up or drop off an item.
     ///
     /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
+    /// The only exception is if the storage inventory is full, in which case the unit will pick up items from there.
     fn find(
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
@@ -639,6 +640,14 @@ impl CurrentAction {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
+                                candidates.push((candidate, tile_pos));
+                            }
+                        }
+
+                        if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
+                            if storage_inventory.is_full()
+                                && storage_inventory.contains_kind(item_kind, item_manifest)
+                            {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
