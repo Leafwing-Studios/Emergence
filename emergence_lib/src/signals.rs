@@ -364,7 +364,7 @@ impl SignalType {
     ///
     /// If `delivery_mode` is [`DeliveryMode::PickUp`], this will return [`SignalType::Push`] and [`SignalType::Contains`].
     /// If `delivery_mode` is [`DeliveryMode::DropOff`], this will return [`SignalType::Pull`] and [`SignalType::Stores`].
-    /// If `purpose` is [`Purpose::Primary`], [`SignalType::Stores`] and [`SignalType::Contains`] are excluded.
+    /// If `purpose` is [`Purpose::Intrinsic`], [`SignalType::Stores`] and [`SignalType::Contains`] are excluded.
     pub(crate) fn item_signal_types(
         item_kind: ItemKind,
         item_manifest: &ItemManifest,
