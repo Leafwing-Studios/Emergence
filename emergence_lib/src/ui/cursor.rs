@@ -29,7 +29,9 @@ fn set_cursor(
     mut commands: Commands,
 ) {
     if let Ok(mut cursor_image) = cursor_query.get_single_mut() {
-        if cursor_image.is_changed() {
+        if clipboard.is_changed() {
+            info!("Changing cursor image");
+
             *cursor_image = match *clipboard {
                 // Use the matching icon for the terraforming tool
                 Clipboard::Terraform(terraforming_tool) => {
@@ -43,12 +45,18 @@ fn set_cursor(
             .into()
         }
     } else {
+        info!("Spawning cursor entity");
+
         commands.spawn((
-            NodeBundle {
+            ImageBundle {
                 style: Style {
-                    size: Size::new(Val::Px(32.0), Val::Px(32.0)),
+                    size: Size::new(Val::Px(64.0), Val::Px(64.0)),
                     position_type: PositionType::Absolute,
                     ..Default::default()
+                },
+                image: UiImage {
+                    texture: Handle::default(),
+                    ..default()
                 },
                 ..Default::default()
             },

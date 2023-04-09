@@ -5,6 +5,7 @@ use crate::{
     construction::terraform::TerraformingTool,
     structures::structure_manifest::Structure,
     ui::{
+        cursor::CursorPlugin,
         overlay::OverlayMenuPlugin,
         production_statistics::ProductionStatisticsPlugin,
         select_structure::SelectStructurePlugin,
@@ -55,6 +56,7 @@ impl Plugin for UiPlugin {
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
+        .add_plugin(CursorPlugin)
         .add_plugin(SelectionDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
         .add_plugin(StatusPlugin)
