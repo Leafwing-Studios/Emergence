@@ -1,3 +1,5 @@
+//! Graphics and animation code for terrain.
+
 use crate::{
     asset_management::manifest::Id,
     crafting::components::StorageInventory,
@@ -6,8 +8,6 @@ use crate::{
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
 use bevy::{prelude::*, utils::HashMap};
-
-/// Graphics and animation code for terrain.
 
 /// Spawn and despawn litter scenes based on the items stored as litter on each tile.
 pub(super) fn manage_litter_piles(
