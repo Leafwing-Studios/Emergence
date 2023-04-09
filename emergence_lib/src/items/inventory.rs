@@ -34,7 +34,7 @@ pub struct Inventory {
 }
 
 /// The fullness of an inventory
-#[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Default, Clone, Copy)]
 pub enum InventoryState {
     /// Fully empty.
     Empty,
