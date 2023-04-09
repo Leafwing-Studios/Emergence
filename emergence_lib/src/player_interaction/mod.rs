@@ -10,8 +10,8 @@ use leafwing_input_manager::{
 pub(crate) mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
-pub(crate) mod cursor;
 pub(crate) mod intent;
+pub(crate) mod picking;
 pub(crate) mod selection;
 
 /// All of the code needed for users to interact with the simulation.
@@ -24,7 +24,7 @@ impl Plugin for InteractionPlugin {
             .insert_resource(PlayerAction::default_input_map())
             .add_plugin(camera::CameraPlugin)
             .add_plugin(abilities::AbilitiesPlugin)
-            .add_plugin(cursor::CursorPlugin)
+            .add_plugin(picking::PickingPlugin)
             .add_plugin(intent::IntentPlugin)
             .add_plugin(selection::SelectionPlugin)
             .add_plugin(clipboard::ClipboardPlugin);

@@ -8,7 +8,7 @@ use crate::{
     construction::{demolition::MarkedForDemolition, ghosts::Preview},
     player_interaction::{
         clipboard::{Clipboard, ClipboardData},
-        cursor::CursorPos,
+        picking::CursorPos,
         selection::CurrentSelection,
         InteractionSystem, PlayerAction,
     },

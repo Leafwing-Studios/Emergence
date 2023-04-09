@@ -1,7 +1,7 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
-use super::cursor::CursorPos;
 use super::intent::{Intent, IntentPool};
+use super::picking::CursorPos;
 use super::InteractionSystem;
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;

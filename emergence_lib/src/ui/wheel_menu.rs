@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     graphics::palette::ui::MENU_NEUTRAL_COLOR,
-    player_interaction::{cursor::CursorPos, PlayerAction},
+    player_interaction::{picking::CursorPos, PlayerAction},
 };
 
 use core::fmt::Debug;
