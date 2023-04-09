@@ -77,16 +77,30 @@ pub(super) fn choose_actions(
             let previous_action = current_action.action.clone();
 
             *current_action = match goal {
-                // Alternate between spinning and moving forward.
-                Goal::Wander { .. } => CurrentAction::wander(
-                    previous_action,
-                    unit_tile_pos,
-                    facing,
-                    map_geometry,
-                    &terrain_query,
-                    &terrain_manifest,
-                    rng,
-                ),
+                // Drop whatever you're holding before wandering further
+                Goal::Wander { .. } => match unit_inventory.held_item {
+                    Some(_) => CurrentAction::abandon(
+                        previous_action,
+                        unit_tile_pos,
+                        unit_inventory,
+                        map_geometry,
+                        &item_manifest,
+                        &terrain_storage_query,
+                        &terrain_manifest,
+                        &terrain_query,
+                        facing,
+                        rng,
+                    ),
+                    None => CurrentAction::wander(
+                        previous_action,
+                        unit_tile_pos,
+                        facing,
+                        map_geometry,
+                        &terrain_query,
+                        &terrain_manifest,
+                        rng,
+                    ),
+                },
                 Goal::Fetch(item_kind)
                 | Goal::Deliver(item_kind)
                 | Goal::Store(item_kind)
