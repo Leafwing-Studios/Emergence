@@ -9,6 +9,7 @@ use crate::{
 
 use super::ui_assets::Icons;
 
+/// The plugin that adds the cursor to the UI and controls its appearance.
 pub(super) struct CursorPlugin;
 
 impl Plugin for CursorPlugin {

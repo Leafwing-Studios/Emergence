@@ -82,6 +82,6 @@ enum PauseState {
 /// These:
 /// - are run in [`CoreSchedule::FixedUpdate`]
 /// - only run in [`PauseState::Playing`]
-/// - only run in [`AssetState::Ready`]
+/// - only run in [`AssetState::FullyLoaded`]
 #[derive(SystemSet, PartialEq, Eq, Hash, Debug, Clone)]
 pub(crate) struct SimulationSet;
