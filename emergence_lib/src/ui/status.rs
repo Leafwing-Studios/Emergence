@@ -212,7 +212,7 @@ fn display_status(
                 ),
                 (true, false) => format!("Deliver {}", input_inventory.display(&item_manifest)),
                 (false, true) => format!("Remove {}", output_inventory.display(&item_manifest)),
-                (false, false) => format!(""),
+                (false, false) => String::new(),
             };
 
             commands
