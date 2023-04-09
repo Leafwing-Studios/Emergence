@@ -612,7 +612,7 @@ impl CurrentAction {
 
     /// Atempts to find a place to pick up or drop off an item.
     ///
-    /// If the `purpose` is [`Purpose::Primary`], items will not be picked up from or dropped off at a [`StorageInventory`].
+    /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
     fn find(
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
