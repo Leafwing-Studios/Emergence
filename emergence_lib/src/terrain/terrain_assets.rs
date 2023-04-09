@@ -6,6 +6,7 @@ use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     enum_iter::IterableEnum,
     graphics::palette::environment::COLUMN_COLOR,
+    items::inventory::InventoryState,
     player_interaction::selection::ObjectInteraction,
     simulation::geometry::{hexagonal_column, Height, MapGeometry},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
@@ -24,6 +25,8 @@ pub(crate) struct TerrainHandles {
     pub(crate) column_material: Handle<StandardMaterial>,
     /// The materials used to display player interaction with terrain tiles
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
+    /// Models used to depict litter on tiles.
+    pub(crate) litter_models: HashMap<InventoryState, Handle<Scene>>,
 }
 
 impl Loadable for TerrainHandles {
@@ -39,6 +42,18 @@ impl Loadable for TerrainHandles {
             let scene = asset_server.load(path_string);
             scenes.insert(Id::from_name(name.to_string()), scene);
         }
+
+        let mut litter_models = HashMap::new();
+        // TODO: these should probably be procedurally generated to match the stored item type.
+        litter_models.insert(
+            InventoryState::Partial,
+            asset_server.load("litter/partial.gltf#Scene0"),
+        );
+
+        litter_models.insert(
+            InventoryState::Full,
+            asset_server.load("litter/pile.gltf#Scene0"),
+        );
 
         let map_geometry = world.resource::<MapGeometry>();
         let column_mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
@@ -67,6 +82,7 @@ impl Loadable for TerrainHandles {
             column_mesh,
             column_material,
             interaction_materials,
+            litter_models,
         });
     }
 

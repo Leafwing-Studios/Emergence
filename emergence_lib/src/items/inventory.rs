@@ -34,7 +34,7 @@ pub struct Inventory {
 }
 
 /// The fullness of an inventory
-#[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Default, Clone, Copy)]
 pub enum InventoryState {
     /// Fully empty.
     Empty,
@@ -115,6 +115,10 @@ impl Inventory {
 
     /// How full is this inventory?
     pub(crate) fn state(&self) -> InventoryState {
+        if self.max_slot_count == 0 || self.is_empty() {
+            return InventoryState::Empty;
+        }
+
         let mut inventory_state: Option<InventoryState> = None;
 
         for item_slot in self.iter() {
