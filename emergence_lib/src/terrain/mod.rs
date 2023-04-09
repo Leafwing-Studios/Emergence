@@ -116,6 +116,7 @@ fn respond_to_height_changes(
     }
 }
 
+/// Updates the signals produced by terrain tiles.
 fn set_terrain_emitters(
     mut query: Query<(&mut Emitter, Ref<StorageInventory>), With<Id<Terrain>>>,
 ) {

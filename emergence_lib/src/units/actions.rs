@@ -1069,8 +1069,8 @@ impl CurrentAction {
                 unit_tile_pos,
                 facing,
                 map_geometry,
-                &terrain_query,
-                &terrain_manifest,
+                terrain_query,
+                terrain_manifest,
             ),
             _ => CurrentAction::random_spin(rng),
         }
