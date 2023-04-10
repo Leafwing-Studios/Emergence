@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -288,9 +289,18 @@ pub(super) fn sprout_seeds(
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
+    // TODO: add germination conditions, and vary this based on the seed type.
+    /// The chance that a seed will sprout when dropped on the ground each tick.
+    const SEED_SPROUT_CHANCE: f32 = 0.01;
+
     let rng = &mut rand::thread_rng();
 
     for (&tile_pos, mut storage) in litter_query.iter_mut() {
+        // Roll to see if any seeds will sprout for this tile this tick.
+        if rng.gen::<f32>() > SEED_SPROUT_CHANCE {
+            continue;
+        }
+
         for item_slot in storage.iter_mut() {
             let item_id = item_slot.item_id();
             let Some(organism_id) = item_manifest.get(item_id).seed else { continue };
