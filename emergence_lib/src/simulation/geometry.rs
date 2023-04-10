@@ -723,6 +723,7 @@ pub(crate) struct Facing {
 }
 
 impl Facing {
+    /// Generates a random facing.
     pub(crate) fn random(rng: &mut ThreadRng) -> Self {
         let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
 

@@ -113,7 +113,7 @@ impl From<RawItemData> for ItemData {
         Self {
             stack_size: raw.stack_size,
             compostable: raw.compostable,
-            seed: raw.seed.map(|raw_id| OrganismId::from(raw_id)),
+            seed: raw.seed.map(OrganismId::from),
         }
     }
 }

@@ -278,7 +278,7 @@ pub(super) fn transform_when_lifecycle_complete(
     }
 }
 
-/// Items with [`ItemTag::Seed`] that are dropped on the ground will be consumed and transformed into a new organism.
+/// Items with [`ItemTag::Seed`](crate::crafting::item_tags::ItemTag) that are dropped on the ground will be consumed and transformed into a new organism.
 pub(super) fn sprout_seeds(
     mut litter_query: Query<(&TilePos, &mut StorageInventory), With<Id<Terrain>>>,
     terrain_query: Query<&Id<Terrain>>,
