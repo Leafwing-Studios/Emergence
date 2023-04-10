@@ -6,7 +6,7 @@ use emergence_lib::{
         item_tags::ItemTag,
         recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
     },
-    items::item_manifest::{ItemData, RawItemManifest},
+    items::item_manifest::{RawItemData, RawItemManifest},
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
@@ -33,16 +33,18 @@ fn can_serialize_item_manifest() {
         items: HashMap::from_iter(vec![
             (
                 "test_item".to_string(),
-                ItemData {
+                RawItemData {
                     stack_size: 1,
                     compostable: true,
+                    seed: None,
                 },
             ),
             (
                 "test_item_2".to_string(),
-                ItemData {
+                RawItemData {
                     stack_size: 2,
                     compostable: false,
+                    seed: Some(RawOrganismId::Structure("test_organism".to_string())),
                 },
             ),
         ]),

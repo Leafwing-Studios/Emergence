@@ -15,6 +15,8 @@ use crate::{
 pub enum ItemTag {
     /// Items that can be composted.
     Compostable,
+    /// Items that will grow into something if left on the ground.
+    Seed,
 }
 
 impl ItemTag {
@@ -22,6 +24,7 @@ impl ItemTag {
     pub fn name(&self) -> &'static str {
         match self {
             ItemTag::Compostable => "Compostable",
+            ItemTag::Seed => "Seed",
         }
     }
 }
