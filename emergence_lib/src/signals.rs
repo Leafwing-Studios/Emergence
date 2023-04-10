@@ -19,6 +19,7 @@ use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
+use std::fmt::Display;
 use std::ops::MulAssign;
 
 use crate::asset_management::manifest::Id;
@@ -581,6 +582,16 @@ impl SignalModifier {
     ///
     /// This should be greater than 1.
     const RATIO: f32 = 10.;
+}
+
+impl Display for SignalModifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SignalModifier::None => write!(f, "None"),
+            SignalModifier::Amplify(duration) => write!(f, "Amplify({})", duration.as_secs_f32()),
+            SignalModifier::Dampen(duration) => write!(f, "Dampen({})", duration.as_secs_f32()),
+        }
+    }
 }
 
 impl Add for SignalModifier {

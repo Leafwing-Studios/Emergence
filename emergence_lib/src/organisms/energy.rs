@@ -226,6 +226,16 @@ impl VigorModifier {
     const RATIO: f32 = 10.;
 }
 
+impl Display for VigorModifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VigorModifier::None => write!(f, "None"),
+            VigorModifier::Flourish(duration) => write!(f, "Flourish({})", duration.as_secs_f32()),
+            VigorModifier::Fallow(duration) => write!(f, "Fallow({})", duration.as_secs_f32()),
+        }
+    }
+}
+
 impl Add for VigorModifier {
     type Output = Self;
 
