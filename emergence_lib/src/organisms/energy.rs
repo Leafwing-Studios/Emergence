@@ -1,13 +1,11 @@
 //! Logic and data types for energy.
 
 use bevy::prelude::*;
-use bevy::utils::Duration;
 use core::fmt::Display;
-use core::ops::{Add, Div, Mul};
-use derive_more::{Add, AddAssign, Sub, SubAssign};
+use core::ops::{Div, Mul};
+use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 use serde::{Deserialize, Serialize};
-use std::ops::AddAssign;
 
 use crate::asset_management::manifest::Id;
 use crate::simulation::geometry::MapGeometry;
@@ -179,8 +177,8 @@ pub(super) fn consume_energy(
 
         let vigor_multiplier = match vigor_modifier {
             VigorModifier::None => 1.,
-            VigorModifier::Flourish(..) => VigorModifier::RATIO,
-            VigorModifier::Fallow(..) => 1. / VigorModifier::RATIO,
+            VigorModifier::Flourish => VigorModifier::RATIO,
+            VigorModifier::Fallow => 1. / VigorModifier::RATIO,
         };
         // Note that regen rates are almost always negative.
         let regen_rate = energy_pool.regen_per_second * vigor_multiplier;
@@ -208,15 +206,15 @@ pub(super) fn kill_organisms_when_out_of_energy(
 /// Modifies the working speed and energy consumption rate of an organism.
 ///
 /// This is stored as a component on each tile, and is applied to all entities at that tile position.
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Debug, Display, Default, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VigorModifier {
     /// No modifier is applied.
     #[default]
     None,
-    /// Working speed and energy consumption is multiplied for the duration of this effect.
-    Flourish(Duration),
-    /// Working speed and energy consumption is divided for the duration of this effect.
-    Fallow(Duration),
+    /// Working speed and energy consumption is multiplied.
+    Flourish,
+    /// Working speed and energy consumption is divided.
+    Fallow,
 }
 
 impl VigorModifier {
@@ -224,82 +222,4 @@ impl VigorModifier {
     ///
     /// This should be greater than 1.
     const RATIO: f32 = 10.;
-}
-
-impl Display for VigorModifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VigorModifier::None => write!(f, "None"),
-            VigorModifier::Flourish(duration) => write!(f, "Flourish({})", duration.as_secs_f32()),
-            VigorModifier::Fallow(duration) => write!(f, "Fallow({})", duration.as_secs_f32()),
-        }
-    }
-}
-
-impl Add for VigorModifier {
-    type Output = Self;
-
-    /// Combines two modifiers, returning the resulting modifier.
-    ///
-    /// If the two modifiers are the same, their durations are added together.
-    /// If the two modifiers are different, they cancel each other out.
-    fn add(self, other: VigorModifier) -> Self {
-        match (self, other) {
-            (VigorModifier::None, other) | (other, VigorModifier::None) => other,
-            (
-                VigorModifier::Flourish(amplify_duration),
-                VigorModifier::Fallow(diminish_duration),
-            )
-            | (
-                VigorModifier::Fallow(diminish_duration),
-                VigorModifier::Flourish(amplify_duration),
-            ) => {
-                if amplify_duration == diminish_duration {
-                    VigorModifier::None
-                } else if amplify_duration > diminish_duration {
-                    VigorModifier::Flourish(amplify_duration - diminish_duration)
-                } else {
-                    VigorModifier::Fallow(diminish_duration - amplify_duration)
-                }
-            }
-            (VigorModifier::Flourish(a), VigorModifier::Flourish(b)) => {
-                VigorModifier::Flourish(a + b)
-            }
-            (VigorModifier::Fallow(a), VigorModifier::Fallow(b)) => VigorModifier::Fallow(a + b),
-        }
-    }
-}
-
-impl AddAssign for VigorModifier {
-    fn add_assign(&mut self, other: Self) {
-        *self = *self + other;
-    }
-}
-
-/// Ticks down the duration of all [`VigorModifier`] components.
-pub(super) fn tick_vigor_modifiers(
-    mut query: Query<&mut VigorModifier>,
-    fixed_time: Res<FixedTime>,
-) {
-    let delta_time = fixed_time.period;
-
-    for mut vigor_modifier in query.iter_mut() {
-        match *vigor_modifier {
-            VigorModifier::None => {}
-            VigorModifier::Flourish(duration) => {
-                if duration > delta_time {
-                    *vigor_modifier = VigorModifier::Flourish(duration - delta_time);
-                } else {
-                    *vigor_modifier = VigorModifier::None;
-                }
-            }
-            VigorModifier::Fallow(duration) => {
-                if duration > delta_time {
-                    *vigor_modifier = VigorModifier::Fallow(duration - delta_time);
-                } else {
-                    *vigor_modifier = VigorModifier::None;
-                }
-            }
-        }
-    }
 }

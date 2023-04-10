@@ -11,15 +11,12 @@ use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
-use bevy::{
-    prelude::*,
-    utils::{Duration, HashMap},
-};
+use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use derive_more::Display;
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
-use std::fmt::Display;
 use std::ops::MulAssign;
 
 use crate::asset_management::manifest::Id;
@@ -42,12 +39,7 @@ pub(crate) struct SignalsPlugin;
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Signals>().add_systems(
-            (
-                tick_signal_modifiers,
-                emit_signals,
-                diffuse_signals,
-                degrade_signals,
-            )
+            (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -506,8 +498,8 @@ impl SignalStrength {
     pub fn apply_modifier(&mut self, modifier: SignalModifier) {
         *self *= match modifier {
             SignalModifier::None => 1.,
-            SignalModifier::Amplify(_) => SignalModifier::RATIO,
-            SignalModifier::Dampen(_) => 1. / SignalModifier::RATIO,
+            SignalModifier::Amplify => SignalModifier::RATIO,
+            SignalModifier::Dampen => 1. / SignalModifier::RATIO,
         }
     }
 }
@@ -566,15 +558,15 @@ pub(crate) struct Emitter {
 /// Modifies the strength of a signal.
 ///
 /// This is stored as a component on each tile, and is applied to all signals emitted from entities at that tile position.
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Debug, Display, Default, Clone, Copy, PartialEq, Eq)]
 pub enum SignalModifier {
     /// No modifier is applied.
     #[default]
     None,
     /// The signal strength is multiplied for the duration of this effect.
-    Amplify(Duration),
+    Amplify,
     /// The signal strength is divided for the duration of this effect.
-    Dampen(Duration),
+    Dampen,
 }
 
 impl SignalModifier {
@@ -582,84 +574,6 @@ impl SignalModifier {
     ///
     /// This should be greater than 1.
     const RATIO: f32 = 10.;
-}
-
-impl Display for SignalModifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SignalModifier::None => write!(f, "None"),
-            SignalModifier::Amplify(duration) => write!(f, "Amplify({})", duration.as_secs_f32()),
-            SignalModifier::Dampen(duration) => write!(f, "Dampen({})", duration.as_secs_f32()),
-        }
-    }
-}
-
-impl Add for SignalModifier {
-    type Output = Self;
-
-    /// Combines two modifiers, returning the resulting modifier.
-    ///
-    /// If the two modifiers are the same, their durations are added together.
-    /// If the two modifiers are different, they cancel each other out.
-    fn add(self, other: SignalModifier) -> Self {
-        match (self, other) {
-            (SignalModifier::None, other) | (other, SignalModifier::None) => other,
-            (
-                SignalModifier::Amplify(amplify_duration),
-                SignalModifier::Dampen(diminish_duration),
-            )
-            | (
-                SignalModifier::Dampen(diminish_duration),
-                SignalModifier::Amplify(amplify_duration),
-            ) => {
-                if amplify_duration == diminish_duration {
-                    SignalModifier::None
-                } else if amplify_duration > diminish_duration {
-                    SignalModifier::Amplify(amplify_duration - diminish_duration)
-                } else {
-                    SignalModifier::Dampen(diminish_duration - amplify_duration)
-                }
-            }
-            (SignalModifier::Amplify(a), SignalModifier::Amplify(b)) => {
-                SignalModifier::Amplify(a + b)
-            }
-            (SignalModifier::Dampen(a), SignalModifier::Dampen(b)) => SignalModifier::Dampen(a + b),
-        }
-    }
-}
-
-impl AddAssign for SignalModifier {
-    fn add_assign(&mut self, other: SignalModifier) {
-        *self = *self + other
-    }
-}
-
-/// Ticks down the duration of all signal modifiers.
-fn tick_signal_modifiers(
-    mut modifier_query: Query<&mut SignalModifier>,
-    fixed_time: Res<FixedTime>,
-) {
-    let delta_time = fixed_time.period;
-
-    for mut modifier in modifier_query.iter_mut() {
-        match *modifier {
-            SignalModifier::None => {}
-            SignalModifier::Amplify(duration) => {
-                if duration > delta_time {
-                    *modifier = SignalModifier::Amplify(duration - delta_time);
-                } else {
-                    *modifier = SignalModifier::None;
-                }
-            }
-            SignalModifier::Dampen(duration) => {
-                if duration > delta_time {
-                    *modifier = SignalModifier::Dampen(duration - delta_time);
-                } else {
-                    *modifier = SignalModifier::None;
-                }
-            }
-        }
-    }
 }
 
 /// Emits signals from [`Emitter`] sources.
@@ -1005,29 +919,5 @@ mod tests {
             ),
             vec![SignalType::Pull(item_kind), SignalType::Stores(item_kind)]
         );
-    }
-
-    #[test]
-    fn modifiers_add_correctly() {
-        let amplify = SignalModifier::Amplify(Duration::from_secs(1));
-        let diminish = SignalModifier::Dampen(Duration::from_secs(1));
-        let double_amplify = SignalModifier::Amplify(Duration::from_secs(2));
-        let double_diminish = SignalModifier::Dampen(Duration::from_secs(2));
-
-        let none = SignalModifier::None;
-
-        assert_eq!(amplify + none, amplify);
-        assert_eq!(none + amplify, amplify);
-        assert_eq!(diminish + none, diminish);
-        assert_eq!(none + diminish, diminish);
-
-        assert_eq!(amplify + diminish, none);
-        assert_eq!(diminish + amplify, none);
-
-        assert_eq!(amplify + amplify, double_amplify);
-        assert_eq!(diminish + diminish, double_diminish);
-
-        assert_eq!(double_amplify + diminish, amplify);
-        assert_eq!(double_diminish + amplify, diminish);
     }
 }

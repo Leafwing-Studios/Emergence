@@ -4,7 +4,7 @@ use crate as emergence_lib;
 use crate::asset_management::manifest::Id;
 use crate::organisms::energy::VigorModifier;
 use crate::signals::SignalModifier;
-use crate::simulation::geometry::MapGeometry;
+use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::terrain::terrain_manifest::Terrain;
 
@@ -13,6 +13,7 @@ use super::picking::CursorPos;
 use super::selection::CurrentSelection;
 use super::PlayerAction;
 use bevy::prelude::*;
+use bevy::utils::HashSet;
 use derive_more::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use emergence_macros::IterableEnum;
@@ -80,12 +81,26 @@ fn use_ability(
     fixed_time: Res<FixedTime>,
     mut terrain_query: Query<(&mut VigorModifier, &mut SignalModifier), With<Id<Terrain>>>,
     map_geometry: Res<MapGeometry>,
+    mut previously_modified_tiles: Local<HashSet<TilePos>>,
 ) {
     let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
     if relevant_tiles.is_empty() {
         return;
     }
     let Tool::Ability(ability) = *tool else { return };
+
+    // Clear all previously modified tiles
+    // By caching which tiles we touched, we can avoid iterating over the entire map every frame
+    for &tile_pos in previously_modified_tiles.iter() {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let (mut vigor_modifier, mut signal_modifier) =
+            terrain_query.get_mut(terrain_entity).unwrap();
+
+        *vigor_modifier = VigorModifier::None;
+        *signal_modifier = SignalModifier::None;
+    }
+    // Clear, rather than re-allocate
+    previously_modified_tiles.clear();
 
     if player_actions.pressed(PlayerAction::UseTool) {
         let delta_time = fixed_time.period;
@@ -99,18 +114,15 @@ fn use_ability(
                 let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
                 let (mut vigor_modifier, mut signal_modifier) =
                     terrain_query.get_mut(terrain_entity).unwrap();
+                previously_modified_tiles.insert(tile_pos);
 
                 match ability {
                     IntentAbility::Lure => todo!(),
                     IntentAbility::Warning => todo!(),
-                    IntentAbility::Flourish => {
-                        *vigor_modifier = VigorModifier::Flourish(delta_time)
-                    }
-                    IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow(delta_time),
-                    IntentAbility::Amplify => {
-                        *signal_modifier = SignalModifier::Amplify(delta_time)
-                    }
-                    IntentAbility::Dampen => *signal_modifier = SignalModifier::Dampen(delta_time),
+                    IntentAbility::Flourish => *vigor_modifier = VigorModifier::Flourish,
+                    IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow,
+                    IntentAbility::Amplify => *signal_modifier = SignalModifier::Amplify,
+                    IntentAbility::Dampen => *signal_modifier = SignalModifier::Dampen,
                 }
             }
         }

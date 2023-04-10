@@ -11,10 +11,7 @@ use crate::{
 };
 
 use self::{
-    energy::{
-        consume_energy, kill_organisms_when_out_of_energy, tick_vigor_modifiers, EnergyPool,
-        VigorModifier,
-    },
+    energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool, VigorModifier},
     lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
 };
 
@@ -150,7 +147,6 @@ impl Plugin for OrganismPlugin {
                 kill_organisms_when_out_of_energy,
                 transform_when_lifecycle_complete,
                 sprout_seeds,
-                tick_vigor_modifiers,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
