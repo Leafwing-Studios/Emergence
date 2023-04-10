@@ -57,7 +57,7 @@ fn handle_selection(
     match result {
         Ok(element) => {
             if element.is_complete() {
-                *tool = Tool::Ability(element.data().clone());
+                *tool = Tool::Ability(*element.data());
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {

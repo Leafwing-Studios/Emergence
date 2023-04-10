@@ -7,6 +7,7 @@ use crate::{
     structures::structure_manifest::Structure,
     ui::{
         cursor::CursorPlugin,
+        intent::IntentPlugin,
         overlay::OverlayMenuPlugin,
         production_statistics::ProductionStatisticsPlugin,
         select_ability::SelectAbilityPlugin,
@@ -63,6 +64,7 @@ impl Plugin for UiPlugin {
         .add_plugin(CursorPlugin)
         .add_plugin(SelectionDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
+        .add_plugin(IntentPlugin)
         .add_plugin(StatusPlugin)
         .add_plugin(OverlayMenuPlugin)
         .add_plugin(SelectStructurePlugin)
