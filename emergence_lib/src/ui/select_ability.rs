@@ -2,6 +2,7 @@
 
 use crate::{
     asset_management::AssetState,
+    enum_iter::IterableEnum,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{abilities::IntentAbility, clipboard::Tool, PlayerAction},
 };
@@ -18,13 +19,16 @@ pub(super) struct SelectAbilityPlugin;
 
 impl Plugin for SelectAbilityPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AvailableChoices<IntentAbility>>()
-            .add_system(spawn_hex_menu::<IntentAbility>.run_if(in_state(AssetState::FullyLoaded)))
-            .add_system(
-                select_hex
-                    .pipe(handle_selection)
-                    .run_if(resource_exists::<HexMenuArrangement<IntentAbility>>()),
-            );
+        // TODO: these should unlock over time
+        app.insert_resource(AvailableChoices::<IntentAbility> {
+            choices: IntentAbility::variants().collect(),
+        })
+        .add_system(spawn_hex_menu::<IntentAbility>.run_if(in_state(AssetState::FullyLoaded)))
+        .add_system(
+            select_hex
+                .pipe(handle_selection)
+                .run_if(resource_exists::<HexMenuArrangement<IntentAbility>>()),
+        );
     }
 }
 
@@ -41,6 +45,8 @@ fn handle_selection(
     commands: Commands,
     arrangement: Res<HexMenuArrangement<IntentAbility>>,
 ) {
+    info!("Handling ability selection: {:?}", result);
+
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
         for entity in menu_query.iter() {
