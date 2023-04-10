@@ -3,8 +3,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::AssetState, construction::terraform::TerraformingTool,
-    player_interaction::clipboard::Tool, ui::ui_assets::CHOICE_ICON_SIZE,
+    asset_management::AssetState,
+    construction::terraform::TerraformingTool,
+    player_interaction::{abilities::IntentAbility, clipboard::Tool},
+    ui::ui_assets::CHOICE_ICON_SIZE,
 };
 
 use super::ui_assets::Icons;
@@ -28,6 +30,7 @@ fn set_cursor(
     tool: Res<Tool>,
     mut cursor_query: Query<&mut UiImage, With<Cursor>>,
     terraforming_icons: Res<Icons<TerraformingTool>>,
+    ability_icons: Res<Icons<IntentAbility>>,
     mut commands: Commands,
 ) {
     if let Ok(mut cursor_image) = cursor_query.get_single_mut() {
@@ -35,10 +38,12 @@ fn set_cursor(
             *cursor_image = match *tool {
                 // Use the matching icon for the terraforming tool
                 Tool::Terraform(terraforming_tool) => terraforming_icons.get(terraforming_tool),
+                // Use the matching icon for abilities
+                Tool::Ability(ability) => ability_icons.get(ability),
                 // Ghosts are used instead for structures
                 Tool::Structures(_) => Handle::default(),
                 // No need to show a custom cursor if we have nothing selected
-                Tool::Empty => Handle::default(),
+                Tool::None => Handle::default(),
             }
             .into()
         }

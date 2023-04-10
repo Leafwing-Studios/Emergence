@@ -12,7 +12,10 @@ use crate::{
     structures::structure_manifest::Structure,
 };
 
-use super::{picking::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
+use super::{
+    abilities::IntentAbility, picking::CursorPos, selection::CurrentSelection, InteractionSystem,
+    PlayerAction,
+};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;
@@ -44,18 +47,21 @@ pub(crate) enum Tool {
     Terraform(TerraformingTool),
     /// A structure / structure to place
     Structures(HashMap<TilePos, ClipboardData>),
+    /// An ability to use.
+    Ability(IntentAbility),
     /// No tool is selected.
     #[default]
-    Empty,
+    None,
 }
 
 impl Tool {
     /// Is the clipboard empty?
     pub(crate) fn is_empty(&self) -> bool {
         match self {
-            Tool::Empty => true,
+            Tool::None => true,
             Tool::Structures(map) => map.is_empty(),
             Tool::Terraform(_) => false,
+            Tool::Ability(_) => false,
         }
     }
 
@@ -67,7 +73,7 @@ impl Tool {
                 map.insert(TilePos::default(), clipboard_data);
                 map
             }),
-            None => Tool::Empty,
+            None => Tool::None,
         };
     }
 }
@@ -146,7 +152,7 @@ impl Tool {
 /// Clears the clipboard when the correct actions are pressed
 fn clear_clipboard(mut tool: ResMut<Tool>, actions: Res<ActionState<PlayerAction>>) {
     if actions.just_pressed(PlayerAction::Deselect) {
-        *tool = Tool::Empty;
+        *tool = Tool::None;
     }
 }
 

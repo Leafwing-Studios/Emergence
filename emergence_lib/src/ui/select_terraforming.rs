@@ -99,7 +99,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            *tool = Tool::Empty;
+            *tool = Tool::None;
             if complete {
                 cleanup(commands, menu_query);
             } else {

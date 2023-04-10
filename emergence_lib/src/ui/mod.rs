@@ -3,11 +3,13 @@
 use crate::{
     asset_management::{manifest::Id, AssetCollectionExt},
     construction::terraform::TerraformingTool,
+    player_interaction::abilities::IntentAbility,
     structures::structure_manifest::Structure,
     ui::{
         cursor::CursorPlugin,
         overlay::OverlayMenuPlugin,
         production_statistics::ProductionStatisticsPlugin,
+        select_ability::SelectAbilityPlugin,
         select_structure::SelectStructurePlugin,
         select_terraforming::SelectTerraformingPlugin,
         selection_details::SelectionDetailsPlugin,
@@ -22,6 +24,7 @@ mod cursor;
 mod intent;
 mod overlay;
 mod production_statistics;
+mod select_ability;
 mod select_structure;
 mod select_terraforming;
 mod selection_details;
@@ -53,6 +56,7 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<UiElements>()
         .add_asset_collection::<Icons<Id<Structure>>>()
         .add_asset_collection::<Icons<TerraformingTool>>()
+        .add_asset_collection::<Icons<IntentAbility>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
@@ -62,7 +66,8 @@ impl Plugin for UiPlugin {
         .add_plugin(StatusPlugin)
         .add_plugin(OverlayMenuPlugin)
         .add_plugin(SelectStructurePlugin)
-        .add_plugin(SelectTerraformingPlugin);
+        .add_plugin(SelectTerraformingPlugin)
+        .add_plugin(SelectAbilityPlugin);
     }
 }
 

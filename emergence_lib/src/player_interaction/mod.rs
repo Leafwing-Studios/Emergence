@@ -65,7 +65,7 @@ pub(crate) enum PlayerAction {
     /// When the clipboard is full, places the clipboard contents on the map.
     ///
     /// When the clipboard is empty, selects a tile or group of tiles.
-    Select,
+    UseTool,
     /// When the clipboard is full, clears the clipboard.
     ///
     /// When the clipboard is empty, deselects a tile or group of tiles.
@@ -82,8 +82,10 @@ pub(crate) enum PlayerAction {
     Line,
     /// Selects a structure from a wheel menu.
     SelectStructure,
-    /// Set the height of a tile.
+    /// Select a terraforming tool from a wheel menu.
     SelectTerraform,
+    /// Select an ability from a wheel menu.
+    SelectAbility,
     /// Selects the structure on the tile under the player's cursor.
     ///
     /// If there is no structure there, the player's selection is cleared.
@@ -134,7 +136,7 @@ impl PlayerAction {
         use PlayerAction::*;
         match self {
             TogglePause => KeyCode::Space.into(),
-            Select => MouseButton::Left.into(),
+            UseTool => MouseButton::Left.into(),
             Deselect => MouseButton::Right.into(),
             // Plus and Equals are swapped. See: https://github.com/rust-windowing/winit/issues/2682
             IncreaseSelectionRadius => UserInput::modified(Modifier::Control, KeyCode::Equals),
@@ -144,6 +146,7 @@ impl PlayerAction {
             Line => Modifier::Alt.into(),
             SelectStructure => KeyCode::Key1.into(),
             SelectTerraform => KeyCode::Key2.into(),
+            SelectAbility => KeyCode::Key3.into(),
             Copy => UserInput::modified(Modifier::Control, KeyCode::C),
             Paste => UserInput::modified(Modifier::Control, KeyCode::V),
             ClearZoning => KeyCode::Back.into(),
@@ -176,22 +179,24 @@ impl PlayerAction {
         let camera_modifier = RightTrigger2;
         let radius_modifier = LeftTrigger;
         let infovis_modifier = LeftTrigger2;
+        let selection_modifier = RightTrigger;
 
         match self {
             TogglePause => GamepadButtonType::Select.into(),
-            PlayerAction::Select => South.into(),
+            PlayerAction::UseTool => South.into(),
             Deselect => East.into(),
             Multiple => RightTrigger.into(),
             IncreaseSelectionRadius => UserInput::chord([radius_modifier, DPadUp]),
             DecreaseSelectionRadius => UserInput::chord([radius_modifier, DPadDown]),
             Area => LeftTrigger.into(),
             Line => LeftTrigger2.into(),
-            SelectStructure => RightThumb.into(),
             Copy => West.into(),
             Paste => North.into(),
             ClearZoning => DPadUp.into(),
             KeepClear => DPadDown.into(),
-            SelectTerraform => UserInput::chord([radius_modifier, North]),
+            SelectStructure => UserInput::chord([selection_modifier, West]),
+            SelectTerraform => UserInput::chord([selection_modifier, North]),
+            SelectAbility => UserInput::chord([selection_modifier, East]),
             RotateClipboardLeft => DPadLeft.into(),
             RotateClipboardRight => DPadRight.into(),
             CenterCameraOnSelection => GamepadButtonType::LeftThumb.into(),

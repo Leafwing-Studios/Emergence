@@ -1,72 +1,77 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
+use crate as emergence_lib;
+
+use super::clipboard::Tool;
 use super::intent::{Intent, IntentPool};
 use super::picking::CursorPos;
-use super::InteractionSystem;
+use super::{InteractionSystem, PlayerAction};
 use bevy::prelude::*;
+use derive_more::Display;
+use emergence_macros::IterableEnum;
 use leafwing_abilities::prelude::Pool;
-use leafwing_input_manager::prelude::*;
+use leafwing_input_manager::prelude::ActionState;
 
 /// Controls, interface and effects of intent-spending abilities.
 pub(super) struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<IntentAbility>::default())
-            .init_resource::<ActionState<IntentAbility>>()
-            .insert_resource(IntentAbility::default_input_map())
-            .add_system(
-                use_ability
-                    .in_set(InteractionSystem::UseAbilities)
-                    // If we don't have enough intent, zoning should be applied first to reduce the risk of an error message.
-                    .after(InteractionSystem::ApplyZoning),
-            );
+        app.add_system(
+            use_ability
+                // If we don't have enough intent, zoning should be applied first to reduce the risk of an error message.
+                .after(InteractionSystem::ApplyZoning),
+        );
     }
 }
 
 /// The different intent-spending "abilities" that the hive mind can use
-// FIXME: these need to be unified
-#[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, IterableEnum, Display)]
 pub(crate) enum IntentAbility {
     /// Gather allied units.
     Lure,
     /// Repel allied units.
     Warning,
+    /// Increases the working speed and maintenance costs of structures.
+    Flourish,
+    /// Decreases the working speed and maintenance costs of structures.
+    Fallow,
+    /// Increase the signal strength of emitters.
+    Amplify,
+    /// Decrease the signal strength of emitters.
+    Dampen,
 }
 
 impl IntentAbility {
-    /// The starting keybinds
-    fn default_input_map() -> InputMap<IntentAbility> {
-        InputMap::new([
-            (KeyCode::F, IntentAbility::Lure),
-            (KeyCode::V, IntentAbility::Warning),
-        ])
-    }
-
     /// The cost of each ability
     fn cost(&self) -> Intent {
-        match self {
-            IntentAbility::Lure => Intent(10.),
-            IntentAbility::Warning => Intent(20.),
-        }
+        Intent(match self {
+            IntentAbility::Lure => 10.,
+            IntentAbility::Warning => 20.,
+            IntentAbility::Flourish => 30.,
+            IntentAbility::Fallow => 30.,
+            IntentAbility::Amplify => 10.,
+            IntentAbility::Dampen => 10.,
+        })
     }
 }
 
 /// Uses abilities when pressed at the cursor's location.
 fn use_ability(
     cursor_tile_pos: Res<CursorPos>,
-    ability_state: Res<ActionState<IntentAbility>>,
+    tool: Res<Tool>,
+    player_actions: Res<ActionState<PlayerAction>>,
     mut intent_pool: ResMut<IntentPool>,
 ) {
-    if let Some(_pos) = cursor_tile_pos.maybe_tile_pos() {
-        for variant in IntentAbility::variants() {
-            if ability_state.pressed(variant) {
-                #[allow(clippy::collapsible_if)]
-                // The expend method has side effects, and needs to be guarded
-                if intent_pool.expend(variant.cost()).is_ok() {
-                    // TODO: actually take effect
-                };
-            }
+    let Some(tile_pos) = cursor_tile_pos.maybe_tile_pos() else { return };
+    let Tool::Ability(ability) = *tool else { return };
+
+    if player_actions.just_pressed(PlayerAction::UseTool) {
+        let cost = ability.cost();
+        if intent_pool.current() >= cost {
+            intent_pool.expend(cost).unwrap();
+
+            info!("Using {} at {}", ability, tile_pos);
         }
     }
 }

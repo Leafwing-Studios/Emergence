@@ -7,6 +7,8 @@ use core::hash::Hash;
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     construction::terraform::TerraformingTool,
+    enum_iter::IterableEnum,
+    player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
 };
@@ -94,6 +96,22 @@ impl FromWorld for Icons<TerraformingTool> {
             TerraformingTool::Raise,
             asset_server.load("icons/terraforming/raise.png"),
         );
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<IntentAbility> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let mut map = HashMap::new();
+
+        for ability in IntentAbility::variants() {
+            let ability_name = format!("{ability}");
+            let ability_path = format!("icons/abilities/{ability_name}.png");
+            let icon = asset_server.load(ability_path);
+            map.insert(ability, icon);
+        }
 
         Icons { map }
     }

@@ -556,7 +556,7 @@ impl SelectionState {
 
         self.action = match self.shape {
             SelectionShape::Single => {
-                if actions.pressed(Select) {
+                if actions.pressed(UseTool) {
                     SelectionAction::Select
                 // Don't repeatedly trigger deselect to avoid accidentally clearing selection
                 } else if actions.just_pressed(Deselect) {
@@ -567,7 +567,7 @@ impl SelectionState {
             }
             SelectionShape::Area { .. } | SelectionShape::Line { .. } => {
                 // Trigger on just released in order to enable a drag-and-preview effect
-                if actions.just_released(Select) {
+                if actions.just_released(UseTool) {
                     SelectionAction::Select
                 } else if actions.just_released(Deselect) {
                     SelectionAction::Deselect
@@ -639,7 +639,7 @@ fn set_selection(
 
             if same_tile_as_last_time
                 && !selection_state.multiple
-                && actions.just_pressed(PlayerAction::Select)
+                && actions.just_pressed(PlayerAction::UseTool)
             {
                 current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {

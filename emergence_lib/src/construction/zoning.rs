@@ -141,7 +141,7 @@ fn set_zoning(
 
     // Apply zoning
     let apply_zoning = actions.pressed(PlayerAction::Paste)
-        || actions.pressed(PlayerAction::Select) && !tool.is_empty();
+        || actions.pressed(PlayerAction::UseTool) && !tool.is_empty();
 
     match &*tool {
         Tool::Terraform(terraform_tool) => match apply_zoning {
@@ -203,7 +203,8 @@ fn set_zoning(
                 }
             }
         }
-        Tool::Empty => (),
+        Tool::Ability(..) => (),
+        Tool::None => (),
     }
 }
 
