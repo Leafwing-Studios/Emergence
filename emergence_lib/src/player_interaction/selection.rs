@@ -103,8 +103,13 @@ impl SelectedTiles {
         &self.selected
     }
 
+    /// How many tiles are selected?
+    pub(crate) fn len(&self) -> usize {
+        self.selected.len()
+    }
+
     /// Are any tiles selected?
-    pub(super) fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.selected.is_empty()
     }
 

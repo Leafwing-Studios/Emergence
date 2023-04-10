@@ -7,6 +7,7 @@ use crate::simulation::SimulationSet;
 
 use super::clipboard::Tool;
 use super::picking::CursorPos;
+use super::selection::CurrentSelection;
 use super::PlayerAction;
 use bevy::prelude::*;
 use derive_more::Display;
@@ -60,50 +61,57 @@ impl IntentAbility {
     /// The cost of each ability per second they are used.
     fn cost(&self) -> Intent {
         Intent(match self {
-            IntentAbility::Lure => 10.,
-            IntentAbility::Warning => 10.,
-            IntentAbility::Flourish => 30.,
-            IntentAbility::Fallow => 30.,
-            IntentAbility::Amplify => 10.,
-            IntentAbility::Dampen => 10.,
+            IntentAbility::Lure => 5.,
+            IntentAbility::Warning => 5.,
+            IntentAbility::Flourish => 10.,
+            IntentAbility::Fallow => 10.,
+            IntentAbility::Amplify => 5.,
+            IntentAbility::Dampen => 5.,
         })
     }
 }
 
 /// Uses abilities when pressed at the cursor's location.
 fn use_ability(
-    cursor_tile_pos: Res<CursorPos>,
+    current_selection: Res<CurrentSelection>,
+    cursor_pos: Res<CursorPos>,
     tool: Res<Tool>,
     player_actions: Res<ActionState<PlayerAction>>,
     mut intent_pool: ResMut<IntentPool>,
     fixed_time: Res<FixedTime>,
     mut signal_modifier_events: EventWriter<SignalModifierEvent>,
 ) {
-    let Some(tile_pos) = cursor_tile_pos.maybe_tile_pos() else { return };
+    let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
+    if relevant_tiles.is_empty() {
+        return;
+    }
     let Tool::Ability(ability) = *tool else { return };
 
     if player_actions.pressed(PlayerAction::UseTool) {
         let delta_time = fixed_time.period;
+        let n_tiles = relevant_tiles.len();
 
-        let cost = ability.cost() * delta_time.as_secs_f32();
+        let cost = ability.cost() * delta_time.as_secs_f32() * n_tiles as f32;
         if intent_pool.current() >= cost {
             intent_pool.expend(cost).unwrap();
 
-            match ability {
-                IntentAbility::Lure => todo!(),
-                IntentAbility::Warning => todo!(),
-                IntentAbility::Flourish => todo!(),
-                IntentAbility::Fallow => todo!(),
-                IntentAbility::Amplify => {
-                    signal_modifier_events.send(SignalModifierEvent {
+            for &tile_pos in relevant_tiles.selection() {
+                match ability {
+                    IntentAbility::Lure => todo!(),
+                    IntentAbility::Warning => todo!(),
+                    IntentAbility::Flourish => todo!(),
+                    IntentAbility::Fallow => todo!(),
+                    IntentAbility::Amplify => {
+                        signal_modifier_events.send(SignalModifierEvent {
+                            tile_pos,
+                            modifier: SignalModifier::Amplify(delta_time),
+                        });
+                    }
+                    IntentAbility::Dampen => signal_modifier_events.send(SignalModifierEvent {
                         tile_pos,
-                        modifier: SignalModifier::Amplify(delta_time),
-                    });
+                        modifier: SignalModifier::Dampen(delta_time),
+                    }),
                 }
-                IntentAbility::Dampen => signal_modifier_events.send(SignalModifierEvent {
-                    tile_pos,
-                    modifier: SignalModifier::Dampen(delta_time),
-                }),
             }
         }
     }
