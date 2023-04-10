@@ -45,8 +45,6 @@ fn handle_selection(
     commands: Commands,
     arrangement: Res<HexMenuArrangement<IntentAbility>>,
 ) {
-    info!("Handling ability selection: {:?}", result);
-
     /// Clean up the menu when we are done with it
     fn cleanup(mut commands: Commands, menu_query: Query<Entity, With<HexMenu>>) {
         for entity in menu_query.iter() {
