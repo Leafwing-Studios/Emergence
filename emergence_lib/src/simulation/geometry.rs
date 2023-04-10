@@ -826,6 +826,8 @@ pub(super) fn sync_rotation_to_facing(
 
 #[cfg(test)]
 mod tests {
+    use bevy::{ecs::system::SystemState, utils::HashSet};
+
     use super::*;
 
     #[test]
@@ -894,5 +896,67 @@ mod tests {
             dbg!(tile_pos);
             assert_eq!(None, map_geometry.get_structure(tile_pos));
         }
+    }
+
+    #[test]
+    fn can_only_build_on_valid_terrain() {
+        let invalid_name = "invalid".to_string();
+        let valid_name = "valid".to_string();
+        let valid: Id<Terrain> = Id::from_name(valid_name);
+        let invalid: Id<Terrain> = Id::from_name(invalid_name);
+
+        let allowed_terrain_types = AllowedTerrainTypes::Only(HashSet::from_iter([valid]));
+
+        let mut world = World::new();
+        let valid_terrain_entity = world.spawn(valid).id();
+        let invalid_terrain_entity = world.spawn(invalid).id();
+        let mut system_state: SystemState<Query<&Id<Terrain>>> = SystemState::new(&mut world);
+        let terrain_query = system_state.get_mut(&mut world);
+
+        let mut map_geometry = MapGeometry::new(1);
+        let valid_tile_pos = TilePos::new(0, 0);
+        let invalid_tile_pos = TilePos::new(1, 0);
+        map_geometry.add_terrain(valid_tile_pos, valid_terrain_entity);
+        map_geometry.add_terrain(invalid_tile_pos, invalid_terrain_entity);
+
+        assert_eq!(
+            true,
+            map_geometry.is_terrain_valid(
+                valid_tile_pos,
+                &Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            true,
+            map_geometry.can_build(
+                valid_tile_pos,
+                Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            false,
+            map_geometry.is_terrain_valid(
+                invalid_tile_pos,
+                &Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            false,
+            map_geometry.can_build(
+                invalid_tile_pos,
+                Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
     }
 }

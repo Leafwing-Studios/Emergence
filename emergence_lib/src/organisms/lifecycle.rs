@@ -321,7 +321,7 @@ pub(super) fn sprout_seeds(
                     &terrain_query,
                     allowed_terrain_types,
                 ) {
-                    // Look for another viable form to transform into.
+                    // We can't germinate here
                     continue;
                 }
             } else {
