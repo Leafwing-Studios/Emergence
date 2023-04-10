@@ -189,19 +189,6 @@ impl TilePos {
         iter
     }
 
-    /// All adjacent tiles that are on the map and free of structures.
-    pub(crate) fn empty_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&pos| {
-            map_geometry.is_valid(pos) && !map_geometry.structure_index.contains_key(&pos)
-        });
-        iter
-    }
-
     /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
     pub(crate) fn rotated(&self, facing: Facing) -> Self {
         let n_rotations = facing.rotation_count();
