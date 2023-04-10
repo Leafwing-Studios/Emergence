@@ -19,7 +19,7 @@ pub(super) struct ClipboardPlugin;
 
 impl Plugin for ClipboardPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Clipboard>()
+        app.init_resource::<Tool>()
             // We're running this before we select tiles to deliberately introduce a one-frame delay,
             // ensuring that users need to double click to clear the clipboard as well.
             .add_system(clear_clipboard.before(InteractionSystem::SelectTiles))
@@ -37,37 +37,37 @@ impl Plugin for ClipboardPlugin {
     }
 }
 
-/// Stores a selection to copy and paste.
+/// Stores the currently active tool that the player is using.
 #[derive(Default, Resource, Debug)]
-pub(crate) enum Clipboard {
-    /// The clipboard is set to terraform terrain.
+pub(crate) enum Tool {
+    /// Terraform terrain.
     Terraform(TerraformingTool),
-    /// The clipboard contains a structure.
+    /// A structure / structure to place
     Structures(HashMap<TilePos, ClipboardData>),
-    /// The clipboard is empty.
+    /// No tool is selected.
     #[default]
     Empty,
 }
 
-impl Clipboard {
+impl Tool {
     /// Is the clipboard empty?
     pub(crate) fn is_empty(&self) -> bool {
         match self {
-            Clipboard::Empty => true,
-            Clipboard::Structures(map) => map.is_empty(),
-            Clipboard::Terraform(_) => false,
+            Tool::Empty => true,
+            Tool::Structures(map) => map.is_empty(),
+            Tool::Terraform(_) => false,
         }
     }
 
     /// Sets the contents of the clipboard to a single structure (or clears it if [`None`] is provided).
     pub(crate) fn set_to_structure(&mut self, maybe_structure: Option<ClipboardData>) {
         *self = match maybe_structure {
-            Some(clipboard_data) => Clipboard::Structures({
+            Some(clipboard_data) => Tool::Structures({
                 let mut map = HashMap::new();
                 map.insert(TilePos::default(), clipboard_data);
                 map
             }),
-            None => Clipboard::Empty,
+            None => Tool::Empty,
         };
     }
 }
@@ -83,13 +83,13 @@ pub(crate) struct ClipboardData {
     pub(crate) active_recipe: ActiveRecipe,
 }
 
-impl Clipboard {
+impl Tool {
     /// Normalizes the positions of the items on the clipboard.
     ///
     /// Centers relative to the median selected tile position.
     /// Each axis is computed independently.
     fn normalize_positions(&mut self) {
-        if let Clipboard::Structures(map) = self {
+        if let Tool::Structures(map) = self {
             let center = TilePos {
                 hex: map.keys().map(|tile_pos| tile_pos.hex).center(),
             };
@@ -110,7 +110,7 @@ impl Clipboard {
     ///
     /// Used to place items in the correct location relative to the cursor.
     pub(crate) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardData)> {
-        if let Clipboard::Structures(map) = self {
+        if let Tool::Structures(map) = self {
             map.iter()
                 .map(|(k, v)| ((*k + origin), v.clone()))
                 .collect()
@@ -123,7 +123,7 @@ impl Clipboard {
     ///
     /// You must ensure that the contents are normalized first.
     fn rotate_around(&mut self, clockwise: bool) {
-        if let Clipboard::Structures(map) = self {
+        if let Tool::Structures(map) = self {
             let mut new_map = HashMap::with_capacity(map.capacity());
 
             for (&original_pos, item) in map.iter_mut() {
@@ -144,9 +144,9 @@ impl Clipboard {
 }
 
 /// Clears the clipboard when the correct actions are pressed
-fn clear_clipboard(mut clipboard: ResMut<Clipboard>, actions: Res<ActionState<PlayerAction>>) {
+fn clear_clipboard(mut tool: ResMut<Tool>, actions: Res<ActionState<PlayerAction>>) {
     if actions.just_pressed(PlayerAction::Deselect) {
-        *clipboard = Clipboard::Empty;
+        *tool = Tool::Empty;
     }
 }
 
@@ -179,11 +179,9 @@ impl From<ClipboardQueryItem<'_>> for ClipboardData {
 }
 
 /// Copies the selected structure(s) to the clipboard, to be placed later.
-///
-/// This system also handles the "pipette" functionality.
 fn copy_selection(
     actions: Res<ActionState<PlayerAction>>,
-    mut clipboard: ResMut<Clipboard>,
+    mut tool: ResMut<Tool>,
     cursor_pos: Res<CursorPos>,
     current_selection: Res<CurrentSelection>,
     structure_query: Query<ClipboardQuery, Without<Preview>>,
@@ -199,8 +197,8 @@ fn copy_selection(
                 let tile_pos = query_item.tile_pos;
                 let clipboard_data = query_item.into();
                 map.insert(*tile_pos, clipboard_data);
-                *clipboard = Clipboard::Structures(map);
-                clipboard.normalize_positions();
+                *tool = Tool::Structures(map);
+                tool.normalize_positions();
             }
             CurrentSelection::Terrain(selected_tiles) => {
                 // If there is no selection, just grab whatever's under the cursor
@@ -224,8 +222,8 @@ fn copy_selection(
                             map.insert(TilePos::default(), clipboard_data);
                         }
                     }
-                    *clipboard = Clipboard::Structures(map);
-                    clipboard.normalize_positions();
+                    *tool = Tool::Structures(map);
+                    tool.normalize_positions();
                 }
             }
             // Otherwise, just grab whatever's under the cursor
@@ -234,7 +232,7 @@ fn copy_selection(
                     if let Some(structure_entity) = map_geometry.get_structure(cursor_tile_pos) {
                         let clipboard_data = structure_query.get(structure_entity).unwrap().into();
                         map.insert(TilePos::default(), clipboard_data);
-                        *clipboard = Clipboard::Structures(map);
+                        *tool = Tool::Structures(map);
                     }
                 }
             }
@@ -243,7 +241,7 @@ fn copy_selection(
 }
 
 /// Rotates the contents of the clipboard based on player input
-fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResMut<Clipboard>) {
+fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResMut<Tool>) {
     if actions.just_pressed(PlayerAction::RotateClipboardLeft)
         && actions.just_pressed(PlayerAction::RotateClipboardRight)
     {

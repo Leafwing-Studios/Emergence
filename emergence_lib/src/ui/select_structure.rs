@@ -4,7 +4,7 @@ use crate::{
     asset_management::{manifest::Id, AssetState},
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{
-        clipboard::{Clipboard, ClipboardData},
+        clipboard::{ClipboardData, Tool},
         PlayerAction,
     },
     simulation::geometry::Facing,
@@ -61,7 +61,7 @@ fn update_structure_choices(
 /// Set the selected structure based on the results of the hex menu.
 fn handle_selection(
     In(result): In<Result<HexMenuElement<Id<Structure>>, HexMenuError>>,
-    mut clipboard: ResMut<Clipboard>,
+    mut tool: ResMut<Tool>,
     menu_query: Query<Entity, With<HexMenu>>,
     mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     structure_manifest: Res<StructureManifest>,
@@ -89,7 +89,7 @@ fn handle_selection(
                         .clone(),
                 };
 
-                clipboard.set_to_structure(Some(structure_data));
+                tool.set_to_structure(Some(structure_data));
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
@@ -104,7 +104,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            clipboard.set_to_structure(None);
+            tool.set_to_structure(None);
 
             if complete {
                 cleanup(commands, menu_query);

@@ -11,7 +11,7 @@ use crate::simulation::geometry::TilePos;
 
 use crate as emergence_lib;
 
-use super::clipboard::Clipboard;
+use super::clipboard::Tool;
 use super::{picking::CursorPos, InteractionSystem, PlayerAction};
 
 /// Code and data for selecting groups of tiles
@@ -528,12 +528,7 @@ enum SelectionShape {
 
 impl SelectionState {
     /// Determine what selection state should be used this frame based on player actions
-    fn compute(
-        &mut self,
-        clipboard: &Clipboard,
-        actions: &ActionState<PlayerAction>,
-        hovered_tile: TilePos,
-    ) {
+    fn compute(&mut self, tool: &Tool, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
         use PlayerAction::*;
 
         self.multiple = actions.pressed(PlayerAction::Multiple);
@@ -584,7 +579,7 @@ impl SelectionState {
 
         // If the clipboard is not empty, PlayerAction::Select is used to paste from the clipboard instead of selecting.
         // Allow users to override this using shift+select to expand or shrink their selection.
-        if !clipboard.is_empty() && !self.multiple {
+        if !tool.is_empty() && !self.multiple {
             self.action = SelectionAction::Preview;
         }
     }
@@ -592,7 +587,7 @@ impl SelectionState {
 
 /// Determine what should be selected based on player inputs.
 fn set_selection(
-    clipboard: Res<Clipboard>,
+    tool: Res<Tool>,
     mut current_selection: ResMut<CurrentSelection>,
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
@@ -609,7 +604,7 @@ fn set_selection(
     let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
-    selection_state.compute(&clipboard, actions, hovered_tile);
+    selection_state.compute(&tool, actions, hovered_tile);
 
     // Update hovered tiles
     hovered_tiles.update(hovered_tile, &selection_state);

@@ -7,7 +7,7 @@ use crate::{
     asset_management::{manifest::Id, AssetState},
     construction::{demolition::MarkedForDemolition, ghosts::Preview},
     player_interaction::{
-        clipboard::{Clipboard, ClipboardData},
+        clipboard::{ClipboardData, Tool},
         picking::CursorPos,
         selection::CurrentSelection,
         InteractionSystem, PlayerAction,
@@ -107,7 +107,7 @@ struct CleanMeUp;
 fn set_zoning(
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
-    clipboard: Res<Clipboard>,
+    tool: Res<Tool>,
     mut zoning_query: Query<&mut Zoning>,
     terrain_preview_query: Query<(&Id<Terrain>, &TilePos)>,
     current_selection: Res<CurrentSelection>,
@@ -141,10 +141,10 @@ fn set_zoning(
 
     // Apply zoning
     let apply_zoning = actions.pressed(PlayerAction::Paste)
-        || actions.pressed(PlayerAction::Select) && !clipboard.is_empty();
+        || actions.pressed(PlayerAction::Select) && !tool.is_empty();
 
-    match &*clipboard {
-        Clipboard::Terraform(terraform_tool) => match apply_zoning {
+    match &*tool {
+        Tool::Terraform(terraform_tool) => match apply_zoning {
             true => {
                 for terrain_entity in relevant_terrain_entities {
                     let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
@@ -161,7 +161,7 @@ fn set_zoning(
                 }
             }
         },
-        Clipboard::Structures(map) => {
+        Tool::Structures(map) => {
             // Zone using the single selected structure
             match map.len() {
                 0 => (),
@@ -186,7 +186,7 @@ fn set_zoning(
                         return;
                     };
 
-                    for (tile_pos, clipboard_item) in clipboard.offset_positions(cursor_tile_pos) {
+                    for (tile_pos, clipboard_item) in tool.offset_positions(cursor_tile_pos) {
                         match apply_zoning {
                             true => {
                                 // Avoid trying to operate on terrain that doesn't exist
@@ -203,7 +203,7 @@ fn set_zoning(
                 }
             }
         }
-        Clipboard::Empty => (),
+        Tool::Empty => (),
     }
 }
 
