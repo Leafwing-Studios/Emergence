@@ -48,11 +48,11 @@ pub(crate) enum IntentAbility {
 }
 
 impl IntentAbility {
-    /// The cost of each ability
+    /// The cost of each ability per second they are used.
     fn cost(&self) -> Intent {
         Intent(match self {
             IntentAbility::Lure => 10.,
-            IntentAbility::Warning => 20.,
+            IntentAbility::Warning => 10.,
             IntentAbility::Flourish => 30.,
             IntentAbility::Fallow => 30.,
             IntentAbility::Amplify => 10.,
@@ -67,12 +67,13 @@ fn use_ability(
     tool: Res<Tool>,
     player_actions: Res<ActionState<PlayerAction>>,
     mut intent_pool: ResMut<IntentPool>,
+    fixed_time: Res<FixedTime>,
 ) {
     let Some(tile_pos) = cursor_tile_pos.maybe_tile_pos() else { return };
     let Tool::Ability(ability) = *tool else { return };
 
-    if player_actions.just_pressed(PlayerAction::UseTool) {
-        let cost = ability.cost();
+    if player_actions.pressed(PlayerAction::UseTool) {
+        let cost = ability.cost() * fixed_time.period.as_secs_f32();
         if intent_pool.current() >= cost {
             intent_pool.expend(cost).unwrap();
 
