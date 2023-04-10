@@ -1,11 +1,13 @@
 //! Logic and data types for energy.
 
 use bevy::prelude::*;
+use bevy::utils::Duration;
 use core::fmt::Display;
-use core::ops::{Div, Mul};
+use core::ops::{Add, Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 use serde::{Deserialize, Serialize};
+use std::ops::AddAssign;
 
 use crate::asset_management::manifest::Id;
 use crate::structures::structure_manifest::Structure;
@@ -161,6 +163,27 @@ impl Pool for EnergyPool {
     }
 }
 
+/// Consumes [`Energy`] over time, taking into account the organism's [`VigorModifier`].
+pub(super) fn consume_energy(
+    fixed_time: Res<FixedTime>,
+    mut vigor_query: Query<(&mut EnergyPool, &VigorModifier)>,
+) {
+    let delta_time = fixed_time.period.as_secs_f32();
+
+    for (mut energy_pool, vigor_modifier) in vigor_query.iter_mut() {
+        let vigor_multiplier = match vigor_modifier {
+            VigorModifier::None => 1.,
+            VigorModifier::Flourish(..) => VigorModifier::RATIO,
+            VigorModifier::Fallow(..) => 1. / VigorModifier::RATIO,
+        };
+        // Note that regen rates are almost always negative.
+        let regen_rate = energy_pool.regen_per_second * vigor_multiplier;
+        let current = energy_pool.current();
+
+        energy_pool.set_current(current + regen_rate * delta_time);
+    }
+}
+
 /// Despawns organisms when they run out of energy
 pub(super) fn kill_organisms_when_out_of_energy(
     organism_query: Query<(Entity, &EnergyPool, &TilePos, Option<&Id<Structure>>)>,
@@ -171,6 +194,93 @@ pub(super) fn kill_organisms_when_out_of_energy(
             match maybe_structure {
                 Some(_) => commands.despawn_structure(*tile_pos),
                 None => commands.entity(entity).despawn_recursive(),
+            }
+        }
+    }
+}
+
+/// Modifies the working speed and energy consumption rate of an organism.
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum VigorModifier {
+    /// No modifier is applied.
+    #[default]
+    None,
+    /// Working speed and energy consumption is multiplied for the duration of this effect.
+    Flourish(Duration),
+    /// Working speed and energy consumption is divided for the duration of this effect.
+    Fallow(Duration),
+}
+
+impl VigorModifier {
+    /// Controls the ratio of the signal strength when modified.
+    ///
+    /// This should be greater than 1.
+    const RATIO: f32 = 10.;
+}
+
+impl Add for VigorModifier {
+    type Output = Self;
+
+    /// Combines two modifiers, returning the resulting modifier.
+    ///
+    /// If the two modifiers are the same, their durations are added together.
+    /// If the two modifiers are different, they cancel each other out.
+    fn add(self, other: VigorModifier) -> Self {
+        match (self, other) {
+            (VigorModifier::None, other) | (other, VigorModifier::None) => other,
+            (
+                VigorModifier::Flourish(amplify_duration),
+                VigorModifier::Fallow(diminish_duration),
+            )
+            | (
+                VigorModifier::Fallow(diminish_duration),
+                VigorModifier::Flourish(amplify_duration),
+            ) => {
+                if amplify_duration == diminish_duration {
+                    VigorModifier::None
+                } else if amplify_duration > diminish_duration {
+                    VigorModifier::Flourish(amplify_duration - diminish_duration)
+                } else {
+                    VigorModifier::Fallow(diminish_duration - amplify_duration)
+                }
+            }
+            (VigorModifier::Flourish(a), VigorModifier::Flourish(b)) => {
+                VigorModifier::Flourish(a + b)
+            }
+            (VigorModifier::Fallow(a), VigorModifier::Fallow(b)) => VigorModifier::Fallow(a + b),
+        }
+    }
+}
+
+impl AddAssign for VigorModifier {
+    fn add_assign(&mut self, other: Self) {
+        *self = *self + other;
+    }
+}
+
+/// Ticks down the duration of all [`VigorModifier`] components.
+pub(super) fn tick_vigor_modifiers(
+    mut query: Query<&mut VigorModifier>,
+    fixed_time: Res<FixedTime>,
+) {
+    let delta_time = fixed_time.period;
+
+    for mut vigor_modifier in query.iter_mut() {
+        match *vigor_modifier {
+            VigorModifier::None => {}
+            VigorModifier::Flourish(duration) => {
+                if duration > delta_time {
+                    *vigor_modifier = VigorModifier::Flourish(duration - delta_time);
+                } else {
+                    *vigor_modifier = VigorModifier::None;
+                }
+            }
+            VigorModifier::Fallow(duration) => {
+                if duration > delta_time {
+                    *vigor_modifier = VigorModifier::Fallow(duration - delta_time);
+                } else {
+                    *vigor_modifier = VigorModifier::None;
+                }
             }
         }
     }

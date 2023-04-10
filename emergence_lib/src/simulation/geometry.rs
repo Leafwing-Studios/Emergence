@@ -577,9 +577,9 @@ impl MapGeometry {
         entities
     }
 
-    /// Gets the [`Entity`] at the provided `tile_pos` that might emit signals.
+    /// Gets all entities [`Entity`] at the provided `tile_pos`.
     // FIXME: this doesn't look for units, but it should. Unfortunately, they're not indexed.
-    pub(crate) fn get_emitters(&self, tile_pos: TilePos) -> Vec<Entity> {
+    pub(crate) fn get_entities(&self, tile_pos: TilePos) -> Vec<Entity> {
         let mut entities = Vec::new();
 
         if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
