@@ -227,7 +227,8 @@ pub(super) fn transform_when_lifecycle_complete(
                 let footprint = variety.footprint.rotated(facing);
                 let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-                if !map_geometry.can_build(
+                if !map_geometry.can_transform(
+                    entity,
                     tile_pos,
                     footprint,
                     &terrain_query,

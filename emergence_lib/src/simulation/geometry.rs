@@ -369,7 +369,7 @@ impl MapGeometry {
         distance <= self.radius as i32
     }
 
-    /// Are all of the tiles in the `footprint` centered around `center` in the map?
+    /// Are all of the tiles in the `footprint` centered around `center` valid?
     pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(tile_pos)
@@ -413,6 +413,21 @@ impl MapGeometry {
             .in_world_space(center)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+    }
+
+    /// Is there enough space for `existing_entity` to transform into a structure with the provided `footprint` located at the `center` tile?
+    ///
+    /// The `existing_entity` will be ignored when checking for space.
+    fn is_space_available_to_transform(
+        &self,
+        existing_entity: Entity,
+        center: TilePos,
+        footprint: &Footprint,
+    ) -> bool {
+        footprint.in_world_space(center).iter().all(|tile_pos| {
+            let entity = self.get_structure(*tile_pos);
+            entity.is_none() || entity == Some(existing_entity)
+        })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` appropriate?
@@ -465,6 +480,30 @@ impl MapGeometry {
         self.is_footprint_valid(center, &footprint)
             && self.is_terrain_flat(center, &footprint)
             && self.is_space_available(center, &footprint)
+            && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
+    }
+
+    /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
+    ///
+    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
+    /// matching the [`Facing`] of the structure.
+    ///
+    /// This checks that:
+    /// - the area is in the map
+    /// - the area is flat
+    /// - the area is free of structures
+    /// - all tiles match the provided allowable terrain list
+    pub(crate) fn can_transform(
+        &self,
+        existing_entity: Entity,
+        center: TilePos,
+        footprint: Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &AllowedTerrainTypes,
+    ) -> bool {
+        self.is_footprint_valid(center, &footprint)
+            && self.is_terrain_flat(center, &footprint)
+            && self.is_space_available_to_transform(existing_entity, center, &footprint)
             && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
     }
 
