@@ -6,7 +6,7 @@ use crate::{
         AssetCollectionExt,
     },
     player_interaction::InteractionSystem,
-    signals::{Emitter, SignalModifier, SignalStrength, SignalType},
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
         SimulationSet,
@@ -115,7 +115,6 @@ impl UnitBundle {
             held_item: UnitInventory::default(),
             emitter: Emitter {
                 signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
-                modifier: SignalModifier::None,
             },
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,

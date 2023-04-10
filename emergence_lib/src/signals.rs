@@ -22,7 +22,7 @@ use rand::seq::SliceRandom;
 use std::ops::MulAssign;
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -560,12 +560,12 @@ impl MulAssign<f32> for SignalStrength {
 pub(crate) struct Emitter {
     /// The list of signals to emit at a provided
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
-    /// Any modifiers applied to the signal strength.
-    pub(crate) modifier: SignalModifier,
 }
 
 /// Modifies the strength of a signal.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+///
+/// This is stored as a component on each tile, and is applied to all signals emitted from entities at that tile position.
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum SignalModifier {
     /// No modifier is applied.
     #[default]
@@ -624,24 +624,27 @@ impl AddAssign for SignalModifier {
 }
 
 /// Ticks down the duration of all signal modifiers.
-fn tick_signal_modifiers(mut query: Query<&mut Emitter>, fixed_time: Res<FixedTime>) {
+fn tick_signal_modifiers(
+    mut modifier_query: Query<&mut SignalModifier>,
+    fixed_time: Res<FixedTime>,
+) {
     let delta_time = fixed_time.period;
 
-    for mut emitter in query.iter_mut() {
-        match emitter.modifier {
+    for mut modifier in modifier_query.iter_mut() {
+        match *modifier {
             SignalModifier::None => {}
             SignalModifier::Amplify(duration) => {
                 if duration > delta_time {
-                    emitter.modifier = SignalModifier::Amplify(duration - delta_time);
+                    *modifier = SignalModifier::Amplify(duration - delta_time);
                 } else {
-                    emitter.modifier = SignalModifier::None;
+                    *modifier = SignalModifier::None;
                 }
             }
             SignalModifier::Dampen(duration) => {
                 if duration > delta_time {
-                    emitter.modifier = SignalModifier::Dampen(duration - delta_time);
+                    *modifier = SignalModifier::Dampen(duration - delta_time);
                 } else {
-                    emitter.modifier = SignalModifier::None;
+                    *modifier = SignalModifier::None;
                 }
             }
         }
@@ -651,24 +654,37 @@ fn tick_signal_modifiers(mut query: Query<&mut Emitter>, fixed_time: Res<FixedTi
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(
     mut signals: ResMut<Signals>,
-    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>)>,
+    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
+    modifier_query: Query<&SignalModifier>,
     structure_manifest: Res<StructureManifest>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (&center, emitter, maybe_structure_id) in emitter_query.iter() {
+    for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
             Some(structure_id) => {
-                let footprint = &structure_manifest.get(*structure_id).footprint;
+                let facing = *maybe_facing.expect("Structures must have a facing");
+                let footprint = &structure_manifest
+                    .get(*structure_id)
+                    .footprint
+                    .rotated(facing);
+
                 for tile_pos in footprint.in_world_space(center) {
+                    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                    let modifier = *modifier_query.get(terrain_entity).unwrap();
+
                     for (signal_type, mut signal_strength) in emitter.signals.clone() {
-                        signal_strength.apply_modifier(emitter.modifier);
+                        signal_strength.apply_modifier(modifier);
                         signals.add_signal(signal_type, tile_pos, signal_strength);
                     }
                 }
             }
             None => {
                 for (signal_type, mut signal_strength) in emitter.signals.clone() {
-                    signal_strength.apply_modifier(emitter.modifier);
+                    let terrain_entity = map_geometry.get_terrain(center).unwrap();
+                    let modifier = *modifier_query.get(terrain_entity).unwrap();
+
+                    signal_strength.apply_modifier(modifier);
                     signals.add_signal(signal_type, center, signal_strength);
                 }
             }

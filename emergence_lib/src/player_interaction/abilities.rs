@@ -1,10 +1,12 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
 use crate as emergence_lib;
+use crate::asset_management::manifest::Id;
 use crate::organisms::energy::VigorModifier;
-use crate::signals::{Emitter, SignalModifier};
-use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::signals::SignalModifier;
+use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
+use crate::terrain::terrain_manifest::Terrain;
 
 use super::clipboard::Tool;
 use super::picking::CursorPos;
@@ -24,24 +26,13 @@ pub(super) struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SignalModifierEvent>()
-            .add_event::<VigorModifierEvent>()
-            .add_systems(
-                (regenerate_intent, use_ability)
-                    .chain()
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            )
-            .add_systems(
-                (
-                    process_signal_modifier_events,
-                    process_vigor_modifier_events,
-                )
-                    .after(use_ability)
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            )
-            .init_resource::<IntentPool>();
+        app.add_systems(
+            (regenerate_intent, use_ability)
+                .chain()
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        )
+        .init_resource::<IntentPool>();
     }
 }
 
@@ -87,8 +78,8 @@ fn use_ability(
     player_actions: Res<ActionState<PlayerAction>>,
     mut intent_pool: ResMut<IntentPool>,
     fixed_time: Res<FixedTime>,
-    mut signal_modifier_events: EventWriter<SignalModifierEvent>,
-    mut vigor_modifier_events: EventWriter<VigorModifierEvent>,
+    mut terrain_query: Query<(&mut VigorModifier, &mut SignalModifier), With<Id<Terrain>>>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
     if relevant_tiles.is_empty() {
@@ -105,31 +96,21 @@ fn use_ability(
             intent_pool.expend(cost).unwrap();
 
             for &tile_pos in relevant_tiles.selection() {
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let (mut vigor_modifier, mut signal_modifier) =
+                    terrain_query.get_mut(terrain_entity).unwrap();
+
                 match ability {
                     IntentAbility::Lure => todo!(),
                     IntentAbility::Warning => todo!(),
                     IntentAbility::Flourish => {
-                        vigor_modifier_events.send(VigorModifierEvent {
-                            tile_pos,
-                            modifier: VigorModifier::Flourish(delta_time),
-                        });
+                        *vigor_modifier = VigorModifier::Flourish(delta_time)
                     }
-                    IntentAbility::Fallow => {
-                        vigor_modifier_events.send(VigorModifierEvent {
-                            tile_pos,
-                            modifier: VigorModifier::Fallow(delta_time),
-                        });
-                    }
+                    IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow(delta_time),
                     IntentAbility::Amplify => {
-                        signal_modifier_events.send(SignalModifierEvent {
-                            tile_pos,
-                            modifier: SignalModifier::Amplify(delta_time),
-                        });
+                        *signal_modifier = SignalModifier::Amplify(delta_time)
                     }
-                    IntentAbility::Dampen => signal_modifier_events.send(SignalModifierEvent {
-                        tile_pos,
-                        modifier: SignalModifier::Dampen(delta_time),
-                    }),
+                    IntentAbility::Dampen => *signal_modifier = SignalModifier::Dampen(delta_time),
                 }
             }
         }
@@ -238,61 +219,5 @@ impl Pool for IntentPool {
 fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<FixedTime>) {
     if intent_pool.current() != intent_pool.max() {
         intent_pool.regenerate(time.period);
-    }
-}
-
-/// An event that is sent when a signal modifier is applied to a tile.
-#[derive(Clone, Debug)]
-struct SignalModifierEvent {
-    /// The tile that the modifier is applied to.
-    tile_pos: TilePos,
-    /// The modifier that is applied.
-    modifier: SignalModifier,
-}
-
-/// Applies [`SignalModifierEvent`]s, modifying matching [`Emitter`]s.
-fn process_signal_modifier_events(
-    mut signal_modifier_events: EventReader<SignalModifierEvent>,
-    mut emitter_query: Query<&mut Emitter>,
-    map_geometry: Res<MapGeometry>,
-) {
-    for SignalModifierEvent { tile_pos, modifier } in signal_modifier_events.iter() {
-        let tile_pos = *tile_pos;
-        let modifier = *modifier;
-
-        // FIXME: this won't amplify unit signals, but there's no good way to do that right now without a linear search
-        for entity in map_geometry.get_entities(tile_pos) {
-            if let Ok(mut emitter) = emitter_query.get_mut(entity) {
-                emitter.modifier += modifier;
-            }
-        }
-    }
-}
-
-/// An event that is sent when a vigor modifier is applied to a tile.
-#[derive(Clone, Debug)]
-struct VigorModifierEvent {
-    /// The tile that the modifier is applied to.
-    tile_pos: TilePos,
-    /// The modifier that is applied.
-    modifier: VigorModifier,
-}
-
-/// Applies [`VigorModifierEvent`]s, modifying matching [`VigorModifier`] components.
-fn process_vigor_modifier_events(
-    mut events: EventReader<VigorModifierEvent>,
-    mut query: Query<&mut VigorModifier>,
-    map_geometry: Res<MapGeometry>,
-) {
-    for VigorModifierEvent { tile_pos, modifier } in events.iter() {
-        let tile_pos = *tile_pos;
-        let modifier = *modifier;
-
-        // FIXME: this won't amplify unit signals, but there's no good way to do that right now without a linear search
-        for entity in map_geometry.get_entities(tile_pos) {
-            if let Ok(mut vigor) = query.get_mut(entity) {
-                *vigor += modifier;
-            }
-        }
     }
 }

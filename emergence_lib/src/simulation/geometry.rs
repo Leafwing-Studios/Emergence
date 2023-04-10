@@ -577,30 +577,6 @@ impl MapGeometry {
         entities
     }
 
-    /// Gets all entities [`Entity`] at the provided `tile_pos`.
-    // FIXME: this doesn't look for units, but it should. Unfortunately, they're not indexed.
-    pub(crate) fn get_entities(&self, tile_pos: TilePos) -> Vec<Entity> {
-        let mut entities = Vec::new();
-
-        if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
-            entities.push(structure_entity)
-        }
-
-        if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-            entities.push(ghost_terrain_entity)
-        }
-
-        if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
-            entities.push(ghost_structure_entity)
-        }
-
-        if let Some(&litter_entity) = self.terrain_index.get(&tile_pos) {
-            entities.push(litter_entity)
-        }
-
-        entities
-    }
-
     /// Gets entities that units might work at, at the provided `tile_pos`.
     ///
     /// Prioritizes ghosts over structures if both are present to allow for replacing structures.

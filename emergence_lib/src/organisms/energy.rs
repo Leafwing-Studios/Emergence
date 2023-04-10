@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::AddAssign;
 
 use crate::asset_management::manifest::Id;
+use crate::simulation::geometry::MapGeometry;
 use crate::structures::structure_manifest::Structure;
 use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
 
@@ -163,14 +164,19 @@ impl Pool for EnergyPool {
     }
 }
 
-/// Consumes [`Energy`] over time, taking into account the organism's [`VigorModifier`].
+/// Consumes [`Energy`] over time, taking into account the tile's [`VigorModifier`].
 pub(super) fn consume_energy(
     fixed_time: Res<FixedTime>,
-    mut vigor_query: Query<(&mut EnergyPool, &VigorModifier)>,
+    mut energy_query: Query<(&mut EnergyPool, &TilePos)>,
+    vigor_modifier_query: Query<&VigorModifier>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
 
-    for (mut energy_pool, vigor_modifier) in vigor_query.iter_mut() {
+    for (mut energy_pool, &tile_pos) in energy_query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let vigor_modifier = vigor_modifier_query.get(terrain_entity).unwrap();
+
         let vigor_multiplier = match vigor_modifier {
             VigorModifier::None => 1.,
             VigorModifier::Flourish(..) => VigorModifier::RATIO,
@@ -200,6 +206,8 @@ pub(super) fn kill_organisms_when_out_of_energy(
 }
 
 /// Modifies the working speed and energy consumption rate of an organism.
+///
+/// This is stored as a component on each tile, and is applied to all entities at that tile position.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VigorModifier {
     /// No modifier is applied.
