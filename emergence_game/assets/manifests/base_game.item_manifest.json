@@ -11,7 +11,10 @@
     },
     "ant_egg": {
       "stack_size": 3,
-      "compostable": false
+      "compostable": false,
+      "seed": {
+        "Unit": "ant"
+      }
     },
     "acacia_seed": {
       "stack_size": 12,

@@ -1,20 +1,5 @@
 {
 	"structure_types": {
-		"hatchery": {
-			"kind": {
-				"Crafting": {
-					"starting_recipe": "hatch_ants"
-				}
-			},
-			"construction_strategy": {
-				"Direct": {
-					"work": 5,
-					"materials": {},
-					"allowed_terrain_types": []
-				}
-			},
-			"max_workers": 6
-		},
 		"storage": {
 			"kind": {
 				"Storage": {

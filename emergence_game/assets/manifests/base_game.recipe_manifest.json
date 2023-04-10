@@ -1,17 +1,5 @@
 {
 	"recipes": {
-		"hatch_ants": {
-			"inputs": {
-				"Exact": {
-					"ant_egg": 1
-				}
-			},
-			"outputs": {},
-			"craft_time": 10,
-			"conditions": {
-				"workers_required": 1
-			}
-		},
 		"leuco_chunk_production": {
 			"inputs": {
 				"Flexible": {
