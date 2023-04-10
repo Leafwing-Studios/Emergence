@@ -99,6 +99,7 @@ fn setup_ui(mut commands: Commands) {
                 NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::SpaceBetween,
                         size: Size::new(Val::Px(200.), Val::Percent(100.)),
                         ..default()
                     },
