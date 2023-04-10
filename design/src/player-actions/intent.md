@@ -58,6 +58,12 @@ Recover intent for each affected organism for the duration of the effect.
 When used in dense areas, Fallow is intent-positive (at the cost of productivity).
 It can also be used to slow down consumption in times of need and reduce generation of unwanted products without destroying the organism.
 
+### *Amplify / Dampen*
+
+*Amplify* increases the strength of all emitters in the area.
+
+*Dampen* decreases the strength of all emitters in the area.
+
 ## Unlocking and upgrading
 
 Intent is unlocked at the very beginning of the game, and narratively represents the first "consciousness" of the collective.
