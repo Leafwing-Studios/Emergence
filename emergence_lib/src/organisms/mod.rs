@@ -13,7 +13,7 @@ use crate::{
 
 use self::{
     energy::{kill_organisms_when_out_of_energy, EnergyPool},
-    lifecycle::{transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
+    lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
 };
 
 pub mod energy;
@@ -144,6 +144,7 @@ impl Plugin for OrganismPlugin {
                 regenerate_resource_pool::<EnergyPool>,
                 kill_organisms_when_out_of_energy,
                 transform_when_lifecycle_complete,
+                sprout_seeds,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),

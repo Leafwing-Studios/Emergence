@@ -8,7 +8,7 @@ use bevy::{
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
@@ -697,6 +697,12 @@ pub(crate) struct Facing {
 }
 
 impl Facing {
+    pub(crate) fn random(rng: &mut ThreadRng) -> Self {
+        let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
+
+        Self { direction }
+    }
+
     /// Rotates this facing one 60 degree step clockwise.
     pub(crate) fn rotate_left(&mut self) {
         self.direction = self.direction.left();

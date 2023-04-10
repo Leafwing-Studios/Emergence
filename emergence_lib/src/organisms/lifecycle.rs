@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::components::StorageInventory,
+    items::item_manifest::ItemManifest,
     player_interaction::clipboard::ClipboardData,
     simulation::{
         geometry::{Facing, MapGeometry, TilePos},
@@ -270,6 +272,62 @@ pub(super) fn transform_when_lifecycle_complete(
 
             // We only want to transform once, so we break out of the loop.
             break;
+        }
+    }
+}
+
+/// Items with [`ItemTag::Seed`] that are dropped on the ground will be consumed and transformed into a new organism.
+pub(super) fn sprout_seeds(
+    mut litter_query: Query<(&TilePos, &mut StorageInventory), With<Id<Terrain>>>,
+    item_manifest: Res<ItemManifest>,
+    structure_manifest: Res<StructureManifest>,
+    unit_manifest: Res<UnitManifest>,
+    unit_handles: Res<UnitHandles>,
+    map_geometry: Res<MapGeometry>,
+    mut commands: Commands,
+) {
+    let rng = &mut rand::thread_rng();
+
+    for (&tile_pos, mut storage) in litter_query.iter_mut() {
+        for item_slot in storage.iter_mut() {
+            let item_id = item_slot.item_id();
+
+            // Make sure the tile is empty.
+            if !map_geometry.is_passable(tile_pos, tile_pos) {
+                continue;
+            }
+
+            // Make sure we can actually remove the item from the slot.
+            let Ok(()) = item_slot.remove_all_or_nothing(1) else { continue };
+
+            if let Some(organism_id) = item_manifest.get(item_id).seed {
+                match organism_id {
+                    OrganismId::Structure(structure_id) => {
+                        let facing = Facing::random(rng);
+
+                        let data = ClipboardData {
+                            structure_id,
+                            facing,
+                            active_recipe: structure_manifest
+                                .get(structure_id)
+                                .starting_recipe()
+                                .clone(),
+                        };
+                        commands.spawn_structure(tile_pos, data);
+                    }
+                    OrganismId::Unit(unit_id) => {
+                        let unit_data = unit_manifest.get(unit_id).clone();
+
+                        commands.spawn(UnitBundle::new(
+                            unit_id,
+                            tile_pos,
+                            unit_data,
+                            &unit_handles,
+                            &map_geometry,
+                        ));
+                    }
+                }
+            }
         }
     }
 }
