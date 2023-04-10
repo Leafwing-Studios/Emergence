@@ -1,10 +1,9 @@
-//! Quickly select which structure to place.
+//! Quickly select which ability to use.
 
 use crate::{
-    asset_management::{manifest::Id, AssetState},
+    asset_management::AssetState,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{abilities::IntentAbility, clipboard::Tool, PlayerAction},
-    structures::structure_manifest::Structure,
 };
 
 use bevy::prelude::*;
@@ -48,7 +47,7 @@ fn handle_selection(
             commands.entity(entity).despawn_recursive();
         }
 
-        commands.remove_resource::<HexMenuArrangement<Id<Structure>>>();
+        commands.remove_resource::<HexMenuArrangement<IntentAbility>>();
     }
 
     match result {
