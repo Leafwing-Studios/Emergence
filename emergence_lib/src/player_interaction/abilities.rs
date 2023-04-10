@@ -1,6 +1,7 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
 use crate as emergence_lib;
+use crate::simulation::SimulationSet;
 
 use super::clipboard::Tool;
 use super::picking::CursorPos;
@@ -19,8 +20,13 @@ pub(super) struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((regenerate_intent, use_ability).chain())
-            .init_resource::<IntentPool>();
+        app.add_systems(
+            (regenerate_intent, use_ability)
+                .chain()
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        )
+        .init_resource::<IntentPool>();
     }
 }
 
