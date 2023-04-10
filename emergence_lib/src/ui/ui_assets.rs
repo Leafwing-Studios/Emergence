@@ -107,7 +107,7 @@ impl FromWorld for Icons<IntentAbility> {
         let mut map = HashMap::new();
 
         for ability in IntentAbility::variants() {
-            let ability_name = format!("{ability}");
+            let ability_name = format!("{ability}").to_lowercase();
             let ability_path = format!("icons/abilities/{ability_name}.png");
             let icon = asset_server.load(ability_path);
             map.insert(ability, icon);
