@@ -40,21 +40,24 @@ impl Plugin for AbilitiesPlugin {
     }
 }
 
-/// The different intent-spending "abilities" that the hive mind can use
+/// The different intent-spending "abilities" that the hive mind can use.
+///
+/// Note that the order of these variants is important,
+/// as it determines the order of the abilities in the UI.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, IterableEnum, Display)]
 pub(crate) enum IntentAbility {
-    /// Gather allied units.
-    Lure,
-    /// Repel allied units.
-    Warning,
     /// Increases the working speed and maintenance costs of structures.
     Flourish,
-    /// Decreases the working speed and maintenance costs of structures.
-    Fallow,
+    /// Repel allied units.
+    Warning,
     /// Increase the signal strength of emitters.
     Amplify,
+    /// Decreases the working speed and maintenance costs of structures.
+    Fallow,
     /// Decrease the signal strength of emitters.
     Dampen,
+    /// Gather allied units.
+    Lure,
 }
 
 impl IntentAbility {
