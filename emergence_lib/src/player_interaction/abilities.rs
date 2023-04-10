@@ -1,6 +1,8 @@
 //! Abilities spend intent, modifying the behavior of allied organisms in an area.
 
 use crate as emergence_lib;
+use crate::signals::{Emitter, SignalModifier};
+use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 
 use super::clipboard::Tool;
@@ -20,13 +22,20 @@ pub(super) struct AbilitiesPlugin;
 
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            (regenerate_intent, use_ability)
-                .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        )
-        .init_resource::<IntentPool>();
+        app.add_event::<SignalModifierEvent>()
+            .add_systems(
+                (regenerate_intent, use_ability)
+                    .chain()
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            )
+            .add_systems(
+                (process_signal_modifier_events,)
+                    .after(use_ability)
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            )
+            .init_resource::<IntentPool>();
     }
 }
 
@@ -68,16 +77,34 @@ fn use_ability(
     player_actions: Res<ActionState<PlayerAction>>,
     mut intent_pool: ResMut<IntentPool>,
     fixed_time: Res<FixedTime>,
+    mut signal_modifier_events: EventWriter<SignalModifierEvent>,
 ) {
     let Some(tile_pos) = cursor_tile_pos.maybe_tile_pos() else { return };
     let Tool::Ability(ability) = *tool else { return };
 
     if player_actions.pressed(PlayerAction::UseTool) {
-        let cost = ability.cost() * fixed_time.period.as_secs_f32();
+        let delta_time = fixed_time.period;
+
+        let cost = ability.cost() * delta_time.as_secs_f32();
         if intent_pool.current() >= cost {
             intent_pool.expend(cost).unwrap();
 
-            info!("Using {} at {}", ability, tile_pos);
+            match ability {
+                IntentAbility::Lure => todo!(),
+                IntentAbility::Warning => todo!(),
+                IntentAbility::Flourish => todo!(),
+                IntentAbility::Fallow => todo!(),
+                IntentAbility::Amplify => {
+                    signal_modifier_events.send(SignalModifierEvent {
+                        tile_pos,
+                        modifier: SignalModifier::Amplify(delta_time),
+                    });
+                }
+                IntentAbility::Dampen => signal_modifier_events.send(SignalModifierEvent {
+                    tile_pos,
+                    modifier: SignalModifier::Dampen(delta_time),
+                }),
+            }
         }
     }
 }
@@ -184,5 +211,33 @@ impl Pool for IntentPool {
 fn regenerate_intent(mut intent_pool: ResMut<IntentPool>, time: Res<FixedTime>) {
     if intent_pool.current() != intent_pool.max() {
         intent_pool.regenerate(time.period);
+    }
+}
+
+/// An event that is sent when a signal modifier is applied to a tile.
+#[derive(Clone, Debug)]
+struct SignalModifierEvent {
+    /// The tile that the modifier is applied to.
+    tile_pos: TilePos,
+    /// The modifier that is applied.
+    modifier: SignalModifier,
+}
+
+/// Applies [`SignalModifierEvent`]s, modifying matching [`Emitter`]s.
+fn process_signal_modifier_events(
+    mut signal_modifier_events: EventReader<SignalModifierEvent>,
+    mut emitter_query: Query<&mut Emitter>,
+    map_geometry: Res<MapGeometry>,
+) {
+    for SignalModifierEvent { tile_pos, modifier } in signal_modifier_events.iter() {
+        let tile_pos = *tile_pos;
+        let modifier = *modifier;
+
+        // FIXME: this won't amplify unit signals, but there's no good way to do that right now without a linear search
+        for entity in map_geometry.get_emitters(tile_pos) {
+            if let Ok(mut emitter) = emitter_query.get_mut(entity) {
+                emitter.modifier += modifier;
+            }
+        }
     }
 }

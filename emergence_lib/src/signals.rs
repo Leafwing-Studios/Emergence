@@ -11,11 +11,15 @@ use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    prelude::*,
+    utils::{Duration, HashMap},
+};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
+use std::ops::MulAssign;
 
 use crate::asset_management::manifest::Id;
 use crate::simulation::geometry::{MapGeometry, TilePos};
@@ -37,7 +41,12 @@ pub(crate) struct SignalsPlugin;
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Signals>().add_systems(
-            (emit_signals, diffuse_signals, degrade_signals)
+            (
+                tick_signal_modifiers,
+                emit_signals,
+                diffuse_signals,
+                degrade_signals,
+            )
                 .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -491,6 +500,15 @@ impl SignalStrength {
     pub fn value(&self) -> f32 {
         self.0
     }
+
+    /// Applies a [`SignalModifier`] to this signal strength.
+    pub fn apply_modifier(&mut self, modifier: SignalModifier) {
+        *self *= match modifier {
+            SignalModifier::None => 1.,
+            SignalModifier::Amplify(_) => SignalModifier::RATIO,
+            SignalModifier::Dampen(_) => 1. / SignalModifier::RATIO,
+        }
+    }
 }
 
 impl Add<SignalStrength> for SignalStrength {
@@ -529,6 +547,12 @@ impl Mul<f32> for SignalStrength {
     }
 }
 
+impl MulAssign<f32> for SignalStrength {
+    fn mul_assign(&mut self, rhs: f32) {
+        *self = *self * rhs
+    }
+}
+
 /// The component that causes a game object to emit a signal.
 ///
 /// This can change over time, and multiple signals may be emitted at once.
@@ -536,6 +560,92 @@ impl Mul<f32> for SignalStrength {
 pub(crate) struct Emitter {
     /// The list of signals to emit at a provided
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
+    /// Any modifiers applied to the signal strength.
+    pub(crate) modifier: SignalModifier,
+}
+
+/// Modifies the strength of a signal.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum SignalModifier {
+    /// No modifier is applied.
+    #[default]
+    None,
+    /// The signal strength is multiplied for the duration of this effect.
+    Amplify(Duration),
+    /// The signal strength is divided for the duration of this effect.
+    Dampen(Duration),
+}
+
+impl SignalModifier {
+    /// Controls the ratio of the signal strength when modified.
+    ///
+    /// This should be greater than 1.
+    const RATIO: f32 = 10.;
+}
+
+impl Add for SignalModifier {
+    type Output = Self;
+
+    /// Combines two modifiers, returning the resulting modifier.
+    ///
+    /// If the two modifiers are the same, their durations are added together.
+    /// If the two modifiers are different, they cancel each other out.
+    fn add(self, other: SignalModifier) -> Self {
+        match (self, other) {
+            (SignalModifier::None, other) | (other, SignalModifier::None) => other,
+            (
+                SignalModifier::Amplify(amplify_duration),
+                SignalModifier::Dampen(diminish_duration),
+            )
+            | (
+                SignalModifier::Dampen(diminish_duration),
+                SignalModifier::Amplify(amplify_duration),
+            ) => {
+                if amplify_duration == diminish_duration {
+                    SignalModifier::None
+                } else if amplify_duration > diminish_duration {
+                    SignalModifier::Amplify(amplify_duration - diminish_duration)
+                } else {
+                    SignalModifier::Dampen(diminish_duration - amplify_duration)
+                }
+            }
+            (SignalModifier::Amplify(a), SignalModifier::Amplify(b)) => {
+                SignalModifier::Amplify(a + b)
+            }
+            (SignalModifier::Dampen(a), SignalModifier::Dampen(b)) => SignalModifier::Dampen(a + b),
+        }
+    }
+}
+
+impl AddAssign for SignalModifier {
+    fn add_assign(&mut self, other: SignalModifier) {
+        *self = *self + other
+    }
+}
+
+/// Ticks down the duration of all signal modifiers.
+fn tick_signal_modifiers(mut query: Query<&mut Emitter>, fixed_time: Res<FixedTime>) {
+    let delta_time = fixed_time.period;
+
+    for mut emitter in query.iter_mut() {
+        match emitter.modifier {
+            SignalModifier::None => {}
+            SignalModifier::Amplify(duration) => {
+                if duration > delta_time {
+                    emitter.modifier = SignalModifier::Amplify(duration - delta_time);
+                } else {
+                    emitter.modifier = SignalModifier::None;
+                }
+            }
+            SignalModifier::Dampen(duration) => {
+                if duration > delta_time {
+                    emitter.modifier = SignalModifier::Dampen(duration - delta_time);
+                } else {
+                    emitter.modifier = SignalModifier::None;
+                }
+            }
+        }
+    }
 }
 
 /// Emits signals from [`Emitter`] sources.
@@ -550,14 +660,16 @@ fn emit_signals(
             Some(structure_id) => {
                 let footprint = &structure_manifest.get(*structure_id).footprint;
                 for tile_pos in footprint.in_world_space(center) {
-                    for (signal_type, signal_strength) in &emitter.signals {
-                        signals.add_signal(*signal_type, tile_pos, *signal_strength);
+                    for (signal_type, mut signal_strength) in emitter.signals.clone() {
+                        signal_strength.apply_modifier(emitter.modifier);
+                        signals.add_signal(signal_type, tile_pos, signal_strength);
                     }
                 }
             }
             None => {
-                for (signal_type, signal_strength) in &emitter.signals {
-                    signals.add_signal(*signal_type, center, *signal_strength);
+                for (signal_type, mut signal_strength) in emitter.signals.clone() {
+                    signal_strength.apply_modifier(emitter.modifier);
+                    signals.add_signal(signal_type, center, signal_strength);
                 }
             }
         }
@@ -866,5 +978,29 @@ mod tests {
             ),
             vec![SignalType::Pull(item_kind), SignalType::Stores(item_kind)]
         );
+    }
+
+    #[test]
+    fn modifiers_add_correctly() {
+        let amplify = SignalModifier::Amplify(Duration::from_secs(1));
+        let diminish = SignalModifier::Dampen(Duration::from_secs(1));
+        let double_amplify = SignalModifier::Amplify(Duration::from_secs(2));
+        let double_diminish = SignalModifier::Dampen(Duration::from_secs(2));
+
+        let none = SignalModifier::None;
+
+        assert_eq!(amplify + none, amplify);
+        assert_eq!(none + amplify, amplify);
+        assert_eq!(diminish + none, diminish);
+        assert_eq!(none + diminish, diminish);
+
+        assert_eq!(amplify + diminish, none);
+        assert_eq!(diminish + amplify, none);
+
+        assert_eq!(amplify + amplify, double_amplify);
+        assert_eq!(diminish + diminish, double_diminish);
+
+        assert_eq!(double_amplify + diminish, amplify);
+        assert_eq!(double_diminish + amplify, diminish);
     }
 }
