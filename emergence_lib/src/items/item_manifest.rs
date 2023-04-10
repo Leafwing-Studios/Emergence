@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     crafting::item_tags::{ItemKind, ItemTag},
+    organisms::{OrganismId, RawOrganismId},
 };
 
 /// The marker type for [`Id<Item>`](super::Id).
@@ -24,6 +25,7 @@ impl ItemManifest {
 
         match tag {
             ItemTag::Compostable => data.compostable,
+            ItemTag::Seed => data.seed.is_some(),
         }
     }
 
@@ -87,6 +89,33 @@ pub struct ItemData {
     pub stack_size: u32,
     /// Can this item be composted?
     pub compostable: bool,
+    /// Is this item a seed?
+    ///
+    /// If so, what does it grow into when left as litter?
+    pub seed: Option<OrganismId>,
+}
+
+/// The unprocessed [`ItemData`] as seen in the manifest file.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RawItemData {
+    /// The number of items that can fit in a single item slot.
+    pub stack_size: u32,
+    /// Can this item be composted?
+    pub compostable: bool,
+    /// Is this item a seed?
+    ///
+    /// If so, what does it grow into when left as litter?
+    pub seed: Option<RawOrganismId>,
+}
+
+impl From<RawItemData> for ItemData {
+    fn from(raw: RawItemData) -> Self {
+        Self {
+            stack_size: raw.stack_size,
+            compostable: raw.compostable,
+            seed: raw.seed.map(OrganismId::from),
+        }
+    }
 }
 
 /// The [`ItemManifest`] as seen in the manifest file.
@@ -94,7 +123,7 @@ pub struct ItemData {
 #[uuid = "cd9f4571-b0c4-4641-8d27-1c9c5ad4c812"]
 pub struct RawItemManifest {
     /// The data for each item.
-    pub items: HashMap<String, ItemData>,
+    pub items: HashMap<String, RawItemData>,
 }
 
 impl IsRawManifest for RawItemManifest {
@@ -107,8 +136,9 @@ impl IsRawManifest for RawItemManifest {
         let mut manifest = Manifest::new();
 
         for (raw_id, raw_data) in self.items.clone() {
-            // No additional preprocessing is needed.
-            manifest.insert(raw_id, raw_data)
+            let data = ItemData::from(raw_data);
+
+            manifest.insert(raw_id, data)
         }
 
         manifest

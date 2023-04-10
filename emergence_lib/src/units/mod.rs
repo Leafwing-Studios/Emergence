@@ -33,7 +33,6 @@ pub(crate) mod goals;
 pub mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
-mod reproduction;
 pub(crate) mod unit_assets;
 pub mod unit_manifest;
 
@@ -168,7 +167,6 @@ impl Plugin for UnitsPlugin {
                         .in_set(UnitSystem::ChooseNewAction)
                         .after(UnitSystem::Act)
                         .after(UnitSystem::ChooseGoal),
-                    reproduction::hatch_ant_eggs,
                     hunger::check_for_hunger.before(UnitSystem::ChooseNewAction),
                 )
                     .in_set(SimulationSet)

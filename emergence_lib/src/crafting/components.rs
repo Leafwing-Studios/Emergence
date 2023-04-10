@@ -147,7 +147,11 @@ impl InputInventory {
     }
 
     /// Does this inventory have space for at least one item of the given kind?
-    pub fn currently_accepts(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
+    pub(crate) fn currently_accepts(
+        &self,
+        item_kind: ItemKind,
+        item_manifest: &ItemManifest,
+    ) -> bool {
         match self {
             InputInventory::Exact { inventory } => match item_kind {
                 ItemKind::Single(item_id) => {

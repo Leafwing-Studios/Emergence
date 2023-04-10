@@ -4,8 +4,7 @@ use bevy::{
     ecs::system::{Command, SystemState},
     prelude::{warn, Commands, DespawnRecursiveExt, Mut, Query, Res, World},
 };
-use hexx::Direction;
-use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
+use rand::{rngs::ThreadRng, thread_rng};
 
 use crate::{
     asset_management::manifest::Id,
@@ -83,8 +82,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         mut data: ClipboardData,
         rng: &mut ThreadRng,
     ) {
-        let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
-        data.facing = Facing { direction };
+        data.facing = Facing::random(rng);
 
         self.add(SpawnStructureCommand {
             tile_pos,

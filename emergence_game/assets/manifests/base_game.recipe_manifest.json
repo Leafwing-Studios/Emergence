@@ -1,17 +1,5 @@
 {
 	"recipes": {
-		"hatch_ants": {
-			"inputs": {
-				"Exact": {
-					"ant_egg": 1
-				}
-			},
-			"outputs": {},
-			"craft_time": 10,
-			"conditions": {
-				"workers_required": 1
-			}
-		},
 		"leuco_chunk_production": {
 			"inputs": {
 				"Flexible": {
@@ -22,7 +10,7 @@
 			"outputs": {
 				"leuco_chunk": 1
 			},
-			"craft_time": 2,
+			"craft_time": 4,
 			"energy": 40.0
 		},
 		"acacia_leaf_production": {
@@ -48,7 +36,7 @@
 			},
 			"outputs": {
 				"acacia_leaf": 1,
-				"acacia_seed": 0.1
+				"acacia_seed": 0.3
 			},
 			"craft_time": 3,
 			"conditions": {

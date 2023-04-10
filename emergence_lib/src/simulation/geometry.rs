@@ -8,7 +8,7 @@ use bevy::{
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
@@ -189,19 +189,6 @@ impl TilePos {
         iter
     }
 
-    /// All adjacent tiles that are on the map and free of structures.
-    pub(crate) fn empty_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&pos| {
-            map_geometry.is_valid(pos) && !map_geometry.structure_index.contains_key(&pos)
-        });
-        iter
-    }
-
     /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
     pub(crate) fn rotated(&self, facing: Facing) -> Self {
         let n_rotations = facing.rotation_count();
@@ -369,7 +356,7 @@ impl MapGeometry {
         distance <= self.radius as i32
     }
 
-    /// Are all of the tiles in the `footprint` centered around `center` in the map?
+    /// Are all of the tiles in the `footprint` centered around `center` valid?
     pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(tile_pos)
@@ -413,6 +400,21 @@ impl MapGeometry {
             .in_world_space(center)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+    }
+
+    /// Is there enough space for `existing_entity` to transform into a structure with the provided `footprint` located at the `center` tile?
+    ///
+    /// The `existing_entity` will be ignored when checking for space.
+    fn is_space_available_to_transform(
+        &self,
+        existing_entity: Entity,
+        center: TilePos,
+        footprint: &Footprint,
+    ) -> bool {
+        footprint.in_world_space(center).iter().all(|tile_pos| {
+            let entity = self.get_structure(*tile_pos);
+            entity.is_none() || entity == Some(existing_entity)
+        })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` appropriate?
@@ -465,6 +467,30 @@ impl MapGeometry {
         self.is_footprint_valid(center, &footprint)
             && self.is_terrain_flat(center, &footprint)
             && self.is_space_available(center, &footprint)
+            && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
+    }
+
+    /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
+    ///
+    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
+    /// matching the [`Facing`] of the structure.
+    ///
+    /// This checks that:
+    /// - the area is in the map
+    /// - the area is flat
+    /// - the area is free of structures
+    /// - all tiles match the provided allowable terrain list
+    pub(crate) fn can_transform(
+        &self,
+        existing_entity: Entity,
+        center: TilePos,
+        footprint: Footprint,
+        terrain_query: &Query<&Id<Terrain>>,
+        allowed_terrain_types: &AllowedTerrainTypes,
+    ) -> bool {
+        self.is_footprint_valid(center, &footprint)
+            && self.is_terrain_flat(center, &footprint)
+            && self.is_space_available_to_transform(existing_entity, center, &footprint)
             && self.is_terrain_valid(center, &footprint, terrain_query, allowed_terrain_types)
     }
 
@@ -697,6 +723,13 @@ pub(crate) struct Facing {
 }
 
 impl Facing {
+    /// Generates a random facing.
+    pub(crate) fn random(rng: &mut ThreadRng) -> Self {
+        let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
+
+        Self { direction }
+    }
+
     /// Rotates this facing one 60 degree step clockwise.
     pub(crate) fn rotate_left(&mut self) {
         self.direction = self.direction.left();
@@ -794,6 +827,8 @@ pub(super) fn sync_rotation_to_facing(
 
 #[cfg(test)]
 mod tests {
+    use bevy::{ecs::system::SystemState, utils::HashSet};
+
     use super::*;
 
     #[test]
@@ -862,5 +897,67 @@ mod tests {
             dbg!(tile_pos);
             assert_eq!(None, map_geometry.get_structure(tile_pos));
         }
+    }
+
+    #[test]
+    fn can_only_build_on_valid_terrain() {
+        let invalid_name = "invalid".to_string();
+        let valid_name = "valid".to_string();
+        let valid: Id<Terrain> = Id::from_name(valid_name);
+        let invalid: Id<Terrain> = Id::from_name(invalid_name);
+
+        let allowed_terrain_types = AllowedTerrainTypes::Only(HashSet::from_iter([valid]));
+
+        let mut world = World::new();
+        let valid_terrain_entity = world.spawn(valid).id();
+        let invalid_terrain_entity = world.spawn(invalid).id();
+        let mut system_state: SystemState<Query<&Id<Terrain>>> = SystemState::new(&mut world);
+        let terrain_query = system_state.get_mut(&mut world);
+
+        let mut map_geometry = MapGeometry::new(1);
+        let valid_tile_pos = TilePos::new(0, 0);
+        let invalid_tile_pos = TilePos::new(1, 0);
+        map_geometry.add_terrain(valid_tile_pos, valid_terrain_entity);
+        map_geometry.add_terrain(invalid_tile_pos, invalid_terrain_entity);
+
+        assert_eq!(
+            true,
+            map_geometry.is_terrain_valid(
+                valid_tile_pos,
+                &Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            true,
+            map_geometry.can_build(
+                valid_tile_pos,
+                Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            false,
+            map_geometry.is_terrain_valid(
+                invalid_tile_pos,
+                &Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
+
+        assert_eq!(
+            false,
+            map_geometry.can_build(
+                invalid_tile_pos,
+                Footprint::single(),
+                &terrain_query,
+                &allowed_terrain_types
+            )
+        );
     }
 }

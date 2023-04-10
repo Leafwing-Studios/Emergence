@@ -661,6 +661,7 @@ mod tests {
             ItemData {
                 stack_size: 10,
                 compostable: true,
+                seed: None,
             },
         );
         manifest.insert(
@@ -668,6 +669,7 @@ mod tests {
             ItemData {
                 stack_size: 10,
                 compostable: false,
+                seed: None,
             },
         );
         manifest
