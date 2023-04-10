@@ -227,7 +227,7 @@ pub(super) fn transform_when_lifecycle_complete(
                 let footprint = variety.footprint.rotated(facing);
                 let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-                if map_geometry.can_build(
+                if !map_geometry.can_build(
                     tile_pos,
                     footprint,
                     &terrain_query,
@@ -279,6 +279,7 @@ pub(super) fn transform_when_lifecycle_complete(
 /// Items with [`ItemTag::Seed`] that are dropped on the ground will be consumed and transformed into a new organism.
 pub(super) fn sprout_seeds(
     mut litter_query: Query<(&TilePos, &mut StorageInventory), With<Id<Terrain>>>,
+    terrain_query: Query<&Id<Terrain>>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -291,41 +292,59 @@ pub(super) fn sprout_seeds(
     for (&tile_pos, mut storage) in litter_query.iter_mut() {
         for item_slot in storage.iter_mut() {
             let item_id = item_slot.item_id();
+            let Some(organism_id) = item_manifest.get(item_id).seed else { continue };
 
-            // Make sure the tile is empty.
-            if !map_geometry.is_passable(tile_pos, tile_pos) {
-                continue;
+            // Generate a random facing now, so we can verify that the new organism fits.
+            let facing = Facing::random(rng);
+
+            // Make sure that there's a valid place to spawn the new form.
+            if let OrganismId::Structure(structure_id) = organism_id {
+                let construction_data = structure_manifest.construction_data(structure_id);
+                let variety = structure_manifest.get(structure_id);
+                let footprint = variety.footprint.rotated(facing);
+                let allowed_terrain_types = &construction_data.allowed_terrain_types;
+
+                if !map_geometry.can_build(
+                    tile_pos,
+                    footprint,
+                    &terrain_query,
+                    allowed_terrain_types,
+                ) {
+                    // Look for another viable form to transform into.
+                    continue;
+                }
+            } else {
+                // For units, just make sure the tile is empty.
+                if !map_geometry.is_passable(tile_pos, tile_pos) {
+                    continue;
+                }
             }
 
             // Make sure we can actually remove the item from the slot.
             let Ok(()) = item_slot.remove_all_or_nothing(1) else { continue };
 
-            if let Some(organism_id) = item_manifest.get(item_id).seed {
-                match organism_id {
-                    OrganismId::Structure(structure_id) => {
-                        let facing = Facing::random(rng);
+            match organism_id {
+                OrganismId::Structure(structure_id) => {
+                    let data = ClipboardData {
+                        structure_id,
+                        facing,
+                        active_recipe: structure_manifest
+                            .get(structure_id)
+                            .starting_recipe()
+                            .clone(),
+                    };
+                    commands.spawn_structure(tile_pos, data);
+                }
+                OrganismId::Unit(unit_id) => {
+                    let unit_data = unit_manifest.get(unit_id).clone();
 
-                        let data = ClipboardData {
-                            structure_id,
-                            facing,
-                            active_recipe: structure_manifest
-                                .get(structure_id)
-                                .starting_recipe()
-                                .clone(),
-                        };
-                        commands.spawn_structure(tile_pos, data);
-                    }
-                    OrganismId::Unit(unit_id) => {
-                        let unit_data = unit_manifest.get(unit_id).clone();
-
-                        commands.spawn(UnitBundle::new(
-                            unit_id,
-                            tile_pos,
-                            unit_data,
-                            &unit_handles,
-                            &map_geometry,
-                        ));
-                    }
+                    commands.spawn(UnitBundle::new(
+                        unit_id,
+                        tile_pos,
+                        unit_data,
+                        &unit_handles,
+                        &map_geometry,
+                    ));
                 }
             }
         }
