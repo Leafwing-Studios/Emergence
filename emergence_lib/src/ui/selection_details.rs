@@ -421,6 +421,7 @@ fn get_details(
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
                 impatience_pool: unit_query_item.impatience_pool.clone(),
+                age: unit_query_item.age.clone(),
                 organism_details,
             })
         }
@@ -879,6 +880,7 @@ mod unit_details {
         terrain::terrain_manifest::TerrainManifest,
         units::{
             actions::CurrentAction,
+            age::Age,
             goals::Goal,
             hunger::Diet,
             impatience::ImpatiencePool,
@@ -906,6 +908,8 @@ mod unit_details {
         pub(super) action: &'static CurrentAction,
         /// How frustrated the unit is
         pub(super) impatience_pool: &'static ImpatiencePool,
+        /// The current and max age of this unit.
+        pub(super) age: &'static Age,
     }
 
     /// Detailed info about a given unit.
@@ -929,6 +933,8 @@ mod unit_details {
         pub(crate) organism_details: OrganismDetails,
         /// How frustrated the unit is
         pub(super) impatience_pool: ImpatiencePool,
+        /// The current and max age of this unit.
+        pub(super) age: Age,
     }
 
     impl UnitDetails {
@@ -953,6 +959,7 @@ mod unit_details {
             let organism_details = self
                 .organism_details
                 .display(structure_manifest, unit_manifest);
+            let age = &self.age;
 
             format!(
                 "Entity: {entity:?}
@@ -963,6 +970,7 @@ Holding: {held_item}
 Goal: {goal}
 Action: {action}
 Impatience: {impatience_pool}
+Age: {age}
 {organism_details}"
             )
         }

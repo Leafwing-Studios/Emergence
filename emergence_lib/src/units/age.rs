@@ -3,6 +3,8 @@
 //! As discussed in <https://github.com/Leafwing-Studios/Emergence/issues/704>,
 //! this enables players to more easily control their population size and stockpile food.
 
+use std::fmt::{Display, Formatter};
+
 use bevy::prelude::*;
 use rand::{rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
@@ -43,5 +45,11 @@ impl Age {
     /// Returns the maximum age in [`Days`].
     pub fn max(&self) -> Days {
         self.max
+    }
+}
+
+impl Display for Age {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}/{:.2} days", self.current.0, self.max.0)
     }
 }
