@@ -62,6 +62,11 @@ pub struct InGameTime {
 )]
 pub struct Days(pub f32);
 
+impl Days {
+    /// Represents a duration of 0 days.
+    pub const ZERO: Self = Days(0.);
+}
+
 impl Div<f32> for Days {
     type Output = Days;
 

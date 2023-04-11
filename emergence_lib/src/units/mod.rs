@@ -29,6 +29,7 @@ use self::{
 use crate::organisms::OrganismBundle;
 
 pub(crate) mod actions;
+pub mod age;
 pub(crate) mod goals;
 pub mod hunger;
 pub(crate) mod impatience;
