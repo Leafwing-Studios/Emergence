@@ -276,7 +276,7 @@ fn compute_new_goal(
     // Only try to avoid units of the same type
     goal_relevant_signals.retain(|(signal_type, _)| {
         if let SignalType::Unit(signal_unit_id) = signal_type {
-            *signal_unit_id != unit_id
+            *signal_unit_id == unit_id
         } else {
             true
         }
