@@ -52,7 +52,7 @@ impl Plugin for AbilitiesPlugin {
 /// Note that the order of these variants is important,
 /// as it determines the order of the abilities in the UI.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, IterableEnum, Display)]
-pub(crate) enum IntentAbility {
+pub enum IntentAbility {
     /// Increases the working speed and maintenance costs of structures.
     Flourish,
     /// Gather allied units.

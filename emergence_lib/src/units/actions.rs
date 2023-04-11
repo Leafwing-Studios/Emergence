@@ -1187,7 +1187,7 @@ impl CurrentAction {
         }
     }
 
-    /// Follow a [`IntentAbility::Lure](crate::player_interaction::abilities::IntentAbility::Lure) signal.
+    /// Follow a [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure) signal.
     ///
     /// If [`SignalType::Lure`] is not the strongest signal at the unit's position, then idle instead.
     fn lure(
@@ -1217,7 +1217,7 @@ impl CurrentAction {
         }
     }
 
-    /// Flee a [`IntentAbility::Repel](crate::player_interaction::abilities::IntentAbility::Repel) signal.
+    /// Flee a [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel) signal.
     ///
     /// If [`SignalType::Repel`] is not the strongest signal at the unit's position, then idle instead.
     fn repel(

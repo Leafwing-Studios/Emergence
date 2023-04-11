@@ -7,7 +7,7 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
-pub(crate) mod abilities;
+pub mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
 pub(crate) mod picking;

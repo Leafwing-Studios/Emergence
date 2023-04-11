@@ -145,6 +145,7 @@ fn set_terrain_emitters(
     }
 }
 
+/// The set of systems that update terrain emitters.
 #[derive(SystemSet, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct TerrainEmitters;
 

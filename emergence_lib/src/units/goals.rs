@@ -58,9 +58,9 @@ pub(crate) enum Goal {
     Demolish(Id<Structure>),
     /// Attempt to feed self
     Eat(ItemKind),
-    /// Following [`IntentAbility::Lure`]
+    /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure)
     Lure,
-    /// Retrating from [`IntentAbility::Repel`]
+    /// Retrating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
     Repel,
 }
 

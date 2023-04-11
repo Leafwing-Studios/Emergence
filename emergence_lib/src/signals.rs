@@ -673,7 +673,8 @@ fn emit_signals(
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
 
-    fn emit_signal(
+    /// Emits signals that correspond to a single [`Emitter`].
+    fn emit(
         signals: &mut Signals,
         tile_pos: TilePos,
         emitter: &Emitter,
@@ -705,7 +706,7 @@ fn emit_signals(
                         intent_pool.expend(cost).unwrap();
                     }
 
-                    emit_signal(&mut signals, tile_pos, emitter, &modifier);
+                    emit(&mut signals, tile_pos, emitter, modifier);
                 }
             }
             None => {
@@ -717,7 +718,7 @@ fn emit_signals(
                     intent_pool.expend(cost).unwrap();
                 }
 
-                emit_signal(&mut signals, center, emitter, &modifier);
+                emit(&mut signals, center, emitter, modifier);
             }
         }
     }
