@@ -14,6 +14,7 @@ use crate::simulation::time::TemporalPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
+use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
 pub mod generation;
@@ -51,6 +52,10 @@ impl Plugin for SimulationPlugin {
                         .run_if(in_state(PauseState::Playing))
                         .run_if(in_state(AssetState::FullyLoaded)),
                 );
+                schedule.set_build_settings(ScheduleBuildSettings {
+                    ambiguity_detection: LogLevel::Error,
+                    ..Default::default()
+                });
             })
             .add_plugin(GenerationPlugin {
                 config: self.gen_config.clone(),
