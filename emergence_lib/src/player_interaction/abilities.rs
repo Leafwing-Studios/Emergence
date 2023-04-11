@@ -51,16 +51,16 @@ impl Plugin for AbilitiesPlugin {
 pub(crate) enum IntentAbility {
     /// Increases the working speed and maintenance costs of structures.
     Flourish,
-    /// Repel allied units.
-    Repel,
+    /// Gather allied units.
+    Lure,
     /// Increase the signal strength of emitters.
     Amplify,
     /// Decreases the working speed and maintenance costs of structures.
     Fallow,
     /// Decrease the signal strength of emitters.
     Dampen,
-    /// Gather allied units.
-    Lure,
+    /// Repel allied units.
+    Repel,
 }
 
 impl IntentAbility {
