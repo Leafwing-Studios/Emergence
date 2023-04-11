@@ -53,7 +53,7 @@ impl Plugin for SimulationPlugin {
                         .run_if(in_state(AssetState::FullyLoaded)),
                 );
                 schedule.set_build_settings(ScheduleBuildSettings {
-                    ambiguity_detection: LogLevel::Error,
+                    ambiguity_detection: LogLevel::Warn,
                     ..Default::default()
                 });
             })

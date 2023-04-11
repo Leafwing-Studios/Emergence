@@ -43,6 +43,7 @@ impl Plugin for SignalsPlugin {
         app.init_resource::<Signals>().add_systems(
             (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
+                .in_set(ManageSignals)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
