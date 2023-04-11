@@ -162,7 +162,6 @@ impl Goal {
 pub(super) fn choose_goal(
     mut units_query: Query<(
         &TilePos,
-        &Id<Unit>,
         &mut Goal,
         &mut ImpatiencePool,
         &UnitInventory,
@@ -174,7 +173,7 @@ pub(super) fn choose_goal(
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, &unit_id, mut goal, mut impatience_pool, unit_inventory, id) in
+    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, unit_id) in
         units_query.iter_mut()
     {
         // If the strongest signal is ability-related, stop what you're currently doing and do that.
@@ -219,10 +218,9 @@ pub(super) fn choose_goal(
         }
 
         if let Goal::Wander { remaining_actions } = *goal {
-            let wandering_behavior = &unit_manifest.get(*id).wandering_behavior;
+            let wandering_behavior = &unit_manifest.get(*unit_id).wandering_behavior;
             *goal = compute_new_goal(
                 remaining_actions,
-                unit_id,
                 tile_pos,
                 wandering_behavior,
                 rng,
@@ -241,7 +239,6 @@ pub(super) fn choose_goal(
 /// If anything fails, just keep wandering for now.
 fn compute_new_goal(
     mut remaining_actions: Option<u16>,
-    unit_id: Id<Unit>,
     tile_pos: TilePos,
     wandering_behavior: &WanderingBehavior,
     rng: &mut ThreadRng,
@@ -249,14 +246,7 @@ fn compute_new_goal(
 ) -> Goal {
     // When we first get a wandering goal, pick a number of actions to take before picking a new goal.
     if remaining_actions.is_none() {
-        // Units should wander for longer when they are more densely packed in order to fight crowding.
-        let density_multiplier = signals
-            .get(SignalType::Unit(unit_id), tile_pos)
-            .value()
-            // This needs to scale in a sublinear but strictly positive way.
-            .ln_1p();
-        let number_of_actions =
-            (wandering_behavior.sample(rng) as f32 * density_multiplier).round() as u16;
+        let number_of_actions = wandering_behavior.sample(rng);
         remaining_actions = Some(number_of_actions);
     }
 
