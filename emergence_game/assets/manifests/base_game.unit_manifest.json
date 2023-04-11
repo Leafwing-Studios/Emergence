@@ -21,7 +21,7 @@
         "energy": 50.0
       },
       "max_impatience": 10,
-      "max_age": 1.0,
+      "max_age": 10.0,
       "wandering_behavior": {
         "wander_durations": [
           [
