@@ -69,8 +69,8 @@ impl IntentAbility {
     /// This cost is only paid for entities that this ability affects.
     pub(crate) fn cost(&self) -> Intent {
         Intent(match self {
-            IntentAbility::Lure => 5.,
-            IntentAbility::Repel => 5.,
+            IntentAbility::Lure => 10.,
+            IntentAbility::Repel => 10.,
             IntentAbility::Flourish => 5.,
             IntentAbility::Fallow => 5.,
             IntentAbility::Amplify => 2.,
