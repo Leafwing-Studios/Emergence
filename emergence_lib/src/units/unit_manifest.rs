@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     asset_management::manifest::loader::IsRawManifest,
     organisms::{OrganismVariety, RawOrganismVariety},
+    simulation::time::Days,
     units::{hunger::Diet, WanderingBehavior},
 };
 
@@ -29,6 +30,8 @@ pub struct UnitData {
     pub diet: Diet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     pub max_impatience: u8,
+    /// How long can this unit go without eating before it dies?
+    pub max_age: Days,
     /// How many actions will units of this type take while wandering before picking a new goal?
     ///
     /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
@@ -44,6 +47,8 @@ pub struct RawUnitData {
     pub diet: RawDiet,
     /// How much impatience this unit can accumulate before getting too frustrated and picking a new task.
     pub max_impatience: u8,
+    /// How long can this unit go without eating before it dies?
+    pub max_age: f32,
     /// How many actions will units of this type take while wandering before picking a new goal?
     ///
     /// This stores a [`WeightedIndex`](rand::distributions::WeightedIndex) to allow for multimodal distributions.
@@ -52,10 +57,17 @@ pub struct RawUnitData {
 
 impl From<RawUnitData> for UnitData {
     fn from(raw: RawUnitData) -> Self {
+        assert!(
+            raw.max_age > 0.0,
+            "Unit max age must be positive (got {})",
+            raw.max_age
+        );
+
         Self {
             organism_variety: raw.organism_variety.into(),
             diet: raw.diet.into(),
             max_impatience: raw.max_impatience,
+            max_age: Days(raw.max_age),
             wandering_behavior: raw.wandering_behavior,
         }
     }

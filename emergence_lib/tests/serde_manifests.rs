@@ -108,6 +108,7 @@ fn can_serialize_unit_manifest() {
                         (8, 0.2),
                         (16, 0.1),
                     ]),
+                    max_age: 10.,
                 },
             ),
             (
@@ -121,6 +122,7 @@ fn can_serialize_unit_manifest() {
                     diet: RawDiet::new("acacia_leaf", 0.),
                     max_impatience: 0,
                     wandering_behavior: WanderingBehavior::from_iter([(0, 0.7), (16, 0.1)]),
+                    max_age: 0.2,
                 },
             ),
         ]),

@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use self::{
     actions::CurrentAction,
+    age::Age,
     goals::Goal,
     impatience::ImpatiencePool,
     item_interaction::UnitInventory,
@@ -85,6 +86,8 @@ pub(crate) struct UnitBundle {
     held_item: UnitInventory,
     /// What signals is this unit emitting?
     emitter: Emitter,
+    /// The current and max age of the unit.
+    age: Age,
     /// Organism data
     organism_bundle: OrganismBundle,
     /// Makes units pickable
@@ -119,6 +122,7 @@ impl UnitBundle {
             emitter: Emitter {
                 signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
             },
+            age: Age::newborn(unit_data.max_age),
             organism_bundle: OrganismBundle::new(
                 unit_data.organism_variety.energy_pool,
                 unit_data.organism_variety.lifecycle,
@@ -147,6 +151,7 @@ impl UnitBundle {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
         let mut energy_pool = unit_data.organism_variety.energy_pool;
         energy_pool.randomize(rng);
+        let age = Age::randomized(rng, unit_data.max_age);
 
         UnitBundle {
             unit_id,
@@ -159,6 +164,7 @@ impl UnitBundle {
             emitter: Emitter {
                 signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
             },
+            age,
             organism_bundle: OrganismBundle::new(energy_pool, unit_data.organism_variety.lifecycle),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
