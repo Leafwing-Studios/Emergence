@@ -213,6 +213,8 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
+                Goal::Lure => todo!(),
+                Goal::Warning => todo!(),
             }
         }
     }
