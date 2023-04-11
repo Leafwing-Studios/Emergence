@@ -106,6 +106,11 @@ impl InGameTime {
         // but 24 hour time begins at midnight.
         ((self.fraction_of_day() + 0.25) * 24.) % 24.
     }
+
+    /// Returns the configured number of seconds per day.
+    pub fn seconds_per_day(&self) -> f32 {
+        self.seconds_per_day
+    }
 }
 
 impl Display for InGameTime {

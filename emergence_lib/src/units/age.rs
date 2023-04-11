@@ -9,7 +9,7 @@ use bevy::prelude::*;
 use rand::{rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 
-use crate::simulation::time::Days;
+use crate::simulation::time::{Days, InGameTime};
 
 /// The age of a unit, in in-game days.
 #[derive(Component, Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -51,5 +51,24 @@ impl Age {
 impl Display for Age {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:.2}/{:.2} days", self.current.0, self.max.0)
+    }
+}
+
+/// Advances the age of all units by the elapsed time and kills them if they are too old.
+pub(super) fn aging(
+    mut commands: Commands,
+    fixed_time: Res<FixedTime>,
+    in_game_time: Res<InGameTime>,
+    mut query: Query<(&mut Age, Entity)>,
+) {
+    let delta_time = fixed_time.period.as_secs_f32();
+    let delta_days = Days(delta_time / in_game_time.seconds_per_day());
+
+    for (mut age, entity) in query.iter_mut() {
+        age.current += delta_days;
+
+        if age.current > age.max {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }

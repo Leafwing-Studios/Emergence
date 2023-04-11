@@ -218,6 +218,7 @@ impl Plugin for UnitsPlugin {
                         .before(UnitSystem::ChooseNewAction)
                         // Make sure to overwrite any existing goal
                         .after(UnitSystem::ChooseGoal),
+                    age::aging,
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
