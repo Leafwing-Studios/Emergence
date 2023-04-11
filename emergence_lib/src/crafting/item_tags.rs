@@ -60,4 +60,12 @@ impl ItemKind {
             ItemKind::Tag(self_tag) => *self_tag == tag,
         }
     }
+
+    /// Returns the tag associated with this kind, if any.
+    pub fn tag(&self) -> Option<ItemTag> {
+        match self {
+            ItemKind::Single(_) => None,
+            ItemKind::Tag(tag) => Some(*tag),
+        }
+    }
 }

@@ -133,6 +133,7 @@ pub(super) fn choose_actions(
                         )
                     } else {
                         CurrentAction::find(
+                            unit_inventory,
                             *item_kind,
                             goal.delivery_mode().unwrap(),
                             goal.purpose(),
@@ -171,6 +172,7 @@ pub(super) fn choose_actions(
                         }
                     } else {
                         CurrentAction::find(
+                            unit_inventory,
                             *item_kind,
                             DeliveryMode::PickUp,
                             Purpose::Instrumental,
@@ -674,6 +676,7 @@ impl CurrentAction {
     /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
     /// The only exception is if the storage inventory is full, in which case the unit will pick up items from there.
     fn find(
+        unit_inventory: &UnitInventory,
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
         purpose: Purpose,
@@ -692,6 +695,14 @@ impl CurrentAction {
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut candidates: Vec<(Entity, TilePos)> = Vec::new();
+        let held_item = unit_inventory.held_item;
+
+        // If we're not holding anyhing, we can't drop it off
+        if held_item.is_none() && delivery_mode == DeliveryMode::DropOff {
+            return CurrentAction::idle();
+        }
+
+        let item_tag = item_kind.tag();
 
         for tile_pos in neighboring_tiles {
             for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
@@ -726,20 +737,30 @@ impl CurrentAction {
                     }
                     (DeliveryMode::DropOff, Purpose::Intrinsic) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
-                            if input_inventory.currently_accepts(item_kind, item_manifest) {
+                            if input_inventory.currently_accepts(
+                                held_item.unwrap(),
+                                item_tag,
+                                item_manifest,
+                            ) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
                     }
                     (DeliveryMode::DropOff, Purpose::Instrumental) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
-                            if input_inventory.currently_accepts(item_kind, item_manifest) {
+                            if input_inventory.currently_accepts(
+                                held_item.unwrap(),
+                                item_tag,
+                                item_manifest,
+                            ) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
 
                         if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
-                            if storage_inventory.currently_accepts(item_kind, item_manifest) {
+                            if storage_inventory
+                                .currently_accepts(held_item.unwrap(), item_manifest)
+                            {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
@@ -1152,8 +1173,7 @@ impl CurrentAction {
         let terrain_storage_inventory = terrain_storage_query.get(terrain_entity).unwrap();
 
         if let Some(item_id) = unit_inventory.held_item {
-            let item_kind = ItemKind::Single(item_id);
-            if terrain_storage_inventory.currently_accepts(item_kind, item_manifest) {
+            if terrain_storage_inventory.currently_accepts(item_id, item_manifest) {
                 return CurrentAction {
                     action: UnitAction::Abandon,
                     timer: Timer::from_seconds(0.1, TimerMode::Once),

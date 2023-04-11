@@ -1,7 +1,7 @@
 //! The components needed to create a `CraftingBundle`.
 
 use super::{
-    item_tags::{ItemKind, ItemTag},
+    item_tags::ItemTag,
     recipe::{Recipe, RecipeData, RecipeInput, RecipeManifest, RecipeOutput},
 };
 
@@ -147,24 +147,28 @@ impl InputInventory {
         self.len() == 0
     }
 
-    /// Does this inventory have space for at least one item of the given kind?
+    /// Does this inventory have space for at least one item with the provided `item_id`?
+    ///
+    /// If `required_tag` is `Some`, the item must have that tag.
     pub(crate) fn currently_accepts(
         &self,
-        item_kind: ItemKind,
+        item_id: Id<Item>,
+        required_tag: Option<ItemTag>,
         item_manifest: &ItemManifest,
     ) -> bool {
-        match self {
-            InputInventory::Exact { inventory } => match item_kind {
-                ItemKind::Single(item_id) => {
-                    inventory.remaining_reserved_space_for_item(item_id) > 0
+        // Check if the tag matches
+        if let Some(required_tag) = required_tag {
+            if let InputInventory::Tagged { tag, .. } = self {
+                if *tag != required_tag {
+                    return false;
                 }
-                ItemKind::Tag(_) => false,
-            },
-            InputInventory::Tagged { tag, inventory } => match item_kind {
-                ItemKind::Tag(item_tag) => *tag == item_tag && !inventory.is_full(),
-                ItemKind::Single(item_id) => item_manifest.has_tag(item_id, *tag),
-            },
+            }
         }
+
+        // Check that we can fit at least one item of this type
+        self.inventory()
+            .remaining_space_for_item(item_id, item_manifest)
+            > 0
     }
 
     /// Try to add items to this inventory.
@@ -375,21 +379,9 @@ impl StorageInventory {
     }
 
     /// Does this inventory have space for at least one item of the given kind?
-    pub fn currently_accepts(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
-        match self.reserved_for() {
-            Some(reserved_for) => match item_kind {
-                ItemKind::Single(item_id) => !self.is_full() && item_id == reserved_for,
-                ItemKind::Tag(_) => false,
-            },
-            None => match item_kind {
-                ItemKind::Single(item_id) => {
-                    self.remaining_space_for_item(item_id, item_manifest) > 0
-                }
-                ItemKind::Tag(tag) => {
-                    !self.is_full() && item_kind.is_compatible_with(tag, item_manifest)
-                }
-            },
-        }
+    pub fn currently_accepts(&self, item_id: Id<Item>, item_manifest: &ItemManifest) -> bool {
+        // Check that we can fit at least one item of this type
+        self.remaining_space_for_item(item_id, item_manifest) > 0
     }
 }
 
