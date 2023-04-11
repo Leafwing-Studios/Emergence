@@ -12,7 +12,7 @@ use crate::terrain::TerrainEmitters;
 use super::clipboard::Tool;
 use super::picking::CursorPos;
 use super::selection::CurrentSelection;
-use super::PlayerAction;
+use super::{InteractionSystem, PlayerAction};
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 use derive_more::Display;
@@ -31,9 +31,13 @@ impl Plugin for AbilitiesPlugin {
         app.add_systems(
             (
                 regenerate_intent,
-                // Run after the terrain emitters, so that the our Lure / Repel signals are not overwritten.
-                // Run before the signal manager, so that the signals are updated before they are used.
-                use_ability.after(TerrainEmitters).before(ManageSignals),
+                use_ability
+                    // Run after the terrain emitters, so that the our Lure / Repel signals are not overwritten.
+                    .after(TerrainEmitters)
+                    // Run before the signal manager, so that the signals are updated before they are used.
+                    .before(ManageSignals)
+                    // Run after we select tiles, so that we can use abilities on the selected tiles.
+                    .after(InteractionSystem::SelectTiles),
             )
                 .chain()
                 .in_set(SimulationSet)
