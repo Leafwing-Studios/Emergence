@@ -95,8 +95,10 @@ pub(crate) struct UnitBundle {
 }
 
 impl UnitBundle {
-    /// Initializes a new unit
-    pub(crate) fn new(
+    /// Initializes a new unit.
+    ///
+    /// It will be just born, and full.
+    pub(crate) fn newborn(
         unit_id: Id<Unit>,
         tile_pos: TilePos,
         unit_data: UnitData,
@@ -120,6 +122,43 @@ impl UnitBundle {
                 unit_data.organism_variety.energy_pool,
                 unit_data.organism_variety.lifecycle,
             ),
+            raycast_mesh: RaycastMesh::default(),
+            mesh: unit_handles.picking_mesh.clone_weak(),
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                ..default()
+            },
+        }
+    }
+
+    //// Generates a randomized unit.
+    ///
+    /// This is used for world generation.
+    pub(crate) fn randomized(
+        unit_id: Id<Unit>,
+        tile_pos: TilePos,
+        unit_data: UnitData,
+        unit_handles: &UnitHandles,
+        map_geometry: &MapGeometry,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
+        let mut energy_pool = unit_data.organism_variety.energy_pool;
+        energy_pool.randomize(rng);
+
+        UnitBundle {
+            unit_id,
+            tile_pos,
+            facing: Facing::default(),
+            current_goal: Goal::default(),
+            impatience: ImpatiencePool::new(unit_data.max_impatience),
+            current_action: CurrentAction::default(),
+            held_item: UnitInventory::default(),
+            emitter: Emitter {
+                signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
+            },
+            organism_bundle: OrganismBundle::new(energy_pool, unit_data.organism_variety.lifecycle),
             raycast_mesh: RaycastMesh::default(),
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
