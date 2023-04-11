@@ -14,13 +14,14 @@ use crate::{
         slot::ItemSlot,
         ItemCount,
     },
+    organisms::energy::VigorModifier,
     signals::Emitter,
     structures::structure_manifest::{Structure, StructureManifest},
 };
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 use serde::{Deserialize, Serialize};
 
@@ -437,10 +438,11 @@ impl ActiveRecipe {
 }
 
 /// The number of workers present / allowed at this structure.
-#[derive(Component, Debug, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub(crate) struct WorkersPresent {
-    /// The number of workers present
-    present: u8,
+    /// The list of workers present
+    workers: HashMap<Entity, VigorModifier>,
+
     /// The maximum number of workers allowed
     allowed: u8,
 }
@@ -449,25 +451,37 @@ impl WorkersPresent {
     /// Create a new [`WorkersPresent`] with the provided maximum number of workers allowed.
     pub(crate) fn new(allowed: u8) -> Self {
         Self {
-            present: 0,
+            workers: HashMap::new(),
             allowed,
         }
     }
 
     /// Are more workers needed?
     pub(crate) fn needs_more(&self) -> bool {
-        self.present < self.allowed
+        self.current() < self.allowed
     }
 
-    /// The number of workers present.
+    /// The current number of workers present.
     pub(crate) fn current(&self) -> u8 {
-        self.present
+        self.workers.len() as u8
+    }
+
+    /// The current number of effective workers, when taking into account the [`VigorModifier`].
+    pub(crate) fn effective_workers(&self) -> f32 {
+        self.workers
+            .values()
+            .map(|vigor_modifier| vigor_modifier.ratio())
+            .sum()
     }
 
     /// Adds a worker to this structure if there is room.
-    pub(crate) fn add_worker(&mut self) -> Result<(), ()> {
+    pub(crate) fn add_worker(
+        &mut self,
+        worker_entity: Entity,
+        vigor_modifier: VigorModifier,
+    ) -> Result<(), ()> {
         if self.needs_more() {
-            self.present += 1;
+            self.workers.insert(worker_entity, vigor_modifier);
             Ok(())
         } else {
             Err(())
@@ -475,8 +489,8 @@ impl WorkersPresent {
     }
 
     /// Removes a worker from this structure
-    pub(crate) fn remove_worker(&mut self) {
-        self.present = self.present.saturating_sub(1);
+    pub(crate) fn remove_worker(&mut self, worker_entity: Entity) {
+        self.workers.remove(&worker_entity);
     }
 }
 
@@ -484,8 +498,9 @@ impl Display for WorkersPresent {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{present} / {allowed}",
-            present = self.present,
+            "{present} ({effective_workers}) / {allowed}",
+            present = self.current(),
+            effective_workers = self.effective_workers(),
             allowed = self.allowed
         )
     }

@@ -183,13 +183,8 @@ pub(super) fn consume_energy(
             *vigor_modifier = VigorModifier::None;
         }
 
-        let vigor_multiplier = match *vigor_modifier {
-            VigorModifier::None => 1.,
-            VigorModifier::Flourish => VigorModifier::RATIO,
-            VigorModifier::Fallow => 1. / VigorModifier::RATIO,
-        };
         // Note that regen rates are almost always negative.
-        let regen_rate = energy_pool.regen_per_second * vigor_multiplier;
+        let regen_rate = energy_pool.regen_per_second * vigor_modifier.ratio();
         let current = energy_pool.current();
 
         energy_pool.set_current(current + regen_rate * delta_time);
@@ -239,6 +234,15 @@ impl VigorModifier {
             VigorModifier::None => Intent(0.),
             VigorModifier::Flourish => IntentAbility::Flourish.cost(),
             VigorModifier::Fallow => IntentAbility::Fallow.cost(),
+        }
+    }
+
+    /// The ratio of the working speed and energy consumption rate.
+    pub fn ratio(&self) -> f32 {
+        match self {
+            VigorModifier::None => 1.,
+            VigorModifier::Flourish => Self::RATIO,
+            VigorModifier::Fallow => 1. / Self::RATIO,
         }
     }
 }

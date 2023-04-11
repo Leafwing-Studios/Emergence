@@ -22,7 +22,10 @@ use crate::{
         item_tags::ItemKind,
     },
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
-    organisms::{energy::EnergyPool, lifecycle::Lifecycle},
+    organisms::{
+        energy::{EnergyPool, VigorModifier},
+        lifecycle::Lifecycle,
+    },
     signals::{SignalType, Signals},
     simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
@@ -210,15 +213,20 @@ pub(super) fn choose_actions(
 
 /// Exhaustively handles the setup for each planned action
 pub(super) fn start_actions(
-    mut unit_query: Query<&mut CurrentAction>,
+    mut unit_query: Query<(Entity, &mut CurrentAction, &TilePos)>,
+    modifier_query: Query<&VigorModifier>,
     mut workplace_query: Query<&mut WorkersPresent>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for mut action in unit_query.iter_mut() {
+    for (worker_entity, mut action, tile_pos) in unit_query.iter_mut() {
         if action.just_started {
             if let Some(workplace_entity) = action.action().workplace() {
                 if let Ok(mut workers_present) = workplace_query.get_mut(workplace_entity) {
+                    let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
+                    let vigor_modifier = *modifier_query.get(terrain_entity).unwrap();
+
                     // This has a side effect of adding the worker to the workplace
-                    let result = workers_present.add_worker();
+                    let result = workers_present.add_worker(worker_entity, vigor_modifier);
                     if result.is_err() {
                         *action = CurrentAction::idle();
                     }
@@ -258,7 +266,7 @@ pub(super) fn finish_actions(
                 if let Ok(workplace) = workplace_query.get_mut(workplace_entity) {
                     let (.., mut workers_present) = workplace;
                     // FIXME: this isn't robust to units dying
-                    workers_present.remove_worker();
+                    workers_present.remove_worker(unit.entity);
                 }
             }
 
@@ -472,6 +480,8 @@ pub(super) fn finish_actions(
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub(super) struct ActionDataQuery {
+    /// The [`Entity`] of the acting unit
+    entity: Entity,
     /// The [`Id`] of the unit type
     unit_id: &'static Id<Unit>,
     /// The unit's goal
