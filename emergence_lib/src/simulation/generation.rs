@@ -46,7 +46,7 @@ impl GenerationConfig {
     const MAP_RADIUS: u32 = 20;
 
     /// The number of ants in the default generation config
-    const N_ANT: usize = 5;
+    const N_ANT: usize = 12;
     /// The number of plants in the default generation config
     const N_PLANT: usize = 12;
     /// The number of fungi in the default generation config

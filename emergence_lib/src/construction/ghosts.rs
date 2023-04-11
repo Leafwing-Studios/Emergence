@@ -351,11 +351,13 @@ pub(super) fn ghost_structure_signals(
         With<Ghost>,
     >,
 ) {
-    // Ghosts that are ignored will slowly become more important to build.
     for (&structure_id, mut emitter, crafting_state, input_inventory, workers_present) in
         ghost_query.iter_mut()
     {
         if crafting_state.is_changed() {
+            // Reset any signals.
+            emitter.signals.clear();
+
             match *crafting_state {
                 CraftingState::NeedsInput => {
                     match input_inventory {
@@ -380,9 +382,6 @@ pub(super) fn ghost_structure_signals(
                     progress: _,
                     required: _,
                 } => {
-                    // Wipe out any pull signals as we've already got enough stuff.
-                    emitter.signals.clear();
-
                     if workers_present.needs_more() {
                         let workplace_id = WorkplaceId::structure(structure_id);
 

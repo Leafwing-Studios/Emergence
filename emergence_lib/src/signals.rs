@@ -19,7 +19,7 @@ use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
-use std::ops::MulAssign;
+use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
 use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
@@ -622,6 +622,20 @@ impl MulAssign<f32> for SignalStrength {
     }
 }
 
+impl Div<f32> for SignalStrength {
+    type Output = SignalStrength;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        SignalStrength(self.0 / rhs)
+    }
+}
+
+impl DivAssign<f32> for SignalStrength {
+    fn div_assign(&mut self, rhs: f32) {
+        *self = *self / rhs
+    }
+}
+
 /// The component that causes a game object to emit a signal.
 ///
 /// This can change over time, and multiple signals may be emitted at once.
@@ -679,9 +693,10 @@ fn emit_signals(
         tile_pos: TilePos,
         emitter: &Emitter,
         modifier: &SignalModifier,
+        n_tiles: usize,
     ) {
         for (signal_type, signal_strength) in &emitter.signals {
-            let mut signal_strength = *signal_strength;
+            let mut signal_strength = *signal_strength / n_tiles as f32;
             signal_strength.apply_modifier(*modifier);
             signals.add_signal(*signal_type, tile_pos, signal_strength);
         }
@@ -697,16 +712,18 @@ fn emit_signals(
                     .footprint
                     .rotated(facing);
 
+                let n_tiles = footprint.set.len();
+
                 for tile_pos in footprint.in_world_space(center) {
                     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
                     let modifier = modifier_query.get(terrain_entity).unwrap();
-                    let cost = modifier.cost() * delta_time;
+                    let cost = modifier.cost() * delta_time / n_tiles as f32;
 
                     if intent_pool.current() >= cost {
                         intent_pool.expend(cost).unwrap();
                     }
 
-                    emit(&mut signals, tile_pos, emitter, modifier);
+                    emit(&mut signals, tile_pos, emitter, modifier, n_tiles);
                 }
             }
             None => {
@@ -718,7 +735,7 @@ fn emit_signals(
                     intent_pool.expend(cost).unwrap();
                 }
 
-                emit(&mut signals, center, emitter, modifier);
+                emit(&mut signals, center, emitter, modifier, 1);
             }
         }
     }

@@ -62,6 +62,11 @@ pub struct InGameTime {
 )]
 pub struct Days(pub f32);
 
+impl Days {
+    /// Represents a duration of 0 days.
+    pub const ZERO: Self = Days(0.);
+}
+
 impl Div<f32> for Days {
     type Output = Days;
 
@@ -100,6 +105,11 @@ impl InGameTime {
         // Correct for different time systems: fraction of day begins at dawn,
         // but 24 hour time begins at midnight.
         ((self.fraction_of_day() + 0.25) * 24.) % 24.
+    }
+
+    /// Returns the configured number of seconds per day.
+    pub fn seconds_per_day(&self) -> f32 {
+        self.seconds_per_day
     }
 }
 
