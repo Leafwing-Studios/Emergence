@@ -717,7 +717,7 @@ fn emit_signals(
                 for tile_pos in footprint.in_world_space(center) {
                     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
                     let modifier = modifier_query.get(terrain_entity).unwrap();
-                    let cost = modifier.cost() * delta_time;
+                    let cost = modifier.cost() * delta_time / n_tiles as f32;
 
                     if intent_pool.current() >= cost {
                         intent_pool.expend(cost).unwrap();
