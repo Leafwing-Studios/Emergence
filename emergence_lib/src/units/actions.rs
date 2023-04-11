@@ -1272,17 +1272,20 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
-        /// The signal strength threshold at which we will start moving away from a signal.
+        /// The relative signal strength threshold at which we will stop avoiding the source of our discomfort.
+        ///
+        /// Increasing this value will make units avoid for longer.
+        /// To increase the frequency at which this goal is chosen at all, change the signal strength instead.
         ///
         /// This should be a value between 0 and 1.
         const SIGNAL_STRENGTH_THRESHOLD: f32 = 0.5;
 
-        let signal_strength = signals.get(SignalType::Unit(unit_id), current_tile);
+        let avoided_signal_strength = signals.get(SignalType::Unit(unit_id), current_tile);
 
         // If our signal is more than some fraction as strong as the strongest other signal, then keep moving.
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
         if let Some((_, strongest_signal_strength)) = strongest_signal {
-            if signal_strength > strongest_signal_strength * SIGNAL_STRENGTH_THRESHOLD {
+            if avoided_signal_strength > strongest_signal_strength * SIGNAL_STRENGTH_THRESHOLD {
                 return CurrentAction::move_away_from(
                     &Goal::Avoid(unit_id),
                     current_tile,
