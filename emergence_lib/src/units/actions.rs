@@ -1231,7 +1231,7 @@ impl CurrentAction {
     ) -> Self {
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
 
-        if strongest_signal == Some(SignalType::Lure) {
+        if strongest_signal == Some(SignalType::Repel) {
             CurrentAction::move_away_from(
                 &Goal::Repel,
                 current_tile,
