@@ -232,7 +232,7 @@ impl Signals {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
             }
             Goal::Lure => self.neighboring_signals(SignalType::Lure, tile_pos, map_geometry),
-            Goal::Warning => self.neighboring_signals(SignalType::Warning, tile_pos, map_geometry),
+            Goal::Repel => self.neighboring_signals(SignalType::Repel, tile_pos, map_geometry),
             Goal::Demolish(structure_id) => self.neighboring_signals(
                 SignalType::Demolish(*structure_id),
                 tile_pos,
@@ -413,8 +413,8 @@ pub enum SignalType {
     Lure,
     /// Pushes units away.
     ///
-    /// Corresponds to [`IntentAbility::Warning`].
-    Warning,
+    /// Corresponds to [`IntentAbility::Repel`].
+    Repel,
 }
 
 impl SignalType {
@@ -488,7 +488,7 @@ impl SignalType {
             }
             SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
             SignalType::Lure => "Lure".to_string(),
-            SignalType::Warning => "Warning".to_string(),
+            SignalType::Repel => "Repel".to_string(),
         }
     }
 }
@@ -522,8 +522,8 @@ pub(crate) enum SignalKind {
     Lure,
     /// Pushes units away.
     ///
-    /// Corresponds to [`IntentAbility::Warning`].
-    Warning,
+    /// Corresponds to [`IntentAbility::Repel`].
+    Repel,
 }
 
 impl From<SignalType> for SignalKind {
@@ -537,7 +537,7 @@ impl From<SignalType> for SignalKind {
             SignalType::Stores(_) => SignalKind::Stores,
             SignalType::Unit(_) => SignalKind::Unit,
             SignalType::Lure => SignalKind::Lure,
-            SignalType::Warning => SignalKind::Warning,
+            SignalType::Repel => SignalKind::Repel,
         }
     }
 }

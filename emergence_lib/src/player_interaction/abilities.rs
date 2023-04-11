@@ -31,7 +31,7 @@ impl Plugin for AbilitiesPlugin {
         app.add_systems(
             (
                 regenerate_intent,
-                // Run after the terrain emitters, so that the our Lure / Warning signals are not overwritten.
+                // Run after the terrain emitters, so that the our Lure / Repel signals are not overwritten.
                 use_ability.after(TerrainEmitters),
             )
                 .chain()
@@ -51,7 +51,7 @@ pub(crate) enum IntentAbility {
     /// Increases the working speed and maintenance costs of structures.
     Flourish,
     /// Repel allied units.
-    Warning,
+    Repel,
     /// Increase the signal strength of emitters.
     Amplify,
     /// Decreases the working speed and maintenance costs of structures.
@@ -69,7 +69,7 @@ impl IntentAbility {
     pub(crate) fn cost(&self) -> Intent {
         Intent(match self {
             IntentAbility::Lure => 5.,
-            IntentAbility::Warning => 5.,
+            IntentAbility::Repel => 5.,
             IntentAbility::Flourish => 5.,
             IntentAbility::Fallow => 5.,
             IntentAbility::Amplify => 2.,
@@ -124,9 +124,9 @@ fn use_ability(
                 IntentAbility::Lure => emitter
                     .signals
                     .push((SignalType::Lure, SignalStrength::new(50.))),
-                IntentAbility::Warning => emitter
+                IntentAbility::Repel => emitter
                     .signals
-                    .push((SignalType::Warning, SignalStrength::new(50.))),
+                    .push((SignalType::Repel, SignalStrength::new(50.))),
                 IntentAbility::Flourish => *vigor_modifier = VigorModifier::Flourish,
                 IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow,
                 IntentAbility::Amplify => *signal_modifier = SignalModifier::Amplify,

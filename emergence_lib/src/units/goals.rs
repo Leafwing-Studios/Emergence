@@ -60,8 +60,8 @@ pub(crate) enum Goal {
     Eat(ItemKind),
     /// Following [`IntentAbility::Lure`]
     Lure,
-    /// Retrating from [`IntentAbility::Warning`]
-    Warning,
+    /// Retrating from [`IntentAbility::Repel`]
+    Repel,
 }
 
 impl Default for Goal {
@@ -85,7 +85,7 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
             SignalType::Lure => Ok(Goal::Lure),
-            SignalType::Warning => Ok(Goal::Warning),
+            SignalType::Repel => Ok(Goal::Repel),
             SignalType::Contains(_) => Err(()),
             SignalType::Stores(_) => Err(()),
             SignalType::Unit(_) => Err(()),
@@ -106,7 +106,7 @@ impl Goal {
             Goal::Demolish(_) => None,
             Goal::Eat(_) => Some(DeliveryMode::PickUp),
             Goal::Lure => None,
-            Goal::Warning => None,
+            Goal::Repel => None,
         }
     }
 
@@ -122,7 +122,7 @@ impl Goal {
             Goal::Demolish(_) => Purpose::Intrinsic,
             Goal::Eat(_) => Purpose::Instrumental,
             Goal::Lure => Purpose::Intrinsic,
-            Goal::Warning => Purpose::Intrinsic,
+            Goal::Repel => Purpose::Intrinsic,
         }
     }
 
@@ -153,7 +153,7 @@ impl Goal {
             }
             Goal::Eat(item_kind) => format!("Eat {}", item_manifest.name_of_kind(*item_kind)),
             Goal::Lure => "Lure".to_string(),
-            Goal::Warning => "Warning".to_string(),
+            Goal::Repel => "Repel".to_string(),
         }
     }
 }

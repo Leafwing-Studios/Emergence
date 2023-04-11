@@ -213,8 +213,7 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
-                Goal::Lure => CurrentAction::move_towards(
-                    &Goal::Lure,
+                Goal::Lure => CurrentAction::lure(
                     unit_tile_pos,
                     facing,
                     &signals,
@@ -223,8 +222,7 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
-                Goal::Warning => CurrentAction::move_away_from(
-                    &Goal::Warning,
+                Goal::Repel => CurrentAction::repel(
                     unit_tile_pos,
                     facing,
                     &signals,
@@ -1186,6 +1184,66 @@ impl CurrentAction {
                 terrain_manifest,
             ),
             _ => CurrentAction::random_spin(rng),
+        }
+    }
+
+    /// Follow a [`IntentAbility::Lure](crate::player_interaction::abilities::IntentAbility::Lure) signal.
+    ///
+    /// If [`SignalType::Lure`] is not the strongest signal at the unit's position, then idle instead.
+    fn lure(
+        current_tile: TilePos,
+        facing: &Facing,
+        signals: &Signals,
+        item_manifest: &ItemManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
+
+        if strongest_signal == Some(SignalType::Lure) {
+            CurrentAction::move_towards(
+                &Goal::Lure,
+                current_tile,
+                facing,
+                signals,
+                item_manifest,
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
+        }
+    }
+
+    /// Flee a [`IntentAbility::Repel](crate::player_interaction::abilities::IntentAbility::Repel) signal.
+    ///
+    /// If [`SignalType::Repel`] is not the strongest signal at the unit's position, then idle instead.
+    fn repel(
+        current_tile: TilePos,
+        facing: &Facing,
+        signals: &Signals,
+        item_manifest: &ItemManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
+
+        if strongest_signal == Some(SignalType::Lure) {
+            CurrentAction::move_away_from(
+                &Goal::Repel,
+                current_tile,
+                facing,
+                signals,
+                item_manifest,
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
         }
     }
 }

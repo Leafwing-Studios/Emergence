@@ -110,7 +110,7 @@ pub(crate) mod infovis {
                 // Blue-purple
                 SignalKind::Lure => 270.,
                 // Orange-red
-                SignalKind::Warning => 10.,
+                SignalKind::Repel => 10.,
             }
         }
 
@@ -198,8 +198,8 @@ pub(crate) mod infovis {
                     lightness: 0.7,
                     alpha: 1.0,
                 },
-                Goal::Warning => Color::Hsla {
-                    hue: SignalKind::Warning.hue(),
+                Goal::Repel => Color::Hsla {
+                    hue: SignalKind::Repel.hue(),
                     saturation: 0.7,
                     lightness: 0.7,
                     alpha: 1.0,
