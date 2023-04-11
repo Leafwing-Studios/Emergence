@@ -12,7 +12,7 @@ use crate::{
     player_interaction::PlayerAction,
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
-    units::goals::Goal,
+    units::{goals::Goal, unit_manifest::UnitManifest},
 };
 
 use super::FiraSansFontFamily;
@@ -119,6 +119,7 @@ fn display_status(
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
+    unit_manifest: Res<UnitManifest>,
     mut commands: Commands,
 ) {
     // PERF: immediate mode for now
@@ -173,7 +174,12 @@ fn display_status(
                 .spawn(BillboardTextBundle {
                     transform,
                     text: Text::from_section(
-                        goal.display(&item_manifest, &structure_manifest, &terrain_manifest),
+                        goal.display(
+                            &item_manifest,
+                            &structure_manifest,
+                            &terrain_manifest,
+                            &unit_manifest,
+                        ),
                         TextStyle {
                             font_size: 60.0,
                             font: fonts.regular.clone_weak(),

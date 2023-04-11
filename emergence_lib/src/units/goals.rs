@@ -60,8 +60,10 @@ pub(crate) enum Goal {
     Eat(ItemKind),
     /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure)
     Lure,
-    /// Retrating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
+    /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
     Repel,
+    /// Trying to avoid a specific unit.
+    Avoid(Id<Unit>),
 }
 
 impl Default for Goal {
@@ -88,7 +90,7 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Repel => Ok(Goal::Repel),
             SignalType::Contains(_) => Err(()),
             SignalType::Stores(_) => Err(()),
-            SignalType::Unit(_) => Err(()),
+            SignalType::Unit(unit) => Ok(Goal::Avoid(unit)),
         }
     }
 }
@@ -107,6 +109,7 @@ impl Goal {
             Goal::Eat(_) => Some(DeliveryMode::PickUp),
             Goal::Lure => None,
             Goal::Repel => None,
+            Goal::Avoid(_) => None,
         }
     }
 
@@ -123,6 +126,7 @@ impl Goal {
             Goal::Eat(_) => Purpose::Instrumental,
             Goal::Lure => Purpose::Intrinsic,
             Goal::Repel => Purpose::Intrinsic,
+            Goal::Avoid(_) => Purpose::Instrumental,
         }
     }
 
@@ -132,6 +136,7 @@ impl Goal {
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
+        unit_manifest: &UnitManifest,
     ) -> String {
         match self {
             Goal::Wander { remaining_actions } => format!(
@@ -154,6 +159,7 @@ impl Goal {
             Goal::Eat(item_kind) => format!("Eat {}", item_manifest.name_of_kind(*item_kind)),
             Goal::Lure => "Lure".to_string(),
             Goal::Repel => "Repel".to_string(),
+            Goal::Avoid(unit) => format!("Avoid {}", unit_manifest.name(*unit)),
         }
     }
 }
@@ -162,7 +168,6 @@ impl Goal {
 pub(super) fn choose_goal(
     mut units_query: Query<(
         &TilePos,
-        &Id<Unit>,
         &mut Goal,
         &mut ImpatiencePool,
         &UnitInventory,
@@ -174,18 +179,20 @@ pub(super) fn choose_goal(
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, &unit_id, mut goal, mut impatience_pool, unit_inventory, id) in
+    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, &unit_id) in
         units_query.iter_mut()
     {
         // If the strongest signal is ability-related, stop what you're currently doing and do that.
         // This dramatically improves responsiveness of the AI to abilities.
         let strongest_signal = signals.strongest_goal_signal_at_position(tile_pos);
-        if Some(SignalType::Repel) == strongest_signal {
+        let strongest_signal_type = strongest_signal.map(|(signal_type, _)| signal_type);
+
+        if Some(SignalType::Repel) == strongest_signal_type {
             *goal = Goal::Repel;
             continue;
         }
 
-        if Some(SignalType::Lure) == strongest_signal {
+        if Some(SignalType::Lure) == strongest_signal_type {
             *goal = Goal::Lure;
             continue;
         }
@@ -219,10 +226,10 @@ pub(super) fn choose_goal(
         }
 
         if let Goal::Wander { remaining_actions } = *goal {
-            let wandering_behavior = &unit_manifest.get(*id).wandering_behavior;
+            let wandering_behavior = &unit_manifest.get(unit_id).wandering_behavior;
             *goal = compute_new_goal(
-                remaining_actions,
                 unit_id,
+                remaining_actions,
                 tile_pos,
                 wandering_behavior,
                 rng,
@@ -240,8 +247,8 @@ pub(super) fn choose_goal(
 // By default, goals are reset to wandering when completed.
 /// If anything fails, just keep wandering for now.
 fn compute_new_goal(
-    mut remaining_actions: Option<u16>,
     unit_id: Id<Unit>,
+    mut remaining_actions: Option<u16>,
     tile_pos: TilePos,
     wandering_behavior: &WanderingBehavior,
     rng: &mut ThreadRng,
@@ -249,14 +256,7 @@ fn compute_new_goal(
 ) -> Goal {
     // When we first get a wandering goal, pick a number of actions to take before picking a new goal.
     if remaining_actions.is_none() {
-        // Units should wander for longer when they are more densely packed in order to fight crowding.
-        let density_multiplier = signals
-            .get(SignalType::Unit(unit_id), tile_pos)
-            .value()
-            // This needs to scale in a sublinear but strictly positive way.
-            .ln_1p();
-        let number_of_actions =
-            (wandering_behavior.sample(rng) as f32 * density_multiplier).round() as u16;
+        let number_of_actions = wandering_behavior.sample(rng);
         remaining_actions = Some(number_of_actions);
     }
 
@@ -272,13 +272,23 @@ fn compute_new_goal(
     // Pick a new goal based on the signals at this tile
     let current_signals = signals.all_signals_at_position(tile_pos);
     let mut goal_relevant_signals = current_signals.goal_relevant_signals();
+
+    // Only try to avoid units of the same type
+    goal_relevant_signals.retain(|(signal_type, _)| {
+        if let SignalType::Unit(signal_unit_id) = signal_type {
+            *signal_unit_id == unit_id
+        } else {
+            true
+        }
+    });
+
     if let Ok(goal_weights) = WeightedIndex::new(
         goal_relevant_signals
-            .clone()
+            .iter()
             .map(|(_type, strength)| strength.value()),
     ) {
         let selected_goal_index = goal_weights.sample(rng);
-        if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
+        if let Some(selected_signal) = goal_relevant_signals.get(selected_goal_index) {
             let selected_signal_type = *selected_signal.0;
             selected_signal_type.try_into().unwrap()
         } else {

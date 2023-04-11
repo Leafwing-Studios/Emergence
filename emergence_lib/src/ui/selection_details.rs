@@ -951,9 +951,12 @@ mod unit_details {
             let diet = self.diet.display(item_manifest);
             let tile_pos = &self.tile_pos;
             let held_item = self.held_item.display(item_manifest);
-            let goal = self
-                .goal
-                .display(item_manifest, structure_manifest, terrain_manifest);
+            let goal = self.goal.display(
+                item_manifest,
+                structure_manifest,
+                terrain_manifest,
+                unit_manifest,
+            );
             let action = &self.action.display(item_manifest);
             let impatience_pool = &self.impatience_pool;
             let organism_details = self

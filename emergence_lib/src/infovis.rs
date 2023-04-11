@@ -251,7 +251,9 @@ fn set_overlay_material(
             let maybe_signal_type = match tile_overlay.overlay_type {
                 OverlayType::None => None,
                 OverlayType::Single(signal_type) => Some(signal_type),
-                OverlayType::StrongestSignal => signals.strongest_goal_signal_at_position(tile_pos),
+                OverlayType::StrongestSignal => signals
+                    .strongest_goal_signal_at_position(tile_pos)
+                    .map(|(signal_type, _)| signal_type),
             };
 
             if let Some(signal_type) = maybe_signal_type {

@@ -115,7 +115,7 @@ impl Signals {
     pub(crate) fn strongest_goal_signal_at_position(
         &self,
         tile_pos: TilePos,
-    ) -> Option<SignalType> {
+    ) -> Option<(SignalType, SignalStrength)> {
         let mut strongest_signal = None;
         let mut strongest_strength = SignalStrength::ZERO;
 
@@ -129,7 +129,7 @@ impl Signals {
             }
         }
 
-        strongest_signal
+        strongest_signal.map(|signal_type| (signal_type, strongest_strength))
     }
 
     /// Returns the adjacent, empty tile position that contains the highest sum signal strength that can be used to meet the provided `goal`.
@@ -238,6 +238,9 @@ impl Signals {
             }
             Goal::Lure => self.neighboring_signals(SignalType::Lure, tile_pos, map_geometry),
             Goal::Repel => self.neighboring_signals(SignalType::Repel, tile_pos, map_geometry),
+            Goal::Avoid(unit_id) => {
+                self.neighboring_signals(SignalType::Unit(*unit_id), tile_pos, map_geometry)
+            }
             Goal::Demolish(structure_id) => self.neighboring_signals(
                 SignalType::Demolish(*structure_id),
                 tile_pos,
@@ -318,12 +321,11 @@ pub(crate) struct LocalSignals {
 
 impl LocalSignals {
     /// Returns the set of signals that might be used to pick a goal
-    pub(crate) fn goal_relevant_signals(
-        &self,
-    ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
+    pub(crate) fn goal_relevant_signals(&self) -> Vec<(&SignalType, &SignalStrength)> {
         self.map
             .iter()
             .filter(|(signal_type, _signal_strength)| Goal::try_from(**signal_type).is_ok())
+            .collect()
     }
 
     /// The pretty formatting for this type.

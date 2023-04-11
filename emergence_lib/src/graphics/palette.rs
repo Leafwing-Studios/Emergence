@@ -204,6 +204,12 @@ pub(crate) mod infovis {
                     lightness: 0.7,
                     alpha: 1.0,
                 },
+                Goal::Avoid(_) => Color::Hsla {
+                    hue: SignalKind::Unit.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
             }
         }
     }

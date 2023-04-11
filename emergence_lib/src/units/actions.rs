@@ -231,6 +231,16 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
+                Goal::Avoid(unit_id) => CurrentAction::avoid(
+                    *unit_id,
+                    unit_tile_pos,
+                    facing,
+                    &signals,
+                    &item_manifest,
+                    &terrain_query,
+                    &terrain_manifest,
+                    map_geometry,
+                ),
             }
         }
     }
@@ -1200,8 +1210,9 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> Self {
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
+        let strongest_signal_type = strongest_signal.map(|signal| signal.0);
 
-        if strongest_signal == Some(SignalType::Lure) {
+        if strongest_signal_type == Some(SignalType::Lure) {
             CurrentAction::move_towards(
                 &Goal::Lure,
                 current_tile,
@@ -1230,8 +1241,9 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
     ) -> Self {
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
+        let strongest_signal_type = strongest_signal.map(|signal| signal.0);
 
-        if strongest_signal == Some(SignalType::Repel) {
+        if strongest_signal_type == Some(SignalType::Repel) {
             CurrentAction::move_away_from(
                 &Goal::Repel,
                 current_tile,
@@ -1245,6 +1257,50 @@ impl CurrentAction {
         } else {
             CurrentAction::idle()
         }
+    }
+
+    /// Flee a [`SignalType::Unit`] signal matching `unit_id`.
+    ///
+    /// If [`SignalType::Repel`] is not the strongest signal at the unit's position, then idle instead.
+    fn avoid(
+        unit_id: Id<Unit>,
+        current_tile: TilePos,
+        facing: &Facing,
+        signals: &Signals,
+        item_manifest: &ItemManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        /// The relative signal strength threshold at which we will stop avoiding the source of our discomfort.
+        ///
+        /// Increasing this value will make units avoid for longer.
+        /// To increase the frequency at which this goal is chosen at all, change the signal strength instead.
+        ///
+        /// This should be a value between 0 and 1.
+        const SIGNAL_STRENGTH_THRESHOLD: f32 = 0.5;
+
+        let avoided_signal_strength = signals.get(SignalType::Unit(unit_id), current_tile);
+
+        // If our signal is more than some fraction as strong as the strongest other signal, then keep moving.
+        let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
+        if let Some((_, strongest_signal_strength)) = strongest_signal {
+            if avoided_signal_strength > strongest_signal_strength * SIGNAL_STRENGTH_THRESHOLD {
+                return CurrentAction::move_away_from(
+                    &Goal::Avoid(unit_id),
+                    current_tile,
+                    facing,
+                    signals,
+                    item_manifest,
+                    terrain_query,
+                    terrain_manifest,
+                    map_geometry,
+                );
+            }
+        }
+
+        // Otherwise, idle.
+        CurrentAction::idle()
     }
 }
 
