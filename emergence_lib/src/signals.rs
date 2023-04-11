@@ -281,7 +281,11 @@ impl Signals {
             {
                 let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
-                let mut num_neighbors = 0.0;
+                // Signal that goes out of bounds is lost
+                let mut num_neighbors = occupied_tile
+                    .out_of_bounds_neighbors(map_geometry)
+                    .into_iter()
+                    .count() as f32;
                 for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
                     num_neighbors += 1.0;
                     addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
