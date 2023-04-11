@@ -140,8 +140,69 @@ impl Signals {
         let mut best_choice: Option<TilePos> = None;
         let mut best_score = SignalStrength::ZERO;
 
-        let neighboring_signals = match goal {
-            Goal::Wander { .. } => return None,
+        for (possible_tile, current_score) in
+            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+        {
+            if current_score > best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
+            }
+        }
+
+        if let Some(best_tile_pos) = best_choice {
+            if best_tile_pos == tile_pos {
+                None
+            } else {
+                best_choice
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Returns the adjacent, empty tile position that contains the lowest sum signal strength that can be used to meet the provided `goal`.
+    ///
+    /// If no suitable tile exists, [`None`] will be returned instead.
+    pub(crate) fn downstream(
+        &self,
+        tile_pos: TilePos,
+        goal: &Goal,
+        item_manifest: &ItemManifest,
+        map_geometry: &MapGeometry,
+    ) -> Option<TilePos> {
+        let mut best_choice: Option<TilePos> = None;
+        let mut best_score = SignalStrength::INFINITY;
+
+        for (possible_tile, current_score) in
+            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+        {
+            if current_score < best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
+            }
+        }
+
+        if let Some(best_tile_pos) = best_choice {
+            if best_tile_pos == tile_pos {
+                None
+            } else {
+                best_choice
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Returns the strength of goal-relevant signals in neighboring tiles.
+    fn relevant_neighboring_signals(
+        &self,
+        tile_pos: TilePos,
+        goal: &Goal,
+        item_manifest: &ItemManifest,
+        map_geometry: &MapGeometry,
+    ) -> HashMap<TilePos, SignalStrength> {
+        match goal {
+            Goal::Wander { .. } => HashMap::new(),
             Goal::Fetch(item_kind)
             | Goal::Eat(item_kind)
             | Goal::Store(item_kind)
@@ -177,23 +238,6 @@ impl Signals {
                 tile_pos,
                 map_geometry,
             ),
-        };
-
-        for (possible_tile, current_score) in neighboring_signals {
-            if current_score > best_score {
-                best_score = current_score;
-                best_choice = Some(possible_tile);
-            }
-        }
-
-        if let Some(best_tile_pos) = best_choice {
-            if best_tile_pos == tile_pos {
-                None
-            } else {
-                best_choice
-            }
-        } else {
-            None
         }
     }
 
@@ -507,6 +551,9 @@ pub struct SignalStrength(f32);
 impl SignalStrength {
     /// No signal is present.
     pub const ZERO: SignalStrength = SignalStrength(0.);
+
+    /// An infinitely strong signal.
+    pub const INFINITY: SignalStrength = SignalStrength(f32::INFINITY);
 
     /// Creates a new [`SignalStrength`], ensuring that it has a minimum value of 0.
     pub fn new(value: f32) -> Self {
