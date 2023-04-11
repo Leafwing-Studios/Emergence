@@ -177,6 +177,19 @@ pub(super) fn choose_goal(
     for (&tile_pos, &unit_id, mut goal, mut impatience_pool, unit_inventory, id) in
         units_query.iter_mut()
     {
+        // If the strongest signal is ability-related, stop what you're currently doing and do that.
+        // This dramatically improves responsiveness of the AI to abilities.
+        let strongest_signal = signals.strongest_goal_signal_at_position(tile_pos);
+        if Some(SignalType::Repel) == strongest_signal {
+            *goal = Goal::Repel;
+            continue;
+        }
+
+        if Some(SignalType::Lure) == strongest_signal {
+            *goal = Goal::Lure;
+            continue;
+        }
+
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
             // If you're holding something, try to put it away nicely
