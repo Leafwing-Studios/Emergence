@@ -49,6 +49,10 @@ impl Plugin for SignalsPlugin {
     }
 }
 
+/// A public system set for the signals plugin.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct ManageSignals;
+
 /// The central resource that tracks all signals.
 #[derive(Resource, Debug, Default)]
 pub struct Signals {

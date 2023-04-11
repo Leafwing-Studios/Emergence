@@ -3,7 +3,7 @@
 use crate as emergence_lib;
 use crate::asset_management::manifest::Id;
 use crate::organisms::energy::VigorModifier;
-use crate::signals::{Emitter, SignalModifier, SignalStrength, SignalType};
+use crate::signals::{Emitter, ManageSignals, SignalModifier, SignalStrength, SignalType};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::terrain::terrain_manifest::Terrain;
@@ -32,7 +32,8 @@ impl Plugin for AbilitiesPlugin {
             (
                 regenerate_intent,
                 // Run after the terrain emitters, so that the our Lure / Repel signals are not overwritten.
-                use_ability.after(TerrainEmitters),
+                // Run before the signal manager, so that the signals are updated before they are used.
+                use_ability.after(TerrainEmitters).before(ManageSignals),
             )
                 .chain()
                 .in_set(SimulationSet)
