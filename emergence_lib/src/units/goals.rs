@@ -288,7 +288,7 @@ fn compute_new_goal(
             .map(|(_type, strength)| strength.value()),
     ) {
         let selected_goal_index = goal_weights.sample(rng);
-        if let Some(selected_signal) = goal_relevant_signals.iter().nth(selected_goal_index) {
+        if let Some(selected_signal) = goal_relevant_signals.get(selected_goal_index) {
             let selected_signal_type = *selected_signal.0;
             selected_signal_type.try_into().unwrap()
         } else {
