@@ -39,11 +39,11 @@ Abilities are always **dual**: their effect can always be thematically mirrored.
 The more straightforward positive effect is always on the left mouse button,
 while the negative effect is on the right mouse button.
 
-### *Lure* / *Warning*
+### *Lure* / *Repel*
 
 *Lure* gathers units to the area.
 
-*Warning* repels them from the area.
+*Repel* repels them from the area.
 This is more efficient to use than Lure.
 
 ### *Flourish* / *Fallow*
@@ -57,6 +57,12 @@ Maintenance costs are decreased proportionally.
 Recover intent for each affected organism for the duration of the effect.
 When used in dense areas, Fallow is intent-positive (at the cost of productivity).
 It can also be used to slow down consumption in times of need and reduce generation of unwanted products without destroying the organism.
+
+### *Amplify / Dampen*
+
+*Amplify* increases the strength of all emitters in the area.
+
+*Dampen* decreases the strength of all emitters in the area.
 
 ## Unlocking and upgrading
 

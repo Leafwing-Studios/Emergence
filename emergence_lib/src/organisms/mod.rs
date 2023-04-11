@@ -1,7 +1,6 @@
 //! Models organisms, which have two primary types: units (organisms that can move around freely)
 //! and structures (organisms that are fixed in place).
 use bevy::prelude::*;
-use leafwing_abilities::systems::regenerate_resource_pool;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -12,7 +11,7 @@ use crate::{
 };
 
 use self::{
-    energy::{kill_organisms_when_out_of_energy, EnergyPool},
+    energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool, VigorModifier},
     lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
 };
 
@@ -83,6 +82,8 @@ pub(crate) struct OrganismBundle {
     organism: Organism,
     /// The energy available to this organism
     energy_pool: EnergyPool,
+    /// The modifier to both working speed and energy drain rate.
+    vigor_modfiier: VigorModifier,
     /// The ways this organism can transform, and the progress toward doing so.
     lifecycle: Lifecycle,
 }
@@ -93,6 +94,7 @@ impl OrganismBundle {
         OrganismBundle {
             organism: Organism,
             energy_pool,
+            vigor_modfiier: VigorModifier::None,
             lifecycle,
         }
     }
@@ -141,7 +143,7 @@ impl Plugin for OrganismPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             (
-                regenerate_resource_pool::<EnergyPool>,
+                consume_energy,
                 kill_organisms_when_out_of_energy,
                 transform_when_lifecycle_complete,
                 sprout_seeds,

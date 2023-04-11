@@ -179,11 +179,27 @@ fn update_signal_type_display(
                     },
                 },
                 TextSection {
-                    value: "Demolish".to_string(),
+                    value: "Demolish\n".to_string(),
                     style: TextStyle {
                         font: fonts.regular.clone_weak(),
                         font_size,
                         color: SignalKind::Demolish.color(),
+                    },
+                },
+                TextSection {
+                    value: "Lure\n".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Lure.color(),
+                    },
+                },
+                TextSection {
+                    value: "Repel".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Repel.color(),
                     },
                 },
             ];

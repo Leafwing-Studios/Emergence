@@ -3,8 +3,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::AssetState, construction::terraform::TerraformingTool,
-    player_interaction::clipboard::Clipboard, ui::ui_assets::CHOICE_ICON_SIZE,
+    asset_management::AssetState,
+    construction::terraform::TerraformingTool,
+    player_interaction::{abilities::IntentAbility, clipboard::Tool},
+    ui::ui_assets::CHOICE_ICON_SIZE,
 };
 
 use super::ui_assets::Icons;
@@ -23,24 +25,25 @@ impl Plugin for CursorPlugin {
 #[derive(Component, Debug, Default, Clone, Copy)]
 struct Cursor;
 
-/// Changes the cursor's UI element based on the current [`Clipboard`] contents
+/// Changes the cursor's UI element based on the current [`Tool`] contents
 fn set_cursor(
-    clipboard: Res<Clipboard>,
+    tool: Res<Tool>,
     mut cursor_query: Query<&mut UiImage, With<Cursor>>,
     terraforming_icons: Res<Icons<TerraformingTool>>,
+    ability_icons: Res<Icons<IntentAbility>>,
     mut commands: Commands,
 ) {
     if let Ok(mut cursor_image) = cursor_query.get_single_mut() {
-        if clipboard.is_changed() {
-            *cursor_image = match *clipboard {
+        if tool.is_changed() {
+            *cursor_image = match *tool {
                 // Use the matching icon for the terraforming tool
-                Clipboard::Terraform(terraforming_tool) => {
-                    terraforming_icons.get(terraforming_tool)
-                }
+                Tool::Terraform(terraforming_tool) => terraforming_icons.get(terraforming_tool),
+                // Use the matching icon for abilities
+                Tool::Ability(ability) => ability_icons.get(ability),
                 // Ghosts are used instead for structures
-                Clipboard::Structures(_) => Handle::default(),
+                Tool::Structures(_) => Handle::default(),
                 // No need to show a custom cursor if we have nothing selected
-                Clipboard::Empty => Handle::default(),
+                Tool::None => Handle::default(),
             }
             .into()
         }

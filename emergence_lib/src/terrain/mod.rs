@@ -9,8 +9,9 @@ use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
 use crate::crafting::components::StorageInventory;
 use crate::crafting::item_tags::ItemKind;
+use crate::organisms::energy::VigorModifier;
 use crate::player_interaction::selection::ObjectInteraction;
-use crate::signals::{Emitter, SignalStrength, SignalType};
+use crate::signals::{Emitter, SignalModifier, SignalStrength, SignalType};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 
@@ -31,7 +32,7 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 (
                     respond_to_height_changes,
-                    set_terrain_emitters,
+                    set_terrain_emitters.in_set(TerrainEmitters),
                     update_litter_index,
                 )
                     .in_set(SimulationSet)
@@ -59,6 +60,10 @@ struct TerrainBundle {
     zoning: Zoning,
     /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
+    /// Modifies the intensity of emitters on this tile.
+    signal_modifer: SignalModifier,
+    /// Modifies the rate of work and the energy costs on this tile.
+    vigor_modifier: VigorModifier,
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
     /// Stores littered items
@@ -92,6 +97,8 @@ impl TerrainBundle {
             object_interaction: ObjectInteraction::None,
             zoning: Zoning::None,
             scene_bundle,
+            signal_modifer: SignalModifier::None,
+            vigor_modifier: VigorModifier::None,
             emitter: Emitter::default(),
             storage_inventory: StorageInventory::new(1, None),
         }
@@ -137,6 +144,10 @@ fn set_terrain_emitters(
         }
     }
 }
+
+/// The set of systems that update terrain emitters.
+#[derive(SystemSet, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct TerrainEmitters;
 
 /// Tracks how much litter is on the ground on each tile.
 fn update_litter_index(

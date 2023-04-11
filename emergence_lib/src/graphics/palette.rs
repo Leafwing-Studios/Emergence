@@ -107,6 +107,10 @@ pub(crate) mod infovis {
                 SignalKind::Demolish => 0.,
                 // Blue
                 SignalKind::Unit => 220.,
+                // Blue-purple
+                SignalKind::Lure => 270.,
+                // Orange-red
+                SignalKind::Repel => 10.,
             }
         }
 
@@ -184,6 +188,18 @@ pub(crate) mod infovis {
                 },
                 Goal::Demolish(_) => Color::Hsla {
                     hue: SignalKind::Demolish.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Lure => Color::Hsla {
+                    hue: SignalKind::Lure.hue(),
+                    saturation: 0.7,
+                    lightness: 0.7,
+                    alpha: 1.0,
+                },
+                Goal::Repel => Color::Hsla {
+                    hue: SignalKind::Repel.hue(),
                     saturation: 0.7,
                     lightness: 0.7,
                     alpha: 1.0,

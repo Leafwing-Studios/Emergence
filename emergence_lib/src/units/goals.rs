@@ -58,6 +58,10 @@ pub(crate) enum Goal {
     Demolish(Id<Structure>),
     /// Attempt to feed self
     Eat(ItemKind),
+    /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure)
+    Lure,
+    /// Retrating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
+    Repel,
 }
 
 impl Default for Goal {
@@ -80,6 +84,8 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Pull(item_kind) => Ok(Goal::Fetch(item_kind)),
             SignalType::Work(structure_id) => Ok(Goal::Work(structure_id)),
             SignalType::Demolish(structure_id) => Ok(Goal::Demolish(structure_id)),
+            SignalType::Lure => Ok(Goal::Lure),
+            SignalType::Repel => Ok(Goal::Repel),
             SignalType::Contains(_) => Err(()),
             SignalType::Stores(_) => Err(()),
             SignalType::Unit(_) => Err(()),
@@ -99,6 +105,8 @@ impl Goal {
             Goal::Work(_) => None,
             Goal::Demolish(_) => None,
             Goal::Eat(_) => Some(DeliveryMode::PickUp),
+            Goal::Lure => None,
+            Goal::Repel => None,
         }
     }
 
@@ -113,6 +121,8 @@ impl Goal {
             Goal::Work(_) => Purpose::Intrinsic,
             Goal::Demolish(_) => Purpose::Intrinsic,
             Goal::Eat(_) => Purpose::Instrumental,
+            Goal::Lure => Purpose::Intrinsic,
+            Goal::Repel => Purpose::Intrinsic,
         }
     }
 
@@ -142,6 +152,8 @@ impl Goal {
                 format!("Demolish {}", structure_manifest.name(*structure))
             }
             Goal::Eat(item_kind) => format!("Eat {}", item_manifest.name_of_kind(*item_kind)),
+            Goal::Lure => "Lure".to_string(),
+            Goal::Repel => "Repel".to_string(),
         }
     }
 }
@@ -165,6 +177,19 @@ pub(super) fn choose_goal(
     for (&tile_pos, &unit_id, mut goal, mut impatience_pool, unit_inventory, id) in
         units_query.iter_mut()
     {
+        // If the strongest signal is ability-related, stop what you're currently doing and do that.
+        // This dramatically improves responsiveness of the AI to abilities.
+        let strongest_signal = signals.strongest_goal_signal_at_position(tile_pos);
+        if Some(SignalType::Repel) == strongest_signal {
+            *goal = Goal::Repel;
+            continue;
+        }
+
+        if Some(SignalType::Lure) == strongest_signal {
+            *goal = Goal::Lure;
+            continue;
+        }
+
         // If we're out of patience, give up and choose a new goal
         if impatience_pool.is_full() {
             // If you're holding something, try to put it away nicely

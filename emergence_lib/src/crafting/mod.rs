@@ -7,9 +7,17 @@ use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::ghosts::WorkplaceId,
     items::item_manifest::{ItemManifest, RawItemManifest},
-    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
+    organisms::{
+        energy::{EnergyPool, VigorModifier},
+        lifecycle::Lifecycle,
+        Organism,
+    },
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::{light::TotalLight, SimulationSet},
+    simulation::{
+        geometry::{MapGeometry, TilePos},
+        light::TotalLight,
+        SimulationSet,
+    },
     structures::structure_manifest::Structure,
 };
 
@@ -65,7 +73,9 @@ struct CraftingQuery {
     output: &'static mut OutputInventory,
     /// The number of workers present
     workers_present: &'static WorkersPresent,
-    /// Is this an organism?
+    /// The current position of the crafter
+    tile_pos: &'static TilePos,
+    /// Is the structure an organism?
     maybe_organism: Option<&'static Organism>,
 }
 
@@ -76,6 +86,8 @@ fn progress_crafting(
     item_manifest: Res<ItemManifest>,
     total_light: Res<TotalLight>,
     mut crafting_query: Query<CraftingQuery>,
+    vigor_query: Query<&VigorModifier>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let rng = &mut rand::thread_rng();
 
@@ -113,14 +125,27 @@ fn progress_crafting(
                     let recipe = recipe_manifest.get(*recipe_id);
                     // Check if we can make progress
                     if recipe.satisfied(crafter.workers_present.current(), &total_light) {
+                        let structure_vigor_bonus = if crafter.maybe_organism.is_some() {
+                            let terrain_entity =
+                                map_geometry.get_terrain(*crafter.tile_pos).unwrap();
+                            let vigor_modifier = vigor_query.get(terrain_entity).unwrap();
+                            vigor_modifier.ratio()
+                        } else {
+                            1.
+                        };
+
                         // Many hands make light work!
                         if recipe.workers_required() > 0 {
-                            let work_ratio = crafter.workers_present.current() as f32
-                                / recipe.workers_required() as f32;
-                            updated_progress +=
-                                Duration::from_secs_f32(time.period.as_secs_f32() * work_ratio);
+                            updated_progress += Duration::from_secs_f32(
+                                time.period.as_secs_f32()
+                                    * structure_vigor_bonus
+                                    * crafter.workers_present.effective_workers()
+                                    / recipe.workers_required() as f32,
+                            );
                         } else {
-                            updated_progress += time.period;
+                            updated_progress += Duration::from_secs_f32(
+                                time.period.as_secs_f32() * structure_vigor_bonus,
+                            );
                         }
 
                         if updated_progress >= required {

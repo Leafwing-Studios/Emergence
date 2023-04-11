@@ -7,18 +7,22 @@ use crate as emergence_lib;
 use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
+use crate::player_interaction::abilities::{Intent, IntentAbility, IntentPool};
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use derive_more::Display;
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
+use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
+use std::ops::MulAssign;
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -39,11 +43,16 @@ impl Plugin for SignalsPlugin {
         app.init_resource::<Signals>().add_systems(
             (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
+                .in_set(ManageSignals)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
     }
 }
+
+/// A public system set for the signals plugin.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct ManageSignals;
 
 /// The central resource that tracks all signals.
 #[derive(Resource, Debug, Default)]
@@ -136,8 +145,69 @@ impl Signals {
         let mut best_choice: Option<TilePos> = None;
         let mut best_score = SignalStrength::ZERO;
 
-        let neighboring_signals = match goal {
-            Goal::Wander { .. } => return None,
+        for (possible_tile, current_score) in
+            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+        {
+            if current_score > best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
+            }
+        }
+
+        if let Some(best_tile_pos) = best_choice {
+            if best_tile_pos == tile_pos {
+                None
+            } else {
+                best_choice
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Returns the adjacent, empty tile position that contains the lowest sum signal strength that can be used to meet the provided `goal`.
+    ///
+    /// If no suitable tile exists, [`None`] will be returned instead.
+    pub(crate) fn downstream(
+        &self,
+        tile_pos: TilePos,
+        goal: &Goal,
+        item_manifest: &ItemManifest,
+        map_geometry: &MapGeometry,
+    ) -> Option<TilePos> {
+        let mut best_choice: Option<TilePos> = None;
+        let mut best_score = SignalStrength::INFINITY;
+
+        for (possible_tile, current_score) in
+            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+        {
+            if current_score < best_score {
+                best_score = current_score;
+                best_choice = Some(possible_tile);
+            }
+        }
+
+        if let Some(best_tile_pos) = best_choice {
+            if best_tile_pos == tile_pos {
+                None
+            } else {
+                best_choice
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Returns the strength of goal-relevant signals in neighboring tiles.
+    fn relevant_neighboring_signals(
+        &self,
+        tile_pos: TilePos,
+        goal: &Goal,
+        item_manifest: &ItemManifest,
+        map_geometry: &MapGeometry,
+    ) -> HashMap<TilePos, SignalStrength> {
+        match goal {
+            Goal::Wander { .. } => HashMap::new(),
             Goal::Fetch(item_kind)
             | Goal::Eat(item_kind)
             | Goal::Store(item_kind)
@@ -166,28 +236,13 @@ impl Signals {
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
             }
+            Goal::Lure => self.neighboring_signals(SignalType::Lure, tile_pos, map_geometry),
+            Goal::Repel => self.neighboring_signals(SignalType::Repel, tile_pos, map_geometry),
             Goal::Demolish(structure_id) => self.neighboring_signals(
                 SignalType::Demolish(*structure_id),
                 tile_pos,
                 map_geometry,
             ),
-        };
-
-        for (possible_tile, current_score) in neighboring_signals {
-            if current_score > best_score {
-                best_score = current_score;
-                best_choice = Some(possible_tile);
-            }
-        }
-
-        if let Some(best_tile_pos) = best_choice {
-            if best_tile_pos == tile_pos {
-                None
-            } else {
-                best_choice
-            }
-        } else {
-            None
         }
     }
 
@@ -357,6 +412,14 @@ pub enum SignalType {
     Stores(ItemKind),
     /// Has a unit of this type.
     Unit(Id<Unit>),
+    /// Draws units in.
+    ///
+    /// Corrresponds to [`IntentAbility::Lure`].
+    Lure,
+    /// Pushes units away.
+    ///
+    /// Corresponds to [`IntentAbility::Repel`].
+    Repel,
 }
 
 impl SignalType {
@@ -429,6 +492,8 @@ impl SignalType {
                 format!("Stores({})", item_manifest.name_of_kind(*item_kind))
             }
             SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
+            SignalType::Lure => "Lure".to_string(),
+            SignalType::Repel => "Repel".to_string(),
         }
     }
 }
@@ -456,6 +521,14 @@ pub(crate) enum SignalKind {
     Stores,
     /// Has a unit of this type.
     Unit,
+    /// Draws units in.
+    ///
+    /// Corrresponds to [`IntentAbility::Lure`].
+    Lure,
+    /// Pushes units away.
+    ///
+    /// Corresponds to [`IntentAbility::Repel`].
+    Repel,
 }
 
 impl From<SignalType> for SignalKind {
@@ -468,6 +541,8 @@ impl From<SignalType> for SignalKind {
             SignalType::Contains(_) => SignalKind::Contains,
             SignalType::Stores(_) => SignalKind::Stores,
             SignalType::Unit(_) => SignalKind::Unit,
+            SignalType::Lure => SignalKind::Lure,
+            SignalType::Repel => SignalKind::Repel,
         }
     }
 }
@@ -482,6 +557,9 @@ impl SignalStrength {
     /// No signal is present.
     pub const ZERO: SignalStrength = SignalStrength(0.);
 
+    /// An infinitely strong signal.
+    pub const INFINITY: SignalStrength = SignalStrength(f32::INFINITY);
+
     /// Creates a new [`SignalStrength`], ensuring that it has a minimum value of 0.
     pub fn new(value: f32) -> Self {
         SignalStrength(value.max(0.))
@@ -490,6 +568,15 @@ impl SignalStrength {
     /// The underlying value
     pub fn value(&self) -> f32 {
         self.0
+    }
+
+    /// Applies a [`SignalModifier`] to this signal strength.
+    pub fn apply_modifier(&mut self, modifier: SignalModifier) {
+        *self *= match modifier {
+            SignalModifier::None => 1.,
+            SignalModifier::Amplify => SignalModifier::RATIO,
+            SignalModifier::Dampen => 1. / SignalModifier::RATIO,
+        }
     }
 }
 
@@ -529,6 +616,12 @@ impl Mul<f32> for SignalStrength {
     }
 }
 
+impl MulAssign<f32> for SignalStrength {
+    fn mul_assign(&mut self, rhs: f32) {
+        *self = *self * rhs
+    }
+}
+
 /// The component that causes a game object to emit a signal.
 ///
 /// This can change over time, and multiple signals may be emitted at once.
@@ -538,27 +631,94 @@ pub(crate) struct Emitter {
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
 }
 
+/// Modifies the strength of a signal.
+///
+/// This is stored as a component on each tile, and is applied to all signals emitted from entities at that tile position.
+#[derive(Component, Debug, Display, Default, Clone, Copy, PartialEq, Eq)]
+pub enum SignalModifier {
+    /// No modifier is applied.
+    #[default]
+    None,
+    /// The signal strength is multiplied for the duration of this effect.
+    Amplify,
+    /// The signal strength is divided for the duration of this effect.
+    Dampen,
+}
+
+impl SignalModifier {
+    /// Controls the ratio of the signal strength when modified.
+    ///
+    /// This should be greater than 1.
+    const RATIO: f32 = 10.;
+
+    /// The cost (in intent) of applying to a single emitter for one second.
+    fn cost(&self) -> Intent {
+        match self {
+            SignalModifier::None => Intent(0.),
+            SignalModifier::Amplify => IntentAbility::Amplify.cost(),
+            SignalModifier::Dampen => IntentAbility::Dampen.cost(),
+        }
+    }
+}
+
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(
     mut signals: ResMut<Signals>,
-    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>)>,
+    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
+    modifier_query: Query<&SignalModifier>,
     structure_manifest: Res<StructureManifest>,
+    mut intent_pool: ResMut<IntentPool>,
+    fixed_time: Res<FixedTime>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (&center, emitter, maybe_structure_id) in emitter_query.iter() {
+    let delta_time = fixed_time.period.as_secs_f32();
+
+    /// Emits signals that correspond to a single [`Emitter`].
+    fn emit(
+        signals: &mut Signals,
+        tile_pos: TilePos,
+        emitter: &Emitter,
+        modifier: &SignalModifier,
+    ) {
+        for (signal_type, signal_strength) in &emitter.signals {
+            let mut signal_strength = *signal_strength;
+            signal_strength.apply_modifier(*modifier);
+            signals.add_signal(*signal_type, tile_pos, signal_strength);
+        }
+    }
+
+    for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
             Some(structure_id) => {
-                let footprint = &structure_manifest.get(*structure_id).footprint;
+                let facing = *maybe_facing.expect("Structures must have a facing");
+                let footprint = &structure_manifest
+                    .get(*structure_id)
+                    .footprint
+                    .rotated(facing);
+
                 for tile_pos in footprint.in_world_space(center) {
-                    for (signal_type, signal_strength) in &emitter.signals {
-                        signals.add_signal(*signal_type, tile_pos, *signal_strength);
+                    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                    let modifier = modifier_query.get(terrain_entity).unwrap();
+                    let cost = modifier.cost() * delta_time;
+
+                    if intent_pool.current() >= cost {
+                        intent_pool.expend(cost).unwrap();
                     }
+
+                    emit(&mut signals, tile_pos, emitter, modifier);
                 }
             }
             None => {
-                for (signal_type, signal_strength) in &emitter.signals {
-                    signals.add_signal(*signal_type, center, *signal_strength);
+                let terrain_entity = map_geometry.get_terrain(center).unwrap();
+                let modifier = modifier_query.get(terrain_entity).unwrap();
+                let cost = modifier.cost() * delta_time;
+
+                if intent_pool.current() >= cost {
+                    intent_pool.expend(cost).unwrap();
                 }
+
+                emit(&mut signals, center, emitter, modifier);
             }
         }
     }

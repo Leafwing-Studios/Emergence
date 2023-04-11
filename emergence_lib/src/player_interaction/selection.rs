@@ -11,7 +11,7 @@ use crate::simulation::geometry::TilePos;
 
 use crate as emergence_lib;
 
-use super::clipboard::Clipboard;
+use super::clipboard::Tool;
 use super::{picking::CursorPos, InteractionSystem, PlayerAction};
 
 /// Code and data for selecting groups of tiles
@@ -103,8 +103,14 @@ impl SelectedTiles {
         &self.selected
     }
 
+    /// How many tiles are selected?
+    #[allow(dead_code)]
+    pub(crate) fn len(&self) -> usize {
+        self.selected.len()
+    }
+
     /// Are any tiles selected?
-    pub(super) fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.selected.is_empty()
     }
 
@@ -528,12 +534,7 @@ enum SelectionShape {
 
 impl SelectionState {
     /// Determine what selection state should be used this frame based on player actions
-    fn compute(
-        &mut self,
-        clipboard: &Clipboard,
-        actions: &ActionState<PlayerAction>,
-        hovered_tile: TilePos,
-    ) {
+    fn compute(&mut self, tool: &Tool, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
         use PlayerAction::*;
 
         self.multiple = actions.pressed(PlayerAction::Multiple);
@@ -561,7 +562,7 @@ impl SelectionState {
 
         self.action = match self.shape {
             SelectionShape::Single => {
-                if actions.pressed(Select) {
+                if actions.pressed(UseTool) {
                     SelectionAction::Select
                 // Don't repeatedly trigger deselect to avoid accidentally clearing selection
                 } else if actions.just_pressed(Deselect) {
@@ -572,7 +573,7 @@ impl SelectionState {
             }
             SelectionShape::Area { .. } | SelectionShape::Line { .. } => {
                 // Trigger on just released in order to enable a drag-and-preview effect
-                if actions.just_released(Select) {
+                if actions.just_released(UseTool) {
                     SelectionAction::Select
                 } else if actions.just_released(Deselect) {
                     SelectionAction::Deselect
@@ -584,7 +585,7 @@ impl SelectionState {
 
         // If the clipboard is not empty, PlayerAction::Select is used to paste from the clipboard instead of selecting.
         // Allow users to override this using shift+select to expand or shrink their selection.
-        if !clipboard.is_empty() && !self.multiple {
+        if !tool.is_empty() && !self.multiple {
             self.action = SelectionAction::Preview;
         }
     }
@@ -592,7 +593,7 @@ impl SelectionState {
 
 /// Determine what should be selected based on player inputs.
 fn set_selection(
-    clipboard: Res<Clipboard>,
+    tool: Res<Tool>,
     mut current_selection: ResMut<CurrentSelection>,
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
@@ -609,7 +610,7 @@ fn set_selection(
     let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
-    selection_state.compute(&clipboard, actions, hovered_tile);
+    selection_state.compute(&tool, actions, hovered_tile);
 
     // Update hovered tiles
     hovered_tiles.update(hovered_tile, &selection_state);
@@ -644,7 +645,7 @@ fn set_selection(
 
             if same_tile_as_last_time
                 && !selection_state.multiple
-                && actions.just_pressed(PlayerAction::Select)
+                && actions.just_pressed(PlayerAction::UseTool)
             {
                 current_selection.cycle_selection(cursor_pos, &selection_state, map_geometry)
             } else if !same_tile_as_last_time {

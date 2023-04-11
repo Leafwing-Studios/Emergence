@@ -167,7 +167,11 @@ impl Plugin for UnitsPlugin {
                         .in_set(UnitSystem::ChooseNewAction)
                         .after(UnitSystem::Act)
                         .after(UnitSystem::ChooseGoal),
-                    hunger::check_for_hunger.before(UnitSystem::ChooseNewAction),
+                    hunger::check_for_hunger
+                        // Avoid a delay
+                        .before(UnitSystem::ChooseNewAction)
+                        // Make sure to overwrite any existing goal
+                        .after(UnitSystem::ChooseGoal),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),

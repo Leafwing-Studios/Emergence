@@ -4,7 +4,7 @@ use crate::{
     asset_management::AssetState,
     construction::terraform::TerraformingTool,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
-    player_interaction::{clipboard::Clipboard, PlayerAction},
+    player_interaction::{clipboard::Tool, PlayerAction},
     terrain::terrain_manifest::TerrainManifest,
 };
 
@@ -68,7 +68,7 @@ fn handle_selection(
     In(result): In<Result<HexMenuElement<TerraformingTool>, HexMenuError>>,
     mut background_query: Query<&mut BackgroundColor, With<HexMenu>>,
     menu_query: Query<Entity, With<HexMenu>>,
-    mut clipboard: ResMut<Clipboard>,
+    mut tool: ResMut<Tool>,
     commands: Commands,
     arrangement: Res<HexMenuArrangement<TerraformingTool>>,
 ) {
@@ -84,7 +84,7 @@ fn handle_selection(
     match result {
         Ok(element) => {
             if element.is_complete() {
-                *clipboard = Clipboard::Terraform(*element.data());
+                *tool = Tool::Terraform(*element.data());
                 cleanup(commands, menu_query);
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
@@ -99,7 +99,7 @@ fn handle_selection(
             }
         }
         Err(HexMenuError::NoSelection { complete }) => {
-            *clipboard = Clipboard::Empty;
+            *tool = Tool::None;
             if complete {
                 cleanup(commands, menu_query);
             } else {

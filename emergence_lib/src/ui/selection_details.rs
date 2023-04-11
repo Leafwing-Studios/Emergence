@@ -387,6 +387,8 @@ fn get_details(
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     signals: signals.all_signals_at_position(*tile_pos),
+                    signal_modifier: *terrain_query_item.signal_modifier,
+                    vigor_modifier: *terrain_query_item.vigor_modifier,
                     zoning: terrain_query_item.zoning.clone(),
                     storage_inventory: terrain_query_item.storage_inventory.clone(),
                     maybe_terraforming_details,
@@ -726,7 +728,8 @@ mod terrain_details {
         construction::{terraform::TerraformingAction, zoning::Zoning},
         crafting::components::{InputInventory, OutputInventory, StorageInventory},
         items::item_manifest::ItemManifest,
-        signals::LocalSignals,
+        organisms::energy::VigorModifier,
+        signals::{LocalSignals, SignalModifier},
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::{Terrain, TerrainManifest},
@@ -746,6 +749,10 @@ mod terrain_details {
         pub(super) zoning: &'static Zoning,
         /// Any littered items on this tile
         pub(super) storage_inventory: &'static StorageInventory,
+        /// The signal modifier on this tile
+        pub(super) signal_modifier: &'static SignalModifier,
+        /// The vigor modifier on this tile
+        pub(super) vigor_modifier: &'static VigorModifier,
     }
 
     /// Data needed to populate [`TerraformingDetails`].
@@ -804,6 +811,10 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
+        /// The signal modifier on this tile
+        pub(super) signal_modifier: SignalModifier,
+        /// The vigor modifier on this tile
+        pub(super) vigor_modifier: VigorModifier,
         /// Any littered items on this tile
         pub(super) storage_inventory: StorageInventory,
         /// The details about the terraforming process, if any
@@ -830,6 +841,8 @@ Output: {output}"
                 unit_manifest,
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
+            let vigor_modifier = self.vigor_modifier;
+            let signal_modifier = self.signal_modifier;
             let litter = self.storage_inventory.display(item_manifest);
 
             let base_string = format!(
@@ -838,6 +851,8 @@ Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
 Zoning: {zoning}
+Vigor modifier: {vigor_modifier}
+Signal modifier: {signal_modifier}
 Litter: {litter}"
             );
 
