@@ -3,6 +3,7 @@
 use bevy::{
     ecs::{query::WorldQuery, system::SystemParam},
     prelude::*,
+    utils::Duration,
 };
 use leafwing_abilities::prelude::Pool;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
@@ -41,13 +42,19 @@ use super::{
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(
-    mut units_query: Query<&mut CurrentAction>,
+    mut units_query: Query<(&mut CurrentAction, &TilePos)>,
     time: Res<FixedTime>,
+    modifier_query: Query<&VigorModifier>,
+    map_geometry: Res<MapGeometry>,
 ) {
     let delta = time.period;
 
-    for mut current_action in units_query.iter_mut() {
-        current_action.timer.tick(delta);
+    for (mut current_action, tile_pos) in units_query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
+        let vigor_modifier = modifier_query.get(terrain_entity).unwrap();
+        let modified_delta = Duration::from_secs_f32(delta.as_secs_f32() * vigor_modifier.ratio());
+
+        current_action.timer.tick(modified_delta);
     }
 }
 
