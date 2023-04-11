@@ -12,6 +12,7 @@ use crate::{
 
 use super::{
     goals::Goal,
+    item_interaction::UnitInventory,
     unit_manifest::{Unit, UnitManifest},
 };
 
@@ -83,11 +84,18 @@ impl Diet {
 
 /// Swaps the goal to [`Goal::Eat`] when energy is low
 pub(super) fn check_for_hunger(
-    mut unit_query: Query<(&mut Goal, &EnergyPool, &Id<Unit>)>,
+    mut unit_query: Query<(&mut Goal, &EnergyPool, &Id<Unit>, &UnitInventory)>,
     unit_manifest: Res<UnitManifest>,
 ) {
-    for (mut goal, energy_pool, unit_id) in unit_query.iter_mut() {
+    for (mut goal, energy_pool, unit_id, unit_inventory) in unit_query.iter_mut() {
         if energy_pool.is_hungry() {
+            // Make sure to put down any item we're holding before eating
+            if let Some(item) = unit_inventory.held_item {
+                if *goal == Goal::Store(ItemKind::Single(item)) {
+                    continue;
+                };
+            }
+
             let diet = &unit_manifest.get(*unit_id).diet;
             *goal = Goal::Eat(diet.item_kind);
         } else if matches!(*goal, Goal::Eat(..)) && energy_pool.is_satiated() {
