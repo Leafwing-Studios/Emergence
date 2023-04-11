@@ -32,7 +32,7 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 (
                     respond_to_height_changes,
-                    set_terrain_emitters,
+                    set_terrain_emitters.in_set(TerrainEmitters),
                     update_litter_index,
                 )
                     .in_set(SimulationSet)
@@ -144,6 +144,9 @@ fn set_terrain_emitters(
         }
     }
 }
+
+#[derive(SystemSet, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct TerrainEmitters;
 
 /// Tracks how much litter is on the ground on each tile.
 fn update_litter_index(

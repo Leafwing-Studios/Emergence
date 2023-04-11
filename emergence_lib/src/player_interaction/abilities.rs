@@ -3,10 +3,11 @@
 use crate as emergence_lib;
 use crate::asset_management::manifest::Id;
 use crate::organisms::energy::VigorModifier;
-use crate::signals::SignalModifier;
+use crate::signals::{Emitter, SignalModifier, SignalStrength, SignalType};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::terrain::terrain_manifest::Terrain;
+use crate::terrain::TerrainEmitters;
 
 use super::clipboard::Tool;
 use super::picking::CursorPos;
@@ -28,7 +29,11 @@ pub(super) struct AbilitiesPlugin;
 impl Plugin for AbilitiesPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (regenerate_intent, use_ability)
+            (
+                regenerate_intent,
+                // Run after the terrain emitters, so that the our Lure / Warning signals are not overwritten.
+                use_ability.after(TerrainEmitters),
+            )
                 .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -82,7 +87,10 @@ fn use_ability(
     cursor_pos: Res<CursorPos>,
     tool: Res<Tool>,
     player_actions: Res<ActionState<PlayerAction>>,
-    mut terrain_query: Query<(&mut VigorModifier, &mut SignalModifier), With<Id<Terrain>>>,
+    mut terrain_query: Query<
+        (&mut VigorModifier, &mut SignalModifier, &mut Emitter),
+        With<Id<Terrain>>,
+    >,
     map_geometry: Res<MapGeometry>,
     mut previously_modified_tiles: Local<HashSet<TilePos>>,
 ) {
@@ -96,7 +104,7 @@ fn use_ability(
     // By caching which tiles we touched, we can avoid iterating over the entire map every frame
     for &tile_pos in previously_modified_tiles.iter() {
         let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let (mut vigor_modifier, mut signal_modifier) =
+        let (mut vigor_modifier, mut signal_modifier, _emitter) =
             terrain_query.get_mut(terrain_entity).unwrap();
 
         *vigor_modifier = VigorModifier::None;
@@ -108,13 +116,17 @@ fn use_ability(
     if player_actions.pressed(PlayerAction::UseTool) {
         for &tile_pos in relevant_tiles.selection() {
             let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-            let (mut vigor_modifier, mut signal_modifier) =
+            let (mut vigor_modifier, mut signal_modifier, mut emitter) =
                 terrain_query.get_mut(terrain_entity).unwrap();
             previously_modified_tiles.insert(tile_pos);
 
             match ability {
-                IntentAbility::Lure => todo!(),
-                IntentAbility::Warning => todo!(),
+                IntentAbility::Lure => emitter
+                    .signals
+                    .push((SignalType::Lure, SignalStrength::new(50.))),
+                IntentAbility::Warning => emitter
+                    .signals
+                    .push((SignalType::Warning, SignalStrength::new(50.))),
                 IntentAbility::Flourish => *vigor_modifier = VigorModifier::Flourish,
                 IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow,
                 IntentAbility::Amplify => *signal_modifier = SignalModifier::Amplify,
