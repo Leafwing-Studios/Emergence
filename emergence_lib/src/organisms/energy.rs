@@ -224,7 +224,7 @@ impl VigorModifier {
     /// Controls the ratio of the signal strength when modified.
     ///
     /// This should be greater than 1.
-    const RATIO: f32 = 10.;
+    const RATIO: f32 = 2.;
 
     /// The cost of this modifier, in [`Intent`] per second.
     ///

@@ -65,10 +65,10 @@ impl IntentAbility {
         Intent(match self {
             IntentAbility::Lure => 5.,
             IntentAbility::Warning => 5.,
-            IntentAbility::Flourish => 10.,
-            IntentAbility::Fallow => 10.,
-            IntentAbility::Amplify => 5.,
-            IntentAbility::Dampen => 5.,
+            IntentAbility::Flourish => 5.,
+            IntentAbility::Fallow => 5.,
+            IntentAbility::Amplify => 2.,
+            IntentAbility::Dampen => 2.,
         })
     }
 }
