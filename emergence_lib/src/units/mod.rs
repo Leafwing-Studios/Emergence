@@ -99,6 +99,12 @@ pub(crate) struct UnitBundle {
 }
 
 impl UnitBundle {
+    /// Controls the strength of the unit's signal production.
+    ///
+    /// Increasing this value will make all units signal stronger,
+    /// and increase the frequency at which units attempt to flee crowding.
+    const UNIT_EMITTER_STRENGTH: f32 = 0.5;
+
     /// Initializes a new unit.
     ///
     /// It will be just born, and full.
@@ -120,7 +126,10 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             emitter: Emitter {
-                signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
+                signals: vec![(
+                    SignalType::Unit(unit_id),
+                    SignalStrength::new(Self::UNIT_EMITTER_STRENGTH),
+                )],
             },
             age: Age::newborn(unit_data.max_age),
             organism_bundle: OrganismBundle::new(
@@ -162,7 +171,10 @@ impl UnitBundle {
             current_action: CurrentAction::default(),
             held_item: UnitInventory::default(),
             emitter: Emitter {
-                signals: vec![(SignalType::Unit(unit_id), SignalStrength::new(1.))],
+                signals: vec![(
+                    SignalType::Unit(unit_id),
+                    SignalStrength::new(Self::UNIT_EMITTER_STRENGTH),
+                )],
             },
             age,
             organism_bundle: OrganismBundle::new(energy_pool, unit_data.organism_variety.lifecycle),
