@@ -57,7 +57,7 @@
 			"outputs": {
 				"ant_egg": 1
 			},
-			"craft_time": 30,
+			"craft_time": 10,
 			"conditions": {
 				"workers_required": 2
 			}
