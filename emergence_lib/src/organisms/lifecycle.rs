@@ -262,7 +262,7 @@ pub(super) fn transform_when_lifecycle_complete(
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();
 
-                    commands.spawn(UnitBundle::new(
+                    commands.spawn(UnitBundle::newborn(
                         unit_id,
                         tile_pos,
                         unit_data,
@@ -349,7 +349,7 @@ pub(super) fn sprout_seeds(
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();
 
-                    commands.spawn(UnitBundle::new(
+                    commands.spawn(UnitBundle::newborn(
                         unit_id,
                         tile_pos,
                         unit_data,

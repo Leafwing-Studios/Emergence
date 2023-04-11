@@ -191,12 +191,13 @@ fn generate_organisms(
     // Ant
     let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
     for ant_position in ant_positions {
-        commands.spawn(UnitBundle::new(
+        commands.spawn(UnitBundle::randomized(
             Id::from_name("ant".to_string()),
             ant_position,
             unit_manifest.get(Id::from_name("ant".to_string())).clone(),
             &unit_handles,
             &map_geometry,
+            rng,
         ));
     }
 

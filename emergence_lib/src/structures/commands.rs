@@ -170,11 +170,20 @@ impl Command for SpawnStructureCommand {
             .id();
 
         // PERF: these operations could be done in a single archetype move with more branching
+        let rng = &mut thread_rng();
         if let Some(organism_details) = &structure_variety.organism_variety {
+            let energy_pool = if self.randomized {
+                let mut energy_pool = organism_details.energy_pool.clone();
+                energy_pool.randomize(rng);
+                energy_pool
+            } else {
+                organism_details.energy_pool.clone()
+            };
+
             world
                 .entity_mut(structure_entity)
                 .insert(OrganismBundle::new(
-                    organism_details.energy_pool.clone(),
+                    energy_pool,
                     organism_details.lifecycle.clone(),
                 ));
         };
@@ -201,17 +210,14 @@ impl Command for SpawnStructureCommand {
                                     &item_manifest,
                                     &structure_manifest,
                                 ),
-                                true => {
-                                    let rng = &mut thread_rng();
-                                    CraftingBundle::randomized(
-                                        structure_id,
-                                        starting_recipe,
-                                        &recipe_manifest,
-                                        &item_manifest,
-                                        &structure_manifest,
-                                        rng,
-                                    )
-                                }
+                                true => CraftingBundle::randomized(
+                                    structure_id,
+                                    starting_recipe,
+                                    &recipe_manifest,
+                                    &item_manifest,
+                                    &structure_manifest,
+                                    rng,
+                                ),
                             };
 
                             world.entity_mut(structure_entity).insert(crafting_bundle);

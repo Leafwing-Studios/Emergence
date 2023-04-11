@@ -5,6 +5,8 @@ use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+use rand::rngs::ThreadRng;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
@@ -33,6 +35,13 @@ impl EnergyPool {
     /// Quickly construct a new empty energy pool with a max energy of `max` and no regeneration.
     pub fn simple(max: f32) -> Self {
         EnergyPool::new_empty(Energy(max), Energy(0.))
+    }
+
+    /// Randomizes the energy pool's current energy between `warning_threshold` and `max`.
+    pub fn randomize(&mut self, rng: &mut ThreadRng) {
+        let range = self.max.0 - self.warning_threshold.0;
+        let current = rng.gen::<f32>() * range + self.warning_threshold.0;
+        self.current = Energy(current);
     }
 
     /// Is this organism out of energy?
