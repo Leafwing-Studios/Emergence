@@ -202,6 +202,14 @@ fn update_signal_type_display(
                         color: SignalKind::Repel.color(),
                     },
                 },
+                TextSection {
+                    value: "Unit".to_string(),
+                    style: TextStyle {
+                        font: fonts.regular.clone_weak(),
+                        font_size,
+                        color: SignalKind::Unit.color(),
+                    },
+                },
             ];
 
             legend.texture = Handle::default();

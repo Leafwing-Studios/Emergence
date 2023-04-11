@@ -60,8 +60,10 @@ pub(crate) enum Goal {
     Eat(ItemKind),
     /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure)
     Lure,
-    /// Retrating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
+    /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
     Repel,
+    /// Trying to avoid a specific unit.
+    Avoid(Id<Unit>),
 }
 
 impl Default for Goal {
@@ -88,7 +90,7 @@ impl TryFrom<SignalType> for Goal {
             SignalType::Repel => Ok(Goal::Repel),
             SignalType::Contains(_) => Err(()),
             SignalType::Stores(_) => Err(()),
-            SignalType::Unit(_) => Err(()),
+            SignalType::Unit(unit) => Ok(Goal::Avoid(unit)),
         }
     }
 }
@@ -107,6 +109,7 @@ impl Goal {
             Goal::Eat(_) => Some(DeliveryMode::PickUp),
             Goal::Lure => None,
             Goal::Repel => None,
+            Goal::Avoid(_) => None,
         }
     }
 
@@ -123,6 +126,7 @@ impl Goal {
             Goal::Eat(_) => Purpose::Instrumental,
             Goal::Lure => Purpose::Intrinsic,
             Goal::Repel => Purpose::Intrinsic,
+            Goal::Avoid(_) => Purpose::Instrumental,
         }
     }
 
@@ -132,6 +136,7 @@ impl Goal {
         item_manifest: &ItemManifest,
         structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
+        unit_manifest: &UnitManifest,
     ) -> String {
         match self {
             Goal::Wander { remaining_actions } => format!(
@@ -154,6 +159,7 @@ impl Goal {
             Goal::Eat(item_kind) => format!("Eat {}", item_manifest.name_of_kind(*item_kind)),
             Goal::Lure => "Lure".to_string(),
             Goal::Repel => "Repel".to_string(),
+            Goal::Avoid(unit) => format!("Avoid {}", unit_manifest.name(*unit)),
         }
     }
 }
@@ -179,12 +185,14 @@ pub(super) fn choose_goal(
         // If the strongest signal is ability-related, stop what you're currently doing and do that.
         // This dramatically improves responsiveness of the AI to abilities.
         let strongest_signal = signals.strongest_goal_signal_at_position(tile_pos);
-        if Some(SignalType::Repel) == strongest_signal {
+        let strongest_signal_type = strongest_signal.map(|(signal_type, _)| signal_type);
+
+        if Some(SignalType::Repel) == strongest_signal_type {
             *goal = Goal::Repel;
             continue;
         }
 
-        if Some(SignalType::Lure) == strongest_signal {
+        if Some(SignalType::Lure) == strongest_signal_type {
             *goal = Goal::Lure;
             continue;
         }
