@@ -195,7 +195,7 @@ fn update_signal_type_display(
                     },
                 },
                 TextSection {
-                    value: "Repel".to_string(),
+                    value: "Repel\n".to_string(),
                     style: TextStyle {
                         font: fonts.regular.clone_weak(),
                         font_size,
