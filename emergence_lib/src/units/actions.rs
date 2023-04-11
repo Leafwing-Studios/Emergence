@@ -216,6 +216,7 @@ pub(super) fn choose_actions(
                 Goal::Lure => CurrentAction::move_towards(
                     &Goal::Lure,
                     unit_tile_pos,
+                    facing,
                     &signals,
                     &item_manifest,
                     &terrain_query,
@@ -225,6 +226,7 @@ pub(super) fn choose_actions(
                 Goal::Warning => CurrentAction::move_away_from(
                     &Goal::Warning,
                     unit_tile_pos,
+                    facing,
                     &signals,
                     &item_manifest,
                     &terrain_query,
@@ -938,6 +940,7 @@ impl CurrentAction {
     pub(super) fn move_towards(
         goal: &Goal,
         current_tile: TilePos,
+        facing: &Facing,
         signals: &Signals,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
@@ -949,7 +952,7 @@ impl CurrentAction {
             CurrentAction::move_or_spin(
                 current_tile,
                 target_tile,
-                &Facing::default(),
+                facing,
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
@@ -963,6 +966,7 @@ impl CurrentAction {
     pub(super) fn move_away_from(
         goal: &Goal,
         current_tile: TilePos,
+        facing: &Facing,
         signals: &Signals,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
@@ -975,7 +979,7 @@ impl CurrentAction {
             CurrentAction::move_or_spin(
                 current_tile,
                 target_tile,
-                &Facing::default(),
+                facing,
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
