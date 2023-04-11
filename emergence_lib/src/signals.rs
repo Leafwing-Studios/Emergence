@@ -7,6 +7,7 @@ use crate as emergence_lib;
 use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
+use crate::player_interaction::abilities::{Intent, IntentAbility, IntentPool};
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
@@ -16,6 +17,7 @@ use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use derive_more::Display;
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
+use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
 use std::ops::MulAssign;
 
@@ -574,6 +576,15 @@ impl SignalModifier {
     ///
     /// This should be greater than 1.
     const RATIO: f32 = 10.;
+
+    /// The cost (in intent) of applying to a single emitter for one second.
+    fn cost(&self) -> Intent {
+        match self {
+            SignalModifier::None => Intent(0.),
+            SignalModifier::Amplify => IntentAbility::Amplify.cost(),
+            SignalModifier::Dampen => IntentAbility::Dampen.cost(),
+        }
+    }
 }
 
 /// Emits signals from [`Emitter`] sources.
@@ -582,8 +593,25 @@ fn emit_signals(
     emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
     modifier_query: Query<&SignalModifier>,
     structure_manifest: Res<StructureManifest>,
+    mut intent_pool: ResMut<IntentPool>,
+    fixed_time: Res<FixedTime>,
     map_geometry: Res<MapGeometry>,
 ) {
+    let delta_time = fixed_time.period.as_secs_f32();
+
+    fn emit_signal(
+        signals: &mut Signals,
+        tile_pos: TilePos,
+        emitter: &Emitter,
+        modifier: &SignalModifier,
+    ) {
+        for (signal_type, signal_strength) in &emitter.signals {
+            let mut signal_strength = *signal_strength;
+            signal_strength.apply_modifier(*modifier);
+            signals.add_signal(*signal_type, tile_pos, signal_strength);
+        }
+    }
+
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
@@ -596,22 +624,26 @@ fn emit_signals(
 
                 for tile_pos in footprint.in_world_space(center) {
                     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-                    let modifier = *modifier_query.get(terrain_entity).unwrap();
+                    let modifier = modifier_query.get(terrain_entity).unwrap();
+                    let cost = modifier.cost() * delta_time;
 
-                    for (signal_type, mut signal_strength) in emitter.signals.clone() {
-                        signal_strength.apply_modifier(modifier);
-                        signals.add_signal(signal_type, tile_pos, signal_strength);
+                    if intent_pool.current() >= cost {
+                        intent_pool.expend(cost).unwrap();
                     }
+
+                    emit_signal(&mut signals, tile_pos, emitter, &modifier);
                 }
             }
             None => {
-                for (signal_type, mut signal_strength) in emitter.signals.clone() {
-                    let terrain_entity = map_geometry.get_terrain(center).unwrap();
-                    let modifier = *modifier_query.get(terrain_entity).unwrap();
+                let terrain_entity = map_geometry.get_terrain(center).unwrap();
+                let modifier = modifier_query.get(terrain_entity).unwrap();
+                let cost = modifier.cost() * delta_time;
 
-                    signal_strength.apply_modifier(modifier);
-                    signals.add_signal(signal_type, center, signal_strength);
+                if intent_pool.current() >= cost {
+                    intent_pool.expend(cost).unwrap();
                 }
+
+                emit_signal(&mut signals, center, emitter, &modifier);
             }
         }
     }

@@ -8,6 +8,7 @@ use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
+use crate::player_interaction::abilities::{Intent, IntentAbility, IntentPool};
 use crate::simulation::geometry::MapGeometry;
 use crate::structures::structure_manifest::Structure;
 use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
@@ -166,16 +167,23 @@ impl Pool for EnergyPool {
 pub(super) fn consume_energy(
     fixed_time: Res<FixedTime>,
     mut energy_query: Query<(&mut EnergyPool, &TilePos)>,
-    vigor_modifier_query: Query<&VigorModifier>,
+    mut vigor_modifier_query: Query<&mut VigorModifier>,
+    mut intent_pool: ResMut<IntentPool>,
     map_geometry: Res<MapGeometry>,
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
 
     for (mut energy_pool, &tile_pos) in energy_query.iter_mut() {
         let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let vigor_modifier = vigor_modifier_query.get(terrain_entity).unwrap();
+        let mut vigor_modifier = vigor_modifier_query.get_mut(terrain_entity).unwrap();
+        let cost = vigor_modifier.cost() * delta_time;
 
-        let vigor_multiplier = match vigor_modifier {
+        // Pay the vigor modifier's cost, if possible.
+        if let Err(..) = intent_pool.expend(cost) {
+            *vigor_modifier = VigorModifier::None;
+        }
+
+        let vigor_multiplier = match *vigor_modifier {
             VigorModifier::None => 1.,
             VigorModifier::Flourish => VigorModifier::RATIO,
             VigorModifier::Fallow => 1. / VigorModifier::RATIO,
@@ -222,4 +230,15 @@ impl VigorModifier {
     ///
     /// This should be greater than 1.
     const RATIO: f32 = 10.;
+
+    /// The cost of this modifier, in [`Intent`] per second.
+    ///
+    /// This is paid when computing the energy consumption rate.
+    pub fn cost(&self) -> Intent {
+        match self {
+            VigorModifier::None => Intent(0.),
+            VigorModifier::Flourish => IntentAbility::Flourish.cost(),
+            VigorModifier::Fallow => IntentAbility::Fallow.cost(),
+        }
+    }
 }

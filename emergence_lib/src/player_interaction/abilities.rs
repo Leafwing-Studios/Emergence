@@ -59,7 +59,9 @@ pub(crate) enum IntentAbility {
 
 impl IntentAbility {
     /// The cost of each ability per second they are used.
-    fn cost(&self) -> Intent {
+    ///
+    /// This cost is only paid for entities that this ability affects.
+    pub(crate) fn cost(&self) -> Intent {
         Intent(match self {
             IntentAbility::Lure => 5.,
             IntentAbility::Warning => 5.,
@@ -72,13 +74,14 @@ impl IntentAbility {
 }
 
 /// Uses abilities when pressed at the cursor's location.
+///
+/// Note: [`Intent`] is spent when these abilities take effect, not when they are used.
+/// This allows the player to use abilities over a broad area, and only pay for the tiles that actually matter.
 fn use_ability(
     current_selection: Res<CurrentSelection>,
     cursor_pos: Res<CursorPos>,
     tool: Res<Tool>,
     player_actions: Res<ActionState<PlayerAction>>,
-    mut intent_pool: ResMut<IntentPool>,
-    fixed_time: Res<FixedTime>,
     mut terrain_query: Query<(&mut VigorModifier, &mut SignalModifier), With<Id<Terrain>>>,
     map_geometry: Res<MapGeometry>,
     mut previously_modified_tiles: Local<HashSet<TilePos>>,
@@ -103,27 +106,19 @@ fn use_ability(
     previously_modified_tiles.clear();
 
     if player_actions.pressed(PlayerAction::UseTool) {
-        let delta_time = fixed_time.period;
-        let n_tiles = relevant_tiles.len();
+        for &tile_pos in relevant_tiles.selection() {
+            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+            let (mut vigor_modifier, mut signal_modifier) =
+                terrain_query.get_mut(terrain_entity).unwrap();
+            previously_modified_tiles.insert(tile_pos);
 
-        let cost = ability.cost() * delta_time.as_secs_f32() * n_tiles as f32;
-        if intent_pool.current() >= cost {
-            intent_pool.expend(cost).unwrap();
-
-            for &tile_pos in relevant_tiles.selection() {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-                let (mut vigor_modifier, mut signal_modifier) =
-                    terrain_query.get_mut(terrain_entity).unwrap();
-                previously_modified_tiles.insert(tile_pos);
-
-                match ability {
-                    IntentAbility::Lure => todo!(),
-                    IntentAbility::Warning => todo!(),
-                    IntentAbility::Flourish => *vigor_modifier = VigorModifier::Flourish,
-                    IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow,
-                    IntentAbility::Amplify => *signal_modifier = SignalModifier::Amplify,
-                    IntentAbility::Dampen => *signal_modifier = SignalModifier::Dampen,
-                }
+            match ability {
+                IntentAbility::Lure => todo!(),
+                IntentAbility::Warning => todo!(),
+                IntentAbility::Flourish => *vigor_modifier = VigorModifier::Flourish,
+                IntentAbility::Fallow => *vigor_modifier = VigorModifier::Fallow,
+                IntentAbility::Amplify => *signal_modifier = SignalModifier::Amplify,
+                IntentAbility::Dampen => *signal_modifier = SignalModifier::Dampen,
             }
         }
     }

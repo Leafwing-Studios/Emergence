@@ -104,6 +104,7 @@ impl SelectedTiles {
     }
 
     /// How many tiles are selected?
+    #[allow(dead_code)]
     pub(crate) fn len(&self) -> usize {
         self.selected.len()
     }
