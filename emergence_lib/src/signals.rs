@@ -321,12 +321,11 @@ pub(crate) struct LocalSignals {
 
 impl LocalSignals {
     /// Returns the set of signals that might be used to pick a goal
-    pub(crate) fn goal_relevant_signals(
-        &self,
-    ) -> impl Iterator<Item = (&SignalType, &SignalStrength)> + Clone {
+    pub(crate) fn goal_relevant_signals(&self) -> Vec<(&SignalType, &SignalStrength)> {
         self.map
             .iter()
             .filter(|(signal_type, _signal_strength)| Goal::try_from(**signal_type).is_ok())
+            .collect()
     }
 
     /// The pretty formatting for this type.

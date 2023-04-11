@@ -179,7 +179,7 @@ pub(super) fn choose_goal(
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, unit_id) in
+    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, &unit_id) in
         units_query.iter_mut()
     {
         // If the strongest signal is ability-related, stop what you're currently doing and do that.
@@ -226,8 +226,9 @@ pub(super) fn choose_goal(
         }
 
         if let Goal::Wander { remaining_actions } = *goal {
-            let wandering_behavior = &unit_manifest.get(*unit_id).wandering_behavior;
+            let wandering_behavior = &unit_manifest.get(unit_id).wandering_behavior;
             *goal = compute_new_goal(
+                unit_id,
                 remaining_actions,
                 tile_pos,
                 wandering_behavior,
@@ -246,6 +247,7 @@ pub(super) fn choose_goal(
 // By default, goals are reset to wandering when completed.
 /// If anything fails, just keep wandering for now.
 fn compute_new_goal(
+    unit_id: Id<Unit>,
     mut remaining_actions: Option<u16>,
     tile_pos: TilePos,
     wandering_behavior: &WanderingBehavior,
@@ -270,13 +272,23 @@ fn compute_new_goal(
     // Pick a new goal based on the signals at this tile
     let current_signals = signals.all_signals_at_position(tile_pos);
     let mut goal_relevant_signals = current_signals.goal_relevant_signals();
+
+    // Only try to avoid units of the same type
+    goal_relevant_signals.retain(|(signal_type, _)| {
+        if let SignalType::Unit(signal_unit_id) = signal_type {
+            *signal_unit_id != unit_id
+        } else {
+            true
+        }
+    });
+
     if let Ok(goal_weights) = WeightedIndex::new(
         goal_relevant_signals
-            .clone()
+            .iter()
             .map(|(_type, strength)| strength.value()),
     ) {
         let selected_goal_index = goal_weights.sample(rng);
-        if let Some(selected_signal) = goal_relevant_signals.nth(selected_goal_index) {
+        if let Some(selected_signal) = goal_relevant_signals.iter().nth(selected_goal_index) {
             let selected_signal_type = *selected_signal.0;
             selected_signal_type.try_into().unwrap()
         } else {
