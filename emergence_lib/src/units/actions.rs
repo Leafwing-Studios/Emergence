@@ -213,8 +213,24 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     map_geometry,
                 ),
-                Goal::Lure => todo!(),
-                Goal::Warning => todo!(),
+                Goal::Lure => CurrentAction::move_towards(
+                    &Goal::Lure,
+                    unit_tile_pos,
+                    &signals,
+                    &item_manifest,
+                    &terrain_query,
+                    &terrain_manifest,
+                    map_geometry,
+                ),
+                Goal::Warning => CurrentAction::move_away_from(
+                    &Goal::Warning,
+                    unit_tile_pos,
+                    &signals,
+                    &item_manifest,
+                    &terrain_query,
+                    &terrain_manifest,
+                    map_geometry,
+                ),
             }
         }
     }
@@ -916,6 +932,57 @@ impl CurrentAction {
         let rotation_direction = RotationDirection::random(rng);
 
         CurrentAction::spin(rotation_direction)
+    }
+
+    /// Move towards the signals matching the provided `goal` if able.
+    pub(super) fn move_towards(
+        goal: &Goal,
+        current_tile: TilePos,
+        signals: &Signals,
+        item_manifest: &ItemManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        if let Some(target_tile) = signals.upstream(current_tile, goal, item_manifest, map_geometry)
+        {
+            CurrentAction::move_or_spin(
+                current_tile,
+                target_tile,
+                &Facing::default(),
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
+        }
+    }
+
+    /// Move away from the signals matching the provided `goal` if able.
+    pub(super) fn move_away_from(
+        goal: &Goal,
+        current_tile: TilePos,
+        signals: &Signals,
+        item_manifest: &ItemManifest,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        if let Some(target_tile) =
+            signals.downstream(current_tile, goal, item_manifest, map_geometry)
+        {
+            CurrentAction::move_or_spin(
+                current_tile,
+                target_tile,
+                &Facing::default(),
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::idle()
+        }
     }
 
     /// Move toward the tile this unit is facing if able
