@@ -1,7 +1,7 @@
 # Kremling worldbuilding scratch notes
 
-- units
-  - kremling
+- units: wholesome, not nasty
+  - basket crabs!
     - artificial basket on back
     - arthroprod-like
     - smart and slow
@@ -12,7 +12,15 @@
   - rolling beetles
   - web spinner
   - flyers
-- wholesome, not nasty
+- islands scattered in the sea
+  - geysers of water, pushed up from the sea at the center of each island
+  - each geyser can have a different water type
+  - slopes downhill from geyser to shore
+  - when water hits the sea, melds back into sea water?
+  - distinct islands reduce risks of catastrophic failures, even as localized failures occur
+  - limited land area encourages smarter growth
+  - use striders for inter-island shipping
+  - can filter water for dirt items: renewable source enables island expansion and even land bridges
 - tide pools!
   - tides probably slower: weekly?
 - seasons
@@ -34,3 +42,6 @@
   - avoid humanoid body plans and postures
 - factory builder, not colony sim: complex production, simple unit needs and preferences
 - predators!
+- plants that grow together, forming bridges
+- plants that pump water, by weeping out water gathered from roots
+  - roots require specific terrain type?
