@@ -13,7 +13,7 @@ use crate::units::UnitBundle;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
-use bevy::math::vec2;
+use bevy::math::Vec2;
 use bevy::prelude::IntoSystemAppConfigs;
 use bevy::utils::HashMap;
 use hexx::shapes::hexagon;
@@ -23,7 +23,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 /// Controls world generation strategy
-#[derive(Resource, Clone)]
+#[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
@@ -37,6 +37,8 @@ pub struct GenerationConfig {
     n_hive: usize,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Id<Terrain>, f32>,
+    /// Controls the distribution of terrain heights.
+    simplex_settings: SimplexSettings,
 }
 
 impl Default for GenerationConfig {
@@ -54,6 +56,14 @@ impl Default for GenerationConfig {
             n_fungi: 2,
             n_hive: 1,
             terrain_weights,
+            simplex_settings: SimplexSettings {
+                frequency: 0.07,
+                amplitude: 2.0,
+                octaves: 4,
+                lacunarity: 2.3,
+                gain: 0.5,
+                seed: 2378.0,
+            },
         }
     }
 }
@@ -75,33 +85,16 @@ impl Plugin for GenerationPlugin {
     }
 }
 
-/// The minimum height of any tile.
-///
-/// This should always be a multiple of 1.0;
-const MIN_HEIGHT: f32 = 1.0;
-/// Scale the pos to make it work better with the noise function
-const FREQUENCY_SCALE: f32 = 0.07;
-/// Scale the output of the noise function so you can more easily use the number for a height
-const AMPLITUDE_SCALE: f32 = 2.0;
-/// How many times will the fbm be sampled?
-const OCTAVES: usize = 4;
-/// Smoothing factor
-const LACUNARITY: f32 = 2.3;
-/// Scale the output of the fbm function
-const GAIN: f32 = 0.5;
-/// Seed that determines the noise function output
-const SEED: f32 = 2378.0;
-
 /// Creates the world according to [`GenerationConfig`].
 pub(crate) fn generate_terrain(
     mut commands: Commands,
-    config: Res<GenerationConfig>,
+    generation_config: Res<GenerationConfig>,
     map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating terrain...");
     let mut rng = thread_rng();
 
-    let terrain_weights = &config.terrain_weights;
+    let terrain_weights = &generation_config.terrain_weights;
     let terrain_variants: Vec<Id<Terrain>> = terrain_weights.keys().copied().collect();
 
     for hex in hexagon(Hex::ZERO, map_geometry.radius) {
@@ -113,17 +106,46 @@ pub(crate) fn generate_terrain(
             .unwrap();
 
         let tile_pos = TilePos { hex };
-        let pos = vec2(tile_pos.x as f32, tile_pos.y as f32);
-
-        let hex_height = MIN_HEIGHT
-            + (fbm_simplex_2d_seeded(pos * FREQUENCY_SCALE, OCTAVES, LACUNARITY, GAIN, SEED)
-                * AMPLITUDE_SCALE)
-                .abs();
+        let hex_height = simplex_noise(tile_pos, &generation_config.simplex_settings);
 
         let height = Height::from_world_pos(hex_height);
 
         commands.spawn_terrain(tile_pos, height, terrain_id);
     }
+}
+
+/// A settings struct for [`simplex_noise`].
+#[derive(Debug, Clone)]
+struct SimplexSettings {
+    /// Scale the pos to make it work better with the noise function
+    frequency: f32,
+    /// Scale the output of the noise function so you can more easily use the number for a height
+    amplitude: f32,
+    /// How many times will the fbm be sampled?
+    octaves: usize,
+    /// Smoothing factor
+    lacunarity: f32,
+    /// Scale the output of the fbm function
+    gain: f32,
+    /// Seed that determines the noise function output
+    seed: f32,
+}
+
+fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
+    let SimplexSettings {
+        frequency,
+        amplitude,
+        octaves,
+        lacunarity,
+        gain,
+        seed,
+    } = *settings;
+
+    let pos = Vec2::new(tile_pos.hex.x as f32, tile_pos.hex.y as f32);
+
+    Height::MIN.into_world_pos()
+        + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed) * amplitude)
+            .abs()
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on
