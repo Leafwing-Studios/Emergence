@@ -37,7 +37,9 @@ pub struct GenerationConfig {
     n_hive: usize,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Id<Terrain>, f32>,
-    /// Controls the distribution of terrain heights.
+    /// Controls and shape of the hills.
+    hill_settings: HillSettings,
+    /// Controls the noise added to the terrain heights.
     simplex_settings: SimplexSettings,
 }
 
@@ -56,6 +58,10 @@ impl Default for GenerationConfig {
             n_fungi: 2,
             n_hive: 1,
             terrain_weights,
+            hill_settings: HillSettings {
+                height: 10.,
+                radius: 10.,
+            },
             simplex_settings: SimplexSettings {
                 frequency: 0.07,
                 amplitude: 2.0,
@@ -106,12 +112,39 @@ pub(crate) fn generate_terrain(
             .unwrap();
 
         let tile_pos = TilePos { hex };
-        let hex_height = simplex_noise(tile_pos, &generation_config.simplex_settings);
+        // Heights are generated in f32 world coordinates to start
+        let hex_height = hill(tile_pos, &generation_config.hill_settings)
+            + simplex_noise(tile_pos, &generation_config.simplex_settings);
 
+        // And then discretized to the nearest integer height before being used
         let height = Height::from_world_pos(hex_height);
 
         commands.spawn_terrain(tile_pos, height, terrain_id);
     }
+}
+
+/// Returns the height of a cone-shaped hill at the given position.
+///
+/// The hill is centered at the origin and has a radius of `radius`.
+/// The height of the hill is `height` at the center and 0 at the edge.
+fn hill(tile_pos: TilePos, hill_settings: &HillSettings) -> f32 {
+    let HillSettings { height, radius } = *hill_settings;
+
+    let pos = Vec2::new(tile_pos.hex.x as f32, tile_pos.hex.y as f32);
+
+    let dist = pos.length();
+    let height = height * (1.0 - dist / radius).max(0.0);
+
+    Height::MIN.into_world_pos() + height
+}
+
+/// A settings struct for [`hill`].
+#[derive(Debug, Clone)]
+struct HillSettings {
+    /// The height of the hill
+    height: f32,
+    /// The radius of the hill
+    radius: f32,
 }
 
 /// A settings struct for [`simplex_noise`].
@@ -127,10 +160,13 @@ struct SimplexSettings {
     lacunarity: f32,
     /// Scale the output of the fbm function
     gain: f32,
-    /// Seed that determines the noise function output
+    /// Arbitary seed that determines the noise function output
     seed: f32,
 }
 
+/// Computes the value of the noise function at a given position.
+///
+/// This can then be used to determine the height of a tile.
 fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
     let SimplexSettings {
         frequency,
