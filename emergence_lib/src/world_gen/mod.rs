@@ -52,16 +52,16 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         GenerationConfig {
-            map_radius: 20,
-            n_ant: 12,
-            n_plant: 12,
-            n_fungi: 2,
+            map_radius: 40,
+            n_ant: 20,
+            n_plant: 150,
+            n_fungi: 30,
             n_hive: 1,
             terrain_weights,
             hill_settings: HillSettings {
                 center: TilePos::ZERO,
-                height: Height(10),
-                radius: 10,
+                height: Height(25),
+                radius: 40,
             },
             simplex_settings: SimplexSettings {
                 frequency: 0.07,
