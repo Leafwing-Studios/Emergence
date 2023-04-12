@@ -2,7 +2,7 @@
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
 use crate::player_interaction::clipboard::ClipboardData;
-use crate::simulation::geometry::{Facing, Height, TilePos};
+use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::StructureManifest;
 use crate::terrain::commands::TerrainCommandsExt;
@@ -21,8 +21,6 @@ use hexx::Hex;
 use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-
-use super::geometry::MapGeometry;
 
 /// Controls world generation strategy
 #[derive(Resource, Clone)]

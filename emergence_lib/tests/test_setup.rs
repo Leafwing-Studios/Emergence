@@ -1,7 +1,7 @@
 // use common::{bevy_app, interaction_app, minimal_app, simulation_app};
 
-use emergence_lib::simulation::generation::GenerationConfig;
 use emergence_lib::testing::{interaction_app, minimal_app, simulation_app};
+use emergence_lib::world_gen::GenerationConfig;
 
 #[test]
 fn minimal_app_can_update() {
