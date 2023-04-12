@@ -39,50 +39,20 @@ pub struct GenerationConfig {
     terrain_weights: HashMap<Id<Terrain>, f32>,
 }
 
-impl GenerationConfig {
-    /// The number of tiles from the center of the map to the edge
-    const MAP_RADIUS: u32 = 20;
-
-    /// The number of ants in the default generation config
-    const N_ANT: usize = 12;
-    /// The number of plants in the default generation config
-    const N_PLANT: usize = 12;
-    /// The number of fungi in the default generation config
-    const N_FUNGI: usize = 2;
-    /// The number of ant hives in the default generation config
-    const N_HIVE: usize = 1;
-
-    /// The choice weight for plain terrain in default generation config
-    const TERRAIN_WEIGHT_LOAM: f32 = 1.0;
-    /// The choice weight for high terrain in default generation config
-    const TERRAIN_WEIGHT_MUDDY: f32 = 0.3;
-    /// The choice weight for impassable terrain in default generation config
-    const TERRAIN_WEIGHT_ROCKY: f32 = 0.2;
-}
-
 impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
-        terrain_weights.insert(
-            Id::from_name("loam".to_string()),
-            GenerationConfig::TERRAIN_WEIGHT_LOAM,
-        );
-        terrain_weights.insert(
-            Id::from_name("muddy".to_string()),
-            GenerationConfig::TERRAIN_WEIGHT_MUDDY,
-        );
-        terrain_weights.insert(
-            Id::from_name("rocky".to_string()),
-            GenerationConfig::TERRAIN_WEIGHT_ROCKY,
-        );
+        terrain_weights.insert(Id::from_name("loam".to_string()), 1.0);
+        terrain_weights.insert(Id::from_name("muddy".to_string()), 0.3);
+        terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         GenerationConfig {
-            map_radius: GenerationConfig::MAP_RADIUS,
-            n_ant: GenerationConfig::N_ANT,
-            n_plant: GenerationConfig::N_PLANT,
-            n_fungi: GenerationConfig::N_FUNGI,
-            n_hive: GenerationConfig::N_HIVE,
+            map_radius: 20,
+            n_ant: 12,
+            n_plant: 12,
+            n_fungi: 2,
+            n_hive: 1,
             terrain_weights,
         }
     }
