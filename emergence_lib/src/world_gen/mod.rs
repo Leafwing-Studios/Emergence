@@ -59,8 +59,9 @@ impl Default for GenerationConfig {
             n_hive: 1,
             terrain_weights,
             hill_settings: HillSettings {
-                height: 10.,
-                radius: 10.,
+                center: TilePos::ZERO,
+                height: Height(10),
+                radius: 10,
             },
             simplex_settings: SimplexSettings {
                 frequency: 0.07,
@@ -123,28 +124,62 @@ pub(crate) fn generate_terrain(
     }
 }
 
-/// Returns the height of a cone-shaped hill at the given position.
-///
-/// The hill is centered at the origin and has a radius of `radius`.
-/// The height of the hill is `height` at the center and 0 at the edge.
-fn hill(tile_pos: TilePos, hill_settings: &HillSettings) -> f32 {
-    let HillSettings { height, radius } = *hill_settings;
-
-    let pos = Vec2::new(tile_pos.hex.x as f32, tile_pos.hex.y as f32);
-
-    let dist = pos.length();
-    let height = height * (1.0 - dist / radius).max(0.0);
-
-    Height::MIN.into_world_pos() + height
-}
-
 /// A settings struct for [`hill`].
 #[derive(Debug, Clone)]
 struct HillSettings {
-    /// The height of the hill
-    height: f32,
-    /// The radius of the hill
-    radius: f32,
+    /// The center of the hill
+    center: TilePos,
+    /// The height of the hill, in height units
+    height: Height,
+    /// The radius of the hill, in tiles
+    radius: u16,
+}
+
+/// Returns the height (in world coordinates) of a 2D normal-shaped hill at the given position.
+///
+/// The hill is centered at the origin and has a radius of `radius`.
+/// The height of the hill is `height` at the center and 0 at the edge.
+/// The edge corresponds to the 95% confidence interval of a normal distribution,
+/// so the radius is 1.96 times larger than the standard deviation.
+fn hill(tile_pos: TilePos, hill_settings: &HillSettings) -> f32 {
+    let HillSettings {
+        center,
+        height,
+        radius,
+    } = *hill_settings;
+
+    // Convert to f32 for computation
+    let height = height.into_world_pos();
+    let radius = radius as f32;
+
+    /// Returns the value of a normal distribution with the given standard deviation at the given value.
+    ///
+    /// The mean is 0.
+    fn normal(x: f32, standard_deviation: f32) -> f32 {
+        let variance = standard_deviation.powi(2);
+        (-x.powi(2) / (2. * variance)).exp()
+    }
+
+    let distance_from_center = center.distance_to_tile_coordinates(tile_pos);
+    if distance_from_center >= radius {
+        return 0.;
+    }
+
+    let standard_deviation = radius / 1.96;
+    // The value at the edge is not exactly 0, but rather the value of the normal distribution at the edge
+    // PERF: these values are constant, so we could precompute them
+    let minimum_value = normal(radius, standard_deviation);
+    let maximum_value = normal(0., standard_deviation);
+    let scale_factor = maximum_value - minimum_value;
+
+    // Get the value of the normal distribution
+    let value = normal(distance_from_center, standard_deviation);
+    // Shift the value so if it is at the edge, it is 0
+    let shifted_value = value - minimum_value;
+    // Scale the value, so if it is at the center, it is 1
+    let scaled_value = shifted_value / scale_factor;
+    // Scale the final value to the desired height
+    scaled_value * height * Height::STEP_HEIGHT
 }
 
 /// A settings struct for [`simplex_noise`].
@@ -276,5 +311,156 @@ fn generate_organisms(
         };
 
         commands.spawn_randomized_structure(position, item, rng);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hills_have_the_correct_height_at_the_center() {
+        let settings = HillSettings {
+            center: TilePos::new(3, 7),
+            height: Height(2),
+            radius: 3,
+        };
+
+        let value = hill(settings.center, &settings);
+        let computed_height = Height::from_world_pos(value);
+
+        assert_eq!(value, settings.height.into_world_pos());
+        assert_eq!(computed_height, settings.height);
+    }
+
+    #[test]
+    fn hills_have_zero_height_at_edge() {
+        let settings = HillSettings {
+            center: TilePos::new(0, 0),
+            height: Height(2),
+            radius: 5,
+        };
+
+        let edge = TilePos::new(0, settings.radius as i32);
+        let value = hill(edge, &settings);
+        let computed_height = Height::from_world_pos(value);
+
+        assert_eq!(value, 0.0);
+        assert_eq!(computed_height, Height::MIN);
+    }
+
+    #[test]
+    fn hills_always_have_positive_height() {
+        let map_geometry = MapGeometry::new(10);
+
+        let settings = HillSettings {
+            center: TilePos::new(13, -2),
+            height: Height(12),
+            radius: 4,
+        };
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let value = hill(tile_pos, &settings);
+            assert!(value >= 0.0);
+        }
+    }
+
+    #[test]
+    fn hills_are_highest_at_their_center() {
+        let map_geometry = MapGeometry::new(10);
+
+        let settings = HillSettings {
+            center: TilePos::new(3, 7),
+            height: Height(2),
+            radius: 13,
+        };
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let value = hill(tile_pos, &settings);
+            let computed_height = Height::from_world_pos(value);
+
+            if tile_pos == settings.center {
+                assert_eq!(value, settings.height.into_world_pos());
+                assert_eq!(computed_height, settings.height);
+            } else {
+                assert!(value < settings.height.into_world_pos());
+                // We have to allow for discretization, so we can't assert that
+                // the computed height is strictly less than the desired height.
+                assert!(computed_height <= settings.height);
+            }
+        }
+    }
+
+    #[test]
+    fn hills_are_lowest_at_their_edge() {
+        let map_geometry = MapGeometry::new(10);
+
+        let settings = HillSettings {
+            center: TilePos::new(4, 2),
+            height: Height(2),
+            radius: 5,
+        };
+
+        // Hills are defined to have a height of 0 at their edge.
+        let height_at_edge = 0.;
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let distance_from_center = (tile_pos - settings.center).hex.length();
+            let height = hill(tile_pos, &settings);
+
+            if distance_from_center >= settings.radius as i32 {
+                assert_eq!(height, height_at_edge);
+            } else {
+                assert!(height > height_at_edge);
+            }
+        }
+    }
+
+    #[test]
+    fn hills_are_symmetric() {
+        let map_geometry = MapGeometry::new(10);
+
+        let settings = HillSettings {
+            center: TilePos::new(3, -2),
+            height: Height(5),
+            radius: 2,
+        };
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let value = hill(tile_pos, &settings);
+            let relative_position = tile_pos - settings.center;
+
+            let symmetric_position = settings.center - relative_position;
+            let symmetric_value = hill(symmetric_position, &settings);
+
+            assert_eq!(value, symmetric_value);
+        }
+    }
+
+    #[test]
+    fn hills_are_monotonic_from_edge_to_peak() {
+        let settings = HillSettings {
+            center: TilePos::new(0, 0),
+            height: Height(3),
+            radius: 5,
+        };
+
+        // Draw a line from the center to the edge of the hill.
+        let starting_hex = settings.center.hex;
+        let ending_hex = starting_hex + Hex::new(1, 0) * settings.radius as i32;
+
+        let line_of_hexes = starting_hex.line_to(ending_hex);
+
+        let mut previous_value = settings.height.into_world_pos();
+
+        // Walk down the hill, checking that the height is decreasing.
+        for hex in line_of_hexes {
+            let tile_pos = TilePos { hex };
+            let value = hill(tile_pos, &settings);
+
+            assert!(value <= previous_value);
+
+            previous_value = value;
+        }
     }
 }

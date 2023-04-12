@@ -1,6 +1,7 @@
 //! Manages the game world's grid and data tied to that grid
 
 use bevy::{
+    math::Vec3Swizzles,
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology},
     utils::HashMap,
@@ -96,7 +97,10 @@ impl TilePos {
     #[must_use]
     pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex);
-        let y = map_geometry.get_height(self).unwrap().into_world_pos();
+        let y = map_geometry
+            .get_height(self)
+            .unwrap_or_default()
+            .into_world_pos();
 
         Vec3 {
             x: xz.x,
@@ -208,13 +212,35 @@ impl TilePos {
             hex: self.hex.rotate_right(n_rotations),
         }
     }
+
+    /// Computes the flat distance between the centers of self and `other` in world coordinates.
+    ///
+    /// Note that this is not the same as the distance between tiles in tile coordinates!
+    #[allow(dead_code)]
+    pub(crate) fn distance_to_world_coordinates(
+        &self,
+        other: TilePos,
+        map_geometry: &MapGeometry,
+    ) -> f32 {
+        let self_pos = self.into_world_pos(map_geometry).xz();
+        let other_pos = other.into_world_pos(map_geometry).xz();
+
+        self_pos.distance(other_pos)
+    }
+
+    /// Computes the flat distance between the centers of self and `other` in tile coordinates.
+    ///
+    /// Note that this is not the same as the distance between tiles in world coordinates!
+    pub(crate) fn distance_to_tile_coordinates(&self, other: TilePos) -> f32 {
+        (self.hex - other.hex).length() as f32
+    }
 }
 
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
 #[derive(
-    Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Display,
+    Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Display, Default,
 )]
 pub(crate) struct Height(pub u8);
 
@@ -359,6 +385,12 @@ impl MapGeometry {
             litter_index: HashMap::default(),
             height_index,
         }
+    }
+
+    /// Returns the list of valid tile positions.
+    #[cfg(test)]
+    pub fn valid_tile_positions(&self) -> impl Iterator<Item = TilePos> + '_ {
+        hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
     }
 
     /// Is the provided `tile_pos` in the map?
