@@ -25,14 +25,14 @@ pub mod structures;
 pub mod terrain;
 pub mod ui;
 pub mod units;
+pub mod world_gen;
 
 /// Various app configurations, used for testing.
 ///
 /// Importing between files shared in the `tests` directory appears to be broken with this workspace config?
 /// Followed directions from <https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html>
 pub mod testing {
-    use crate::simulation::generation::GenerationConfig;
-    use crate::simulation::SimulationPlugin;
+    use crate::{simulation::SimulationPlugin, world_gen::GenerationConfig};
     use bevy::prelude::*;
 
     /// Just [`MinimalPlugins`].

@@ -7,17 +7,16 @@ use crate::construction::ConstructionPlugin;
 use crate::crafting::CraftingPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
-use crate::simulation::generation::{GenerationConfig, GenerationPlugin};
 use crate::simulation::geometry::{sync_rotation_to_facing, MapGeometry};
 use crate::simulation::light::LightPlugin;
 use crate::simulation::time::TemporalPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
+use crate::world_gen::{GenerationConfig, GenerationPlugin};
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
-pub mod generation;
 pub mod geometry;
 pub mod light;
 pub mod time;

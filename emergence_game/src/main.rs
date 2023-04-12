@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowMode, WindowPlugin};
 use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
-use emergence_lib::simulation::generation::GenerationConfig;
+use emergence_lib::world_gen::GenerationConfig;
 
 fn main() {
     App::new()
