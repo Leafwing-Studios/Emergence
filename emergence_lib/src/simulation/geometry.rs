@@ -626,7 +626,6 @@ impl MapGeometry {
 
     /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
     #[inline]
-    #[must_use]
     pub(crate) fn height_difference(
         &self,
         starting_pos: TilePos,
