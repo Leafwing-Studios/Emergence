@@ -1697,6 +1697,7 @@ dependencies = [
  "debug_tools",
  "derive_more",
  "emergence_macros",
+ "hashbrown",
  "hexx",
  "indexmap",
  "itertools",
@@ -1705,6 +1706,7 @@ dependencies = [
  "noisy_bevy",
  "petitset",
  "rand",
+ "rayon",
  "serde",
  "serde_json",
 ]
@@ -2125,6 +2127,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 dependencies = [
  "ahash 0.7.6",
+ "rayon",
  "serde",
 ]
 

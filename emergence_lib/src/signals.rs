@@ -19,6 +19,7 @@ use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
+use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
@@ -769,7 +770,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     ///  - increase the amount of time units will wait around for more production
     const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
 
-    for signal_map in signals.maps.values_mut() {
+    signals.maps.par_iter_mut().for_each(|(_, signal_map)| {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
 
         for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
@@ -785,7 +786,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         for tile_to_clear in tiles_to_clear {
             signal_map.map.remove(&tile_to_clear);
         }
-    }
+    });
 }
 
 #[cfg(test)]
