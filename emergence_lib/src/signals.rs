@@ -19,6 +19,7 @@ use emergence_macros::IterableEnum;
 use itertools::Itertools;
 use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
+use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
@@ -268,43 +269,45 @@ impl Signals {
 
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
-        for original_map in self.maps.values_mut() {
-            let num_elements = original_map.map.len();
-            let size_hint = num_elements * 6;
-            let mut addition_map = Vec::with_capacity(size_hint);
-            let mut removal_map = Vec::with_capacity(size_hint);
+        self.maps
+            .par_iter_mut()
+            .for_each(|(_signal_type, original_map)| {
+                let num_elements = original_map.map.len();
+                let size_hint = num_elements * 6;
+                let mut addition_map = Vec::with_capacity(size_hint);
+                let mut removal_map = Vec::with_capacity(size_hint);
 
-            for (&occupied_tile, original_strength) in original_map
-                .map
-                .iter()
-                .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
-            {
-                let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
+                for (&occupied_tile, original_strength) in original_map
+                    .map
+                    .iter()
+                    .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
+                {
+                    let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
-                // Signal that goes out of bounds is lost
-                let mut num_neighbors = occupied_tile
-                    .out_of_bounds_neighbors(map_geometry)
-                    .into_iter()
-                    .count() as f32;
-                for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
-                    num_neighbors += 1.0;
-                    addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
+                    // Signal that goes out of bounds is lost
+                    let mut num_neighbors = occupied_tile
+                        .out_of_bounds_neighbors(map_geometry)
+                        .into_iter()
+                        .count() as f32;
+                    for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
+                        num_neighbors += 1.0;
+                        addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
+                    }
+                    removal_map.push((
+                        occupied_tile,
+                        amount_to_send_to_each_neighbor * num_neighbors,
+                    ));
                 }
-                removal_map.push((
-                    occupied_tile,
-                    amount_to_send_to_each_neighbor * num_neighbors,
-                ));
-            }
 
-            // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-            for (removal_pos, removal_strength) in removal_map.into_iter() {
-                original_map.subtract_signal(removal_pos, removal_strength)
-            }
+                // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
+                for (removal_pos, removal_strength) in removal_map.into_iter() {
+                    original_map.subtract_signal(removal_pos, removal_strength)
+                }
 
-            for (addition_pos, addition_strength) in addition_map.into_iter() {
-                original_map.add_signal(addition_pos, addition_strength)
-            }
-        }
+                for (addition_pos, addition_strength) in addition_map.into_iter() {
+                    original_map.add_signal(addition_pos, addition_strength)
+                }
+            });
     }
 
     /// Returns a random signal type present in the map.
@@ -708,6 +711,7 @@ fn emit_signals(
         }
     }
 
+    // PERF: this could be parallelized, but requires some thought due to the intent pool.
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
@@ -769,7 +773,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     ///  - increase the amount of time units will wait around for more production
     const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
 
-    for signal_map in signals.maps.values_mut() {
+    signals.maps.par_iter_mut().for_each(|(_, signal_map)| {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
 
         for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
@@ -785,7 +789,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         for tile_to_clear in tiles_to_clear {
             signal_map.map.remove(&tile_to_clear);
         }
-    }
+    });
 }
 
 #[cfg(test)]

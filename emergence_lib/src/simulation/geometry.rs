@@ -66,12 +66,14 @@ impl TilePos {
 
     /// Generates a new [`TilePos`] from axial coordinates.
     #[inline]
+    #[must_use]
     pub fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
     }
 
     /// Generates a random [`TilePos`], sampled uniformly from the valid positions in `map_geometry`
     #[inline]
+    #[must_use]
     pub fn random(map_geometry: &MapGeometry, rng: &mut ThreadRng) -> TilePos {
         let range = -(map_geometry.radius as i32)..(map_geometry.radius as i32);
 
@@ -94,6 +96,7 @@ impl TilePos {
     /// Returns the world position (in [`Transform`] units) associated with this tile.
     ///
     /// The `y` value returned corresponds to the top of the tile column at this location.
+    #[inline]
     #[must_use]
     pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex);
@@ -112,6 +115,7 @@ impl TilePos {
     /// Returns the world position (in [`Transform`] units) associated with the top of this tile.
     ///
     /// The `y` value returned corresponds to the top of the tile topper at this location.
+    #[inline]
     #[must_use]
     pub(crate) fn top_of_tile(self, map_geometry: &MapGeometry) -> Vec3 {
         self.into_world_pos(map_geometry)
@@ -125,6 +129,7 @@ impl TilePos {
     /// Returns the nearest tile position to the provided `world_pos`
     ///
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
+    #[inline]
     #[must_use]
     pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
         TilePos {
@@ -136,6 +141,8 @@ impl TilePos {
     }
 
     /// Returns the [`TilePos`] in the provided `direction` from `self`.
+    #[inline]
+    #[must_use]
     pub(crate) fn neighbor(&self, direction: Direction) -> Self {
         TilePos {
             hex: self.hex.neighbor(direction),
@@ -143,6 +150,8 @@ impl TilePos {
     }
 
     /// All adjacent tiles that are on the map.
+    #[inline]
+    #[must_use]
     pub fn all_neighbors(&self, map_geometry: &MapGeometry) -> impl IntoIterator<Item = TilePos> {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
@@ -151,6 +160,8 @@ impl TilePos {
     }
 
     /// All adjacent tiles that are at most [`Height::MAX_STEP`] higher or lower than `self`.
+    #[inline]
+    #[must_use]
     pub(crate) fn reachable_neighbors(
         &self,
         map_geometry: &MapGeometry,
@@ -174,6 +185,8 @@ impl TilePos {
     /// All adjacent tiles that are passable.
     ///
     /// This is distinct from [`reachable_neighbors`](Self::reachable_neighbors), which includes tiles filled with litter.
+    #[inline]
+    #[must_use]
     pub(crate) fn passable_neighbors(
         &self,
         map_geometry: &MapGeometry,
@@ -194,6 +207,8 @@ impl TilePos {
     }
 
     /// All adjacent tiles that are out of bounds.
+    #[inline]
+    #[must_use]
     pub(crate) fn out_of_bounds_neighbors(
         &self,
         map_geometry: &MapGeometry,
@@ -205,6 +220,8 @@ impl TilePos {
     }
 
     /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
+    #[inline]
+    #[must_use]
     pub(crate) fn rotated(&self, facing: Facing) -> Self {
         let n_rotations = facing.rotation_count();
 
@@ -216,6 +233,8 @@ impl TilePos {
     /// Computes the flat distance between the centers of self and `other` in world coordinates.
     ///
     /// Note that this is not the same as the distance between tiles in tile coordinates!
+    #[inline]
+    #[must_use]
     #[allow(dead_code)]
     pub(crate) fn world_space_distance(&self, other: TilePos, map_geometry: &MapGeometry) -> f32 {
         let self_pos = self.into_world_pos(map_geometry).xz();
@@ -227,12 +246,16 @@ impl TilePos {
     /// Computes the length of the shortest path between the centers of self and `other` in tile coordinates.
     ///
     /// Note that this is not the same as the distance between tiles in world coordinates!
+    #[inline]
+    #[must_use]
     #[allow(dead_code)]
     pub(crate) fn manhattan_tile_distance(&self, other: TilePos) -> f32 {
         (self.hex - other.hex).length() as f32
     }
 
     /// Computes the Euclidean distance between the centers of self and `other` in tile coordinates.
+    #[inline]
+    #[must_use]
     pub(crate) fn euclidean_tile_distance(&self, other: TilePos) -> f32 {
         let [a_x, a_y, a_z] = self.hex.to_cubic_array();
         let [b_x, b_y, b_z] = other.hex.to_cubic_array();
@@ -268,6 +291,8 @@ impl Height {
     pub(crate) const STEP_HEIGHT: f32 = 1.0;
 
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
+    #[inline]
+    #[must_use]
     pub(crate) fn into_world_pos(self) -> f32 {
         self.0 as f32 * Self::STEP_HEIGHT
     }
@@ -275,6 +300,8 @@ impl Height {
     /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
     /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
+    #[inline]
+    #[must_use]
     pub(crate) fn from_world_pos(world_y: f32) -> Self {
         let f32_height = (world_y / Self::STEP_HEIGHT).round();
         if f32_height < 0. {
@@ -290,6 +317,8 @@ impl Height {
     }
 
     /// Computes the correct [`Transform`] of the column underneath a tile of this height at this position
+    #[inline]
+    #[must_use]
     pub(crate) fn column_transform(&self) -> Transform {
         let y_scale = self.into_world_pos();
         let scale = Vec3 {
@@ -394,18 +423,24 @@ impl MapGeometry {
     }
 
     /// Returns the list of valid tile positions.
+    #[inline]
+    #[must_use]
     #[cfg(test)]
     pub fn valid_tile_positions(&self) -> impl Iterator<Item = TilePos> + '_ {
         hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
     }
 
     /// Is the provided `tile_pos` in the map?
+    #[inline]
+    #[must_use]
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
+    #[inline]
+    #[must_use]
     pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(tile_pos)
@@ -419,6 +454,8 @@ impl MapGeometry {
     /// Tiles that have a structure will return `false`.
     /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
     /// Tiles that are completely full of litter will return `false`.
+    #[inline]
+    #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
@@ -444,6 +481,8 @@ impl MapGeometry {
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
+    #[inline]
+    #[must_use]
     fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(center)
@@ -454,6 +493,8 @@ impl MapGeometry {
     /// Is there enough space for `existing_entity` to transform into a structure with the provided `footprint` located at the `center` tile?
     ///
     /// The `existing_entity` will be ignored when checking for space.
+    #[inline]
+    #[must_use]
     fn is_space_available_to_transform(
         &self,
         existing_entity: Entity,
@@ -467,6 +508,8 @@ impl MapGeometry {
     }
 
     /// Are all of the terrain tiles in the provided `footprint` appropriate?
+    #[inline]
+    #[must_use]
     fn is_terrain_valid(
         &self,
         center: TilePos,
@@ -487,6 +530,8 @@ impl MapGeometry {
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
+    #[inline]
+    #[must_use]
     fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
         let height = self.get_height(center).unwrap();
 
@@ -506,6 +551,8 @@ impl MapGeometry {
     /// - the area is flat
     /// - the area is free of structures
     /// - all tiles match the provided allowable terrain list
+    #[inline]
+    #[must_use]
     pub(crate) fn can_build(
         &self,
         center: TilePos,
@@ -529,6 +576,8 @@ impl MapGeometry {
     /// - the area is flat
     /// - the area is free of structures
     /// - all tiles match the provided allowable terrain list
+    #[inline]
+    #[must_use]
     pub(crate) fn can_transform(
         &self,
         existing_entity: Entity,
@@ -544,6 +593,7 @@ impl MapGeometry {
     }
 
     /// Updates the height of the tile at `tile_pos`
+    #[inline]
     pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
         self.height_index.insert(tile_pos, height);
     }
@@ -559,6 +609,8 @@ impl MapGeometry {
     }
 
     /// Returns the average height (in world units) of tiles around `tile_pos` within `radius`
+    #[inline]
+    #[must_use]
     pub(crate) fn average_height(&self, tile_pos: TilePos, radius: u32) -> f32 {
         let hex_iter = hexagon(tile_pos.hex, radius);
         let heights = hex_iter
@@ -573,6 +625,7 @@ impl MapGeometry {
     }
 
     /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
+    #[inline]
     pub(crate) fn height_difference(
         &self,
         starting_pos: TilePos,
@@ -587,6 +640,8 @@ impl MapGeometry {
     ///
     /// If the `delivery_mode` is [`DeliveryMode::PickUp`], looks for litter, ghost terrain, or structures.
     /// If the `delivery_mode` is [`DeliveryMode::DropOff`], looks for ghost structures, ghost terrain or structures.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_candidates(
         &self,
         tile_pos: TilePos,
@@ -629,6 +684,8 @@ impl MapGeometry {
     /// Gets entities that units might work at, at the provided `tile_pos`.
     ///
     /// Prioritizes ghosts over structures if both are present to allow for replacing structures.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_workplaces(&self, tile_pos: TilePos) -> Vec<Entity> {
         let mut entities = Vec::new();
 
@@ -644,21 +701,27 @@ impl MapGeometry {
     }
 
     /// Gets the terrain [`Entity`] at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
         self.terrain_index.get(&tile_pos).copied()
     }
 
     /// Adds the provided `terrain_entity` to the terrain index at the provided `tile_pos`.
+    #[inline]
     pub(crate) fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
         self.terrain_index.insert(tile_pos, terrain_entity);
     }
 
     /// Gets the structure [`Entity`] at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_structure(&self, tile_pos: TilePos) -> Option<Entity> {
         self.structure_index.get(&tile_pos).copied()
     }
 
     /// Adds the provided `structure_entity` to the structure index at the provided `center`.
+    #[inline]
     pub(crate) fn add_structure(
         &mut self,
         center: TilePos,
@@ -673,6 +736,7 @@ impl MapGeometry {
     /// Removes any structure entity found at the provided `tile_pos` from the structure index.
     ///
     /// Returns the removed entity, if any.
+    #[inline]
     pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
         let removed = self.structure_index.remove(&tile_pos);
 
@@ -686,11 +750,14 @@ impl MapGeometry {
     }
 
     /// Gets the ghost structure [`Entity`] at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_ghost_structure(&self, tile_pos: TilePos) -> Option<Entity> {
         self.ghost_structure_index.get(&tile_pos).copied()
     }
 
     /// Adds the provided `ghost_structure_entity` to the ghost structure index at the provided `center`.
+    #[inline]
     pub(crate) fn add_ghost_structure(
         &mut self,
         center: TilePos,
@@ -706,6 +773,7 @@ impl MapGeometry {
     /// Removes any ghost structure entity found at the provided `tile_pos` from the ghost structure index.
     ///
     /// Returns the removed entity, if any.
+    #[inline]
     pub(crate) fn remove_ghost_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
         let removed = self.ghost_structure_index.remove(&tile_pos);
 
@@ -720,6 +788,7 @@ impl MapGeometry {
     }
 
     /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `tile_pos`.
+    #[inline]
     pub(crate) fn add_ghost_terrain(&mut self, ghost_terrain_entity: Entity, tile_pos: TilePos) {
         self.ghost_terrain_index
             .insert(tile_pos, ghost_terrain_entity);
@@ -728,6 +797,7 @@ impl MapGeometry {
     /// Removes any ghost terrain entity found at the provided `tile_pos` from the ghost terrain index.
     ///
     /// Returns the removed entity, if any.
+    #[inline]
     pub(crate) fn remove_ghost_terrain(&mut self, tile_pos: TilePos) -> Option<Entity> {
         let removed = self.ghost_terrain_index.remove(&tile_pos);
 
@@ -742,16 +812,21 @@ impl MapGeometry {
     }
 
     /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
         self.ghost_terrain_index.get(&tile_pos).copied()
     }
 
     /// Sets the amount of litter at the provided `tile_pos`.
+    #[inline]
     pub(crate) fn set_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
         self.litter_index.insert(tile_pos, litter_state);
     }
 
     /// Gets the amount of litter at the provided `tile_pos`.
+    #[inline]
+    #[must_use]
     pub(crate) fn get_litter_state(&self, tile_pos: TilePos) -> InventoryState {
         self.litter_index
             .get(&tile_pos)
@@ -773,6 +848,8 @@ pub(crate) struct Facing {
 
 impl Facing {
     /// Generates a random facing.
+    #[inline]
+    #[must_use]
     pub(crate) fn random(rng: &mut ThreadRng) -> Self {
         let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
 
@@ -780,11 +857,13 @@ impl Facing {
     }
 
     /// Rotates this facing one 60 degree step clockwise.
+    #[inline]
     pub(crate) fn rotate_left(&mut self) {
         self.direction = self.direction.left();
     }
 
     /// Rotates this facing one 60 degree step counterclockwise.
+    #[inline]
     pub(crate) fn rotate_right(&mut self) {
         self.direction = self.direction.right();
     }
@@ -792,6 +871,7 @@ impl Facing {
     /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
     ///
     /// This is intended to be paired with [`Hex::rotate_right`](hexx::Hex) to rotate a hex to face this direction.
+    #[inline]
     pub(crate) const fn rotation_count(&self) -> u32 {
         match self.direction {
             Direction::Top => 0,
@@ -838,6 +918,8 @@ pub(crate) enum RotationDirection {
 
 impl RotationDirection {
     /// Picks a direction to rotate in at random
+    #[inline]
+    #[must_use]
     pub(crate) fn random(rng: &mut ThreadRng) -> Self {
         match rng.gen::<bool>() {
             true => RotationDirection::Left,
@@ -847,6 +929,7 @@ impl RotationDirection {
 }
 
 /// Constructs the mesh for a single hexagonal column with the specified height.
+#[must_use]
 pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
     let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, hex_height);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);

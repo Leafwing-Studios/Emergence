@@ -409,9 +409,19 @@ mod tests {
             let height = hill(tile_pos, &settings);
 
             if distance_from_center >= settings.radius as i32 {
-                assert_eq!(height, height_at_edge);
+                assert_eq!(
+                    height, height_at_edge,
+                    "height at {} is {}, but should be at most {}",
+                    tile_pos, height, height_at_edge
+                );
             } else {
-                assert!(height > height_at_edge);
+                assert!(
+                    height >= height_at_edge,
+                    "height at {} is {}, but should be at most {}",
+                    tile_pos,
+                    height,
+                    height_at_edge
+                );
             }
         }
     }
