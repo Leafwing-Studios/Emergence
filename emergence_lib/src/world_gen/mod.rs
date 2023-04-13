@@ -160,7 +160,7 @@ fn hill(tile_pos: TilePos, hill_settings: &HillSettings) -> f32 {
         (-x.powi(2) / (2. * variance)).exp()
     }
 
-    let distance_from_center = center.distance_to_tile_coordinates(tile_pos);
+    let distance_from_center = center.euclidean_tile_distance(tile_pos);
     if distance_from_center >= radius {
         return 0.;
     }

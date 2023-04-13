@@ -217,22 +217,28 @@ impl TilePos {
     ///
     /// Note that this is not the same as the distance between tiles in tile coordinates!
     #[allow(dead_code)]
-    pub(crate) fn distance_to_world_coordinates(
-        &self,
-        other: TilePos,
-        map_geometry: &MapGeometry,
-    ) -> f32 {
+    pub(crate) fn world_space_distance(&self, other: TilePos, map_geometry: &MapGeometry) -> f32 {
         let self_pos = self.into_world_pos(map_geometry).xz();
         let other_pos = other.into_world_pos(map_geometry).xz();
 
         self_pos.distance(other_pos)
     }
 
-    /// Computes the flat distance between the centers of self and `other` in tile coordinates.
+    /// Computes the length of the shortest path between the centers of self and `other` in tile coordinates.
     ///
     /// Note that this is not the same as the distance between tiles in world coordinates!
-    pub(crate) fn distance_to_tile_coordinates(&self, other: TilePos) -> f32 {
+    #[allow(dead_code)]
+    pub(crate) fn manhattan_tile_distance(&self, other: TilePos) -> f32 {
         (self.hex - other.hex).length() as f32
+    }
+
+    /// Computes the Euclidean distance between the centers of self and `other` in tile coordinates.
+    pub(crate) fn euclidean_tile_distance(&self, other: TilePos) -> f32 {
+        let [a_x, a_y, a_z] = self.hex.to_cubic_array();
+        let [b_x, b_y, b_z] = other.hex.to_cubic_array();
+
+        let dist_sq = ((a_x - b_x).pow(2) + (a_y - b_y).pow(2) + (a_z - b_z).pow(2)) as f32;
+        dist_sq.sqrt()
     }
 }
 
