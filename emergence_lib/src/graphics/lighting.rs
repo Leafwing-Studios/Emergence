@@ -24,7 +24,10 @@ impl Plugin for LightingPlugin {
         //.insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_system(set_celestial_body_transform);
+        .add_systems((
+            animate_celestial_body_transform,
+            animate_celestial_body_brightness,
+        ));
     }
 }
 
@@ -138,7 +141,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
 }
 
 /// Moves celestial bodies to the correct position and orientation
-fn set_celestial_body_transform(
+fn animate_celestial_body_transform(
     mut query: Query<(&mut Transform, &CelestialBody), Changed<CelestialBody>>,
 ) {
     for (mut transform, celestial_body) in query.iter_mut() {
@@ -158,5 +161,15 @@ fn set_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
+    }
+}
+
+/// Adjusts the brightness of celestial bodies based on their position in the sky
+fn animate_celestial_body_brightness(
+    mut query: Query<(&CelestialBody, &mut DirectionalLight), Changed<CelestialBody>>,
+) {
+    for (celestial_body, mut directional_light) in query.iter_mut() {
+        let current_illuminance = celestial_body.compute_light();
+        directional_light.illuminance = current_illuminance.0;
     }
 }
