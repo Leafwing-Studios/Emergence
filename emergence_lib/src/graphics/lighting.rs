@@ -2,14 +2,10 @@
 
 use std::f32::consts::PI;
 
-use bevy::{
-    pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 use crate::{
     graphics::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
-    player_interaction::camera::CameraSettings,
     simulation::{geometry::Height, light::Illuminance},
 };
 
@@ -23,10 +19,15 @@ impl Plugin for LightingPlugin {
             color: LIGHT_STARS,
         })
         // Controls the resolution of shadows cast by the sun
-        .insert_resource(DirectionalLightShadowMap { size: 8192 })
+        // FIXME: shadows are blocked on better rendering performance.
+        // Tracked in https://github.com/Leafwing-Studios/Emergence/issues/726
+        //.insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_system(set_celestial_body_transform);
+        .add_systems((
+            animate_celestial_body_transform,
+            animate_celestial_body_brightness,
+        ));
     }
 }
 
@@ -86,14 +87,18 @@ impl CelestialBody {
             hour_angle: 0.,
             declination: 23.5 / 360. * PI / 2.,
             travel_axis: PI / 6.,
-            illuminance: 1e4,
+            illuminance: 3e4,
             days_per_cycle: 29.53,
         }
     }
 }
 
 /// Spawns a directional light source to illuminate the scene
-fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSettings>) {
+#[allow(dead_code)]
+fn spawn_celestial_bodies(mut commands: Commands) {
+    /*  Shadows are currently disabled for perf reasons:
+    Tracked in https://github.com/Leafwing-Studios/Emergence/issues/726
+
     let camera_settings = camera_query.single();
     let cascade_shadow_config = CascadeShadowConfigBuilder {
         // Max is 4, as of Bevy 0.10
@@ -106,6 +111,7 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
         overlap_proportion: 0.3,
     }
     .build();
+    */
 
     let sun = CelestialBody::sun();
     commands
@@ -113,10 +119,9 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
             directional_light: DirectionalLight {
                 color: LIGHT_SUN,
                 illuminance: sun.illuminance,
-                shadows_enabled: true,
+                shadows_enabled: false,
                 ..Default::default()
             },
-            cascade_shadow_config: cascade_shadow_config.clone(),
             ..default()
         })
         .insert(sun);
@@ -127,17 +132,16 @@ fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSet
             directional_light: DirectionalLight {
                 color: LIGHT_MOON,
                 illuminance: moon.illuminance,
-                shadows_enabled: true,
+                shadows_enabled: false,
                 ..Default::default()
             },
-            cascade_shadow_config,
             ..default()
         })
         .insert(moon);
 }
 
 /// Moves celestial bodies to the correct position and orientation
-fn set_celestial_body_transform(
+fn animate_celestial_body_transform(
     mut query: Query<(&mut Transform, &CelestialBody), Changed<CelestialBody>>,
 ) {
     for (mut transform, celestial_body) in query.iter_mut() {
@@ -157,5 +161,15 @@ fn set_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
+    }
+}
+
+/// Adjusts the brightness of celestial bodies based on their position in the sky
+fn animate_celestial_body_brightness(
+    mut query: Query<(&CelestialBody, &mut DirectionalLight), Changed<CelestialBody>>,
+) {
+    for (celestial_body, mut directional_light) in query.iter_mut() {
+        let current_illuminance = celestial_body.compute_light();
+        directional_light.illuminance = current_illuminance.0;
     }
 }
