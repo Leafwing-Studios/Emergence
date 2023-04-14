@@ -2,10 +2,7 @@
 
 use std::f32::consts::PI;
 
-use bevy::{
-    pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap},
-    prelude::*,
-};
+use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
 
 use crate::{
     graphics::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
@@ -19,13 +16,15 @@ pub(super) struct LightingPlugin;
 impl Plugin for LightingPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AmbientLight {
-            brightness: 0.2,
+            brightness: 2.0,
             color: LIGHT_STARS,
         })
         // Controls the resolution of shadows cast by the sun
-        .insert_resource(DirectionalLightShadowMap { size: 8192 })
+        // FIXME: shadows are blocked on better rendering performance.
+        // Tracked in https://github.com/Leafwing-Studios/Emergence/issues/726
+        //.insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
-        .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
+        //.add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
         .add_system(set_celestial_body_transform);
     }
 }
@@ -68,6 +67,7 @@ impl CelestialBody {
     }
 
     /// The starting settings for the sun
+    #[allow(dead_code)]
     fn sun() -> CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
@@ -80,6 +80,7 @@ impl CelestialBody {
     }
 
     /// The starting settings for the moon
+    #[allow(dead_code)]
     fn moon() -> CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
@@ -93,6 +94,7 @@ impl CelestialBody {
 }
 
 /// Spawns a directional light source to illuminate the scene
+#[allow(dead_code)]
 fn spawn_celestial_bodies(mut commands: Commands, camera_query: Query<&CameraSettings>) {
     let camera_settings = camera_query.single();
     let cascade_shadow_config = CascadeShadowConfigBuilder {
