@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::graphics::palette::environment::{MIDDAY_LIGHTNESS, SKY_SUNNY};
 
-use super::lighting::{CelestialBody, Sun};
+use super::lighting::{CelestialBody, PrimaryCelestialBody};
 
 /// Logic and resources to modify the sky and atmosphere.
 pub(super) struct AtmospherePlugin;
@@ -19,7 +19,7 @@ impl Plugin for AtmospherePlugin {
 /// Changes the ClearColor resource which drives the sky color based on the illuminance from the Sun.
 fn animate_sky_color(
     mut clear_color: ResMut<ClearColor>,
-    query: Query<(&CelestialBody, &Sun), Changed<CelestialBody>>,
+    query: Query<(&CelestialBody, &PrimaryCelestialBody), Changed<CelestialBody>>,
 ) {
     for (celestial_body, _) in query.iter() {
         let max_illuminance = celestial_body.compute_max_light();

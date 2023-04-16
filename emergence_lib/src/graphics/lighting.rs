@@ -110,8 +110,9 @@ impl CelestialBody {
     }
 }
 
+/// This component signals that this Entity is the primary celestial body for lighting.
 #[derive(Component, Debug)]
-pub(crate) struct Sun;
+pub(crate) struct PrimaryCelestialBody;
 
 /// Spawns a directional light source to illuminate the scene
 #[allow(dead_code)]
@@ -145,7 +146,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             ..default()
         })
         .insert(sun)
-        .insert(Sun);
+        .insert(PrimaryCelestialBody);
 
     let moon = CelestialBody::moon();
     commands
