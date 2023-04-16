@@ -56,16 +56,33 @@ pub(crate) struct CelestialBody {
 }
 
 impl CelestialBody {
+    /// The default angle that the sun is offset from the zenith in radians.
+    const DEFAULT_NOON_RADIANS: f32 = 23.5 / 360.;
+
     /// Computes the total irradiance produced by this celestial body based on its position in the sky.
     pub(crate) fn compute_light(&self) -> Illuminance {
+        CelestialBody::compute_illuminance(self.hour_angle, self.declination, self.illuminance)
+    }
+
+    /// Computes the maximum total irradiance produced by this celestial body based on its brightest possible position in the sky.
+    pub(crate) fn compute_max_light(&self) -> Illuminance {
+        CelestialBody::compute_illuminance(
+            CelestialBody::DEFAULT_NOON_RADIANS,
+            self.declination,
+            self.illuminance,
+        )
+    }
+
+    /// Computes the total irradiance produced by a celestial body given `hour_angle`, `declination`, and `illuminance`.
+    fn compute_illuminance(hour_angle: f32, declination: f32, illuminance: f32) -> Illuminance {
         // Computes the total angle formed by the celestial body and the horizon
         //
         // We cannot simply use the progress, as the inclination also needs to be taken into account.
         // See https://en.wikipedia.org/wiki/Solar_zenith_angle
         // We're treating the latitude here as equatorial.
-        let cos_solar_zenith_angle = self.hour_angle.cos() * self.declination.cos();
+        let cos_solar_zenith_angle = hour_angle.cos() * declination.cos();
         let solar_zenith_angle = cos_solar_zenith_angle.acos();
-        Illuminance(self.illuminance * solar_zenith_angle.cos().max(0.))
+        Illuminance(illuminance * solar_zenith_angle.cos().max(0.))
     }
 
     /// The starting settings for the sun
@@ -73,7 +90,7 @@ impl CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
             hour_angle: -PI / 4.,
-            declination: 23.5 / 360. * PI / 2.,
+            declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
             travel_axis: 0.,
             illuminance: 8e4,
             days_per_cycle: 1.0,
@@ -85,13 +102,17 @@ impl CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
             hour_angle: 0.,
-            declination: 23.5 / 360. * PI / 2.,
+            declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
             travel_axis: PI / 6.,
             illuminance: 3e4,
             days_per_cycle: 29.53,
         }
     }
 }
+
+/// This component signals that this Entity is the primary celestial body for lighting.
+#[derive(Component, Debug)]
+pub(crate) struct PrimaryCelestialBody;
 
 /// Spawns a directional light source to illuminate the scene
 #[allow(dead_code)]
@@ -124,7 +145,8 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             },
             ..default()
         })
-        .insert(sun);
+        .insert(sun)
+        .insert(PrimaryCelestialBody);
 
     let moon = CelestialBody::moon();
     commands
