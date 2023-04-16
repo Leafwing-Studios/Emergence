@@ -73,7 +73,7 @@ impl CelestialBody {
         )
     }
 
-    /// Computes the total irradiance produced by a celestial body given hour_angle, declination, and illuminance.
+    /// Computes the total irradiance produced by a celestial body given `hour_angle`, `declination`, and `illuminance`.
     fn compute_illuminance(hour_angle: f32, declination: f32, illuminance: f32) -> Illuminance {
         // Computes the total angle formed by the celestial body and the horizon
         //

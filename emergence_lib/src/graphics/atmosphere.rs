@@ -16,7 +16,7 @@ impl Plugin for AtmospherePlugin {
     }
 }
 
-/// Changes the ClearColor resource which drives the sky color based on the illuminance from the Sun.
+/// Changes the `ClearColor` resource which drives the sky color based on the illuminance from the Sun.
 fn animate_sky_color(
     mut clear_color: ResMut<ClearColor>,
     query: Query<(&CelestialBody, &PrimaryCelestialBody), Changed<CelestialBody>>,
