@@ -68,7 +68,7 @@ impl CelestialBody {
     pub(crate) fn compute_max_light(&self) -> Illuminance {
         CelestialBody::compute_illuminance(
             CelestialBody::DEFAULT_NOON_RADIANS,
-            CelestialBody::DEFAULT_NOON_RADIANS,
+            self.declination,
             self.illuminance,
         )
     }
