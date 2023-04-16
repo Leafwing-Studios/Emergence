@@ -113,9 +113,6 @@ impl CelestialBody {
 #[derive(Component, Debug)]
 pub(crate) struct Sun;
 
-#[derive(Component, Debug)]
-pub(crate) struct Moon;
-
 /// Spawns a directional light source to illuminate the scene
 #[allow(dead_code)]
 fn spawn_celestial_bodies(mut commands: Commands) {
@@ -161,8 +158,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             },
             ..default()
         })
-        .insert(moon)
-        .insert(Moon);
+        .insert(moon);
 }
 
 /// Moves celestial bodies to the correct position and orientation
