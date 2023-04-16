@@ -28,9 +28,7 @@ fn animate_sky_color(
         let [hue, saturation, _, alpha] = clear_color.0.as_hsla_f32();
 
         // The midday lightness is the ideal lightness at noon.
-        //
-        // Scaling up the max illuminance by the midday lightness ensures
-        // we reach the max_illuminance at the same time we reach midday lightness.
+        // Scaling up the max_illuminance by the midday lightness ensures we reach midday lightness.
         let target_scaled_max_illuminance = max_illuminance.0 / MIDDAY_LIGHTNESS;
 
         // Calculate a percentage of lightness of the given max illuminance
