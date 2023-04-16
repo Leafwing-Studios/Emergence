@@ -64,8 +64,7 @@ impl CelestialBody {
         CelestialBody::compute_illuminance(self.hour_angle, self.declination, self.illuminance)
     }
 
-    /// Computes the maximum total irradiance produced by
-    /// this celestial body based on its brightest possible position in the sky.
+    /// Computes the maximum total irradiance produced by this celestial body based on its brightest possible position in the sky.
     pub(crate) fn compute_max_light(&self) -> Illuminance {
         CelestialBody::compute_illuminance(
             CelestialBody::DEFAULT_NOON_RADIANS,
