@@ -3,6 +3,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_toon_shader::ToonShaderSun;
 
 use crate::{
     graphics::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
@@ -146,7 +147,9 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             ..default()
         })
         .insert(sun)
-        .insert(PrimaryCelestialBody);
+        .insert(PrimaryCelestialBody)
+        // This causes the light direction to be updated automatically for the toon shaded materials
+        .insert(ToonShaderSun);
 
     let moon = CelestialBody::moon();
     commands

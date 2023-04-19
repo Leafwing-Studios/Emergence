@@ -9,6 +9,7 @@ use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastSource;
+use bevy_toon_shader::ToonShaderMainCamera;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
@@ -78,6 +79,7 @@ fn setup_camera(mut commands: Commands) {
         })
         .insert(settings)
         .insert(focus)
+        .insert(ToonShaderMainCamera)
         .insert(RaycastSource::<Terrain>::new())
         .insert(RaycastSource::<Structure>::new())
         .insert(RaycastSource::<Unit>::new())
