@@ -990,6 +990,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_toon_shader"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a314af8d43fd4241aa248f6ebb6d37410a8a78175db86434b7e19f4f016584b2"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_transform"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1693,6 +1702,7 @@ dependencies = [
  "bevy_mod_billboard",
  "bevy_mod_raycast",
  "bevy_screen_diagnostics",
+ "bevy_toon_shader",
  "criterion",
  "debug_tools",
  "derive_more",
