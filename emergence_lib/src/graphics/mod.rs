@@ -1,11 +1,15 @@
 //! Rendering and animation logic.
 
 use bevy::prelude::*;
+use bevy_toon_shader::{ToonShaderMaterial, ToonShaderPlugin};
 
 use crate::asset_management::AssetState;
 
 use self::{
-    atmosphere::AtmospherePlugin, lighting::LightingPlugin, structures::remove_ghostly_shadows,
+    atmosphere::AtmospherePlugin,
+    lighting::LightingPlugin,
+    palette::lighting::{LIGHT_STARS, LIGHT_SUN},
+    structures::remove_ghostly_shadows,
     terrain::manage_litter_piles,
 };
 
@@ -23,13 +27,15 @@ pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(LightingPlugin)
+        app.add_plugin(ToonShaderPlugin)
+            .add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
             .add_system(manage_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
-            );
+            )
+            .add_startup_system(spawn_debug_toon_shaded_cube);
     }
 }
 
@@ -50,4 +56,33 @@ pub(super) fn inherit_materials(
             }
         }
     }
+}
+
+fn spawn_debug_toon_shaded_cube(
+    mut commands: Commands,
+    mut mesh_assets: ResMut<Assets<Mesh>>,
+    mut material_assets: ResMut<Assets<ToonShaderMaterial>>,
+) {
+    let mesh = Mesh::from(shape::Cube { size: 80.0 });
+    let material = ToonShaderMaterial {
+        color: Color::rgb(0.5, 0.5, 0.5),
+        sun_color: LIGHT_SUN,
+        ambient_color: LIGHT_STARS,
+        // Automatically updated
+        sun_dir: Vec3::default(),
+        // Automatically updated
+        camera_pos: Vec3::default(),
+        base_color_texture: None,
+    };
+
+    // Store the generated assets and get a handle to them
+    let mesh = mesh_assets.add(mesh);
+    let material = material_assets.add(material);
+
+    commands.spawn(MaterialMeshBundle {
+        mesh,
+        material,
+        transform: Transform::default(),
+        ..Default::default()
+    });
 }
