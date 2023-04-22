@@ -6,6 +6,8 @@
 //! - Official CI runs latest stable
 //! - Local runs use whatever the default Rust is locally
 
+use std::process;
+
 use bevy::utils::HashSet;
 use xshell::{cmd, Shell};
 
@@ -84,7 +86,7 @@ fn main() {
                     .collect::<Vec<&str>>()
                     .join(", "),
             );
-            return;
+            process::exit(1);
         }
     } else {
         Check::all()
