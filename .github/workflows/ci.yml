@@ -31,7 +31,7 @@ jobs:
             toolchain-components: clippy
           - ci-argument: format
             toolchain-components: rustfmt
-
+    name: CI check (${{ matrix.ci-argument }})
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
