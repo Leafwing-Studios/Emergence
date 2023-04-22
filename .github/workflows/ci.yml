@@ -37,7 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          components: ${{ matrix.toolchain-components }}
+          # components: ${{ matrix.toolchain-components }}
       - name: Cache Cargo build files
         uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
