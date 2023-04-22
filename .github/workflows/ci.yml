@@ -59,7 +59,7 @@ jobs:
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- compile
 
-  check-doc:
+  check-doctest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -73,7 +73,7 @@ jobs:
         if: runner.os == 'linux'
       - name: Build and check doc
         # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- doc
+        run: cargo run -p ci -- doctest
   #      - name: Installs cargo-deadlinks
   #        run: cargo install --force cargo-deadlinks
   #      - name: Checks dead links
