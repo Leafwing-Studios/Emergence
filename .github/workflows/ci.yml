@@ -13,7 +13,7 @@ env:
   RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
 jobs:
-  check-lints:
+  check-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,7 +27,23 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: CI job
         # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- lints
+        run: cargo run -p ci -- format
+
+  check-clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: CI job
+        # See tools/ci/src/main.rs for the commands this runs
+        run: cargo run -p ci -- clippy
 
   check-tests:
     runs-on: ubuntu-latest
@@ -57,7 +73,23 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Check Compile
         # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- compile
+        run: cargo run -p ci -- compilecheck
+
+  check-doccheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+        if: runner.os == 'linux'
+      - name: Build and check doc
+        # See tools/ci/src/main.rs for the commands this runs
+        run: cargo run -p ci -- doccheck
 
   check-doctest:
     runs-on: ubuntu-latest
