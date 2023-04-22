@@ -28,24 +28,16 @@ jobs:
           - test
         include:
           - ci-argument: clippy
-            toolchain-components: foo
-          - ci-argument: compilecheck
-            toolchain-components: bar
-          - ci-argument: doccheck
-            toolchain-components: baz
-          - ci-argument: doctest
-            toolchain-components: quux
+            toolchain-components: clippy
           - ci-argument: format
-            toolchain-components: zugga
-          - ci-argument: test
-            toolchain-components: lugga
+            toolchain-components: rustfmt
 
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          components: ${{ matrix.toolchain-components }}
+          components: ${{ matrix.toolchain-components || null }}
       - name: Cache Cargo build files
         uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
