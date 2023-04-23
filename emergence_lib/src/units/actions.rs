@@ -1028,11 +1028,19 @@ impl CurrentAction {
     ) -> Self {
         /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
         const BASE_WALKING_DURATION: f32 = 0.5;
+        /// The multiplier applied to the walking speed when walking on a path.
+        // TODO: vary this based on the path type
+        const PATH_MULTIPLIER: f32 = 1.5;
 
         let target_tile = current_tile.neighbor(facing.direction);
         let entity_standing_on = map_geometry.get_terrain(current_tile).unwrap();
-        let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
-        let walking_speed = terrain_manifest.get(*terrain_standing_on).walking_speed;
+        let walking_speed = if map_geometry.get_structure(current_tile).is_some() {
+            PATH_MULTIPLIER
+        } else {
+            let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
+            terrain_manifest.get(*terrain_standing_on).walking_speed
+        };
+
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
         if map_geometry.is_passable(current_tile, target_tile) {
