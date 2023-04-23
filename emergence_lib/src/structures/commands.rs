@@ -225,6 +225,7 @@ impl Command for SpawnStructureCommand {
                     })
                 })
             }
+            StructureKind::Path => {}
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();

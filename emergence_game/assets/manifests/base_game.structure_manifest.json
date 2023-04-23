@@ -18,11 +18,7 @@
 			"max_workers": 6
 		},
 		"path": {
-			"kind": {
-				"Storage": {
-					"max_slot_count": 3
-				}
-			},
+			"kind": "Path",
 			"construction_strategy": {
 				"Direct": {
 					"work": 3,

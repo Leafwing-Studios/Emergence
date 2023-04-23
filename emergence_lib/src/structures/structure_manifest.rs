@@ -104,6 +104,8 @@ pub enum StructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: ActiveRecipe,
     },
+    /// A structure that can be walked over.
+    Path,
 }
 
 /// The unprocessed equivalent of [`StructureKind`].
@@ -121,6 +123,8 @@ pub enum RawStructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: RawActiveRecipe,
     },
+    /// A structure that can be walked over.
+    Path,
 }
 
 impl From<RawStructureKind> for StructureKind {
@@ -136,6 +140,7 @@ impl From<RawStructureKind> for StructureKind {
             RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
                 starting_recipe: starting_recipe.into(),
             },
+            RawStructureKind::Path => Self::Path,
         }
     }
 }
