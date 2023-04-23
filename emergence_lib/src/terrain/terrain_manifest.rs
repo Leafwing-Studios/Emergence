@@ -22,6 +22,8 @@ pub struct TerrainData {
     /// These values should always be strictly positive.
     /// Higher values make units walk faster.
     /// 1.0 is "normal speed".
+    ///
+    /// Note that this only affects the walking speed of units that are not on a path.
     pub walking_speed: f32,
 }
 

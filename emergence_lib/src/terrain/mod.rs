@@ -155,6 +155,6 @@ fn update_litter_index(
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     for (&tile_pos, litter) in query.iter() {
-        map_geometry.set_litter_state(tile_pos, litter.state());
+        map_geometry.update_litter_state(tile_pos, litter.state());
     }
 }

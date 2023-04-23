@@ -90,8 +90,6 @@ pub(crate) enum PlayerAction {
     Paste,
     /// Sets the zoning of all currently selected tiles to [`Zoning::None`](crate::construction::zoning::Zoning::None).
     ClearZoning,
-    /// Sets the zoning of all currently selected tiles to [`Zoning::KeepClear`](crate::construction::zoning::Zoning::KeepClear).
-    KeepClear,
     /// Rotates the contents of the clipboard counterclockwise.
     RotateClipboardLeft,
     /// Rotates the contents of the clipboard clockwise.
@@ -144,7 +142,6 @@ impl PlayerAction {
             Copy => UserInput::modified(Modifier::Control, KeyCode::C),
             Paste => UserInput::modified(Modifier::Control, KeyCode::V),
             ClearZoning => KeyCode::Back.into(),
-            KeepClear => KeyCode::Delete.into(),
             RotateClipboardLeft => UserInput::modified(Modifier::Shift, KeyCode::R),
             RotateClipboardRight => KeyCode::R.into(),
             CenterCameraOnSelection => KeyCode::L.into(),
@@ -187,7 +184,6 @@ impl PlayerAction {
             Copy => West.into(),
             Paste => North.into(),
             ClearZoning => DPadUp.into(),
-            KeepClear => DPadDown.into(),
             SelectStructure => UserInput::chord([selection_modifier, West]),
             SelectTerraform => UserInput::chord([selection_modifier, North]),
             SelectAbility => UserInput::chord([selection_modifier, East]),

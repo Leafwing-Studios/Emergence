@@ -58,6 +58,8 @@ pub struct StructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
+    /// Can units pass over this structure?
+    pub passable: bool,
 }
 
 /// The unprocessed equivalent of [`StructureData`].
@@ -75,6 +77,8 @@ pub struct RawStructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
+    /// Can units pass over this structure?
+    pub passable: bool,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -85,6 +89,7 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
             footprint: raw.footprint.unwrap_or_default(),
+            passable: raw.passable,
         }
     }
 }
@@ -104,6 +109,8 @@ pub enum StructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: ActiveRecipe,
     },
+    /// A structure that can be walked over.
+    Path,
 }
 
 /// The unprocessed equivalent of [`StructureKind`].
@@ -121,6 +128,8 @@ pub enum RawStructureKind {
         /// Does this structure start with a recipe pre-selected?
         starting_recipe: RawActiveRecipe,
     },
+    /// A structure that can be walked over.
+    Path,
 }
 
 impl From<RawStructureKind> for StructureKind {
@@ -136,6 +145,7 @@ impl From<RawStructureKind> for StructureKind {
             RawStructureKind::Crafting { starting_recipe } => Self::Crafting {
                 starting_recipe: starting_recipe.into(),
             },
+            RawStructureKind::Path => Self::Path,
         }
     }
 }

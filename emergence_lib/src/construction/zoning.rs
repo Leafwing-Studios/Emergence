@@ -58,8 +58,6 @@ pub(crate) enum Zoning {
     Terraform(TerraformingAction),
     /// No zoning is set.
     None,
-    /// Zoning is set to keep the tile clear.
-    KeepClear,
 }
 
 impl Zoning {
@@ -75,7 +73,6 @@ impl Zoning {
                 .to_string(),
             Zoning::Terraform(action) => action.display(terrain_manifest),
             Zoning::None => "None".to_string(),
-            Zoning::KeepClear => "Keep Clear".to_string(),
         }
     }
 }
@@ -116,17 +113,6 @@ fn set_zoning(
 ) {
     let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
     let relevant_terrain_entities = relevant_tiles.entities(&map_geometry);
-
-    // Try to remove everything at the location
-    if actions.pressed(PlayerAction::KeepClear) {
-        for terrain_entity in relevant_terrain_entities {
-            let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
-            *zoning = Zoning::KeepClear;
-        }
-
-        // Don't try to clear and zone in the same frame
-        return;
-    }
 
     // Explicitly clear the selection
     if actions.pressed(PlayerAction::ClearZoning) {
@@ -209,16 +195,12 @@ fn set_zoning(
 }
 
 /// Mark the selected structure for deletion.
-///
-/// Note that this is distinct from setting the tile to [`Zoning::KeepClear`], as it does not persist.
 fn mark_for_demolition(
     player_actions: Res<ActionState<PlayerAction>>,
     current_selection: Res<CurrentSelection>,
     mut commands: Commands,
 ) {
-    if player_actions.just_pressed(PlayerAction::KeepClear)
-        || player_actions.just_pressed(PlayerAction::ClearZoning)
-    {
+    if player_actions.just_pressed(PlayerAction::ClearZoning) {
         if let CurrentSelection::Structure(structure_entity) = *current_selection {
             commands
                 .entity(structure_entity)
@@ -280,15 +262,6 @@ fn mark_based_on_zoning(
             Zoning::None => {
                 commands.despawn_ghost_terrain(tile_pos);
                 commands.despawn_ghost_structure(tile_pos);
-            }
-            Zoning::KeepClear => {
-                commands.despawn_ghost_terrain(tile_pos);
-                commands.despawn_ghost_structure(tile_pos);
-                if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
-                    commands
-                        .entity(structure_entity)
-                        .insert(MarkedForDemolition);
-                }
             }
         };
     }

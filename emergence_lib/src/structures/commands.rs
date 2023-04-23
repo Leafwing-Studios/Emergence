@@ -225,12 +225,14 @@ impl Command for SpawnStructureCommand {
                     })
                 })
             }
+            StructureKind::Path => {}
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry.add_structure(
             self.tile_pos,
             &structure_variety.footprint,
+            structure_variety.passable,
             structure_entity,
         );
     }

@@ -240,6 +240,22 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    passable: false,
+                },
+            ),
+            (
+                "path".to_string(),
+                RawStructureData {
+                    organism_variety: None,
+                    kind: RawStructureKind::Path,
+                    construction_strategy: RawConstructionStrategy::Direct {
+                        work: Some(3.),
+                        materials: HashMap::new(),
+                        allowed_terrain_types: HashSet::new(),
+                    },
+                    max_workers: 1,
+                    footprint: Some(Footprint::path()),
+                    passable: true,
                 },
             ),
             (
@@ -267,6 +283,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 1,
                     footprint: Some(Footprint::single()),
+                    passable: false,
                 },
             ),
             (
@@ -289,6 +306,7 @@ fn can_serialize_structure_manifest() {
                     ),
                     max_workers: 1,
                     footprint: Some(Footprint::single()),
+                    passable: false,
                 },
             ),
             (
@@ -307,6 +325,7 @@ fn can_serialize_structure_manifest() {
                     ),
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    passable: false,
                 },
             ),
             (
@@ -327,6 +346,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 3,
                     footprint: Some(Footprint::hexagon(1)),
+                    passable: false,
                 },
             ),
             (
@@ -348,6 +368,7 @@ fn can_serialize_structure_manifest() {
                     max_workers: 6,
                     // Forms a crescent shape
                     footprint: Some(Footprint::single()),
+                    passable: false,
                 },
             ),
             (
@@ -369,6 +390,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    passable: false,
                 },
             ),
         ]),
