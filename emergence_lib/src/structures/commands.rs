@@ -232,6 +232,7 @@ impl Command for SpawnStructureCommand {
         geometry.add_structure(
             self.tile_pos,
             &structure_variety.footprint,
+            structure_variety.passable,
             structure_entity,
         );
     }

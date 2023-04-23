@@ -15,7 +15,8 @@
 					"allowed_terrain_types": []
 				}
 			},
-			"max_workers": 6
+			"max_workers": 6,
+			"passable": false
 		},
 		"path": {
 			"kind": "Path",
@@ -26,7 +27,8 @@
 					"allowed_terrain_types": []
 				}
 			},
-			"max_workers": 1
+			"max_workers": 1,
+			"passable": true
 		},
 		"acacia_seedling": {
 			"organism_variety": {
@@ -68,7 +70,8 @@
 					]
 				}
 			},
-			"max_workers": 1
+			"max_workers": 1,
+			"passable": false
 		},
 		"leuco": {
 			"organism_variety": {
@@ -102,7 +105,8 @@
 					]
 				}
 			},
-			"max_workers": 6
+			"max_workers": 6,
+			"passable": false
 		},
 		"acacia_sprout": {
 			"organism_variety": {
@@ -135,7 +139,8 @@
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
-			"max_workers": 1
+			"max_workers": 1,
+			"passable": false
 		},
 		"acacia": {
 			"organism_variety": {
@@ -161,7 +166,8 @@
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
-			"max_workers": 6
+			"max_workers": 6,
+			"passable": false
 		},
 		"ant_hive": {
 			"kind": {
@@ -177,6 +183,7 @@
 				}
 			},
 			"max_workers": 3,
+			"passable": false,
 			"footprint": {
 				"set": [
 					{

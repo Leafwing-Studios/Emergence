@@ -58,6 +58,8 @@ pub struct StructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
+    /// Can units pass over this structure?
+    pub passable: bool,
 }
 
 /// The unprocessed equivalent of [`StructureData`].
@@ -75,6 +77,8 @@ pub struct RawStructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
+    /// Can units pass over this structure?
+    pub passable: bool,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -85,6 +89,7 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
             footprint: raw.footprint.unwrap_or_default(),
+            passable: raw.passable,
         }
     }
 }

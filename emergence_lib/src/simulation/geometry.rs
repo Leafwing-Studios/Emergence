@@ -4,7 +4,7 @@ use bevy::{
     math::Vec3Swizzles,
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology},
-    utils::HashMap,
+    utils::{HashMap, HashSet},
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
@@ -388,8 +388,8 @@ pub struct MapGeometry {
     ghost_structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
     ghost_terrain_index: HashMap<TilePos, Entity>,
-    /// The amount of litter at each tile position
-    litter_index: HashMap<TilePos, InventoryState>,
+    /// The set of tiles that cannot be traversed by units.
+    impassable_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position
     height_index: HashMap<TilePos, Height>,
 }
@@ -417,7 +417,7 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
-            litter_index: HashMap::default(),
+            impassable_tiles: HashSet::default(),
             height_index,
         }
     }
@@ -465,11 +465,7 @@ impl MapGeometry {
             return false;
         }
 
-        if self.get_structure(ending_pos).is_some() {
-            return false;
-        }
-
-        if self.get_litter_state(ending_pos) == InventoryState::Full {
+        if self.impassable_tiles.contains(&ending_pos) {
             return false;
         }
 
@@ -726,10 +722,14 @@ impl MapGeometry {
         &mut self,
         center: TilePos,
         footprint: &Footprint,
+        passable: bool,
         structure_entity: Entity,
     ) {
         for tile_pos in footprint.in_world_space(center) {
             self.structure_index.insert(tile_pos, structure_entity);
+            if !passable {
+                self.impassable_tiles.insert(tile_pos);
+            }
         }
     }
 
@@ -744,6 +744,7 @@ impl MapGeometry {
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
             self.structure_index.retain(|_k, v| *v != removed_entity);
+            self.impassable_tiles.remove(&tile_pos);
         };
 
         removed
@@ -818,20 +819,16 @@ impl MapGeometry {
         self.ghost_terrain_index.get(&tile_pos).copied()
     }
 
-    /// Sets the amount of litter at the provided `tile_pos`.
-    #[inline]
-    pub(crate) fn set_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
-        self.litter_index.insert(tile_pos, litter_state);
-    }
-
-    /// Gets the amount of litter at the provided `tile_pos`.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_litter_state(&self, tile_pos: TilePos) -> InventoryState {
-        self.litter_index
-            .get(&tile_pos)
-            .copied()
-            .unwrap_or(InventoryState::Empty)
+    /// Updates the passability of the provided `tile_pos` based on the state of the litter at that location.
+    pub(crate) fn update_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
+        match litter_state {
+            InventoryState::Empty | InventoryState::Partial => {
+                self.impassable_tiles.remove(&tile_pos);
+            }
+            InventoryState::Full => {
+                self.impassable_tiles.insert(tile_pos);
+            }
+        }
     }
 }
 
@@ -1006,7 +1003,9 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let center = TilePos::new(17, -2);
-        map_geometry.add_structure(center, &footprint, structure_entity);
+        let passable = false;
+
+        map_geometry.add_structure(center, &footprint, passable, structure_entity);
 
         // Check that the structure index was updated correctly
         for tile_pos in footprint.in_world_space(center) {
@@ -1021,7 +1020,9 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let center = TilePos::new(17, -2);
-        map_geometry.add_structure(center, &footprint, structure_entity);
+        let passable = false;
+
+        map_geometry.add_structure(center, &footprint, passable, structure_entity);
         map_geometry.remove_structure(center);
 
         // Check that the structure index was updated correctly
