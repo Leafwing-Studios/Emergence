@@ -17,6 +17,21 @@
 			},
 			"max_workers": 6
 		},
+		"path": {
+			"kind": {
+				"Storage": {
+					"max_slot_count": 3
+				}
+			},
+			"construction_strategy": {
+				"Direct": {
+					"work": 3,
+					"materials": {},
+					"allowed_terrain_types": []
+				}
+			},
+			"max_workers": 1
+		},
 		"acacia_seedling": {
 			"organism_variety": {
 				"prototypical_form": {
