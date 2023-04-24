@@ -1,13 +1,12 @@
 //! Methods to use [`Commands`] to manipulate structures.
 
 use bevy::{
-    ecs::system::{Command, SystemState},
-    prelude::{warn, Commands, DespawnRecursiveExt, Mut, Query, Res, World},
+    ecs::system::Command,
+    prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
 };
 use rand::{rngs::ThreadRng, thread_rng};
 
 use crate::{
-    asset_management::manifest::Id,
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
     crafting::{
         components::{CraftingBundle, StorageInventory},
@@ -19,7 +18,6 @@ use crate::{
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    terrain::terrain_manifest::Terrain,
 };
 
 use super::{
@@ -128,23 +126,13 @@ impl Command for SpawnStructureCommand {
 
         let structure_id = self.data.structure_id;
 
-        let mut system_state: SystemState<(
-            Query<&Id<Terrain>>,
-            Res<MapGeometry>,
-            Res<StructureManifest>,
-        )> = SystemState::new(world);
-
-        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let manifest = world.resource::<StructureManifest>();
         let structure_variety = manifest.get(structure_id).clone();
-        let construction_data = manifest.construction_data(structure_id);
-        let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
             structure_variety.footprint.rotated(self.data.facing),
-            &terrain_query,
-            allowed_terrain_types,
         ) {
             return;
         }
@@ -278,23 +266,13 @@ impl Command for SpawnStructureGhostCommand {
             return;
         }
 
-        let mut system_state: SystemState<(
-            Query<&Id<Terrain>>,
-            Res<MapGeometry>,
-            Res<StructureManifest>,
-        )> = SystemState::new(world);
-
-        let (terrain_query, geometry, manifest) = system_state.get(world);
-        let construction_data = manifest.construction_data(structure_id);
-        let allowed_terrain_types = &construction_data.allowed_terrain_types;
+        let manifest = world.resource::<StructureManifest>();
         let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
             construction_footprint.rotated(self.data.facing),
-            &terrain_query,
-            allowed_terrain_types,
         ) {
             return;
         }
@@ -391,23 +369,15 @@ impl Command for SpawnStructurePreviewCommand {
         // Compute the world position
         let world_pos = self.tile_pos.top_of_tile(map_geometry);
 
-        let mut system_state: SystemState<(
-            Query<&Id<Terrain>>,
-            Res<MapGeometry>,
-            Res<StructureManifest>,
-        )> = SystemState::new(world);
-
-        let (terrain_query, geometry, manifest) = system_state.get(world);
+        let manifest = world.resource::<StructureManifest>();
         let structure_variety = manifest.get(structure_id).clone();
-        let construction_data = manifest.construction_data(structure_id);
-        let allowed_terrain_types = &construction_data.allowed_terrain_types;
+
+        let geometry = world.resource::<MapGeometry>();
 
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
             structure_variety.footprint.rotated(self.data.facing),
-            &terrain_query,
-            allowed_terrain_types,
         );
 
         // Fetch the scene and material to use

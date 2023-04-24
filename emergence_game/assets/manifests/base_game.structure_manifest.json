@@ -11,8 +11,7 @@
 					"work": 7,
 					"materials": {
 						"leuco_chunk": 1
-					},
-					"allowed_terrain_types": []
+					}
 				}
 			},
 			"max_workers": 6,
@@ -23,8 +22,7 @@
 			"construction_strategy": {
 				"Direct": {
 					"work": 3,
-					"materials": {},
-					"allowed_terrain_types": []
+					"materials": {}
 				}
 			},
 			"max_workers": 1,
@@ -63,11 +61,7 @@
 					"work": null,
 					"materials": {
 						"acacia_seed": 1
-					},
-					"allowed_terrain_types": [
-						"loam",
-						"muddy"
-					]
+					}
 				}
 			},
 			"max_workers": 1,
@@ -98,11 +92,7 @@
 				"Direct": {
 					"materials": {
 						"leuco_chunk": 1
-					},
-					"allowed_terrain_types": [
-						"loam",
-						"muddy"
-					]
+					}
 				}
 			},
 			"max_workers": 6,
@@ -178,8 +168,7 @@
 			"construction_strategy": {
 				"Direct": {
 					"work": 5.0,
-					"materials": {},
-					"allowed_terrain_types": []
+					"materials": {}
 				}
 			},
 			"max_workers": 3,

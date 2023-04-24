@@ -1,13 +1,12 @@
 //! Tools and systems for constructing structures and terraforming the world.
 
-use bevy::utils::{Duration, HashMap, HashSet};
+use bevy::utils::{Duration, HashMap};
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::crafting::components::InputInventory;
 use crate::items::slot::ItemSlot;
-use crate::terrain::terrain_manifest::Terrain;
 use crate::{asset_management::manifest::Id, structures::structure_manifest::Structure};
 
 pub(crate) mod demolition;
@@ -45,18 +44,6 @@ pub struct ConstructionData {
     pub work: Option<Duration>,
     /// The set of items needed to create a new copy of this structure
     pub materials: InputInventory,
-    /// The set of terrain types that this structure can be built on
-    pub allowed_terrain_types: AllowedTerrainTypes,
-}
-
-/// The set of terrain types that this structure can be built on.
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
-pub enum AllowedTerrainTypes {
-    /// Any terrain type is allowed.
-    #[default]
-    Any,
-    /// Only the provided terrain types are allowed.
-    Only(HashSet<Id<Terrain>>),
 }
 
 /// The unprocessed equivalent of [`ConstructionStrategy`].
@@ -72,10 +59,6 @@ pub enum RawConstructionStrategy {
         work: Option<f32>,
         /// The set of items needed to create a new copy of this structure
         materials: HashMap<String, u32>,
-        /// The set of terrain types that this structure can be built on
-        ///
-        /// If this is empty, any terrain type is allowed.
-        allowed_terrain_types: HashSet<String>,
     },
 }
 
@@ -85,11 +68,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
             RawConstructionStrategy::Seedling(seedling_name) => {
                 ConstructionStrategy::Seedling(Id::from_name(seedling_name))
             }
-            RawConstructionStrategy::Direct {
-                work,
-                materials,
-                allowed_terrain_types,
-            } => {
+            RawConstructionStrategy::Direct { work, materials } => {
                 let inventory = materials
                     .into_iter()
                     .map(|(item_name, count)| ItemSlot::empty(Id::from_name(item_name), count))
@@ -99,16 +78,6 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
                 ConstructionStrategy::Direct(ConstructionData {
                     work: work.map(Duration::from_secs_f32),
                     materials,
-                    allowed_terrain_types: if allowed_terrain_types.is_empty() {
-                        AllowedTerrainTypes::Any
-                    } else {
-                        AllowedTerrainTypes::Only(
-                            allowed_terrain_types
-                                .into_iter()
-                                .map(Id::from_name)
-                                .collect(),
-                        )
-                    },
                 })
             }
         }
