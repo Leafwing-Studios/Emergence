@@ -185,7 +185,7 @@ fn display_status(
         (&InputInventory, &OutputInventory, &StatusParent),
         With<TerraformingAction>,
     >,
-    mut status_text_query: Query<&mut Text, With<StatusDisplay>>,
+    mut status_text_query: Query<(&mut Text, &mut Visibility), With<StatusDisplay>>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
@@ -193,42 +193,50 @@ fn display_status(
 ) {
     if status_visualization.structures_enabled() {
         for (crafting_state, status) in crafting_query.iter() {
-            let status_text = &mut status_text_query
-                .get_mut(status.entity)
-                .expect("Expected status text to exist")
-                .sections[0];
+            let (mut status_text, mut visibility) =
+                status_text_query.get_mut(status.entity).unwrap();
+            let status_text = &mut status_text.sections[0];
 
+            *visibility = Visibility::Inherited;
             status_text.value = format!("{crafting_state}");
-
             status_text.style.color = crafting_state.color();
+        }
+    } else {
+        for (.., status) in crafting_query.iter() {
+            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            *visibility = Visibility::Hidden;
         }
     }
 
     if status_visualization.units_enabled() {
         for (goal, status) in unit_query.iter() {
-            let status_text = &mut status_text_query
-                .get_mut(status.entity)
-                .expect("Expected status text to exist")
-                .sections[0];
+            let (mut status_text, mut visibility) =
+                status_text_query.get_mut(status.entity).unwrap();
+            let status_text = &mut status_text.sections[0];
 
+            *visibility = Visibility::Inherited;
             status_text.value = goal.display(
                 &item_manifest,
                 &structure_manifest,
                 &terrain_manifest,
                 &unit_manifest,
             );
-
             status_text.style.color = goal.color();
+        }
+    } else {
+        for (.., status) in unit_query.iter() {
+            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            *visibility = Visibility::Hidden;
         }
     }
 
     if status_visualization.terraforming_enabled() {
         for (input_inventory, output_inventory, status) in terraforming_query.iter() {
-            let status_text = &mut status_text_query
-                .get_mut(status.entity)
-                .expect("Expected status text to exist")
-                .sections[0];
+            let (mut status_text, mut visibility) =
+                status_text_query.get_mut(status.entity).unwrap();
+            let status_text = &mut status_text.sections[0];
 
+            *visibility = Visibility::Inherited;
             // Clippy is wrong.
             // The semantics here are different: an empty inventory has no items currently,
             // but an inventory with zero length is a placeholder for an inventory that does not accept items.
@@ -242,6 +250,11 @@ fn display_status(
                 (false, true) => format!("Remove {}", output_inventory.display(&item_manifest)),
                 (false, false) => String::new(),
             };
+        }
+    } else {
+        for (.., status) in terraforming_query.iter() {
+            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            *visibility = Visibility::Hidden;
         }
     }
 }
