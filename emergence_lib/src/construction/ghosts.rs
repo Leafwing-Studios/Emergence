@@ -179,7 +179,7 @@ impl GhostStructureBundle {
     }
 }
 
-/// The set of components needed to spawn a ghost of a [`Terrain`].
+/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
 #[derive(Bundle)]
 pub(crate) struct GhostTerrainBundle {
     /// Shared components across all ghosts
@@ -304,7 +304,7 @@ impl StructurePreviewBundle {
     }
 }
 
-/// The components needed to create a preview of a [`Terrain`].
+/// The components needed to create a preview of a [`TerraformingAction`].
 #[derive(Bundle)]
 pub(crate) struct TerrainPreviewBundle {
     /// Shared components for all previews
