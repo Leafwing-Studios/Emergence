@@ -36,8 +36,8 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a structure with randomized `data` at `tile_pos`.
     ///
     /// Some fields of data will be randomized.
-    /// Terrain will be fixed as needed to ensure that this can spawn in the provided location.
-    /// This is intended to be used for world generation.
+    /// This is intended to be used for world generation,
+    /// and should only be called if [`MapGeometry::can_build`] has been verified to be true.
     fn generate_structure(&mut self, tile_pos: TilePos, data: ClipboardData, rng: &mut ThreadRng);
 
     /// Despawns any structure at the provided `tile_pos`.
@@ -66,7 +66,6 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(SpawnStructureCommand {
             tile_pos,
             data,
-            fix_terrain: false,
             randomized: false,
         });
     }
@@ -82,7 +81,6 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
         self.add(SpawnStructureCommand {
             tile_pos,
             data,
-            fix_terrain: true,
             randomized: true,
         });
     }
@@ -110,8 +108,6 @@ struct SpawnStructureCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
-    /// Should the terrain be fixed to ensure that the structure can spawn?
-    fix_terrain: bool,
     /// Should the generated structure be randomized?
     randomized: bool,
 }
@@ -135,48 +131,8 @@ impl Command for SpawnStructureCommand {
             &structure_variety.footprint,
             &self.data.facing,
         ) {
-            if self.fix_terrain {
-                if !geometry.is_footprint_valid(
-                    self.tile_pos,
-                    &structure_variety.footprint,
-                    &self.data.facing,
-                ) {
-                    // Nothing we can do about out-of-bounds :(
-                    return;
-                }
-
-                if !geometry.is_space_available(
-                    self.tile_pos,
-                    &structure_variety.footprint,
-                    &self.data.facing,
-                ) {
-                    // Don't try to remove existing structures.
-                    // Instead, generate structures in order of importance.
-                    return;
-                }
-
-                if !geometry.is_terrain_flat(
-                    self.tile_pos,
-                    &structure_variety.footprint,
-                    &self.data.facing,
-                ) {
-                    // Flatten the terrain if it's not flat.
-                    geometry.flatten_terrain(
-                        self.tile_pos,
-                        &structure_variety.footprint,
-                        &self.data.facing,
-                    );
-                }
-
-                assert!(geometry.can_build(
-                    self.tile_pos,
-                    &structure_variety.footprint,
-                    &self.data.facing,
-                ));
-            } else {
-                // Most of the time, we should just give up if the terrain is wrong.
-                return;
-            }
+            // Just give up if the terrain is wrong.
+            return;
         }
 
         let structure_handles = world.resource::<StructureHandles>();
