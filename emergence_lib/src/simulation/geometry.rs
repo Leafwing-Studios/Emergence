@@ -478,7 +478,7 @@ impl MapGeometry {
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
     #[inline]
     #[must_use]
-    fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
+    pub(crate) fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
         footprint
             .in_world_space(center)
             .iter()
@@ -505,7 +505,7 @@ impl MapGeometry {
     /// Are all of the terrain tiles in the provided `footprint` flat?
     #[inline]
     #[must_use]
-    fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
+    pub(crate) fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
         let height = self.get_height(center).unwrap();
 
         footprint
@@ -526,7 +526,7 @@ impl MapGeometry {
     /// - all tiles match the provided allowable terrain list
     #[inline]
     #[must_use]
-    pub(crate) fn can_build(&self, center: TilePos, footprint: Footprint) -> bool {
+    pub(crate) fn can_build(&self, center: TilePos, footprint: &Footprint) -> bool {
         self.is_footprint_valid(center, &footprint)
             && self.is_terrain_flat(center, &footprint)
             && self.is_space_available(center, &footprint)

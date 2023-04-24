@@ -223,7 +223,7 @@ fn mark_based_on_zoning(
                 let footprint =
                     structure_manifest.construction_footprint(clipboard_data.structure_id);
 
-                if map_geometry.can_build(tile_pos, footprint.rotated(clipboard_data.facing)) {
+                if map_geometry.can_build(tile_pos, &footprint.rotated(clipboard_data.facing)) {
                     commands.spawn_ghost_structure(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

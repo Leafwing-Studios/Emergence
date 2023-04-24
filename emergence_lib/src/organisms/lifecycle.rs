@@ -303,7 +303,7 @@ pub(super) fn sprout_seeds(
                 let variety = structure_manifest.get(structure_id);
                 let footprint = variety.footprint.rotated(facing);
 
-                if !map_geometry.can_build(tile_pos, footprint) {
+                if !map_geometry.can_build(tile_pos, &footprint) {
                     // We can't germinate here
                     continue;
                 }

@@ -615,7 +615,7 @@ pub(super) fn validate_ghost_structures(
         let structure_details = structure_manifest.get(structure_id);
         let footprint = structure_details.footprint.rotated(facing);
 
-        if !map_geometry.can_build(tile_pos, footprint) {
+        if !map_geometry.can_build(tile_pos, &footprint) {
             commands.despawn_ghost_structure(tile_pos);
         }
     }

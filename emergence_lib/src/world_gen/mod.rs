@@ -276,7 +276,7 @@ fn generate_organisms(
                 .clone(),
         };
 
-        commands.spawn_randomized_structure(position, item, rng);
+        commands.generate_structure(position, item, rng);
     }
 
     // Fungi
@@ -293,7 +293,7 @@ fn generate_organisms(
                 .clone(),
         };
 
-        commands.spawn_randomized_structure(position, item, rng);
+        commands.generate_structure(position, item, rng);
     }
 
     // Hives
@@ -310,7 +310,7 @@ fn generate_organisms(
                 .clone(),
         };
 
-        commands.spawn_randomized_structure(position, item, rng);
+        commands.generate_structure(position, item, rng);
     }
 }
 
