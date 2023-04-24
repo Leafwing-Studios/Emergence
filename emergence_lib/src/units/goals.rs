@@ -52,18 +52,63 @@ pub(crate) enum Goal {
     ///
     /// This is [`DeliveryMode::DropOff`] and [`Purpose::Instrumental`].
     Store(ItemKind),
-    /// Attempting to perform work at a structure
+    /// Attempting to perform work at a structure.
     Work(WorkplaceId),
-    /// Attempting to destroy a structure
+    /// Attempting to destroy a structure.
     Demolish(Id<Structure>),
-    /// Attempt to feed self
+    /// Attempting to feed self.
     Eat(ItemKind),
-    /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure)
+    /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure).
     Lure,
-    /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel)
+    /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel).
     Repel,
     /// Trying to avoid a specific unit.
     Avoid(Id<Unit>),
+}
+
+/// The data-less version of [`Goal`].
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub(crate) enum GoalKind {
+    /// Attempting to find something useful to do.
+    Wander,
+    /// Attempting to pick up an object, so it can be taken away from a structure that actively rejects it.
+    Remove,
+    /// Attempting to pick up an object wherever we can, so it can be delivered to a structure.
+    Fetch,
+    /// Attempting to drop off an object to a structure that actively needs it.
+    Deliver,
+    /// Attempting to drop off an object wherever we can.
+    Store,
+    /// Attempting to perform work at a structure.
+    Work,
+    /// Attempting to destroy a structure.
+    Demolish,
+    /// Attempting to feed self.
+    Eat,
+    /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure).
+    Lure,
+    /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel).
+    Repel,
+    /// Trying to avoid a specific unit.
+    Avoid,
+}
+
+impl From<&Goal> for GoalKind {
+    fn from(value: &Goal) -> Self {
+        match value {
+            Goal::Wander { .. } => GoalKind::Wander,
+            Goal::Remove(_) => GoalKind::Remove,
+            Goal::Fetch(_) => GoalKind::Fetch,
+            Goal::Deliver(_) => GoalKind::Deliver,
+            Goal::Store(_) => GoalKind::Store,
+            Goal::Work(_) => GoalKind::Work,
+            Goal::Demolish(_) => GoalKind::Demolish,
+            Goal::Eat(_) => GoalKind::Eat,
+            Goal::Lure => GoalKind::Lure,
+            Goal::Repel => GoalKind::Repel,
+            Goal::Avoid(_) => GoalKind::Avoid,
+        }
+    }
 }
 
 impl Default for Goal {

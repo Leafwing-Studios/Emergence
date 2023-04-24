@@ -1,24 +1,24 @@
 //! Code to display the status of each unit and crafting structure.
 
-use bevy::prelude::*;
-use bevy_mod_billboard::{prelude::BillboardPlugin, BillboardDepth, BillboardTextBundle};
+use bevy::prelude::{shape::Quad, *};
+use bevy_mod_billboard::{
+    prelude::{BillboardMeshHandle, BillboardPlugin, BillboardTexture},
+    BillboardDepth, BillboardTextureBundle,
+};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     asset_management::{manifest::Id, AssetState},
     construction::terraform::TerraformingAction,
-    crafting::components::{CraftingState, InputInventory, OutputInventory},
-    items::item_manifest::ItemManifest,
+    crafting::components::CraftingState,
     player_interaction::PlayerAction,
-    structures::structure_manifest::StructureManifest,
-    terrain::terrain_manifest::TerrainManifest,
     units::{
-        goals::Goal,
-        unit_manifest::{Unit, UnitManifest},
+        goals::{Goal, GoalKind},
+        unit_manifest::Unit,
     },
 };
 
-use super::FiraSansFontFamily;
+use super::ui_assets::Icons;
 
 /// Plugin that displays the status of each unit and crafting structure.
 pub(super) struct StatusPlugin;
@@ -47,8 +47,6 @@ enum StatusVisualization {
     Structures,
     /// Only display the status of units.
     Units,
-    /// Only display the status of terraforming actions.
-    Terraforming,
     /// Display all statuses.
     All,
 }
@@ -59,8 +57,7 @@ impl StatusVisualization {
         *self = match self {
             StatusVisualization::Off => StatusVisualization::Structures,
             StatusVisualization::Structures => StatusVisualization::Units,
-            StatusVisualization::Units => StatusVisualization::Terraforming,
-            StatusVisualization::Terraforming => StatusVisualization::All,
+            StatusVisualization::Units => StatusVisualization::All,
             StatusVisualization::All => StatusVisualization::Off,
         };
     }
@@ -71,7 +68,6 @@ impl StatusVisualization {
             StatusVisualization::Off => false,
             StatusVisualization::Structures => true,
             StatusVisualization::Units => false,
-            StatusVisualization::Terraforming => false,
             StatusVisualization::All => true,
         }
     }
@@ -82,19 +78,46 @@ impl StatusVisualization {
             StatusVisualization::Off => false,
             StatusVisualization::Structures => false,
             StatusVisualization::Units => true,
-            StatusVisualization::Terraforming => false,
             StatusVisualization::All => true,
         }
     }
+}
 
-    /// Returns true if the status of terraforming actions should be displayed.
-    fn terraforming_enabled(&self) -> bool {
-        match self {
-            StatusVisualization::Off => false,
-            StatusVisualization::Structures => false,
-            StatusVisualization::Units => false,
-            StatusVisualization::Terraforming => true,
-            StatusVisualization::All => true,
+/// How far along a crafting structure is in its current crafting process.
+///
+/// This is used to display the progress of the crafting process,
+/// and is a visual indicator of [`CraftingState`].
+///
+/// This isn't a one-to-one mapping of [`CraftingState`] because
+/// some states are ephemeral and don't need to be displayed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) enum CraftingProgress {
+    /// Crafting is stopped because the input inventory is empty.
+    NeedsInput,
+    /// Crafting is stopped because the output inventory is full.
+    FullAndBlocked,
+    /// Crafting is in progress: n/6ths of the way to completion.
+    InProgress(u8),
+    /// No recipe has been selected.
+    NoRecipe,
+}
+
+impl From<&CraftingState> for CraftingProgress {
+    fn from(state: &CraftingState) -> Self {
+        match state {
+            CraftingState::NeedsInput => CraftingProgress::NeedsInput,
+            CraftingState::InProgress { progress, required } => {
+                debug_assert!(progress <= required);
+                let fraction = progress.as_secs_f32() / required.as_secs_f32();
+                // Round to the nearest 1/6th.
+                // This allows for a maximum of 6 segments, and represents both 0 and 6 segments differently.
+                let n_segments = (fraction * 6.0).round() as u8;
+                CraftingProgress::InProgress(n_segments)
+            }
+            CraftingState::FullAndBlocked => CraftingProgress::FullAndBlocked,
+            CraftingState::RecipeComplete => CraftingProgress::InProgress(6),
+            CraftingState::Overproduction => CraftingProgress::InProgress(6),
+            CraftingState::NoRecipe => CraftingProgress::NoRecipe,
         }
     }
 }
@@ -126,38 +149,31 @@ fn add_status_displays(
             Without<StatusParent>,
         ),
     >,
-    fonts: Res<FiraSansFontFamily>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    /// The scale of the status text.
+    /// The scale of the icons.
     ///
-    ///  Default settings are way too big.
-    const TEXT_SCALE: f32 = 0.1;
+    /// This converts pixels to world units.
+    const ICON_SCALE: f32 = 2.0;
 
     /// The transform of the status display.
     const STATUS_TRANSFORM: Transform = Transform {
         // Float above the parent entity.
-        translation: Vec3::new(0.0, 0.5, 0.0),
+        translation: Vec3::new(0.0, 3.0, 0.0),
         rotation: Quat::IDENTITY,
-        scale: Vec3::new(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE),
+        scale: Vec3::new(ICON_SCALE, ICON_SCALE, ICON_SCALE),
     };
+
+    let mesh: Mesh = Quad::new(Vec2::new(1., 1.)).into();
+    // PERF: we could cache this mesh somewhere rather than recreating it every time
+    let mesh_handle = meshes.add(mesh);
 
     for parent_entity in query.iter() {
         let status_entity = commands
-            .spawn(BillboardTextBundle {
+            .spawn(BillboardTextureBundle {
                 billboard_depth: BillboardDepth(false),
-                // We don't care about setting the text on initialization
-                // because it will be set in the `display_status` system.
-                text: Text {
-                    // Allocate one section now: we'll set the text later.
-                    sections: vec![TextSection::from_style(TextStyle {
-                        font: fonts.regular.clone_weak(),
-                        font_size: 10.0,
-                        color: Color::WHITE,
-                    })],
-                    alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::WordBoundary,
-                },
                 transform: STATUS_TRANSFORM,
+                mesh: BillboardMeshHandle(mesh_handle.clone()),
                 ..Default::default()
             })
             .insert(StatusDisplay)
@@ -181,84 +197,52 @@ fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Goal, &StatusParent)>,
     crafting_query: Query<(&CraftingState, &StatusParent)>,
-    terraforming_query: Query<
-        (&InputInventory, &OutputInventory, &StatusParent),
-        With<TerraformingAction>,
+    mut status_icon_query: Query<
+        (&mut Handle<BillboardTexture>, &mut Visibility),
+        With<StatusDisplay>,
     >,
-    mut status_text_query: Query<(&mut Text, &mut Visibility), With<StatusDisplay>>,
-    item_manifest: Res<ItemManifest>,
-    structure_manifest: Res<StructureManifest>,
-    terrain_manifest: Res<TerrainManifest>,
-    unit_manifest: Res<UnitManifest>,
+    mut billboard_textures: ResMut<Assets<BillboardTexture>>,
+    crafting_progress_icons: Res<Icons<CraftingProgress>>,
+    goal_icons: Res<Icons<GoalKind>>,
 ) {
     if status_visualization.structures_enabled() {
         for (crafting_state, status) in crafting_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
+            let (mut status_icon, mut visibility) =
+                status_icon_query.get_mut(status.entity).unwrap();
+
+            let crafting_progress = CraftingProgress::from(crafting_state);
+            let image_handle = crafting_progress_icons.get(crafting_progress);
+
+            // PERF: this is dumb to reinsert every frame
+            *status_icon =
+                billboard_textures.add(BillboardTexture::Single(image_handle.clone_weak()));
 
             *visibility = Visibility::Inherited;
-            status_text.value = format!("{crafting_state}");
-            status_text.style.color = crafting_state.color();
         }
     } else {
         for (.., status) in crafting_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
     }
 
     if status_visualization.units_enabled() {
         for (goal, status) in unit_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
+            let (mut status_icon, mut visibility) =
+                status_icon_query.get_mut(status.entity).unwrap();
+
+            let goal_kind = GoalKind::from(goal);
+            let image_handle = goal_icons.get(goal_kind);
+
+            // PERF: this is dumb to reinsert every frame
+            *status_icon =
+                billboard_textures.add(BillboardTexture::Single(image_handle.clone_weak()));
 
             *visibility = Visibility::Inherited;
-            status_text.value = goal.display(
-                &item_manifest,
-                &structure_manifest,
-                &terrain_manifest,
-                &unit_manifest,
-            );
-            status_text.style.color = goal.color();
         }
     } else {
         for (.., status) in unit_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
-            *visibility = Visibility::Hidden;
-        }
-    }
-
-    if status_visualization.terraforming_enabled() {
-        for (input_inventory, output_inventory, status) in terraforming_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
-
-            *visibility = Visibility::Inherited;
-            // Clippy is wrong.
-            // The semantics here are different: an empty inventory has no items currently,
-            // but an inventory with zero length is a placeholder for an inventory that does not accept items.
-            #[allow(clippy::len_zero)]
-            let pulls_items = input_inventory.len() > 0;
-            #[allow(clippy::len_zero)]
-            let pushes_items = output_inventory.len() > 0;
-
-            status_text.value = match (pulls_items, pushes_items) {
-                (true, true) => format!(
-                    "Deliver {} + Remove {}",
-                    input_inventory.display(&item_manifest),
-                    output_inventory.display(&item_manifest)
-                ),
-                (true, false) => format!("Deliver {}", input_inventory.display(&item_manifest)),
-                (false, true) => format!("Remove {}", output_inventory.display(&item_manifest)),
-                (false, false) => String::new(),
-            };
-        }
-    } else {
-        for (.., status) in terraforming_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
     }

@@ -8,10 +8,17 @@ use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     construction::terraform::TerraformingTool,
     enum_iter::IterableEnum,
+    items::item_manifest::{Item, ItemManifest},
     player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
+    units::{
+        goals::GoalKind,
+        unit_manifest::{Unit, UnitManifest},
+    },
 };
+
+use super::status::CraftingProgress;
 
 /// The size of icons used to represent choices in menus
 pub(crate) const CHOICE_ICON_SIZE: f32 = 64.0;
@@ -46,9 +53,28 @@ pub(crate) struct Icons<D: Send + Sync + 'static> {
 }
 
 impl<D: Send + Sync + 'static + Hash + Eq> Icons<D> {
-    /// Returns a weakly cloned handle to the image of the icon corresponding to `structure_id`.
-    pub(crate) fn get(&self, structure_id: D) -> Handle<Image> {
-        self.map.get(&structure_id).unwrap().clone_weak()
+    /// Returns a weakly cloned handle to the image of the icon corresponding to `key`.
+    pub(crate) fn get(&self, key: D) -> Handle<Image> {
+        self.map.get(&key).unwrap().clone_weak()
+    }
+}
+
+impl FromWorld for Icons<Id<Item>> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let item_manifest = world.resource::<ItemManifest>();
+        let item_names = item_manifest.names();
+
+        let mut map = HashMap::new();
+
+        for id in item_names {
+            let item_id = Id::from_name(id.to_string());
+            let item_path = format!("icons/items/{id}.png");
+            let icon = asset_server.load(item_path);
+            map.insert(item_id, icon);
+        }
+
+        Icons { map }
     }
 }
 
@@ -101,6 +127,25 @@ impl FromWorld for Icons<TerraformingTool> {
     }
 }
 
+impl FromWorld for Icons<Id<Unit>> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let unit_manifest = world.resource::<UnitManifest>();
+        let unit_names = unit_manifest.names();
+
+        let mut map = HashMap::new();
+
+        for id in unit_names {
+            let unit_id = Id::from_name(id.to_string());
+            let unit_path = format!("icons/units/{id}.png");
+            let icon = asset_server.load(unit_path);
+            map.insert(unit_id, icon);
+        }
+
+        Icons { map }
+    }
+}
+
 impl FromWorld for Icons<IntentAbility> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
@@ -112,6 +157,66 @@ impl FromWorld for Icons<IntentAbility> {
             let icon = asset_server.load(ability_path);
             map.insert(ability, icon);
         }
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<CraftingProgress> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let mut map = HashMap::new();
+
+        map.insert(
+            CraftingProgress::NoRecipe,
+            asset_server.load("icons/crafting_progress/no_recipe.png"),
+        );
+        map.insert(
+            CraftingProgress::NeedsInput,
+            asset_server.load("icons/crafting_progress/needs_input.png"),
+        );
+        map.insert(
+            CraftingProgress::FullAndBlocked,
+            asset_server.load("icons/crafting_progress/full_and_blocked.png"),
+        );
+
+        for wedges in 0..=6 {
+            let path = format!("icons/crafting_progress/progress_{wedges}_of_6.png");
+            let icon = asset_server.load(path);
+            map.insert(CraftingProgress::InProgress(wedges), icon);
+        }
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<GoalKind> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let mut map = HashMap::new();
+
+        map.insert(GoalKind::Avoid, asset_server.load("icons/goals/avoid.png"));
+        map.insert(
+            GoalKind::Deliver,
+            asset_server.load("icons/goals/deliver.png"),
+        );
+        map.insert(
+            GoalKind::Demolish,
+            asset_server.load("icons/goals/demolish.png"),
+        );
+        map.insert(GoalKind::Eat, asset_server.load("icons/goals/eat.png"));
+        map.insert(GoalKind::Fetch, asset_server.load("icons/goals/fetch.png"));
+        map.insert(GoalKind::Lure, asset_server.load("icons/goals/lure.png"));
+        map.insert(
+            GoalKind::Remove,
+            asset_server.load("icons/goals/remove.png"),
+        );
+        map.insert(GoalKind::Repel, asset_server.load("icons/goals/repel.png"));
+        map.insert(GoalKind::Store, asset_server.load("icons/goals/store.png"));
+        map.insert(
+            GoalKind::Wander,
+            asset_server.load("icons/goals/wander.png"),
+        );
 
         Icons { map }
     }
