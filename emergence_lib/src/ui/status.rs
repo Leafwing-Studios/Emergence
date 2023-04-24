@@ -10,14 +10,11 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::{manifest::Id, AssetState},
     construction::terraform::TerraformingAction,
-    crafting::components::{CraftingState, InputInventory, OutputInventory},
-    items::item_manifest::ItemManifest,
+    crafting::components::CraftingState,
     player_interaction::PlayerAction,
-    structures::structure_manifest::StructureManifest,
-    terrain::terrain_manifest::TerrainManifest,
     units::{
         goals::{Goal, GoalKind},
-        unit_manifest::{Unit, UnitManifest},
+        unit_manifest::Unit,
     },
 };
 
@@ -50,8 +47,6 @@ enum StatusVisualization {
     Structures,
     /// Only display the status of units.
     Units,
-    /// Only display the status of terraforming actions.
-    Terraforming,
     /// Display all statuses.
     All,
 }
@@ -62,8 +57,7 @@ impl StatusVisualization {
         *self = match self {
             StatusVisualization::Off => StatusVisualization::Structures,
             StatusVisualization::Structures => StatusVisualization::Units,
-            StatusVisualization::Units => StatusVisualization::Terraforming,
-            StatusVisualization::Terraforming => StatusVisualization::All,
+            StatusVisualization::Units => StatusVisualization::All,
             StatusVisualization::All => StatusVisualization::Off,
         };
     }
@@ -74,7 +68,6 @@ impl StatusVisualization {
             StatusVisualization::Off => false,
             StatusVisualization::Structures => true,
             StatusVisualization::Units => false,
-            StatusVisualization::Terraforming => false,
             StatusVisualization::All => true,
         }
     }
@@ -85,18 +78,6 @@ impl StatusVisualization {
             StatusVisualization::Off => false,
             StatusVisualization::Structures => false,
             StatusVisualization::Units => true,
-            StatusVisualization::Terraforming => false,
-            StatusVisualization::All => true,
-        }
-    }
-
-    /// Returns true if the status of terraforming actions should be displayed.
-    fn terraforming_enabled(&self) -> bool {
-        match self {
-            StatusVisualization::Off => false,
-            StatusVisualization::Structures => false,
-            StatusVisualization::Units => false,
-            StatusVisualization::Terraforming => true,
             StatusVisualization::All => true,
         }
     }
@@ -216,21 +197,13 @@ fn display_status(
     status_visualization: Res<StatusVisualization>,
     unit_query: Query<(&Goal, &StatusParent)>,
     crafting_query: Query<(&CraftingState, &StatusParent)>,
-    terraforming_query: Query<
-        (&InputInventory, &OutputInventory, &StatusParent),
-        With<TerraformingAction>,
-    >,
     mut status_icon_query: Query<
         (&mut Handle<BillboardTexture>, &mut Visibility),
         With<StatusDisplay>,
     >,
-    item_manifest: Res<ItemManifest>,
     mut billboard_textures: ResMut<Assets<BillboardTexture>>,
     crafting_progress_icons: Res<Icons<CraftingProgress>>,
     goal_icons: Res<Icons<GoalKind>>,
-    structure_manifest: Res<StructureManifest>,
-    terrain_manifest: Res<TerrainManifest>,
-    unit_manifest: Res<UnitManifest>,
 ) {
     if status_visualization.structures_enabled() {
         for (crafting_state, status) in crafting_query.iter() {
@@ -269,39 +242,6 @@ fn display_status(
         }
     } else {
         for (.., status) in unit_query.iter() {
-            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
-            *visibility = Visibility::Hidden;
-        }
-    }
-
-    if status_visualization.terraforming_enabled() {
-        for (input_inventory, output_inventory, status) in terraforming_query.iter() {
-            let (mut status_icon, mut visibility) =
-                status_icon_query.get_mut(status.entity).unwrap();
-
-            *visibility = Visibility::Inherited;
-            // Clippy is wrong.
-            // The semantics here are different: an empty inventory has no items currently,
-            // but an inventory with zero length is a placeholder for an inventory that does not accept items.
-            #[allow(clippy::len_zero)]
-            let pulls_items = input_inventory.len() > 0;
-            #[allow(clippy::len_zero)]
-            let pushes_items = output_inventory.len() > 0;
-
-            // TODO: set the icon based on the type of terraforming action
-            match (pulls_items, pushes_items) {
-                (true, true) => format!(
-                    "Deliver {} + Remove {}",
-                    input_inventory.display(&item_manifest),
-                    output_inventory.display(&item_manifest)
-                ),
-                (true, false) => format!("Deliver {}", input_inventory.display(&item_manifest)),
-                (false, true) => format!("Remove {}", output_inventory.display(&item_manifest)),
-                (false, false) => String::new(),
-            };
-        }
-    } else {
-        for (.., status) in terraforming_query.iter() {
             let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
