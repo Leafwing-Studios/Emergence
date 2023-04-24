@@ -212,7 +212,6 @@ fn mark_for_demolition(
 /// Spawn and despawn ghosts and apply other markings based on zoning.
 fn mark_based_on_zoning(
     mut terrain_query: Query<(Entity, &mut Zoning, &TilePos, &Id<Terrain>), Changed<Zoning>>,
-    can_build_query: Query<&Id<Terrain>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
@@ -221,18 +220,10 @@ fn mark_based_on_zoning(
         // Reborrowing here would trigger change detection, causing this system to constantly check
         match zoning.bypass_change_detection() {
             Zoning::Structure(clipboard_data) => {
-                let construction_data =
-                    structure_manifest.construction_data(clipboard_data.structure_id);
                 let footprint =
                     structure_manifest.construction_footprint(clipboard_data.structure_id);
-                let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-                if map_geometry.can_build(
-                    tile_pos,
-                    footprint.rotated(clipboard_data.facing),
-                    &can_build_query,
-                    allowed_terrain_types,
-                ) {
+                if map_geometry.can_build(tile_pos, footprint.rotated(clipboard_data.facing)) {
                     commands.spawn_ghost_structure(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

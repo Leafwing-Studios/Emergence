@@ -12,7 +12,7 @@ use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
-use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
+use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
 use bevy::utils::{Duration, HashMap};
@@ -179,7 +179,7 @@ impl GhostStructureBundle {
     }
 }
 
-/// The set of components needed to spawn a ghost of a [`Terrain`].
+/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
 #[derive(Bundle)]
 pub(crate) struct GhostTerrainBundle {
     /// Shared components across all ghosts
@@ -304,7 +304,7 @@ impl StructurePreviewBundle {
     }
 }
 
-/// The components needed to create a preview of a [`Terrain`].
+/// The components needed to create a preview of a [`TerraformingAction`].
 #[derive(Bundle)]
 pub(crate) struct TerrainPreviewBundle {
     /// Shared components for all previews
@@ -604,7 +604,6 @@ pub(super) fn validate_ghost_structures(
     map_geometry: Res<MapGeometry>,
     ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
     structure_manifest: Res<StructureManifest>,
-    terrain_query: Query<&Id<Terrain>>,
     mut commands: Commands,
 ) {
     // We only need to validate this when the map geometry changes.
@@ -615,10 +614,8 @@ pub(super) fn validate_ghost_structures(
     for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
         let footprint = structure_details.footprint.rotated(facing);
-        let construction_data = structure_manifest.construction_data(structure_id);
-        let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-        if !map_geometry.can_build(tile_pos, footprint, &terrain_query, allowed_terrain_types) {
+        if !map_geometry.can_build(tile_pos, footprint) {
             commands.despawn_ghost_structure(tile_pos);
         }
     }

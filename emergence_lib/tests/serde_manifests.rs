@@ -1,4 +1,4 @@
-use bevy::utils::{HashMap, HashSet};
+use bevy::utils::HashMap;
 use emergence_lib::{
     construction::RawConstructionStrategy,
     crafting::components::RawActiveRecipe,
@@ -233,10 +233,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(3.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                        allowed_terrain_types: HashSet::from_iter([
-                            "loam".to_string(),
-                            "muddy".to_string(),
-                        ]),
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
@@ -251,7 +247,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(3.),
                         materials: HashMap::new(),
-                        allowed_terrain_types: HashSet::new(),
                     },
                     max_workers: 1,
                     footprint: Some(Footprint::path()),
@@ -276,10 +271,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: None,
                         materials: HashMap::from_iter([("acacia_seed".to_string(), 1)]),
-                        allowed_terrain_types: HashSet::from_iter([
-                            "loam".to_string(),
-                            "muddy".to_string(),
-                        ]),
                     },
                     max_workers: 1,
                     footprint: Some(Footprint::single()),
@@ -338,11 +329,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(10.),
                         materials: HashMap::new(),
-                        allowed_terrain_types: HashSet::from_iter([
-                            "loam".to_string(),
-                            "muddy".to_string(),
-                            "rocky".to_string(),
-                        ]),
                     },
                     max_workers: 3,
                     footprint: Some(Footprint::hexagon(1)),
@@ -359,11 +345,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(5.),
                         materials: HashMap::new(),
-                        allowed_terrain_types: HashSet::from_iter([
-                            "loam".to_string(),
-                            "muddy".to_string(),
-                            "rocky".to_string(),
-                        ]),
                     },
                     max_workers: 6,
                     // Forms a crescent shape
@@ -382,11 +363,6 @@ fn can_serialize_structure_manifest() {
                     construction_strategy: RawConstructionStrategy::Direct {
                         work: Some(10.),
                         materials: HashMap::from_iter([("leuco_chunk".to_string(), 1)]),
-                        allowed_terrain_types: HashSet::from_iter([
-                            "loam".to_string(),
-                            "muddy".to_string(),
-                            "rocky".to_string(),
-                        ]),
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),

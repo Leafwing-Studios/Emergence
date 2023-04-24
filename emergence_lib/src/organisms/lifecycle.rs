@@ -216,25 +216,16 @@ pub(super) fn transform_when_lifecycle_complete(
     unit_manifest: Res<UnitManifest>,
     unit_handles: Res<UnitHandles>,
     map_geometry: Res<MapGeometry>,
-    terrain_query: Query<&Id<Terrain>>,
     mut commands: Commands,
 ) {
     for (entity, lifecycle, &tile_pos, &facing, maybe_unit) in query.iter() {
         for new_form in lifecycle.new_forms() {
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
-                let construction_data = structure_manifest.construction_data(structure_id);
                 let variety = structure_manifest.get(structure_id);
                 let footprint = variety.footprint.rotated(facing);
-                let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-                if !map_geometry.can_transform(
-                    entity,
-                    tile_pos,
-                    footprint,
-                    &terrain_query,
-                    allowed_terrain_types,
-                ) {
+                if !map_geometry.can_transform(entity, tile_pos, footprint) {
                     // Look for another viable form to transform into.
                     continue;
                 }
@@ -281,7 +272,6 @@ pub(super) fn transform_when_lifecycle_complete(
 /// Items with [`ItemTag::Seed`](crate::crafting::item_tags::ItemTag) that are dropped on the ground will be consumed and transformed into a new organism.
 pub(super) fn sprout_seeds(
     mut litter_query: Query<(&TilePos, &mut StorageInventory), With<Id<Terrain>>>,
-    terrain_query: Query<&Id<Terrain>>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -310,17 +300,10 @@ pub(super) fn sprout_seeds(
 
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = organism_id {
-                let construction_data = structure_manifest.construction_data(structure_id);
                 let variety = structure_manifest.get(structure_id);
                 let footprint = variety.footprint.rotated(facing);
-                let allowed_terrain_types = &construction_data.allowed_terrain_types;
 
-                if !map_geometry.can_build(
-                    tile_pos,
-                    footprint,
-                    &terrain_query,
-                    allowed_terrain_types,
-                ) {
+                if !map_geometry.can_build(tile_pos, footprint) {
                     // We can't germinate here
                     continue;
                 }
