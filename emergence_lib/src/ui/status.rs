@@ -99,6 +99,45 @@ impl StatusVisualization {
     }
 }
 
+/// How far along a crafting structure is in its current crafting process.
+///
+/// This is used to display the progress of the crafting process,
+/// and is a visual indicator of [`CraftingState`].
+///
+/// This isn't a one-to-one mapping of [`CraftingState`] because
+/// some states are ephemeral and don't need to be displayed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) enum CraftingProgress {
+    /// Crafting is stopped because the input inventory is empty.
+    NeedsInput,
+    /// Crafting is stopped because the output inventory is full.
+    FullAndBlocked,
+    /// Crafting is in progress: n/6ths of the way to completion.
+    InProgress(u8),
+    /// No recipe has been selected.
+    NoRecipe,
+}
+
+impl From<CraftingState> for CraftingProgress {
+    fn from(state: CraftingState) -> Self {
+        match state {
+            CraftingState::NeedsInput => CraftingProgress::NeedsInput,
+            CraftingState::InProgress { progress, required } => {
+                debug_assert!(progress <= required);
+                let fraction = progress.as_secs_f32() / required.as_secs_f32();
+                // Round to the nearest 1/6th.
+                // This allows for a maximum of 6 segments, and represents both 0 and 6 segments differently.
+                let n_segments = (fraction * 6.0).round() as u8;
+                CraftingProgress::InProgress(n_segments)
+            }
+            CraftingState::FullAndBlocked => CraftingProgress::FullAndBlocked,
+            CraftingState::RecipeComplete => CraftingProgress::InProgress(6),
+            CraftingState::Overproduction => CraftingProgress::InProgress(6),
+            CraftingState::NoRecipe => CraftingProgress::NoRecipe,
+        }
+    }
+}
+
 /// Cycles between status display options.
 fn cycle_status_visualization(
     mut status_visualization: ResMut<StatusVisualization>,

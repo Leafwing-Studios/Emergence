@@ -15,6 +15,8 @@ use crate::{
     units::unit_manifest::{Unit, UnitManifest},
 };
 
+use super::status::CraftingProgress;
+
 /// The size of icons used to represent choices in menus
 pub(crate) const CHOICE_ICON_SIZE: f32 = 64.0;
 
@@ -151,6 +153,34 @@ impl FromWorld for Icons<IntentAbility> {
             let ability_path = format!("icons/abilities/{ability_name}.png");
             let icon = asset_server.load(ability_path);
             map.insert(ability, icon);
+        }
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<CraftingProgress> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let mut map = HashMap::new();
+
+        map.insert(
+            CraftingProgress::NoRecipe,
+            asset_server.load("icons/crafting_progress/no_recipe.png"),
+        );
+        map.insert(
+            CraftingProgress::NeedsInput,
+            asset_server.load("icons/crafting_progress/needs_input.png"),
+        );
+        map.insert(
+            CraftingProgress::FullAndBlocked,
+            asset_server.load("icons/crafting_progress/full_and_blocked.png"),
+        );
+
+        for wedges in 0..=6 {
+            let path = format!("icons/crafting_progress/progress_{wedges}_of_6.png");
+            let icon = asset_server.load(path);
+            map.insert(CraftingProgress::InProgress(wedges), icon);
         }
 
         Icons { map }
