@@ -239,6 +239,7 @@ fn display_status(
             let crafting_progress = CraftingProgress::from(crafting_state);
             let image_handle = crafting_progress_icons.get(crafting_progress);
 
+            // PERF: this is dumb to reinsert every frame
             *status_icon =
                 billboard_textures.add(BillboardTexture::Single(image_handle.clone_weak()));
 
