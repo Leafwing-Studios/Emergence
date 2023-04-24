@@ -8,6 +8,7 @@ use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     construction::terraform::TerraformingTool,
     enum_iter::IterableEnum,
+    items::item_manifest::{Item, ItemManifest},
     player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
@@ -50,6 +51,25 @@ impl<D: Send + Sync + 'static + Hash + Eq> Icons<D> {
     /// Returns a weakly cloned handle to the image of the icon corresponding to `structure_id`.
     pub(crate) fn get(&self, structure_id: D) -> Handle<Image> {
         self.map.get(&structure_id).unwrap().clone_weak()
+    }
+}
+
+impl FromWorld for Icons<Id<Item>> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let item_manifest = world.resource::<ItemManifest>();
+        let item_names = item_manifest.names();
+
+        let mut map = HashMap::new();
+
+        for id in item_names {
+            let item_id = Id::from_name(id.to_string());
+            let item_path = format!("icons/items/{id}.png");
+            let icon = asset_server.load(item_path);
+            map.insert(item_id, icon);
+        }
+
+        Icons { map }
     }
 }
 
