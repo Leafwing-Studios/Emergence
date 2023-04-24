@@ -447,6 +447,7 @@ impl MapGeometry {
         facing: &Facing,
     ) -> bool {
         footprint
+            .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
             .all(|tile_pos| self.is_valid(*tile_pos))
@@ -508,10 +509,14 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: &Facing,
     ) -> bool {
-        footprint.in_world_space(center).iter().all(|tile_pos| {
-            let entity = self.get_structure(*tile_pos);
-            entity.is_none() || entity == Some(existing_entity)
-        })
+        footprint
+            .rotated(facing)
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| {
+                let entity = self.get_structure(*tile_pos);
+                entity.is_none() || entity == Some(existing_entity)
+            })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
@@ -526,6 +531,7 @@ impl MapGeometry {
         let height = self.get_height(center).unwrap();
 
         footprint
+            .rotated(facing)
             .in_world_space(center)
             .iter()
             .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
