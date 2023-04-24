@@ -130,27 +130,49 @@ impl Command for SpawnStructureCommand {
         let structure_variety = manifest.get(structure_id).clone();
 
         // Check that the tiles needed are appropriate.
-        let rotated_footprint = structure_variety.footprint.rotated(self.data.facing);
-
-        if !geometry.can_build(self.tile_pos, &rotated_footprint) {
+        if !geometry.can_build(
+            self.tile_pos,
+            &structure_variety.footprint,
+            &self.data.facing,
+        ) {
             if self.fix_terrain {
-                if !geometry.is_footprint_valid(self.tile_pos, &rotated_footprint) {
+                if !geometry.is_footprint_valid(
+                    self.tile_pos,
+                    &structure_variety.footprint,
+                    &self.data.facing,
+                ) {
                     // Nothing we can do about out-of-bounds :(
                     return;
                 }
 
-                if !geometry.is_space_available(self.tile_pos, &rotated_footprint) {
+                if !geometry.is_space_available(
+                    self.tile_pos,
+                    &structure_variety.footprint,
+                    &self.data.facing,
+                ) {
                     // Don't try to remove existing structures.
                     // Instead, generate structures in order of importance.
                     return;
                 }
 
-                if !geometry.is_terrain_flat(self.tile_pos, &rotated_footprint) {
+                if !geometry.is_terrain_flat(
+                    self.tile_pos,
+                    &structure_variety.footprint,
+                    &self.data.facing,
+                ) {
                     // Flatten the terrain if it's not flat.
-                    geometry.flatten_terrain(self.tile_pos, &rotated_footprint);
+                    geometry.flatten_terrain(
+                        self.tile_pos,
+                        &structure_variety.footprint,
+                        &self.data.facing,
+                    );
                 }
 
-                assert!(geometry.can_build(self.tile_pos, &rotated_footprint));
+                assert!(geometry.can_build(
+                    self.tile_pos,
+                    &structure_variety.footprint,
+                    &self.data.facing,
+                ));
             } else {
                 // Most of the time, we should just give up if the terrain is wrong.
                 return;
@@ -290,10 +312,7 @@ impl Command for SpawnStructureGhostCommand {
         let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(
-            self.tile_pos,
-            &construction_footprint.rotated(self.data.facing),
-        ) {
+        if !geometry.can_build(self.tile_pos, &construction_footprint, &self.data.facing) {
             return;
         }
 
@@ -397,7 +416,8 @@ impl Command for SpawnStructurePreviewCommand {
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint.rotated(self.data.facing),
+            &structure_variety.footprint,
+            &self.data.facing,
         );
 
         // Fetch the scene and material to use
