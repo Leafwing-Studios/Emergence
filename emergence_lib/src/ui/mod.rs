@@ -17,6 +17,7 @@ use crate::{
         status::StatusPlugin,
         ui_assets::{Icons, UiElements},
     },
+    units::unit_manifest::Unit,
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -56,6 +57,7 @@ impl Plugin for UiPlugin {
         })
         .add_asset_collection::<UiElements>()
         .add_asset_collection::<Icons<Id<Structure>>>()
+        .add_asset_collection::<Icons<Id<Unit>>>()
         .add_asset_collection::<Icons<TerraformingTool>>()
         .add_asset_collection::<Icons<IntentAbility>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))

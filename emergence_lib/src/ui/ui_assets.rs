@@ -11,6 +11,7 @@ use crate::{
     player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
+    units::unit_manifest::{Unit, UnitManifest},
 };
 
 /// The size of icons used to represent choices in menus
@@ -96,6 +97,25 @@ impl FromWorld for Icons<TerraformingTool> {
             TerraformingTool::Raise,
             asset_server.load("icons/terraforming/raise.png"),
         );
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<Id<Unit>> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let unit_manifest = world.resource::<UnitManifest>();
+        let unit_names = unit_manifest.names();
+
+        let mut map = HashMap::new();
+
+        for id in unit_names {
+            let unit_id = Id::from_name(id.to_string());
+            let unit_path = format!("icons/units/{id}.png");
+            let icon = asset_server.load(unit_path);
+            map.insert(unit_id, icon);
+        }
 
         Icons { map }
     }
