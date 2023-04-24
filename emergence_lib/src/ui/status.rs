@@ -16,7 +16,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::{
-        goals::Goal,
+        goals::{Goal, GoalKind},
         unit_manifest::{Unit, UnitManifest},
     },
 };
@@ -227,6 +227,7 @@ fn display_status(
     item_manifest: Res<ItemManifest>,
     mut billboard_textures: ResMut<Assets<BillboardTexture>>,
     crafting_progress_icons: Res<Icons<CraftingProgress>>,
+    goal_icons: Res<Icons<GoalKind>>,
     structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -257,7 +258,14 @@ fn display_status(
             let (mut status_icon, mut visibility) =
                 status_icon_query.get_mut(status.entity).unwrap();
 
-            // TODO: set the icon based on the goal
+            let goal_kind = GoalKind::from(goal);
+            let image_handle = goal_icons.get(goal_kind);
+
+            // PERF: this is dumb to reinsert every frame
+            *status_icon =
+                billboard_textures.add(BillboardTexture::Single(image_handle.clone_weak()));
+
+            *visibility = Visibility::Inherited;
         }
     } else {
         for (.., status) in unit_query.iter() {

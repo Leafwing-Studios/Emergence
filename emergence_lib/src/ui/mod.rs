@@ -17,7 +17,7 @@ use crate::{
         status::{CraftingProgress, StatusPlugin},
         ui_assets::{Icons, UiElements},
     },
-    units::unit_manifest::Unit,
+    units::{goals::GoalKind, unit_manifest::Unit},
 };
 use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -61,6 +61,7 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<Icons<TerraformingTool>>()
         .add_asset_collection::<Icons<IntentAbility>>()
         .add_asset_collection::<Icons<CraftingProgress>>()
+        .add_asset_collection::<Icons<GoalKind>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)

@@ -12,7 +12,10 @@ use crate::{
     player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
-    units::unit_manifest::{Unit, UnitManifest},
+    units::{
+        goals::GoalKind,
+        unit_manifest::{Unit, UnitManifest},
+    },
 };
 
 use super::status::CraftingProgress;
@@ -182,6 +185,38 @@ impl FromWorld for Icons<CraftingProgress> {
             let icon = asset_server.load(path);
             map.insert(CraftingProgress::InProgress(wedges), icon);
         }
+
+        Icons { map }
+    }
+}
+
+impl FromWorld for Icons<GoalKind> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let mut map = HashMap::new();
+
+        map.insert(GoalKind::Avoid, asset_server.load("icons/goals/avoid.png"));
+        map.insert(
+            GoalKind::Deliver,
+            asset_server.load("icons/goals/deliver.png"),
+        );
+        map.insert(
+            GoalKind::Demolish,
+            asset_server.load("icons/goals/demolish.png"),
+        );
+        map.insert(GoalKind::Eat, asset_server.load("icons/goals/eat.png"));
+        map.insert(GoalKind::Fetch, asset_server.load("icons/goals/fetch.png"));
+        map.insert(GoalKind::Lure, asset_server.load("icons/goals/lure.png"));
+        map.insert(
+            GoalKind::Remove,
+            asset_server.load("icons/goals/remove.png"),
+        );
+        map.insert(GoalKind::Repel, asset_server.load("icons/goals/repel.png"));
+        map.insert(GoalKind::Store, asset_server.load("icons/goals/store.png"));
+        map.insert(
+            GoalKind::Wander,
+            asset_server.load("icons/goals/wander.png"),
+        );
 
         Icons { map }
     }
