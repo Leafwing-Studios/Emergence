@@ -1,7 +1,10 @@
 //! Code to display the status of each unit and crafting structure.
 
-use bevy::prelude::*;
-use bevy_mod_billboard::{prelude::BillboardPlugin, BillboardDepth, BillboardTextBundle};
+use bevy::prelude::{shape::Quad, *};
+use bevy_mod_billboard::{
+    prelude::{BillboardMeshHandle, BillboardPlugin, BillboardTexture},
+    BillboardDepth, BillboardTextureBundle,
+};
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -18,7 +21,7 @@ use crate::{
     },
 };
 
-use super::FiraSansFontFamily;
+use super::ui_assets::Icons;
 
 /// Plugin that displays the status of each unit and crafting structure.
 pub(super) struct StatusPlugin;
@@ -118,8 +121,8 @@ pub(super) enum CraftingProgress {
     NoRecipe,
 }
 
-impl From<CraftingState> for CraftingProgress {
-    fn from(state: CraftingState) -> Self {
+impl From<&CraftingState> for CraftingProgress {
+    fn from(state: &CraftingState) -> Self {
         match state {
             CraftingState::NeedsInput => CraftingProgress::NeedsInput,
             CraftingState::InProgress { progress, required } => {
@@ -165,38 +168,31 @@ fn add_status_displays(
             Without<StatusParent>,
         ),
     >,
-    fonts: Res<FiraSansFontFamily>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    /// The scale of the status text.
+    /// The scale of the icons.
     ///
-    ///  Default settings are way too big.
-    const TEXT_SCALE: f32 = 0.1;
+    /// This converts pixels to world units.
+    const ICON_SCALE: f32 = 2.0;
 
     /// The transform of the status display.
     const STATUS_TRANSFORM: Transform = Transform {
         // Float above the parent entity.
-        translation: Vec3::new(0.0, 0.5, 0.0),
+        translation: Vec3::new(0.0, 3.0, 0.0),
         rotation: Quat::IDENTITY,
-        scale: Vec3::new(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE),
+        scale: Vec3::new(ICON_SCALE, ICON_SCALE, ICON_SCALE),
     };
+
+    let mesh: Mesh = Quad::new(Vec2::new(1., 1.)).into();
+    // PERF: we could cache this mesh somewhere rather than recreating it every time
+    let mesh_handle = meshes.add(mesh);
 
     for parent_entity in query.iter() {
         let status_entity = commands
-            .spawn(BillboardTextBundle {
+            .spawn(BillboardTextureBundle {
                 billboard_depth: BillboardDepth(false),
-                // We don't care about setting the text on initialization
-                // because it will be set in the `display_status` system.
-                text: Text {
-                    // Allocate one section now: we'll set the text later.
-                    sections: vec![TextSection::from_style(TextStyle {
-                        font: fonts.regular.clone_weak(),
-                        font_size: 10.0,
-                        color: Color::WHITE,
-                    })],
-                    alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::WordBoundary,
-                },
                 transform: STATUS_TRANSFORM,
+                mesh: BillboardMeshHandle(mesh_handle.clone()),
                 ..Default::default()
             })
             .insert(StatusDisplay)
@@ -224,56 +220,55 @@ fn display_status(
         (&InputInventory, &OutputInventory, &StatusParent),
         With<TerraformingAction>,
     >,
-    mut status_text_query: Query<(&mut Text, &mut Visibility), With<StatusDisplay>>,
+    mut status_icon_query: Query<
+        (&mut Handle<BillboardTexture>, &mut Visibility),
+        With<StatusDisplay>,
+    >,
     item_manifest: Res<ItemManifest>,
+    mut billboard_textures: ResMut<Assets<BillboardTexture>>,
+    crafting_progress_icons: Res<Icons<CraftingProgress>>,
     structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
     unit_manifest: Res<UnitManifest>,
 ) {
     if status_visualization.structures_enabled() {
         for (crafting_state, status) in crafting_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
+            let (mut status_icon, mut visibility) =
+                status_icon_query.get_mut(status.entity).unwrap();
+
+            let crafting_progress = CraftingProgress::from(crafting_state);
+            let image_handle = crafting_progress_icons.get(crafting_progress);
+
+            *status_icon =
+                billboard_textures.add(BillboardTexture::Single(image_handle.clone_weak()));
 
             *visibility = Visibility::Inherited;
-            status_text.value = format!("{crafting_state}");
-            status_text.style.color = crafting_state.color();
         }
     } else {
         for (.., status) in crafting_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
     }
 
     if status_visualization.units_enabled() {
         for (goal, status) in unit_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
+            let (mut status_icon, mut visibility) =
+                status_icon_query.get_mut(status.entity).unwrap();
 
-            *visibility = Visibility::Inherited;
-            status_text.value = goal.display(
-                &item_manifest,
-                &structure_manifest,
-                &terrain_manifest,
-                &unit_manifest,
-            );
-            status_text.style.color = goal.color();
+            // TODO: set the icon based on the goal
         }
     } else {
         for (.., status) in unit_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
     }
 
     if status_visualization.terraforming_enabled() {
         for (input_inventory, output_inventory, status) in terraforming_query.iter() {
-            let (mut status_text, mut visibility) =
-                status_text_query.get_mut(status.entity).unwrap();
-            let status_text = &mut status_text.sections[0];
+            let (mut status_icon, mut visibility) =
+                status_icon_query.get_mut(status.entity).unwrap();
 
             *visibility = Visibility::Inherited;
             // Clippy is wrong.
@@ -284,7 +279,8 @@ fn display_status(
             #[allow(clippy::len_zero)]
             let pushes_items = output_inventory.len() > 0;
 
-            status_text.value = match (pulls_items, pushes_items) {
+            // TODO: set the icon based on the type of terraforming action
+            match (pulls_items, pushes_items) {
                 (true, true) => format!(
                     "Deliver {} + Remove {}",
                     input_inventory.display(&item_manifest),
@@ -297,7 +293,7 @@ fn display_status(
         }
     } else {
         for (.., status) in terraforming_query.iter() {
-            let (_, mut visibility) = status_text_query.get_mut(status.entity).unwrap();
+            let (_, mut visibility) = status_icon_query.get_mut(status.entity).unwrap();
             *visibility = Visibility::Hidden;
         }
     }

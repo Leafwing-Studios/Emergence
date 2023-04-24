@@ -50,9 +50,9 @@ pub(crate) struct Icons<D: Send + Sync + 'static> {
 }
 
 impl<D: Send + Sync + 'static + Hash + Eq> Icons<D> {
-    /// Returns a weakly cloned handle to the image of the icon corresponding to `structure_id`.
-    pub(crate) fn get(&self, structure_id: D) -> Handle<Image> {
-        self.map.get(&structure_id).unwrap().clone_weak()
+    /// Returns a weakly cloned handle to the image of the icon corresponding to `key`.
+    pub(crate) fn get(&self, key: D) -> Handle<Image> {
+        self.map.get(&key).unwrap().clone_weak()
     }
 }
 
