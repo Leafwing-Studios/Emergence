@@ -4,11 +4,11 @@ use crate::asset_management::AssetState;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::structures::commands::StructureCommandsExt;
-use crate::structures::structure_manifest::StructureManifest;
+use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_assets::UnitHandles;
-use crate::units::unit_manifest::UnitManifest;
+use crate::units::unit_manifest::{Unit, UnitManifest};
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
@@ -27,14 +27,10 @@ use rand::{thread_rng, Rng};
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
-    /// Chance that each tile contains an ant.
-    chance_ant: f32,
-    /// Chance that each tile contains a plant.
-    chance_plant: f32,
-    /// Chance that each tile contains a fungi.
-    chance_fungi: f32,
-    /// Chance that each tile contains a hive.
-    chance_hive: f32,
+    /// Chance that each tile contains a unit of the given type.
+    unit_chances: HashMap<Id<Unit>, f32>,
+    /// Chance that each tile contains a structure of the given type.
+    structure_chances: HashMap<Id<Structure>, f32>,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Id<Terrain>, f32>,
     /// Controls and shape of the hills.
@@ -51,12 +47,18 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("muddy".to_string()), 0.3);
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
+        let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        unit_chances.insert(Id::from_name("ant".to_string()), 0.1);
+
+        let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        structure_chances.insert(Id::from_name("ant_hive".to_string()), 0.02);
+        structure_chances.insert(Id::from_name("acacia".to_string()), 0.02);
+        structure_chances.insert(Id::from_name("leuco".to_string()), 0.02);
+
         GenerationConfig {
             map_radius: 40,
-            chance_ant: 0.1,
-            chance_plant: 0.2,
-            chance_fungi: 0.1,
-            chance_hive: 0.02,
+            unit_chances,
+            structure_chances,
             terrain_weights,
             hill_settings: HillSettings {
                 center: TilePos::ZERO,
@@ -232,38 +234,28 @@ fn generate_organisms(
     info!("Generating organisms...");
     let rng = &mut thread_rng();
 
-    let fungi_data =
-        ClipboardData::generate_from_id(Id::from_name("leuco".to_string()), &*structure_manifest);
-    let plant_data =
-        ClipboardData::generate_from_id(Id::from_name("acacia".to_string()), &*structure_manifest);
-    let hive_data = ClipboardData::generate_from_id(
-        Id::from_name("ant_hive".to_string()),
-        &*structure_manifest,
-    );
-
     for tile_pos in map_geometry.valid_tile_positions() {
-        if rng.gen::<f32>() < config.chance_hive {
-            // FIXME: flatten terrain before placing organisms if needed
-            commands.generate_structure(tile_pos, hive_data.clone(), rng);
+        for (&structure_id, &chance) in &config.structure_chances {
+            if rng.gen::<f32>() < chance {
+                commands.generate_structure(
+                    tile_pos,
+                    ClipboardData::generate_from_id(structure_id, &*structure_manifest),
+                    rng,
+                );
+            }
         }
 
-        if rng.gen::<f32>() < config.chance_plant {
-            commands.generate_structure(tile_pos, plant_data.clone(), rng);
-        }
-
-        if rng.gen::<f32>() < config.chance_fungi {
-            commands.generate_structure(tile_pos, fungi_data.clone(), rng);
-        }
-
-        if rng.gen::<f32>() < config.chance_ant {
-            commands.spawn(UnitBundle::randomized(
-                Id::from_name("ant".to_string()),
-                tile_pos,
-                unit_manifest.get(Id::from_name("ant".to_string())).clone(),
-                &unit_handles,
-                &map_geometry,
-                rng,
-            ));
+        for (&unit_id, &chance) in &config.unit_chances {
+            if rng.gen::<f32>() < chance {
+                commands.spawn(UnitBundle::randomized(
+                    unit_id,
+                    tile_pos,
+                    unit_manifest.get(unit_id).clone(),
+                    &unit_handles,
+                    &map_geometry,
+                    rng,
+                ));
+            }
         }
     }
 }
