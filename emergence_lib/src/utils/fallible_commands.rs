@@ -19,6 +19,13 @@ pub trait FallibleEntityCommandExt<'w, 's, 'a> {
     ///
     /// Fallible version of [`EntityCommands::remove`].
     fn try_remove<B: Bundle>(&mut self) -> &mut EntityCommands<'w, 's, 'a>;
+
+    /// Attempts to add a child entity to the entity.
+    ///
+    /// Fails silently (rather than panicking) if the entity does not exist.
+    ///
+    /// Fallible version of [`BuildChildren::add_child`].
+    fn try_add_child(&mut self, child: Entity) -> &mut EntityCommands<'w, 's, 'a>;
 }
 
 impl<'w, 's, 'a> FallibleEntityCommandExt<'w, 's, 'a> for EntityCommands<'w, 's, 'a> {
@@ -35,6 +42,15 @@ impl<'w, 's, 'a> FallibleEntityCommandExt<'w, 's, 'a> for EntityCommands<'w, 's,
         self.add(|entity, world: &mut World| {
             if let Some(mut entity_mut) = world.get_entity_mut(entity) {
                 entity_mut.remove::<B>();
+            }
+        });
+        self
+    }
+
+    fn try_add_child(&mut self, child: Entity) -> &mut EntityCommands<'w, 's, 'a> {
+        self.add(move |entity, world: &mut World| {
+            if let Some(mut entity_mut) = world.get_entity_mut(entity) {
+                entity_mut.add_child(child);
             }
         });
         self
