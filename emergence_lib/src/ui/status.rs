@@ -16,6 +16,7 @@ use crate::{
         goals::{Goal, GoalKind},
         unit_manifest::Unit,
     },
+    utils::fallible_commands::FallibleEntityCommandExt,
 };
 
 use super::ui_assets::Icons;
@@ -185,7 +186,7 @@ fn add_status_displays(
         // - it will be hidden when the parent entity is hidden
         commands
             .entity(parent_entity)
-            .insert(StatusParent {
+            .try_insert(StatusParent {
                 entity: status_entity,
             })
             .add_child(status_entity);
