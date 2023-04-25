@@ -220,6 +220,7 @@ impl FromWorld for Icons<GoalKind> {
             GoalKind::Wander,
             asset_server.load("icons/goals/wander.png"),
         );
+        map.insert(GoalKind::Work, asset_server.load("icons/goals/work.png"));
 
         Icons { map }
     }
