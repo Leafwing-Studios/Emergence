@@ -70,6 +70,20 @@ pub(crate) enum CraftingState {
     NoRecipe,
 }
 
+impl CraftingState {
+    /// Generates a random crafting state.
+    ///
+    /// This will always be `InProgress` with a random progress value.
+    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng, recipe_data: &RecipeData) {
+        let distribution = Uniform::new(Duration::ZERO, recipe_data.craft_time);
+        let progress = distribution.sample(rng);
+        *self = CraftingState::InProgress {
+            progress,
+            required: recipe_data.craft_time,
+        };
+    }
+}
+
 impl Display for CraftingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string = match self {
@@ -253,7 +267,7 @@ impl InputInventory {
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
     ///
     /// Note that this only works for [`InputInventory::Exact`].
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
         if let InputInventory::Exact { inventory } = self {
             for item_slot in inventory.iter_mut() {
                 item_slot.randomize(rng);
@@ -300,7 +314,7 @@ pub(crate) struct OutputInventory {
 
 impl OutputInventory {
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
-    pub(super) fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
         for item_slot in self.iter_mut() {
             item_slot.randomize(rng);
         }
@@ -528,49 +542,6 @@ impl CraftingBundle {
                 emitter: Emitter::default(),
                 workers_present: WorkersPresent::new(max_workers),
             }
-        }
-    }
-
-    /// Generates a new crafting bundle that is at a random point in its cycle.
-    pub(crate) fn randomized(
-        structure_id: Id<Structure>,
-        starting_recipe: ActiveRecipe,
-        recipe_manifest: &RecipeManifest,
-        item_manifest: &ItemManifest,
-        structure_manifest: &StructureManifest,
-        rng: &mut ThreadRng,
-    ) -> Self {
-        if let Some(recipe_id) = starting_recipe.0 {
-            let recipe = recipe_manifest.get(recipe_id);
-
-            let mut input_inventory = recipe.input_inventory(item_manifest);
-            input_inventory.randomize(rng);
-            let mut output_inventory = recipe.output_inventory(item_manifest);
-            output_inventory.randomize(rng);
-
-            let distribution = Uniform::new(Duration::ZERO, recipe.craft_time);
-            let progress = distribution.sample(rng);
-            let max_workers = structure_manifest.get(structure_id).max_workers;
-
-            Self {
-                input_inventory,
-                output_inventory,
-                active_recipe: ActiveRecipe(Some(recipe_id)),
-                craft_state: CraftingState::InProgress {
-                    progress,
-                    required: recipe.craft_time,
-                },
-                emitter: Emitter::default(),
-                workers_present: WorkersPresent::new(max_workers),
-            }
-        } else {
-            CraftingBundle::new(
-                structure_id,
-                starting_recipe,
-                recipe_manifest,
-                item_manifest,
-                structure_manifest,
-            )
         }
     }
 }

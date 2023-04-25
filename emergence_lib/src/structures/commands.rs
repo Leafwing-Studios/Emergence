@@ -4,7 +4,6 @@ use bevy::{
     ecs::system::Command,
     prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
 };
-use rand::{rngs::ThreadRng, thread_rng};
 
 use crate::{
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
@@ -17,7 +16,7 @@ use crate::{
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    simulation::geometry::{MapGeometry, TilePos},
 };
 
 use super::{
@@ -32,17 +31,6 @@ pub(crate) trait StructureCommandsExt {
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
     fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
-
-    /// Spawns a structure with randomized `data` at `tile_pos`.
-    ///
-    /// Some fields of data will be randomized.
-    /// This is intended to be used for world generation.
-    fn spawn_randomized_structure(
-        &mut self,
-        tile_pos: TilePos,
-        data: ClipboardData,
-        rng: &mut ThreadRng,
-    );
 
     /// Despawns any structure at the provided `tile_pos`.
     ///
@@ -67,26 +55,7 @@ pub(crate) trait StructureCommandsExt {
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnStructureCommand {
-            tile_pos,
-            data,
-            randomized: false,
-        });
-    }
-
-    fn spawn_randomized_structure(
-        &mut self,
-        tile_pos: TilePos,
-        mut data: ClipboardData,
-        rng: &mut ThreadRng,
-    ) {
-        data.facing = Facing::random(rng);
-
-        self.add(SpawnStructureCommand {
-            tile_pos,
-            data,
-            randomized: true,
-        });
+        self.add(SpawnStructureCommand { tile_pos, data });
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
@@ -112,8 +81,6 @@ struct SpawnStructureCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
-    /// Should the generated structure be randomized
-    randomized: bool,
 }
 
 impl Command for SpawnStructureCommand {
@@ -132,8 +99,10 @@ impl Command for SpawnStructureCommand {
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            structure_variety.footprint.rotated(self.data.facing),
+            &structure_variety.footprint,
+            &self.data.facing,
         ) {
+            // Just give up if the terrain is wrong.
             return;
         }
 
@@ -158,15 +127,8 @@ impl Command for SpawnStructureCommand {
             .id();
 
         // PERF: these operations could be done in a single archetype move with more branching
-        let rng = &mut thread_rng();
         if let Some(organism_details) = &structure_variety.organism_variety {
-            let energy_pool = if self.randomized {
-                let mut energy_pool = organism_details.energy_pool.clone();
-                energy_pool.randomize(rng);
-                energy_pool
-            } else {
-                organism_details.energy_pool.clone()
-            };
+            let energy_pool = organism_details.energy_pool.clone();
 
             world
                 .entity_mut(structure_entity)
@@ -190,23 +152,13 @@ impl Command for SpawnStructureCommand {
                 world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
                     world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
                         world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
-                            let crafting_bundle = match self.randomized {
-                                false => CraftingBundle::new(
-                                    structure_id,
-                                    starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                    &structure_manifest,
-                                ),
-                                true => CraftingBundle::randomized(
-                                    structure_id,
-                                    starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                    &structure_manifest,
-                                    rng,
-                                ),
-                            };
+                            let crafting_bundle = CraftingBundle::new(
+                                structure_id,
+                                starting_recipe,
+                                &recipe_manifest,
+                                &item_manifest,
+                                &structure_manifest,
+                            );
 
                             world.entity_mut(structure_entity).insert(crafting_bundle);
                         })
@@ -270,10 +222,7 @@ impl Command for SpawnStructureGhostCommand {
         let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(
-            self.tile_pos,
-            construction_footprint.rotated(self.data.facing),
-        ) {
+        if !geometry.can_build(self.tile_pos, construction_footprint, &self.data.facing) {
             return;
         }
 
@@ -377,7 +326,8 @@ impl Command for SpawnStructurePreviewCommand {
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
-            structure_variety.footprint.rotated(self.data.facing),
+            &structure_variety.footprint,
+            &self.data.facing,
         );
 
         // Fetch the scene and material to use

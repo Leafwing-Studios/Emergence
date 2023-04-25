@@ -423,8 +423,6 @@ impl MapGeometry {
 
     /// Returns the list of valid tile positions.
     #[inline]
-    #[must_use]
-    #[cfg(test)]
     pub fn valid_tile_positions(&self) -> impl Iterator<Item = TilePos> + '_ {
         hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
     }
@@ -440,8 +438,14 @@ impl MapGeometry {
     /// Are all of the tiles in the `footprint` centered around `center` valid?
     #[inline]
     #[must_use]
-    pub(crate) fn is_footprint_valid(&self, tile_pos: TilePos, footprint: &Footprint) -> bool {
+    pub(crate) fn is_footprint_valid(
+        &self,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
         footprint
+            .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
             .all(|tile_pos| self.is_valid(*tile_pos))
@@ -478,9 +482,15 @@ impl MapGeometry {
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
     #[inline]
     #[must_use]
-    fn is_space_available(&self, center: TilePos, footprint: &Footprint) -> bool {
+    pub(crate) fn is_space_available(
+        &self,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
         footprint
-            .in_world_space(center)
+            .rotated(facing)
+            .in_world_space(tile_pos)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
     }
@@ -495,20 +505,31 @@ impl MapGeometry {
         existing_entity: Entity,
         center: TilePos,
         footprint: &Footprint,
+        facing: &Facing,
     ) -> bool {
-        footprint.in_world_space(center).iter().all(|tile_pos| {
-            let entity = self.get_structure(*tile_pos);
-            entity.is_none() || entity == Some(existing_entity)
-        })
+        footprint
+            .rotated(facing)
+            .in_world_space(center)
+            .iter()
+            .all(|tile_pos| {
+                let entity = self.get_structure(*tile_pos);
+                entity.is_none() || entity == Some(existing_entity)
+            })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
     #[inline]
     #[must_use]
-    fn is_terrain_flat(&self, center: TilePos, footprint: &Footprint) -> bool {
+    pub(crate) fn is_terrain_flat(
+        &self,
+        center: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
         let height = self.get_height(center).unwrap();
 
         footprint
+            .rotated(facing)
             .in_world_space(center)
             .iter()
             .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
@@ -526,10 +547,15 @@ impl MapGeometry {
     /// - all tiles match the provided allowable terrain list
     #[inline]
     #[must_use]
-    pub(crate) fn can_build(&self, center: TilePos, footprint: Footprint) -> bool {
-        self.is_footprint_valid(center, &footprint)
-            && self.is_terrain_flat(center, &footprint)
-            && self.is_space_available(center, &footprint)
+    pub(crate) fn can_build(
+        &self,
+        center: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
+        self.is_footprint_valid(center, footprint, facing)
+            && self.is_terrain_flat(center, footprint, facing)
+            && self.is_space_available(center, footprint, facing)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -548,11 +574,12 @@ impl MapGeometry {
         &self,
         existing_entity: Entity,
         center: TilePos,
-        footprint: Footprint,
+        footprint: &Footprint,
+        facing: &Facing,
     ) -> bool {
-        self.is_footprint_valid(center, &footprint)
-            && self.is_terrain_flat(center, &footprint)
-            && self.is_space_available_to_transform(existing_entity, center, &footprint)
+        self.is_footprint_valid(center, footprint, facing)
+            && self.is_terrain_flat(center, footprint, facing)
+            && self.is_space_available_to_transform(existing_entity, center, footprint, facing)
     }
 
     /// Updates the height of the tile at `tile_pos`
@@ -597,6 +624,28 @@ impl MapGeometry {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
         Ok(Height(starting_height.abs_diff(ending_height.0)))
+    }
+
+    /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
+    ///
+    /// This footprint is rotated by the supplied `facing`.
+    pub(crate) fn flatten_height(
+        &mut self,
+        height_query: &mut Query<&mut Height>,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) {
+        let Ok(target_height) = self.get_height(tile_pos) else { return };
+        let rotated_footprint = footprint.rotated(facing);
+        for tile_pos in rotated_footprint.in_world_space(tile_pos) {
+            if let Some(entity) = self.get_terrain(tile_pos) {
+                if let Ok(mut height) = height_query.get_mut(entity) {
+                    *height = target_height;
+                    self.update_height(tile_pos, target_height);
+                }
+            }
+        }
     }
 
     /// Gets the [`Entity`] at the provided `tile_pos` that might have or want an item.

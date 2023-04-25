@@ -218,14 +218,13 @@ pub(super) fn transform_when_lifecycle_complete(
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    for (entity, lifecycle, &tile_pos, &facing, maybe_unit) in query.iter() {
+    for (entity, lifecycle, &tile_pos, facing, maybe_unit) in query.iter() {
         for new_form in lifecycle.new_forms() {
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
                 let variety = structure_manifest.get(structure_id);
-                let footprint = variety.footprint.rotated(facing);
 
-                if !map_geometry.can_transform(entity, tile_pos, footprint) {
+                if !map_geometry.can_transform(entity, tile_pos, &variety.footprint, facing) {
                     // Look for another viable form to transform into.
                     continue;
                 }
@@ -242,7 +241,7 @@ pub(super) fn transform_when_lifecycle_complete(
                 OrganismId::Structure(structure_id) => {
                     let data = ClipboardData {
                         structure_id,
-                        facing,
+                        facing: *facing,
                         active_recipe: structure_manifest
                             .get(structure_id)
                             .starting_recipe()
@@ -301,9 +300,8 @@ pub(super) fn sprout_seeds(
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = organism_id {
                 let variety = structure_manifest.get(structure_id);
-                let footprint = variety.footprint.rotated(facing);
 
-                if !map_geometry.can_build(tile_pos, footprint) {
+                if !map_geometry.can_build(tile_pos, &variety.footprint, &facing) {
                     // We can't germinate here
                     continue;
                 }
