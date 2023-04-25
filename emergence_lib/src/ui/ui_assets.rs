@@ -52,10 +52,13 @@ pub(crate) struct Icons<D: Send + Sync + 'static> {
     map: HashMap<D, Handle<Image>>,
 }
 
-impl<D: Send + Sync + 'static + Hash + Eq> Icons<D> {
+impl<D: Send + Sync + 'static + Hash + Eq + Debug> Icons<D> {
     /// Returns a weakly cloned handle to the image of the icon corresponding to `key`.
     pub(crate) fn get(&self, key: D) -> Handle<Image> {
-        self.map.get(&key).unwrap().clone_weak()
+        self.map
+            .get(&key)
+            .unwrap_or_else(|| panic!("Key {key:?} was not found in map of loaded icons."))
+            .clone_weak()
     }
 }
 
