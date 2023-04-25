@@ -485,13 +485,13 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_space_available(
         &self,
-        center: TilePos,
+        tile_pos: TilePos,
         footprint: &Footprint,
         facing: &Facing,
     ) -> bool {
         footprint
             .rotated(facing)
-            .in_world_space(center)
+            .in_world_space(tile_pos)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
     }
@@ -625,6 +625,22 @@ impl MapGeometry {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
         Ok(Height(starting_height.abs_diff(ending_height.0)))
+    }
+
+    /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
+    ///
+    /// This footprint is rotated by the supplied `facing`.
+    pub(crate) fn flatten_height(
+        &mut self,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) {
+        let height = self.get_height(tile_pos).unwrap();
+        let rotated_footprint = footprint.rotated(facing);
+        for tile_pos in rotated_footprint.in_world_space(tile_pos) {
+            self.update_height(tile_pos, height);
+        }
     }
 
     /// Gets the [`Entity`] at the provided `tile_pos` that might have or want an item.

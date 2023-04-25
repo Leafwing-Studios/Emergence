@@ -1,8 +1,10 @@
 //! Generating starting terrain and organisms
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
+use crate::crafting::components::{CraftingState, InputInventory, OutputInventory};
+use crate::organisms::energy::EnergyPool;
 use crate::player_interaction::clipboard::ClipboardData;
-use crate::simulation::geometry::{Height, MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
@@ -229,19 +231,32 @@ fn generate_organisms(
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating organisms...");
     let rng = &mut thread_rng();
 
-    for tile_pos in map_geometry.valid_tile_positions() {
+    // Collect out so we can mutate the height map to flatten the terrain while in the loop
+    for tile_pos in map_geometry.valid_tile_positions().collect::<Vec<_>>() {
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
-                commands.generate_structure(
-                    tile_pos,
-                    ClipboardData::generate_from_id(structure_id, &*structure_manifest),
-                    rng,
-                );
+                let mut clipboard_data =
+                    ClipboardData::generate_from_id(structure_id, &*structure_manifest);
+                let facing = Facing::random(rng);
+                clipboard_data.facing = facing;
+                let footprint = &structure_manifest.get(structure_id).footprint;
+
+                // Only try to spawn a structure if the location is valid and there is space
+                if map_geometry.is_footprint_valid(tile_pos, footprint, &facing)
+                    && map_geometry.is_space_available(tile_pos, footprint, &facing)
+                {
+                    // Flatten the terrain under the structure before spawning it
+                    map_geometry.flatten_height(tile_pos, footprint, &facing);
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData::generate_from_id(structure_id, &*structure_manifest),
+                    );
+                }
             }
         }
 
@@ -258,6 +273,16 @@ fn generate_organisms(
             }
         }
     }
+}
+
+/// Sets all the starting organisms to a random state to avoid strange synchronization issues.
+fn randomize_starting_organisms(
+    enery_pool_query: Query<&mut EnergyPool>,
+    input_inventory_query: Query<&mut InputInventory>,
+    output_inventory_query: Query<&mut OutputInventory>,
+    crafting_state_query: Query<&mut CraftingState>,
+) {
+    todo!()
 }
 
 #[cfg(test)]

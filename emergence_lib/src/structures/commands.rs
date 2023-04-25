@@ -4,7 +4,7 @@ use bevy::{
     ecs::system::Command,
     prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
 };
-use rand::{rngs::ThreadRng, thread_rng};
+use rand::thread_rng;
 
 use crate::{
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
@@ -17,7 +17,7 @@ use crate::{
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    simulation::geometry::{MapGeometry, TilePos},
 };
 
 use super::{
@@ -32,13 +32,6 @@ pub(crate) trait StructureCommandsExt {
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
     fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
-
-    /// Spawns a structure with randomized `data` at `tile_pos`.
-    ///
-    /// Some fields of data will be randomized.
-    /// This is intended to be used for world generation,
-    /// and should only be called if [`MapGeometry::can_build`] has been verified to be true.
-    fn generate_structure(&mut self, tile_pos: TilePos, data: ClipboardData, rng: &mut ThreadRng);
 
     /// Despawns any structure at the provided `tile_pos`.
     ///
@@ -63,26 +56,7 @@ pub(crate) trait StructureCommandsExt {
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnStructureCommand {
-            tile_pos,
-            data,
-            randomized: false,
-        });
-    }
-
-    fn generate_structure(
-        &mut self,
-        tile_pos: TilePos,
-        mut data: ClipboardData,
-        rng: &mut ThreadRng,
-    ) {
-        data.facing = Facing::random(rng);
-
-        self.add(SpawnStructureCommand {
-            tile_pos,
-            data,
-            randomized: true,
-        });
+        self.add(SpawnStructureCommand { tile_pos, data });
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
@@ -108,8 +82,6 @@ struct SpawnStructureCommand {
     tile_pos: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
-    /// Should the generated structure be randomized?
-    randomized: bool,
 }
 
 impl Command for SpawnStructureCommand {
@@ -158,13 +130,7 @@ impl Command for SpawnStructureCommand {
         // PERF: these operations could be done in a single archetype move with more branching
         let rng = &mut thread_rng();
         if let Some(organism_details) = &structure_variety.organism_variety {
-            let energy_pool = if self.randomized {
-                let mut energy_pool = organism_details.energy_pool.clone();
-                energy_pool.randomize(rng);
-                energy_pool
-            } else {
-                organism_details.energy_pool.clone()
-            };
+            let energy_pool = organism_details.energy_pool.clone();
 
             world
                 .entity_mut(structure_entity)
@@ -188,23 +154,13 @@ impl Command for SpawnStructureCommand {
                 world.resource_scope(|world, recipe_manifest: Mut<RecipeManifest>| {
                     world.resource_scope(|world, item_manifest: Mut<ItemManifest>| {
                         world.resource_scope(|world, structure_manifest: Mut<StructureManifest>| {
-                            let crafting_bundle = match self.randomized {
-                                false => CraftingBundle::new(
-                                    structure_id,
-                                    starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                    &structure_manifest,
-                                ),
-                                true => CraftingBundle::randomized(
-                                    structure_id,
-                                    starting_recipe,
-                                    &recipe_manifest,
-                                    &item_manifest,
-                                    &structure_manifest,
-                                    rng,
-                                ),
-                            };
+                            let crafting_bundle = CraftingBundle::new(
+                                structure_id,
+                                starting_recipe,
+                                &recipe_manifest,
+                                &item_manifest,
+                                &structure_manifest,
+                            );
 
                             world.entity_mut(structure_entity).insert(crafting_bundle);
                         })
