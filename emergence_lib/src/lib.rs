@@ -11,7 +11,6 @@
 pub mod asset_management;
 pub mod construction;
 pub mod crafting;
-pub mod curves;
 pub mod enum_iter;
 pub mod filtered_array_iter;
 pub mod graphics;
@@ -25,6 +24,7 @@ pub mod structures;
 pub mod terrain;
 pub mod ui;
 pub mod units;
+pub mod utils;
 pub mod world_gen;
 
 /// Various app configurations, used for testing.
