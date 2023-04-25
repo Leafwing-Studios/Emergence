@@ -71,6 +71,9 @@ pub(crate) enum CraftingState {
 }
 
 impl CraftingState {
+    /// Generates a random crafting state.
+    ///
+    /// This will always be `InProgress` with a random progress value.
     pub(crate) fn randomize(&mut self, rng: &mut ThreadRng, recipe_data: &RecipeData) {
         let distribution = Uniform::new(Duration::ZERO, recipe_data.craft_time);
         let progress = distribution.sample(rng);

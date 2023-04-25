@@ -249,7 +249,7 @@ fn generate_organisms(
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
-                    ClipboardData::generate_from_id(structure_id, &*structure_manifest);
+                    ClipboardData::generate_from_id(structure_id, &structure_manifest);
                 let facing = Facing::random(rng);
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
@@ -262,7 +262,7 @@ fn generate_organisms(
                     map_geometry.flatten_height(&mut height_query, tile_pos, footprint, &facing);
                     commands.spawn_structure(
                         tile_pos,
-                        ClipboardData::generate_from_id(structure_id, &*structure_manifest),
+                        ClipboardData::generate_from_id(structure_id, &structure_manifest),
                     );
                 }
             }
@@ -410,16 +410,12 @@ mod tests {
             if distance_from_center >= settings.radius as i32 {
                 assert_eq!(
                     height, height_at_edge,
-                    "height at {} is {}, but should be at most {}",
-                    tile_pos, height, height_at_edge
+                    "height at {tile_pos} is {height}, but should be at most {height_at_edge}"
                 );
             } else {
                 assert!(
                     height >= height_at_edge,
-                    "height at {} is {}, but should be at most {}",
-                    tile_pos,
-                    height,
-                    height_at_edge
+                    "height at {tile_pos} is {height}, but should be at most {height_at_edge}"
                 );
             }
         }

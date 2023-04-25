@@ -222,7 +222,7 @@ impl Command for SpawnStructureGhostCommand {
         let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(self.tile_pos, &construction_footprint, &self.data.facing) {
+        if !geometry.can_build(self.tile_pos, construction_footprint, &self.data.facing) {
             return;
         }
 

@@ -423,7 +423,6 @@ impl MapGeometry {
 
     /// Returns the list of valid tile positions.
     #[inline]
-    #[must_use]
     pub fn valid_tile_positions(&self) -> impl Iterator<Item = TilePos> + '_ {
         hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
     }
@@ -578,9 +577,9 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: &Facing,
     ) -> bool {
-        self.is_footprint_valid(center, &footprint, &facing)
-            && self.is_terrain_flat(center, &footprint, &facing)
-            && self.is_space_available_to_transform(existing_entity, center, &footprint, &facing)
+        self.is_footprint_valid(center, footprint, facing)
+            && self.is_terrain_flat(center, footprint, facing)
+            && self.is_space_available_to_transform(existing_entity, center, footprint, facing)
     }
 
     /// Updates the height of the tile at `tile_pos`
