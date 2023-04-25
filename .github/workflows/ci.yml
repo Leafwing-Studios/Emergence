@@ -14,6 +14,7 @@ env:
 
 jobs:
   checks:
+    name: CI check (${{ matrix.ci-argument }})
     runs-on: ubuntu-latest
     strategy:
       # Default is `true`
@@ -28,7 +29,6 @@ jobs:
         include:
           - ci-argument: clippy
             toolchain-components: clippy
-    name: CI check (${{ matrix.ci-argument }})
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
@@ -42,7 +42,6 @@ jobs:
       - name: CI job
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- ${{ matrix.ci-argument }}
-
   formatting:
     name: cargo fmt
     runs-on: ubuntu-latest
