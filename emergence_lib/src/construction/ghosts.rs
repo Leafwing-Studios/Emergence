@@ -611,11 +611,10 @@ pub(super) fn validate_ghost_structures(
         return;
     }
 
-    for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
+    for (&tile_pos, &structure_id, facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
-        let footprint = structure_details.footprint.rotated(facing);
 
-        if !map_geometry.can_build(tile_pos, footprint) {
+        if !map_geometry.can_build(tile_pos, &structure_details.footprint, facing) {
             commands.despawn_ghost_structure(tile_pos);
         }
     }

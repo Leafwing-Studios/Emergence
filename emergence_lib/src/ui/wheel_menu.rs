@@ -122,7 +122,7 @@ pub(super) fn select_hex<D: Choice>(
 }
 
 /// A choice that can be used in a wheel menu.
-pub(super) trait Choice: Clone + Hash + Eq + Send + Sync + 'static {
+pub(super) trait Choice: Clone + Hash + Eq + Debug + Send + Sync + 'static {
     /// The action that is pressed to bring up this wheel menu
     const ACTIVATION: PlayerAction;
 }
@@ -221,7 +221,7 @@ struct HexMenuIconBundle {
 
 impl HexMenuIconBundle {
     /// Create a new icon with the appropriate positioning and appearance.
-    fn new<D: Hash + Eq + Send + Sync + 'static>(
+    fn new<D: Hash + Eq + Debug + Send + Sync + 'static>(
         data: D,
         hex: Hex,
         icons: &Icons<D>,

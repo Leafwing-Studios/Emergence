@@ -1,14 +1,17 @@
 //! Generating starting terrain and organisms
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
+use crate::crafting::components::{ActiveRecipe, CraftingState, InputInventory, OutputInventory};
+use crate::crafting::recipe::RecipeManifest;
+use crate::organisms::energy::EnergyPool;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
 use crate::structures::commands::StructureCommandsExt;
-use crate::structures::structure_manifest::StructureManifest;
+use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_assets::UnitHandles;
-use crate::units::unit_manifest::UnitManifest;
+use crate::units::unit_manifest::{Unit, UnitManifest};
 use crate::units::UnitBundle;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
@@ -20,21 +23,17 @@ use hexx::shapes::hexagon;
 use hexx::Hex;
 use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 /// Controls world generation strategy
 #[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
-    /// Initial number of ants.
-    n_ant: usize,
-    /// Initial number of plants.
-    n_plant: usize,
-    /// Initial number of fungi.
-    n_fungi: usize,
-    /// Initial number of ant hives.
-    n_hive: usize,
+    /// Chance that each tile contains a unit of the given type.
+    unit_chances: HashMap<Id<Unit>, f32>,
+    /// Chance that each tile contains a structure of the given type.
+    structure_chances: HashMap<Id<Structure>, f32>,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Id<Terrain>, f32>,
     /// Controls and shape of the hills.
@@ -51,12 +50,18 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("muddy".to_string()), 0.3);
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
+        let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
+
+        let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        structure_chances.insert(Id::from_name("ant_hive".to_string()), 1e-3);
+        structure_chances.insert(Id::from_name("acacia".to_string()), 2e-2);
+        structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
+
         GenerationConfig {
             map_radius: 40,
-            n_ant: 20,
-            n_plant: 150,
-            n_fungi: 30,
-            n_hive: 1,
+            unit_chances,
+            structure_chances,
             terrain_weights,
             hill_settings: HillSettings {
                 center: TilePos::ZERO,
@@ -85,7 +90,13 @@ impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone()).add_systems(
-            (generate_terrain, apply_system_buffers, generate_organisms)
+            (
+                generate_terrain,
+                apply_system_buffers,
+                generate_organisms,
+                apply_system_buffers,
+                randomize_starting_organisms,
+            )
                 .chain()
                 .in_schedule(OnEnter(AssetState::FullyLoaded)),
         );
@@ -224,93 +235,81 @@ fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
 fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    tile_query: Query<&TilePos, With<Id<Terrain>>>,
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
-    map_geometry: Res<MapGeometry>,
+    mut height_query: Query<&mut Height>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating organisms...");
-    let n_ant = config.n_ant;
-    let n_plant = config.n_plant;
-    let n_fungi = config.n_fungi;
-    let n_hive = config.n_hive;
+    let rng = &mut thread_rng();
 
-    let n_entities = n_ant + n_plant + n_fungi + n_hive;
-    assert!(n_entities <= tile_query.iter().len());
+    // Collect out so we can mutate the height map to flatten the terrain while in the loop
+    for tile_pos in map_geometry.valid_tile_positions().collect::<Vec<_>>() {
+        for (&structure_id, &chance) in &config.structure_chances {
+            if rng.gen::<f32>() < chance {
+                let mut clipboard_data =
+                    ClipboardData::generate_from_id(structure_id, &structure_manifest);
+                let facing = Facing::random(rng);
+                clipboard_data.facing = facing;
+                let footprint = &structure_manifest.get(structure_id).footprint;
 
-    let mut rng = &mut thread_rng();
-    let mut entity_positions: Vec<TilePos> = {
-        let possible_positions: Vec<TilePos> = tile_query.iter().copied().collect();
+                // Only try to spawn a structure if the location is valid and there is space
+                if map_geometry.is_footprint_valid(tile_pos, footprint, &facing)
+                    && map_geometry.is_space_available(tile_pos, footprint, &facing)
+                {
+                    // Flatten the terrain under the structure before spawning it
+                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, &facing);
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData::generate_from_id(structure_id, &structure_manifest),
+                    );
+                }
+            }
+        }
 
-        possible_positions
-            .choose_multiple(&mut rng, n_entities)
-            .cloned()
-            .collect()
-    };
+        for (&unit_id, &chance) in &config.unit_chances {
+            if rng.gen::<f32>() < chance {
+                commands.spawn(UnitBundle::randomized(
+                    unit_id,
+                    tile_pos,
+                    unit_manifest.get(unit_id).clone(),
+                    &unit_handles,
+                    &map_geometry,
+                    rng,
+                ));
+            }
+        }
+    }
+}
 
-    // Ant
-    let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    for ant_position in ant_positions {
-        commands.spawn(UnitBundle::randomized(
-            Id::from_name("ant".to_string()),
-            ant_position,
-            unit_manifest.get(Id::from_name("ant".to_string())).clone(),
-            &unit_handles,
-            &map_geometry,
-            rng,
-        ));
+/// Sets all the starting organisms to a random state to avoid strange synchronization issues.
+fn randomize_starting_organisms(
+    mut energy_pool_query: Query<&mut EnergyPool>,
+    mut input_inventory_query: Query<&mut InputInventory>,
+    mut output_inventory_query: Query<&mut OutputInventory>,
+    mut crafting_state_query: Query<(&mut CraftingState, &ActiveRecipe)>,
+    recipe_manifest: Res<RecipeManifest>,
+) {
+    let rng = &mut thread_rng();
+
+    for mut energy_pool in energy_pool_query.iter_mut() {
+        energy_pool.randomize(rng)
     }
 
-    // Plant
-    let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    for position in plant_positions {
-        let structure_id = Id::from_name("acacia".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.spawn_randomized_structure(position, item, rng);
+    for mut input_inventory in input_inventory_query.iter_mut() {
+        input_inventory.randomize(rng)
     }
 
-    // Fungi
-    let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    for position in fungus_positions {
-        let structure_id = Id::from_name("leuco".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.spawn_randomized_structure(position, item, rng);
+    for mut output_inventory in output_inventory_query.iter_mut() {
+        output_inventory.randomize(rng)
     }
 
-    // Hives
-    let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
-    for position in hive_positions {
-        let structure_id = Id::from_name("ant_hive".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.spawn_randomized_structure(position, item, rng);
+    for (mut crafting_state, active_recipe) in crafting_state_query.iter_mut() {
+        if let Some(recipe_id) = active_recipe.recipe_id() {
+            let recipe_data = recipe_manifest.get(*recipe_id);
+            crafting_state.randomize(rng, recipe_data);
+        }
     }
 }
 
@@ -411,16 +410,12 @@ mod tests {
             if distance_from_center >= settings.radius as i32 {
                 assert_eq!(
                     height, height_at_edge,
-                    "height at {} is {}, but should be at most {}",
-                    tile_pos, height, height_at_edge
+                    "height at {tile_pos} is {height}, but should be at most {height_at_edge}"
                 );
             } else {
                 assert!(
                     height >= height_at_edge,
-                    "height at {} is {}, but should be at most {}",
-                    tile_pos,
-                    height,
-                    height_at_edge
+                    "height at {tile_pos} is {height}, but should be at most {height_at_edge}"
                 );
             }
         }

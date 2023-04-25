@@ -716,7 +716,7 @@ fn emit_signals(
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
             Some(structure_id) => {
-                let facing = *maybe_facing.expect("Structures must have a facing");
+                let facing = maybe_facing.expect("Structures must have a facing");
                 let footprint = &structure_manifest
                     .get(*structure_id)
                     .footprint
