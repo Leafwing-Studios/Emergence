@@ -4,7 +4,6 @@ use bevy::{
     ecs::system::Command,
     prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
 };
-use rand::thread_rng;
 
 use crate::{
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
@@ -128,7 +127,6 @@ impl Command for SpawnStructureCommand {
             .id();
 
         // PERF: these operations could be done in a single archetype move with more branching
-        let rng = &mut thread_rng();
         if let Some(organism_details) = &structure_variety.organism_variety {
             let energy_pool = organism_details.energy_pool.clone();
 

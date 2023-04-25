@@ -1,7 +1,8 @@
 //! Generating starting terrain and organisms
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
-use crate::crafting::components::{CraftingState, InputInventory, OutputInventory};
+use crate::crafting::components::{ActiveRecipe, CraftingState, InputInventory, OutputInventory};
+use crate::crafting::recipe::RecipeManifest;
 use crate::organisms::energy::EnergyPool;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
@@ -89,7 +90,13 @@ impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
         app.insert_resource(self.config.clone()).add_systems(
-            (generate_terrain, apply_system_buffers, generate_organisms)
+            (
+                generate_terrain,
+                apply_system_buffers,
+                generate_organisms,
+                apply_system_buffers,
+                randomize_starting_organisms,
+            )
                 .chain()
                 .in_schedule(OnEnter(AssetState::FullyLoaded)),
         );
@@ -277,12 +284,32 @@ fn generate_organisms(
 
 /// Sets all the starting organisms to a random state to avoid strange synchronization issues.
 fn randomize_starting_organisms(
-    enery_pool_query: Query<&mut EnergyPool>,
-    input_inventory_query: Query<&mut InputInventory>,
-    output_inventory_query: Query<&mut OutputInventory>,
-    crafting_state_query: Query<&mut CraftingState>,
+    mut energy_pool_query: Query<&mut EnergyPool>,
+    mut input_inventory_query: Query<&mut InputInventory>,
+    mut output_inventory_query: Query<&mut OutputInventory>,
+    mut crafting_state_query: Query<(&mut CraftingState, &ActiveRecipe)>,
+    recipe_manifest: Res<RecipeManifest>,
 ) {
-    todo!()
+    let rng = &mut thread_rng();
+
+    for mut energy_pool in energy_pool_query.iter_mut() {
+        energy_pool.randomize(rng)
+    }
+
+    for mut input_inventory in input_inventory_query.iter_mut() {
+        input_inventory.randomize(rng)
+    }
+
+    for mut output_inventory in output_inventory_query.iter_mut() {
+        output_inventory.randomize(rng)
+    }
+
+    for (mut crafting_state, active_recipe) in crafting_state_query.iter_mut() {
+        if let Some(recipe_id) = active_recipe.recipe_id() {
+            let recipe_data = recipe_manifest.get(*recipe_id);
+            crafting_state.randomize(rng, recipe_data);
+        }
+    }
 }
 
 #[cfg(test)]
