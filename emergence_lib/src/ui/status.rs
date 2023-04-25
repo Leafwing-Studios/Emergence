@@ -189,7 +189,7 @@ fn add_status_displays(
             .try_insert(StatusParent {
                 entity: status_entity,
             })
-            .add_child(status_entity);
+            .try_add_child(status_entity);
     }
 }
 
