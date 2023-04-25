@@ -51,12 +51,12 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
-        unit_chances.insert(Id::from_name("ant".to_string()), 0.1);
+        unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
 
         let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
-        structure_chances.insert(Id::from_name("ant_hive".to_string()), 0.02);
-        structure_chances.insert(Id::from_name("acacia".to_string()), 0.02);
-        structure_chances.insert(Id::from_name("leuco".to_string()), 0.02);
+        structure_chances.insert(Id::from_name("ant_hive".to_string()), 1e-3);
+        structure_chances.insert(Id::from_name("acacia".to_string()), 2e-2);
+        structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
 
         GenerationConfig {
             map_radius: 40,
