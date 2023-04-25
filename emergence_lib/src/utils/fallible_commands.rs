@@ -1,4 +1,4 @@
-//! Contains [`FallibleCommandExt`], [`FallibleEntityCommandsExt`] and related code.
+//! Contains [`FallibleEntityCommandExt`] and related code.
 
 use bevy::{ecs::system::EntityCommands, prelude::*};
 
