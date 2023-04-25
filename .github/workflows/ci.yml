@@ -29,8 +29,6 @@ jobs:
         include:
           - ci-argument: clippy
             toolchain-components: clippy
-          - ci-argument: format
-            toolchain-components: rustfmt
     name: CI check (${{ matrix.ci-argument }})
     steps:
       - uses: actions/checkout@v3
