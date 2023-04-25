@@ -238,6 +238,7 @@ fn generate_organisms(
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
+    mut height_query: Query<&mut Height>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating organisms...");
@@ -258,7 +259,7 @@ fn generate_organisms(
                     && map_geometry.is_space_available(tile_pos, footprint, &facing)
                 {
                     // Flatten the terrain under the structure before spawning it
-                    map_geometry.flatten_height(tile_pos, footprint, &facing);
+                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, &facing);
                     commands.spawn_structure(
                         tile_pos,
                         ClipboardData::generate_from_id(structure_id, &*structure_manifest),

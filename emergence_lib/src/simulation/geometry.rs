@@ -632,14 +632,20 @@ impl MapGeometry {
     /// This footprint is rotated by the supplied `facing`.
     pub(crate) fn flatten_height(
         &mut self,
+        height_query: &mut Query<&mut Height>,
         tile_pos: TilePos,
         footprint: &Footprint,
         facing: &Facing,
     ) {
-        let height = self.get_height(tile_pos).unwrap();
+        let Ok(target_height) = self.get_height(tile_pos) else { return };
         let rotated_footprint = footprint.rotated(facing);
         for tile_pos in rotated_footprint.in_world_space(tile_pos) {
-            self.update_height(tile_pos, height);
+            if let Some(entity) = self.get_terrain(tile_pos) {
+                if let Ok(mut height) = height_query.get_mut(entity) {
+                    *height = target_height;
+                    self.update_height(tile_pos, target_height);
+                }
+            }
         }
     }
 
