@@ -424,7 +424,6 @@ impl MapGeometry {
     /// Returns the list of valid tile positions.
     #[inline]
     #[must_use]
-    #[cfg(test)]
     pub fn valid_tile_positions(&self) -> impl Iterator<Item = TilePos> + '_ {
         hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
     }

@@ -9,7 +9,7 @@ use crate::{
     construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::components::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
-    structures::structure_manifest::Structure,
+    structures::structure_manifest::{Structure, StructureManifest},
 };
 
 use super::{
@@ -87,6 +87,27 @@ pub(crate) struct ClipboardData {
     pub(crate) facing: Facing,
     /// The recipe that this structure makes, if any
     pub(crate) active_recipe: ActiveRecipe,
+}
+
+impl ClipboardData {
+    /// Creates a new [`ClipboardData`] for the given `structure_id`.
+    ///
+    /// The starting properties are determined by the `structure_manifest`.
+    /// This is intended to be used during world generation.
+    #[must_use]
+    pub(crate) fn generate_from_id(
+        structure_id: Id<Structure>,
+        structure_manifest: &StructureManifest,
+    ) -> Self {
+        Self {
+            structure_id,
+            facing: Facing::default(),
+            active_recipe: structure_manifest
+                .get(structure_id)
+                .starting_recipe()
+                .clone(),
+        }
+    }
 }
 
 impl Tool {

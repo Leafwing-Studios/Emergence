@@ -2,7 +2,7 @@
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetState;
 use crate::player_interaction::clipboard::ClipboardData;
-use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
+use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::StructureManifest;
 use crate::terrain::commands::TerrainCommandsExt;
@@ -20,21 +20,21 @@ use hexx::shapes::hexagon;
 use hexx::Hex;
 use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 /// Controls world generation strategy
 #[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
-    /// Initial number of ants.
-    n_ant: usize,
-    /// Initial number of plants.
-    n_plant: usize,
-    /// Initial number of fungi.
-    n_fungi: usize,
-    /// Initial number of ant hives.
-    n_hive: usize,
+    /// Chance that each tile contains an ant.
+    chance_ant: f32,
+    /// Chance that each tile contains a plant.
+    chance_plant: f32,
+    /// Chance that each tile contains a fungi.
+    chance_fungi: f32,
+    /// Chance that each tile contains a hive.
+    chance_hive: f32,
     /// Relative probability of generating tiles of each terrain type.
     terrain_weights: HashMap<Id<Terrain>, f32>,
     /// Controls and shape of the hills.
@@ -53,10 +53,10 @@ impl Default for GenerationConfig {
 
         GenerationConfig {
             map_radius: 40,
-            n_ant: 20,
-            n_plant: 150,
-            n_fungi: 30,
-            n_hive: 1,
+            chance_ant: 0.1,
+            chance_plant: 0.2,
+            chance_fungi: 0.1,
+            chance_hive: 0.02,
             terrain_weights,
             hill_settings: HillSettings {
                 center: TilePos::ZERO,
@@ -224,93 +224,47 @@ fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
 fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    tile_query: Query<&TilePos, With<Id<Terrain>>>,
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
-    let n_ant = config.n_ant;
-    let n_plant = config.n_plant;
-    let n_fungi = config.n_fungi;
-    let n_hive = config.n_hive;
+    let rng = &mut thread_rng();
 
-    let n_entities = n_ant + n_plant + n_fungi + n_hive;
-    assert!(n_entities <= tile_query.iter().len());
+    let fungi_data =
+        ClipboardData::generate_from_id(Id::from_name("leuco".to_string()), &*structure_manifest);
+    let plant_data =
+        ClipboardData::generate_from_id(Id::from_name("acacia".to_string()), &*structure_manifest);
+    let hive_data = ClipboardData::generate_from_id(
+        Id::from_name("ant_hive".to_string()),
+        &*structure_manifest,
+    );
 
-    let mut rng = &mut thread_rng();
-    let mut entity_positions: Vec<TilePos> = {
-        let possible_positions: Vec<TilePos> = tile_query.iter().copied().collect();
+    for tile_pos in map_geometry.valid_tile_positions() {
+        if rng.gen::<f32>() < config.chance_hive {
+            // FIXME: flatten terrain before placing organisms if needed
+            commands.generate_structure(tile_pos, hive_data.clone(), rng);
+        }
 
-        possible_positions
-            .choose_multiple(&mut rng, n_entities)
-            .cloned()
-            .collect()
-    };
+        if rng.gen::<f32>() < config.chance_plant {
+            commands.generate_structure(tile_pos, plant_data.clone(), rng);
+        }
 
-    // Ant
-    let ant_positions = entity_positions.split_off(entity_positions.len() - n_ant);
-    for ant_position in ant_positions {
-        commands.spawn(UnitBundle::randomized(
-            Id::from_name("ant".to_string()),
-            ant_position,
-            unit_manifest.get(Id::from_name("ant".to_string())).clone(),
-            &unit_handles,
-            &map_geometry,
-            rng,
-        ));
-    }
+        if rng.gen::<f32>() < config.chance_fungi {
+            commands.generate_structure(tile_pos, fungi_data.clone(), rng);
+        }
 
-    // Plant
-    let plant_positions = entity_positions.split_off(entity_positions.len() - n_plant);
-    for position in plant_positions {
-        let structure_id = Id::from_name("acacia".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.generate_structure(position, item, rng);
-    }
-
-    // Fungi
-    let fungus_positions = entity_positions.split_off(entity_positions.len() - n_fungi);
-    for position in fungus_positions {
-        let structure_id = Id::from_name("leuco".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.generate_structure(position, item, rng);
-    }
-
-    // Hives
-    let hive_positions = entity_positions.split_off(entity_positions.len() - n_hive);
-    for position in hive_positions {
-        let structure_id = Id::from_name("ant_hive".to_string());
-
-        let item = ClipboardData {
-            structure_id,
-            facing: Facing::default(),
-            active_recipe: structure_manifest
-                .get(structure_id)
-                .starting_recipe()
-                .clone(),
-        };
-
-        commands.generate_structure(position, item, rng);
+        if rng.gen::<f32>() < config.chance_ant {
+            commands.spawn(UnitBundle::randomized(
+                Id::from_name("ant".to_string()),
+                tile_pos,
+                unit_manifest.get(Id::from_name("ant".to_string())).clone(),
+                &unit_handles,
+                &map_geometry,
+                rng,
+            ));
+        }
     }
 }
 
