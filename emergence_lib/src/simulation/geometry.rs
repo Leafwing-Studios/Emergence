@@ -561,7 +561,7 @@ impl MapGeometry {
     /// - the area is in the map
     /// - the area is flat
     /// - the area is free of structures
-    /// - all tiles match the provided allowable terrain list
+    /// - there is no surface water present
     #[inline]
     #[must_use]
     pub(crate) fn can_build(
@@ -573,6 +573,7 @@ impl MapGeometry {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
+            && self.is_free_of_water(center, footprint, facing)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -885,6 +886,22 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn get_surface_water_height(&self, tile_pos: TilePos) -> Option<Height> {
         self.surface_water_index.get(&tile_pos).copied()
+    }
+
+    /// Are all of the tiles defined by `footprint` located at the `center` tile free of surface water?
+    #[inline]
+    #[must_use]
+    pub(crate) fn is_free_of_water(
+        &self,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
+        footprint
+            .rotated(facing)
+            .in_world_space(tile_pos)
+            .iter()
+            .all(|tile_pos| self.get_surface_water_height(*tile_pos).is_none())
     }
 }
 
