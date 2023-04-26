@@ -4,6 +4,8 @@ use bevy::prelude::*;
 
 use crate::simulation::geometry::{hexagonal_column, MapGeometry};
 
+use super::palette::environment::WATER;
+
 pub(super) struct WaterRenderingPlugin;
 
 impl Plugin for WaterRenderingPlugin {
@@ -30,12 +32,8 @@ fn init_water_handles(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let material = materials.add(StandardMaterial {
-        base_color: Color::Rgba {
-            red: 0.,
-            green: 0.,
-            blue: 0.7,
-            alpha: 0.2,
-        },
+        base_color: WATER,
+        unlit: true,
         alpha_mode: AlphaMode::Blend,
         ..Default::default()
     });

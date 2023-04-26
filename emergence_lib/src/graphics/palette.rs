@@ -158,6 +158,14 @@ pub(crate) mod environment {
 
     /// The amount of lightness at the brightest point in a day cycle
     pub(crate) const MIDDAY_LIGHTNESS: f32 = 0.8;
+
+    /// The color of the surface water.
+    pub(crate) const WATER: Color = Color::Hsla {
+        hue: 202.,
+        saturation: 0.7,
+        lightness: 0.5,
+        alpha: 0.3,
+    };
 }
 
 /// Colors used for lighting
