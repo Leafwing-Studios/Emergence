@@ -817,7 +817,7 @@ Output: {output}"
         pub(super) height: Height,
         /// The distance from the surface to the water table
         pub(super) depth_to_water_table: DepthToWaterTable,
-        // The depth of water at this tile
+        /// The depth of water at this tile
         pub(super) water_depth: Option<Height>,
         /// The signals on this tile
         pub(super) signals: LocalSignals,

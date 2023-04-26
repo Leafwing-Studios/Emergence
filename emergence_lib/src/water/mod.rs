@@ -35,7 +35,7 @@ impl Plugin for WaterPlugin {
 ///
 /// This can be underground, at ground level, or above ground.
 /// If it is above ground, it will pool on top of the tile it is on.
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub(crate) struct WaterTable {
     /// The height of the water table at each tile.
     height: HashMap<TilePos, Height>,
@@ -85,14 +85,6 @@ impl WaterTable {
         let height = self.get(tile_pos);
         let new_height = height - amount;
         self.set(tile_pos, new_height.max(Height::ZERO));
-    }
-}
-
-impl Default for WaterTable {
-    fn default() -> Self {
-        Self {
-            height: HashMap::default(),
-        }
     }
 }
 

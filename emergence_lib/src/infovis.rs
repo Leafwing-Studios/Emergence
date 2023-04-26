@@ -116,7 +116,7 @@ impl FromWorld for TileOverlay {
         // Signals
         for kind in SignalKind::variants() {
             let material_assets: &mut Assets<StandardMaterial> =
-                &mut *world.resource_mut::<Assets<StandardMaterial>>();
+                &mut world.resource_mut::<Assets<StandardMaterial>>();
 
             let colors =
                 generate_color_gradient(kind.color_low(), kind.color_high(), Self::N_COLORS);
@@ -136,7 +136,7 @@ impl FromWorld for TileOverlay {
             Self::N_COLORS,
         );
         let material_assets: &mut Assets<StandardMaterial> =
-            &mut *world.resource_mut::<Assets<StandardMaterial>>();
+            &mut world.resource_mut::<Assets<StandardMaterial>>();
         let water_table_color_ramp = generate_color_ramp(&water_table_colors, material_assets);
         let water_table_legend_image = generate_legend(&water_table_colors, Self::LEGEND_WIDTH);
         let mut image_assets = world.resource_mut::<Assets<Image>>();
@@ -197,6 +197,7 @@ fn generate_color_ramp(
 }
 
 /// Generates a legend image for the given color gradient.
+#[allow(clippy::identity_op)]
 fn generate_legend(colors: &Vec<Color>, legend_width: u32) -> Image {
     // Create the legend image
     let size = Extent3d {
@@ -215,7 +216,7 @@ fn generate_legend(colors: &Vec<Color>, legend_width: u32) -> Image {
     // Each pixel is represented by 4 bytes, in RGBA order
     // We need to reverse the order of the rows, because the image is stored in memory from top to bottom
     // and we want the lowest value to be at the bottom of the image.
-    for (row, color) in colors.into_iter().rev().enumerate() {
+    for (row, color) in colors.iter().rev().enumerate() {
         let row_start = row * size.width as usize * 4;
         for column in 0..size.width as usize {
             let pixel_start = row_start + column * 4;
@@ -335,11 +336,10 @@ fn set_overlay_material(
                 }
                 OverlayType::StrongestSignal => signals
                     .strongest_goal_signal_at_position(tile_pos)
-                    .map(|(signal_type, signal_strength)| {
+                    .and_then(|(signal_type, signal_strength)| {
                         let signal_kind = signal_type.into();
                         tile_overlay.get_material(signal_kind, signal_strength)
-                    })
-                    .flatten(),
+                    }),
                 OverlayType::WaterTable => {
                     let depth_to_water_table =
                         water_table.depth_to_water_table(tile_pos, &map_geometry);
