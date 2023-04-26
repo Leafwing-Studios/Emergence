@@ -281,6 +281,11 @@ impl TileOverlay {
         &self,
         depth_to_water_table: Height,
     ) -> Option<Handle<StandardMaterial>> {
+        // Don't show the depth to the water table if the tile is covered with surface water
+        if depth_to_water_table == Height::ZERO {
+            return None;
+        }
+
         let normalized_depth = depth_to_water_table.0.min(Self::MAX_DEPTH_TO_WATER_TABLE)
             / Self::MAX_DEPTH_TO_WATER_TABLE;
 
