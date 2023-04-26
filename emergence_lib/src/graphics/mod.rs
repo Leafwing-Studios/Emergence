@@ -6,7 +6,7 @@ use crate::asset_management::AssetState;
 
 use self::{
     atmosphere::AtmospherePlugin, lighting::LightingPlugin, structures::remove_ghostly_shadows,
-    terrain::manage_litter_piles,
+    terrain::manage_litter_piles, water::WaterRenderingPlugin,
 };
 
 mod atmosphere;
@@ -15,6 +15,7 @@ pub(crate) mod palette;
 mod structures;
 mod terrain;
 mod units;
+mod water;
 
 /// Adds all logic required to render the game.
 ///
@@ -25,6 +26,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
+            .add_plugin(WaterRenderingPlugin)
             .add_system(manage_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
