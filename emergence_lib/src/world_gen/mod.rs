@@ -266,10 +266,20 @@ fn randomize_starting_organisms(
 
 /// Sets the starting water table
 fn initialize_water_table(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
-    /// The starting water level across the entire map
-    const STARTING_WATER_LEVEL: Height = Height(2.0);
+    /// The minimum starting water level for low lying areas
+    const LOW_WATER_LINE: Height = Height(2.0);
+
+    /// The maximum distance of the water table from the surface of the soil
+    const MAX_DISTANCE_FROM_SURFACE: Height = Height(1.5);
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.set(tile_pos, STARTING_WATER_LEVEL);
+        let height = map_geometry.get_height(tile_pos).unwrap();
+        let water_table_level = if height < LOW_WATER_LINE {
+            LOW_WATER_LINE
+        } else {
+            height - MAX_DISTANCE_FROM_SURFACE
+        };
+
+        water_table.set(tile_pos, water_table_level);
     }
 }
