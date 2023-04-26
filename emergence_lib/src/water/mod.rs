@@ -52,10 +52,18 @@ impl WaterTable {
 
     /// Adds the given amount of water to the water table at the given tile.
     pub(crate) fn add(&mut self, tile_pos: TilePos, amount: Height) {
-        self.height
-            .entry(tile_pos)
-            .and_modify(|height| *height += amount)
-            .or_insert(amount);
+        let height = self.get(tile_pos);
+        let new_height = height + amount;
+        self.set(tile_pos, new_height);
+    }
+
+    /// Subtracts the given amount of water from the water table at the given tile.
+    ///
+    /// This will not go below zero.
+    pub(crate) fn subtract(&mut self, tile_pos: TilePos, amount: Height) {
+        let height = self.get(tile_pos);
+        let new_height = height - amount;
+        self.set(tile_pos, new_height.max(Height::ZERO));
     }
 }
 
@@ -98,6 +106,9 @@ fn evaporation(
 ) {
     /// The amount of water that evaporates per day from each surface water tile.
     const EVAPORATION_PER_DAY: Height = Height(0.5);
+    /// The relative rate of evaporation from soil relative to surface water.
+    const SOIL_EVAPORATION_RATE: f32 = 0.2;
+
     let evaporation_per_second = EVAPORATION_PER_DAY.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
 
@@ -105,11 +116,13 @@ fn evaporation(
         evaporation_per_second * elapsed_time * current_weather.get().evaporation_rate();
 
     for tile in map_geometry.valid_tile_positions() {
-        if let Some(surface_water) = map_geometry.get_surface_water_height(tile) {
-            let total_evaporated = evaporation_rate.min(surface_water.0);
-            let new_height = water_table.get(tile) - Height(total_evaporated);
-            water_table.set(tile, new_height);
-        }
+        // Surface water evaporation
+        let total_evaporated = match map_geometry.get_surface_water_height(tile) {
+            Some(_) => Height(evaporation_rate),
+            None => Height(evaporation_rate * SOIL_EVAPORATION_RATE),
+        };
+
+        water_table.subtract(tile, total_evaporated);
     }
 }
 
@@ -132,5 +145,29 @@ fn precipitation(
 
     for tile_pos in map_geometry.valid_tile_positions() {
         water_table.add(tile_pos, precipitation_rate);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn water_table_arithmetic() {
+        use super::*;
+        let mut water_table = WaterTable::default();
+        let tile_pos = TilePos::new(0, 0);
+        water_table.set(tile_pos, Height(1.0));
+        assert_eq!(water_table.get(tile_pos), Height(1.0));
+
+        water_table.add(tile_pos, Height(1.0));
+        assert_eq!(water_table.get(tile_pos), Height(2.0));
+
+        water_table.subtract(tile_pos, Height(1.0));
+        assert_eq!(water_table.get(tile_pos), Height(1.0));
+
+        water_table.subtract(tile_pos, Height(1.0));
+        assert_eq!(water_table.get(tile_pos), Height(0.0));
+
+        water_table.subtract(tile_pos, Height(1.0));
+        assert_eq!(water_table.get(tile_pos), Height(0.0));
     }
 }

@@ -362,6 +362,21 @@ impl Height {
     pub(crate) fn lower(&mut self) {
         self.0 = (self.0 - 1.).clamp(Height::MIN.0, Height::MAX.0).round();
     }
+
+    /// Returns the lower of the two heights.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) fn min(self, other: Self) -> Self {
+        Height(self.0.min(other.0))
+    }
+
+    /// Returns the higher of the two heights.
+    #[inline]
+    #[must_use]
+    pub(crate) fn max(self, other: Self) -> Self {
+        Height(self.0.max(other.0))
+    }
 }
 
 impl Add for Height {
