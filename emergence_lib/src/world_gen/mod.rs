@@ -206,7 +206,6 @@ fn generate_organisms(
                 // Only try to spawn a structure if the location is valid and there is space
                 if map_geometry.is_footprint_valid(tile_pos, footprint, &facing)
                     && map_geometry.is_space_available(tile_pos, footprint, &facing)
-                    && map_geometry.is_free_of_water(tile_pos, footprint, &facing)
                 {
                     // Flatten the terrain under the structure before spawning it
                     map_geometry.flatten_height(&mut height_query, tile_pos, footprint, &facing);
