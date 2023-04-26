@@ -31,7 +31,7 @@ impl Plugin for LightingPlugin {
     }
 }
 
-/// Controls the position of the sun
+/// Controls the position and properties of the sun and moon
 #[derive(Component, Debug)]
 pub(crate) struct CelestialBody {
     /// The distance from the origin of the directional light
@@ -51,6 +51,10 @@ pub(crate) struct CelestialBody {
     travel_axis: f32,
     /// The base illuminance of the [`DirectionalLight`]
     illuminance: f32,
+    /// The total effect of temporary modifiers to the [`DirectionalLight`]'s illuminance.
+    ///
+    /// This defaults to 1.0, and is multiplied by the base illuminance.
+    light_level: f32,
     /// The number of in-game days required to complete a full cycle.
     pub(crate) days_per_cycle: f32,
 }
@@ -59,14 +63,27 @@ impl CelestialBody {
     /// The default angle that the sun is offset from the zenith in radians.
     const DEFAULT_NOON_RADIANS: f32 = 23.5 / 360.;
 
+    /// Sets the `light_level` of this celestial body.
+    pub(crate) fn set_light_level(&mut self, light_level: f32) {
+        self.light_level = light_level;
+    }
+
     /// Computes the total irradiance produced by this celestial body based on its position in the sky.
     pub(crate) fn compute_light(&self) -> Illuminance {
-        CelestialBody::compute_illuminance(self.hour_angle, self.declination, self.illuminance)
+        CelestialBody::compute_illuminance(
+            self.light_level,
+            self.hour_angle,
+            self.declination,
+            self.illuminance,
+        )
     }
 
     /// Computes the maximum total irradiance produced by this celestial body based on its brightest possible position in the sky.
+    ///
+    /// This is used to determine the maximum brightness of the directional light.
     pub(crate) fn compute_max_light(&self) -> Illuminance {
         CelestialBody::compute_illuminance(
+            1.0,
             CelestialBody::DEFAULT_NOON_RADIANS,
             self.declination,
             self.illuminance,
@@ -74,7 +91,12 @@ impl CelestialBody {
     }
 
     /// Computes the total irradiance produced by a celestial body given `hour_angle`, `declination`, and `illuminance`.
-    fn compute_illuminance(hour_angle: f32, declination: f32, illuminance: f32) -> Illuminance {
+    fn compute_illuminance(
+        light_level: f32,
+        hour_angle: f32,
+        declination: f32,
+        illuminance: f32,
+    ) -> Illuminance {
         // Computes the total angle formed by the celestial body and the horizon
         //
         // We cannot simply use the progress, as the inclination also needs to be taken into account.
@@ -82,7 +104,7 @@ impl CelestialBody {
         // We're treating the latitude here as equatorial.
         let cos_solar_zenith_angle = hour_angle.cos() * declination.cos();
         let solar_zenith_angle = cos_solar_zenith_angle.acos();
-        Illuminance(illuminance * solar_zenith_angle.cos().max(0.))
+        Illuminance(light_level * illuminance * solar_zenith_angle.cos().max(0.))
     }
 
     /// The starting settings for the sun
@@ -93,6 +115,7 @@ impl CelestialBody {
             declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
             travel_axis: 0.,
             illuminance: 8e4,
+            light_level: 1.0,
             days_per_cycle: 1.0,
         }
     }
@@ -105,6 +128,7 @@ impl CelestialBody {
             declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
             travel_axis: PI / 6.,
             illuminance: 3e4,
+            light_level: 1.0,
             days_per_cycle: 29.53,
         }
     }

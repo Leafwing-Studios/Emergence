@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::{Add, AddAssign};
 use serde::{Deserialize, Serialize};
+use std::ops::Mul;
 
 use super::SimulationSet;
 use crate::graphics::lighting::CelestialBody;
@@ -54,6 +55,22 @@ impl Display for Illuminance {
         let rounded_illuminance = (self.0 / 100.).round() * 100.;
 
         write!(f, "{rounded_illuminance:.0} lux")
+    }
+}
+
+impl Mul<f32> for Illuminance {
+    type Output = Illuminance;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Illuminance(self.0 * rhs)
+    }
+}
+
+impl Mul<Illuminance> for f32 {
+    type Output = Illuminance;
+
+    fn mul(self, rhs: Illuminance) -> Self::Output {
+        Illuminance(self * rhs.0)
     }
 }
 
