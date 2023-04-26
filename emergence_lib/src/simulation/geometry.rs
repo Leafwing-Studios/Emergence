@@ -255,6 +255,7 @@ impl TilePos {
     /// Computes the Euclidean distance between the centers of self and `other` in tile coordinates.
     #[inline]
     #[must_use]
+    #[allow(dead_code)]
     pub(crate) fn euclidean_tile_distance(&self, other: TilePos) -> f32 {
         let [a_x, a_y, a_z] = self.hex.to_cubic_array();
         let [b_x, b_y, b_z] = other.hex.to_cubic_array();
