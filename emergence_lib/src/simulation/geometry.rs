@@ -13,7 +13,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
 use crate::{
@@ -404,6 +404,14 @@ impl AddAssign for Height {
 impl SubAssign for Height {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
+    }
+}
+
+impl Div<f32> for Height {
+    type Output = Height;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Height(self.0 / rhs)
     }
 }
 
