@@ -230,8 +230,8 @@ impl Command for SpawnTerrainGhostCommand {
         let inherited_material = InheritedMaterial(ghost_material);
         let current_height = map_geometry.get_height(self.tile_pos).unwrap();
         let new_height = match self.terraforming_action {
-            TerraformingAction::Raise => current_height + Height(1),
-            TerraformingAction::Lower => current_height - Height(1),
+            TerraformingAction::Raise => current_height + Height(1.),
+            TerraformingAction::Lower => current_height - Height(1.),
             _ => current_height,
         };
 
@@ -325,8 +325,8 @@ impl Command for ApplyTerraformingCommand {
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
-            TerraformingAction::Raise => *height += Height(1),
-            TerraformingAction::Lower => *height -= Height(1),
+            TerraformingAction::Raise => height.raise(),
+            TerraformingAction::Lower => height.lower(),
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;
             }

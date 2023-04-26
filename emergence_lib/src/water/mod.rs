@@ -39,7 +39,7 @@ pub struct WaterTable {
 impl Default for WaterTable {
     fn default() -> Self {
         /// The height of the water table at the start of the game.
-        const BASE_HEIGHT: Height = Height(2);
+        const BASE_HEIGHT: Height = Height(2.);
 
         Self {
             base_height: BASE_HEIGHT,
@@ -57,7 +57,7 @@ fn tides(in_game_time: Res<InGameTime>, mut water_table: ResMut<WaterTable>) {
     const TIDAL_SCALE: f32 = 2.0;
 
     let tidal_offset = in_game_time.elapsed_days().sin() * TIDAL_SCALE;
-    water_table.height = water_table.base_height + Height(tidal_offset.round() as u8);
+    water_table.height = water_table.base_height + Height(tidal_offset);
 }
 
 /// Computes how much water is on the surface of each tile.

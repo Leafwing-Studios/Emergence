@@ -69,7 +69,7 @@ fn render_water(
                     mesh: water_handles.mesh.clone_weak(),
                     material: water_handles.material.clone_weak(),
                     transform: Transform {
-                        translation: tile_pos.into_world_pos(&map_geometry),
+                        translation: tile_pos.top_of_tile(&map_geometry),
                         scale: Vec3::new(1.0, water_height.into_world_pos(), 1.0),
                         ..Default::default()
                     },
