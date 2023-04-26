@@ -740,6 +740,7 @@ mod terrain_details {
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
+        water::DepthToWaterTable,
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -815,7 +816,7 @@ Output: {output}"
         /// The height of the tile
         pub(super) height: Height,
         /// The distance from the surface to the water table
-        pub(super) depth_to_water_table: Height,
+        pub(super) depth_to_water_table: DepthToWaterTable,
         // The depth of water at this tile
         pub(super) water_depth: Option<Height>,
         /// The signals on this tile
@@ -863,7 +864,7 @@ Output: {output}"
 Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
-Depth to Water Table: {depth_to_water_table}
+Water Table: {depth_to_water_table}
 Water Depth: {water_depth}
 Zoning: {zoning}
 Vigor modifier: {vigor_modifier}

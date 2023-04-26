@@ -15,10 +15,10 @@ use crate::{
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
-    water::WaterTable,
+    water::{DepthToWaterTable, WaterTable},
 };
 
 /// Systems and reources for communicating the state of the world to the player.
@@ -279,15 +279,15 @@ impl TileOverlay {
     /// If this is `None`, then the tile is covered with surface water.
     fn get_water_table_material(
         &self,
-        depth_to_water_table: Height,
+        depth_to_water_table: DepthToWaterTable,
     ) -> Option<Handle<StandardMaterial>> {
-        // Don't show the depth to the water table if the tile is covered with surface water
-        if depth_to_water_table == Height::ZERO {
-            return None;
-        }
-
-        let normalized_depth = depth_to_water_table.0.min(Self::MAX_DEPTH_TO_WATER_TABLE)
-            / Self::MAX_DEPTH_TO_WATER_TABLE;
+        let normalized_depth = match depth_to_water_table {
+            DepthToWaterTable::Dry => 1.,
+            DepthToWaterTable::Depth(depth) => {
+                depth.0.min(Self::MAX_DEPTH_TO_WATER_TABLE) / Self::MAX_DEPTH_TO_WATER_TABLE
+            }
+            DepthToWaterTable::Flooded => return None,
+        };
 
         let color_index: usize = (normalized_depth * (Self::N_COLORS as f32)) as usize;
         // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals

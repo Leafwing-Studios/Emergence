@@ -3,6 +3,8 @@
 //! Code for how it should be rendered belongs in the `graphics` module,
 //! while code for how it can be used typically belongs in `structures`.
 
+use core::fmt::{Display, Formatter};
+
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::simulation::{
@@ -52,10 +54,16 @@ impl WaterTable {
         &self,
         tile_pos: TilePos,
         map_geometry: &MapGeometry,
-    ) -> Height {
+    ) -> DepthToWaterTable {
         let tile_height = map_geometry.get_height(tile_pos).unwrap();
         let water_height = self.get(tile_pos);
-        (tile_height - water_height).max(Height::ZERO)
+        if water_height == Height::ZERO {
+            DepthToWaterTable::Dry
+        } else if water_height >= tile_height {
+            DepthToWaterTable::Flooded
+        } else {
+            DepthToWaterTable::Depth(tile_height - water_height)
+        }
     }
 
     /// Sets the height of the water table at the given tile.
@@ -84,6 +92,27 @@ impl Default for WaterTable {
     fn default() -> Self {
         Self {
             height: HashMap::default(),
+        }
+    }
+}
+
+/// The depth to the water table at a given tile.
+#[derive(Debug)]
+pub(crate) enum DepthToWaterTable {
+    /// The water table is above the surface.
+    Flooded,
+    /// The water table is completely empty.
+    Dry,
+    /// The water table is at the given depth, measured from the soil surface.
+    Depth(Height),
+}
+
+impl Display for DepthToWaterTable {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self {
+            DepthToWaterTable::Flooded => write!(f, "Flooded"),
+            DepthToWaterTable::Dry => write!(f, "Dry"),
+            DepthToWaterTable::Depth(depth) => write!(f, "{depth} from surface"),
         }
     }
 }
