@@ -45,6 +45,19 @@ impl WaterTable {
         self.height.get(&tile_pos).copied().unwrap_or_default()
     }
 
+    /// Get the depth to the water table at the given tile.
+    ///
+    /// If there is surface water, this will be zero.
+    pub(crate) fn depth_to_water_table(
+        &self,
+        tile_pos: TilePos,
+        map_geometry: &MapGeometry,
+    ) -> Height {
+        let tile_height = map_geometry.get_height(tile_pos).unwrap();
+        let water_height = self.get(tile_pos);
+        (water_height - tile_height).min(Height::ZERO)
+    }
+
     /// Sets the height of the water table at the given tile.
     pub(crate) fn set(&mut self, tile_pos: TilePos, height: Height) {
         self.height.insert(tile_pos, height);
