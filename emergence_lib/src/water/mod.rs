@@ -55,7 +55,7 @@ impl WaterTable {
     ) -> Height {
         let tile_height = map_geometry.get_height(tile_pos).unwrap();
         let water_height = self.get(tile_pos);
-        (water_height - tile_height).min(Height::ZERO)
+        (tile_height - water_height).max(Height::ZERO)
     }
 
     /// Sets the height of the water table at the given tile.
