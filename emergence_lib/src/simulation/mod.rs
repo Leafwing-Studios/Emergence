@@ -10,6 +10,7 @@ use crate::signals::SignalsPlugin;
 use crate::simulation::geometry::{sync_rotation_to_facing, MapGeometry};
 use crate::simulation::light::LightPlugin;
 use crate::simulation::time::TemporalPlugin;
+use crate::simulation::weather::WeatherPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
@@ -21,6 +22,7 @@ use bevy::prelude::*;
 pub mod geometry;
 pub mod light;
 pub mod time;
+pub mod weather;
 
 /// Sets up world geometry
 pub struct GeometryPlugin {
@@ -69,7 +71,8 @@ impl Plugin for SimulationPlugin {
             .add_plugin(SignalsPlugin)
             .add_plugin(TemporalPlugin)
             .add_plugin(LightPlugin)
-            .add_plugin(WaterPlugin);
+            .add_plugin(WaterPlugin)
+            .add_plugin(WeatherPlugin);
     }
 }
 
