@@ -273,6 +273,9 @@ impl TilePos {
 pub(crate) struct Height(pub u8);
 
 impl Height {
+    /// The absolute minimum height.
+    pub(crate) const ZERO: Height = Height(0);
+
     /// The minimum allowed height
     pub(crate) const MIN: Height = Height(0);
 
@@ -389,8 +392,12 @@ pub struct MapGeometry {
     ghost_terrain_index: HashMap<TilePos, Entity>,
     /// The set of tiles that cannot be traversed by units.
     impassable_tiles: HashSet<TilePos>,
-    /// The height of the terrain at each tile position
+    /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
+    /// The height of the surface water at each tile position.
+    ///
+    /// Tiles with no surface water will not be present in this index.
+    surface_water_index: HashMap<TilePos, Height>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -418,6 +425,7 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_tiles: HashSet::default(),
             height_index,
+            surface_water_index: HashMap::default(),
         }
     }
 
@@ -845,6 +853,20 @@ impl MapGeometry {
                 self.impassable_tiles.insert(tile_pos);
             }
         }
+    }
+
+    /// Records the presence of surface water at the provided `tile_pos`.
+    pub(crate) fn add_surface_water(&mut self, tile_pos: TilePos, height: Height) {
+        assert!(
+            height > Height::ZERO,
+            "Surface water height must be greater than zero."
+        );
+        self.surface_water_index.insert(tile_pos, height);
+    }
+
+    /// Removes any surface water at the provided `tile_pos`.
+    pub(crate) fn remove_surface_water(&mut self, tile_pos: TilePos) {
+        self.surface_water_index.remove(&tile_pos);
     }
 }
 

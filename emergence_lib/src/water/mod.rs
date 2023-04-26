@@ -5,13 +5,17 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::{geometry::Height, time::InGameTime, SimulationSet};
+use crate::simulation::{
+    geometry::{Height, MapGeometry, TilePos},
+    time::InGameTime,
+    SimulationSet,
+};
 pub(super) struct WaterPlugin;
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<WaterTable>().add_system(
-            tides
+        app.init_resource::<WaterTable>().add_systems(
+            (tides, update_surface_water_map_geometry)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -49,4 +53,24 @@ fn tides(in_game_time: Res<InGameTime>, mut water_table: ResMut<WaterTable>) {
 
     let tidal_offset = in_game_time.elapsed_days().sin() * TIDAL_SCALE;
     water_table.height = water_table.base_height + Height(tidal_offset.round() as u8);
+}
+
+/// Computes how much water is on the surface of each tile.
+fn update_surface_water_map_geometry(
+    mut map_geometry: ResMut<MapGeometry>,
+    water_table: Res<WaterTable>,
+) {
+    // Collect out to avoid borrow checker pain
+    for tile_pos in map_geometry
+        .valid_tile_positions()
+        .collect::<Vec<TilePos>>()
+    {
+        let tile_height = map_geometry.get_height(tile_pos).unwrap();
+
+        if water_table.height > tile_height {
+            map_geometry.add_surface_water(tile_pos, water_table.height - tile_height);
+        } else {
+            map_geometry.remove_surface_water(tile_pos);
+        }
+    }
 }
