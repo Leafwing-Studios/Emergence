@@ -13,6 +13,7 @@ use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_assets::UnitHandles;
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use crate::units::UnitBundle;
+use crate::water::WaterTable;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
@@ -95,6 +96,7 @@ impl Plugin for GenerationPlugin {
         app.insert_resource(self.config.clone()).add_systems(
             (
                 generate_terrain,
+                initialize_water_table,
                 apply_system_buffers,
                 generate_organisms,
                 apply_system_buffers,
@@ -259,5 +261,15 @@ fn randomize_starting_organisms(
             let recipe_data = recipe_manifest.get(*recipe_id);
             crafting_state.randomize(rng, recipe_data);
         }
+    }
+}
+
+/// Sets the starting water table
+fn initialize_water_table(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
+    /// The starting water level across the entire map
+    const STARTING_WATER_LEVEL: Height = Height(2.0);
+
+    for tile_pos in map_geometry.valid_tile_positions() {
+        water_table.set(tile_pos, STARTING_WATER_LEVEL);
     }
 }
