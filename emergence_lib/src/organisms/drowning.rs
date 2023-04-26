@@ -19,7 +19,7 @@ pub(super) fn drown(
 ) {
     /// The water height at which units and structures drown.
     // TODO: make drowning characteristics customizable on a per strain basis
-    const DROWNING_HEIGHT: Height = Height(2);
+    const DROWNING_HEIGHT: Height = Height(2.);
 
     for (entity, &tile_pos) in unit_query.iter() {
         if let Some(water_height) = map_geometry.get_surface_water_height(tile_pos) {

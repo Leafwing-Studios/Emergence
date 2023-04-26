@@ -268,21 +268,21 @@ impl TilePos {
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Default)]
-pub(crate) struct Height(pub u8);
+#[derive(Component, Clone, Copy, Debug, PartialEq, PartialOrd, Display, Default)]
+pub(crate) struct Height(pub f32);
 
 impl Height {
     /// The absolute minimum height.
-    pub(crate) const ZERO: Height = Height(0);
+    pub(crate) const ZERO: Height = Height(0.);
 
     /// The minimum allowed height
-    pub(crate) const MIN: Height = Height(0);
+    pub(crate) const MIN: Height = Height(0.);
 
     /// The maximum allowable height
-    pub(crate) const MAX: Height = Height(u8::MAX);
+    pub(crate) const MAX: Height = Height(255.);
 
     /// The maximum height difference that units can traverse in a single step.
-    pub(crate) const MAX_STEP: Height = Height(1);
+    pub(crate) const MAX_STEP: Height = Height(1.);
 
     /// The thickness of all terrain topper models.
     /// Note that the diameter of a tile is 1.0 transform units.
@@ -304,16 +304,16 @@ impl Height {
     #[inline]
     #[must_use]
     pub(crate) fn from_world_pos(world_y: f32) -> Self {
-        let f32_height = (world_y / Self::STEP_HEIGHT).round();
-        if f32_height < 0. {
+        let height = (world_y / Self::STEP_HEIGHT).round();
+        if height < 0. {
             Height::MIN
-        } else if f32_height > u8::MAX as f32 {
+        } else if height > u8::MAX as f32 {
             Height::MAX
-        } else if f32_height.is_nan() {
+        } else if height.is_nan() {
             error!("NaN height conversion detected. Are your transforms broken?");
             Height::MAX
         } else {
-            Height(f32_height as u8)
+            Height(height)
         }
     }
 
@@ -348,7 +348,7 @@ impl Add for Height {
     type Output = Height;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Height(self.0.saturating_add(rhs.0))
+        Height(self.0 + rhs.0)
     }
 }
 
@@ -356,7 +356,7 @@ impl Sub for Height {
     type Output = Height;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Height(self.0.saturating_sub(rhs.0))
+        Height((self.0 - rhs.0).max(0.))
     }
 }
 
@@ -468,7 +468,7 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         /// The maximum height of water that units can walk through.
-        const WADING_HEIGHT: Height = Height(1);
+        const WADING_HEIGHT: Height = Height(1.);
 
         if !self.is_valid(starting_pos) {
             return false;
@@ -640,7 +640,7 @@ impl MapGeometry {
     ) -> Result<Height, IndexError> {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
-        Ok(Height(starting_height.0.abs_diff(ending_height.0)))
+        Ok(Height((starting_height.0 - ending_height.0).abs()))
     }
 
     /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
@@ -1034,7 +1034,7 @@ mod tests {
     #[test]
     fn height_is_invertable() {
         for i in u8::MIN..=u8::MAX {
-            let height = Height(i);
+            let height = Height(i as f32);
             let z = height.into_world_pos();
             let remapped_height = Height::from_world_pos(z);
 
@@ -1058,7 +1058,7 @@ mod tests {
             for y in -10..=10 {
                 let tile_pos = TilePos::new(x, y);
                 // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(tile_pos, Height(17));
+                map_geometry.update_height(tile_pos, Height(17.));
                 let world_pos = tile_pos.into_world_pos(&map_geometry);
                 let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
 
