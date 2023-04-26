@@ -65,12 +65,12 @@ impl Default for GenerationConfig {
             terrain_weights,
             hill_settings: HillSettings {
                 center: TilePos::ZERO,
-                height: Height(25),
-                radius: 40,
+                height: Height(10),
+                radius: 5,
             },
             simplex_settings: SimplexSettings {
-                frequency: 0.07,
-                amplitude: 2.0,
+                frequency: 0.02,
+                amplitude: 3.0,
                 octaves: 4,
                 lacunarity: 2.3,
                 gain: 0.5,
@@ -196,9 +196,13 @@ fn hill(tile_pos: TilePos, hill_settings: &HillSettings) -> f32 {
 /// A settings struct for [`simplex_noise`].
 #[derive(Debug, Clone)]
 struct SimplexSettings {
-    /// Scale the pos to make it work better with the noise function
+    /// Controls the size of the features in the noise function.
+    ///
+    /// Higher values mean smaller features.
     frequency: f32,
-    /// Scale the output of the noise function so you can more easily use the number for a height
+    /// Controls the vertical scale of the noise function.
+    ///
+    /// Higher values mean deeper valleys and higher mountains.
     amplitude: f32,
     /// How many times will the fbm be sampled?
     octaves: usize,

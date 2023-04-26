@@ -36,9 +36,12 @@ pub struct WaterTable {
 
 impl Default for WaterTable {
     fn default() -> Self {
+        /// The height of the water table at the start of the game.
+        const BASE_HEIGHT: Height = Height(2);
+
         Self {
-            base_height: Height(3),
-            height: Height(3),
+            base_height: BASE_HEIGHT,
+            height: BASE_HEIGHT,
         }
     }
 }
