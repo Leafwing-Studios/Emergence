@@ -25,6 +25,7 @@ pub mod terrain;
 pub mod ui;
 pub mod units;
 pub mod utils;
+pub mod water;
 pub mod world_gen;
 
 /// Various app configurations, used for testing.

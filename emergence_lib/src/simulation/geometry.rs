@@ -255,6 +255,7 @@ impl TilePos {
     /// Computes the Euclidean distance between the centers of self and `other` in tile coordinates.
     #[inline]
     #[must_use]
+    #[allow(dead_code)]
     pub(crate) fn euclidean_tile_distance(&self, other: TilePos) -> f32 {
         let [a_x, a_y, a_z] = self.hex.to_cubic_array();
         let [b_x, b_y, b_z] = other.hex.to_cubic_array();
@@ -273,6 +274,9 @@ impl TilePos {
 pub(crate) struct Height(pub u8);
 
 impl Height {
+    /// The absolute minimum height.
+    pub(crate) const ZERO: Height = Height(0);
+
     /// The minimum allowed height
     pub(crate) const MIN: Height = Height(0);
 
@@ -389,8 +393,12 @@ pub struct MapGeometry {
     ghost_terrain_index: HashMap<TilePos, Entity>,
     /// The set of tiles that cannot be traversed by units.
     impassable_tiles: HashSet<TilePos>,
-    /// The height of the terrain at each tile position
+    /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
+    /// The height of the surface water at each tile position.
+    ///
+    /// Tiles with no surface water will not be present in this index.
+    surface_water_index: HashMap<TilePos, Height>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -418,6 +426,7 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_tiles: HashSet::default(),
             height_index,
+            surface_water_index: HashMap::default(),
         }
     }
 
@@ -460,6 +469,9 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        /// The maximum height of water that units can walk through.
+        const WADING_HEIGHT: Height = Height(1);
+
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -470,6 +482,12 @@ impl MapGeometry {
 
         if self.impassable_tiles.contains(&ending_pos) {
             return false;
+        }
+
+        if let Some(water_level) = self.get_surface_water_height(ending_pos) {
+            if water_level > WADING_HEIGHT {
+                return false;
+            }
         }
 
         if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
@@ -544,7 +562,7 @@ impl MapGeometry {
     /// - the area is in the map
     /// - the area is flat
     /// - the area is free of structures
-    /// - all tiles match the provided allowable terrain list
+    /// - there is no surface water present
     #[inline]
     #[must_use]
     pub(crate) fn can_build(
@@ -556,6 +574,7 @@ impl MapGeometry {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
+            && self.is_free_of_water(center, footprint, facing)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -845,6 +864,45 @@ impl MapGeometry {
                 self.impassable_tiles.insert(tile_pos);
             }
         }
+    }
+
+    /// Records the presence of surface water at the provided `tile_pos`.
+    #[inline]
+    pub(crate) fn add_surface_water(&mut self, tile_pos: TilePos, height: Height) {
+        assert!(
+            height > Height::ZERO,
+            "Surface water height must be greater than zero."
+        );
+        self.surface_water_index.insert(tile_pos, height);
+    }
+
+    /// Removes any surface water at the provided `tile_pos`.
+    #[inline]
+    pub(crate) fn remove_surface_water(&mut self, tile_pos: TilePos) {
+        self.surface_water_index.remove(&tile_pos);
+    }
+
+    /// Gets the surface water height at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
+    pub(crate) fn get_surface_water_height(&self, tile_pos: TilePos) -> Option<Height> {
+        self.surface_water_index.get(&tile_pos).copied()
+    }
+
+    /// Are all of the tiles defined by `footprint` located at the `center` tile free of surface water?
+    #[inline]
+    #[must_use]
+    pub(crate) fn is_free_of_water(
+        &self,
+        tile_pos: TilePos,
+        footprint: &Footprint,
+        facing: &Facing,
+    ) -> bool {
+        footprint
+            .rotated(facing)
+            .in_world_space(tile_pos)
+            .iter()
+            .all(|tile_pos| self.get_surface_water_height(*tile_pos).is_none())
     }
 }
 
