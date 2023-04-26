@@ -13,6 +13,7 @@ use crate::simulation::time::TemporalPlugin;
 use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
+use crate::water::WaterPlugin;
 use crate::world_gen::{GenerationConfig, GenerationPlugin};
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
@@ -67,7 +68,8 @@ impl Plugin for SimulationPlugin {
             .add_plugin(UnitsPlugin)
             .add_plugin(SignalsPlugin)
             .add_plugin(TemporalPlugin)
-            .add_plugin(LightPlugin);
+            .add_plugin(LightPlugin)
+            .add_plugin(WaterPlugin);
     }
 }
 

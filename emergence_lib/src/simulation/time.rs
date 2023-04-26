@@ -85,7 +85,11 @@ impl Mul<f32> for Days {
 
 impl InGameTime {
     /// How many days have elapsed total?
-    pub fn elapsed_days(&self) -> u64 {
+    pub fn elapsed_days(&self) -> f32 {
+        self.elapsed_time.0
+    }
+    /// How many days have elapsed total, rounded to the nearest day?
+    pub fn rounded_elapsed_days(&self) -> u64 {
         self.elapsed_time.0.floor() as u64
     }
 
@@ -118,7 +122,7 @@ impl Display for InGameTime {
         write!(
             f,
             "{} days elapsed\n{:.2}h",
-            self.elapsed_days(),
+            self.rounded_elapsed_days(),
             self.twenty_four_hour_time()
         )
     }
