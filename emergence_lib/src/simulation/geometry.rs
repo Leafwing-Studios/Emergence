@@ -268,9 +268,7 @@ impl TilePos {
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(
-    Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Display, Default,
-)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Default)]
 pub(crate) struct Height(pub u8);
 
 impl Height {
@@ -642,7 +640,7 @@ impl MapGeometry {
     ) -> Result<Height, IndexError> {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
-        Ok(Height(starting_height.abs_diff(ending_height.0)))
+        Ok(Height(starting_height.0.abs_diff(ending_height.0)))
     }
 
     /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
