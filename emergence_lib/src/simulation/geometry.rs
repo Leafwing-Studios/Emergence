@@ -13,7 +13,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
 use crate::{
@@ -362,6 +362,21 @@ impl Height {
     pub(crate) fn lower(&mut self) {
         self.0 = (self.0 - 1.).clamp(Height::MIN.0, Height::MAX.0).round();
     }
+
+    /// Returns the lower of the two heights.
+    #[inline]
+    #[must_use]
+    #[allow(dead_code)]
+    pub(crate) fn min(self, other: Self) -> Self {
+        Height(self.0.min(other.0))
+    }
+
+    /// Returns the higher of the two heights.
+    #[inline]
+    #[must_use]
+    pub(crate) fn max(self, other: Self) -> Self {
+        Height(self.0.max(other.0))
+    }
 }
 
 impl Add for Height {
@@ -389,6 +404,14 @@ impl AddAssign for Height {
 impl SubAssign for Height {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
+    }
+}
+
+impl Div<f32> for Height {
+    type Output = Height;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Height(self.0 / rhs)
     }
 }
 

@@ -54,13 +54,20 @@ fn select_overlay(
         // FIXME: this is very silly, but it's the easiest way to get and cycle signal types
         tile_overlay.overlay_type = signals.random_signal_type().into();
     }
+
+    if player_actions.just_pressed(PlayerAction::ToggleWaterTableOverlay) {
+        if tile_overlay.overlay_type != OverlayType::WaterTable {
+            tile_overlay.overlay_type = OverlayType::WaterTable;
+        } else {
+            tile_overlay.overlay_type = OverlayType::None;
+        }
+    }
 }
 
 /// Creates the UI needed to display the overlay.
 fn setup_overlay_menu(
     mut commands: Commands,
     left_panel_query: Query<Entity, With<LeftPanel>>,
-    tile_overlay: Res<TileOverlay>,
     fonts: Res<FiraSansFontFamily>,
 ) {
     let left_panel_entity = left_panel_query.single();
@@ -90,7 +97,7 @@ fn setup_overlay_menu(
                 ..Default::default()
             },
             image: UiImage {
-                texture: tile_overlay.legend_image_handle(SignalKind::Contains),
+                texture: Handle::default(),
                 ..Default::default()
             },
             ..Default::default()
@@ -121,9 +128,9 @@ fn update_signal_type_display(
     let font_size = 20.0;
 
     match &tile_overlay.overlay_type {
-        crate::infovis::OverlayType::None => {
+        OverlayType::None => {
             text.sections = vec![TextSection {
-                value: "No signal".to_string(),
+                value: "No overlay".to_string(),
                 style: TextStyle {
                     font: fonts.regular.clone_weak(),
                     font_size,
@@ -133,7 +140,7 @@ fn update_signal_type_display(
 
             legend.texture = Handle::default();
         }
-        crate::infovis::OverlayType::Single(signal_type) => {
+        OverlayType::Single(signal_type) => {
             let signal_kind: SignalKind = (*signal_type).into();
 
             text.sections = vec![TextSection {
@@ -152,7 +159,7 @@ fn update_signal_type_display(
 
             legend.texture = tile_overlay.legend_image_handle(signal_kind)
         }
-        crate::infovis::OverlayType::StrongestSignal => {
+        OverlayType::StrongestSignal => {
             text.sections = vec![
                 TextSection {
                     value: "Push\n".to_string(),
@@ -213,6 +220,18 @@ fn update_signal_type_display(
             ];
 
             legend.texture = Handle::default();
+        }
+        OverlayType::WaterTable => {
+            text.sections = vec![TextSection {
+                value: "Depth to water table".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
+
+            legend.texture = tile_overlay.water_table_legend_image_handle();
         }
     }
 }

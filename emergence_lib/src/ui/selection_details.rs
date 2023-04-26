@@ -16,6 +16,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
+    water::WaterTable,
 };
 
 use self::{
@@ -302,6 +303,7 @@ fn get_details(
     unit_manifest: Res<UnitManifest>,
     recipe_manifest: Res<RecipeManifest>,
     signals: Res<Signals>,
+    water_table: Res<WaterTable>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
         CurrentSelection::GhostStructure(ghost_structure_entity) => {
@@ -386,6 +388,9 @@ fn get_details(
                     terrain_id: *terrain_query_item.terrain_id,
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
+                    depth_to_water_table: water_table
+                        .depth_to_water_table(*tile_pos, &map_geometry),
+                    water_depth: map_geometry.get_surface_water_height(*tile_pos),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
@@ -735,6 +740,7 @@ mod terrain_details {
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
+        water::DepthToWaterTable,
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -806,8 +812,13 @@ Output: {output}"
         pub(super) terrain_id: Id<Terrain>,
         /// The location of the tile
         pub(super) tile_pos: TilePos,
+
         /// The height of the tile
         pub(super) height: Height,
+        /// The distance from the surface to the water table
+        pub(super) depth_to_water_table: DepthToWaterTable,
+        /// The depth of water at this tile
+        pub(super) water_depth: Option<Height>,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -835,6 +846,8 @@ Output: {output}"
             let terrain_type = terrain_manifest.name(self.terrain_id);
             let tile_pos = &self.tile_pos;
             let height = &self.height;
+            let depth_to_water_table = &self.depth_to_water_table;
+            let water_depth = self.water_depth.unwrap_or_default();
             let signals = self.signals.display(
                 item_manifest,
                 structure_manifest,
@@ -851,6 +864,8 @@ Output: {output}"
 Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
+Water Table: {depth_to_water_table}
+Water Depth: {water_depth}
 Zoning: {zoning}
 Vigor modifier: {vigor_modifier}
 Signal modifier: {signal_modifier}

@@ -13,6 +13,7 @@ use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_assets::UnitHandles;
 use crate::units::unit_manifest::{Unit, UnitManifest};
 use crate::units::UnitBundle;
+use crate::water::WaterTable;
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::log::info;
@@ -95,6 +96,7 @@ impl Plugin for GenerationPlugin {
         app.insert_resource(self.config.clone()).add_systems(
             (
                 generate_terrain,
+                initialize_water_table,
                 apply_system_buffers,
                 generate_organisms,
                 apply_system_buffers,
@@ -259,5 +261,25 @@ fn randomize_starting_organisms(
             let recipe_data = recipe_manifest.get(*recipe_id);
             crafting_state.randomize(rng, recipe_data);
         }
+    }
+}
+
+/// Sets the starting water table
+fn initialize_water_table(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
+    /// The minimum starting water level for low lying areas
+    const LOW_WATER_LINE: Height = Height(2.0);
+
+    /// Scales the distance of the water table from the surface of the soil
+    const DISTANCE_FROM_SURFACE: Height = Height(1.5);
+
+    for tile_pos in map_geometry.valid_tile_positions() {
+        let height = map_geometry.get_height(tile_pos).unwrap();
+        let water_table_level = if height < LOW_WATER_LINE {
+            LOW_WATER_LINE
+        } else {
+            LOW_WATER_LINE + (height - DISTANCE_FROM_SURFACE) / 2.0
+        };
+
+        water_table.set(tile_pos, water_table_level);
     }
 }

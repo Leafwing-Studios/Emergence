@@ -120,6 +120,8 @@ pub(crate) enum PlayerAction {
     ToggleSignalOverlay,
     /// Show / hide the strongest signal overlay
     ToggleStrongestSignalOverlay,
+    /// Show / hide the depth to the water table overlay
+    ToggleWaterTableOverlay,
 }
 
 impl PlayerAction {
@@ -159,6 +161,7 @@ impl PlayerAction {
             ToggleStatusInfo => KeyCode::F1.into(),
             ToggleSignalOverlay => KeyCode::F2.into(),
             ToggleStrongestSignalOverlay => KeyCode::F3.into(),
+            ToggleWaterTableOverlay => KeyCode::F4.into(),
         }
     }
 
@@ -202,6 +205,7 @@ impl PlayerAction {
             ToggleStatusInfo => UserInput::chord([infovis_modifier, DPadLeft]),
             ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadUp]),
             ToggleStrongestSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
+            ToggleWaterTableOverlay => UserInput::chord([infovis_modifier, DPadDown]),
         }
     }
 
