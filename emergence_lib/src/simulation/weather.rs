@@ -26,7 +26,7 @@ impl Plugin for WeatherPlugin {
 /// The current weather.
 #[derive(Resource)]
 pub struct CurrentWeather {
-    // The day that the weather was last updated.
+    /// The day that the weather was last updated.
     last_updated: u32,
     /// The current weather.
     weather: Weather,
