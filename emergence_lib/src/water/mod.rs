@@ -10,6 +10,8 @@ use crate::simulation::{
     time::InGameTime,
     SimulationSet,
 };
+
+/// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 
 impl Plugin for WaterPlugin {

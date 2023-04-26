@@ -6,6 +6,7 @@ use crate::simulation::geometry::{hexagonal_column, MapGeometry};
 
 use super::palette::environment::WATER;
 
+/// A plugin that controls how water is displayed.
 pub(super) struct WaterRenderingPlugin;
 
 impl Plugin for WaterRenderingPlugin {
