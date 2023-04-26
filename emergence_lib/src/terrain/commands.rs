@@ -325,8 +325,8 @@ impl Command for ApplyTerraformingCommand {
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
-            TerraformingAction::Raise => *height += Height(1.),
-            TerraformingAction::Lower => *height -= Height(1.),
+            TerraformingAction::Raise => height.raise(),
+            TerraformingAction::Lower => height.lower(),
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;
             }

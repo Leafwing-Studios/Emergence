@@ -342,6 +342,26 @@ impl Height {
             scale,
         }
     }
+
+    /// Raises the height by a single terrain step.
+    ///
+    /// Clamps the height to [`Height::MIN`] if it would go below it.
+    /// Clamps the height to [`Height::MAX`] if it would exceed it.
+    /// Rounds the height to the nearest integer.
+    #[inline]
+    pub(crate) fn raise(&mut self) {
+        self.0 = (self.0 + 1.).clamp(Height::MIN.0, Height::MAX.0).round();
+    }
+
+    /// Lowers the height by a single terrain step.
+    ///
+    /// Clamps the height to [`Height::MIN`] if it would go below it.
+    /// Clamps the height to [`Height::MAX`] if it would exceed it.
+    /// Rounds the height to the nearest integer.
+    #[inline]
+    pub(crate) fn lower(&mut self) {
+        self.0 = (self.0 - 1.).clamp(Height::MIN.0, Height::MAX.0).round();
+    }
 }
 
 impl Add for Height {
