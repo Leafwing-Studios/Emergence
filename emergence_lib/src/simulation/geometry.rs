@@ -295,7 +295,7 @@ impl Height {
     #[inline]
     #[must_use]
     pub(crate) fn into_world_pos(self) -> f32 {
-        self.0 as f32 * Self::STEP_HEIGHT
+        self.0 * Self::STEP_HEIGHT
     }
 
     /// Constructs a new height from the `y` coordinate of a `Transform`.
