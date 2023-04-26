@@ -468,6 +468,9 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        /// The maximum height of water that units can walk through.
+        const WADING_HEIGHT: Height = Height(1);
+
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -478,6 +481,12 @@ impl MapGeometry {
 
         if self.impassable_tiles.contains(&ending_pos) {
             return false;
+        }
+
+        if let Some(water_level) = self.get_surface_water_height(ending_pos) {
+            if water_level > WADING_HEIGHT {
+                return false;
+            }
         }
 
         if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
@@ -856,6 +865,7 @@ impl MapGeometry {
     }
 
     /// Records the presence of surface water at the provided `tile_pos`.
+    #[inline]
     pub(crate) fn add_surface_water(&mut self, tile_pos: TilePos, height: Height) {
         assert!(
             height > Height::ZERO,
@@ -865,8 +875,16 @@ impl MapGeometry {
     }
 
     /// Removes any surface water at the provided `tile_pos`.
+    #[inline]
     pub(crate) fn remove_surface_water(&mut self, tile_pos: TilePos) {
         self.surface_water_index.remove(&tile_pos);
+    }
+
+    /// Gets the surface water height at the provided `tile_pos`, if any.
+    #[inline]
+    #[must_use]
+    pub(crate) fn get_surface_water_height(&self, tile_pos: TilePos) -> Option<Height> {
+        self.surface_water_index.get(&tile_pos).copied()
     }
 }
 
