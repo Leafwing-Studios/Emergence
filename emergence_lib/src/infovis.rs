@@ -15,7 +15,7 @@ use crate::{
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
     water::{DepthToWaterTable, WaterTable},
@@ -88,7 +88,9 @@ pub(crate) enum OverlayType {
     /// The strongest signal in each cell is being visualized.
     StrongestSignal,
     /// The distance to the water table is being visualized.
-    WaterTable,
+    DepthToWaterTable,
+    /// The height of the water table is being visualized.
+    HeightOfWaterTable,
 }
 
 impl OverlayType {
@@ -340,10 +342,20 @@ fn set_overlay_material(
                         let signal_kind = signal_type.into();
                         tile_overlay.get_material(signal_kind, signal_strength)
                     }),
-                OverlayType::WaterTable => {
+                OverlayType::DepthToWaterTable => {
                     let depth_to_water_table =
                         water_table.depth_to_water_table(tile_pos, &map_geometry);
                     tile_overlay.get_water_table_material(depth_to_water_table)
+                }
+                OverlayType::HeightOfWaterTable => {
+                    let water_table_height = water_table.get(tile_pos);
+                    // FIXME: use a dedicated color ramp for this, rather than hacking it
+                    // We subtract here to ensure that blue == wet and red == dry
+                    let inverted_height = DepthToWaterTable::Depth(
+                        Height(TileOverlay::MAX_DEPTH_TO_WATER_TABLE) - water_table_height,
+                    );
+
+                    tile_overlay.get_water_table_material(inverted_height)
                 }
             };
 

@@ -23,6 +23,7 @@ impl Plugin for WaterPlugin {
             (
                 evaporation,
                 precipitation,
+                horizontal_water_movement,
                 update_surface_water_map_geometry,
             )
                 .in_set(SimulationSet)
@@ -179,6 +180,61 @@ fn precipitation(
 
     for tile_pos in map_geometry.valid_tile_positions() {
         water_table.add(tile_pos, precipitation_rate);
+    }
+}
+
+/// Moves water from one tile to another, according to the relative height of the water table.
+fn horizontal_water_movement(
+    mut water_table: ResMut<WaterTable>,
+    map_geometry: Res<MapGeometry>,
+    fixed_time: Res<FixedTime>,
+    in_game_time: Res<InGameTime>,
+) {
+    /// The rate of water transfer between adjacent tiles.
+    ///
+    /// The units are cubic tiles per day per tile of height difference.
+    const LATERAL_WATER_FLOW_RATE: f32 = 10.0;
+    let base_water_transfer_amount =
+        LATERAL_WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
+
+    /// The relative rate of water transfer between soil tiles, compared to surface water.
+    // TODO: vary this based on soil type
+    const SOIL_WATER_FLOW_RATE: f32 = 0.1;
+
+    // We must use a working copy of the water table to avoid effects due to the order of evaluation.
+    let mut delta_water_flow = WaterTable::default();
+    for tile_pos in map_geometry.valid_tile_positions() {
+        let height = water_table.get(tile_pos);
+        let neighbors = tile_pos.all_neighbors(&map_geometry);
+        for neighbor in neighbors {
+            let neighbor_height = water_table.get(neighbor);
+            // FIXME: this is non-conservative; water can be moved even from tiles that end up being overdrawn
+            // If the water is higher than the neighbor, move water from the tile to the neighbor
+            // at a rate proportional to the height difference.
+            // If the water is lower than the neighbor, the flow direction is reversed.
+            // The rate is halved as we do the same computation in both directions.
+            let delta_water_height = height - neighbor_height;
+
+            // Water flows more easily between tiles that are both flooded.
+            let medium_coefficient = match (
+                map_geometry.get_surface_water_height(tile_pos).is_some(),
+                map_geometry.get_surface_water_height(neighbor).is_some(),
+            ) {
+                (true, true) => 1.,
+                (false, false) => SOIL_WATER_FLOW_RATE,
+                _ => (1. + SOIL_WATER_FLOW_RATE) / 2.,
+            };
+
+            let water_transfer =
+                delta_water_height * medium_coefficient * base_water_transfer_amount / 2.;
+            delta_water_flow.subtract(tile_pos, water_transfer);
+            delta_water_flow.add(neighbor, water_transfer);
+        }
+    }
+
+    // Apply the changes
+    for tile_pos in map_geometry.valid_tile_positions() {
+        water_table.add(tile_pos, delta_water_flow.get(tile_pos));
     }
 }
 

@@ -56,11 +56,11 @@ fn select_overlay(
     }
 
     if player_actions.just_pressed(PlayerAction::ToggleWaterTableOverlay) {
-        if tile_overlay.overlay_type != OverlayType::WaterTable {
-            tile_overlay.overlay_type = OverlayType::WaterTable;
-        } else {
-            tile_overlay.overlay_type = OverlayType::None;
-        }
+        tile_overlay.overlay_type = match tile_overlay.overlay_type {
+            OverlayType::DepthToWaterTable => OverlayType::HeightOfWaterTable,
+            OverlayType::HeightOfWaterTable => OverlayType::None,
+            _ => OverlayType::DepthToWaterTable,
+        };
     }
 }
 
@@ -221,9 +221,21 @@ fn update_signal_type_display(
 
             legend.texture = Handle::default();
         }
-        OverlayType::WaterTable => {
+        OverlayType::DepthToWaterTable => {
             text.sections = vec![TextSection {
                 value: "Depth to water table".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
+
+            legend.texture = tile_overlay.water_table_legend_image_handle();
+        }
+        OverlayType::HeightOfWaterTable => {
+            text.sections = vec![TextSection {
+                value: "Height of water table".to_string(),
                 style: TextStyle {
                     font: fonts.regular.clone_weak(),
                     font_size,
