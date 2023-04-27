@@ -21,7 +21,7 @@ impl Display for RootZone {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "Root Zone: Max Depth: {} tiles, Radius: {} tiles",
+            "Root Zone: {} tiles deep, {} tiles radius",
             self.max_depth, self.radius
         )
     }

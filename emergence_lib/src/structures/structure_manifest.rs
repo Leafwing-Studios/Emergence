@@ -81,7 +81,7 @@ pub struct RawStructureData {
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
     /// The set of tiles that this structure can reach with its roots.
-    pub rootzone: Option<RootZone>,
+    pub root_zone: Option<RootZone>,
     /// Can units pass over this structure?
     pub passable: bool,
 }
@@ -94,7 +94,7 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
             footprint: raw.footprint.unwrap_or_default(),
-            root_zone: raw.rootzone,
+            root_zone: raw.root_zone,
             passable: raw.passable,
         }
     }

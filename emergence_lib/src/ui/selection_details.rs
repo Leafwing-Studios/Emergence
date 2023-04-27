@@ -674,7 +674,7 @@ Tile: {tile_pos}"
             }
 
             if let Some(root_zone) = &structure_manifest.get(self.structure_id).root_zone {
-                string += &format!("{root_zone}",);
+                string += &format!("\n{root_zone}",);
             }
 
             if let Some(organism) = &self.maybe_organism_details {
