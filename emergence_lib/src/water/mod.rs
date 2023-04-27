@@ -14,6 +14,8 @@ use crate::simulation::{
     SimulationSet,
 };
 
+pub mod roots;
+
 /// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 

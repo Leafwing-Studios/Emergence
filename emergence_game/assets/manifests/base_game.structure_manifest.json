@@ -126,6 +126,10 @@
 					"starting_recipe": "acacia_leaf_production"
 				}
 			},
+			"root_zone": {
+				"depth": 1.5,
+				"radius": 1
+			},
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
@@ -155,6 +159,10 @@
 			},
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
+			},
+			"root_zone": {
+				"depth": 3,
+				"radius": 2
 			},
 			"max_workers": 6,
 			"passable": false

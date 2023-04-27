@@ -6,6 +6,7 @@ use crate::{
     crafting::components::{ActiveRecipe, RawActiveRecipe},
     items::item_manifest::Item,
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
+    water::roots::RootZone,
 };
 use bevy::{
     reflect::{FromReflect, Reflect, TypeUuid},
@@ -58,6 +59,8 @@ pub struct StructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
+    /// The set of tiles that this structure can reach with its roots.
+    pub rootzone: Option<RootZone>,
     /// Can units pass over this structure?
     pub passable: bool,
 }
@@ -77,6 +80,8 @@ pub struct RawStructureData {
     pub max_workers: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
+    /// The set of tiles that this structure can reach with its roots.
+    pub rootzone: Option<RootZone>,
     /// Can units pass over this structure?
     pub passable: bool,
 }
@@ -89,6 +94,7 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
             footprint: raw.footprint.unwrap_or_default(),
+            rootzone: raw.rootzone,
             passable: raw.passable,
         }
     }
