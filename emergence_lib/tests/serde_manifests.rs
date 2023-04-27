@@ -12,7 +12,7 @@ use emergence_lib::{
         lifecycle::{RawLifePath, RawLifecycle},
         RawOrganismId, RawOrganismVariety,
     },
-    simulation::light::Illuminance,
+    simulation::{geometry::Height, light::Illuminance},
     structures::{
         structure_manifest::{RawStructureData, RawStructureKind, RawStructureManifest},
         Footprint,
@@ -23,6 +23,7 @@ use emergence_lib::{
         unit_manifest::{RawUnitData, RawUnitManifest},
         WanderingBehavior,
     },
+    water::roots::RootZone,
 };
 use leafwing_abilities::prelude::Pool;
 
@@ -236,6 +237,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    root_zone: None,
                     passable: false,
                 },
             ),
@@ -250,6 +252,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 1,
                     footprint: Some(Footprint::path()),
+                    root_zone: None,
                     passable: true,
                 },
             ),
@@ -274,6 +277,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 1,
                     footprint: Some(Footprint::single()),
+                    root_zone: None,
                     passable: false,
                 },
             ),
@@ -297,6 +301,10 @@ fn can_serialize_structure_manifest() {
                     ),
                     max_workers: 1,
                     footprint: Some(Footprint::single()),
+                    root_zone: Some(RootZone {
+                        max_depth: Height(1.5),
+                        radius: 1,
+                    }),
                     passable: false,
                 },
             ),
@@ -316,6 +324,10 @@ fn can_serialize_structure_manifest() {
                     ),
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    root_zone: Some(RootZone {
+                        max_depth: Height(3.0),
+                        radius: 2,
+                    }),
                     passable: false,
                 },
             ),
@@ -332,6 +344,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 3,
                     footprint: Some(Footprint::hexagon(1)),
+                    root_zone: None,
                     passable: false,
                 },
             ),
@@ -349,6 +362,7 @@ fn can_serialize_structure_manifest() {
                     max_workers: 6,
                     // Forms a crescent shape
                     footprint: Some(Footprint::single()),
+                    root_zone: None,
                     passable: false,
                 },
             ),
@@ -366,6 +380,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 6,
                     footprint: Some(Footprint::single()),
+                    root_zone: None,
                     passable: false,
                 },
             ),

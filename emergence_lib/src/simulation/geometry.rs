@@ -268,8 +268,10 @@ impl TilePos {
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(Component, Clone, Copy, Debug, PartialEq, PartialOrd, Display, Default)]
-pub(crate) struct Height(pub f32);
+#[derive(
+    Component, Clone, Copy, Debug, PartialEq, PartialOrd, Display, Default, Serialize, Deserialize,
+)]
+pub struct Height(pub f32);
 
 impl Height {
     /// The absolute minimum height.

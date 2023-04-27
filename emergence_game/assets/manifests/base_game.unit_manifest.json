@@ -20,8 +20,8 @@
         "item": "leuco_chunk",
         "energy": 50.0
       },
-      "max_impatience": 10,
-      "max_age": 10.0,
+      "max_impatience": 5,
+      "max_age": 30.0,
       "wandering_behavior": {
         "wander_durations": [
           [
