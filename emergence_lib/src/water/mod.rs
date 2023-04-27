@@ -144,7 +144,7 @@ fn evaporation(
     /// The amount of water that evaporates per day from each surface water tile.
     const EVAPORATION_PER_DAY: Height = Height(1.5);
     /// The relative rate of evaporation from soil relative to surface water.
-    const SOIL_EVAPORATION_RATE: f32 = 0.5;
+    const SOIL_EVAPORATION_RATE: f32 = 0.2;
 
     let evaporation_per_second = EVAPORATION_PER_DAY.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
@@ -172,7 +172,7 @@ fn precipitation(
     map_geometry: Res<MapGeometry>,
 ) {
     /// The amount of water that is deposited per day on each tile.
-    const PRECIPITATION_PER_DAY: Height = Height(1.0);
+    const PRECIPITATION_PER_DAY: Height = Height(0.5);
     let precipitation_per_second = PRECIPITATION_PER_DAY.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
 
