@@ -96,6 +96,7 @@ impl Plugin for GenerationPlugin {
         app.insert_resource(self.config.clone()).add_systems(
             (
                 generate_terrain,
+                apply_system_buffers,
                 initialize_water_table,
                 apply_system_buffers,
                 generate_organisms,
