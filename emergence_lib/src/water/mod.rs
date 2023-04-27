@@ -193,9 +193,13 @@ fn horizontal_water_movement(
     /// The rate of water transfer between adjacent tiles.
     ///
     /// The units are cubic tiles per day per tile of height difference.
-    const LATERAL_WATER_FLOW_RATE: f32 = 5.0;
-    let water_flow_coefficient =
+    const LATERAL_WATER_FLOW_RATE: f32 = 10.0;
+    let base_water_transfer_amount =
         LATERAL_WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
+
+    /// The relative rate of water transfer between soil tiles, compared to surface water.
+    // TODO: vary this based on soil type
+    const SOIL_WATER_FLOW_RATE: f32 = 0.1;
 
     // We must use a working copy of the water table to avoid effects due to the order of evaluation.
     let mut delta_water_flow = WaterTable::default();
@@ -210,7 +214,19 @@ fn horizontal_water_movement(
             // If the water is lower than the neighbor, the flow direction is reversed.
             // The rate is halved as we do the same computation in both directions.
             let delta_water_height = height - neighbor_height;
-            let water_transfer = delta_water_height * water_flow_coefficient / 2.;
+
+            // Water flows more easily between tiles that are both flooded.
+            let medium_coefficient = match (
+                map_geometry.get_surface_water_height(tile_pos).is_some(),
+                map_geometry.get_surface_water_height(neighbor).is_some(),
+            ) {
+                (true, true) => 1.,
+                (false, false) => SOIL_WATER_FLOW_RATE,
+                _ => (1. + SOIL_WATER_FLOW_RATE) / 2.,
+            };
+
+            let water_transfer =
+                delta_water_height * medium_coefficient * base_water_transfer_amount / 2.;
             delta_water_flow.subtract(tile_pos, water_transfer);
             delta_water_flow.add(neighbor, water_transfer);
         }
