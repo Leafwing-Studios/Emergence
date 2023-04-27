@@ -193,9 +193,9 @@ fn horizontal_water_movement(
     /// The rate of water transfer between adjacent tiles.
     ///
     /// The units are cubic tiles per day per tile of height difference.
-    const WATER_FLOW_RATE: f32 = 0.5;
+    const LATERAL_WATER_FLOW_RATE: f32 = 0.5;
     let water_flow_coefficient =
-        WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
+        LATERAL_WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
 
     // We must use a working copy of the water table to avoid effects due to the order of evaluation.
     let mut delta_water_flow = WaterTable::default();
