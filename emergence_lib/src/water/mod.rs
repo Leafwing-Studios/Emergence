@@ -193,7 +193,7 @@ fn horizontal_water_movement(
     /// The rate of water transfer between adjacent tiles.
     ///
     /// The units are cubic tiles per day per tile of height difference.
-    const LATERAL_WATER_FLOW_RATE: f32 = 0.5;
+    const LATERAL_WATER_FLOW_RATE: f32 = 5.0;
     let water_flow_coefficient =
         LATERAL_WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
 
