@@ -15,7 +15,7 @@ use crate::{
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
     water::{DepthToWaterTable, WaterTable},
@@ -349,9 +349,13 @@ fn set_overlay_material(
                 }
                 OverlayType::HeightOfWaterTable => {
                     let water_table_height = water_table.get(tile_pos);
-                    // FIXME: use a dedicated color ramp for this. Currently, the colors are backwards.
-                    tile_overlay
-                        .get_water_table_material(DepthToWaterTable::Depth(water_table_height))
+                    // FIXME: use a dedicated color ramp for this, rather than hacking it
+                    // We subtract here to ensure that blue == wet and red == dry
+                    let inverted_height = DepthToWaterTable::Depth(
+                        Height(TileOverlay::MAX_DEPTH_TO_WATER_TABLE) - water_table_height,
+                    );
+
+                    tile_overlay.get_water_table_material(inverted_height)
                 }
             };
 
