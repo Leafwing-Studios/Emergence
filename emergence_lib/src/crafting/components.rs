@@ -167,22 +167,19 @@ impl InputInventory {
     pub(crate) fn currently_accepts(
         &self,
         item_id: Id<Item>,
-        required_tag: Option<ItemTag>,
         item_manifest: &ItemManifest,
     ) -> bool {
-        // Check if the tag matches
-        if let Some(required_tag) = required_tag {
-            if let InputInventory::Tagged { tag, .. } = self {
-                if *tag != required_tag {
-                    return false;
-                }
+        match self {
+            InputInventory::Exact { .. } => {
+                self.inventory()
+                    .remaining_space_for_item(item_id, item_manifest)
+                    > 0
+            }
+            InputInventory::Tagged { tag, inventory } => {
+                item_manifest.has_tag(item_id, *tag)
+                    && inventory.remaining_space_for_item(item_id, item_manifest) > 0
             }
         }
-
-        // Check that we can fit at least one item of this type
-        self.inventory()
-            .remaining_space_for_item(item_id, item_manifest)
-            > 0
     }
 
     /// Try to add items to this inventory.

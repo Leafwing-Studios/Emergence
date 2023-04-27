@@ -702,8 +702,6 @@ impl CurrentAction {
             return CurrentAction::idle();
         }
 
-        let item_tag = item_kind.tag();
-
         for tile_pos in neighboring_tiles {
             for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
@@ -737,22 +735,16 @@ impl CurrentAction {
                     }
                     (DeliveryMode::DropOff, Purpose::Intrinsic) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
-                            if input_inventory.currently_accepts(
-                                held_item.unwrap(),
-                                item_tag,
-                                item_manifest,
-                            ) {
+                            if input_inventory.currently_accepts(held_item.unwrap(), item_manifest)
+                            {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
                     }
                     (DeliveryMode::DropOff, Purpose::Instrumental) => {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
-                            if input_inventory.currently_accepts(
-                                held_item.unwrap(),
-                                item_tag,
-                                item_manifest,
-                            ) {
+                            if input_inventory.currently_accepts(held_item.unwrap(), item_manifest)
+                            {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
