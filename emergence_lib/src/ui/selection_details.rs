@@ -673,6 +673,10 @@ Tile: {tile_pos}"
                 string += &format!("\nStoring: {}", storage.display(item_manifest));
             }
 
+            if let Some(root_zone) = &structure_manifest.get(self.structure_id).root_zone {
+                string += &format!("{root_zone}",);
+            }
+
             if let Some(organism) = &self.maybe_organism_details {
                 string += &format!("\n{}", organism.display(structure_manifest, unit_manifest));
             };

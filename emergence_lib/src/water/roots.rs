@@ -1,6 +1,7 @@
 //! Datastructures and mechanics for roots, which draw water from the nearby water table.
 
-use bevy::prelude::*;
+use std::fmt::{Display, Formatter};
+
 use serde::{Deserialize, Serialize};
 
 use crate::simulation::geometry::Height;
@@ -14,4 +15,14 @@ pub struct RootZone {
     ///
     /// Water can only be drawn from tiles within this radius.
     pub radius: u8,
+}
+
+impl Display for RootZone {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "Root Zone: Max Depth: {} tiles, Radius: {} tiles",
+            self.max_depth, self.radius
+        )
+    }
 }
