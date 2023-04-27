@@ -14,6 +14,8 @@ use crate::simulation::{
     SimulationSet,
 };
 
+use self::roots::draw_water_from_roots;
+
 pub mod roots;
 
 /// A plugin that handles water movement and behavior.
@@ -26,6 +28,7 @@ impl Plugin for WaterPlugin {
                 evaporation,
                 precipitation,
                 horizontal_water_movement,
+                draw_water_from_roots,
                 update_surface_water_map_geometry,
             )
                 .in_set(SimulationSet)
