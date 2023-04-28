@@ -352,6 +352,7 @@ mod tests {
         map_size: MapSize,
         map_shape: MapShape,
         weather: Weather,
+        simulated_duration: Duration,
     }
 
     fn water_testing_app(scenario: Scenario) -> App {
@@ -417,7 +418,7 @@ mod tests {
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
         let mut fixed_time = app.world.resource_mut::<FixedTime>();
-        fixed_time.tick(Duration::from_secs(1));
+        fixed_time.tick(scenario.simulated_duration);
 
         app
     }
@@ -543,6 +544,7 @@ mod tests {
             water_table_strategy: WaterTableStrategy::DepthOne,
             water_config: WaterConfig::IN_GAME,
             weather: Weather::Cloudy,
+            simulated_duration: Duration::from_secs(1),
         };
 
         let mut app = water_testing_app(scenario);
@@ -573,6 +575,7 @@ mod tests {
                             ..WaterConfig::NULL
                         },
                         weather: Weather::Clear,
+                        simulated_duration: Duration::from_secs(1),
                     };
 
                     let mut app = water_testing_app(scenario);
@@ -624,6 +627,7 @@ mod tests {
                             ..WaterConfig::NULL
                         },
                         weather: Weather::Rainy,
+                        simulated_duration: Duration::from_secs(1),
                     };
 
                     let mut app = water_testing_app(scenario);
@@ -661,6 +665,7 @@ mod tests {
                         ..WaterConfig::NULL
                     },
                     weather: Weather::Clear,
+                    simulated_duration: Duration::from_secs(10),
                 };
 
                 let mut app = water_testing_app(scenario);
@@ -672,7 +677,7 @@ mod tests {
                 for &tile_pos in water_table.height.keys() {
                     assert!(
                             water_table.get(tile_pos) > water_table_strategy.starting_water_level(tile_pos, &map_geometry),
-                            "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
+                            "Water level {:?} at tile position {} is less than or equal to the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
                             water_table_strategy.starting_water_level(tile_pos, &map_geometry),
@@ -697,6 +702,7 @@ mod tests {
                         ..WaterConfig::NULL
                     },
                     weather: Weather::Clear,
+                    simulated_duration: Duration::from_secs(10),
                 };
 
                 let mut app = water_testing_app(scenario);
@@ -730,6 +736,7 @@ mod tests {
                         water_table_strategy,
                         water_config: WaterConfig::NULL,
                         weather: Weather::Clear,
+                        simulated_duration: Duration::from_secs(3),
                     };
 
                     let mut app = water_testing_app(scenario);
@@ -765,6 +772,7 @@ mod tests {
                             ..WaterConfig::NULL
                         },
                         weather: Weather::Clear,
+                        simulated_duration: Duration::from_secs(5),
                     };
 
                     let mut app = water_testing_app(scenario);
@@ -800,6 +808,7 @@ mod tests {
                             ..WaterConfig::NULL
                         },
                         weather: Weather::Clear,
+                        simulated_duration: Duration::from_secs(5),
                     };
 
                     let mut app = water_testing_app(scenario);
