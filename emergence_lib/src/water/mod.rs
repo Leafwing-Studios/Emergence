@@ -134,6 +134,13 @@ impl WaterTable {
             .reduce(|a, b| a + b)
             .unwrap_or_default()
     }
+
+    /// Computes the average depth of the water table.
+    pub(crate) fn average_depth(&self, map_geometry: &MapGeometry) -> Height {
+        let total_water = self.total_water();
+        let total_area = map_geometry.valid_tile_positions().count() as f32;
+        total_water / total_area
+    }
 }
 
 /// The depth to the water table at a given tile.

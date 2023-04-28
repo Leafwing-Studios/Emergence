@@ -4,7 +4,9 @@ use bevy::prelude::*;
 
 use crate::{
     infovis::Census,
-    simulation::{light::TotalLight, time::InGameTime, weather::CurrentWeather},
+    simulation::{
+        geometry::MapGeometry, light::TotalLight, time::InGameTime, weather::CurrentWeather,
+    },
     water::WaterTable,
 };
 
@@ -65,12 +67,16 @@ fn update_production_statistics(
     current_weather: Res<CurrentWeather>,
     total_light: Res<TotalLight>,
     water_table: Res<WaterTable>,
+    map_geometry: Res<MapGeometry>,
     census: Res<Census>,
 ) {
     let mut text = query.single_mut();
     text.sections[0].value = format!("{}\n", *in_game_time);
     text.sections[1].value = format!("Weather: {}\n", current_weather.get());
     text.sections[2].value = format!("{}\n", *total_light);
-    text.sections[3].value = format!("{}\n", water_table.total_water());
+    text.sections[3].value = format!(
+        "{} average depth of water table \n",
+        water_table.average_depth(&map_geometry)
+    );
     text.sections[4].value = format!("{}", *census);
 }
