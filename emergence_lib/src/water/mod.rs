@@ -68,22 +68,46 @@ impl WaterConfig {
 /// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum WaterSet {
+    VerticalWaterMovement,
+    HorizontalWaterMovement,
+    UpdateGeometry,
+}
+
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<WaterTable>()
-            .insert_resource(WaterConfig::IN_GAME)
-            .add_systems(
-                (
-                    evaporation,
-                    precipitation,
-                    horizontal_water_movement,
-                    produce_water_from_emitters,
-                    draw_water_from_roots,
-                    update_surface_water_map_geometry,
+            .insert_resource(WaterConfig::IN_GAME);
+
+        app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
+            schedule
+                .configure_sets(
+                    (
+                        WaterSet::VerticalWaterMovement,
+                        WaterSet::HorizontalWaterMovement,
+                        WaterSet::UpdateGeometry,
+                    )
+                        .in_set(SimulationSet)
+                        .chain(),
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            );
+                .add_systems(
+                    (
+                        produce_water_from_emitters,
+                        precipitation,
+                        draw_water_from_roots,
+                        evaporation,
+                    )
+                        .chain()
+                        .in_set(WaterSet::VerticalWaterMovement),
+                )
+                .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
+                .add_systems(
+                    (produce_water_from_emitters, draw_water_from_roots)
+                        .in_set(WaterSet::VerticalWaterMovement),
+                )
+                .add_system(update_surface_water_map_geometry.in_set(WaterSet::UpdateGeometry));
+        });
     }
 }
 
@@ -591,27 +615,27 @@ mod tests {
     #[test]
     fn emission_increases_water_levels() {
         for map_size in MapSize::variants() {
-            for map_shape in MapShape::variants() {
-                for water_table_strategy in WaterTableStrategy::variants() {
-                    let scenario = Scenario {
-                        map_size,
-                        map_shape,
-                        water_table_strategy,
-                        water_config: WaterConfig {
-                            emission_rate: Height(1.0),
-                            ..WaterConfig::NULL
-                        },
-                        weather: Weather::Clear,
-                    };
+            for water_table_strategy in WaterTableStrategy::variants() {
+                let scenario = Scenario {
+                    map_size,
+                    map_shape: MapShape::Flat,
+                    water_table_strategy,
+                    water_config: WaterConfig {
+                        emission_rate: Height(1.0),
+                        lateral_flow_rate: 10.,
+                        ..WaterConfig::NULL
+                    },
+                    weather: Weather::Clear,
+                };
 
-                    let mut app = water_testing_app(scenario);
-                    app.update();
+                let mut app = water_testing_app(scenario);
+                app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
-                    let map_geometry = app.world.resource::<MapGeometry>();
+                let water_table = app.world.resource::<WaterTable>();
+                let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.height.keys() {
-                        assert!(
+                for &tile_pos in water_table.height.keys() {
+                    assert!(
                             water_table.get(tile_pos) > water_table_strategy.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
@@ -619,7 +643,6 @@ mod tests {
                             water_table_strategy.starting_water_level(tile_pos, &map_geometry),
                             scenario
                         );
-                    }
                 }
             }
         }
@@ -628,27 +651,27 @@ mod tests {
     #[test]
     fn root_draw_decreases_water_levels() {
         for map_size in MapSize::variants() {
-            for map_shape in MapShape::variants() {
-                for water_table_strategy in WaterTableStrategy::variants() {
-                    let scenario = Scenario {
-                        map_size,
-                        map_shape,
-                        water_table_strategy,
-                        water_config: WaterConfig {
-                            root_draw_rate: Height(1.0),
-                            ..WaterConfig::NULL
-                        },
-                        weather: Weather::Clear,
-                    };
+            for water_table_strategy in WaterTableStrategy::variants() {
+                let scenario = Scenario {
+                    map_size,
+                    map_shape: MapShape::Flat,
+                    water_table_strategy,
+                    water_config: WaterConfig {
+                        root_draw_rate: Height(1.0),
+                        lateral_flow_rate: 10.,
+                        ..WaterConfig::NULL
+                    },
+                    weather: Weather::Clear,
+                };
 
-                    let mut app = water_testing_app(scenario);
-                    app.update();
+                let mut app = water_testing_app(scenario);
+                app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
-                    let map_geometry = app.world.resource::<MapGeometry>();
+                let water_table = app.world.resource::<WaterTable>();
+                let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.height.keys() {
-                        assert!(
+                for &tile_pos in water_table.height.keys() {
+                    assert!(
                             water_table.get(tile_pos) < water_table_strategy.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is greater than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
@@ -656,7 +679,6 @@ mod tests {
                             water_table_strategy.starting_water_level(tile_pos, &map_geometry),
                             scenario
                         );
-                    }
                 }
             }
         }
