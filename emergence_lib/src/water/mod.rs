@@ -19,23 +19,54 @@ use self::{emitters::produce_water_from_emitters, roots::draw_water_from_roots};
 mod emitters;
 pub mod roots;
 
+/// Controls the key parameters of water movement and behavior.
+#[derive(Resource, Debug, Default)]
+struct WaterConfig {
+    /// The rate of evaporation per day from each tile.
+    evaporation_rate: Height,
+    /// The relative rate of evaporation from soil.
+    soil_evaporation_ratio: f32,
+    /// The rate of precipitation per day on each tile.
+    precipitation_rate: Height,
+    /// The amount of water that is deposited per day on the tile of each water emitter.
+    emission_rate: Height,
+    /// The amount of water that is drawn per day from the tile of each structure with roots.
+    root_draw_rate: Height,
+    /// The rate at which water moves horizontally.
+    ///
+    /// The units are cubic tiles per day per tile of height difference.
+    lateral_water_flow_rate: f32,
+    /// The relative rate at which water moves horizontally through soil.
+    soil_lateral_water_flow_ratio: f32,
+}
+
 /// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<WaterTable>().add_systems(
-            (
-                evaporation,
-                precipitation,
-                horizontal_water_movement,
-                produce_water_from_emitters,
-                draw_water_from_roots,
-                update_surface_water_map_geometry,
-            )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        );
+        app.init_resource::<WaterTable>()
+            .insert_resource(WaterConfig {
+                evaporation_rate: Height(0.1),
+                soil_evaporation_ratio: 0.5,
+                precipitation_rate: Height(0.1),
+                emission_rate: Height(10.0),
+                root_draw_rate: Height(10.0),
+                lateral_water_flow_rate: 0.1,
+                soil_lateral_water_flow_ratio: 0.5,
+            })
+            .add_systems(
+                (
+                    evaporation,
+                    precipitation,
+                    horizontal_water_movement,
+                    produce_water_from_emitters,
+                    draw_water_from_roots,
+                    update_surface_water_map_geometry,
+                )
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
     }
 }
 
@@ -141,17 +172,13 @@ fn update_surface_water_map_geometry(
 /// Evaporates water from surface water.
 fn evaporation(
     mut water_table: ResMut<WaterTable>,
+    water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
     current_weather: Res<CurrentWeather>,
 ) {
-    /// The amount of water that evaporates per day from each surface water tile.
-    const EVAPORATION_PER_DAY: Height = Height(1.5);
-    /// The relative rate of evaporation from soil relative to surface water.
-    const SOIL_EVAPORATION_RATE: f32 = 0.2;
-
-    let evaporation_per_second = EVAPORATION_PER_DAY.0 / in_game_time.seconds_per_day();
+    let evaporation_per_second = water_config.evaporation_rate.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
 
     let evaporation_rate =
@@ -161,7 +188,7 @@ fn evaporation(
         // Surface water evaporation
         let total_evaporated = match map_geometry.get_surface_water_height(tile) {
             Some(_) => Height(evaporation_rate),
-            None => Height(evaporation_rate * SOIL_EVAPORATION_RATE),
+            None => Height(evaporation_rate * water_config.soil_evaporation_ratio),
         };
 
         water_table.subtract(tile, total_evaporated);
@@ -171,14 +198,14 @@ fn evaporation(
 /// Adds water to the water table via rainfall.
 fn precipitation(
     mut water_table: ResMut<WaterTable>,
+    water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
     current_weather: Res<CurrentWeather>,
     map_geometry: Res<MapGeometry>,
 ) {
-    /// The amount of water that is deposited per day on each tile.
-    const PRECIPITATION_PER_DAY: Height = Height(0.5);
-    let precipitation_per_second = PRECIPITATION_PER_DAY.0 / in_game_time.seconds_per_day();
+    let precipitation_per_second =
+        water_config.precipitation_rate.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
 
     let precipitation_rate = Height(
@@ -193,20 +220,14 @@ fn precipitation(
 /// Moves water from one tile to another, according to the relative height of the water table.
 fn horizontal_water_movement(
     mut water_table: ResMut<WaterTable>,
+    water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
 ) {
-    /// The rate of water transfer between adjacent tiles.
-    ///
-    /// The units are cubic tiles per day per tile of height difference.
-    const LATERAL_WATER_FLOW_RATE: f32 = 10.0;
-    let base_water_transfer_amount =
-        LATERAL_WATER_FLOW_RATE / in_game_time.seconds_per_day() * fixed_time.period.as_secs_f32();
-
-    /// The relative rate of water transfer between soil tiles, compared to surface water.
-    // TODO: vary this based on soil type
-    const SOIL_WATER_FLOW_RATE: f32 = 0.1;
+    let base_water_transfer_amount = water_config.lateral_water_flow_rate
+        / in_game_time.seconds_per_day()
+        * fixed_time.period.as_secs_f32();
 
     // We must use a working copy of the water table to avoid effects due to the order of evaluation.
     let mut delta_water_flow = WaterTable::default();
@@ -228,8 +249,8 @@ fn horizontal_water_movement(
                 map_geometry.get_surface_water_height(neighbor).is_some(),
             ) {
                 (true, true) => 1.,
-                (false, false) => SOIL_WATER_FLOW_RATE,
-                _ => (1. + SOIL_WATER_FLOW_RATE) / 2.,
+                (false, false) => water_config.soil_lateral_water_flow_ratio,
+                _ => (1. + water_config.soil_lateral_water_flow_ratio) / 2.,
             };
 
             let water_transfer =

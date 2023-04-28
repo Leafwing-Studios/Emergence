@@ -12,7 +12,7 @@ use crate::{
 };
 use bevy::prelude::*;
 
-use super::WaterTable;
+use super::{WaterConfig, WaterTable};
 
 /// The volume around a tile that roots can draw water from.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,13 +71,13 @@ impl Display for RootZone {
 // This would give us faster lookups, but force duplication.
 pub(super) fn draw_water_from_roots(
     mut water_table: ResMut<WaterTable>,
+    water_config: Res<WaterConfig>,
     structure_query: Query<(&TilePos, &Id<Structure>)>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
 ) {
-    let water_draw_rate = 200.0; // TODO: make this a property of the structure.
-    let water_requested = water_draw_rate * fixed_time.period.as_secs_f32();
+    let water_requested = water_config.root_draw_rate * fixed_time.period.as_secs_f32();
 
     // TODO: only do this during CraftingState::NeedsInput
     for (&center, &structure_id) in structure_query.iter() {
@@ -85,7 +85,7 @@ pub(super) fn draw_water_from_roots(
         if let Some(root_zone) = &structure_data.root_zone {
             let relevant_tiles = root_zone.relevant_tiles(center, &water_table, &map_geometry);
             let n = relevant_tiles.len() as f32;
-            let water_per_tile = Height(water_requested / n);
+            let water_per_tile = water_requested / n;
 
             for tile_pos in relevant_tiles {
                 // This can ever so slightly overdraw water, but that's fine.
