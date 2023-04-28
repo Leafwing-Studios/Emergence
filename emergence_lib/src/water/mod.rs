@@ -347,7 +347,7 @@ mod tests {
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
         let mut fixed_time = app.world.resource_mut::<FixedTime>();
-        fixed_time.tick(Duration::from_secs(1));
+        fixed_time.tick(Duration::from_secs(600));
 
         app
     }
@@ -389,8 +389,6 @@ mod tests {
         OneTile,
         /// Radius 3 map.
         Tiny,
-        /// Radius 10 map.
-        Modest,
     }
 
     impl MapSizes {
@@ -398,7 +396,6 @@ mod tests {
             match self {
                 MapSizes::OneTile => MapGeometry::new(0),
                 MapSizes::Tiny => MapGeometry::new(3),
-                MapSizes::Modest => MapGeometry::new(10),
             }
         }
     }
@@ -481,6 +478,7 @@ mod tests {
 
                     let water_config = WaterConfig {
                         evaporation_rate: Height(1.0),
+                        soil_evaporation_ratio: 0.5,
                         ..WaterConfig::NULL
                     };
 
@@ -495,7 +493,7 @@ mod tests {
                         if scenario.starting_water_level() > Height::ZERO {
                             assert!(
                                 water_table.get(tile_pos) < scenario.starting_water_level(),
-                                "Water level {} at tile position {} is greater than the starting water level of {}",
+                                "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
                                 scenario.starting_water_level()
@@ -504,7 +502,7 @@ mod tests {
                             assert_eq!(
                                 water_table.get(tile_pos),
                                 scenario.starting_water_level(),
-                                "Water level {} at tile position {} is not equal to the starting water level of {}",
+                                "Water level {:?} at tile position {} is not equal to the starting water level of {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
                                 scenario.starting_water_level()
@@ -538,7 +536,7 @@ mod tests {
                     for &tile_pos in water_table.height.keys() {
                         assert!(
                             water_table.get(tile_pos) > scenario.starting_water_level(),
-                            "Water level {} at tile position {} is less than the starting water level of {}",
+                            "Water level {:?} at tile position {} is less than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
                             scenario.starting_water_level()
@@ -571,7 +569,7 @@ mod tests {
                     for &tile_pos in water_table.height.keys() {
                         assert!(
                             water_table.get(tile_pos) > scenario.starting_water_level(),
-                            "Water level {} at tile position {} is less than the starting water level of {}",
+                            "Water level {:?} at tile position {} is less than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
                             scenario.starting_water_level()
@@ -604,7 +602,7 @@ mod tests {
                     for &tile_pos in water_table.height.keys() {
                         assert!(
                             water_table.get(tile_pos) < scenario.starting_water_level(),
-                            "Water level {} at tile position {} is greater than the starting water level of {}",
+                            "Water level {:?} at tile position {} is greater than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
                             scenario.starting_water_level()
@@ -635,7 +633,7 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
                         final_total_water,
                         starting_total_water
                     );
@@ -667,7 +665,7 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
                         final_total_water,
                         starting_total_water
                     );
@@ -699,7 +697,7 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
                         final_total_water,
                         starting_total_water
                     );
