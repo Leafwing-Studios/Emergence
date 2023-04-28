@@ -696,7 +696,7 @@ mod tests {
                     water_table_strategy,
                     water_config: WaterConfig {
                         emission_rate: Height(1.0),
-                        lateral_flow_rate: 10.,
+                        lateral_flow_rate: 1000.,
                         soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
                     },
@@ -797,7 +797,7 @@ mod tests {
             map_shape: MapShape::Bedrock,
             water_table_strategy: WaterTableStrategy::DepthOne,
             water_config: WaterConfig {
-                lateral_flow_rate: 10.,
+                lateral_flow_rate: 1000.,
                 ..WaterConfig::NULL
             },
             weather: Weather::Clear,
@@ -836,7 +836,7 @@ mod tests {
             map_shape: MapShape::Bedrock,
             water_table_strategy: WaterTableStrategy::DepthOne,
             water_config: WaterConfig {
-                lateral_flow_rate: 10.,
+                lateral_flow_rate: 1000.,
                 ..WaterConfig::NULL
             },
             weather: Weather::Clear,
