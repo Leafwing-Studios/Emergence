@@ -80,7 +80,7 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
-        landmark_chances.insert(Id::from_name("spring".to_string()), 1e-2);
+        landmark_chances.insert(Id::from_name("spring".to_string()), 2e-3);
 
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
         unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
@@ -91,18 +91,18 @@ impl Default for GenerationConfig {
         structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
 
         GenerationConfig {
-            map_radius: 40,
+            map_radius: 60,
             unit_chances,
             landmark_chances,
             structure_chances,
             terrain_weights,
             low_frequency_noise: SimplexSettings {
-                frequency: 0.02,
-                amplitude: 5.0,
+                frequency: 1e-2,
+                amplitude: 8.0,
                 octaves: 4,
-                lacunarity: 2.3,
+                lacunarity: 1.,
                 gain: 0.5,
-                seed: 2378.0,
+                seed: 3.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
@@ -161,7 +161,9 @@ struct SimplexSettings {
     amplitude: f32,
     /// How many times will the fbm be sampled?
     octaves: usize,
-    /// Smoothing factor
+    /// Controls the smoothness of the noise.
+    ///
+    /// Lower values are smoother.
     lacunarity: f32,
     /// Scale the output of the fbm function
     gain: f32,
@@ -314,19 +316,9 @@ fn randomize_starting_organisms(
 /// Sets the starting water table
 fn initialize_water_table(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
     /// The minimum starting water level for low lying areas
-    const LOW_WATER_LINE: Height = Height(2.0);
-
-    /// Scales the distance of the water table from the surface of the soil
-    const DISTANCE_FROM_SURFACE: Height = Height(1.5);
+    const LOW_WATER_LINE: Height = Height(1.5);
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        let height = map_geometry.get_height(tile_pos).unwrap();
-        let water_table_level = if height < LOW_WATER_LINE {
-            LOW_WATER_LINE
-        } else {
-            LOW_WATER_LINE + (height - DISTANCE_FROM_SURFACE) / 2.0
-        };
-
-        water_table.set(tile_pos, water_table_level);
+        water_table.set(tile_pos, LOW_WATER_LINE);
     }
 }
