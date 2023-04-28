@@ -158,7 +158,7 @@ impl GhostStructureBundle {
     ) -> Self {
         let structure_id = clipboard_data.structure_id;
         let construction_strategy = structure_manifest.construction_data(structure_id);
-        let construction_materials = construction_strategy.materials.clone();
+        let construction_materials = construction_strategy.unwrap().materials.clone();
 
         GhostStructureBundle {
             ghost_bundle: GhostBundle::new(
@@ -523,7 +523,7 @@ pub(super) fn ghost_structure_lifecycle(
                 *crafting_state = match input_inventory.inventory().is_full() {
                     true => CraftingState::InProgress {
                         progress: Duration::ZERO,
-                        required: construction_data.work.unwrap_or_default(),
+                        required: construction_data.unwrap().work.unwrap_or_default(),
                     },
                     false => CraftingState::NeedsInput,
                 };

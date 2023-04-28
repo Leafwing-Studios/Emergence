@@ -138,3 +138,9 @@ impl Footprint {
         Footprint { set }
     }
 }
+
+/// A special structure used to create interest in the game world.
+///
+/// Landmarks cannot be created or destroyed by players.
+#[derive(Component, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub(crate) struct Landmark;

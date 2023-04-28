@@ -24,11 +24,15 @@ pub type StructureManifest = Manifest<Structure, StructureData>;
 
 impl StructureManifest {
     /// Fetches the [`ConstructionData`] for a given structure type.
-    pub fn construction_data(&self, structure_id: Id<Structure>) -> &ConstructionData {
+    ///
+    /// If the structure uses a seedling, this will recursively fetch the data for the seedling.
+    /// If the structure uses a landmark, this will return [`None`].
+    pub fn construction_data(&self, structure_id: Id<Structure>) -> Option<&ConstructionData> {
         let initial_strategy = &self.get(structure_id).construction_strategy;
         match initial_strategy {
             ConstructionStrategy::Seedling(seedling_id) => self.construction_data(*seedling_id),
-            ConstructionStrategy::Direct(data) => data,
+            ConstructionStrategy::Direct(data) => Some(data),
+            ConstructionStrategy::Landmark { .. } => None,
         }
     }
 
@@ -39,7 +43,9 @@ impl StructureManifest {
             ConstructionStrategy::Seedling(seedling_id) => {
                 self.construction_footprint(*seedling_id)
             }
-            ConstructionStrategy::Direct(_data) => &self.get(structure_id).footprint,
+            ConstructionStrategy::Direct(..) | ConstructionStrategy::Landmark => {
+                &self.get(structure_id).footprint
+            }
         }
     }
 }
@@ -117,6 +123,8 @@ pub enum StructureKind {
     },
     /// A structure that can be walked over.
     Path,
+    /// A structure that is used to define a special element of the world.
+    Landmark,
 }
 
 /// The unprocessed equivalent of [`StructureKind`].
@@ -136,6 +144,8 @@ pub enum RawStructureKind {
     },
     /// A structure that can be walked over.
     Path,
+    /// A structure that is used to define a special element of the world.
+    Landmark,
 }
 
 impl From<RawStructureKind> for StructureKind {
@@ -152,6 +162,7 @@ impl From<RawStructureKind> for StructureKind {
                 starting_recipe: starting_recipe.into(),
             },
             RawStructureKind::Path => Self::Path,
+            RawStructureKind::Landmark => Self::Landmark,
         }
     }
 }
@@ -176,10 +187,11 @@ impl StructureManifest {
     pub(crate) fn prototypes(&self) -> impl IntoIterator<Item = Id<Structure>> + '_ {
         self.data_map()
             .iter()
-            .filter(|(id, v)| match &v.organism_variety {
+            .filter(|(id, data)| match &data.organism_variety {
                 None => true,
                 Some(variety) => variety.prototypical_form == OrganismId::Structure(**id),
             })
+            .filter(|(_id, data)| data.kind != StructureKind::Landmark)
             .map(|(id, _v)| *id)
     }
 

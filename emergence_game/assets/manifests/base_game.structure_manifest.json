@@ -227,6 +227,15 @@
 					}
 				]
 			}
+		},
+		"spring": {
+			"organism_variety": null,
+			"kind": "Landmark",
+			"construction_strategy": "Landmark",
+			"max_workers": 0,
+			"footprint": null,
+			"root_zone": null,
+			"passable": false
 		}
 	}
 }
