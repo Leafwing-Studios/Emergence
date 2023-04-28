@@ -26,11 +26,39 @@ use noisy_bevy::fbm_simplex_2d_seeded;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
+/// Generate the world.
+pub(super) struct GenerationPlugin {
+    /// Configuration settings for world generation
+    pub(super) config: GenerationConfig,
+}
+
+impl Plugin for GenerationPlugin {
+    fn build(&self, app: &mut App) {
+        info!("Building Generation plugin...");
+        app.insert_resource(self.config.clone()).add_systems(
+            (
+                generate_terrain,
+                apply_system_buffers,
+                generate_landmarks,
+                initialize_water_table,
+                apply_system_buffers,
+                generate_organisms,
+                apply_system_buffers,
+                randomize_starting_organisms,
+            )
+                .chain()
+                .in_schedule(OnEnter(AssetState::FullyLoaded)),
+        );
+    }
+}
+
 /// Controls world generation strategy
 #[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
+    /// Chance that each tile contains a landmark of the given type.
+    landmark_chances: HashMap<Id<Structure>, f32>,
     /// Chance that each tile contains a unit of the given type.
     unit_chances: HashMap<Id<Unit>, f32>,
     /// Chance that each tile contains a structure of the given type.
@@ -51,6 +79,9 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("muddy".to_string()), 0.3);
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
+        let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        landmark_chances.insert(Id::from_name("spring".to_string()), 0.2);
+
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
         unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
 
@@ -62,6 +93,7 @@ impl Default for GenerationConfig {
         GenerationConfig {
             map_radius: 40,
             unit_chances,
+            landmark_chances,
             structure_chances,
             terrain_weights,
             low_frequency_noise: SimplexSettings {
@@ -81,31 +113,6 @@ impl Default for GenerationConfig {
                 seed: 100.0,
             },
         }
-    }
-}
-
-/// Generate the world.
-pub(super) struct GenerationPlugin {
-    /// Configuration settings for world generation
-    pub(super) config: GenerationConfig,
-}
-
-impl Plugin for GenerationPlugin {
-    fn build(&self, app: &mut App) {
-        info!("Building Generation plugin...");
-        app.insert_resource(self.config.clone()).add_systems(
-            (
-                generate_terrain,
-                apply_system_buffers,
-                initialize_water_table,
-                apply_system_buffers,
-                generate_organisms,
-                apply_system_buffers,
-                randomize_starting_organisms,
-            )
-                .chain()
-                .in_schedule(OnEnter(AssetState::FullyLoaded)),
-        );
     }
 }
 
@@ -180,6 +187,45 @@ fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
     Height::MIN.into_world_pos()
         + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed) * amplitude)
             .abs()
+}
+
+/// Places landmarks according to [`GenerationConfig`].
+fn generate_landmarks(
+    mut commands: Commands,
+    generation_config: Res<GenerationConfig>,
+    structure_manifest: Res<StructureManifest>,
+    mut height_query: Query<&mut Height>,
+    mut map_geometry: ResMut<MapGeometry>,
+) {
+    info!("Generating landmarks...");
+    let rng = &mut thread_rng();
+
+    for tile_pos in map_geometry
+        .valid_tile_positions()
+        .collect::<Vec<TilePos>>()
+    {
+        for (&structure_id, &chance) in &generation_config.landmark_chances {
+            if rng.gen::<f32>() < chance {
+                let mut clipboard_data =
+                    ClipboardData::generate_from_id(structure_id, &structure_manifest);
+                let facing = Facing::random(rng);
+                clipboard_data.facing = facing;
+                let footprint = &structure_manifest.get(structure_id).footprint;
+
+                // Only try to spawn a structure if the location is valid and there is space
+                if map_geometry.is_footprint_valid(tile_pos, footprint, &facing)
+                    && map_geometry.is_space_available(tile_pos, footprint, &facing)
+                {
+                    // Flatten the terrain under the structure before spawning it
+                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, &facing);
+                    commands.spawn_structure(
+                        tile_pos,
+                        ClipboardData::generate_from_id(structure_id, &structure_manifest),
+                    );
+                }
+            }
+        }
+    }
 }
 
 /// Create starting organisms according to [`GenerationConfig`], and randomly place them on

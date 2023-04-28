@@ -33,6 +33,8 @@ pub enum ConstructionStrategy {
     Seedling(Id<Structure>),
     /// This structure can be built directly.
     Direct(ConstructionData),
+    /// A landmark, which cannot be built.
+    Landmark,
 }
 
 /// The data contained in a [`ConstructionStrategy::Direct`] variant.
@@ -60,6 +62,8 @@ pub enum RawConstructionStrategy {
         /// The set of items needed to create a new copy of this structure
         materials: HashMap<String, u32>,
     },
+    /// A landmark, which cannot be built.
+    Landmark,
 }
 
 impl From<RawConstructionStrategy> for ConstructionStrategy {
@@ -80,6 +84,7 @@ impl From<RawConstructionStrategy> for ConstructionStrategy {
                     materials,
                 })
             }
+            RawConstructionStrategy::Landmark => ConstructionStrategy::Landmark,
         }
     }
 }

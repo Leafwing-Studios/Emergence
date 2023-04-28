@@ -22,7 +22,7 @@ use crate::{
 use super::{
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
-    StructureBundle,
+    Landmark, StructureBundle,
 };
 
 /// An extension trait for [`Commands`] for working with structures.
@@ -166,6 +166,9 @@ impl Command for SpawnStructureCommand {
                 })
             }
             StructureKind::Path => {}
+            StructureKind::Landmark => {
+                world.entity_mut(structure_entity).insert(Landmark);
+            }
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();

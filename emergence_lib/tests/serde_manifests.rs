@@ -257,6 +257,18 @@ fn can_serialize_structure_manifest() {
                 },
             ),
             (
+                "spring".to_string(),
+                RawStructureData {
+                    organism_variety: None,
+                    kind: RawStructureKind::Landmark,
+                    construction_strategy: RawConstructionStrategy::Landmark,
+                    max_workers: 0,
+                    footprint: None,
+                    root_zone: None,
+                    passable: false,
+                },
+            ),
+            (
                 "acacia_seedling".to_string(),
                 RawStructureData {
                     organism_variety: Some(RawOrganismVariety {

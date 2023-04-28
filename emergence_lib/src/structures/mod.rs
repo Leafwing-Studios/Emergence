@@ -138,3 +138,7 @@ impl Footprint {
         Footprint { set }
     }
 }
+
+/// A special structure used to create interest in the game world.
+#[derive(Component, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+struct Landmark;

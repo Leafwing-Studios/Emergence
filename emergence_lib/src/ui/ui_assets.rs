@@ -91,6 +91,7 @@ impl FromWorld for Icons<Id<Structure>> {
 
         for id in structure_names {
             let structure_id = Id::from_name(id.to_string());
+
             let structure_path = format!("icons/structures/{id}.png");
             let icon = asset_server.load(structure_path);
             map.insert(structure_id, icon);
