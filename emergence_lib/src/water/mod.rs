@@ -20,10 +20,7 @@ mod emitters;
 pub mod roots;
 
 /// Controls the key parameters of water movement and behavior.
-///
-/// Note the [`Default`] impl of this trait is not used by the game.
-/// Instead, it is set to zero everywhere for testing purposes.
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug)]
 struct WaterConfig {
     /// The rate of evaporation per day from each tile.
     evaporation_rate: Height,
@@ -43,21 +40,38 @@ struct WaterConfig {
     soil_lateral_flow_ratio: f32,
 }
 
+impl WaterConfig {
+    /// The default configuration for in-game water behavior.
+    const IN_GAME: Self = Self {
+        evaporation_rate: Height(0.1),
+        soil_evaporation_ratio: 0.5,
+        precipitation_rate: Height(0.1),
+        emission_rate: Height(100.0),
+        root_draw_rate: Height(0.1),
+        lateral_flow_rate: 10.0,
+        soil_lateral_flow_ratio: 0.5,
+    };
+
+    /// A configuration that disables all water behavior.
+    #[allow(dead_code)]
+    const NULL: Self = Self {
+        evaporation_rate: Height(0.0),
+        soil_evaporation_ratio: 0.0,
+        precipitation_rate: Height(0.0),
+        emission_rate: Height(0.0),
+        root_draw_rate: Height(0.0),
+        lateral_flow_rate: 0.0,
+        soil_lateral_flow_ratio: 0.0,
+    };
+}
+
 /// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<WaterTable>()
-            .insert_resource(WaterConfig {
-                evaporation_rate: Height(0.0),
-                soil_evaporation_ratio: 0.0,
-                precipitation_rate: Height(0.0),
-                emission_rate: Height(100.0),
-                root_draw_rate: Height(0.0),
-                lateral_flow_rate: 10.0,
-                soil_lateral_flow_ratio: 0.5,
-            })
+            .insert_resource(WaterConfig::IN_GAME)
             .add_systems(
                 (
                     evaporation,
@@ -77,7 +91,7 @@ impl Plugin for WaterPlugin {
 ///
 /// This can be underground, at ground level, or above ground.
 /// If it is above ground, it will pool on top of the tile it is on.
-#[derive(Resource, Default)]
+#[derive(Resource, Default, PartialEq, Clone, Debug)]
 pub(crate) struct WaterTable {
     /// The height of the water table at each tile.
     height: HashMap<TilePos, Height>,
@@ -434,13 +448,26 @@ mod tests {
     }
 
     #[test]
+    fn water_testing_applies_water_dynamics() {
+        let water_config = WaterConfig::IN_GAME;
+        let map_geometry = MapShape::Bedrock.set_heights(MapSizes::OneTile.map_geometry());
+        let initial_water_table = WaterTableScenario::DepthOne.water_table(&map_geometry);
+
+        let mut app = water_testing_app(water_config, map_geometry, initial_water_table.clone());
+        app.update();
+
+        let water_table = app.world.resource::<WaterTable>();
+        assert!(water_table != &initial_water_table);
+    }
+
+    #[test]
     fn evaporation_decreases_water_levels() {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         evaporation_rate: Height(1.0),
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -482,7 +509,7 @@ mod tests {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         precipitation_rate: Height(1.0),
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -513,7 +540,7 @@ mod tests {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         emission_rate: Height(1.0),
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -544,7 +571,7 @@ mod tests {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         root_draw_rate: Height(1.0),
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -573,7 +600,7 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    let water_config = WaterConfig::default();
+                    let water_config = WaterConfig::NULL;
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
@@ -602,7 +629,7 @@ mod tests {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         lateral_flow_rate: 1.0,
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -632,7 +659,7 @@ mod tests {
                 for scenario in WaterTableScenario::variants() {
                     let water_config = WaterConfig {
                         lateral_flow_rate: 9001.0,
-                        ..Default::default()
+                        ..WaterConfig::NULL
                     };
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
