@@ -844,8 +844,7 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
-                    let water_difference =
-                        Height((final_total_water.0 - starting_total_water.0).abs());
+                    let water_difference = final_total_water.abs_diff(starting_total_water);
 
                     assert!(
                         water_difference < EPSILON,
@@ -882,8 +881,7 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
-                    let water_difference =
-                        Height((final_total_water.0 - starting_total_water.0).abs());
+                    let water_difference = final_total_water.abs_diff(starting_total_water);
 
                     assert!(
                         water_difference < EPSILON,
@@ -1116,10 +1114,10 @@ mod tests {
             )
         }
 
-        let water_difference = (water_height_a.0 - water_height_b.0).abs();
+        let water_difference = water_height_a.abs_diff(water_height_b);
 
         assert!(
-            water_difference < 0.01,
+            water_difference < EPSILON,
             "Water levels did not stabilize, ending with a height difference of ({:?}) ",
             water_difference
         );

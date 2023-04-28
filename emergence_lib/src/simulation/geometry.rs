@@ -384,6 +384,13 @@ impl Height {
     pub(crate) fn max(self, other: Self) -> Self {
         Height(self.0.max(other.0))
     }
+
+    /// Returns the absolute difference between the two heights.
+    #[inline]
+    #[must_use]
+    pub(crate) fn abs_diff(self, other: Self) -> Self {
+        Height((self.0 - other.0).abs())
+    }
 }
 
 impl Add for Height {
@@ -714,7 +721,7 @@ impl MapGeometry {
     ) -> Result<Height, IndexError> {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
-        Ok(Height((starting_height.0 - ending_height.0).abs()))
+        Ok(starting_height.abs_diff(ending_height))
     }
 
     /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
