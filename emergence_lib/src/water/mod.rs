@@ -47,12 +47,12 @@ impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<WaterTable>()
             .insert_resource(WaterConfig {
-                evaporation_rate: Height(0.1),
-                soil_evaporation_ratio: 0.5,
-                precipitation_rate: Height(0.1),
-                emission_rate: Height(10.0),
-                root_draw_rate: Height(10.0),
-                lateral_water_flow_rate: 0.1,
+                evaporation_rate: Height(0.0),
+                soil_evaporation_ratio: 0.0,
+                precipitation_rate: Height(0.0),
+                emission_rate: Height(100.0),
+                root_draw_rate: Height(0.0),
+                lateral_water_flow_rate: 10.0,
                 soil_lateral_water_flow_ratio: 0.5,
             })
             .add_systems(
