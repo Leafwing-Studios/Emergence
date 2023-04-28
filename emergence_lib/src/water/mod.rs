@@ -387,6 +387,9 @@ mod tests {
         simulated_duration: Duration,
     }
 
+    /// The smallest amount of water that we care about in these tests.
+    const EPSILON: Height = Height(0.001);
+
     fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
@@ -701,10 +704,22 @@ mod tests {
                 };
 
                 let mut app = water_testing_app(scenario);
+                let water_table = app.world.resource::<WaterTable>();
+                let initial_water = water_table.total_water();
+
                 app.update();
 
                 let water_table = app.world.resource::<WaterTable>();
                 let map_geometry = app.world.resource::<MapGeometry>();
+                let final_water = water_table.total_water();
+
+                assert!(
+                    final_water > initial_water,
+                    "Water level {:?} is not greater than the initial water level of {:?} in {:?}",
+                    final_water,
+                    initial_water,
+                    scenario
+                );
 
                 for &tile_pos in water_table.height.keys() {
                     assert!(
@@ -738,10 +753,26 @@ mod tests {
                 };
 
                 let mut app = water_testing_app(scenario);
+                let water_table = app.world.resource::<WaterTable>();
+                let initial_water = water_table.total_water();
+                if initial_water == Height::ZERO {
+                    continue;
+                }
+
                 app.update();
 
                 let water_table = app.world.resource::<WaterTable>();
                 let map_geometry = app.world.resource::<MapGeometry>();
+
+                let final_water = water_table.total_water();
+
+                assert!(
+                    final_water < initial_water,
+                    "Water level {:?} is not less than the initial water level of {:?} in {:?}",
+                    final_water,
+                    initial_water,
+                    scenario
+                );
 
                 for &tile_pos in water_table.height.keys() {
                     assert!(
@@ -813,10 +844,11 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
-                    let water_difference = (final_total_water.0 - starting_total_water.0).abs();
+                    let water_difference =
+                        Height((final_total_water.0 - starting_total_water.0).abs());
 
                     assert!(
-                        water_difference < 0.001,
+                        water_difference < EPSILON,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
                         starting_total_water,
@@ -850,10 +882,11 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
-                    let water_difference = (final_total_water.0 - starting_total_water.0).abs();
+                    let water_difference =
+                        Height((final_total_water.0 - starting_total_water.0).abs());
 
                     assert!(
-                        water_difference < 0.001,
+                        water_difference < EPSILON,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
                         starting_total_water,
