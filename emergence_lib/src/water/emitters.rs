@@ -13,6 +13,7 @@ use crate::{
 use super::WaterTable;
 
 // FIXME: not all landmarks should produce water
+/// Creates water from each emitter.
 pub(super) fn produce_water_from_emitters(
     query: Query<&TilePos, With<Landmark>>,
     mut water_table: ResMut<WaterTable>,
