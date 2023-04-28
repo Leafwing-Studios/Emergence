@@ -20,6 +20,9 @@ mod emitters;
 pub mod roots;
 
 /// Controls the key parameters of water movement and behavior.
+///
+/// Note the [`Default`] impl of this trait is not used by the game.
+/// Instead, it is set to zero everywhere for testing purposes.
 #[derive(Resource, Debug, Default)]
 struct WaterConfig {
     /// The rate of evaporation per day from each tile.
@@ -35,9 +38,9 @@ struct WaterConfig {
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
-    lateral_water_flow_rate: f32,
+    lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
-    soil_lateral_water_flow_ratio: f32,
+    soil_lateral_flow_ratio: f32,
 }
 
 /// A plugin that handles water movement and behavior.
@@ -52,8 +55,8 @@ impl Plugin for WaterPlugin {
                 precipitation_rate: Height(0.0),
                 emission_rate: Height(100.0),
                 root_draw_rate: Height(0.0),
-                lateral_water_flow_rate: 10.0,
-                soil_lateral_water_flow_ratio: 0.5,
+                lateral_flow_rate: 10.0,
+                soil_lateral_flow_ratio: 0.5,
             })
             .add_systems(
                 (
@@ -241,7 +244,7 @@ fn horizontal_water_movement(
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
 ) {
-    let base_water_transfer_amount = water_config.lateral_water_flow_rate
+    let base_water_transfer_amount = water_config.lateral_flow_rate
         / in_game_time.seconds_per_day()
         * fixed_time.period.as_secs_f32();
 
@@ -265,8 +268,8 @@ fn horizontal_water_movement(
                 map_geometry.get_surface_water_height(neighbor).is_some(),
             ) {
                 (true, true) => 1.,
-                (false, false) => water_config.soil_lateral_water_flow_ratio,
-                _ => (1. + water_config.soil_lateral_water_flow_ratio) / 2.,
+                (false, false) => water_config.soil_lateral_flow_ratio,
+                _ => (1. + water_config.soil_lateral_flow_ratio) / 2.,
             };
 
             let water_transfer =
@@ -473,16 +476,184 @@ mod tests {
     }
 
     #[test]
-    fn precipitation_increase_water_levels() {}
+    fn precipitation_increase_water_levels() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        precipitation_rate: Height(1.0),
+                        ..Default::default()
+                    };
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    app.update();
+
+                    let water_table = app.world.resource::<WaterTable>();
+
+                    for &tile_pos in water_table.height.keys() {
+                        assert!(
+                            water_table.get(tile_pos) > scenario.starting_water_level(),
+                            "Water level {} at tile position {} is less than the starting water level of {}",
+                            water_table.get(tile_pos),
+                            tile_pos,
+                            scenario.starting_water_level()
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
-    fn emission_increases_water_levels() {}
+    fn emission_increases_water_levels() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        emission_rate: Height(1.0),
+                        ..Default::default()
+                    };
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    app.update();
+
+                    let water_table = app.world.resource::<WaterTable>();
+
+                    for &tile_pos in water_table.height.keys() {
+                        assert!(
+                            water_table.get(tile_pos) > scenario.starting_water_level(),
+                            "Water level {} at tile position {} is less than the starting water level of {}",
+                            water_table.get(tile_pos),
+                            tile_pos,
+                            scenario.starting_water_level()
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
-    fn root_draw_decreases_water_levels() {}
+    fn root_draw_decreases_water_levels() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        root_draw_rate: Height(1.0),
+                        ..Default::default()
+                    };
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    app.update();
+
+                    let water_table = app.world.resource::<WaterTable>();
+
+                    for &tile_pos in water_table.height.keys() {
+                        assert!(
+                            water_table.get(tile_pos) < scenario.starting_water_level(),
+                            "Water level {} at tile position {} is greater than the starting water level of {}",
+                            water_table.get(tile_pos),
+                            tile_pos,
+                            scenario.starting_water_level()
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
-    fn lateral_flow_conserves_water() {}
+    fn doing_nothing_conserves_water() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig::default();
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    app.update();
+
+                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    assert!(
+                        final_total_water == starting_total_water,
+                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        final_total_water,
+                        starting_total_water
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lateral_flow_conserves_water() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        lateral_flow_rate: 1.0,
+                        ..Default::default()
+                    };
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    app.update();
+
+                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    assert!(
+                        final_total_water == starting_total_water,
+                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        final_total_water,
+                        starting_total_water
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn extremely_high_lateral_flow_conserves_water() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        lateral_flow_rate: 9001.0,
+                        ..Default::default()
+                    };
+
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    app.update();
+
+                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    assert!(
+                        final_total_water == starting_total_water,
+                        "Total water at the end ({}) is not equal to the amount of water that we started with ({})",
+                        final_total_water,
+                        starting_total_water
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn lateral_flow_moves_water_from_high_to_low() {}
