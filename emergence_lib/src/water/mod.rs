@@ -293,7 +293,11 @@ mod tests {
 
     use super::*;
 
-    fn water_testing_app(water_table: WaterTable, map_geometry: MapGeometry) -> App {
+    fn water_testing_app(
+        water_config: WaterConfig,
+        map_geometry: MapGeometry,
+        water_table: WaterTable,
+    ) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .add_plugin(WaterPlugin)
@@ -313,6 +317,8 @@ mod tests {
 
         app.insert_resource(water_table);
         app.insert_resource(map_geometry);
+        // Override the default water config with one appropriate for testing.
+        app.insert_resource(water_config);
 
         app
     }
@@ -429,9 +435,14 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    let water_config = WaterConfig {
+                        evaporation_rate: Height(1.0),
+                        ..Default::default()
+                    };
+
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_table, map_geometry);
+                    let mut app = water_testing_app(water_config, map_geometry, water_table);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
