@@ -668,6 +668,9 @@ impl MapGeometry {
     /// Updates the height of the tile at `tile_pos`
     #[inline]
     pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
+        assert!(self.is_valid(tile_pos));
+        assert!(height >= Height(0.));
+
         self.height_index.insert(tile_pos, height);
     }
 
