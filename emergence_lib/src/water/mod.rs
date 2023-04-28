@@ -697,6 +697,7 @@ mod tests {
                     water_config: WaterConfig {
                         emission_rate: Height(1.0),
                         lateral_flow_rate: 10.,
+                        soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
                     },
                     weather: Weather::Clear,
@@ -746,6 +747,7 @@ mod tests {
                     water_config: WaterConfig {
                         root_draw_rate: Height(1.0),
                         lateral_flow_rate: 10.,
+                        soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
                     },
                     weather: Weather::Clear,
