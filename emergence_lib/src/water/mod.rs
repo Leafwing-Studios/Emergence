@@ -329,6 +329,8 @@ fn compute_lateral_flow_to_neighbor(
     assert!(neighbor_water_height >= Height::ZERO);
     assert!(tile_height >= Height::ZERO);
     assert!(neighbor_tile_height >= Height::ZERO);
+    assert!(water_config.soil_lateral_flow_ratio >= 0.);
+    assert!(water_config.soil_lateral_flow_ratio <= 1.);
 
     // If the water is higher than the neighbor, move water from the tile to the neighbor
     // at a rate proportional to the height difference.
@@ -929,16 +931,20 @@ mod tests {
     fn surface_water_flows_faster() {
         let water_config: WaterConfig = WaterConfig {
             lateral_flow_rate: 1.0,
+            soil_lateral_flow_ratio: 0.1,
             ..WaterConfig::NULL
         };
+
+        let water_height = Height(2.0);
+        let neighbor_water_height = Height(1.0);
 
         let surface_water_flow = compute_lateral_flow_to_neighbor(
             1.0,
             &water_config,
-            Height(1.0),
-            Height(1.0),
-            Height(2.0),
-            Height(1.0),
+            Height(0.0),
+            Height(0.0),
+            water_height,
+            neighbor_water_height,
         );
 
         let subsurface_water_flow = compute_lateral_flow_to_neighbor(
@@ -946,26 +952,26 @@ mod tests {
             &water_config,
             Height(2.0),
             Height(2.0),
-            Height(2.0),
-            Height(1.0),
+            water_height,
+            neighbor_water_height,
         );
 
         let surface_to_soil_flow = compute_lateral_flow_to_neighbor(
             1.0,
             &water_config,
-            Height(1.0),
+            Height(0.0),
             Height(2.0),
-            Height(2.0),
-            Height(1.0),
+            water_height,
+            neighbor_water_height,
         );
 
         let soil_to_surface_flow = compute_lateral_flow_to_neighbor(
             1.0,
             &water_config,
             Height(2.0),
-            Height(1.0),
-            Height(2.0),
-            Height(1.0),
+            Height(0.0),
+            water_height,
+            neighbor_water_height,
         );
 
         assert!(
