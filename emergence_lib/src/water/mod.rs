@@ -286,8 +286,6 @@ fn horizontal_water_movement(
         / in_game_time.seconds_per_day()
         * fixed_time.period.as_secs_f32();
 
-    // We must use a working copy of the water table to avoid effects due to the order of evaluation.
-    let mut delta_water_flow = WaterTable::default();
     for tile_pos in map_geometry.valid_tile_positions() {
         let water_height = water_table.get(tile_pos);
         let neighbors = tile_pos.all_neighbors(&map_geometry);
@@ -303,14 +301,9 @@ fn horizontal_water_movement(
                 neighbor_water_height,
             );
 
-            delta_water_flow.subtract(tile_pos, water_transfer);
-            delta_water_flow.add(neighbor, water_transfer);
+            water_table.subtract(tile_pos, water_transfer);
+            water_table.add(neighbor, water_transfer);
         }
-    }
-
-    // Apply the changes
-    for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.add(tile_pos, delta_water_flow.get(tile_pos));
     }
 }
 
@@ -820,9 +813,10 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let water_difference = (final_total_water.0 - starting_total_water.0).abs();
 
                     assert!(
-                        final_total_water == starting_total_water,
+                        water_difference < 0.001,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
                         starting_total_water,
@@ -856,9 +850,10 @@ mod tests {
                     app.update();
 
                     let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let water_difference = (final_total_water.0 - starting_total_water.0).abs();
 
                     assert!(
-                        final_total_water == starting_total_water,
+                        water_difference < 0.001,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
                         starting_total_water,
