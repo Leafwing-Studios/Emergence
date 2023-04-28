@@ -668,7 +668,12 @@ impl MapGeometry {
     /// Updates the height of the tile at `tile_pos`
     #[inline]
     pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
-        assert!(self.is_valid(tile_pos));
+        assert!(
+            self.is_valid(tile_pos),
+            "Invalid tile position: {:?} with a radius of {:?}",
+            tile_pos,
+            self.radius
+        );
         assert!(height >= Height(0.));
 
         self.height_index.insert(tile_pos, height);
@@ -1121,7 +1126,7 @@ mod tests {
 
     #[test]
     fn world_to_tile_pos_conversions_are_invertable() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut map_geometry = MapGeometry::new(20);
 
         for x in -10..=10 {
             for y in -10..=10 {
