@@ -20,7 +20,7 @@ mod emitters;
 pub mod roots;
 
 /// Controls the key parameters of water movement and behavior.
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Clone, Copy)]
 struct WaterConfig {
     /// The rate of evaporation per day from each tile.
     evaporation_rate: Height,
@@ -314,12 +314,16 @@ mod tests {
 
     use super::*;
 
-    fn water_testing_app(
+    #[derive(Debug, Clone, Copy)]
+    struct Scenario {
         water_config: WaterConfig,
-        map_geometry: MapGeometry,
-        water_table: WaterTable,
+        water_table_strategy: WaterTableStrategy,
+        map_size: MapSize,
+        map_shape: MapShape,
         weather: Weather,
-    ) -> App {
+    }
+
+    fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .add_plugin(WaterPlugin)
@@ -332,6 +336,11 @@ mod tests {
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
 
+        let map_geometry = scenario
+            .map_shape
+            .set_heights(scenario.map_size.map_geometry());
+        let water_table = scenario.water_table_strategy.water_table(&map_geometry);
+
         for &tile_pos in water_table.height.keys() {
             assert!(
                 map_geometry.is_valid(tile_pos),
@@ -343,8 +352,8 @@ mod tests {
         app.insert_resource(water_table);
         app.insert_resource(map_geometry);
         // Override the default water config with one appropriate for testing.
-        app.insert_resource(water_config);
-        app.insert_resource(CurrentWeather::new(weather));
+        app.insert_resource(scenario.water_config);
+        app.insert_resource(CurrentWeather::new(scenario.weather));
 
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
@@ -355,8 +364,8 @@ mod tests {
     }
 
     /// Controls the initial water level of the map.
-    #[derive(Debug, IterableEnum)]
-    enum WaterTableScenario {
+    #[derive(Debug, IterableEnum, Clone, Copy)]
+    enum WaterTableStrategy {
         /// No water.
         Dry,
         /// Half a tile of water.
@@ -369,14 +378,14 @@ mod tests {
         Flooded,
     }
 
-    impl WaterTableScenario {
+    impl WaterTableStrategy {
         fn starting_water_level(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
             match self {
-                WaterTableScenario::Dry => Height(0.),
-                WaterTableScenario::DepthHalf => Height(0.5),
-                WaterTableScenario::DepthOne => Height(1.),
-                WaterTableScenario::Saturated => map_geometry.get_height(tile_pos).unwrap(),
-                WaterTableScenario::Flooded => {
+                WaterTableStrategy::Dry => Height(0.),
+                WaterTableStrategy::DepthHalf => Height(0.5),
+                WaterTableStrategy::DepthOne => Height(1.),
+                WaterTableStrategy::Saturated => map_geometry.get_height(tile_pos).unwrap(),
+                WaterTableStrategy::Flooded => {
                     map_geometry.get_height(tile_pos).unwrap() + Height(1.)
                 }
             }
@@ -393,25 +402,25 @@ mod tests {
     }
 
     /// The size of the test map.
-    #[derive(Debug, IterableEnum)]
-    enum MapSizes {
+    #[derive(Debug, IterableEnum, Clone, Copy)]
+    enum MapSize {
         /// Radius 0 map.
         OneTile,
         /// Radius 3 map.
         Tiny,
     }
 
-    impl MapSizes {
+    impl MapSize {
         fn map_geometry(&self) -> MapGeometry {
             match self {
-                MapSizes::OneTile => MapGeometry::new(0),
-                MapSizes::Tiny => MapGeometry::new(3),
+                MapSize::OneTile => MapGeometry::new(0),
+                MapSize::Tiny => MapGeometry::new(3),
             }
         }
     }
 
     /// The shape of the test map.
-    #[derive(Debug, IterableEnum)]
+    #[derive(Debug, IterableEnum, Clone, Copy)]
     enum MapShape {
         /// A flat map with no variation in height at height 0.
         Bedrock,
@@ -468,64 +477,71 @@ mod tests {
 
     #[test]
     fn water_testing_applies_water_dynamics() {
-        let water_config = WaterConfig::IN_GAME;
-        let map_geometry = MapShape::Bedrock.set_heights(MapSizes::OneTile.map_geometry());
-        let initial_water_table = WaterTableScenario::DepthOne.water_table(&map_geometry);
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Flat,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig::IN_GAME,
+            weather: Weather::Cloudy,
+        };
 
-        let mut app = water_testing_app(
-            water_config,
-            map_geometry,
-            initial_water_table.clone(),
-            Weather::Cloudy,
-        );
+        let mut app = water_testing_app(scenario);
+        let initial_water_table = app.world.resource::<WaterTable>().clone();
+
         app.update();
 
         let water_table = app.world.resource::<WaterTable>();
-        assert!(water_table != &initial_water_table);
+        assert!(
+            water_table != &initial_water_table,
+            "Water table was not updated in {:?}",
+            scenario
+        );
     }
 
     #[test]
     fn evaporation_decreases_water_levels() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Evaporation: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        evaporation_rate: Height(1.0),
-                        soil_evaporation_ratio: 0.5,
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            evaporation_rate: Height(1.0),
+                            soil_evaporation_ratio: 0.5,
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Clear,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
                     let map_geometry = app.world.resource::<MapGeometry>();
 
                     for &tile_pos in water_table.height.keys() {
-                        if scenario.starting_water_level(tile_pos, &map_geometry) > Height::ZERO {
+                        if water_table_strategy.starting_water_level(tile_pos, &map_geometry)
+                            > Height::ZERO
+                        {
                             assert!(
-                                water_table.get(tile_pos) < scenario.starting_water_level(tile_pos, &map_geometry),
-                                "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?}",
+                                water_table.get(tile_pos) < water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                                "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?} in {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
-                                scenario.starting_water_level(tile_pos, &map_geometry)
+                                water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                                scenario
                             );
                         } else {
                             assert_eq!(
                                 water_table.get(tile_pos),
-                                scenario.starting_water_level(tile_pos, &map_geometry),
-                                "Water level {:?} at tile position {} is not equal to the starting water level of {:?}",
+                                water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                                "Water level {:?} at tile position {} is not equal to the starting water level of {:?} in {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
-                                scenario.starting_water_level(tile_pos, &map_geometry)
+                                water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                                scenario
                             );
                         }
                     }
@@ -536,23 +552,21 @@ mod tests {
 
     #[test]
     fn precipitation_increase_water_levels() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Precipitation: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        precipitation_rate: Height(1.0),
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            precipitation_rate: Height(1.0),
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Rainy,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Rainy);
+                    let mut app = water_testing_app(scenario);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -560,11 +574,12 @@ mod tests {
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) > scenario.starting_water_level(tile_pos, &map_geometry),
-                            "Water level {:?} at tile position {} is less than the starting water level of {:?}",
+                            water_table.get(tile_pos) > water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level(tile_pos, &map_geometry)
+                            water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            scenario
                         );
                     }
                 }
@@ -574,23 +589,21 @@ mod tests {
 
     #[test]
     fn emission_increases_water_levels() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Emisison: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        emission_rate: Height(1.0),
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            emission_rate: Height(1.0),
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Clear,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -598,11 +611,12 @@ mod tests {
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) > scenario.starting_water_level(tile_pos, &map_geometry),
-                            "Water level {:?} at tile position {} is less than the starting water level of {:?}",
+                            water_table.get(tile_pos) > water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level(tile_pos, &map_geometry)
+                            water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            scenario
                         );
                     }
                 }
@@ -612,23 +626,21 @@ mod tests {
 
     #[test]
     fn root_draw_decreases_water_levels() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Root draw: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        root_draw_rate: Height(1.0),
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            root_draw_rate: Height(1.0),
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Clear,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -636,11 +648,12 @@ mod tests {
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) < scenario.starting_water_level(tile_pos, &map_geometry),
-                            "Water level {:?} at tile position {} is greater than the starting water level of {:?}",
+                            water_table.get(tile_pos) < water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            "Water level {:?} at tile position {} is greater than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level(tile_pos, &map_geometry)
+                            water_table_strategy.starting_water_level(tile_pos, &map_geometry),
+                            scenario
                         );
                     }
                 }
@@ -650,20 +663,18 @@ mod tests {
 
     #[test]
     fn doing_nothing_conserves_water() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Water conservation: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig::NULL,
+                        weather: Weather::Clear,
+                    };
 
-                    let water_config = WaterConfig::NULL;
-
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
@@ -672,9 +683,10 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
-                        starting_total_water
+                        starting_total_water,
+                        scenario
                     );
                 }
             }
@@ -683,23 +695,21 @@ mod tests {
 
     #[test]
     fn lateral_flow_conserves_water() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Lateral flow conservation: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        lateral_flow_rate: 1.0,
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            lateral_flow_rate: 1.0,
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Clear,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
@@ -708,9 +718,10 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
-                        starting_total_water
+                        starting_total_water,
+                        scenario
                     );
                 }
             }
@@ -719,23 +730,21 @@ mod tests {
 
     #[test]
     fn extremely_high_lateral_flow_conserves_water() {
-        for map_size in MapSizes::variants() {
+        for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
-                for scenario in WaterTableScenario::variants() {
-                    println!(
-                        "Extreme lateral flow: testing {:?} + {:?} + {:?}",
-                        map_size, map_shape, scenario
-                    );
-
-                    let water_config = WaterConfig {
-                        lateral_flow_rate: 9001.0,
-                        ..WaterConfig::NULL
+                for water_table_strategy in WaterTableStrategy::variants() {
+                    let scenario = Scenario {
+                        map_size,
+                        map_shape,
+                        water_table_strategy,
+                        water_config: WaterConfig {
+                            lateral_flow_rate: 9001.0,
+                            ..WaterConfig::NULL
+                        },
+                        weather: Weather::Clear,
                     };
 
-                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
-                    let water_table = scenario.water_table(&map_geometry);
-                    let mut app =
-                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
+                    let mut app = water_testing_app(scenario);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
@@ -744,9 +753,10 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?})",
+                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
-                        starting_total_water
+                        starting_total_water,
+                        scenario
                     );
                 }
             }
