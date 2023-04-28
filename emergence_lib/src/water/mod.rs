@@ -309,7 +309,7 @@ mod tests {
     use crate as emergence_lib;
     use crate::enum_iter::IterableEnum;
     use crate::simulation::time::advance_in_game_time;
-    use crate::simulation::weather::WeatherPlugin;
+    use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::structures::structure_manifest::StructureManifest;
 
     use super::*;
@@ -318,6 +318,7 @@ mod tests {
         water_config: WaterConfig,
         map_geometry: MapGeometry,
         water_table: WaterTable,
+        weather: Weather,
     ) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
@@ -343,6 +344,7 @@ mod tests {
         app.insert_resource(map_geometry);
         // Override the default water config with one appropriate for testing.
         app.insert_resource(water_config);
+        app.insert_resource(CurrentWeather::new(weather));
 
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
@@ -462,7 +464,12 @@ mod tests {
         let map_geometry = MapShape::Bedrock.set_heights(MapSizes::OneTile.map_geometry());
         let initial_water_table = WaterTableScenario::DepthOne.water_table(&map_geometry);
 
-        let mut app = water_testing_app(water_config, map_geometry, initial_water_table.clone());
+        let mut app = water_testing_app(
+            water_config,
+            map_geometry,
+            initial_water_table.clone(),
+            Weather::Cloudy,
+        );
         app.update();
 
         let water_table = app.world.resource::<WaterTable>();
@@ -474,7 +481,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Evaporation: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         evaporation_rate: Height(1.0),
@@ -484,7 +494,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -519,7 +530,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Precipitation: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         precipitation_rate: Height(1.0),
@@ -528,7 +542,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Rainy);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -552,7 +567,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Emisison: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         emission_rate: Height(1.0),
@@ -561,7 +579,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -585,7 +604,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Root draw: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         root_draw_rate: Height(1.0),
@@ -594,7 +616,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
@@ -618,13 +641,17 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Water conservation: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig::NULL;
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
@@ -647,7 +674,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Lateral flow conservation: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         lateral_flow_rate: 1.0,
@@ -656,7 +686,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
@@ -679,7 +710,10 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
-                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+                    println!(
+                        "Extreme lateral flow: testing {:?} + {:?} + {:?}",
+                        map_size, map_shape, scenario
+                    );
 
                     let water_config = WaterConfig {
                         lateral_flow_rate: 9001.0,
@@ -688,7 +722,8 @@ mod tests {
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
                     let water_table = scenario.water_table(&map_geometry);
-                    let mut app = water_testing_app(water_config, map_geometry, water_table);
+                    let mut app =
+                        water_testing_app(water_config, map_geometry, water_table, Weather::Clear);
                     let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
