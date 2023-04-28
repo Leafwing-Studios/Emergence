@@ -363,21 +363,29 @@ mod tests {
         DepthHalf,
         /// One tile of water.
         DepthOne,
+        /// The water table is at the same height as the surface.
+        Saturated,
+        /// The water table is one tile above the surface.
+        Flooded,
     }
 
     impl WaterTableScenario {
-        fn starting_water_level(&self) -> Height {
+        fn starting_water_level(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
             match self {
                 WaterTableScenario::Dry => Height(0.),
                 WaterTableScenario::DepthHalf => Height(0.5),
                 WaterTableScenario::DepthOne => Height(1.),
+                WaterTableScenario::Saturated => map_geometry.get_height(tile_pos).unwrap(),
+                WaterTableScenario::Flooded => {
+                    map_geometry.get_height(tile_pos).unwrap() + Height(1.)
+                }
             }
         }
 
         fn water_table(&self, map_geometry: &MapGeometry) -> WaterTable {
             let mut water_table = WaterTable::default();
             for tile_pos in map_geometry.valid_tile_positions() {
-                water_table.set(tile_pos, self.starting_water_level());
+                water_table.set(tile_pos, self.starting_water_level(tile_pos, map_geometry));
             }
 
             water_table
@@ -499,24 +507,25 @@ mod tests {
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
+                    let map_geometry = app.world.resource::<MapGeometry>();
 
                     for &tile_pos in water_table.height.keys() {
-                        if scenario.starting_water_level() > Height::ZERO {
+                        if scenario.starting_water_level(tile_pos, &map_geometry) > Height::ZERO {
                             assert!(
-                                water_table.get(tile_pos) < scenario.starting_water_level(),
+                                water_table.get(tile_pos) < scenario.starting_water_level(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
-                                scenario.starting_water_level()
+                                scenario.starting_water_level(tile_pos, &map_geometry)
                             );
                         } else {
                             assert_eq!(
                                 water_table.get(tile_pos),
-                                scenario.starting_water_level(),
+                                scenario.starting_water_level(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is not equal to the starting water level of {:?}",
                                 water_table.get(tile_pos),
                                 tile_pos,
-                                scenario.starting_water_level()
+                                scenario.starting_water_level(tile_pos, &map_geometry)
                             );
                         }
                     }
@@ -547,14 +556,15 @@ mod tests {
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
+                    let map_geometry = app.world.resource::<MapGeometry>();
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) > scenario.starting_water_level(),
+                            water_table.get(tile_pos) > scenario.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level()
+                            scenario.starting_water_level(tile_pos, &map_geometry)
                         );
                     }
                 }
@@ -584,14 +594,15 @@ mod tests {
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
+                    let map_geometry = app.world.resource::<MapGeometry>();
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) > scenario.starting_water_level(),
+                            water_table.get(tile_pos) > scenario.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level()
+                            scenario.starting_water_level(tile_pos, &map_geometry)
                         );
                     }
                 }
@@ -621,14 +632,15 @@ mod tests {
                     app.update();
 
                     let water_table = app.world.resource::<WaterTable>();
+                    let map_geometry = app.world.resource::<MapGeometry>();
 
                     for &tile_pos in water_table.height.keys() {
                         assert!(
-                            water_table.get(tile_pos) < scenario.starting_water_level(),
+                            water_table.get(tile_pos) < scenario.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is greater than the starting water level of {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
-                            scenario.starting_water_level()
+                            scenario.starting_water_level(tile_pos, &map_geometry)
                         );
                     }
                 }
