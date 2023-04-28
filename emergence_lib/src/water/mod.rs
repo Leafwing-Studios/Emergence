@@ -125,6 +125,15 @@ impl WaterTable {
         let new_height = height - amount;
         self.set(tile_pos, new_height.max(Height::ZERO));
     }
+
+    /// Computes the total amount of water in the water table.
+    pub(crate) fn total_water(&self) -> Height {
+        self.height
+            .values()
+            .copied()
+            .reduce(|a, b| a + b)
+            .unwrap_or_default()
+    }
 }
 
 /// The depth to the water table at a given tile.

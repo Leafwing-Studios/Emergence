@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use crate::{
     infovis::Census,
     simulation::{light::TotalLight, time::InGameTime, weather::CurrentWeather},
+    water::WaterTable,
 };
 
 use super::{FiraSansFontFamily, LeftPanel};
@@ -39,6 +40,7 @@ fn spawn_production_statistics_menu(
         TextSection::new("TIME", style.clone()),
         TextSection::new("WEATHER", style.clone()),
         TextSection::new("LIGHT", style.clone()),
+        TextSection::new("TOTAL_WATER", style.clone()),
         TextSection::new("CENSUS", style),
     ]);
 
@@ -62,11 +64,13 @@ fn update_production_statistics(
     in_game_time: Res<InGameTime>,
     current_weather: Res<CurrentWeather>,
     total_light: Res<TotalLight>,
+    water_table: Res<WaterTable>,
     census: Res<Census>,
 ) {
     let mut text = query.single_mut();
     text.sections[0].value = format!("{}\n", *in_game_time);
     text.sections[1].value = format!("Weather: {}\n", current_weather.get());
     text.sections[2].value = format!("{}\n", *total_light);
-    text.sections[3].value = format!("{}", *census);
+    text.sections[3].value = format!("{}\n", water_table.total_water());
+    text.sections[4].value = format!("{}", *census);
 }
