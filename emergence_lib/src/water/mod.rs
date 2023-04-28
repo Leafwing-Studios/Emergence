@@ -353,7 +353,7 @@ mod tests {
     }
 
     /// Controls the initial water level of the map.
-    #[derive(IterableEnum)]
+    #[derive(Debug, IterableEnum)]
     enum WaterTableScenario {
         /// No water.
         Dry,
@@ -383,7 +383,7 @@ mod tests {
     }
 
     /// The size of the test map.
-    #[derive(IterableEnum)]
+    #[derive(Debug, IterableEnum)]
     enum MapSizes {
         /// Radius 0 map.
         OneTile,
@@ -404,7 +404,7 @@ mod tests {
     }
 
     /// The shape of the test map.
-    #[derive(IterableEnum)]
+    #[derive(Debug, IterableEnum)]
     enum MapShape {
         /// A flat map with no variation in height at height 0.
         Bedrock,
@@ -477,6 +477,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         evaporation_rate: Height(1.0),
                         ..WaterConfig::NULL
@@ -519,6 +521,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         precipitation_rate: Height(1.0),
                         ..WaterConfig::NULL
@@ -550,6 +554,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         emission_rate: Height(1.0),
                         ..WaterConfig::NULL
@@ -581,6 +587,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         root_draw_rate: Height(1.0),
                         ..WaterConfig::NULL
@@ -612,6 +620,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig::NULL;
 
                     let map_geometry = map_shape.set_heights(map_size.map_geometry());
@@ -639,6 +649,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         lateral_flow_rate: 1.0,
                         ..WaterConfig::NULL
@@ -669,6 +681,8 @@ mod tests {
         for map_size in MapSizes::variants() {
             for map_shape in MapShape::variants() {
                 for scenario in WaterTableScenario::variants() {
+                    println!("Testing {:?} + {:?} + {:?}", map_size, map_shape, scenario);
+
                     let water_config = WaterConfig {
                         lateral_flow_rate: 9001.0,
                         ..WaterConfig::NULL
