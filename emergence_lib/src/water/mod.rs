@@ -284,9 +284,128 @@ fn horizontal_water_movement(
 
 #[cfg(test)]
 mod tests {
+    use emergence_macros::IterableEnum;
+    use rand::Rng;
+
+    use crate as emergence_lib;
+    use crate::enum_iter::IterableEnum;
+    use crate::simulation::time::advance_in_game_time;
+
+    use super::*;
+
+    fn water_testing_app(water_table: WaterTable, map_geometry: MapGeometry) -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .add_plugin(WaterPlugin)
+            .add_system(
+                advance_in_game_time
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            );
+
+        for &tile_pos in water_table.height.keys() {
+            assert!(
+                map_geometry.is_valid(tile_pos),
+                "Invalid tile position {} found in water table.",
+                tile_pos
+            );
+        }
+
+        app.insert_resource(water_table);
+        app.insert_resource(map_geometry);
+
+        app
+    }
+
+    /// Controls the initial water level of the map.
+    #[derive(IterableEnum)]
+    enum WaterTableScenario {
+        /// No water.
+        Dry,
+        /// Half a tile of water.
+        DepthHalf,
+        /// One tile of water.
+        DepthOne,
+    }
+
+    impl WaterTableScenario {
+        fn starting_water_level(&self) -> Height {
+            match self {
+                WaterTableScenario::Dry => Height(0.),
+                WaterTableScenario::DepthHalf => Height(0.5),
+                WaterTableScenario::DepthOne => Height(1.),
+            }
+        }
+
+        fn water_table(&self, map_geometry: &MapGeometry) -> WaterTable {
+            let mut water_table = WaterTable::default();
+            for tile_pos in map_geometry.valid_tile_positions() {
+                water_table.set(tile_pos, self.starting_water_level());
+            }
+
+            water_table
+        }
+    }
+
+    /// The size of the test map.
+    #[derive(IterableEnum)]
+    enum MapSizes {
+        /// Radius 0 map.
+        OneTile,
+        /// Radius 3 map.
+        Tiny,
+        /// Radius 10 map.
+        Modest,
+    }
+
+    impl MapSizes {
+        fn map_geometry(&self) -> MapGeometry {
+            match self {
+                MapSizes::OneTile => MapGeometry::new(0),
+                MapSizes::Tiny => MapGeometry::new(3),
+                MapSizes::Modest => MapGeometry::new(10),
+            }
+        }
+    }
+
+    /// The shape of the test map.
+    #[derive(IterableEnum)]
+    enum MapShape {
+        /// A flat map with no variation in height at height 0.
+        Bedrock,
+        /// A flat map with no variation in height at height 1.
+        Flat,
+        /// A map that slopes.
+        Sloped,
+        /// A map with random bumps.
+        Bumpy,
+    }
+
+    impl MapShape {
+        fn set_heights(&self, mut map_geometry: MapGeometry) -> MapGeometry {
+            for tile_pos in map_geometry
+                .valid_tile_positions()
+                .collect::<Vec<TilePos>>()
+            {
+                let height = match self {
+                    MapShape::Bedrock => Height(0.),
+                    MapShape::Flat => Height(1.),
+                    MapShape::Sloped => Height(tile_pos.x as f32),
+                    MapShape::Bumpy => {
+                        let rng = &mut rand::thread_rng();
+                        Height(rng.gen())
+                    }
+                };
+
+                map_geometry.update_height(tile_pos, height);
+            }
+
+            map_geometry
+        }
+    }
+
     #[test]
     fn water_table_arithmetic() {
-        use super::*;
         let mut water_table = WaterTable::default();
         let tile_pos = TilePos::new(0, 0);
         water_table.set(tile_pos, Height(1.0));
@@ -304,4 +423,45 @@ mod tests {
         water_table.subtract(tile_pos, Height(1.0));
         assert_eq!(water_table.get(tile_pos), Height(0.0));
     }
+
+    #[test]
+    fn evaporation_decreases_water_levels() {
+        for map_size in MapSizes::variants() {
+            for map_shape in MapShape::variants() {
+                for scenario in WaterTableScenario::variants() {
+                    let map_geometry = map_shape.set_heights(map_size.map_geometry());
+                    let water_table = scenario.water_table(&map_geometry);
+                    let mut app = water_testing_app(water_table, map_geometry);
+                    app.update();
+
+                    let water_table = app.world.resource::<WaterTable>();
+
+                    for &tile_pos in water_table.height.keys() {
+                        assert!(
+                            water_table.get(tile_pos) <= scenario.starting_water_level(),
+                            "Water level {} at tile position {} is greater than the maximum starting water level of {}",
+                            water_table.get(tile_pos),
+                            tile_pos,
+                            scenario.starting_water_level()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn precipitation_increase_water_levels() {}
+
+    #[test]
+    fn emission_increases_water_levels() {}
+
+    #[test]
+    fn root_draw_decreases_water_levels() {}
+
+    #[test]
+    fn lateral_flow_conserves_water() {}
+
+    #[test]
+    fn lateral_flow_moves_water_from_high_to_low() {}
 }

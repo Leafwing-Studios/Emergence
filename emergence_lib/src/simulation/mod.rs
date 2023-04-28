@@ -46,8 +46,6 @@ impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
         app.add_system(sync_rotation_to_facing)
-            .add_state::<PauseState>()
-            .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
             .edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
                 schedule.configure_set(
                     SimulationSet

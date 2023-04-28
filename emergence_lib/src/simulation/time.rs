@@ -18,22 +18,24 @@ use crate::player_interaction::PlayerAction;
 use super::{PauseState, SimulationSet};
 
 /// Introduces temporal variation into the environment.
-pub(super) struct TemporalPlugin;
+pub(crate) struct TemporalPlugin;
 
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            (
-                advance_in_game_time,
-                move_celestial_bodies,
-                record_elapsed_time_for_lifecycles,
+        app.add_state::<PauseState>()
+            .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
+            .add_systems(
+                (
+                    advance_in_game_time,
+                    move_celestial_bodies,
+                    record_elapsed_time_for_lifecycles,
+                )
+                    .chain()
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
             )
-                .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
-        )
-        .add_system(pause_game)
-        .init_resource::<InGameTime>();
+            .add_system(pause_game)
+            .init_resource::<InGameTime>();
     }
 }
 
@@ -138,7 +140,7 @@ impl Default for InGameTime {
 }
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
-fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
+pub fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
     let delta = Days(time.period.as_secs_f32() / in_game_time.seconds_per_day);
     in_game_time.elapsed_time += delta;
 }
