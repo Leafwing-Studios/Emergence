@@ -437,13 +437,24 @@ mod tests {
                     let water_table = app.world.resource::<WaterTable>();
 
                     for &tile_pos in water_table.height.keys() {
-                        assert!(
-                            water_table.get(tile_pos) <= scenario.starting_water_level(),
-                            "Water level {} at tile position {} is greater than the maximum starting water level of {}",
-                            water_table.get(tile_pos),
-                            tile_pos,
-                            scenario.starting_water_level()
-                        );
+                        if scenario.starting_water_level() > Height::ZERO {
+                            assert!(
+                                water_table.get(tile_pos) < scenario.starting_water_level(),
+                                "Water level {} at tile position {} is greater than the starting water level of {}",
+                                water_table.get(tile_pos),
+                                tile_pos,
+                                scenario.starting_water_level()
+                            );
+                        } else {
+                            assert_eq!(
+                                water_table.get(tile_pos),
+                                scenario.starting_water_level(),
+                                "Water level {} at tile position {} is not equal to the starting water level of {}",
+                                water_table.get(tile_pos),
+                                tile_pos,
+                                scenario.starting_water_level()
+                            );
+                        }
                     }
                 }
             }
