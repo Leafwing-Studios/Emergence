@@ -13,6 +13,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
+    fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
@@ -268,10 +269,14 @@ impl TilePos {
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(
-    Component, Clone, Copy, Debug, PartialEq, PartialOrd, Display, Default, Serialize, Deserialize,
-)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct Height(pub f32);
+
+impl Display for Height {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}", self.0)
+    }
+}
 
 impl Height {
     /// The absolute minimum height.
