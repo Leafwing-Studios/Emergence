@@ -301,12 +301,16 @@ fn horizontal_water_movement(
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use emergence_macros::IterableEnum;
     use rand::Rng;
 
     use crate as emergence_lib;
     use crate::enum_iter::IterableEnum;
     use crate::simulation::time::advance_in_game_time;
+    use crate::simulation::weather::WeatherPlugin;
+    use crate::structures::structure_manifest::StructureManifest;
 
     use super::*;
 
@@ -318,6 +322,9 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .add_plugin(WaterPlugin)
+            .add_plugin(WeatherPlugin)
+            .init_resource::<InGameTime>()
+            .init_resource::<StructureManifest>()
             .add_system(
                 advance_in_game_time
                     .in_set(SimulationSet)
@@ -336,6 +343,11 @@ mod tests {
         app.insert_resource(map_geometry);
         // Override the default water config with one appropriate for testing.
         app.insert_resource(water_config);
+
+        // Our key systems are run in the fixed update schedule.
+        // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
+        let mut fixed_time = app.world.resource_mut::<FixedTime>();
+        fixed_time.tick(Duration::from_secs(1));
 
         app
     }

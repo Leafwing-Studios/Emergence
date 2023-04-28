@@ -11,7 +11,7 @@ use crate::graphics::lighting::CelestialBody;
 use crate::simulation::time::InGameTime;
 
 /// A plugin that handles weather.
-pub(super) struct WeatherPlugin;
+pub(crate) struct WeatherPlugin;
 
 impl Plugin for WeatherPlugin {
     fn build(&self, app: &mut App) {
