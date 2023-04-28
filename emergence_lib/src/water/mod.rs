@@ -314,6 +314,7 @@ fn horizontal_water_movement(
     }
 }
 
+// FIXME: this is non-conservative; water can be moved even from tiles that end up being overdrawn
 #[inline]
 fn compute_lateral_flow_to_neighbor(
     base_water_transfer_amount: f32,
@@ -323,12 +324,23 @@ fn compute_lateral_flow_to_neighbor(
     water_height: Height,
     neighbor_water_height: Height,
 ) -> Height {
-    // FIXME: this is non-conservative; water can be moved even from tiles that end up being overdrawn
+    assert!(base_water_transfer_amount >= 0.);
+    assert!(water_height >= Height::ZERO);
+    assert!(neighbor_water_height >= Height::ZERO);
+    assert!(tile_height >= Height::ZERO);
+    assert!(neighbor_tile_height >= Height::ZERO);
+
     // If the water is higher than the neighbor, move water from the tile to the neighbor
     // at a rate proportional to the height difference.
     // If the water is lower than the neighbor, the flow direction is reversed.
     // The rate is halved as we do the same computation in both directions.
+
     let delta_water_height = water_height - neighbor_water_height;
+
+    // Water can only flow downhill
+    if delta_water_height <= Height::ZERO {
+        return Height::ZERO;
+    }
 
     let surface_water_present = water_height > tile_height;
     let neighbor_surface_water_present = neighbor_water_height > neighbor_tile_height;
@@ -340,7 +352,9 @@ fn compute_lateral_flow_to_neighbor(
         _ => (1. + water_config.soil_lateral_flow_ratio) / 2.,
     };
 
-    delta_water_height * medium_coefficient * base_water_transfer_amount / 2.
+    let final_amount = delta_water_height * medium_coefficient * base_water_transfer_amount / 2.;
+    assert!(final_amount >= Height::ZERO);
+    final_amount
 }
 
 #[cfg(test)]
@@ -1011,10 +1025,12 @@ mod tests {
             ..WaterConfig::NULL
         };
 
-        let base_water_transfer_amount = 1.0;
+        let base_water_transfer_amount = 0.1;
 
         let mut water_height_a = Height(2.0);
         let mut water_height_b = Height(1.0);
+
+        let initial_water = water_height_a + water_height_b;
 
         let tile_height_a = Height(0.0);
         let tile_height_b = Height(0.0);
@@ -1023,10 +1039,10 @@ mod tests {
             let water_transferred_a_to_b = compute_lateral_flow_to_neighbor(
                 base_water_transfer_amount,
                 &water_config,
-                water_height_a,
-                water_height_a,
                 tile_height_a,
                 tile_height_b,
+                water_height_a,
+                water_height_b,
             );
 
             let water_transferred_b_to_a = compute_lateral_flow_to_neighbor(
@@ -1038,8 +1054,29 @@ mod tests {
                 water_height_a,
             );
 
-            water_height_a += water_transferred_b_to_a - water_transferred_a_to_b;
-            water_height_b += water_transferred_a_to_b - water_transferred_b_to_a;
+            println!(
+                "Water transferred A to B: {:?}, Water transferred B to A: {:?}",
+                water_transferred_a_to_b, water_transferred_b_to_a
+            );
+
+            water_height_a += water_transferred_b_to_a;
+            water_height_a -= water_transferred_a_to_b;
+
+            water_height_b += water_transferred_a_to_b;
+            water_height_b -= water_transferred_b_to_a;
+
+            let current_water = water_height_a + water_height_b;
+            assert!(
+                current_water == initial_water,
+                "Water was not conserved, starting with {:?} and ending with {:?}",
+                initial_water,
+                current_water
+            );
+
+            println!(
+                "Water height A: {:?}, Water height B: {:?}",
+                water_height_a, water_height_b
+            )
         }
 
         let water_difference = (water_height_a.0 - water_height_b.0).abs();
