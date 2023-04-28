@@ -441,7 +441,8 @@ mod tests {
                 let height = match self {
                     MapShape::Bedrock => Height(0.),
                     MapShape::Flat => Height(1.),
-                    MapShape::Sloped => Height(tile_pos.x as f32),
+                    // Make sure we don't end up with negative heights.
+                    MapShape::Sloped => Height(tile_pos.x.max(0) as f32),
                     MapShape::Bumpy => {
                         let rng = &mut rand::thread_rng();
                         Height(rng.gen())
