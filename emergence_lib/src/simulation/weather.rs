@@ -11,7 +11,7 @@ use crate::graphics::lighting::CelestialBody;
 use crate::simulation::time::InGameTime;
 
 /// A plugin that handles weather.
-pub(super) struct WeatherPlugin;
+pub(crate) struct WeatherPlugin;
 
 impl Plugin for WeatherPlugin {
     fn build(&self, app: &mut App) {
@@ -42,6 +42,15 @@ impl Default for CurrentWeather {
 }
 
 impl CurrentWeather {
+    /// Initializes this resource with the provided `weather`.
+    #[cfg(test)]
+    pub(crate) fn new(weather: Weather) -> Self {
+        Self {
+            last_updated: 0,
+            weather,
+        }
+    }
+
     /// Access the current weather.
     pub(crate) fn get(&self) -> Weather {
         self.weather

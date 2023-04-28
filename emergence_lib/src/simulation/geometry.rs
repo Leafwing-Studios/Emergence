@@ -13,6 +13,7 @@ use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
+    fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
@@ -268,10 +269,14 @@ impl TilePos {
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(
-    Component, Clone, Copy, Debug, PartialEq, PartialOrd, Display, Default, Serialize, Deserialize,
-)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct Height(pub f32);
+
+impl Display for Height {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}", self.0)
+    }
+}
 
 impl Height {
     /// The absolute minimum height.
@@ -378,6 +383,13 @@ impl Height {
     #[must_use]
     pub(crate) fn max(self, other: Self) -> Self {
         Height(self.0.max(other.0))
+    }
+
+    /// Returns the absolute difference between the two heights.
+    #[inline]
+    #[must_use]
+    pub(crate) fn abs_diff(self, other: Self) -> Self {
+        Height((self.0 - other.0).abs())
     }
 }
 
@@ -663,6 +675,14 @@ impl MapGeometry {
     /// Updates the height of the tile at `tile_pos`
     #[inline]
     pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
+        assert!(
+            self.is_valid(tile_pos),
+            "Invalid tile position: {:?} with a radius of {:?}",
+            tile_pos,
+            self.radius
+        );
+        assert!(height >= Height(0.));
+
         self.height_index.insert(tile_pos, height);
     }
 
@@ -701,7 +721,7 @@ impl MapGeometry {
     ) -> Result<Height, IndexError> {
         let starting_height = self.get_height(starting_pos)?;
         let ending_height = self.get_height(ending_pos)?;
-        Ok(Height((starting_height.0 - ending_height.0).abs()))
+        Ok(starting_height.abs_diff(ending_height))
     }
 
     /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
@@ -1113,7 +1133,7 @@ mod tests {
 
     #[test]
     fn world_to_tile_pos_conversions_are_invertable() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut map_geometry = MapGeometry::new(20);
 
         for x in -10..=10 {
             for y in -10..=10 {
