@@ -17,6 +17,7 @@ use crate::{
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},
+        Landmark,
     },
     terrain::{
         commands::TerrainCommandsExt,
@@ -198,10 +199,16 @@ fn set_zoning(
 fn mark_for_demolition(
     player_actions: Res<ActionState<PlayerAction>>,
     current_selection: Res<CurrentSelection>,
+    landmark_query: Query<&Landmark>,
     mut commands: Commands,
 ) {
     if player_actions.just_pressed(PlayerAction::ClearZoning) {
         if let CurrentSelection::Structure(structure_entity) = *current_selection {
+            // Landmarks can't be demolished
+            if landmark_query.contains(structure_entity) {
+                return;
+            }
+
             commands
                 .entity(structure_entity)
                 .insert(MarkedForDemolition);
