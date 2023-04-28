@@ -76,7 +76,7 @@ fn update_production_statistics(
     text.sections[2].value = format!("{}\n", *total_light);
     text.sections[3].value = format!(
         "{} average depth of water table \n",
-        water_table.average_depth(&map_geometry)
+        water_table.average_height(&map_geometry)
     );
     text.sections[4].value = format!("{}", *census);
 }

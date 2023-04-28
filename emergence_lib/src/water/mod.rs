@@ -176,8 +176,8 @@ impl WaterTable {
             .unwrap_or_default()
     }
 
-    /// Computes the average depth of the water table.
-    pub(crate) fn average_depth(&self, map_geometry: &MapGeometry) -> Height {
+    /// Computes the average height of the water table.
+    pub(crate) fn average_height(&self, map_geometry: &MapGeometry) -> Height {
         let total_water = self.total_water();
         let total_area = map_geometry.valid_tile_positions().count() as f32;
         total_water / total_area
@@ -787,6 +787,84 @@ mod tests {
                         );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn lateral_flow_levels_out_hill() {
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 10.,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let mut water_table = app.world.resource_mut::<WaterTable>();
+        water_table.add(TilePos::ZERO, Height(1.0));
+
+        app.update();
+
+        let water_table = app.world.resource::<WaterTable>();
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let average_water_height = water_table.average_height(map_geometry);
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let height = water_table.get(tile_pos);
+            assert!(
+                height.abs_diff(average_water_height) < EPSILON,
+                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
+                The water table is {:?}",
+                height,
+                tile_pos,
+                average_water_height,
+                water_table
+            )
+        }
+    }
+
+    #[test]
+    fn lateral_flow_levels_out_valley() {
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 10.,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let mut water_table = app.world.resource_mut::<WaterTable>();
+        water_table.subtract(TilePos::ZERO, Height(1.0));
+
+        app.update();
+
+        let water_table = app.world.resource::<WaterTable>();
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let average_water_height = water_table.average_height(map_geometry);
+
+        for tile_pos in map_geometry.valid_tile_positions() {
+            let height = water_table.get(tile_pos);
+            assert!(
+                height.abs_diff(average_water_height) < EPSILON,
+                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
+                The water table is {:?}",
+                height,
+                tile_pos,
+                average_water_height,
+                water_table
+            )
         }
     }
 
