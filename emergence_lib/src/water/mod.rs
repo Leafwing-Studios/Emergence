@@ -314,7 +314,6 @@ fn horizontal_water_movement(
     }
 }
 
-// FIXME: this is non-conservative; water can be moved even from tiles that end up being overdrawn
 #[inline]
 fn compute_lateral_flow_to_neighbor(
     base_water_transfer_amount: f32,
@@ -354,8 +353,12 @@ fn compute_lateral_flow_to_neighbor(
         _ => (1. + water_config.soil_lateral_flow_ratio) / 2.,
     };
 
-    let final_amount = delta_water_height * medium_coefficient * base_water_transfer_amount / 2.;
-    assert!(final_amount >= Height::ZERO);
+    let proposed_amount = delta_water_height * medium_coefficient * base_water_transfer_amount / 2.;
+    assert!(proposed_amount >= Height::ZERO);
+
+    let final_amount = proposed_amount.min(delta_water_height);
+    assert!(final_amount <= delta_water_height);
+
     final_amount
 }
 
