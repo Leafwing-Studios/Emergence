@@ -331,11 +331,18 @@ mod tests {
     use rand::Rng;
 
     use crate as emergence_lib;
+    use crate::asset_management::manifest::Id;
+    use crate::construction::ConstructionStrategy;
+    use crate::crafting::components::ActiveRecipe;
     use crate::enum_iter::IterableEnum;
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
-    use crate::structures::structure_manifest::StructureManifest;
+    use crate::structures::structure_manifest::{
+        Structure, StructureData, StructureKind, StructureManifest,
+    };
+    use crate::structures::{Footprint, Landmark};
 
+    use super::roots::RootZone;
     use super::*;
 
     #[derive(Debug, Clone, Copy)]
@@ -353,7 +360,6 @@ mod tests {
             .add_plugin(WaterPlugin)
             .add_plugin(WeatherPlugin)
             .init_resource::<InGameTime>()
-            .init_resource::<StructureManifest>()
             .add_system(
                 advance_in_game_time
                     .in_set(SimulationSet)
@@ -378,6 +384,35 @@ mod tests {
         // Override the default water config with one appropriate for testing.
         app.insert_resource(scenario.water_config);
         app.insert_resource(CurrentWeather::new(scenario.weather));
+
+        // Spawn emitter
+        app.world.spawn((Landmark, TilePos::ZERO));
+
+        // Spawn something with roots
+        let mut structure_manifest = StructureManifest::default();
+        structure_manifest.insert(
+            "test_plant".to_string(),
+            StructureData {
+                organism_variety: None,
+                kind: StructureKind::Crafting {
+                    starting_recipe: ActiveRecipe::NONE,
+                },
+                construction_strategy: ConstructionStrategy::Landmark,
+                max_workers: 1,
+                footprint: Footprint::default(),
+                root_zone: Some(RootZone {
+                    radius: 1,
+                    max_depth: Height(1.),
+                }),
+                passable: false,
+            },
+        );
+
+        app.insert_resource(structure_manifest);
+        app.world.spawn((
+            TilePos::ZERO,
+            Id::<Structure>::from_name("test_plant".to_string()),
+        ));
 
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
