@@ -68,11 +68,15 @@ impl WaterConfig {
 /// A plugin that handles water movement and behavior.
 pub(super) struct WaterPlugin;
 
+/// System set for water movement and behavior.
 #[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum WaterSet {
+    /// Systems that increase or decrease the amount of water in the water table.
     VerticalWaterMovement,
+    /// Systems that move water horizontally.
     HorizontalWaterMovement,
-    UpdateGeometry,
+    /// Systems that synchronize the state of the world.
+    Synchronization,
 }
 
 impl Plugin for WaterPlugin {
@@ -86,7 +90,7 @@ impl Plugin for WaterPlugin {
                     (
                         WaterSet::VerticalWaterMovement,
                         WaterSet::HorizontalWaterMovement,
-                        WaterSet::UpdateGeometry,
+                        WaterSet::Synchronization,
                     )
                         .in_set(SimulationSet)
                         .chain(),
@@ -106,7 +110,7 @@ impl Plugin for WaterPlugin {
                     (produce_water_from_emitters, draw_water_from_roots)
                         .in_set(WaterSet::VerticalWaterMovement),
                 )
-                .add_system(update_surface_water_map_geometry.in_set(WaterSet::UpdateGeometry));
+                .add_system(update_surface_water_map_geometry.in_set(WaterSet::Synchronization));
         });
     }
 }
@@ -307,6 +311,7 @@ fn horizontal_water_movement(
     }
 }
 
+/// Computes how much water should be moved from one tile to another.
 #[inline]
 fn compute_lateral_flow_to_neighbor(
     base_water_transfer_amount: f32,
