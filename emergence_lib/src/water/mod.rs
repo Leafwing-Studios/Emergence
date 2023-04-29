@@ -54,7 +54,7 @@ impl WaterConfig {
         emission_rate: Height(1e3),
         emission_pressure: Height(1.0),
         root_draw_rate: Height(1.0),
-        lateral_flow_rate: 1e4,
+        lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
 
