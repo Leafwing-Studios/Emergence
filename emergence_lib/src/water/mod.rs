@@ -19,12 +19,12 @@ use self::{
     roots::draw_water_from_roots,
 };
 
-mod emitters;
+pub mod emitters;
 pub mod roots;
 
 /// Controls the key parameters of water movement and behavior.
 #[derive(Resource, Debug, Clone, Copy)]
-struct WaterConfig {
+pub(crate) struct WaterConfig {
     /// The rate of evaporation per day from each tile.
     evaporation_rate: Height,
     /// The relative rate of evaporation from soil.
