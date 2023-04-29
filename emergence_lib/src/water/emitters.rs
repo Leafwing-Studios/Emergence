@@ -59,6 +59,10 @@ impl WaterEmitter {
         surface_water_height: Height,
         water_config: &WaterConfig,
     ) -> Height {
+        // If the water level is below the surface, it should be treated as 0,
+        // as it does not apply any pressure to the emitter due to its weight.
+        assert!(surface_water_height >= Height::ZERO);
+
         // The rate of flow should gradually decrease as the water level rises.
         // Eventually, the rate of flow reaches zero when the water level is equal to the emitter's pressure.
         let remaining_pressure = (self.pressure - surface_water_height).max(Height::ZERO);
