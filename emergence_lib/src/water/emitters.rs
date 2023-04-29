@@ -75,6 +75,7 @@ impl WaterEmitter {
     }
 }
 
+/// Adds the [`WaterEmitter`] component to the structures that need it.
 pub(super) fn add_water_emitters(
     mut commands: Commands,
     water_config: Res<WaterConfig>,

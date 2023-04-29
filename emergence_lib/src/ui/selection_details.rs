@@ -709,8 +709,8 @@ Max water production: {} tiles per day
                 ",
                     water_emitter.pressure(),
                     surface_water_height,
-                    water_emitter.current_water_production(surface_water_height, &water_config),
-                    water_emitter.max_water_production(&water_config)
+                    water_emitter.current_water_production(surface_water_height, water_config),
+                    water_emitter.max_water_production(water_config)
                 );
             }
 
