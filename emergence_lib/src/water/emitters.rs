@@ -83,3 +83,55 @@ pub(super) fn add_water_emitters(
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A water emitter that produces water at a constant rate.
+    const TEST_EMITTER: WaterEmitter = WaterEmitter {
+        pressure: Height(1.0),
+    };
+
+    /// A simple test configuration.
+    const TEST_CONFIG: WaterConfig = WaterConfig {
+        emission_pressure: Height(1.0),
+        emission_rate: Height(1.0),
+        ..WaterConfig::NULL
+    };
+
+    #[test]
+    fn water_emitter_does_not_emit_when_covered() {
+        let water_production =
+            TEST_EMITTER.current_water_production(TEST_EMITTER.pressure(), &TEST_CONFIG);
+        assert_eq!(water_production, Height(0.0));
+
+        let water_production = TEST_EMITTER
+            .current_water_production(TEST_EMITTER.pressure() + Height(0.5), &TEST_CONFIG);
+        assert_eq!(water_production, Height(0.0));
+    }
+
+    #[test]
+    fn water_emitter_emits_when_uncovered() {
+        let water_production = TEST_EMITTER.current_water_production(Height::ZERO, &TEST_CONFIG);
+        assert!(water_production > Height::ZERO);
+
+        let max_water_production = TEST_EMITTER.max_water_production(&TEST_CONFIG);
+        assert!(water_production == max_water_production);
+
+        let water_production = TEST_EMITTER.current_water_production(Height(0.5), &TEST_CONFIG);
+        assert!(water_production > Height::ZERO);
+    }
+
+    #[test]
+    fn water_emitter_emits_more_slowly_as_it_becomes_covered() {
+        let water_production_1 = TEST_EMITTER.current_water_production(Height(0.1), &TEST_CONFIG);
+        let water_production_covered_2 =
+            TEST_EMITTER.current_water_production(Height(0.2), &TEST_CONFIG);
+        let water_production_covered_3 =
+            TEST_EMITTER.current_water_production(Height(0.3), &TEST_CONFIG);
+
+        assert!(water_production_1 > water_production_covered_2);
+        assert!(water_production_covered_2 > water_production_covered_3);
+    }
+}
