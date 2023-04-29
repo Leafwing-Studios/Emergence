@@ -51,11 +51,11 @@ impl WaterConfig {
         evaporation_rate: Height(2.0),
         soil_evaporation_ratio: 0.5,
         precipitation_rate: Height(1.0),
-        emission_rate: Height(1.0),
+        emission_rate: Height(1e3),
         emission_pressure: Height(1.0),
         root_draw_rate: Height(0.1),
         lateral_flow_rate: 1e5,
-        soil_lateral_flow_ratio: 0.01,
+        soil_lateral_flow_ratio: 5e-3,
     };
 
     /// A configuration that disables all water behavior.

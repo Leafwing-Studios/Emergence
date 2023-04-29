@@ -80,7 +80,7 @@ impl Default for GenerationConfig {
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
-        landmark_chances.insert(Id::from_name("spring".to_string()), 2e-3);
+        landmark_chances.insert(Id::from_name("spring".to_string()), 5e-4);
 
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
         unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
