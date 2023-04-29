@@ -702,11 +702,13 @@ Tile: {tile_pos}"
                     .unwrap_or_default();
 
                 string += &format!(
-                    "\n Water pressure: {} tiles
+                    "\nSpring pressure: {} tiles
+Surface water pressure: {} tiles
 Current water production: {} tiles per day
 Max water production: {} tiles per day
                 ",
                     water_emitter.pressure(),
+                    surface_water_height,
                     water_emitter.current_water_production(surface_water_height, &water_config),
                     water_emitter.max_water_production(&water_config)
                 );
