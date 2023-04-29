@@ -229,13 +229,56 @@
 			}
 		},
 		"spring": {
-			"organism_variety": null,
 			"kind": "Landmark",
 			"construction_strategy": "Landmark",
 			"max_workers": 0,
-			"footprint": null,
-			"root_zone": null,
-			"passable": false
+			"passable": false,
+			"footprint": {
+				"set": [
+					{
+						"hex": {
+							"x": 0,
+							"y": 1
+						}
+					},
+					{
+						"hex": {
+							"x": 1,
+							"y": -1
+						}
+					},
+					{
+						"hex": {
+							"x": 1,
+							"y": 0
+						}
+					},
+					{
+						"hex": {
+							"x": 0,
+							"y": 0
+						}
+					},
+					{
+						"hex": {
+							"x": -1,
+							"y": 0
+						}
+					},
+					{
+						"hex": {
+							"x": -1,
+							"y": 1
+						}
+					},
+					{
+						"hex": {
+							"x": 0,
+							"y": -1
+						}
+					}
+				]
+			}
 		}
 	}
 }
