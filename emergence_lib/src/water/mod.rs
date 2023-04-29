@@ -49,13 +49,13 @@ impl WaterConfig {
     /// The default configuration for in-game water behavior.
     const IN_GAME: Self = Self {
         evaporation_rate: Height(2.0),
-        soil_evaporation_ratio: 0.5,
-        precipitation_rate: Height(1.0),
+        soil_evaporation_ratio: 0.2,
+        precipitation_rate: Height(2.0),
         emission_rate: Height(1e3),
         emission_pressure: Height(1.0),
-        root_draw_rate: Height(0.1),
-        lateral_flow_rate: 1e5,
-        soil_lateral_flow_ratio: 5e-3,
+        root_draw_rate: Height(1.0),
+        lateral_flow_rate: 1e4,
+        soil_lateral_flow_ratio: 0.2,
     };
 
     /// A configuration that disables all water behavior.
