@@ -16,7 +16,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
-    water::WaterTable,
+    water::{WaterConfig, WaterTable},
 };
 
 use self::{
@@ -177,6 +177,8 @@ fn update_selection_details(
     terrain_manifest: Res<TerrainManifest>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
+    map_geometry: Res<MapGeometry>,
+    water_config: Res<WaterConfig>,
 ) {
     let mut parent_visibility = selection_panel_query.single_mut();
     let (mut ghost_structure_style, mut ghost_structure_text) =
@@ -226,8 +228,13 @@ fn update_selection_details(
                 details.display(&item_manifest, &structure_manifest, &recipe_manifest);
         }
         SelectionDetails::Structure(details) => {
-            structure_text.sections[0].value =
-                details.display(&structure_manifest, &unit_manifest, &item_manifest);
+            structure_text.sections[0].value = details.display(
+                &structure_manifest,
+                &unit_manifest,
+                &item_manifest,
+                &map_geometry,
+                &water_config,
+            );
         }
         SelectionDetails::Terrain(details) => {
             terrain_text.sections[0].value = details.display(
@@ -362,6 +369,7 @@ fn get_details(
                 maybe_organism_details,
                 storage_inventory: structure_query_item.storage_inventory.cloned(),
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
+                maybe_water_emitter: structure_query_item.maybe_water_emitter.cloned(),
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
@@ -596,9 +604,10 @@ mod structure_details {
             recipe::RecipeData,
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
-        simulation::geometry::TilePos,
+        simulation::geometry::{MapGeometry, TilePos},
         structures::structure_manifest::{Structure, StructureManifest},
         units::unit_manifest::UnitManifest,
+        water::{emitters::WaterEmitter, WaterConfig},
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -622,6 +631,8 @@ mod structure_details {
         pub(super) storage_inventory: Option<&'static StorageInventory>,
         /// Is this structure marked for removal?
         pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
+        /// How much water is emitted by this structure?
+        pub(super) maybe_water_emitter: Option<&'static WaterEmitter>,
     }
 
     /// Detailed info about a given structure.
@@ -641,6 +652,8 @@ mod structure_details {
         pub(crate) maybe_organism_details: Option<OrganismDetails>,
         /// Is this structure slated for removal?
         pub(crate) marked_for_removal: bool,
+        /// How much water is emitted by this structure?
+        pub(crate) maybe_water_emitter: Option<WaterEmitter>,
     }
 
     impl StructureDetails {
@@ -650,6 +663,8 @@ mod structure_details {
             structure_manifest: &StructureManifest,
             unit_manifest: &UnitManifest,
             item_manifest: &ItemManifest,
+            map_geometry: &MapGeometry,
+            water_config: &WaterConfig,
         ) -> String {
             let entity = self.entity;
             let structure_id = structure_manifest.name(self.structure_id);
@@ -680,6 +695,24 @@ Tile: {tile_pos}"
             if let Some(organism) = &self.maybe_organism_details {
                 string += &format!("\n{}", organism.display(structure_manifest, unit_manifest));
             };
+
+            if let Some(water_emitter) = &self.maybe_water_emitter {
+                let surface_water_height = map_geometry
+                    .get_surface_water_height(*tile_pos)
+                    .unwrap_or_default();
+
+                string += &format!(
+                    "\nSpring pressure: {} tiles
+Surface water pressure: {} tiles
+Current water production: {} tiles per day
+Max water production: {} tiles per day
+                ",
+                    water_emitter.pressure(),
+                    surface_water_height,
+                    water_emitter.current_water_production(surface_water_height, water_config),
+                    water_emitter.max_water_production(water_config)
+                );
+            }
 
             string
         }

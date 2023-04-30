@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::{
+        geometry::{Height, MapGeometry, TilePos},
+        time::InGameTime,
+    },
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
@@ -76,8 +79,10 @@ pub(super) fn draw_water_from_roots(
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
+    in_game_time: Res<InGameTime>,
 ) {
-    let water_requested = water_config.root_draw_rate * fixed_time.period.as_secs_f32();
+    let water_requested = water_config.root_draw_rate * fixed_time.period.as_secs_f32()
+        / in_game_time.seconds_per_day();
 
     // TODO: only do this during CraftingState::NeedsInput
     for (&center, &structure_id) in structure_query.iter() {
