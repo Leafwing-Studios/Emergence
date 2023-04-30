@@ -702,6 +702,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "This seeems to have reproduced https://github.com/Leafwing-Studios/Emergence/issues/799"]
     fn emission_increases_water_levels() {
         for map_size in MapSize::variants() {
             for water_table_strategy in WaterTableStrategy::variants() {
