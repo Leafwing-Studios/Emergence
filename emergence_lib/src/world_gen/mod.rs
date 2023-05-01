@@ -53,7 +53,7 @@ impl Plugin for GenerationPlugin {
 
 /// Tracks world generation progress.
 #[derive(Default, States, Clone, Debug, PartialEq, Eq, Hash)]
-pub(crate) enum WorldGenState {
+pub enum WorldGenState {
     /// The world is waiting to be generated.
     #[default]
     Waiting,
@@ -68,6 +68,8 @@ pub(crate) enum WorldGenState {
 impl WorldGenState {
     /// A system that advances the world generation state machine.
     fn manage_state(
+        mut number_of_burn_in_ticks: Local<u32>,
+        generation_config: Res<GenerationConfig>,
         world_gen_state: Res<State<WorldGenState>>,
         mut next_world_gen_state: ResMut<NextState<WorldGenState>>,
         asset_state: Res<State<AssetState>>,
@@ -82,8 +84,15 @@ impl WorldGenState {
                 next_world_gen_state.set(WorldGenState::BurningIn);
             }
             WorldGenState::BurningIn => {
-                // TODO: simulate for a while and burn in the world
-                next_world_gen_state.set(WorldGenState::Complete);
+                *number_of_burn_in_ticks += 1;
+                info!(
+                    "Simulating the generated world to let it stabilize: {}/{}",
+                    *number_of_burn_in_ticks, generation_config.number_of_burn_in_ticks
+                );
+
+                if *number_of_burn_in_ticks > generation_config.number_of_burn_in_ticks {
+                    next_world_gen_state.set(WorldGenState::Complete);
+                }
             }
             WorldGenState::Complete => (),
         }
@@ -95,6 +104,8 @@ impl WorldGenState {
 pub struct GenerationConfig {
     /// Radius of the map.
     pub(super) map_radius: u32,
+    /// How long to simulate the world before starting the game.
+    number_of_burn_in_ticks: u32,
     /// Chance that each tile contains a landmark of the given type.
     landmark_chances: HashMap<Id<Structure>, f32>,
     /// Chance that each tile contains a unit of the given type.
@@ -130,6 +141,7 @@ impl Default for GenerationConfig {
 
         GenerationConfig {
             map_radius: 60,
+            number_of_burn_in_ticks: 1e5 as u32,
             unit_chances,
             landmark_chances,
             structure_chances,
