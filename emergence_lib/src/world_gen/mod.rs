@@ -41,7 +41,13 @@ impl Plugin for GenerationPlugin {
                     .chain()
                     .in_schedule(OnEnter(WorldGenState::Generating)),
             )
-            .add_system(WorldGenState::manage_state.in_base_set(CoreSet::PreUpdate));
+            .add_system(
+                WorldGenState::manage_state
+                    .in_base_set(CoreSet::PreUpdate)
+                    .run_if(|world_gen_state: Res<State<WorldGenState>>| {
+                        world_gen_state.0 != WorldGenState::Complete
+                    }),
+            );
     }
 }
 
