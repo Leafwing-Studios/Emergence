@@ -140,8 +140,8 @@ fn update_cursor_pos(
     ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let (terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast) =
-        camera_query.single();
+    let Ok((terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast)) =
+        camera_query.get_single() else { return; };
 
     cursor_pos.tile_pos = if let Some((terrain_entity, _intersection_data)) =
         terrain_raycast.get_nearest_intersection()
