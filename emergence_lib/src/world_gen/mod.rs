@@ -10,10 +10,7 @@ use crate::world_gen::terrain_generation::{
     generate_landmarks, generate_terrain, initialize_water_table,
 };
 
-use bevy::app::{App, Plugin};
-use bevy::ecs::prelude::*;
-use bevy::log::info;
-use bevy::prelude::IntoSystemAppConfigs;
+use bevy::prelude::*;
 use bevy::utils::HashMap;
 
 mod organism_generation;
@@ -28,20 +25,62 @@ pub(super) struct GenerationPlugin {
 impl Plugin for GenerationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building Generation plugin...");
-        app.insert_resource(self.config.clone()).add_systems(
-            (
-                generate_terrain,
-                apply_system_buffers,
-                generate_landmarks,
-                initialize_water_table,
-                apply_system_buffers,
-                generate_organisms,
-                apply_system_buffers,
-                randomize_starting_organisms,
+        app.add_state::<WorldGenState>()
+            .insert_resource(self.config.clone())
+            .add_systems(
+                (
+                    generate_terrain,
+                    apply_system_buffers,
+                    generate_landmarks,
+                    initialize_water_table,
+                    apply_system_buffers,
+                    generate_organisms,
+                    apply_system_buffers,
+                    randomize_starting_organisms,
+                )
+                    .chain()
+                    .in_schedule(OnEnter(WorldGenState::Generating)),
             )
-                .chain()
-                .in_schedule(OnEnter(AssetState::FullyLoaded)),
-        );
+            .add_system(WorldGenState::manage_state.in_base_set(CoreSet::PreUpdate));
+    }
+}
+
+/// Tracks world generation progress.
+#[derive(Default, States, Clone, Debug, PartialEq, Eq, Hash)]
+pub(crate) enum WorldGenState {
+    /// The world is waiting to be generated.
+    #[default]
+    Waiting,
+    /// The world is being generated.
+    Generating,
+    /// The world has been generated, but we're simulating for a while to let things settle.
+    BurningIn,
+    /// The world has been generated.
+    Complete,
+}
+
+impl WorldGenState {
+    /// A system that advances the world generation state machine.
+    fn manage_state(
+        world_gen_state: Res<State<WorldGenState>>,
+        mut next_world_gen_state: ResMut<NextState<WorldGenState>>,
+        asset_state: Res<State<AssetState>>,
+    ) {
+        match world_gen_state.0 {
+            WorldGenState::Waiting => {
+                if asset_state.0 == AssetState::FullyLoaded {
+                    next_world_gen_state.set(WorldGenState::Generating);
+                }
+            }
+            WorldGenState::Generating => {
+                next_world_gen_state.set(WorldGenState::BurningIn);
+            }
+            WorldGenState::BurningIn => {
+                // TODO: simulate for a while and burn in the world
+                next_world_gen_state.set(WorldGenState::Complete);
+            }
+            WorldGenState::Complete => (),
+        }
     }
 }
 
