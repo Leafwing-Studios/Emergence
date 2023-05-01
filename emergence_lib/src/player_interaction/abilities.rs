@@ -12,7 +12,7 @@ use crate::terrain::TerrainEmitters;
 use super::clipboard::Tool;
 use super::picking::CursorPos;
 use super::selection::CurrentSelection;
-use super::{InteractionSystem, PlayerAction};
+use super::{InteractionSystem, PlayerAction, PlayerModifiesWorld};
 use bevy::prelude::*;
 use bevy::utils::HashSet;
 use derive_more::Display;
@@ -41,6 +41,7 @@ impl Plugin for AbilitiesPlugin {
             )
                 .chain()
                 .in_set(SimulationSet)
+                .in_set(PlayerModifiesWorld)
                 .in_schedule(CoreSchedule::FixedUpdate),
         )
         .init_resource::<IntentPool>();
