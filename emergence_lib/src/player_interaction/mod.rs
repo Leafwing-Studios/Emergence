@@ -7,6 +7,8 @@ use leafwing_input_manager::{
     Actionlike,
 };
 
+use crate::world_gen::WorldGenState;
+
 pub mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
@@ -25,7 +27,8 @@ impl Plugin for InteractionPlugin {
             .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(picking::PickingPlugin)
             .add_plugin(selection::SelectionPlugin)
-            .add_plugin(clipboard::ClipboardPlugin);
+            .add_plugin(clipboard::ClipboardPlugin)
+            .configure_set(PlayerModifiesWorld.run_if(in_state(WorldGenState::Complete)));
 
         #[cfg(feature = "debug_tools")]
         app.add_plugin(debug_tools::DebugToolsPlugin);
@@ -48,6 +51,10 @@ pub(crate) enum InteractionSystem {
     /// Spawn and despawn ghosts
     ManagePreviews,
 }
+
+/// A system set for all actions that the player can take which modify the game world.
+#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct PlayerModifiesWorld;
 
 /// Actions that the player can take to modify the game world or their view of it.
 ///

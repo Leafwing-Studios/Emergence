@@ -2,3 +2,4 @@
 
 pub mod curves;
 pub mod fallible_commands;
+pub mod noise;

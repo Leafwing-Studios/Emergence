@@ -18,6 +18,7 @@ use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
+use crate::world_gen::WorldGenState;
 
 use self::speed::Speed;
 
@@ -30,7 +31,7 @@ pub(super) struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_camera)
+        app.add_system(setup_camera.in_schedule(OnEnter(WorldGenState::Complete)))
             .add_system(mousewheel_zoom.before(zoom))
             .add_system(zoom)
             .add_system(
@@ -251,7 +252,7 @@ fn drag_camera(
     time: Res<Time>,
 ) {
     if actions.pressed(PlayerAction::DragCamera) {
-        let mut settings = camera_query.single_mut();
+        let Ok(mut settings) = camera_query.get_single_mut() else { return };
         let rotation_rate = settings.rotation_speed.delta(time.delta()) * settings.drag_ratio;
         let inclination_rate = settings.inclination_speed.delta(time.delta()) * settings.drag_ratio;
 
@@ -271,7 +272,7 @@ fn set_camera_inclination(
     actions: Res<ActionState<PlayerAction>>,
     time: Res<Time>,
 ) {
-    let mut settings = camera_query.single_mut();
+    let Ok(mut settings) = camera_query.get_single_mut() else { return };
 
     let delta = if actions.pressed(PlayerAction::TiltCameraUp) {
         settings.inclination_speed.delta(time.delta())
@@ -292,7 +293,7 @@ fn zoom(
     actions: Res<ActionState<PlayerAction>>,
     time: Res<Time>,
 ) {
-    let (mut focus, mut settings) = camera_query.single_mut();
+    let Ok((mut focus, mut settings)) = camera_query.get_single_mut() else { return; };
 
     let delta_zoom = match (
         actions.pressed(PlayerAction::ZoomIn),
@@ -319,7 +320,7 @@ fn set_camera_focus(
     unit_query: Query<&Transform>,
     mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
 ) {
-    let (mut focus, mut settings) = camera_query.single_mut();
+    let Ok((mut focus, mut settings)) = camera_query.get_single_mut() else { return; };
 
     // Snap to selected object
     if actions.pressed(PlayerAction::CenterCameraOnSelection)
@@ -360,7 +361,7 @@ fn pan_camera(
     actions: Res<ActionState<PlayerAction>>,
     map_geometry: Res<MapGeometry>,
 ) {
-    let (transform, mut focus, mut settings) = camera_query.single_mut();
+    let Ok((transform, mut focus, mut settings)) = camera_query.get_single_mut() else { return; };
 
     // Pan
     if actions.pressed(PlayerAction::Pan) {
@@ -394,11 +395,11 @@ fn pan_camera(
 
 /// Rotates the camera around the [`CameraFocus`].
 fn rotate_camera(
-    mut query: Query<&mut CameraSettings, With<Camera3d>>,
+    mut camera_query: Query<&mut CameraSettings, With<Camera3d>>,
     actions: Res<ActionState<PlayerAction>>,
     time: Res<Time>,
 ) {
-    let mut settings = query.single_mut();
+    let Ok(mut settings) = camera_query.get_single_mut() else { return };
 
     let delta = settings.rotation_speed.delta(time.delta());
 
@@ -418,7 +419,7 @@ fn rotate_camera(
 fn move_camera_to_goal(
     mut query: Query<(&mut Transform, &CameraFocus, &CameraSettings), With<Camera3d>>,
 ) {
-    let (mut transform, focus, settings) = query.single_mut();
+    let Ok((mut transform, focus, settings)) = query.get_single_mut() else { return; };
 
     // Replace the previous transform
     *transform = compute_camera_transform(focus, settings.facing, settings.inclination);

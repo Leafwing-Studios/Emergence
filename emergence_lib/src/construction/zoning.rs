@@ -10,7 +10,7 @@ use crate::{
         clipboard::{ClipboardData, Tool},
         picking::CursorPos,
         selection::CurrentSelection,
-        InteractionSystem, PlayerAction,
+        InteractionSystem, PlayerAction, PlayerModifiesWorld,
     },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
@@ -35,6 +35,7 @@ impl Plugin for ZoningPlugin {
         app.add_systems(
             (mark_for_demolition, set_zoning)
                 .in_set(InteractionSystem::ApplyZoning)
+                .in_set(PlayerModifiesWorld)
                 .after(InteractionSystem::SelectTiles)
                 .after(InteractionSystem::SetClipboard),
         )

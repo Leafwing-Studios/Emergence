@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowMode, WindowPlugin};
-use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
+use bevy_framepace::FramepacePlugin;
 use emergence_lib::world_gen::GenerationConfig;
 
 fn main() {
@@ -14,10 +14,8 @@ fn main() {
             }),
             ..Default::default()
         }))
+        // This is turned on and off in the world gen state management code.
         .add_plugin(FramepacePlugin)
-        .insert_resource(FramepaceSettings {
-            limiter: Limiter::Auto,
-        })
         .add_plugin(emergence_lib::simulation::GeometryPlugin {
             gen_config: GenerationConfig::default(),
         })
