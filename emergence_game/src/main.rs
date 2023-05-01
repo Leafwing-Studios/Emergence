@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowMode, WindowPlugin};
-use bevy_framepace::{FramepacePlugin};
+use bevy_framepace::FramepacePlugin;
 use emergence_lib::world_gen::GenerationConfig;
 
 fn main() {
