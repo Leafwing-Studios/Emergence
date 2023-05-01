@@ -12,6 +12,7 @@ use crate::world_gen::terrain_generation::{
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
+use bevy_framepace::{FramepaceSettings, Limiter};
 
 mod organism_generation;
 mod terrain_generation;
@@ -72,10 +73,14 @@ impl WorldGenState {
         generation_config: Res<GenerationConfig>,
         world_gen_state: Res<State<WorldGenState>>,
         mut next_world_gen_state: ResMut<NextState<WorldGenState>>,
+        mut frame_pace_settings: ResMut<FramepaceSettings>,
         asset_state: Res<State<AssetState>>,
     ) {
         match world_gen_state.0 {
             WorldGenState::Waiting => {
+                // Don't limit the tick rate while generating the world
+                frame_pace_settings.limiter = Limiter::Off;
+
                 if asset_state.0 == AssetState::FullyLoaded {
                     next_world_gen_state.set(WorldGenState::Generating);
                 }
@@ -91,6 +96,8 @@ impl WorldGenState {
                 );
 
                 if *number_of_burn_in_ticks > generation_config.number_of_burn_in_ticks {
+                    // Resume limiting the tick rate
+                    frame_pace_settings.limiter = Limiter::Auto;
                     next_world_gen_state.set(WorldGenState::Complete);
                 }
             }
