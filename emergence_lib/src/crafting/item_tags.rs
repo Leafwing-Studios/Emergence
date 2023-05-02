@@ -17,6 +17,8 @@ pub enum ItemTag {
     Compostable,
     /// Items that will grow into something if left on the ground.
     Seed,
+    /// A fluid.
+    Fluid,
 }
 
 impl ItemTag {
@@ -25,6 +27,7 @@ impl ItemTag {
         match self {
             ItemTag::Compostable => "Compostable",
             ItemTag::Seed => "Seed",
+            ItemTag::Fluid => "Fluid",
         }
     }
 }

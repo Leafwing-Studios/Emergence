@@ -661,6 +661,7 @@ mod tests {
             ItemData {
                 stack_size: 10,
                 compostable: true,
+                fluid: false,
                 seed: None,
             },
         );
@@ -669,6 +670,7 @@ mod tests {
             ItemData {
                 stack_size: 10,
                 compostable: false,
+                fluid: false,
                 seed: None,
             },
         );
