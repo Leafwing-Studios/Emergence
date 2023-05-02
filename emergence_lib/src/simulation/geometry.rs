@@ -1081,10 +1081,7 @@ impl RotationDirection {
 /// Constructs the mesh for a single hexagonal column with the specified height.
 #[must_use]
 pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = ColumnMeshBuilder::new(hex_layout, hex_height)
-        .without_bottom_face()
-        .without_top_face()
-        .build();
+    let mesh_info = ColumnMeshBuilder::new(hex_layout, hex_height).build();
 
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
