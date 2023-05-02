@@ -15,7 +15,9 @@
 		},
 		"acacia_leaf_production": {
 			"inputs": {
-				"Exact": {}
+				"Exact": {
+					"water": 1
+				}
 			},
 			"outputs": {
 				"acacia_leaf": 1
@@ -32,7 +34,9 @@
 		},
 		"mature_acacia_production": {
 			"inputs": {
-				"Exact": {}
+				"Exact": {
+					"water": 1
+				}
 			},
 			"outputs": {
 				"acacia_leaf": 1,
