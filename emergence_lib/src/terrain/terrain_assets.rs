@@ -19,8 +19,6 @@ pub(crate) struct TerrainHandles {
     pub(crate) scenes: HashMap<Id<Terrain>, Handle<Scene>>,
     /// The mesh used for raycasting the terrain topper
     pub(crate) topper_mesh: Handle<Mesh>,
-    /// The mesh of the column underneath each terrain topper
-    pub(crate) column_mesh: Handle<Mesh>,
     /// The material of the column underneath each terrain topper
     pub(crate) column_material: Handle<StandardMaterial>,
     /// The materials used to display player interaction with terrain tiles
@@ -56,11 +54,9 @@ impl Loadable for TerrainHandles {
         );
 
         let map_geometry = world.resource::<MapGeometry>();
-        let column_mesh_object = bounding_hexagonal_column(&map_geometry.layout, 1.0);
         let topper_mesh_object =
             bounding_hexagonal_column(&map_geometry.layout, Height::TOPPER_THICKNESS);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
-        let column_mesh = mesh_assets.add(column_mesh_object);
         let topper_mesh = mesh_assets.add(topper_mesh_object);
 
         let mut material_assets = world.resource_mut::<Assets<StandardMaterial>>();
@@ -80,7 +76,6 @@ impl Loadable for TerrainHandles {
         world.insert_resource(TerrainHandles {
             scenes,
             topper_mesh,
-            column_mesh,
             column_material,
             interaction_materials,
             litter_models,

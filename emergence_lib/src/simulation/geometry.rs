@@ -324,32 +324,6 @@ impl Height {
         }
     }
 
-    /// Computes the correct [`Transform`] of the column underneath a tile of this height at this position
-    #[inline]
-    #[must_use]
-    pub(crate) fn column_transform(&self) -> Transform {
-        let y_scale = self.into_world_pos();
-        let scale = Vec3 {
-            x: 1.,
-            y: y_scale,
-            z: 1.,
-        };
-
-        // This is x and z aligned with the parent
-        let translation = Vec3 {
-            x: 0.,
-            // We want this to start below the parent
-            y: -y_scale,
-            z: 0.,
-        };
-
-        Transform {
-            translation,
-            rotation: Default::default(),
-            scale,
-        }
-    }
-
     /// Raises the height by a single terrain step.
     ///
     /// Clamps the height to [`Height::MIN`] if it would go below it.

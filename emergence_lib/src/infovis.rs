@@ -324,7 +324,7 @@ fn set_overlay_material(
 
     for (&tile_pos, children) in terrain_query.iter() {
         // This is promised to be the correct entity in the initialization of the terrain's children
-        let overlay_entity = children[1];
+        let overlay_entity = children[0];
 
         if let Ok((mut overlay_material, mut overlay_visibility)) =
             overlay_query.get_mut(overlay_entity)
@@ -383,7 +383,7 @@ fn display_tile_overlay(
 ) {
     for (children, object_interaction) in terrain_query.iter() {
         // This is promised to be the correct entity in the initialization of the terrain's children
-        let overlay_entity = children[1];
+        let overlay_entity = children[0];
 
         let (mut overlay_material, mut overlay_visibility) =
             overlay_query.get_mut(overlay_entity).unwrap();

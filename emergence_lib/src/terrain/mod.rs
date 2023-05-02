@@ -1,7 +1,10 @@
 //! Generating and representing terrain as game objects.
 
 use bevy::prelude::*;
+use bevy::render::mesh::Indices;
+use bevy::render::render_resource::PrimitiveTopology;
 use bevy_mod_raycast::RaycastMesh;
+use hexx::ColumnMeshBuilder;
 
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
@@ -105,21 +108,76 @@ impl TerrainBundle {
     }
 }
 
+/// Generates the merged mesh for all columns in the world.
+///
+/// This needs to be called whenever the height of tiles changes.
+fn generate_mesh_for_columns(map_geometry: &MapGeometry) -> Mesh {
+    let mut mesh_info_vec = Vec::new();
+
+    for tile_pos in map_geometry.valid_tile_positions() {
+        let height = map_geometry.get_height(tile_pos).unwrap().0;
+        let mesh_info = ColumnMeshBuilder::new(&map_geometry.layout, height)
+            .without_bottom_face()
+            .without_top_face()
+            .build();
+        mesh_info_vec.push(mesh_info);
+    }
+
+    let mut merged_mesh_info = mesh_info_vec[0].clone();
+
+    for mesh_info in mesh_info_vec.into_iter().skip(1) {
+        merged_mesh_info.merge_with(mesh_info);
+    }
+
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, merged_mesh_info.vertices.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, merged_mesh_info.normals.to_vec());
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, merged_mesh_info.uvs.to_vec());
+    mesh.set_indices(Some(Indices::U16(merged_mesh_info.indices)));
+    mesh
+}
+
+/// A marker component for terrain columns.
+#[derive(Component)]
+struct TerrainColumn;
+
 /// Updates the game state appropriately whenever the height of a tile is changed.
 fn respond_to_height_changes(
-    mut terrain_query: Query<(Ref<Height>, &TilePos, &mut Transform, &Children)>,
-    mut column_query: Query<&mut Transform, (With<Parent>, Without<Height>)>,
+    mut terrain_topper_query: Query<(Ref<Height>, &TilePos, &mut Transform)>,
     mut map_geometry: ResMut<MapGeometry>,
+    mut terrain_column_query: Query<Entity, With<TerrainColumn>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut commands: Commands,
+    terrain_handles: Res<TerrainHandles>,
 ) {
-    for (height, &tile_pos, mut transform, children) in terrain_query.iter_mut() {
+    let mut any_changed = false;
+
+    for (height, &tile_pos, mut transform) in terrain_topper_query.iter_mut() {
         if height.is_changed() {
+            any_changed = true;
             map_geometry.update_height(tile_pos, *height);
+            // Sets the height of the terrain toppers.
             transform.translation.y = height.into_world_pos();
-            // During terrain initialization we ensure that the column is always the 0th child
-            let column_child = children[0];
-            let mut column_transform = column_query.get_mut(column_child).unwrap();
-            *column_transform = height.column_transform();
         }
+    }
+
+    if any_changed {
+        // Despawn all of the old terrain columns.
+        for entity in terrain_column_query.iter_mut() {
+            commands.entity(entity).despawn();
+        }
+
+        let mesh = generate_mesh_for_columns(&map_geometry);
+        let mesh_handle = meshes.add(mesh);
+
+        // Create new terrain columns.
+        commands.spawn(MaterialMeshBundle {
+            // IMPORTANT: this is inserted by ownership rather than cloned
+            // in order to ensure the asset ref-counting despawns the mesh
+            mesh: mesh_handle,
+            material: terrain_handles.column_material.clone_weak(),
+            ..default()
+        });
     }
 }
 

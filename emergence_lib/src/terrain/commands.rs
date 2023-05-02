@@ -113,9 +113,8 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 /// Constructs a new [`Terrain`] entity.
 ///
 /// The order of the chidlren *must* be:
-/// 0: column
-/// 1: overlay
-/// 2: scene root
+/// 0: overlay
+/// 1: scene root
 pub(crate) struct SpawnTerrainCommand {
     /// The position to spawn the tile
     pub(crate) tile_pos: TilePos,
@@ -148,18 +147,6 @@ impl Command for SpawnTerrainCommand {
                 map_geometry,
             ))
             .id();
-
-        // Spawn the column as the 0th child of the tile entity
-        // The scene bundle will be added as the first child
-        let handles = world.resource::<TerrainHandles>();
-        let column_bundle = PbrBundle {
-            mesh: handles.column_mesh.clone_weak(),
-            material: handles.column_material.clone_weak(),
-            ..Default::default()
-        };
-
-        let hex_column = world.spawn(column_bundle).id();
-        world.entity_mut(terrain_entity).add_child(hex_column);
 
         let handles = world.resource::<TerrainHandles>();
         /// Makes the overlays ever so slightly larger than their base to avoid z-fighting.
