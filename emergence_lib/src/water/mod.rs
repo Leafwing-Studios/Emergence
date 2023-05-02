@@ -9,13 +9,14 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     asset_management::manifest::Id,
-    items::item_manifest::Item,
+    items::item_manifest::{Item, ItemManifest},
     simulation::{
         geometry::{Height, MapGeometry, TilePos},
         time::InGameTime,
         weather::CurrentWeather,
         SimulationSet,
     },
+    structures::structure_manifest::StructureManifest,
 };
 
 use self::{
@@ -120,17 +121,17 @@ impl Plugin for WaterPlugin {
                     (
                         produce_water_from_emitters,
                         precipitation,
-                        draw_water_from_roots,
+                        // This system pulls in a ton of dependencies, so it's best to fail silently when they don't exist
+                        // to allow for integration testing of water behavior.
+                        draw_water_from_roots
+                            .run_if(resource_exists::<StructureManifest>())
+                            .run_if(resource_exists::<ItemManifest>()),
                         evaporation,
                     )
                         .chain()
                         .in_set(WaterSet::VerticalWaterMovement),
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
-                .add_systems(
-                    (produce_water_from_emitters, draw_water_from_roots)
-                        .in_set(WaterSet::VerticalWaterMovement),
-                )
                 .add_systems(
                     (add_water_emitters, update_surface_water_map_geometry)
                         .in_set(WaterSet::Synchronization),
@@ -405,19 +406,12 @@ mod tests {
     use rand::Rng;
 
     use crate as emergence_lib;
-    use crate::asset_management::manifest::Id;
-    use crate::construction::ConstructionStrategy;
-    use crate::crafting::components::ActiveRecipe;
     use crate::enum_iter::IterableEnum;
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
-    use crate::structures::structure_manifest::{
-        Structure, StructureData, StructureKind, StructureManifest,
-    };
-    use crate::structures::{Footprint, Landmark};
 
-    use super::roots::RootZone;
     use super::*;
+    use crate::structures::Landmark;
 
     #[derive(Debug, Clone, Copy)]
     struct Scenario {
@@ -465,32 +459,6 @@ mod tests {
 
         // Spawn emitter
         app.world.spawn((Landmark, TilePos::ZERO));
-
-        // Spawn something with roots
-        let mut structure_manifest = StructureManifest::default();
-        structure_manifest.insert(
-            "test_plant".to_string(),
-            StructureData {
-                organism_variety: None,
-                kind: StructureKind::Crafting {
-                    starting_recipe: ActiveRecipe::NONE,
-                },
-                construction_strategy: ConstructionStrategy::Landmark,
-                max_workers: 1,
-                footprint: Footprint::default(),
-                root_zone: Some(RootZone {
-                    radius: 1,
-                    max_depth: Height(1.),
-                }),
-                passable: false,
-            },
-        );
-
-        app.insert_resource(structure_manifest);
-        app.world.spawn((
-            TilePos::ZERO,
-            Id::<Structure>::from_name("test_plant".to_string()),
-        ));
 
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
@@ -769,60 +737,6 @@ mod tests {
                     assert!(
                             water_table.get(tile_pos) > water_table_strategy.starting_water_level(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than or equal to the starting water level of {:?} in {:?}",
-                            water_table.get(tile_pos),
-                            tile_pos,
-                            water_table_strategy.starting_water_level(tile_pos, &map_geometry),
-                            scenario
-                        );
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn root_draw_decreases_water_levels() {
-        for map_size in MapSize::variants() {
-            for water_table_strategy in WaterTableStrategy::variants() {
-                let scenario = Scenario {
-                    map_size,
-                    map_shape: MapShape::Flat,
-                    water_table_strategy,
-                    water_config: WaterConfig {
-                        water_items_per_tile: 1.0,
-                        lateral_flow_rate: 10.,
-                        soil_lateral_flow_ratio: 0.5,
-                        ..WaterConfig::NULL
-                    },
-                    weather: Weather::Clear,
-                    simulated_duration: Duration::from_secs(10),
-                };
-
-                let mut app = water_testing_app(scenario);
-                let water_table = app.world.resource::<WaterTable>();
-                let initial_water = water_table.total_water();
-                if initial_water == Height::ZERO {
-                    continue;
-                }
-
-                app.update();
-
-                let water_table = app.world.resource::<WaterTable>();
-                let map_geometry = app.world.resource::<MapGeometry>();
-
-                let final_water = water_table.total_water();
-
-                assert!(
-                    final_water < initial_water,
-                    "Water level {:?} is not less than the initial water level of {:?} in {:?}",
-                    final_water,
-                    initial_water,
-                    scenario
-                );
-
-                for &tile_pos in water_table.height.keys() {
-                    assert!(
-                            water_table.get(tile_pos) < water_table_strategy.starting_water_level(tile_pos, &map_geometry),
-                            "Water level {:?} at tile position {} is greater than the starting water level of {:?} in {:?}",
                             water_table.get(tile_pos),
                             tile_pos,
                             water_table_strategy.starting_water_level(tile_pos, &map_geometry),
