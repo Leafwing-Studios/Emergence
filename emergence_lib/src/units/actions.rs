@@ -1055,7 +1055,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::move_forward(
@@ -1087,7 +1087,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         output_tile_pos: TilePos,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(output_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(output_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction {
@@ -1111,7 +1111,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         input_tile_pos: TilePos,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(input_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(input_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction {
