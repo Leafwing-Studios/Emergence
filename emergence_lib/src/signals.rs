@@ -813,6 +813,7 @@ mod tests {
             ItemData {
                 stack_size: 1,
                 compostable: false,
+                fluid: false,
                 seed: None,
             },
         );

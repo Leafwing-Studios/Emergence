@@ -7,10 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::{
-        geometry::{Height, MapGeometry, TilePos},
-        time::InGameTime,
-    },
+    crafting::components::{CraftingState, InputInventory},
+    items::{item_manifest::ItemManifest, ItemCount},
+    simulation::geometry::{Height, MapGeometry, TilePos},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
@@ -75,30 +74,55 @@ impl Display for RootZone {
 pub(super) fn draw_water_from_roots(
     mut water_table: ResMut<WaterTable>,
     water_config: Res<WaterConfig>,
-    structure_query: Query<(&TilePos, &Id<Structure>)>,
+    mut structure_query: Query<(
+        &TilePos,
+        &Id<Structure>,
+        &CraftingState,
+        &mut InputInventory,
+    )>,
     structure_manifest: Res<StructureManifest>,
+    item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
-    fixed_time: Res<FixedTime>,
-    in_game_time: Res<InGameTime>,
 ) {
-    let water_requested = water_config.root_draw_rate * fixed_time.period.as_secs_f32()
-        / in_game_time.seconds_per_day();
-
     // TODO: only do this during CraftingState::NeedsInput
-    for (&center, &structure_id) in structure_query.iter() {
-        let structure_data = structure_manifest.get(structure_id);
-        if let Some(root_zone) = &structure_data.root_zone {
-            let relevant_tiles = root_zone.relevant_tiles(center, &water_table, &map_geometry);
-            let n = relevant_tiles.len() as f32;
-            let water_per_tile = water_requested / n;
+    for (&center, &structure_id, crafting_state, mut input_inventory) in structure_query.iter_mut()
+    {
+        if crafting_state != &CraftingState::NeedsInput {
+            continue;
+        };
 
-            for tile_pos in relevant_tiles {
-                // This can ever so slightly overdraw water, but that's fine.
-                // Accounting for this would significantly complicate the code.
-                // Pretend it's capillary action or something!
-                water_table.subtract(tile_pos, water_per_tile);
-                // TODO: add water to the structure.
-            }
+        let water_items_requested = input_inventory
+            .inventory()
+            .remaining_space_for_item(Id::water(), &item_manifest);
+
+        if water_items_requested == 0 {
+            continue;
+        };
+
+        let water_tiles_requested = water_config.items_to_tiles(water_items_requested);
+
+        let root_zone = match &structure_manifest.get(structure_id).root_zone {
+            Some(root_zone) => root_zone,
+            None => continue,
+        };
+
+        let relevant_tiles = root_zone.relevant_tiles(center, &water_table, &map_geometry);
+        let n = relevant_tiles.len() as f32;
+        let water_per_tile = water_tiles_requested / n;
+
+        let mut total_water = Height::ZERO;
+
+        for tile_pos in relevant_tiles {
+            // This can ever so slightly overdraw water, but that's fine.
+            // Accounting for this would significantly complicate the code.
+            // Pretend it's capillary action or something!
+            total_water += water_table.remove(tile_pos, water_per_tile);
         }
+
+        let water_items_produced = water_config.tiles_to_items(total_water);
+        let _ = input_inventory.fill_with_items(
+            &ItemCount::new(Id::water(), water_items_produced),
+            &item_manifest,
+        );
     }
 }

@@ -3,15 +3,18 @@
   "items": {
     "acacia_leaf": {
       "stack_size": 8,
-      "compostable": true
+      "compostable": true,
+      "fluid": false
     },
     "leuco_chunk": {
       "stack_size": 6,
-      "compostable": false
+      "compostable": false,
+      "fluid": false
     },
     "ant_egg": {
       "stack_size": 3,
       "compostable": false,
+      "fluid": false,
       "seed": {
         "Unit": "ant"
       }
@@ -19,13 +22,20 @@
     "acacia_seed": {
       "stack_size": 12,
       "compostable": true,
+      "fluid": false,
       "seed": {
         "Structure": "acacia_seedling"
       }
     },
     "soil": {
       "stack_size": 3,
-      "compostable": false
+      "compostable": false,
+      "fluid": false
+    },
+    "water": {
+      "stack_size": 10,
+      "compostable": false,
+      "fluid": true
     }
   }
 }

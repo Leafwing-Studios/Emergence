@@ -37,6 +37,7 @@ fn can_serialize_item_manifest() {
                 RawItemData {
                     stack_size: 1,
                     compostable: true,
+                    fluid: false,
                     seed: None,
                 },
             ),
@@ -45,7 +46,17 @@ fn can_serialize_item_manifest() {
                 RawItemData {
                     stack_size: 2,
                     compostable: false,
+                    fluid: false,
                     seed: Some(RawOrganismId::Structure("test_organism".to_string())),
+                },
+            ),
+            (
+                "water".to_string(),
+                RawItemData {
+                    stack_size: 100,
+                    compostable: false,
+                    fluid: true,
+                    seed: None,
                 },
             ),
         ]),
