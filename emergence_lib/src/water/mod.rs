@@ -7,11 +7,15 @@ use core::fmt::{Display, Formatter};
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::simulation::{
-    geometry::{Height, MapGeometry, TilePos},
-    time::InGameTime,
-    weather::CurrentWeather,
-    SimulationSet,
+use crate::{
+    asset_management::manifest::Id,
+    items::item_manifest::Item,
+    simulation::{
+        geometry::{Height, MapGeometry, TilePos},
+        time::InGameTime,
+        weather::CurrentWeather,
+        SimulationSet,
+    },
 };
 
 use self::{
@@ -35,8 +39,8 @@ pub(crate) struct WaterConfig {
     emission_rate: Height,
     /// The amount of water that emitters can be covered with before they stop producing.
     emission_pressure: Height,
-    /// The amount of water that is drawn per day from the tile of each structure with roots.
-    root_draw_rate: Height,
+    /// The number of water items produced for each full tile of water.
+    water_items_per_tile: f32,
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
@@ -53,7 +57,7 @@ impl WaterConfig {
         precipitation_rate: Height(2.0),
         emission_rate: Height(1e3),
         emission_pressure: Height(1.0),
-        root_draw_rate: Height(1.0),
+        water_items_per_tile: 50.0,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
@@ -66,10 +70,20 @@ impl WaterConfig {
         precipitation_rate: Height(0.0),
         emission_rate: Height(0.0),
         emission_pressure: Height(0.0),
-        root_draw_rate: Height(0.0),
+        water_items_per_tile: 0.0,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
     };
+
+    /// Converts a number of items of water to a [`Height`] corresponding to that volume.
+    pub(crate) fn items_to_tiles(&self, items: u32) -> Height {
+        Height(items as f32 / self.water_items_per_tile)
+    }
+
+    /// Converts a [`Height`] representing a volume of water to an equivalent number of items of water.
+    pub(crate) fn tiles_to_items(&self, height: Height) -> u32 {
+        (height.0 * self.water_items_per_tile) as u32
+    }
 }
 
 /// A plugin that handles water movement and behavior.
@@ -174,11 +188,16 @@ impl WaterTable {
 
     /// Subtracts the given amount of water from the water table at the given tile.
     ///
-    /// This will not go below zero.
-    pub(crate) fn subtract(&mut self, tile_pos: TilePos, amount: Height) {
+    /// This will never return a height below zero.
+    ///
+    /// Returns the amount of water that was actually subtracted.
+    pub(crate) fn remove(&mut self, tile_pos: TilePos, amount: Height) -> Height {
         let height = self.get(tile_pos);
-        let new_height = height - amount;
-        self.set(tile_pos, new_height.max(Height::ZERO));
+        // We cannot take more water than there is.
+        let water_drawn = amount.min(height);
+        let new_height = height - water_drawn;
+        self.set(tile_pos, new_height);
+        water_drawn
     }
 
     /// Computes the total amount of water in the water table.
@@ -195,6 +214,14 @@ impl WaterTable {
         let total_water = self.total_water();
         let total_area = map_geometry.valid_tile_positions().count() as f32;
         total_water / total_area
+    }
+}
+
+impl Id<Item> {
+    /// The identifier for the water item.
+    // This can't be a const because Rust hates for loops in const functions T_T
+    pub(crate) fn water() -> Self {
+        Self::from_name("water".to_string())
     }
 }
 
@@ -262,7 +289,7 @@ fn evaporation(
             None => Height(evaporation_rate * water_config.soil_evaporation_ratio),
         };
 
-        water_table.subtract(tile, total_evaporated);
+        water_table.remove(tile, total_evaporated);
     }
 }
 
@@ -315,7 +342,7 @@ fn horizontal_water_movement(
                 neighbor_water_height,
             );
 
-            water_table.subtract(tile_pos, water_transfer);
+            water_table.remove(tile_pos, water_transfer);
             water_table.add(neighbor, water_transfer);
         }
     }
@@ -576,13 +603,13 @@ mod tests {
         water_table.add(tile_pos, Height(1.0));
         assert_eq!(water_table.get(tile_pos), Height(2.0));
 
-        water_table.subtract(tile_pos, Height(1.0));
+        water_table.remove(tile_pos, Height(1.0));
         assert_eq!(water_table.get(tile_pos), Height(1.0));
 
-        water_table.subtract(tile_pos, Height(1.0));
+        water_table.remove(tile_pos, Height(1.0));
         assert_eq!(water_table.get(tile_pos), Height(0.0));
 
-        water_table.subtract(tile_pos, Height(1.0));
+        water_table.remove(tile_pos, Height(1.0));
         assert_eq!(water_table.get(tile_pos), Height(0.0));
     }
 
@@ -761,7 +788,7 @@ mod tests {
                     map_shape: MapShape::Flat,
                     water_table_strategy,
                     water_config: WaterConfig {
-                        root_draw_rate: Height(1.0),
+                        water_items_per_tile: 1.0,
                         lateral_flow_rate: 10.,
                         soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
@@ -861,7 +888,7 @@ mod tests {
 
         let mut app = water_testing_app(scenario);
         let mut water_table = app.world.resource_mut::<WaterTable>();
-        water_table.subtract(TilePos::ZERO, Height(1.0));
+        water_table.remove(TilePos::ZERO, Height(1.0));
 
         app.update();
 

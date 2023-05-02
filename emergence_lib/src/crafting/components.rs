@@ -162,8 +162,6 @@ impl InputInventory {
     }
 
     /// Does this inventory have space for at least one item with the provided `item_id`?
-    ///
-    /// If `required_tag` is `Some`, the item must have that tag.
     pub(crate) fn currently_accepts(
         &self,
         item_id: Id<Item>,
