@@ -8,7 +8,7 @@ use bevy::{
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
+use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -1081,7 +1081,11 @@ impl RotationDirection {
 /// Constructs the mesh for a single hexagonal column with the specified height.
 #[must_use]
 pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, hex_height);
+    let mesh_info = ColumnMeshBuilder::new(hex_layout, hex_height)
+        .without_bottom_face()
+        .without_top_face()
+        .build();
+
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
