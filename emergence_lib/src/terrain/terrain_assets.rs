@@ -8,7 +8,7 @@ use crate::{
     graphics::palette::environment::COLUMN_COLOR,
     items::inventory::InventoryState,
     player_interaction::selection::ObjectInteraction,
-    simulation::geometry::{hexagonal_column, Height, MapGeometry},
+    simulation::geometry::{bounding_hexagonal_column, Height, MapGeometry},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
@@ -56,8 +56,9 @@ impl Loadable for TerrainHandles {
         );
 
         let map_geometry = world.resource::<MapGeometry>();
-        let column_mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
-        let topper_mesh_object = hexagonal_column(&map_geometry.layout, Height::TOPPER_THICKNESS);
+        let column_mesh_object = bounding_hexagonal_column(&map_geometry.layout, 1.0);
+        let topper_mesh_object =
+            bounding_hexagonal_column(&map_geometry.layout, Height::TOPPER_THICKNESS);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let column_mesh = mesh_assets.add(column_mesh_object);
         let topper_mesh = mesh_assets.add(topper_mesh_object);

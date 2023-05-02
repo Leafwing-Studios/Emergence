@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    simulation::geometry::{hexagonal_column, MapGeometry},
+    simulation::geometry::{bounding_hexagonal_column, MapGeometry},
     units::unit_manifest::{Unit, UnitManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
@@ -26,7 +26,7 @@ impl Loadable for UnitHandles {
         const PICKING_HEIGHT: f32 = 1.0;
 
         let map_geometry = world.resource::<MapGeometry>();
-        let picking_mesh_object = hexagonal_column(&map_geometry.layout, PICKING_HEIGHT);
+        let picking_mesh_object = bounding_hexagonal_column(&map_geometry.layout, PICKING_HEIGHT);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let picking_mesh = mesh_assets.add(picking_mesh_object);
 

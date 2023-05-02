@@ -1078,15 +1078,17 @@ impl RotationDirection {
     }
 }
 
-/// Constructs the mesh for a single hexagonal column with the specified height.
+/// Constructs the bounding mesh for a single hexagonal column with the specified height.
+///
+/// # Warning
+///
+/// This mesh does not have normals and UVs, and should not be used for lit or textured meshes.
 #[must_use]
-pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
+pub(crate) fn bounding_hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
     let mesh_info = ColumnMeshBuilder::new(hex_layout, hex_height).build();
 
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, mesh_info.uvs.to_vec());
     mesh.set_indices(Some(Indices::U16(mesh_info.indices)));
     mesh
 }

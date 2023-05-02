@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::geometry::{hexagonal_column, MapGeometry};
+use crate::simulation::geometry::{bounding_hexagonal_column, MapGeometry};
 
 use super::palette::environment::WATER;
 
@@ -38,7 +38,7 @@ fn init_water_handles(
         alpha_mode: AlphaMode::Blend,
         ..Default::default()
     });
-    let mesh = hexagonal_column(&map_geometry.layout, 1.0);
+    let mesh = bounding_hexagonal_column(&map_geometry.layout, 1.0);
     let mesh_handle = meshes.add(mesh);
     commands.insert_resource(WaterHandles {
         material,
