@@ -71,6 +71,16 @@ pub(super) fn horizontal_water_movement(
         / in_game_time.seconds_per_day()
         * fixed_time.period.as_secs_f32();
 
+    // Stores the total volume to be removed from each tile
+    let mut addition_map = HashMap::<TilePos, Volume>::default();
+    // Stores the total volume to be added to each tile
+    let mut removal_map = HashMap::<TilePos, Volume>::default();
+
+    for tile_pos in map_geometry.valid_tile_positions() {
+        addition_map.insert(tile_pos, Volume::ZERO);
+        removal_map.insert(tile_pos, Volume::ZERO);
+    }
+
     for tile_pos in map_geometry.valid_tile_positions() {
         let total_available = water_table.get_volume(tile_pos);
         if total_available <= Volume::ZERO {
@@ -93,14 +103,23 @@ pub(super) fn horizontal_water_movement(
         let actual_water_transfer_ratio = (total_available / total_proposed).min(1.0);
 
         for (&neighbor, &proposed_water_transfer) in water_to_neighbors.iter() {
-            // This is a secondary check to ensure that we don't transfer more water than is available.
-            // Rounding errors may have been introduced above.
-            let actual_water_transfer = water_table.remove(
-                tile_pos,
-                proposed_water_transfer / actual_water_transfer_ratio,
-            );
-            water_table.add(neighbor, actual_water_transfer);
+            let actual_water_transfer = proposed_water_transfer * actual_water_transfer_ratio;
+
+            addition_map
+                .entry(neighbor)
+                .and_modify(|v| *v += actual_water_transfer);
+            removal_map
+                .entry(tile_pos)
+                .and_modify(|v| *v += actual_water_transfer);
         }
+    }
+
+    for (tile_pos, volume) in addition_map {
+        water_table.add(tile_pos, volume);
+    }
+
+    for (tile_pos, volume) in removal_map {
+        water_table.remove(tile_pos, volume);
     }
 }
 
