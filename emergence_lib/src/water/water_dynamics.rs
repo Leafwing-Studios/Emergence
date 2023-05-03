@@ -77,7 +77,7 @@ pub(super) fn horizontal_water_movement(
         for neighbor in neighbors {
             let neighbor_water_height = water_table.get_height(neighbor, &map_geometry);
 
-            let water_transfer = compute_lateral_flow_to_neighbor(
+            let proposed_water_transfer = compute_lateral_flow_to_neighbor(
                 base_water_transfer_amount,
                 &water_config,
                 map_geometry.get_height(tile_pos).unwrap(),
@@ -86,8 +86,8 @@ pub(super) fn horizontal_water_movement(
                 neighbor_water_height,
             );
 
-            water_table.remove(tile_pos, water_transfer);
-            water_table.add(neighbor, water_transfer);
+            let actual_water_transfer = water_table.remove(tile_pos, proposed_water_transfer);
+            water_table.add(neighbor, actual_water_transfer);
         }
     }
 }

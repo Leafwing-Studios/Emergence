@@ -216,11 +216,11 @@ impl WaterTable {
     ///
     /// Returns the amount of water that was actually subtracted.
     pub(crate) fn remove(&mut self, tile_pos: TilePos, amount: Volume) -> Volume {
-        let height = self.get_volume(tile_pos);
+        let volume = self.get_volume(tile_pos);
         // We cannot take more water than there is.
-        let water_drawn = amount.min(height);
-        let new_height = height - water_drawn;
-        self.set_volume(tile_pos, new_height);
+        let water_drawn = amount.min(volume);
+        let new_volume = volume - water_drawn;
+        self.set_volume(tile_pos, new_volume);
         water_drawn
     }
 
