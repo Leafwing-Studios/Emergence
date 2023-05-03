@@ -334,3 +334,38 @@ fn update_water_depth(
         water_table.water_depth.insert(tile_pos, water_depth);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn water_depth_returns_dry_when_volume_is_zero() {
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height::ZERO, 0.5);
+
+        assert_eq!(water_depth, WaterDepth::Dry);
+
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Dry);
+    }
+
+    #[test]
+    fn water_depth_returns_underground_when_volume_is_less_than_soil_capacity() {
+        let water_depth: WaterDepth =
+            WaterDepth::compute(Volume::from_height(Height(0.1)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Underground(Height(0.8)));
+
+        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.5)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Underground(Height(0.0)));
+    }
+
+    #[test]
+    fn water_depth_returns_flooded_when_volume_is_greater_than_soil_capacity() {
+        let water_depth: WaterDepth =
+            WaterDepth::compute(Volume::from_height(Height(1.0)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Flooded(Height(0.5)));
+
+        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.7)), Height(1.0), 0.0);
+        assert_eq!(water_depth, WaterDepth::Flooded(Height(0.7)));
+    }
+}
