@@ -3,7 +3,7 @@
 use crate::{
     asset_management::manifest::Id,
     player_interaction::clipboard::ClipboardData,
-    simulation::geometry::{Facing, Height, MapGeometry, TilePos},
+    simulation::geometry::{Facing, Height, MapGeometry, TilePos, Volume},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
     terrain::{commands::TerrainCommandsExt, terrain_manifest::Terrain},
     utils::noise::simplex_noise,
@@ -91,10 +91,10 @@ pub(super) fn initialize_water_table(
     mut water_table: ResMut<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
-    /// The minimum starting water level for low lying areas
-    const LOW_WATER_LINE: Height = Height(1.5);
+    /// The amount of water stored in each tile to begin with.
+    const STARTING_VOLUME_PER_TILE: Volume = Volume(1.5);
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.set(tile_pos, LOW_WATER_LINE);
+        water_table.set_volume(tile_pos, STARTING_VOLUME_PER_TILE);
     }
 }

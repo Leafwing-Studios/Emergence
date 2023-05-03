@@ -348,7 +348,7 @@ fn set_overlay_material(
                     tile_overlay.get_water_table_material(depth_to_water_table)
                 }
                 OverlayType::HeightOfWaterTable => {
-                    let water_table_height = water_table.get(tile_pos);
+                    let water_table_height = water_table.get_height(tile_pos);
                     // FIXME: use a dedicated color ramp for this, rather than hacking it
                     // We subtract here to ensure that blue == wet and red == dry
                     let inverted_height = DepthToWaterTable::Depth(

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     simulation::{
-        geometry::{Height, MapGeometry, TilePos},
+        geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
     },
     structures::Landmark,
@@ -58,19 +58,20 @@ impl WaterEmitter {
         &self,
         surface_water_height: Height,
         water_config: &WaterConfig,
-    ) -> Height {
+    ) -> Volume {
         // If the water level is below the surface, it should be treated as 0,
         // as it does not apply any pressure to the emitter due to its weight.
         assert!(surface_water_height >= Height::ZERO);
 
         // The rate of flow should gradually decrease as the water level rises.
         // Eventually, the rate of flow reaches zero when the water level is equal to the emitter's pressure.
-        let remaining_pressure = (self.pressure - surface_water_height).max(Height::ZERO);
+        let remaining_pressure =
+            Volume::from_height((self.pressure - surface_water_height).max(Height::ZERO));
         remaining_pressure.0 * water_config.emission_rate
     }
 
     /// Computes the maximum amount of water that this emitter can produce in a single day.
-    pub(crate) fn max_water_production(&self, water_config: &WaterConfig) -> Height {
+    pub(crate) fn max_water_production(&self, water_config: &WaterConfig) -> Volume {
         water_config.emission_rate
     }
 }
@@ -101,7 +102,7 @@ mod tests {
     /// A simple test configuration.
     const TEST_CONFIG: WaterConfig = WaterConfig {
         emission_pressure: Height(1.0),
-        emission_rate: Height(1.0),
+        emission_rate: Volume(1.0),
         ..WaterConfig::NULL
     };
 
@@ -109,23 +110,23 @@ mod tests {
     fn water_emitter_does_not_emit_when_covered() {
         let water_production =
             TEST_EMITTER.current_water_production(TEST_EMITTER.pressure(), &TEST_CONFIG);
-        assert_eq!(water_production, Height(0.0));
+        assert_eq!(water_production, Volume::ZERO);
 
         let water_production = TEST_EMITTER
             .current_water_production(TEST_EMITTER.pressure() + Height(0.5), &TEST_CONFIG);
-        assert_eq!(water_production, Height(0.0));
+        assert_eq!(water_production, Volume::ZERO);
     }
 
     #[test]
     fn water_emitter_emits_when_uncovered() {
         let water_production = TEST_EMITTER.current_water_production(Height::ZERO, &TEST_CONFIG);
-        assert!(water_production > Height::ZERO);
+        assert!(water_production > Volume::ZERO);
 
         let max_water_production = TEST_EMITTER.max_water_production(&TEST_CONFIG);
         assert!(water_production == max_water_production);
 
         let water_production = TEST_EMITTER.current_water_production(Height(0.5), &TEST_CONFIG);
-        assert!(water_production > Height::ZERO);
+        assert!(water_production > Volume::ZERO);
     }
 
     #[test]

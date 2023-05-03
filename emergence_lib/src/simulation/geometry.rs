@@ -445,6 +445,106 @@ impl Div<f32> for Height {
     }
 }
 
+/// A volume of space, in tile units.
+///
+/// A value of 1.0 represents the volume of a single tile.
+#[derive(
+    Debug,
+    Default,
+    Copy,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    Reflect,
+    Add,
+    Sub,
+    AddAssign,
+    SubAssign,
+)]
+pub struct Volume(pub f32);
+
+impl Volume {
+    /// The empty volume.
+    pub const ZERO: Volume = Volume(0.);
+
+    /// The volume of a single tile.
+    pub const ONE: Volume = Volume(1.);
+
+    /// Computes the volume of the provided area and height.
+    #[inline]
+    #[must_use]
+    pub fn from_area_and_height(n_tiles: usize, height: Height) -> Self {
+        Volume(n_tiles as f32 * height.0)
+    }
+
+    /// Computes the volume of a single tile with the provided height.
+    #[inline]
+    #[must_use]
+    pub fn from_height(height: Height) -> Self {
+        Volume(height.0)
+    }
+
+    /// Computes the height of a single tile with the provided volume.
+    #[inline]
+    #[must_use]
+    pub fn into_height(self) -> Height {
+        Height(self.0)
+    }
+
+    /// Returns the lower of the two volumes.
+    #[inline]
+    #[must_use]
+    pub(crate) fn min(self, other: Self) -> Self {
+        Volume(self.0.min(other.0))
+    }
+
+    /// Returns the higher of the two volumes.
+    #[inline]
+    #[must_use]
+    pub fn max(self, other: Self) -> Self {
+        Volume(self.0.max(other.0))
+    }
+
+    /// Computes the absolute difference between the two volumes.
+    #[inline]
+    #[must_use]
+    pub fn abs_diff(self, other: Self) -> Self {
+        Volume((self.0 - other.0).abs())
+    }
+}
+
+impl Display for Volume {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}", self.0)
+    }
+}
+
+impl Mul<f32> for Volume {
+    type Output = Volume;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Volume(self.0 * rhs)
+    }
+}
+
+impl Mul<Volume> for f32 {
+    type Output = Volume;
+
+    fn mul(self, rhs: Volume) -> Self::Output {
+        Volume(self * rhs.0)
+    }
+}
+
+impl Div<f32> for Volume {
+    type Output = Volume;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Volume(self.0 / rhs)
+    }
+}
+
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
 pub struct MapGeometry {
