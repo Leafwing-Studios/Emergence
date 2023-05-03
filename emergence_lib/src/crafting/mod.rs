@@ -30,7 +30,7 @@ use self::{
         ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
         WorkersPresent,
     },
-    item_tags::ItemKind,
+    item_tags::{ItemKind, ItemTag},
     recipe::RecipeInput,
 };
 
@@ -232,6 +232,7 @@ pub(crate) fn set_crafting_emitter(
         &ActiveRecipe,
     )>,
     recipe_manifest: Res<RecipeManifest>,
+    item_manifest: Res<ItemManifest>,
 ) {
     for (
         mut emitter,
@@ -250,8 +251,14 @@ pub(crate) fn set_crafting_emitter(
         match input_inventory {
             InputInventory::Exact { inventory } => {
                 for item_slot in inventory.iter() {
+                    let item_id = item_slot.item_id();
+                    // Fluids cannot be delivered by units, so we don't emit signals for them
+                    if item_manifest.has_tag(item_id, ItemTag::Fluid) {
+                        continue;
+                    }
+
                     if !item_slot.is_full() {
-                        let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                        let signal_type = SignalType::Pull(ItemKind::Single(item_id));
                         let signal_strength = SignalStrength::new(10.);
                         emitter.signals.push((signal_type, signal_strength));
                     }
