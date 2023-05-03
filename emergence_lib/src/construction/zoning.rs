@@ -23,6 +23,7 @@ use crate::{
         commands::TerrainCommandsExt,
         terrain_manifest::{Terrain, TerrainManifest},
     },
+    water::WaterTable,
 };
 
 use super::terraform::TerraformingAction;
@@ -222,6 +223,7 @@ fn mark_based_on_zoning(
     mut terrain_query: Query<(Entity, &mut Zoning, &TilePos, &Id<Terrain>), Changed<Zoning>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
+    water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, mut zoning, &tile_pos, current_terrain_id) in terrain_query.iter_mut() {
@@ -231,7 +233,8 @@ fn mark_based_on_zoning(
                 let footprint =
                     structure_manifest.construction_footprint(clipboard_data.structure_id);
 
-                if map_geometry.can_build(tile_pos, footprint, &clipboard_data.facing) {
+                if map_geometry.can_build(tile_pos, footprint, &clipboard_data.facing, &water_table)
+                {
                     commands.spawn_ghost_structure(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

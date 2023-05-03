@@ -31,6 +31,7 @@ use crate::{
     simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
+    water::WaterTable,
 };
 
 use super::{
@@ -72,6 +73,7 @@ pub(super) fn choose_actions(
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     terrain_storage_query: Query<&StorageInventory, With<Id<Terrain>>>,
@@ -79,7 +81,6 @@ pub(super) fn choose_actions(
     item_manifest: Res<ItemManifest>,
 ) {
     let rng = &mut thread_rng();
-    let map_geometry = map_geometry.into_inner();
 
     for (&unit_tile_pos, facing, goal, mut current_action, unit_inventory) in units_query.iter_mut()
     {
@@ -93,7 +94,8 @@ pub(super) fn choose_actions(
                         previous_action,
                         unit_tile_pos,
                         unit_inventory,
-                        map_geometry,
+                        &map_geometry,
+                        &water_table,
                         &item_manifest,
                         &terrain_storage_query,
                         &terrain_manifest,
@@ -105,7 +107,8 @@ pub(super) fn choose_actions(
                         previous_action,
                         unit_tile_pos,
                         facing,
-                        map_geometry,
+                        &map_geometry,
+                        &water_table,
                         &terrain_query,
                         &terrain_manifest,
                         rng,
@@ -123,7 +126,8 @@ pub(super) fn choose_actions(
                             previous_action,
                             unit_tile_pos,
                             unit_inventory,
-                            map_geometry,
+                            &map_geometry,
+                            &water_table,
                             &item_manifest,
                             &terrain_storage_query,
                             &terrain_manifest,
@@ -148,7 +152,8 @@ pub(super) fn choose_actions(
                             &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
-                            map_geometry,
+                            &map_geometry,
+                            &water_table,
                         )
                     }
                 }
@@ -161,7 +166,8 @@ pub(super) fn choose_actions(
                                 previous_action,
                                 unit_tile_pos,
                                 unit_inventory,
-                                map_geometry,
+                                &map_geometry,
+                                &water_table,
                                 &item_manifest,
                                 &terrain_storage_query,
                                 &terrain_manifest,
@@ -187,7 +193,8 @@ pub(super) fn choose_actions(
                             &item_manifest,
                             &terrain_query,
                             &terrain_manifest,
-                            map_geometry,
+                            &map_geometry,
+                            &water_table,
                         )
                     }
                 }
@@ -201,7 +208,8 @@ pub(super) fn choose_actions(
                     &terrain_query,
                     &terrain_manifest,
                     &item_manifest,
-                    map_geometry,
+                    &map_geometry,
+                    &water_table,
                 ),
                 Goal::Demolish(structure_id) => CurrentAction::find_demolition_site(
                     *structure_id,
@@ -213,7 +221,8 @@ pub(super) fn choose_actions(
                     &item_manifest,
                     &terrain_query,
                     &terrain_manifest,
-                    map_geometry,
+                    &map_geometry,
+                    &water_table,
                 ),
                 Goal::Lure => CurrentAction::lure(
                     unit_tile_pos,
@@ -222,7 +231,8 @@ pub(super) fn choose_actions(
                     &item_manifest,
                     &terrain_query,
                     &terrain_manifest,
-                    map_geometry,
+                    &map_geometry,
+                    &water_table,
                 ),
                 Goal::Repel => CurrentAction::repel(
                     unit_tile_pos,
@@ -231,7 +241,8 @@ pub(super) fn choose_actions(
                     &item_manifest,
                     &terrain_query,
                     &terrain_manifest,
-                    map_geometry,
+                    &map_geometry,
+                    &water_table,
                 ),
                 Goal::Avoid(unit_id) => CurrentAction::avoid(
                     *unit_id,
@@ -241,7 +252,8 @@ pub(super) fn choose_actions(
                     &item_manifest,
                     &terrain_query,
                     &terrain_manifest,
-                    map_geometry,
+                    &map_geometry,
+                    &water_table,
                 ),
             }
         }
@@ -692,6 +704,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> CurrentAction {
         let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
         let mut candidates: Vec<(Entity, TilePos)> = Vec::new();
@@ -780,6 +793,7 @@ impl CurrentAction {
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
+                water_table,
             )
         } else {
             CurrentAction::idle()
@@ -798,6 +812,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) =
@@ -830,6 +845,7 @@ impl CurrentAction {
                     terrain_query,
                     terrain_manifest,
                     map_geometry,
+                    water_table,
                 )
             } else if let Some(upstream) = signals.upstream(
                 unit_tile_pos,
@@ -844,6 +860,7 @@ impl CurrentAction {
                     terrain_query,
                     terrain_manifest,
                     map_geometry,
+                    water_table,
                 )
             } else {
                 CurrentAction::idle()
@@ -863,6 +880,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> CurrentAction {
         let ahead = unit_tile_pos.neighbor(facing.direction);
         if let Some(workplace) =
@@ -899,6 +917,7 @@ impl CurrentAction {
                     terrain_query,
                     terrain_manifest,
                     map_geometry,
+                    water_table,
                 )
             } else if let Some(upstream) = signals.upstream(
                 unit_tile_pos,
@@ -913,6 +932,7 @@ impl CurrentAction {
                     terrain_query,
                     terrain_manifest,
                     map_geometry,
+                    water_table,
                 )
             } else {
                 CurrentAction::idle()
@@ -967,6 +987,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         if let Some(target_tile) = signals.upstream(current_tile, goal, item_manifest, map_geometry)
         {
@@ -977,6 +998,7 @@ impl CurrentAction {
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
+                water_table,
             )
         } else {
             CurrentAction::idle()
@@ -993,6 +1015,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         if let Some(target_tile) =
             signals.downstream(current_tile, goal, item_manifest, map_geometry)
@@ -1004,6 +1027,7 @@ impl CurrentAction {
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
+                water_table,
             )
         } else {
             CurrentAction::idle()
@@ -1015,6 +1039,7 @@ impl CurrentAction {
         current_tile: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
     ) -> Self {
@@ -1035,7 +1060,7 @@ impl CurrentAction {
 
         let walking_duration = BASE_WALKING_DURATION / walking_speed;
 
-        if map_geometry.is_passable(current_tile, target_tile) {
+        if map_geometry.is_passable(current_tile, target_tile, water_table) {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
@@ -1054,6 +1079,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         let required_direction = unit_tile_pos.main_direction_to(target_tile_pos.hex);
 
@@ -1062,6 +1088,7 @@ impl CurrentAction {
                 unit_tile_pos,
                 facing,
                 map_geometry,
+                water_table,
                 terrain_query,
                 terrain_manifest,
             )
@@ -1162,6 +1189,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         unit_inventory: &UnitInventory,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
         item_manifest: &ItemManifest,
         terrain_storage_query: &Query<&StorageInventory, With<Id<Terrain>>>,
         terrain_manifest: &TerrainManifest,
@@ -1187,6 +1215,7 @@ impl CurrentAction {
             unit_tile_pos,
             facing,
             map_geometry,
+            water_table,
             terrain_query,
             terrain_manifest,
             rng,
@@ -1201,6 +1230,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         facing: &Facing,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         rng: &mut ThreadRng,
@@ -1210,6 +1240,7 @@ impl CurrentAction {
                 unit_tile_pos,
                 facing,
                 map_geometry,
+                water_table,
                 terrain_query,
                 terrain_manifest,
             ),
@@ -1228,6 +1259,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
         let strongest_signal_type = strongest_signal.map(|signal| signal.0);
@@ -1242,6 +1274,7 @@ impl CurrentAction {
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
+                water_table,
             )
         } else {
             CurrentAction::idle()
@@ -1259,6 +1292,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
         let strongest_signal_type = strongest_signal.map(|signal| signal.0);
@@ -1273,6 +1307,7 @@ impl CurrentAction {
                 terrain_query,
                 terrain_manifest,
                 map_geometry,
+                water_table,
             )
         } else {
             CurrentAction::idle()
@@ -1291,6 +1326,7 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> Self {
         /// The relative signal strength threshold at which we will stop avoiding the source of our discomfort.
         ///
@@ -1315,6 +1351,7 @@ impl CurrentAction {
                     terrain_query,
                     terrain_manifest,
                     map_geometry,
+                    water_table,
                 );
             }
         }

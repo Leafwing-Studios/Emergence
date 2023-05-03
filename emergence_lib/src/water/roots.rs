@@ -9,7 +9,7 @@ use crate::{
     asset_management::manifest::Id,
     crafting::components::{CraftingState, InputInventory},
     items::{item_manifest::ItemManifest, ItemCount},
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{Height, MapGeometry, TilePos, Volume},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
@@ -43,10 +43,10 @@ impl RootZone {
                 continue;
             };
 
-            match water_table.depth_to_water_table(tile_pos, map_geometry) {
-                super::DepthToWaterTable::Flooded => relevant_tiles.push(tile_pos),
-                super::DepthToWaterTable::Dry => (),
-                super::DepthToWaterTable::Depth(depth) => {
+            match water_table.water_depth(tile_pos) {
+                super::WaterDepth::Flooded(..) => relevant_tiles.push(tile_pos),
+                super::WaterDepth::Dry => (),
+                super::WaterDepth::Underground(depth) => {
                     if depth <= self.max_depth {
                         relevant_tiles.push(tile_pos);
                     }
@@ -110,7 +110,7 @@ pub(super) fn draw_water_from_roots(
         let n = relevant_tiles.len() as f32;
         let water_per_tile = water_tiles_requested / n;
 
-        let mut total_water = Height::ZERO;
+        let mut total_water = Volume::ZERO;
 
         for tile_pos in relevant_tiles {
             // This can ever so slightly overdraw water, but that's fine.

@@ -12,6 +12,7 @@ use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
+use crate::water::WaterTable;
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use derive_more::Display;
@@ -260,7 +261,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in tile_pos.passable_neighbors(map_geometry) {
+        for neighbor in tile_pos.all_neighbors(map_geometry) {
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 
@@ -268,7 +269,12 @@ impl Signals {
     }
 
     /// Diffuses signals from one cell into the next
-    pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
+    pub fn diffuse(
+        &mut self,
+        map_geometry: &MapGeometry,
+        water_table: &WaterTable,
+        diffusion_fraction: f32,
+    ) {
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, original_map)| {
@@ -289,7 +295,9 @@ impl Signals {
                         .out_of_bounds_neighbors(map_geometry)
                         .into_iter()
                         .count() as f32;
-                    for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
+                    for neighboring_tile in
+                        occupied_tile.passable_neighbors(map_geometry, water_table)
+                    {
                         num_neighbors += 1.0;
                         addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
@@ -752,9 +760,12 @@ fn emit_signals(
 }
 
 /// Spreads signals between tiles.
-fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>) {
-    let map_geometry = &*map_geometry;
-    signals.diffuse(map_geometry, DIFFUSION_FRACTION);
+fn diffuse_signals(
+    mut signals: ResMut<Signals>,
+    map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
+) {
+    signals.diffuse(&map_geometry, &water_table, DIFFUSION_FRACTION);
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.

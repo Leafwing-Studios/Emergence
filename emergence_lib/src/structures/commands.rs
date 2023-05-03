@@ -17,6 +17,7 @@ use crate::{
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{MapGeometry, TilePos},
+    water::WaterTable,
 };
 
 use super::{
@@ -90,6 +91,7 @@ impl Command for SpawnStructureCommand {
         if !geometry.is_valid(self.tile_pos) {
             return;
         }
+        let water_table = world.resource::<WaterTable>();
 
         let structure_id = self.data.structure_id;
 
@@ -101,6 +103,7 @@ impl Command for SpawnStructureCommand {
             self.tile_pos,
             &structure_variety.footprint,
             &self.data.facing,
+            water_table,
         ) {
             // Just give up if the terrain is wrong.
             return;
@@ -215,6 +218,7 @@ impl Command for SpawnStructureGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let geometry = world.resource::<MapGeometry>();
+        let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
         if !geometry.is_valid(self.tile_pos) {
@@ -225,7 +229,12 @@ impl Command for SpawnStructureGhostCommand {
         let construction_footprint = manifest.construction_footprint(structure_id);
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(self.tile_pos, construction_footprint, &self.data.facing) {
+        if !geometry.can_build(
+            self.tile_pos,
+            construction_footprint,
+            &self.data.facing,
+            water_table,
+        ) {
             return;
         }
 
@@ -311,6 +320,7 @@ impl Command for SpawnStructurePreviewCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
+        let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.tile_pos) {
@@ -331,6 +341,7 @@ impl Command for SpawnStructurePreviewCommand {
             self.tile_pos,
             &structure_variety.footprint,
             &self.data.facing,
+            water_table,
         );
 
         // Fetch the scene and material to use

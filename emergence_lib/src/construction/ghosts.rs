@@ -13,6 +13,7 @@ use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::TerrainManifest;
+use crate::water::WaterTable;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
 use bevy::utils::{Duration, HashMap};
@@ -604,6 +605,7 @@ pub(super) fn validate_ghost_structures(
     map_geometry: Res<MapGeometry>,
     ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
     structure_manifest: Res<StructureManifest>,
+    water_table: Res<WaterTable>,
     mut commands: Commands,
 ) {
     // We only need to validate this when the map geometry changes.
@@ -614,7 +616,7 @@ pub(super) fn validate_ghost_structures(
     for (&tile_pos, &structure_id, facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
 
-        if !map_geometry.can_build(tile_pos, &structure_details.footprint, facing) {
+        if !map_geometry.can_build(tile_pos, &structure_details.footprint, facing, &water_table) {
             commands.despawn_ghost_structure(tile_pos);
         }
     }

@@ -3,6 +3,7 @@ use emergence_lib::asset_management::manifest::Id;
 use emergence_lib::crafting::item_tags::ItemKind;
 use emergence_lib::signals::{SignalStrength, SignalType, Signals, DIFFUSION_FRACTION};
 use emergence_lib::simulation::geometry::{MapGeometry, TilePos};
+use emergence_lib::water::WaterTable;
 use rand::thread_rng;
 
 /// Setup function
@@ -27,7 +28,9 @@ fn add_signals(settings: Settings) -> (Signals, MapGeometry) {
 /// Benchmarks the signal diffusion process
 fn signal_diffusion(settings: Settings) {
     let (mut signals, map_geometry) = add_signals(settings);
-    signals.diffuse(&map_geometry, DIFFUSION_FRACTION);
+    let water_table = WaterTable::default();
+
+    signals.diffuse(&map_geometry, &water_table, DIFFUSION_FRACTION);
 }
 
 /// Benchmark settings, in a reusable form
