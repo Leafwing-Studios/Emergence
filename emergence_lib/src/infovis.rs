@@ -15,7 +15,7 @@ use crate::{
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{Height, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
     water::{WaterDepth, WaterTable},
@@ -315,7 +315,6 @@ fn set_overlay_material(
     mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     signals: Res<Signals>,
     water_table: Res<WaterTable>,
-    map_geometry: Res<MapGeometry>,
     tile_overlay: Res<TileOverlay>,
 ) {
     if tile_overlay.overlay_type == OverlayType::None {
@@ -343,8 +342,7 @@ fn set_overlay_material(
                         tile_overlay.get_material(signal_kind, signal_strength)
                     }),
                 OverlayType::DepthToWaterTable => {
-                    let depth_to_water_table =
-                        water_table.relative_water_depth(tile_pos, &map_geometry);
+                    let depth_to_water_table = water_table.water_depth(tile_pos);
                     tile_overlay.get_water_table_material(depth_to_water_table)
                 }
                 OverlayType::HeightOfWaterTable => {

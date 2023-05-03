@@ -27,12 +27,11 @@ pub(super) fn evaporation(
 
     for tile_pos in map_geometry.valid_tile_positions() {
         // Surface water evaporation
-        let total_evaporated =
-            if water_table.surface_water_depth(tile_pos, &map_geometry) > Height::ZERO {
-                Volume(evaporation_rate)
-            } else {
-                Volume(evaporation_rate * water_config.soil_evaporation_ratio)
-            };
+        let total_evaporated = if water_table.surface_water_depth(tile_pos) > Height::ZERO {
+            Volume(evaporation_rate)
+        } else {
+            Volume(evaporation_rate * water_config.soil_evaporation_ratio)
+        };
 
         water_table.remove(tile_pos, total_evaporated);
     }

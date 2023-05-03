@@ -657,7 +657,7 @@ impl MapGeometry {
             return false;
         }
 
-        if water_table.surface_water_depth(ending_pos, &self) > WADING_HEIGHT {
+        if water_table.surface_water_depth(ending_pos) > WADING_HEIGHT {
             return false;
         }
 
@@ -1060,7 +1060,7 @@ impl MapGeometry {
             .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos, &self) == Height::ZERO)
+            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) == Height::ZERO)
     }
 }
 

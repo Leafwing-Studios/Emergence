@@ -138,7 +138,9 @@ impl Plugin for WaterPlugin {
                         .in_set(WaterSet::VerticalWaterMovement),
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
-                .add_systems((add_water_emitters,).in_set(WaterSet::Synchronization));
+                .add_systems(
+                    (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
+                );
         });
     }
 }
@@ -151,6 +153,10 @@ impl Plugin for WaterPlugin {
 pub struct WaterTable {
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
+    /// The height of the water table at each tile relative to the soil surface.
+    ///
+    /// This is updated in [`update_water_depth`], and cached for both performance and plumbing reasons.
+    water_depth: HashMap<TilePos, WaterDepth>,
 }
 
 impl WaterTable {
@@ -166,12 +172,8 @@ impl WaterTable {
     }
 
     /// Computes the height of water that is above the soil at `tile_pos`.
-    pub(crate) fn surface_water_depth(
-        &self,
-        tile_pos: TilePos,
-        map_geometry: &MapGeometry,
-    ) -> Height {
-        let depth_to_water_table = self.relative_water_depth(tile_pos, map_geometry);
+    pub(crate) fn surface_water_depth(&self, tile_pos: TilePos) -> Height {
+        let depth_to_water_table = self.water_depth(tile_pos);
 
         match depth_to_water_table {
             WaterDepth::Dry => Height::ZERO,
@@ -181,20 +183,11 @@ impl WaterTable {
     }
 
     /// Get the depth of the water table at the given tile relative to the soil surface.
-    pub(crate) fn relative_water_depth(
-        &self,
-        tile_pos: TilePos,
-        map_geometry: &MapGeometry,
-    ) -> WaterDepth {
-        let tile_height = map_geometry.get_height(tile_pos).unwrap();
-        let water_height = self.get_height(tile_pos);
-        if water_height == Height::ZERO {
-            WaterDepth::Dry
-        } else if water_height >= tile_height {
-            WaterDepth::Flooded(water_height - tile_height)
-        } else {
-            WaterDepth::Underground(tile_height - water_height)
-        }
+    pub(crate) fn water_depth(&self, tile_pos: TilePos) -> WaterDepth {
+        self.water_depth
+            .get(&tile_pos)
+            .map(|d| *d)
+            .unwrap_or_default()
     }
 
     /// Sets the total volume of water at the given tile.
@@ -249,9 +242,10 @@ impl Id<Item> {
 }
 
 /// The depth of the water table at a given tile relative to the soil surface.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub(crate) enum WaterDepth {
     /// The water table is completely empty.
+    #[default]
     Dry,
     /// The water table beneath the soil.
     ///
@@ -270,5 +264,26 @@ impl Display for WaterDepth {
             WaterDepth::Underground(depth) => write!(f, "{depth} below surface"),
             WaterDepth::Flooded(depth) => write!(f, "{depth} above surface"),
         }
+    }
+}
+
+/// Updates the depth of water at each tile based on the volume of water and soil properties.
+fn update_water_depth(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
+    water_table.water_depth.clear();
+
+    for tile_pos in map_geometry.valid_tile_positions() {
+        let tile_height = map_geometry.get_height(tile_pos).unwrap();
+        let water_volume = water_table.get_volume(tile_pos);
+        let water_height = water_volume.into_height();
+
+        let water_depth = if water_height == Height::ZERO {
+            WaterDepth::Dry
+        } else if water_height >= tile_height {
+            WaterDepth::Flooded(water_height - tile_height)
+        } else {
+            WaterDepth::Underground(tile_height - water_height)
+        };
+
+        water_table.water_depth.insert(tile_pos, water_depth);
     }
 }

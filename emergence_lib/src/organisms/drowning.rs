@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    simulation::geometry::{Height, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     units::unit_manifest::Unit,
     water::WaterTable,
@@ -15,7 +15,6 @@ use super::Organism;
 pub(super) fn drown(
     unit_query: Query<(Entity, &TilePos), With<Id<Unit>>>,
     structure_query: Query<&TilePos, (With<Id<Structure>>, With<Organism>)>,
-    map_geometry: Res<MapGeometry>,
     water_table: Res<WaterTable>,
     mut commands: Commands,
 ) {
@@ -24,14 +23,14 @@ pub(super) fn drown(
     const DROWNING_DEPTH: Height = Height(2.);
 
     for (entity, &tile_pos) in unit_query.iter() {
-        let water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        let water_depth = water_table.surface_water_depth(tile_pos);
         if water_depth >= DROWNING_DEPTH {
             commands.entity(entity).despawn_recursive();
         }
     }
 
     for &tile_pos in structure_query.iter() {
-        let water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        let water_depth = water_table.surface_water_depth(tile_pos);
         if water_depth >= DROWNING_DEPTH {
             commands.despawn_structure(tile_pos);
         }

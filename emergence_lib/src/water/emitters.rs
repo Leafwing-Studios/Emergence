@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     simulation::{
-        geometry::{Height, MapGeometry, TilePos, Volume},
+        geometry::{Height, TilePos, Volume},
         time::InGameTime,
     },
     structures::Landmark,
@@ -20,12 +20,11 @@ pub(super) fn produce_water_from_emitters(
     mut water_table: ResMut<WaterTable>,
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
-    map_geometry: Res<MapGeometry>,
 ) {
     let elapsed_time = fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day();
 
     for (water_emitter, &tile_pos) in query.iter() {
-        let surface_water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        let surface_water_depth = water_table.surface_water_depth(tile_pos);
 
         // Use a seperate scaling factor for the water production rate,
         // so then we can tweak the water production rate without affecting the max depth.

@@ -43,7 +43,7 @@ impl RootZone {
                 continue;
             };
 
-            match water_table.relative_water_depth(tile_pos, map_geometry) {
+            match water_table.water_depth(tile_pos) {
                 super::WaterDepth::Flooded(..) => relevant_tiles.push(tile_pos),
                 super::WaterDepth::Dry => (),
                 super::WaterDepth::Underground(depth) => {

@@ -67,7 +67,7 @@ fn render_water(
     }
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        let surface_water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        let surface_water_depth = water_table.surface_water_depth(tile_pos);
 
         if surface_water_depth > Height::ZERO {
             commands

@@ -177,7 +177,6 @@ fn update_selection_details(
     terrain_manifest: Res<TerrainManifest>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
-    map_geometry: Res<MapGeometry>,
     water_table: Res<WaterTable>,
     water_config: Res<WaterConfig>,
 ) {
@@ -233,7 +232,6 @@ fn update_selection_details(
                 &structure_manifest,
                 &unit_manifest,
                 &item_manifest,
-                &map_geometry,
                 &water_config,
                 &water_table,
             );
@@ -398,9 +396,8 @@ fn get_details(
                     terrain_id: *terrain_query_item.terrain_id,
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
-                    depth_to_water_table: water_table
-                        .relative_water_depth(*tile_pos, &map_geometry),
-                    water_depth: water_table.surface_water_depth(*tile_pos, &map_geometry),
+                    depth_to_water_table: water_table.water_depth(*tile_pos),
+                    water_depth: water_table.surface_water_depth(*tile_pos),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
@@ -606,7 +603,7 @@ mod structure_details {
             recipe::RecipeData,
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
-        simulation::geometry::{MapGeometry, TilePos},
+        simulation::geometry::TilePos,
         structures::structure_manifest::{Structure, StructureManifest},
         units::unit_manifest::UnitManifest,
         water::{emitters::WaterEmitter, WaterConfig, WaterTable},
@@ -665,7 +662,6 @@ mod structure_details {
             structure_manifest: &StructureManifest,
             unit_manifest: &UnitManifest,
             item_manifest: &ItemManifest,
-            map_geometry: &MapGeometry,
             water_config: &WaterConfig,
             water_table: &WaterTable,
         ) -> String {
@@ -700,8 +696,7 @@ Tile: {tile_pos}"
             };
 
             if let Some(water_emitter) = &self.maybe_water_emitter {
-                let surface_water_height =
-                    water_table.surface_water_depth(self.tile_pos, map_geometry);
+                let surface_water_height = water_table.surface_water_depth(self.tile_pos);
 
                 string += &format!(
                     "\nSpring pressure: {} tiles
