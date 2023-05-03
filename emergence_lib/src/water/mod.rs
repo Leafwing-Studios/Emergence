@@ -49,6 +49,10 @@ pub(crate) struct WaterConfig {
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
+    ///
+    /// # Warning
+    ///
+    /// If this value becomes too large, the simulation may become unstable, with water alternating between fully flooded and fully dry tiles.
     lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
     soil_lateral_flow_ratio: f32,
@@ -60,7 +64,7 @@ impl WaterConfig {
         evaporation_rate: Height(2.0),
         soil_evaporation_ratio: 0.2,
         precipitation_rate: Height(2.0),
-        emission_rate: Volume(1e3),
+        emission_rate: Volume(1e4),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
         relative_soil_water_capacity: 0.3,
@@ -216,11 +220,11 @@ impl WaterTable {
     ///
     /// Returns the amount of water that was actually subtracted.
     pub(crate) fn remove(&mut self, tile_pos: TilePos, amount: Volume) -> Volume {
-        let height = self.get_volume(tile_pos);
+        let volume = self.get_volume(tile_pos);
         // We cannot take more water than there is.
-        let water_drawn = amount.min(height);
-        let new_height = height - water_drawn;
-        self.set_volume(tile_pos, new_height);
+        let water_drawn = amount.min(volume);
+        let new_volume = volume - water_drawn;
+        self.set_volume(tile_pos, new_volume);
         water_drawn
     }
 
@@ -234,10 +238,18 @@ impl WaterTable {
     }
 
     /// Computes the average height of the water table.
+    #[allow(dead_code)]
     pub(crate) fn average_height(&self, map_geometry: &MapGeometry) -> Height {
         let total_water = self.total_water();
         let total_area = map_geometry.valid_tile_positions().count() as f32;
         (total_water / total_area).into_height()
+    }
+
+    /// Compute the average amount of water per tile.
+    pub(crate) fn average_volume(&self, map_geometry: &MapGeometry) -> Volume {
+        let total_water = self.total_water();
+        let total_area = map_geometry.valid_tile_positions().count() as f32;
+        total_water / total_area
     }
 }
 
@@ -325,5 +337,40 @@ fn update_water_depth(
         );
 
         water_table.water_depth.insert(tile_pos, water_depth);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn water_depth_returns_dry_when_volume_is_zero() {
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height::ZERO, 0.5);
+
+        assert_eq!(water_depth, WaterDepth::Dry);
+
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Dry);
+    }
+
+    #[test]
+    fn water_depth_returns_underground_when_volume_is_less_than_soil_capacity() {
+        let water_depth: WaterDepth =
+            WaterDepth::compute(Volume::from_height(Height(0.1)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Underground(Height(0.8)));
+
+        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.5)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Underground(Height(0.0)));
+    }
+
+    #[test]
+    fn water_depth_returns_flooded_when_volume_is_greater_than_soil_capacity() {
+        let water_depth: WaterDepth =
+            WaterDepth::compute(Volume::from_height(Height(1.0)), Height(1.0), 0.5);
+        assert_eq!(water_depth, WaterDepth::Flooded(Height(0.5)));
+
+        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.7)), Height(1.0), 0.0);
+        assert_eq!(water_depth, WaterDepth::Flooded(Height(0.7)));
     }
 }
