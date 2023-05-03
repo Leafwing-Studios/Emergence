@@ -226,7 +226,7 @@ impl TilePos {
         let n_rotations = facing.rotation_count();
 
         TilePos {
-            hex: self.hex.rotate_right(n_rotations),
+            hex: self.hex.rotate_cw(n_rotations),
         }
     }
 
