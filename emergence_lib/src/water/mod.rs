@@ -44,7 +44,7 @@ pub(crate) struct WaterConfig {
     water_items_per_tile: f32,
     /// The amount of water stored in a tile of soil relative to a pure tile of water.
     ///
-    /// This value should be less than 1.
+    /// This value should be less than 1 and must be greater than 0.
     relative_soil_water_capacity: f32,
     /// The rate at which water moves horizontally.
     ///
@@ -63,7 +63,7 @@ impl WaterConfig {
         emission_rate: Volume(1e3),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
-        relative_soil_water_capacity: 0.3,
+        relative_soil_water_capacity: 0.0,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
@@ -172,9 +172,14 @@ impl WaterTable {
     }
 
     /// Gets the height of the water table at the given tile.
-    pub(crate) fn get_height(&self, tile_pos: TilePos) -> Height {
-        // FIXME: account for storage capacity of soil
-        self.get_volume(tile_pos).into_height()
+    pub(crate) fn get_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
+        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+
+        match self.water_depth(tile_pos) {
+            WaterDepth::Dry => Height::ZERO,
+            WaterDepth::Underground(depth) => soil_height - depth,
+            WaterDepth::Flooded(depth) => soil_height + depth,
+        }
     }
 
     /// Computes the height of water that is above the soil at `tile_pos`.

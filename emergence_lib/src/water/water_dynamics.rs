@@ -72,10 +72,10 @@ pub(super) fn horizontal_water_movement(
         * fixed_time.period.as_secs_f32();
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        let water_height = water_table.get_height(tile_pos);
+        let water_height = water_table.get_height(tile_pos, &map_geometry);
         let neighbors = tile_pos.all_neighbors(&map_geometry);
         for neighbor in neighbors {
-            let neighbor_water_height = water_table.get_height(neighbor);
+            let neighbor_water_height = water_table.get_height(neighbor, &map_geometry);
 
             let water_transfer = compute_lateral_flow_to_neighbor(
                 base_water_transfer_amount,
@@ -525,7 +525,7 @@ mod tests {
         let average_water_height = water_table.average_height(map_geometry);
 
         for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos);
+            let height = water_table.get_height(tile_pos, map_geometry);
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
                 "Water level {:?} at tile position {} is not equal to the average water level of {:?}
@@ -564,7 +564,7 @@ mod tests {
         let average_water_height = water_table.average_height(map_geometry);
 
         for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos);
+            let height = water_table.get_height(tile_pos, map_geometry);
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
                 "Water level {:?} at tile position {} is not equal to the average water level of {:?}
