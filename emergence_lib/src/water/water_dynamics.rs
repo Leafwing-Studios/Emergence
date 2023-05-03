@@ -8,7 +8,7 @@ use crate::simulation::{
     weather::CurrentWeather,
 };
 
-use super::{WaterConfig, WaterTable};
+use super::{FlowVelocity, WaterConfig, WaterTable};
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
@@ -75,10 +75,13 @@ pub(super) fn horizontal_water_movement(
     let mut addition_map = HashMap::<TilePos, Volume>::default();
     // Stores the total volume to be added to each tile
     let mut removal_map = HashMap::<TilePos, Volume>::default();
+    // Stores the net water flow direction for each tile
+    let mut flow_direction_map = HashMap::<TilePos, FlowVelocity>::default();
 
     for tile_pos in map_geometry.valid_tile_positions() {
         addition_map.insert(tile_pos, Volume::ZERO);
         removal_map.insert(tile_pos, Volume::ZERO);
+        flow_direction_map.insert(tile_pos, FlowVelocity::ZERO);
     }
 
     for tile_pos in map_geometry.valid_tile_positions() {
@@ -111,6 +114,17 @@ pub(super) fn horizontal_water_movement(
             removal_map
                 .entry(tile_pos)
                 .and_modify(|v| *v += actual_water_transfer);
+
+            let direction_to_neighbor = neighbor.main_direction_to(tile_pos.hex);
+
+            // This map only tracks outward flow, so we don't need to update the neighbor.
+            flow_direction_map.entry(tile_pos).and_modify(|v| {
+                *v += FlowVelocity::from_hex_direction(
+                    direction_to_neighbor,
+                    actual_water_transfer,
+                    &map_geometry,
+                )
+            });
         }
     }
 
@@ -121,6 +135,8 @@ pub(super) fn horizontal_water_movement(
     for (tile_pos, volume) in removal_map {
         water_table.remove(tile_pos, volume);
     }
+
+    water_table.flow_rate = flow_direction_map;
 }
 
 /// Computes how much water should be removed from one tile to its neigbors.

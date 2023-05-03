@@ -190,6 +190,14 @@ impl WaterTable {
         }
     }
 
+    /// Gets the [`FlowVelocity`] of water at the given tile.
+    ///
+    /// This is the outgoing flow rate of water from the tile only;
+    /// tiles that are only receiving water will have a flow rate of zero.
+    pub(crate) fn get_flow_rate(&self, tile_pos: TilePos) -> FlowVelocity {
+        self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
+    }
+
     /// Computes the height of water that is above the soil at `tile_pos`.
     pub(crate) fn surface_water_depth(&self, tile_pos: TilePos) -> Height {
         let depth_to_water_table = self.water_depth(tile_pos);
@@ -345,7 +353,7 @@ fn update_water_depth(
 }
 
 /// The rate and direction of lateral water flow.
-#[derive(Debug, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
+#[derive(Debug, Default, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
 pub(crate) struct FlowVelocity {
     /// The x component (in world coordinates) of the flow velocity.
     x: Volume,
