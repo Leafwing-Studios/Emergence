@@ -64,7 +64,7 @@ impl WaterConfig {
         evaporation_rate: Height(2.0),
         soil_evaporation_ratio: 0.2,
         precipitation_rate: Height(2.0),
-        emission_rate: Volume(1e3),
+        emission_rate: Volume(1e4),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
         relative_soil_water_capacity: 0.3,
