@@ -42,6 +42,10 @@ pub(crate) struct WaterConfig {
     emission_pressure: Height,
     /// The number of water items produced for each full tile of water.
     water_items_per_tile: f32,
+    /// The amount of water stored in a tile of soil relative to a pure tile of water.
+    ///
+    /// This value should be less than 1.
+    soil_water_capacity: f32,
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
@@ -59,6 +63,7 @@ impl WaterConfig {
         emission_rate: Height(1e3),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
+        soil_water_capacity: 0.3,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
@@ -72,6 +77,7 @@ impl WaterConfig {
         emission_rate: Height(0.0),
         emission_pressure: Height(0.0),
         water_items_per_tile: 0.0,
+        soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
     };
