@@ -70,16 +70,13 @@ fn render_water(
         let surface_water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
 
         if surface_water_depth > Height::ZERO {
-            let surface_water_height =
-                map_geometry.get_height(tile_pos).unwrap() + surface_water_depth;
-
             commands
                 .spawn(PbrBundle {
                     mesh: water_handles.mesh.clone_weak(),
                     material: water_handles.material.clone_weak(),
                     transform: Transform {
                         translation: tile_pos.top_of_tile(&map_geometry),
-                        scale: Vec3::new(1.0, surface_water_height.into_world_pos(), 1.0),
+                        scale: Vec3::new(1.0, surface_water_depth.into_world_pos(), 1.0),
                         ..Default::default()
                     },
                     ..Default::default()
