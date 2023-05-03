@@ -25,14 +25,12 @@ pub(super) fn produce_water_from_emitters(
     let elapsed_time = fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day();
 
     for (water_emitter, &tile_pos) in query.iter() {
-        let surface_water_height = map_geometry
-            .get_surface_water_height(tile_pos)
-            .unwrap_or_default();
+        let surface_water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
 
         // Use a seperate scaling factor for the water production rate,
         // so then we can tweak the water production rate without affecting the max depth.
         let produced_water = water_emitter
-            .current_water_production(surface_water_height, &water_config)
+            .current_water_production(surface_water_depth, &water_config)
             * elapsed_time;
         water_table.add(tile_pos, produced_water);
     }
@@ -56,17 +54,17 @@ impl WaterEmitter {
     /// Computes the current amount of water that this emitter can produce, in tiles per day.
     pub(crate) fn current_water_production(
         &self,
-        surface_water_height: Height,
+        surface_water_depth: Height,
         water_config: &WaterConfig,
     ) -> Volume {
         // If the water level is below the surface, it should be treated as 0,
         // as it does not apply any pressure to the emitter due to its weight.
-        assert!(surface_water_height >= Height::ZERO);
+        assert!(surface_water_depth >= Height::ZERO);
 
         // The rate of flow should gradually decrease as the water level rises.
         // Eventually, the rate of flow reaches zero when the water level is equal to the emitter's pressure.
         let remaining_pressure =
-            Volume::from_height((self.pressure - surface_water_height).max(Height::ZERO));
+            Volume::from_height((self.pressure - surface_water_depth).max(Height::ZERO));
         remaining_pressure.0 * water_config.emission_rate
     }
 

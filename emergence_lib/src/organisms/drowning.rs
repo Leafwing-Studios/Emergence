@@ -6,6 +6,7 @@ use crate::{
     simulation::geometry::{Height, MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     units::unit_manifest::Unit,
+    water::WaterTable,
 };
 
 use super::Organism;
@@ -15,25 +16,24 @@ pub(super) fn drown(
     unit_query: Query<(Entity, &TilePos), With<Id<Unit>>>,
     structure_query: Query<&TilePos, (With<Id<Structure>>, With<Organism>)>,
     map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
     mut commands: Commands,
 ) {
-    /// The water height at which units and structures drown.
+    /// The water depth at which units and structures drown.
     // TODO: make drowning characteristics customizable on a per strain basis
-    const DROWNING_HEIGHT: Height = Height(2.);
+    const DROWNING_DEPTH: Height = Height(2.);
 
     for (entity, &tile_pos) in unit_query.iter() {
-        if let Some(water_height) = map_geometry.get_surface_water_height(tile_pos) {
-            if water_height >= DROWNING_HEIGHT {
-                commands.entity(entity).despawn_recursive();
-            }
+        let water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        if water_depth >= DROWNING_DEPTH {
+            commands.entity(entity).despawn_recursive();
         }
     }
 
     for &tile_pos in structure_query.iter() {
-        if let Some(water_height) = map_geometry.get_surface_water_height(tile_pos) {
-            if water_height >= DROWNING_HEIGHT {
-                commands.despawn_structure(tile_pos);
-            }
+        let water_depth = water_table.surface_water_depth(tile_pos, &map_geometry);
+        if water_depth >= DROWNING_DEPTH {
+            commands.despawn_structure(tile_pos);
         }
     }
 }

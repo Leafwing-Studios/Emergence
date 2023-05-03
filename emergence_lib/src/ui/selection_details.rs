@@ -178,6 +178,7 @@ fn update_selection_details(
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
     water_config: Res<WaterConfig>,
 ) {
     let mut parent_visibility = selection_panel_query.single_mut();
@@ -234,6 +235,7 @@ fn update_selection_details(
                 &item_manifest,
                 &map_geometry,
                 &water_config,
+                &water_table,
             );
         }
         SelectionDetails::Terrain(details) => {
@@ -398,7 +400,7 @@ fn get_details(
                     height: *terrain_query_item.height,
                     depth_to_water_table: water_table
                         .depth_to_water_table(*tile_pos, &map_geometry),
-                    water_depth: map_geometry.get_surface_water_height(*tile_pos),
+                    water_depth: water_table.surface_water_depth(*tile_pos, &map_geometry),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
@@ -607,7 +609,7 @@ mod structure_details {
         simulation::geometry::{MapGeometry, TilePos},
         structures::structure_manifest::{Structure, StructureManifest},
         units::unit_manifest::UnitManifest,
-        water::{emitters::WaterEmitter, WaterConfig},
+        water::{emitters::WaterEmitter, WaterConfig, WaterTable},
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -665,6 +667,7 @@ mod structure_details {
             item_manifest: &ItemManifest,
             map_geometry: &MapGeometry,
             water_config: &WaterConfig,
+            water_table: &WaterTable,
         ) -> String {
             let entity = self.entity;
             let structure_id = structure_manifest.name(self.structure_id);
@@ -697,9 +700,8 @@ Tile: {tile_pos}"
             };
 
             if let Some(water_emitter) = &self.maybe_water_emitter {
-                let surface_water_height = map_geometry
-                    .get_surface_water_height(*tile_pos)
-                    .unwrap_or_default();
+                let surface_water_height =
+                    water_table.surface_water_depth(self.tile_pos, map_geometry);
 
                 string += &format!(
                     "\nSpring pressure: {} tiles
@@ -854,8 +856,8 @@ Output: {output}"
         pub(super) height: Height,
         /// The distance from the surface to the water table
         pub(super) depth_to_water_table: DepthToWaterTable,
-        /// The depth of water at this tile
-        pub(super) water_depth: Option<Height>,
+        /// The depth of surface water at this tile
+        pub(super) water_depth: Height,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -884,7 +886,7 @@ Output: {output}"
             let tile_pos = &self.tile_pos;
             let height = &self.height;
             let depth_to_water_table = &self.depth_to_water_table;
-            let water_depth = self.water_depth.unwrap_or_default();
+            let water_depth = self.water_depth;
             let signals = self.signals.display(
                 item_manifest,
                 structure_manifest,

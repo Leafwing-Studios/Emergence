@@ -21,6 +21,7 @@ use crate::{
         unit_manifest::{Unit, UnitManifest},
         UnitBundle,
     },
+    water::WaterTable,
 };
 
 use super::{
@@ -276,6 +277,7 @@ pub(super) fn sprout_seeds(
     unit_manifest: Res<UnitManifest>,
     unit_handles: Res<UnitHandles>,
     map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
     mut commands: Commands,
 ) {
     // TODO: add germination conditions, and vary this based on the seed type.
@@ -301,13 +303,13 @@ pub(super) fn sprout_seeds(
             if let OrganismId::Structure(structure_id) = organism_id {
                 let variety = structure_manifest.get(structure_id);
 
-                if !map_geometry.can_build(tile_pos, &variety.footprint, &facing) {
+                if !map_geometry.can_build(tile_pos, &variety.footprint, &facing, &water_table) {
                     // We can't germinate here
                     continue;
                 }
             } else {
                 // For units, just make sure the tile is empty.
-                if !map_geometry.is_passable(tile_pos, tile_pos) {
+                if !map_geometry.is_passable(tile_pos, tile_pos, &water_table) {
                     continue;
                 }
             }

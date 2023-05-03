@@ -19,7 +19,7 @@ use std::{
 
 use crate::{
     filtered_array_iter::FilteredArrayIter, items::inventory::InventoryState,
-    structures::Footprint, units::actions::DeliveryMode,
+    structures::Footprint, units::actions::DeliveryMode, water::WaterTable,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -190,6 +190,7 @@ impl TilePos {
     pub(crate) fn passable_neighbors(
         &self,
         map_geometry: &MapGeometry,
+        water_table: &WaterTable,
     ) -> impl IntoIterator<Item = TilePos> {
         if !map_geometry.is_valid(*self) {
             let null_array = [TilePos::ZERO; 6];
@@ -201,7 +202,8 @@ impl TilePos {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&target_pos| {
-            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
+            map_geometry.is_valid(target_pos)
+                && map_geometry.is_passable(*self, target_pos, water_table)
         });
         iter
     }
@@ -566,10 +568,6 @@ pub struct MapGeometry {
     impassable_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
-    /// The height of the surface water at each tile position.
-    ///
-    /// Tiles with no surface water will not be present in this index.
-    surface_water_index: HashMap<TilePos, Height>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -597,7 +595,6 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_tiles: HashSet::default(),
             height_index,
-            surface_water_index: HashMap::default(),
         }
     }
 
@@ -639,7 +636,12 @@ impl MapGeometry {
     /// Tiles that are completely full of litter will return `false`.
     #[inline]
     #[must_use]
-    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+    pub(crate) fn is_passable(
+        &self,
+        starting_pos: TilePos,
+        ending_pos: TilePos,
+        water_table: &WaterTable,
+    ) -> bool {
         /// The maximum height of water that units can walk through.
         const WADING_HEIGHT: Height = Height(1.);
 
@@ -655,10 +657,8 @@ impl MapGeometry {
             return false;
         }
 
-        if let Some(water_level) = self.get_surface_water_height(ending_pos) {
-            if water_level > WADING_HEIGHT {
-                return false;
-            }
+        if water_table.surface_water_depth(ending_pos, &self) > WADING_HEIGHT {
+            return false;
         }
 
         if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
@@ -741,11 +741,12 @@ impl MapGeometry {
         center: TilePos,
         footprint: &Footprint,
         facing: &Facing,
+        water_table: &WaterTable,
     ) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
-            && self.is_free_of_water(center, footprint, facing)
+            && self.is_free_of_water(center, footprint, facing, water_table)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -1045,29 +1046,6 @@ impl MapGeometry {
         }
     }
 
-    /// Records the presence of surface water at the provided `tile_pos`.
-    #[inline]
-    pub(crate) fn add_surface_water(&mut self, tile_pos: TilePos, height: Height) {
-        assert!(
-            height > Height::ZERO,
-            "Surface water height must be greater than zero."
-        );
-        self.surface_water_index.insert(tile_pos, height);
-    }
-
-    /// Removes any surface water at the provided `tile_pos`.
-    #[inline]
-    pub(crate) fn remove_surface_water(&mut self, tile_pos: TilePos) {
-        self.surface_water_index.remove(&tile_pos);
-    }
-
-    /// Gets the surface water height at the provided `tile_pos`, if any.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_surface_water_height(&self, tile_pos: TilePos) -> Option<Height> {
-        self.surface_water_index.get(&tile_pos).copied()
-    }
-
     /// Are all of the tiles defined by `footprint` located at the `center` tile free of surface water?
     #[inline]
     #[must_use]
@@ -1076,12 +1054,13 @@ impl MapGeometry {
         tile_pos: TilePos,
         footprint: &Footprint,
         facing: &Facing,
+        water_table: &WaterTable,
     ) -> bool {
         footprint
             .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
-            .all(|tile_pos| self.get_surface_water_height(*tile_pos).is_none())
+            .all(|tile_pos| water_table.surface_water_depth(*tile_pos, &self) == Height::ZERO)
     }
 }
 

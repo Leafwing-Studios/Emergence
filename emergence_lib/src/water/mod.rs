@@ -138,10 +138,7 @@ impl Plugin for WaterPlugin {
                         .in_set(WaterSet::VerticalWaterMovement),
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
-                .add_systems(
-                    (add_water_emitters, update_surface_water_map_geometry)
-                        .in_set(WaterSet::Synchronization),
-                );
+                .add_systems((add_water_emitters,).in_set(WaterSet::Synchronization));
         });
     }
 }
@@ -151,7 +148,7 @@ impl Plugin for WaterPlugin {
 /// This can be underground, at ground level, or above ground.
 /// If it is above ground, it will pool on top of the tile it is on.
 #[derive(Resource, Default, PartialEq, Clone, Debug)]
-pub(crate) struct WaterTable {
+pub struct WaterTable {
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
 }
@@ -166,6 +163,21 @@ impl WaterTable {
     pub(crate) fn get_height(&self, tile_pos: TilePos) -> Height {
         // FIXME: account for storage capacity of soil
         self.get_volume(tile_pos).into_height()
+    }
+
+    /// Computes the height of water that is above the soil at `tile_pos`.
+    pub(crate) fn surface_water_depth(
+        &self,
+        tile_pos: TilePos,
+        map_geometry: &MapGeometry,
+    ) -> Height {
+        let water_height = self.get_height(tile_pos);
+        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+        if water_height > soil_height {
+            water_height - soil_height
+        } else {
+            Height::ZERO
+        }
     }
 
     /// Get the depth to the water table at the given tile.
@@ -259,27 +271,6 @@ impl Display for DepthToWaterTable {
     }
 }
 
-/// Computes how much water is on the surface of each tile.
-fn update_surface_water_map_geometry(
-    mut map_geometry: ResMut<MapGeometry>,
-    water_table: Res<WaterTable>,
-) {
-    // Collect out to avoid borrow checker pain
-    for tile_pos in map_geometry
-        .valid_tile_positions()
-        .collect::<Vec<TilePos>>()
-    {
-        let tile_height = map_geometry.get_height(tile_pos).unwrap();
-        let water_height = water_table.get_height(tile_pos);
-
-        if water_height > tile_height {
-            map_geometry.add_surface_water(tile_pos, water_height - tile_height);
-        } else {
-            map_geometry.remove_surface_water(tile_pos);
-        }
-    }
-}
-
 /// Evaporates water from surface water.
 fn evaporation(
     mut water_table: ResMut<WaterTable>,
@@ -295,14 +286,16 @@ fn evaporation(
     let evaporation_rate =
         evaporation_per_second * elapsed_time * current_weather.get().evaporation_rate();
 
-    for tile in map_geometry.valid_tile_positions() {
+    for tile_pos in map_geometry.valid_tile_positions() {
         // Surface water evaporation
-        let total_evaporated = match map_geometry.get_surface_water_height(tile) {
-            Some(_) => Volume(evaporation_rate),
-            None => Volume(evaporation_rate * water_config.soil_evaporation_ratio),
-        };
+        let total_evaporated =
+            if water_table.surface_water_depth(tile_pos, &map_geometry) > Height::ZERO {
+                Volume(evaporation_rate)
+            } else {
+                Volume(evaporation_rate * water_config.soil_evaporation_ratio)
+            };
 
-        water_table.remove(tile, total_evaporated);
+        water_table.remove(tile_pos, total_evaporated);
     }
 }
 
