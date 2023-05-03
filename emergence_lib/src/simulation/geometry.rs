@@ -8,7 +8,7 @@ use bevy::{
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use hexx::{shapes::hexagon, Direction, Hex, HexLayout, MeshInfo};
+use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -226,7 +226,7 @@ impl TilePos {
         let n_rotations = facing.rotation_count();
 
         TilePos {
-            hex: self.hex.rotate_right(n_rotations),
+            hex: self.hex.rotate_cw(n_rotations),
         }
     }
 
@@ -1009,13 +1009,13 @@ impl Facing {
     /// Rotates this facing one 60 degree step clockwise.
     #[inline]
     pub(crate) fn rotate_left(&mut self) {
-        self.direction = self.direction.left();
+        self.direction = self.direction.counter_clockwise();
     }
 
     /// Rotates this facing one 60 degree step counterclockwise.
     #[inline]
     pub(crate) fn rotate_right(&mut self) {
-        self.direction = self.direction.right();
+        self.direction = self.direction.clockwise();
     }
 
     /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
@@ -1081,7 +1081,8 @@ impl RotationDirection {
 /// Constructs the mesh for a single hexagonal column with the specified height.
 #[must_use]
 pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
-    let mesh_info = MeshInfo::hexagonal_column(hex_layout, Hex::ZERO, hex_height);
+    let mesh_info = ColumnMeshBuilder::new(hex_layout, hex_height).build();
+
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh_info.vertices.to_vec());
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh_info.normals.to_vec());

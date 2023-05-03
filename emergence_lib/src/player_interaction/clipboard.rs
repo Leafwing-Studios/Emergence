@@ -156,10 +156,10 @@ impl Tool {
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
                     item.facing.rotate_right();
-                    original_pos.right_around(Hex::ZERO)
+                    original_pos.cw_around(Hex::ZERO)
                 } else {
                     item.facing.rotate_left();
-                    original_pos.left_around(Hex::ZERO)
+                    original_pos.ccw_around(Hex::ZERO)
                 };
 
                 new_map.insert(TilePos { hex: new_pos }, item.clone());

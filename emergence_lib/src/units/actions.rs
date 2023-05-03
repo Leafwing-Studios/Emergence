@@ -938,12 +938,12 @@ impl CurrentAction {
         // Left gets an arbitrary unfair advantage though.
         // PERF: this could use a lookup table instead, and would probably be faster
         loop {
-            working_direction_left = working_direction_left.left();
+            working_direction_left = working_direction_left.counter_clockwise();
             if working_direction_left == required_direction {
                 return CurrentAction::spin(RotationDirection::Left);
             }
 
-            working_direction_right = working_direction_right.right();
+            working_direction_right = working_direction_right.clockwise();
             if working_direction_right == required_direction {
                 return CurrentAction::spin(RotationDirection::Right);
             }
@@ -1055,7 +1055,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(target_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::move_forward(
@@ -1087,7 +1087,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         output_tile_pos: TilePos,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(output_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(output_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction {
@@ -1111,7 +1111,7 @@ impl CurrentAction {
         unit_tile_pos: TilePos,
         input_tile_pos: TilePos,
     ) -> Self {
-        let required_direction = unit_tile_pos.direction_to(input_tile_pos.hex);
+        let required_direction = unit_tile_pos.main_direction_to(input_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction {
