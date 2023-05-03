@@ -44,8 +44,8 @@
 					]
 				},
 				"energy_pool": {
-					"current": 300.0,
-					"max": 300.0,
+					"current": 500.0,
+					"max": 500.0,
 					"warning_threshold": 50.0,
 					"satiation_threshold": 225.0,
 					"regen_per_second": -1.0
