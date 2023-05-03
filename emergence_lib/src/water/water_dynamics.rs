@@ -1,9 +1,9 @@
 //! Systems that control the movement of water.
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use crate::simulation::{
-    geometry::{Height, MapGeometry, Volume},
+    geometry::{Height, MapGeometry, TilePos, Volume},
     time::InGameTime,
     weather::CurrentWeather,
 };
@@ -72,29 +72,76 @@ pub(super) fn horizontal_water_movement(
         * fixed_time.period.as_secs_f32();
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        let water_height = water_table.get_height(tile_pos, &map_geometry);
-        let neighbors = tile_pos.all_neighbors(&map_geometry);
-        for neighbor in neighbors {
-            let neighbor_water_height = water_table.get_height(neighbor, &map_geometry);
+        let total_available = water_table.get_volume(tile_pos);
+        if total_available <= Volume::ZERO {
+            continue;
+        }
 
-            let proposed_water_transfer = compute_lateral_flow_to_neighbor(
-                base_water_transfer_amount,
-                &water_config,
-                map_geometry.get_height(tile_pos).unwrap(),
-                map_geometry.get_height(neighbor).unwrap(),
-                water_height,
-                neighbor_water_height,
+        let water_to_neighbors = proposed_lateral_flow_to_neighbors(
+            tile_pos,
+            base_water_transfer_amount,
+            &water_config,
+            &map_geometry,
+            &water_table,
+        );
+
+        // Ensure that we divide the water evenly between all neighbors
+        // Only transfer as much water as is available.
+        let total_proposed = water_to_neighbors
+            .values()
+            .fold(Volume::ZERO, |acc, proposed| acc + *proposed);
+        let actual_water_transfer_ratio = (total_available / total_proposed).min(1.0);
+
+        for (&neighbor, &proposed_water_transfer) in water_to_neighbors.iter() {
+            // This is a secondary check to ensure that we don't transfer more water than is available.
+            // Rounding errors may have been introduced above.
+            let actual_water_transfer = water_table.remove(
+                tile_pos,
+                proposed_water_transfer / actual_water_transfer_ratio,
             );
-
-            let actual_water_transfer = water_table.remove(tile_pos, proposed_water_transfer);
             water_table.add(neighbor, actual_water_transfer);
         }
     }
 }
 
+/// Computes how much water should be removed from one tile to its neigbors.
+///
+/// This does not take into account the actual available volume of water in the tile.
+#[inline]
+#[must_use]
+fn proposed_lateral_flow_to_neighbors(
+    tile_pos: TilePos,
+    base_water_transfer_amount: f32,
+    water_config: &WaterConfig,
+    map_geometry: &MapGeometry,
+    water_table: &WaterTable,
+) -> HashMap<TilePos, Volume> {
+    let water_height = water_table.get_height(tile_pos, map_geometry);
+    let neighbors = tile_pos.all_neighbors(map_geometry);
+    let mut water_to_neighbors = HashMap::default();
+
+    for neighbor in neighbors {
+        let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
+
+        let proposed_water_transfer = lateral_flow(
+            base_water_transfer_amount,
+            water_config,
+            map_geometry.get_height(tile_pos).unwrap(),
+            map_geometry.get_height(neighbor).unwrap(),
+            water_height,
+            neighbor_water_height,
+        );
+
+        water_to_neighbors.insert(neighbor, proposed_water_transfer);
+    }
+
+    water_to_neighbors
+}
+
 /// Computes how much water should be moved from one tile to another.
 #[inline]
-fn compute_lateral_flow_to_neighbor(
+#[must_use]
+fn lateral_flow(
     base_water_transfer_amount: f32,
     water_config: &WaterConfig,
     tile_height: Height,
@@ -690,7 +737,7 @@ mod tests {
             ..WaterConfig::NULL
         };
 
-        let water_transferred = compute_lateral_flow_to_neighbor(
+        let water_transferred = lateral_flow(
             1.0,
             &water_config,
             Height(1.0),
@@ -713,7 +760,7 @@ mod tests {
             ..WaterConfig::NULL
         };
 
-        let water_transferred = compute_lateral_flow_to_neighbor(
+        let water_transferred = lateral_flow(
             1.0,
             &water_config,
             Height(1.0),
@@ -732,7 +779,7 @@ mod tests {
             ..WaterConfig::NULL
         };
 
-        let water_transferred = compute_lateral_flow_to_neighbor(
+        let water_transferred = lateral_flow(
             1.0,
             &water_config,
             Height(1.0),
@@ -755,7 +802,7 @@ mod tests {
         let water_height = Height(2.0);
         let neighbor_water_height = Height(1.0);
 
-        let surface_water_flow = compute_lateral_flow_to_neighbor(
+        let surface_water_flow = lateral_flow(
             1.0,
             &water_config,
             Height(0.0),
@@ -764,7 +811,7 @@ mod tests {
             neighbor_water_height,
         );
 
-        let subsurface_water_flow = compute_lateral_flow_to_neighbor(
+        let subsurface_water_flow = lateral_flow(
             1.0,
             &water_config,
             Height(2.0),
@@ -773,7 +820,7 @@ mod tests {
             neighbor_water_height,
         );
 
-        let surface_to_soil_flow = compute_lateral_flow_to_neighbor(
+        let surface_to_soil_flow = lateral_flow(
             1.0,
             &water_config,
             Height(0.0),
@@ -782,7 +829,7 @@ mod tests {
             neighbor_water_height,
         );
 
-        let soil_to_surface_flow = compute_lateral_flow_to_neighbor(
+        let soil_to_surface_flow = lateral_flow(
             1.0,
             &water_config,
             Height(2.0),
@@ -815,7 +862,7 @@ mod tests {
             ..WaterConfig::NULL
         };
 
-        let small_height_difference = compute_lateral_flow_to_neighbor(
+        let small_height_difference = lateral_flow(
             1.0,
             &water_config,
             Height(1.0),
@@ -824,7 +871,7 @@ mod tests {
             Height(1.0),
         );
 
-        let large_height_difference = compute_lateral_flow_to_neighbor(
+        let large_height_difference = lateral_flow(
             1.0,
             &water_config,
             Height(1.0),
@@ -859,7 +906,7 @@ mod tests {
         let tile_height_b = Height(0.0);
 
         for _ in 0..100 {
-            let water_transferred_a_to_b = compute_lateral_flow_to_neighbor(
+            let water_transferred_a_to_b = lateral_flow(
                 base_water_transfer_amount,
                 &water_config,
                 tile_height_a,
@@ -868,7 +915,7 @@ mod tests {
                 water_height_b,
             );
 
-            let water_transferred_b_to_a = compute_lateral_flow_to_neighbor(
+            let water_transferred_b_to_a = lateral_flow(
                 base_water_transfer_amount,
                 &water_config,
                 tile_height_b,

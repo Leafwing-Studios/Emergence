@@ -547,6 +547,14 @@ impl Div<f32> for Volume {
     }
 }
 
+impl Div<Volume> for Volume {
+    type Output = f32;
+
+    fn div(self, rhs: Volume) -> Self::Output {
+        self.0 / rhs.0
+    }
+}
+
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
 pub struct MapGeometry {
