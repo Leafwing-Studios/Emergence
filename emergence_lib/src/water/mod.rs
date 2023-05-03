@@ -49,6 +49,10 @@ pub(crate) struct WaterConfig {
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
+    ///
+    /// # Warning
+    ///
+    /// If this value becomes too large, the simulation may become unstable, with water alternating between fully flooded and fully dry tiles.
     lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
     soil_lateral_flow_ratio: f32,
