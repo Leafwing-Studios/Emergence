@@ -57,13 +57,13 @@ pub(crate) struct WaterConfig {
 impl WaterConfig {
     /// The default configuration for in-game water behavior.
     const IN_GAME: Self = Self {
-        evaporation_rate: Height(2.0),
+        evaporation_rate: Height(0.0),
         soil_evaporation_ratio: 0.2,
-        precipitation_rate: Height(2.0),
-        emission_rate: Volume(1e3),
+        precipitation_rate: Height(0.0),
+        emission_rate: Volume(0e3),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
-        relative_soil_water_capacity: 0.3,
+        relative_soil_water_capacity: 0.0,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
