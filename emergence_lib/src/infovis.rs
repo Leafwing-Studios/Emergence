@@ -70,11 +70,11 @@ pub(crate) struct TileOverlay {
     ///
     /// Note that we cannot simply store a `Vec<Color>` here,
     /// because we need to be able to display the entire gradients of signal strength simultaneously.
-    color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
+    signal_color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
     /// The materials used to visualize the distance to the water table.
     water_table_color_ramp: Vec<Handle<StandardMaterial>>,
-    /// The materials used to visualize the lateral [`FlowVelocity] of the water table.
-    flow_velocity_materials: HashMap<DiscretizedVector, Handle<StandardMaterial>>,
+    /// The materials used to visualize vector fields.
+    vector_field_materials: HashMap<DiscretizedVector, Handle<StandardMaterial>>,
     /// The images to be used to display the gradient in order to create a legend.
     legends: HashMap<SignalKind, Handle<Image>>,
     /// The image used to display the gradient for the water table.
@@ -156,9 +156,9 @@ impl FromWorld for TileOverlay {
 
         Self {
             overlay_type: OverlayType::None,
-            color_ramps,
+            signal_color_ramps: color_ramps,
             water_table_color_ramp,
-            flow_velocity_materials: vector_field_materials,
+            vector_field_materials,
             legends,
             water_table_legend,
         }
@@ -318,7 +318,7 @@ impl TileOverlay {
         let color_index: usize = (normalized_strength * (Self::N_COLORS as f32)) as usize;
         // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals
         let color_index = color_index.min(Self::N_COLORS - 1);
-        Some(self.color_ramps[&signal_kind][color_index].clone_weak())
+        Some(self.signal_color_ramps[&signal_kind][color_index].clone_weak())
     }
 
     /// Gets the material that should be used to visualize the depth to the water table.
@@ -359,7 +359,7 @@ impl TileOverlay {
         };
 
         Some(
-            self.flow_velocity_materials
+            self.vector_field_materials
                 .get(&discretized_vector)
                 .unwrap()
                 .clone_weak(),
@@ -528,8 +528,8 @@ impl DiscretizedDirection {
         }
 
         let degrees = radians.to_degrees().rem_euclid(360.);
-        assert!(degrees >= 0., "degrees: {}", degrees);
-        assert!(degrees <= 360., "degrees: {}", degrees);
+        assert!(degrees >= 0., "degrees: {degrees}");
+        assert!(degrees <= 360., "degrees: {degrees}");
 
         // Handle the special case of rounding up to 360 degrees
         if degrees > 345.0 {
@@ -593,15 +593,30 @@ impl DiscretizedMagnitude {
         /// Controls how much water is needed to be considered "very weak", "weak", etc.
         const SCALE_FACTOR: f32 = 1e-2;
 
-        if volume == Volume::ZERO {
+        /// Controls how quickly the gap between steps increases.
+        const BASE: f32 = 2.0;
+
+        DiscretizedMagnitude::discretize(volume.0, SCALE_FACTOR, BASE)
+    }
+
+    /// Discretizes a magnitude.
+    ///
+    /// The `scale_factor` sets the scale of the magnitude:
+    /// its value corresponds to the transition between [`DiscretizedMagnitude::VeryWeak`] and [`DiscretizedMagnitude::Weak`].
+    /// The `base` sets the base of the exponent used.
+    /// At a base of 0, this is a linear scale. At a base of 10, this is a base-10 logarithmic scale.
+    ///
+    /// Values of 0.0 or less are considered [`DiscretizedMagnitude::None`].
+    fn discretize(magnitude: f32, scale_factor: f32, base: f32) -> Self {
+        if magnitude <= 0. {
             DiscretizedMagnitude::None
-        } else if volume < Volume(SCALE_FACTOR * 1e0) {
+        } else if magnitude < scale_factor * base.powf(0.) {
             DiscretizedMagnitude::VeryWeak
-        } else if volume < Volume(SCALE_FACTOR * 1e1) {
+        } else if magnitude < scale_factor * base.powf(1.) {
             DiscretizedMagnitude::Weak
-        } else if volume < Volume(SCALE_FACTOR * 1e2) {
+        } else if magnitude < scale_factor * base.powf(2.) {
             DiscretizedMagnitude::Moderate
-        } else if volume < Volume(SCALE_FACTOR * 1e3) {
+        } else if magnitude < scale_factor * base.powf(3.) {
             DiscretizedMagnitude::Strong
         } else {
             DiscretizedMagnitude::VeryStrong
