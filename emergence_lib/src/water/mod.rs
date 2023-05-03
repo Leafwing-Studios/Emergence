@@ -143,7 +143,7 @@ impl Plugin for WaterPlugin {
     }
 }
 
-/// The height of the water.
+/// The amount and height of water across the map.
 ///
 /// This can be underground, at ground level, or above ground.
 /// If it is above ground, it will pool on top of the tile it is on.
@@ -171,31 +171,29 @@ impl WaterTable {
         tile_pos: TilePos,
         map_geometry: &MapGeometry,
     ) -> Height {
-        let water_height = self.get_height(tile_pos);
-        let soil_height = map_geometry.get_height(tile_pos).unwrap();
-        if water_height > soil_height {
-            water_height - soil_height
-        } else {
-            Height::ZERO
+        let depth_to_water_table = self.relative_water_depth(tile_pos, map_geometry);
+
+        match depth_to_water_table {
+            WaterDepth::Dry => Height::ZERO,
+            WaterDepth::Underground(..) => Height::ZERO,
+            WaterDepth::Flooded(depth) => depth,
         }
     }
 
-    /// Get the depth to the water table at the given tile.
-    ///
-    /// If there is surface water, this will be zero.
-    pub(crate) fn depth_to_water_table(
+    /// Get the depth of the water table at the given tile relative to the soil surface.
+    pub(crate) fn relative_water_depth(
         &self,
         tile_pos: TilePos,
         map_geometry: &MapGeometry,
-    ) -> DepthToWaterTable {
+    ) -> WaterDepth {
         let tile_height = map_geometry.get_height(tile_pos).unwrap();
         let water_height = self.get_height(tile_pos);
         if water_height == Height::ZERO {
-            DepthToWaterTable::Dry
+            WaterDepth::Dry
         } else if water_height >= tile_height {
-            DepthToWaterTable::Flooded
+            WaterDepth::Flooded(water_height - tile_height)
         } else {
-            DepthToWaterTable::Depth(tile_height - water_height)
+            WaterDepth::Underground(tile_height - water_height)
         }
     }
 
@@ -250,23 +248,27 @@ impl Id<Item> {
     }
 }
 
-/// The depth to the water table at a given tile.
+/// The depth of the water table at a given tile relative to the soil surface.
 #[derive(Debug)]
-pub(crate) enum DepthToWaterTable {
-    /// The water table is above the surface.
-    Flooded,
+pub(crate) enum WaterDepth {
     /// The water table is completely empty.
     Dry,
-    /// The water table is at the given depth, measured from the soil surface.
-    Depth(Height),
+    /// The water table beneath the soil.
+    ///
+    /// The depth is measured down from the soil surface.
+    Underground(Height),
+    /// The water table is above the surface.
+    ///
+    /// The height is the height above the soil surface.
+    Flooded(Height),
 }
 
-impl Display for DepthToWaterTable {
+impl Display for WaterDepth {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
-            DepthToWaterTable::Flooded => write!(f, "Flooded"),
-            DepthToWaterTable::Dry => write!(f, "Dry"),
-            DepthToWaterTable::Depth(depth) => write!(f, "{depth} from surface"),
+            WaterDepth::Dry => write!(f, "Dry"),
+            WaterDepth::Underground(depth) => write!(f, "{depth} below surface"),
+            WaterDepth::Flooded(depth) => write!(f, "{depth} above surface"),
         }
     }
 }

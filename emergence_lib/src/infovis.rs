@@ -18,7 +18,7 @@ use crate::{
     simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     units::unit_manifest::Unit,
-    water::{DepthToWaterTable, WaterTable},
+    water::{WaterDepth, WaterTable},
 };
 
 /// Systems and reources for communicating the state of the world to the player.
@@ -282,14 +282,14 @@ impl TileOverlay {
     /// If this is `None`, then the tile is covered with surface water.
     fn get_water_table_material(
         &self,
-        depth_to_water_table: DepthToWaterTable,
+        depth_to_water_table: WaterDepth,
     ) -> Option<Handle<StandardMaterial>> {
         let normalized_depth = match depth_to_water_table {
-            DepthToWaterTable::Dry => 1.,
-            DepthToWaterTable::Depth(depth) => {
+            WaterDepth::Dry => 1.,
+            WaterDepth::Underground(depth) => {
                 depth.0.min(Self::MAX_DEPTH_TO_WATER_TABLE) / Self::MAX_DEPTH_TO_WATER_TABLE
             }
-            DepthToWaterTable::Flooded => return None,
+            WaterDepth::Flooded(..) => return None,
         };
 
         let color_index: usize = (normalized_depth * (Self::N_COLORS as f32)) as usize;
@@ -344,14 +344,14 @@ fn set_overlay_material(
                     }),
                 OverlayType::DepthToWaterTable => {
                     let depth_to_water_table =
-                        water_table.depth_to_water_table(tile_pos, &map_geometry);
+                        water_table.relative_water_depth(tile_pos, &map_geometry);
                     tile_overlay.get_water_table_material(depth_to_water_table)
                 }
                 OverlayType::HeightOfWaterTable => {
                     let water_table_height = water_table.get_height(tile_pos);
                     // FIXME: use a dedicated color ramp for this, rather than hacking it
                     // We subtract here to ensure that blue == wet and red == dry
-                    let inverted_height = DepthToWaterTable::Depth(
+                    let inverted_height = WaterDepth::Underground(
                         Height(TileOverlay::MAX_DEPTH_TO_WATER_TABLE) - water_table_height,
                     );
 

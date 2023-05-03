@@ -43,10 +43,10 @@ impl RootZone {
                 continue;
             };
 
-            match water_table.depth_to_water_table(tile_pos, map_geometry) {
-                super::DepthToWaterTable::Flooded => relevant_tiles.push(tile_pos),
-                super::DepthToWaterTable::Dry => (),
-                super::DepthToWaterTable::Depth(depth) => {
+            match water_table.relative_water_depth(tile_pos, map_geometry) {
+                super::WaterDepth::Flooded(..) => relevant_tiles.push(tile_pos),
+                super::WaterDepth::Dry => (),
+                super::WaterDepth::Underground(depth) => {
                     if depth <= self.max_depth {
                         relevant_tiles.push(tile_pos);
                     }

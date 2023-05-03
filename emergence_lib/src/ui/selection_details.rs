@@ -399,7 +399,7 @@ fn get_details(
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     depth_to_water_table: water_table
-                        .depth_to_water_table(*tile_pos, &map_geometry),
+                        .relative_water_depth(*tile_pos, &map_geometry),
                     water_depth: water_table.surface_water_depth(*tile_pos, &map_geometry),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
@@ -779,7 +779,7 @@ mod terrain_details {
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
-        water::DepthToWaterTable,
+        water::WaterDepth,
     };
 
     /// Data needed to populate [`TerrainDetails`].
@@ -855,7 +855,7 @@ Output: {output}"
         /// The height of the tile
         pub(super) height: Height,
         /// The distance from the surface to the water table
-        pub(super) depth_to_water_table: DepthToWaterTable,
+        pub(super) depth_to_water_table: WaterDepth,
         /// The depth of surface water at this tile
         pub(super) water_depth: Height,
         /// The signals on this tile
