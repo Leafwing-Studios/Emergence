@@ -346,18 +346,24 @@ impl TileOverlay {
     pub(crate) fn get_flow_velocity_material(
         &self,
         flow_velocity: FlowVelocity,
-    ) -> Handle<StandardMaterial> {
+    ) -> Option<Handle<StandardMaterial>> {
         let magnitude = DiscretizedMagnitude::from_water_flow_volume(flow_velocity.magnitude());
+        if magnitude == DiscretizedMagnitude::None {
+            return None;
+        }
+
         let direction = DiscretizedDirection::from_radians(flow_velocity.direction());
         let discretized_vector = DiscretizedVector {
             magnitude,
             direction,
         };
 
-        self.flow_velocity_materials
-            .get(&discretized_vector)
-            .unwrap()
-            .clone_weak()
+        Some(
+            self.flow_velocity_materials
+                .get(&discretized_vector)
+                .unwrap()
+                .clone_weak(),
+        )
     }
 
     /// Gets the handle to the image that should be used to display the legend.
@@ -421,7 +427,7 @@ fn set_overlay_material(
                 OverlayType::VelocityOfWaterTable => {
                     let flow_velocity = water_table.get_flow_rate(tile_pos);
 
-                    Some(tile_overlay.get_flow_velocity_material(flow_velocity))
+                    tile_overlay.get_flow_velocity_material(flow_velocity)
                 }
             };
 
