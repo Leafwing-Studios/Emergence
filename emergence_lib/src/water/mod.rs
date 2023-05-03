@@ -239,6 +239,13 @@ impl WaterTable {
         let total_area = map_geometry.valid_tile_positions().count() as f32;
         (total_water / total_area).into_height()
     }
+
+    /// Compute the average amount of water per tile.
+    pub(crate) fn average_volume(&self, map_geometry: &MapGeometry) -> Volume {
+        let total_water = self.total_water();
+        let total_area = map_geometry.valid_tile_positions().count() as f32;
+        total_water / total_area
+    }
 }
 
 impl Id<Item> {
