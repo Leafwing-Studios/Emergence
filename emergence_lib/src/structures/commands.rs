@@ -103,7 +103,7 @@ impl Command for SpawnStructureCommand {
             self.tile_pos,
             &structure_variety.footprint,
             &self.data.facing,
-            &water_table,
+            water_table,
         ) {
             // Just give up if the terrain is wrong.
             return;
@@ -233,7 +233,7 @@ impl Command for SpawnStructureGhostCommand {
             self.tile_pos,
             construction_footprint,
             &self.data.facing,
-            &water_table,
+            water_table,
         ) {
             return;
         }
@@ -341,7 +341,7 @@ impl Command for SpawnStructurePreviewCommand {
             self.tile_pos,
             &structure_variety.footprint,
             &self.data.facing,
-            &water_table,
+            water_table,
         );
 
         // Fetch the scene and material to use

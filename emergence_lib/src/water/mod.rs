@@ -195,10 +195,7 @@ impl WaterTable {
 
     /// Get the depth of the water table at the given tile relative to the soil surface.
     pub(crate) fn water_depth(&self, tile_pos: TilePos) -> WaterDepth {
-        self.water_depth
-            .get(&tile_pos)
-            .map(|d| *d)
-            .unwrap_or_default()
+        self.water_depth.get(&tile_pos).copied().unwrap_or_default()
     }
 
     /// Sets the total volume of water at the given tile.
