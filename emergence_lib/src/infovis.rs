@@ -517,9 +517,13 @@ enum DiscretizedDirection {
 impl DiscretizedDirection {
     /// Converts a direction in radians to the nearest discretized direction.
     fn from_radians(radians: f32) -> Self {
-        let degrees = radians.to_degrees();
-        assert!(degrees >= 0.);
-        assert!(degrees < 360.);
+        if radians.is_infinite() || radians.is_nan() {
+            return DiscretizedDirection::Zero;
+        }
+
+        let degrees = radians.to_degrees().rem_euclid(360.);
+        assert!(degrees >= 0., "degrees: {}", degrees);
+        assert!(degrees <= 360., "degrees: {}", degrees);
 
         // Handle the special case of rounding up to 360 degrees
         if degrees > 345.0 {
