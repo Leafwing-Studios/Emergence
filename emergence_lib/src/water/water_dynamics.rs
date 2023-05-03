@@ -505,6 +505,7 @@ mod tests {
                     water_table_strategy,
                     water_config: WaterConfig {
                         emission_rate: Volume(1.0),
+                        emission_pressure: Height(5.0),
                         lateral_flow_rate: 1000.,
                         soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
