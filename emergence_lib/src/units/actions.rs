@@ -938,12 +938,12 @@ impl CurrentAction {
         // Left gets an arbitrary unfair advantage though.
         // PERF: this could use a lookup table instead, and would probably be faster
         loop {
-            working_direction_left = working_direction_left.left();
+            working_direction_left = working_direction_left.counter_clockwise();
             if working_direction_left == required_direction {
                 return CurrentAction::spin(RotationDirection::Left);
             }
 
-            working_direction_right = working_direction_right.right();
+            working_direction_right = working_direction_right.clockwise();
             if working_direction_right == required_direction {
                 return CurrentAction::spin(RotationDirection::Right);
             }

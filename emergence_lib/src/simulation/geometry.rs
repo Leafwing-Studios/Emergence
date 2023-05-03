@@ -1009,13 +1009,13 @@ impl Facing {
     /// Rotates this facing one 60 degree step clockwise.
     #[inline]
     pub(crate) fn rotate_left(&mut self) {
-        self.direction = self.direction.left();
+        self.direction = self.direction.counter_clockwise();
     }
 
     /// Rotates this facing one 60 degree step counterclockwise.
     #[inline]
     pub(crate) fn rotate_right(&mut self) {
-        self.direction = self.direction.right();
+        self.direction = self.direction.clockwise();
     }
 
     /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
