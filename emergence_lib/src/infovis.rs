@@ -593,15 +593,20 @@ impl DiscretizedMagnitude {
         /// Controls how much water is needed to be considered "very weak", "weak", etc.
         const SCALE_FACTOR: f32 = 1e-2;
 
+        // Controls how quickly the gap between steps increases.
+        //
+        // At 0, this is a linear scale. At 10, this is a base-10 logarithmic scale.
+        const BASE: f32 = 2.0;
+
         if volume == Volume::ZERO {
             DiscretizedMagnitude::None
-        } else if volume < Volume(SCALE_FACTOR * 1e0) {
+        } else if volume < Volume(SCALE_FACTOR * BASE.powf(0.)) {
             DiscretizedMagnitude::VeryWeak
-        } else if volume < Volume(SCALE_FACTOR * 1e1) {
+        } else if volume < Volume(SCALE_FACTOR * BASE.powf(1.)) {
             DiscretizedMagnitude::Weak
-        } else if volume < Volume(SCALE_FACTOR * 1e2) {
+        } else if volume < Volume(SCALE_FACTOR * BASE.powf(2.)) {
             DiscretizedMagnitude::Moderate
-        } else if volume < Volume(SCALE_FACTOR * 1e3) {
+        } else if volume < Volume(SCALE_FACTOR * BASE.powf(3.)) {
             DiscretizedMagnitude::Strong
         } else {
             DiscretizedMagnitude::VeryStrong
