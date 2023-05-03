@@ -449,7 +449,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "This seeems to have reproduced https://github.com/Leafwing-Studios/Emergence/issues/799"]
     fn emission_increases_water_levels() {
         for map_size in MapSize::variants() {
             for water_table_strategy in WaterTableStrategy::variants() {
@@ -648,7 +647,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "This test seems to be failing due to instability in water simulation."]
     fn extremely_high_lateral_flow_conserves_water() {
         for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
