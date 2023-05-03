@@ -58,7 +58,8 @@ fn select_overlay(
     if player_actions.just_pressed(PlayerAction::ToggleWaterTableOverlay) {
         tile_overlay.overlay_type = match tile_overlay.overlay_type {
             OverlayType::DepthToWaterTable => OverlayType::HeightOfWaterTable,
-            OverlayType::HeightOfWaterTable => OverlayType::None,
+            OverlayType::HeightOfWaterTable => OverlayType::VelocityOfWaterTable,
+            OverlayType::VelocityOfWaterTable => OverlayType::None,
             _ => OverlayType::DepthToWaterTable,
         };
     }
@@ -244,6 +245,19 @@ fn update_signal_type_display(
             }];
 
             legend.texture = tile_overlay.water_table_legend_image_handle();
+        }
+        OverlayType::VelocityOfWaterTable => {
+            text.sections = vec![TextSection {
+                value: "Outgoing lateral water flow".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
+
+            // TODO: add a legend for vector fields
+            legend.texture = Handle::default();
         }
     }
 }

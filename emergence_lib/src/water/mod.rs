@@ -4,8 +4,10 @@
 //! while code for how it can be used typically belongs in `structures`.
 
 use core::fmt::{Display, Formatter};
+use core::ops::{Div, Mul};
 
 use bevy::{prelude::*, utils::HashMap};
+use derive_more::{Add, AddAssign, Sub, SubAssign};
 
 use crate::{
     asset_management::manifest::Id,
@@ -163,6 +165,8 @@ impl Plugin for WaterPlugin {
 pub struct WaterTable {
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
+    /// The rate and direction of lateral water flow at each tile.
+    flow_rate: HashMap<TilePos, FlowVelocity>,
     /// The height of the water table at each tile relative to the soil surface.
     ///
     /// This is updated in [`update_water_depth`], and cached for both performance and plumbing reasons.
@@ -184,6 +188,14 @@ impl WaterTable {
             WaterDepth::Underground(depth) => soil_height - depth,
             WaterDepth::Flooded(depth) => soil_height + depth,
         }
+    }
+
+    /// Gets the [`FlowVelocity`] of water at the given tile.
+    ///
+    /// This is the outgoing flow rate of water from the tile only;
+    /// tiles that are only receiving water will have a flow rate of zero.
+    pub(crate) fn get_flow_rate(&self, tile_pos: TilePos) -> FlowVelocity {
+        self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
     }
 
     /// Computes the height of water that is above the soil at `tile_pos`.
@@ -337,6 +349,83 @@ fn update_water_depth(
         );
 
         water_table.water_depth.insert(tile_pos, water_depth);
+    }
+}
+
+/// The rate and direction of lateral water flow.
+#[derive(Debug, Default, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
+pub(crate) struct FlowVelocity {
+    /// The x component (in world coordinates) of the flow velocity.
+    x: Volume,
+    /// The z component (in world coordinates) of the flow velocity.
+    z: Volume,
+}
+
+impl FlowVelocity {
+    /// The 0 vector of flow velocity.
+    pub(crate) const ZERO: Self = Self {
+        x: Volume::ZERO,
+        z: Volume::ZERO,
+    };
+
+    /// The magnitude of the flow velocity.
+    #[inline]
+    #[must_use]
+    pub(crate) fn magnitude(&self) -> Volume {
+        Volume((self.x.0.powi(2) + self.z.0.powi(2)).sqrt())
+    }
+
+    /// The direction of the flow velocity in radians.
+    #[inline]
+    #[must_use]
+    pub(crate) fn direction(&self) -> f32 {
+        self.z.0.atan2(self.x.0)
+    }
+
+    /// Converts a [`hexx::Direction`] and magnitude into a [`FlowVelocity`].
+    fn from_hex_direction(
+        direction: hexx::Direction,
+        magnitude: Volume,
+        map_geometry: &MapGeometry,
+    ) -> Self {
+        let angle = direction.angle(&map_geometry.layout.orientation);
+        let x = magnitude * angle.cos();
+        let z = magnitude * angle.sin();
+
+        Self { x, z }
+    }
+}
+
+impl Mul<f32> for FlowVelocity {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self {
+            x: self.x * rhs,
+            z: self.z * rhs,
+        }
+    }
+}
+
+impl Mul<FlowVelocity> for f32 {
+    type Output = FlowVelocity;
+
+    #[inline]
+    fn mul(self, rhs: FlowVelocity) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl Div<f32> for FlowVelocity {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, rhs: f32) -> Self::Output {
+        Self {
+            x: self.x / rhs,
+            z: self.z / rhs,
+        }
     }
 }
 
