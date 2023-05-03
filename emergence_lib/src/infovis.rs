@@ -528,8 +528,8 @@ impl DiscretizedDirection {
         }
 
         let degrees = radians.to_degrees().rem_euclid(360.);
-        assert!(degrees >= 0., "degrees: {}", degrees);
-        assert!(degrees <= 360., "degrees: {}", degrees);
+        assert!(degrees >= 0., "degrees: {degrees}");
+        assert!(degrees <= 360., "degrees: {degrees}");
 
         // Handle the special case of rounding up to 360 degrees
         if degrees > 345.0 {
@@ -593,7 +593,7 @@ impl DiscretizedMagnitude {
         /// Controls how much water is needed to be considered "very weak", "weak", etc.
         const SCALE_FACTOR: f32 = 1e-2;
 
-        // Controls how quickly the gap between steps increases.
+        /// Controls how quickly the gap between steps increases.
         const BASE: f32 = 2.0;
 
         DiscretizedMagnitude::discretize(volume.0, SCALE_FACTOR, BASE)
