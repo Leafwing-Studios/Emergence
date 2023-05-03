@@ -598,15 +598,27 @@ impl DiscretizedMagnitude {
         // At 0, this is a linear scale. At 10, this is a base-10 logarithmic scale.
         const BASE: f32 = 2.0;
 
-        if volume == Volume::ZERO {
+        DiscretizedMagnitude::discretize(volume.0, SCALE_FACTOR, BASE)
+    }
+
+    /// Discretizes a magnitude.
+    ///
+    /// The `scale_factor` sets the scale of the magnitude:
+    /// its value corresponds to the transition between [`DiscretizedMagnitude::VeryWeak`] and [`DiscretizedMagnitude::Weak`].
+    /// The `base` sets the base of the exponent used.
+    /// At a base of 0, this is a linear scale. At a base of 10, this is a base-10 logarithmic scale.
+    ///
+    /// Values of 0.0 or less are considered [`DiscretizedMagnitude::None`].
+    fn discretize(magnitude: f32, scale_factor: f32, base: f32) -> Self {
+        if magnitude <= 0. {
             DiscretizedMagnitude::None
-        } else if volume < Volume(SCALE_FACTOR * BASE.powf(0.)) {
+        } else if magnitude < scale_factor * base.powf(0.) {
             DiscretizedMagnitude::VeryWeak
-        } else if volume < Volume(SCALE_FACTOR * BASE.powf(1.)) {
+        } else if magnitude < scale_factor * base.powf(1.) {
             DiscretizedMagnitude::Weak
-        } else if volume < Volume(SCALE_FACTOR * BASE.powf(2.)) {
+        } else if magnitude < scale_factor * base.powf(2.) {
             DiscretizedMagnitude::Moderate
-        } else if volume < Volume(SCALE_FACTOR * BASE.powf(3.)) {
+        } else if magnitude < scale_factor * base.powf(3.) {
             DiscretizedMagnitude::Strong
         } else {
             DiscretizedMagnitude::VeryStrong
