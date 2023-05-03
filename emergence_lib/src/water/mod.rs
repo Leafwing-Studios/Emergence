@@ -233,6 +233,14 @@ impl WaterTable {
             .unwrap_or_default()
     }
 
+    /// Computes the average height of the water table.
+    #[allow(dead_code)]
+    pub(crate) fn average_height(&self, map_geometry: &MapGeometry) -> Height {
+        let total_water = self.total_water();
+        let total_area = map_geometry.valid_tile_positions().count() as f32;
+        (total_water / total_area).into_height()
+    }
+
     /// Compute the average amount of water per tile.
     pub(crate) fn average_volume(&self, map_geometry: &MapGeometry) -> Volume {
         let total_water = self.total_water();
