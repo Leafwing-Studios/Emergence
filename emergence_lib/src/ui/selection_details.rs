@@ -397,7 +397,6 @@ fn get_details(
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     depth_to_water_table: water_table.water_depth(*tile_pos),
-                    water_depth: water_table.surface_water_depth(*tile_pos),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
@@ -851,8 +850,6 @@ Output: {output}"
         pub(super) height: Height,
         /// The distance from the surface to the water table
         pub(super) depth_to_water_table: WaterDepth,
-        /// The depth of surface water at this tile
-        pub(super) water_depth: Height,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -881,7 +878,6 @@ Output: {output}"
             let tile_pos = &self.tile_pos;
             let height = &self.height;
             let depth_to_water_table = &self.depth_to_water_table;
-            let water_depth = self.water_depth;
             let signals = self.signals.display(
                 item_manifest,
                 structure_manifest,
@@ -899,7 +895,6 @@ Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
 Water Table: {depth_to_water_table}
-Water Depth: {water_depth}
 Zoning: {zoning}
 Vigor modifier: {vigor_modifier}
 Signal modifier: {signal_modifier}
