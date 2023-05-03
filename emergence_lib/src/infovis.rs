@@ -2,12 +2,14 @@
 //!
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
+use crate::{self as emergence_lib, simulation::geometry::Volume, water::FlowVelocity};
 use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
     utils::HashMap,
 };
 use core::fmt::Display;
+use emergence_macros::IterableEnum;
 
 use crate::{
     asset_management::{manifest::Id, AssetState},
@@ -71,6 +73,8 @@ pub(crate) struct TileOverlay {
     color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
     /// The materials used to visualize the distance to the water table.
     water_table_color_ramp: Vec<Handle<StandardMaterial>>,
+    /// The materials used to visualize the lateral [`FlowVelocity] of the water table.
+    flow_velocity_materials: HashMap<DiscretizedVector, Handle<StandardMaterial>>,
     /// The images to be used to display the gradient in order to create a legend.
     legends: HashMap<SignalKind, Handle<Image>>,
     /// The image used to display the gradient for the water table.
@@ -91,6 +95,8 @@ pub(crate) enum OverlayType {
     DepthToWaterTable,
     /// The height of the water table is being visualized.
     HeightOfWaterTable,
+    /// The flow velocity of the water table is being visualized.
+    VelocityOfWaterTable,
 }
 
 impl OverlayType {
@@ -144,10 +150,15 @@ impl FromWorld for TileOverlay {
         let mut image_assets = world.resource_mut::<Assets<Image>>();
         let water_table_legend = image_assets.add(water_table_legend_image);
 
+        let material_assets: &mut Assets<StandardMaterial> =
+            &mut world.resource_mut::<Assets<StandardMaterial>>();
+        let vector_field_materials = generate_vector_field_materials(material_assets);
+
         Self {
             overlay_type: OverlayType::None,
             color_ramps,
             water_table_color_ramp,
+            flow_velocity_materials: vector_field_materials,
             legends,
             water_table_legend,
         }
@@ -196,6 +207,39 @@ fn generate_color_ramp(
     }
 
     color_ramp
+}
+
+/// Generates a set of [`StandardMaterial`]s for visualizing a vector field.
+///
+/// Hue is used for direction, saturation is used for magnitude.
+fn generate_vector_field_materials(
+    material_assets: &mut Assets<StandardMaterial>,
+) -> HashMap<DiscretizedVector, Handle<StandardMaterial>> {
+    let mut materials = HashMap::default();
+    for direction in DiscretizedDirection::variants() {
+        for magnitude in DiscretizedMagnitude::variants() {
+            let discretized_vector = DiscretizedVector {
+                direction,
+                magnitude,
+            };
+
+            let hue = direction.degrees();
+            let saturation = magnitude.saturation();
+            let color = Color::hsla(hue, saturation, 0.5, 1.0);
+
+            materials.insert(
+                discretized_vector,
+                material_assets.add(StandardMaterial {
+                    base_color: color,
+                    unlit: true,
+                    alpha_mode: AlphaMode::Blend,
+                    ..Default::default()
+                }),
+            );
+        }
+    }
+
+    materials
 }
 
 /// Generates a legend image for the given color gradient.
@@ -298,6 +342,24 @@ impl TileOverlay {
         Some(self.water_table_color_ramp[color_index].clone_weak())
     }
 
+    /// Gets the material that should be used to visualize the flow of water with the provided `flow_velocity`.
+    pub(crate) fn get_flow_velocity_material(
+        &self,
+        flow_velocity: FlowVelocity,
+    ) -> Handle<StandardMaterial> {
+        let magnitude = DiscretizedMagnitude::from_water_flow_volume(flow_velocity.magnitude());
+        let direction = DiscretizedDirection::from_radians(flow_velocity.direction());
+        let discretized_vector = DiscretizedVector {
+            magnitude,
+            direction,
+        };
+
+        self.flow_velocity_materials
+            .get(&discretized_vector)
+            .unwrap()
+            .clone_weak()
+    }
+
     /// Gets the handle to the image that should be used to display the legend.
     pub(crate) fn legend_image_handle(&self, signal_kind: SignalKind) -> Handle<Image> {
         self.legends[&signal_kind].clone_weak()
@@ -356,6 +418,11 @@ fn set_overlay_material(
 
                     tile_overlay.get_water_table_material(inverted_height)
                 }
+                OverlayType::VelocityOfWaterTable => {
+                    let flow_velocity = water_table.get_flow_rate(tile_pos);
+
+                    Some(tile_overlay.get_flow_velocity_material(flow_velocity))
+                }
             };
 
             match maybe_material {
@@ -403,6 +470,145 @@ fn display_tile_overlay(
 
                 *overlay_material = new_material;
             }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// A discretized 2D vector for visualization purposes.
+struct DiscretizedVector {
+    /// The direction of the vector.
+    direction: DiscretizedDirection,
+    /// The magnitude of the vector.
+    magnitude: DiscretizedMagnitude,
+}
+
+/// A discretized direction, in map coordinate degrees.
+///
+/// This is used for visualization purposes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IterableEnum)]
+enum DiscretizedDirection {
+    /// The direction is approximately 0 degrees.
+    Zero,
+    /// The direction is approximately 30 degrees.
+    Thirty,
+    /// The direction is approximately 60 degrees.
+    Sixty,
+    /// The direction is approximately 90 degrees.
+    Ninety,
+    /// The direction is approximately 120 degrees.
+    OneTwenty,
+    /// The direction is approximately 150 degrees.
+    OneFifty,
+    /// The direction is approximately 180 degrees.
+    OneEighty,
+    /// The direction is approximately 210 degrees.
+    TwoTen,
+    /// The direction is approximately 240 degrees.
+    TwoForty,
+    /// The direction is approximately 270 degrees.
+    TwoSeventy,
+    /// The direction is approximately 300 degrees.
+    ThreeHundred,
+    /// The direction is approximately 330 degrees.
+    ThreeThirty,
+}
+
+impl DiscretizedDirection {
+    /// Converts a direction in radians to the nearest discretized direction.
+    fn from_radians(radians: f32) -> Self {
+        let degrees = radians.to_degrees();
+        assert!(degrees >= 0.);
+        assert!(degrees < 360.);
+
+        // Handle the special case of rounding up to 360 degrees
+        if degrees > 345.0 {
+            return DiscretizedDirection::Zero;
+        }
+
+        // PERF: we could use a horrible match statement here, but this is more readable
+        let mut nearest = DiscretizedDirection::Zero;
+        let mut nearest_distance = 360.;
+
+        for direction in DiscretizedDirection::variants() {
+            let distance = (degrees - direction.degrees()).abs();
+            if distance < nearest_distance {
+                nearest = direction;
+                nearest_distance = distance;
+            }
+        }
+
+        nearest
+    }
+
+    /// Returns the angle in degrees of this discretized direction.
+    fn degrees(&self) -> f32 {
+        match self {
+            DiscretizedDirection::Zero => 0.,
+            DiscretizedDirection::Thirty => 30.,
+            DiscretizedDirection::Sixty => 60.,
+            DiscretizedDirection::Ninety => 90.,
+            DiscretizedDirection::OneTwenty => 120.,
+            DiscretizedDirection::OneFifty => 150.,
+            DiscretizedDirection::OneEighty => 180.,
+            DiscretizedDirection::TwoTen => 210.,
+            DiscretizedDirection::TwoForty => 240.,
+            DiscretizedDirection::TwoSeventy => 270.,
+            DiscretizedDirection::ThreeHundred => 300.,
+            DiscretizedDirection::ThreeThirty => 330.,
+        }
+    }
+}
+
+/// A discretized magnitude of something being visualized.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, IterableEnum)]
+enum DiscretizedMagnitude {
+    /// A magnitude of exactly zero.
+    None,
+    /// A very weak magnitude.
+    VeryWeak,
+    /// A weak magnitude.
+    Weak,
+    /// A moderate magnitude.
+    Moderate,
+    /// A strong magnitude.
+    Strong,
+    /// A very strong magnitude.
+    VeryStrong,
+}
+
+impl DiscretizedMagnitude {
+    /// Discretizes a magnitude of water flow into a discretized magnitude.
+    fn from_water_flow_volume(volume: Volume) -> DiscretizedMagnitude {
+        /// Controls how much water is needed to be considered "very weak", "weak", etc.
+        const SCALE_FACTOR: f32 = 1e-2;
+
+        if volume == Volume::ZERO {
+            DiscretizedMagnitude::None
+        } else if volume < Volume(SCALE_FACTOR * 1e0) {
+            DiscretizedMagnitude::VeryWeak
+        } else if volume < Volume(SCALE_FACTOR * 1e1) {
+            DiscretizedMagnitude::Weak
+        } else if volume < Volume(SCALE_FACTOR * 1e2) {
+            DiscretizedMagnitude::Moderate
+        } else if volume < Volume(SCALE_FACTOR * 1e3) {
+            DiscretizedMagnitude::Strong
+        } else {
+            DiscretizedMagnitude::VeryStrong
+        }
+    }
+
+    /// Returns the saturation of this discretized magnitude.
+    ///
+    /// Weaker magnitudes are less saturated, and stronger magnitudes are more saturated.
+    fn saturation(&self) -> f32 {
+        match self {
+            DiscretizedMagnitude::None => 0.,
+            DiscretizedMagnitude::VeryWeak => 0.2,
+            DiscretizedMagnitude::Weak => 0.4,
+            DiscretizedMagnitude::Moderate => 0.6,
+            DiscretizedMagnitude::Strong => 0.8,
+            DiscretizedMagnitude::VeryStrong => 1.,
         }
     }
 }
