@@ -45,7 +45,7 @@ pub(crate) struct WaterConfig {
     /// The amount of water stored in a tile of soil relative to a pure tile of water.
     ///
     /// This value should be less than 1.
-    soil_water_capacity: f32,
+    relative_soil_water_capacity: f32,
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
@@ -63,7 +63,7 @@ impl WaterConfig {
         emission_rate: Volume(1e3),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
-        soil_water_capacity: 0.3,
+        relative_soil_water_capacity: 0.3,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
     };
@@ -77,7 +77,7 @@ impl WaterConfig {
         emission_rate: Volume(0.0),
         emission_pressure: Height(0.0),
         water_items_per_tile: 0.0,
-        soil_water_capacity: 0.5,
+        relative_soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
     };
@@ -136,6 +136,12 @@ impl Plugin for WaterPlugin {
                     )
                         .chain()
                         .in_set(WaterSet::VerticalWaterMovement),
+                )
+                .add_system(
+                    // It is important that the computed height of the water is accurate before we start moving it around.
+                    update_water_depth
+                        .after(WaterSet::VerticalWaterMovement)
+                        .before(WaterSet::HorizontalWaterMovement),
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
                 .add_systems(
@@ -257,6 +263,36 @@ pub(crate) enum WaterDepth {
     Flooded(Height),
 }
 
+impl WaterDepth {
+    /// Computes the [`WaterDepth`] for a single tile.
+    #[inline]
+    #[must_use]
+    fn compute(
+        water_volume: Volume,
+        soil_height: Height,
+        relative_soil_water_capacity: f32,
+    ) -> WaterDepth {
+        if water_volume == Volume::ZERO {
+            return WaterDepth::Dry;
+        }
+
+        let max_volume_stored_by_soil =
+            Volume::from_height(soil_height * relative_soil_water_capacity);
+
+        if max_volume_stored_by_soil >= water_volume {
+            // If the soil water capacity is low, then we will need more height to store the same volume of water.
+            let height_of_water_stored_by_soil =
+                water_volume.into_height() / relative_soil_water_capacity;
+
+            let depth = soil_height - height_of_water_stored_by_soil;
+            WaterDepth::Underground(depth)
+        } else {
+            let above_surface_volume = water_volume - max_volume_stored_by_soil;
+            WaterDepth::Flooded(above_surface_volume.into_height())
+        }
+    }
+}
+
 impl Display for WaterDepth {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -268,21 +304,23 @@ impl Display for WaterDepth {
 }
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
-fn update_water_depth(mut water_table: ResMut<WaterTable>, map_geometry: Res<MapGeometry>) {
+fn update_water_depth(
+    mut water_table: ResMut<WaterTable>,
+    water_config: Res<WaterConfig>,
+    map_geometry: Res<MapGeometry>,
+) {
     water_table.water_depth.clear();
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        let tile_height = map_geometry.get_height(tile_pos).unwrap();
+        let soil_height = map_geometry.get_height(tile_pos).unwrap();
         let water_volume = water_table.get_volume(tile_pos);
-        let water_height = water_volume.into_height();
 
-        let water_depth = if water_height == Height::ZERO {
-            WaterDepth::Dry
-        } else if water_height >= tile_height {
-            WaterDepth::Flooded(water_height - tile_height)
-        } else {
-            WaterDepth::Underground(tile_height - water_height)
-        };
+        let water_depth = WaterDepth::compute(
+            water_volume,
+            soil_height,
+            // TODO: vary this based on soil type
+            water_config.relative_soil_water_capacity,
+        );
 
         water_table.water_depth.insert(tile_pos, water_depth);
     }
