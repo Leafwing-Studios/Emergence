@@ -163,6 +163,8 @@ impl Plugin for WaterPlugin {
 /// If it is above ground, it will pool on top of the tile it is on.
 #[derive(Resource, Default, PartialEq, Clone, Debug)]
 pub struct WaterTable {
+    /// The height of the ocean.
+    ocean_height: Height,
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
     /// The rate and direction of lateral water flow at each tile.
@@ -181,7 +183,7 @@ impl WaterTable {
 
     /// Gets the height of the water table at the given tile.
     pub(crate) fn get_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
 
         match self.water_depth(tile_pos) {
             WaterDepth::Dry => Height::ZERO,
@@ -211,7 +213,10 @@ impl WaterTable {
 
     /// Get the depth of the water table at the given tile relative to the soil surface.
     pub(crate) fn water_depth(&self, tile_pos: TilePos) -> WaterDepth {
-        self.water_depth.get(&tile_pos).copied().unwrap_or_default()
+        self.water_depth
+            .get(&tile_pos)
+            .copied()
+            .unwrap_or(WaterDepth::Flooded(self.ocean_height))
     }
 
     /// Sets the total volume of water at the given tile.
@@ -337,8 +342,11 @@ fn update_water_depth(
 ) {
     water_table.water_depth.clear();
 
+    // Critically, the depth of tiles *outside* of the map is not updated here.
+    // Instead, they are implicitly treated as the ocean depth.
+    // As a result, the ocean acts as both an infinite source and sink for water.
     for tile_pos in map_geometry.valid_tile_positions() {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
         let water_volume = water_table.get_volume(tile_pos);
 
         let water_depth = WaterDepth::compute(

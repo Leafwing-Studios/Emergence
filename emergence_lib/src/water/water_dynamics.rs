@@ -152,7 +152,10 @@ fn proposed_lateral_flow_to_neighbors(
     water_table: &WaterTable,
 ) -> HashMap<TilePos, Volume> {
     let water_height = water_table.get_height(tile_pos, map_geometry);
-    let neighbors = tile_pos.all_neighbors(map_geometry);
+
+    // Critically, this includes neighbors that are not valid tiles.
+    // This is important because we need to be able to transfer water off the edge of the map.
+    let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
 
     for neighbor in neighbors {
@@ -161,8 +164,8 @@ fn proposed_lateral_flow_to_neighbors(
         let proposed_water_transfer = lateral_flow(
             base_water_transfer_amount,
             water_config,
-            map_geometry.get_height(tile_pos).unwrap(),
-            map_geometry.get_height(neighbor).unwrap(),
+            map_geometry.get_height(tile_pos).unwrap_or_default(),
+            map_geometry.get_height(neighbor).unwrap_or_default(),
             water_height,
             neighbor_water_height,
         );

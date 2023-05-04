@@ -261,7 +261,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in tile_pos.all_neighbors(map_geometry) {
+        for neighbor in tile_pos.all_valid_neighbors(map_geometry) {
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 
@@ -935,7 +935,7 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
+        for neighbor in TilePos::ZERO.all_valid_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -963,7 +963,7 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
+        for neighbor in TilePos::ZERO.all_valid_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -984,7 +984,7 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
         let item_manifest = test_manifest();
 
-        for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
+        for neighbor in TilePos::ZERO.all_valid_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -1010,7 +1010,7 @@ mod tests {
             SignalStrength(0.5),
         );
 
-        for neighbor in TilePos::ZERO.all_neighbors(&map_geometry) {
+        for neighbor in TilePos::ZERO.all_valid_neighbors(&map_geometry) {
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
         }
 

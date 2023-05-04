@@ -149,10 +149,25 @@ impl TilePos {
         }
     }
 
+    /// All neighbors of `self`.
+    ///
+    /// # Warning
+    ///
+    /// This includes neighbors that are not on the map.
+    /// Use [`TilePos::all_valid_neighbors`] to get only valid neighbors.
+    #[inline]
+    #[must_use]
+    pub(crate) fn all_neighbors(&self) -> impl IntoIterator<Item = TilePos> {
+        self.hex.all_neighbors().map(|hex| TilePos { hex })
+    }
+
     /// All adjacent tiles that are on the map.
     #[inline]
     #[must_use]
-    pub fn all_neighbors(&self, map_geometry: &MapGeometry) -> impl IntoIterator<Item = TilePos> {
+    pub fn all_valid_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&pos| map_geometry.is_valid(pos));
