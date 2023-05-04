@@ -119,6 +119,10 @@ fn update_ticks_this_frame(mut ticks: ResMut<TicksThisFrame>, frame_count: Res<F
 }
 
 /// Stops
-fn max_ticks_not_reached(ticks: Res<TicksThisFrame>) -> bool {
+fn max_ticks_not_reached(frame_count: Res<FrameCount>, ticks: Res<TicksThisFrame>) -> bool {
+    if frame_count.is_changed() {
+        return true;
+    }
+
     ticks.current < ticks.max
 }
