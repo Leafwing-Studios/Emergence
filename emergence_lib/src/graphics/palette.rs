@@ -7,7 +7,7 @@ pub(crate) mod infovis {
     use crate::signals::SignalKind;
 
     /// The alpha value used for selection/hovering/other UI overlay
-    const OVERLAY_ALPHA: f32 = 0.5;
+    pub(crate) const OVERLAY_ALPHA: f32 = 0.5;
 
     /// The hue of selected objects
     pub(crate) const SELECTION_HUE: f32 = 100.;

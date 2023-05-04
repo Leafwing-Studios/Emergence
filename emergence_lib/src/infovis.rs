@@ -3,8 +3,10 @@
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
 use crate::{
-    self as emergence_lib, graphics::palette::infovis::NEUTRAL_INFOVIS_COLOR,
-    simulation::geometry::Volume, water::FlowVelocity,
+    self as emergence_lib,
+    graphics::palette::infovis::{NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA},
+    simulation::geometry::Volume,
+    water::FlowVelocity,
 };
 use bevy::{
     prelude::*,
@@ -271,7 +273,7 @@ fn generate_vector_field_materials(
 
             let hue = direction.degrees();
             let saturation = magnitude.saturation();
-            let color = Color::hsla(hue, saturation, 0.5, 1.0);
+            let color = Color::hsla(hue, saturation, 0.5, OVERLAY_ALPHA);
 
             materials.insert(
                 discretized_vector,
