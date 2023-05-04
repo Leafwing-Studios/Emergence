@@ -9,6 +9,7 @@ use core::ops::{Div, Mul};
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 
+use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
     items::item_manifest::{Item, ItemManifest},
@@ -19,6 +20,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
 };
 
+use self::ocean::{tides, TideSettings};
 use self::{
     emitters::{add_water_emitters, produce_water_from_emitters},
     roots::draw_water_from_roots,
@@ -26,6 +28,7 @@ use self::{
 };
 
 pub mod emitters;
+mod ocean;
 pub mod roots;
 mod water_dynamics;
 
@@ -58,6 +61,8 @@ pub(crate) struct WaterConfig {
     lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
     soil_lateral_flow_ratio: f32,
+    /// Controls the behavior of the tides.
+    tide_settings: TideSettings,
 }
 
 impl WaterConfig {
@@ -72,6 +77,11 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.3,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
+        tide_settings: TideSettings {
+            amplitude: Height(3.0),
+            period: Days(0.3),
+            minimum: Height(0.1),
+        },
     };
 
     /// A configuration that disables all water behavior.
@@ -86,6 +96,11 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
+        tide_settings: TideSettings {
+            amplitude: Height(0.0),
+            period: Days(1.0),
+            minimum: Height(0.0),
+        },
     };
 
     /// Converts a number of items of water to a [`Volume`] of water.
@@ -131,6 +146,7 @@ impl Plugin for WaterPlugin {
                 )
                 .add_systems(
                     (
+                        tides,
                         produce_water_from_emitters,
                         precipitation,
                         // This system pulls in a ton of dependencies, so it's best to fail silently when they don't exist
