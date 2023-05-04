@@ -2,10 +2,14 @@
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::simulation::{
-    geometry::{Height, MapGeometry, TilePos, Volume},
-    time::InGameTime,
-    weather::CurrentWeather,
+use crate::{
+    asset_management::manifest::Id,
+    simulation::{
+        geometry::{Height, MapGeometry, TilePos, Volume},
+        time::InGameTime,
+        weather::CurrentWeather,
+    },
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
 use super::{FlowVelocity, WaterConfig, WaterTable};
@@ -13,6 +17,8 @@ use super::{FlowVelocity, WaterConfig, WaterTable};
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
     mut water_table: ResMut<WaterTable>,
+    terrain_query: Query<&Id<Terrain>>,
+    terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
@@ -30,7 +36,11 @@ pub(super) fn evaporation(
         let total_evaporated = if water_table.surface_water_depth(tile_pos) > Height::ZERO {
             Volume(evaporation_rate)
         } else {
-            Volume(evaporation_rate * water_config.soil_evaporation_ratio)
+            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+            let terrain_id = *terrain_query.get(terrain_entity).unwrap();
+            let evaporation_ratio = terrain_manifest.get(terrain_id).water_evaporation_rate;
+
+            Volume(evaporation_rate * evaporation_ratio)
         };
 
         water_table.remove(tile_pos, total_evaporated);
@@ -62,6 +72,8 @@ pub(super) fn precipitation(
 /// Moves water from one tile to another, according to the relative height of the water table.
 pub(super) fn horizontal_water_movement(
     mut water_table: ResMut<WaterTable>,
+    terrain_query: Query<&Id<Terrain>>,
+    terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
@@ -96,6 +108,8 @@ pub(super) fn horizontal_water_movement(
             &water_config,
             &map_geometry,
             &water_table,
+            &terrain_query,
+            &terrain_manifest,
         );
 
         // Ensure that we divide the water evenly between all neighbors
@@ -137,10 +151,15 @@ pub(super) fn horizontal_water_movement(
                 let neighbor_tile_height =
                     map_geometry.get_height(valid_neighbor).unwrap_or_default();
                 let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
+                let neighbor_terrain_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
+                let neighbor_terrain_id = *terrain_query.get(neighbor_terrain_entity).unwrap();
+                let neighbor_soil_lateral_flow_ratio =
+                    terrain_manifest.get(neighbor_terrain_id).water_flow_rate;
 
                 let proposed_water_transfer = lateral_flow(
                     base_water_transfer_amount,
-                    &water_config,
+                    1.0,
+                    neighbor_soil_lateral_flow_ratio,
                     Height::ZERO,
                     neighbor_tile_height,
                     water_table.ocean_height,
@@ -178,6 +197,8 @@ fn proposed_lateral_flow_to_neighbors(
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
     water_table: &WaterTable,
+    terrain_query: &Query<&Id<Terrain>>,
+    terrain_manifest: &TerrainManifest,
 ) -> HashMap<TilePos, Volume> {
     let water_height = water_table.get_height(tile_pos, map_geometry);
 
@@ -185,6 +206,9 @@ fn proposed_lateral_flow_to_neighbors(
     // This is important because we need to be able to transfer water off the edge of the map.
     let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
+    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+    let terrain_id = *terrain_query.get(terrain_entity).unwrap();
+    let soil_lateral_flow_ratio = terrain_manifest.get(terrain_id).water_flow_rate;
 
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
@@ -192,11 +216,22 @@ fn proposed_lateral_flow_to_neighbors(
             continue;
         }
 
+        let neighbor_soil_lateral_flow_ratio =
+            if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor) {
+                let neighbor_id = *terrain_query.get(neigbor_entity).unwrap();
+                terrain_manifest.get(neighbor_id).water_flow_rate
+            } else {
+                // If the neighbor is not a valid tile, then it is an ocean tile.
+                // This should never have soil, but if it does, let it flow like surface water.
+                1.0
+            };
+
         let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
 
         let proposed_water_transfer = lateral_flow(
             base_water_transfer_amount,
-            water_config,
+            soil_lateral_flow_ratio,
+            neighbor_soil_lateral_flow_ratio,
             map_geometry.get_height(tile_pos).unwrap_or_default(),
             map_geometry.get_height(neighbor).unwrap_or_default(),
             water_height,
@@ -214,7 +249,8 @@ fn proposed_lateral_flow_to_neighbors(
 #[must_use]
 fn lateral_flow(
     base_water_transfer_amount: f32,
-    water_config: &WaterConfig,
+    soil_lateral_flow_ratio: f32,
+    neighbor_soil_lateral_flow_ratio: f32,
     tile_height: Height,
     neighbor_tile_height: Height,
     water_height: Height,
@@ -225,8 +261,6 @@ fn lateral_flow(
     assert!(neighbor_water_height >= Height::ZERO);
     assert!(tile_height >= Height::ZERO);
     assert!(neighbor_tile_height >= Height::ZERO);
-    assert!(water_config.soil_lateral_flow_ratio >= 0.);
-    assert!(water_config.soil_lateral_flow_ratio <= 1.);
 
     // If the water is higher than the neighbor, move water from the tile to the neighbor
     // at a rate proportional to the height difference.
@@ -246,8 +280,9 @@ fn lateral_flow(
     // Water flows more easily between tiles that are both flooded.
     let medium_coefficient = match (surface_water_present, neighbor_surface_water_present) {
         (true, true) => 1.,
-        (false, false) => water_config.soil_lateral_flow_ratio,
-        _ => (1. + water_config.soil_lateral_flow_ratio) / 2.,
+        (false, false) => (soil_lateral_flow_ratio + neighbor_soil_lateral_flow_ratio) / 2.,
+        (true, false) => (1. + soil_lateral_flow_ratio) / 2.,
+        (false, true) => (1. + neighbor_soil_lateral_flow_ratio) / 2.,
     };
 
     let proposed_amount = Volume::from_height(
@@ -488,7 +523,6 @@ mod tests {
                         water_table_strategy,
                         water_config: WaterConfig {
                             evaporation_rate: Height(1.0),
-                            soil_evaporation_ratio: 0.5,
                             ..WaterConfig::NULL
                         },
                         weather: Weather::Clear,
@@ -580,7 +614,6 @@ mod tests {
                         emission_rate: Volume(1.0),
                         emission_pressure: Height(5.0),
                         lateral_flow_rate: 1000.,
-                        soil_lateral_flow_ratio: 0.5,
                         ..WaterConfig::NULL
                     },
                     weather: Weather::Clear,
@@ -806,14 +839,12 @@ mod tests {
 
     #[test]
     fn lateral_flow_moves_water_from_high_to_low() {
-        let water_config = WaterConfig {
-            lateral_flow_rate: 1.0,
-            ..WaterConfig::NULL
-        };
+        let soil_lateral_flow_ratio = 0.7;
 
         let water_transferred = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(1.0),
             Height(1.0),
             Height(2.0),
@@ -829,14 +860,12 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_from_low_to_high() {
-        let water_config = WaterConfig {
-            lateral_flow_rate: 1.0,
-            ..WaterConfig::NULL
-        };
+        let soil_lateral_flow_ratio = 0.3;
 
         let water_transferred = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(1.0),
             Height(1.0),
             Height(1.0),
@@ -848,14 +877,12 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_at_equal_heights() {
-        let water_config = WaterConfig {
-            lateral_flow_rate: 1.0,
-            ..WaterConfig::NULL
-        };
+        let soil_lateral_flow_ratio = 0.4;
 
         let water_transferred = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(1.0),
             Height(1.0),
             Height(1.0),
@@ -867,18 +894,15 @@ mod tests {
 
     #[test]
     fn surface_water_flows_faster() {
-        let water_config: WaterConfig = WaterConfig {
-            lateral_flow_rate: 1.0,
-            soil_lateral_flow_ratio: 0.1,
-            ..WaterConfig::NULL
-        };
-
         let water_height = Height(2.0);
         let neighbor_water_height = Height(1.0);
+        // This must be less than 1.0 for the test to be valid
+        let soil_lateral_flow_ratio = 0.5;
 
         let surface_water_flow = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(0.0),
             Height(0.0),
             water_height,
@@ -887,7 +911,8 @@ mod tests {
 
         let subsurface_water_flow = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(2.0),
             Height(2.0),
             water_height,
@@ -896,7 +921,8 @@ mod tests {
 
         let surface_to_soil_flow = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(0.0),
             Height(2.0),
             water_height,
@@ -905,7 +931,8 @@ mod tests {
 
         let soil_to_surface_flow = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(2.0),
             Height(0.0),
             water_height,
@@ -931,14 +958,12 @@ mod tests {
 
     #[test]
     fn lateral_water_flows_faster_with_larger_height_difference() {
-        let water_config: WaterConfig = WaterConfig {
-            lateral_flow_rate: 1.0,
-            ..WaterConfig::NULL
-        };
+        let soil_lateral_flow_ratio = 0.1;
 
         let small_height_difference = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(1.0),
             Height(1.0),
             Height(2.0),
@@ -947,7 +972,8 @@ mod tests {
 
         let large_height_difference = lateral_flow(
             1.0,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             Height(1.0),
             Height(1.0),
             Height(3.0),
@@ -964,12 +990,8 @@ mod tests {
 
     #[test]
     fn lateral_flow_eventually_equalizes_height_differences() {
-        let water_config: WaterConfig = WaterConfig {
-            lateral_flow_rate: 1.0,
-            ..WaterConfig::NULL
-        };
-
         let base_water_transfer_amount = 0.1;
+        let soil_lateral_flow_ratio = 0.1;
 
         let mut water_height_a = Height(2.0);
         let mut water_height_b = Height(1.0);
@@ -982,7 +1004,8 @@ mod tests {
         for _ in 0..100 {
             let water_transferred_a_to_b = lateral_flow(
                 base_water_transfer_amount,
-                &water_config,
+                soil_lateral_flow_ratio,
+                soil_lateral_flow_ratio,
                 tile_height_a,
                 tile_height_b,
                 water_height_a,
@@ -991,7 +1014,8 @@ mod tests {
 
             let water_transferred_b_to_a = lateral_flow(
                 base_water_transfer_amount,
-                &water_config,
+                soil_lateral_flow_ratio,
+                soil_lateral_flow_ratio,
                 tile_height_b,
                 tile_height_a,
                 water_height_b,
@@ -1034,10 +1058,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_should_not_result_in_higher_neighbor() {
-        let water_config: WaterConfig = WaterConfig {
-            lateral_flow_rate: 1e5,
-            ..WaterConfig::NULL
-        };
+        let soil_lateral_flow_ratio = 1.0;
 
         // This is a very high transfer rate, to ensure that the water transfer is maximized
         let base_water_transfer_amount = 1e10;
@@ -1050,7 +1071,8 @@ mod tests {
 
         let water_transferred_a_to_b = lateral_flow(
             base_water_transfer_amount,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             tile_height_a,
             tile_height_b,
             water_height_a,
@@ -1059,7 +1081,8 @@ mod tests {
 
         let water_transferred_b_to_a = lateral_flow(
             base_water_transfer_amount,
-            &water_config,
+            soil_lateral_flow_ratio,
+            soil_lateral_flow_ratio,
             tile_height_b,
             tile_height_a,
             water_height_b,
