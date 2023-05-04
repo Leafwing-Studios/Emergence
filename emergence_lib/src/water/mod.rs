@@ -148,6 +148,7 @@ impl Plugin for WaterPlugin {
                         .in_set(SimulationSet)
                         .chain(),
                 )
+                .add_system(cache_water_volume.before(WaterSet::VerticalWaterMovement))
                 .add_systems(
                     (
                         tides,
@@ -171,8 +172,7 @@ impl Plugin for WaterPlugin {
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
                 .add_systems(
-                    (add_water_emitters, update_water_depth, cache_water_volume)
-                        .in_set(WaterSet::Synchronization),
+                    (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
                 );
         });
     }
