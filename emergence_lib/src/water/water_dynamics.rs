@@ -128,6 +128,31 @@ pub(super) fn horizontal_water_movement(
         }
     }
 
+    // Flow back in from the ocean tiles
+    // Flowing out to ocean tiles is implicitly handled by the above code: missing values are treated as if they are ocean tiles
+    for tile_pos in map_geometry.ocean_tiles() {
+        // Don't bother flowing to and from ocean tiles
+        for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
+            let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap_or_default();
+            let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
+
+            let proposed_water_transfer = lateral_flow(
+                base_water_transfer_amount,
+                &water_config,
+                Height::ZERO,
+                neighbor_tile_height,
+                water_table.ocean_height,
+                neighbor_water_height,
+            );
+
+            if proposed_water_transfer > Volume::ZERO {
+                addition_map.entry(valid_neighbor).and_modify(|v| {
+                    *v += proposed_water_transfer;
+                });
+            }
+        }
+    }
+
     for (tile_pos, volume) in addition_map {
         water_table.add(tile_pos, volume);
     }

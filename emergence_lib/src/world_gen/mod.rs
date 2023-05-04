@@ -148,7 +148,7 @@ impl Default for GenerationConfig {
 
         GenerationConfig {
             map_radius: 30,
-            number_of_burn_in_ticks: 1e2 as u32,
+            number_of_burn_in_ticks: 0,
             unit_chances,
             landmark_chances,
             structure_chances,
