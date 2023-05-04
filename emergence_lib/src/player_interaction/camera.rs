@@ -59,6 +59,11 @@ impl Plugin for CameraPlugin {
 /// Should be between the default values of [`CameraSettings`] `min_zoom` and `max_zoom`.
 const STARTING_DISTANCE_FROM_ORIGIN: f32 = 30.;
 
+/// The maximum amount of time that can be treated as a single frame.
+///
+/// This prevents the camera from moving too far in a single frame when the game is lagging.
+const MAX_FRAME_TIME: f32 = 1. / 20.;
+
 /// Spawns a [`Camera3dBundle`] and associated camera components.
 fn setup_camera(mut commands: Commands) {
     let focus = CameraFocus::default();
@@ -175,6 +180,8 @@ pub(crate) enum CameraMode {
 mod speed {
     use bevy::utils::Duration;
 
+    use super::MAX_FRAME_TIME;
+
     /// Controls the rate of camera movement.
     ///
     /// Minimum speed is greater than
@@ -212,12 +219,13 @@ mod speed {
 
         /// The amount that has changed in the elapsed `delta_time`.
         pub(super) fn delta(&mut self, delta_time: Duration) -> f32 {
-            let delta_v = self.acceleration * delta_time.as_secs_f32();
+            let delta_time = delta_time.as_secs_f32().min(MAX_FRAME_TIME);
 
+            let delta_v = self.acceleration * delta_time;
             let proposed = self.current_speed + delta_v;
             self.current_speed = proposed.clamp(self.min, self.max);
 
-            self.current_speed * delta_time.as_secs_f32()
+            self.current_speed * delta_time
         }
 
         /// Resets the current speed to the minimum value
