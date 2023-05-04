@@ -97,6 +97,8 @@ pub(crate) enum OverlayType {
     HeightOfWaterTable,
     /// The flow velocity of the water table is being visualized.
     VelocityOfWaterTable,
+    /// The net increase or decrease in water volume is being visualized.
+    NetWater,
 }
 
 impl OverlayType {
@@ -428,6 +430,17 @@ fn set_overlay_material(
                     let flow_velocity = water_table.get_flow_rate(tile_pos);
 
                     tile_overlay.get_flow_velocity_material(flow_velocity)
+                }
+                OverlayType::NetWater => {
+                    let net_water = water_table.flux(tile_pos);
+                    // FIXME: use a better scale rather than just repurposing the water table color ramp
+                    let height = net_water.into_height();
+                    let depth = match height {
+                        height if height < Height::ZERO => WaterDepth::Underground(-1. * height),
+                        height => WaterDepth::Flooded(height),
+                    };
+
+                    tile_overlay.get_water_table_material(depth)
                 }
             };
 
