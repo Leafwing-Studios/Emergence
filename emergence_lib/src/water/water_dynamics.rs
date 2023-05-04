@@ -1029,4 +1029,52 @@ mod tests {
             water_difference
         );
     }
+
+    #[test]
+    fn lateral_flow_should_not_result_in_higher_neighbor() {
+        let water_config: WaterConfig = WaterConfig {
+            lateral_flow_rate: 1e5,
+            ..WaterConfig::NULL
+        };
+
+        // This is a very high transfer rate, to ensure that the water transfer is maximized
+        let base_water_transfer_amount = 1e10;
+
+        let mut water_height_a = Height(2.0);
+        let mut water_height_b = Height(1.0);
+
+        let tile_height_a = Height(0.0);
+        let tile_height_b = Height(0.0);
+
+        let water_transferred_a_to_b = lateral_flow(
+            base_water_transfer_amount,
+            &water_config,
+            tile_height_a,
+            tile_height_b,
+            water_height_a,
+            water_height_b,
+        );
+
+        let water_transferred_b_to_a = lateral_flow(
+            base_water_transfer_amount,
+            &water_config,
+            tile_height_b,
+            tile_height_a,
+            water_height_b,
+            water_height_a,
+        );
+
+        water_height_a += water_transferred_b_to_a.into_height();
+        water_height_a -= water_transferred_a_to_b.into_height();
+
+        water_height_b += water_transferred_a_to_b.into_height();
+        water_height_b -= water_transferred_b_to_a.into_height();
+
+        assert!(
+            water_height_a >= water_height_b,
+            "Water height A ({:?}) should be greater than or equal to water height B ({:?}) as it started higher.",
+            water_height_a,
+            water_height_b
+        );
+    }
 }
