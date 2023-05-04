@@ -77,16 +77,15 @@ fn can_serialize_item_manifest() {
 fn can_serialize_terrain_manifest() {
     // Create a new raw terrain manifest
     let raw_terrain_manifest = RawTerrainManifest {
-        terrain_types: HashMap::from_iter(vec![
-            (
-                "test_terrain".to_string(),
-                TerrainData { walking_speed: 1.0 },
-            ),
-            (
-                "test_terrain2".to_string(),
-                TerrainData { walking_speed: 2.0 },
-            ),
-        ]),
+        terrain_types: HashMap::from_iter(vec![(
+            "test_terrain".to_string(),
+            TerrainData {
+                walking_speed: 1.0,
+                water_capacity: 0.3,
+                water_flow_rate: 0.1,
+                water_evaporation_rate: 0.2,
+            },
+        )]),
     };
 
     // Serialize it

@@ -25,6 +25,21 @@ pub struct TerrainData {
     ///
     /// Note that this only affects the walking speed of units that are not on a path.
     pub walking_speed: f32,
+    /// The amount of water that can be stored in one volume of this terrain type.
+    ///
+    /// This is relative to empty space, which has a capacity of 1.0.
+    /// Generally this value should be between 0.05 and 0.5.
+    pub water_capacity: f32,
+    /// The relative rate at which water flows through this terrain type.
+    ///
+    /// This is relative to empty space, which has a flow rate of 1.0.
+    /// Generally this value should be between 0.05 and 0.3.
+    pub water_flow_rate: f32,
+    /// The evaporation rate of water from this terrain type.
+    ///
+    /// This is relative to empty space, which has an evaporation rate of 1.0.
+    /// Generally this value should be between 0.05 and 0.5.
+    pub water_evaporation_rate: f32,
 }
 
 /// The [`TerrainManifest`] as seen in the manifest file.
