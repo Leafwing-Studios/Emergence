@@ -2,7 +2,10 @@
 //!
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
-use crate::{self as emergence_lib, simulation::geometry::Volume, water::FlowVelocity};
+use crate::{
+    self as emergence_lib, graphics::palette::infovis::NEUTRAL_INFOVIS_COLOR,
+    simulation::geometry::Volume, water::FlowVelocity,
+};
 use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
@@ -73,12 +76,16 @@ pub(crate) struct TileOverlay {
     signal_color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
     /// The materials used to visualize the distance to the water table.
     water_table_color_ramp: Vec<Handle<StandardMaterial>>,
+    /// The materials used to visualize the net change in water volume.
+    flux_color_ramp: Vec<Handle<StandardMaterial>>,
     /// The materials used to visualize vector fields.
     vector_field_materials: HashMap<DiscretizedVector, Handle<StandardMaterial>>,
     /// The images to be used to display the gradient in order to create a legend.
-    legends: HashMap<SignalKind, Handle<Image>>,
+    signal_legends: HashMap<SignalKind, Handle<Image>>,
     /// The image used to display the gradient for the water table.
     water_table_legend: Handle<Image>,
+    /// The image used to display the gradient for the net change in water volume.
+    flux_legend: Handle<Image>,
 }
 
 /// The type of information that is being visualized by the overlay.
@@ -97,6 +104,8 @@ pub(crate) enum OverlayType {
     HeightOfWaterTable,
     /// The flow velocity of the water table is being visualized.
     VelocityOfWaterTable,
+    /// The net increase or decrease in water volume is being visualized.
+    NetWater,
 }
 
 impl OverlayType {
@@ -150,6 +159,20 @@ impl FromWorld for TileOverlay {
         let mut image_assets = world.resource_mut::<Assets<Image>>();
         let water_table_legend = image_assets.add(water_table_legend_image);
 
+        // Flux
+        let flux_colors = generate_color_bigradient(
+            WATER_TABLE_COLOR_HIGH,
+            WATER_TABLE_COLOR_LOW,
+            Self::N_COLORS,
+        );
+        let material_assets: &mut Assets<StandardMaterial> =
+            &mut world.resource_mut::<Assets<StandardMaterial>>();
+        let flux_color_ramp = generate_color_ramp(&flux_colors, material_assets);
+        let flux_legend_image = generate_legend(&flux_colors, Self::LEGEND_WIDTH);
+        let mut image_assets = world.resource_mut::<Assets<Image>>();
+        let flux_legend = image_assets.add(flux_legend_image);
+
+        // Vector fields
         let material_assets: &mut Assets<StandardMaterial> =
             &mut world.resource_mut::<Assets<StandardMaterial>>();
         let vector_field_materials = generate_vector_field_materials(material_assets);
@@ -158,9 +181,11 @@ impl FromWorld for TileOverlay {
             overlay_type: OverlayType::None,
             signal_color_ramps: color_ramps,
             water_table_color_ramp,
+            flux_color_ramp,
             vector_field_materials,
-            legends,
+            signal_legends: legends,
             water_table_legend,
+            flux_legend,
         }
     }
 }
@@ -188,6 +213,27 @@ fn generate_color_gradient(color_low: Color, color_high: Color, n_steps: usize) 
         let color = Color::hsla(hue, saturation, lightness, alpha);
         colors.push(color);
     }
+    colors
+}
+
+/// Create a linearly interpolated color gradient between the two given colors, with a neutral white in the middle.
+fn generate_color_bigradient(color_low: Color, color_high: Color, n_steps: usize) -> Vec<Color> {
+    let mut colors = Vec::with_capacity(n_steps);
+    let half_way = n_steps / 2;
+
+    // Generate the first half of the gradient
+    colors.extend(generate_color_gradient(
+        color_low,
+        NEUTRAL_INFOVIS_COLOR,
+        half_way,
+    ));
+
+    // Generate the second half of the gradient
+    colors.extend(generate_color_gradient(
+        NEUTRAL_INFOVIS_COLOR,
+        color_high,
+        n_steps - half_way,
+    ));
     colors
 }
 
@@ -288,13 +334,18 @@ impl TileOverlay {
     /// Below this level, the water table is considered to be equally deep.
     const MAX_DEPTH_TO_WATER_TABLE: f32 = 5.;
 
+    /// The maximum volume of water per second of flux to be displayed.
+    ///
+    /// Above this volume, the water flux is considered to be equally large.
+    const MAX_FLUX: Volume = Volume(1e-2);
+
     /// The width of the legend image.
     pub(crate) const LEGEND_WIDTH: u32 = 32;
 
     /// Gets the material that should be used to visualize the given signal strength, if any.
     ///
     /// If this is `None`, then the signal strength is too weak to be visualized and the tile should be invisible.
-    fn get_material(
+    fn get_signal_material(
         &self,
         signal_kind: SignalKind,
         signal_strength: SignalStrength,
@@ -342,6 +393,19 @@ impl TileOverlay {
         Some(self.water_table_color_ramp[color_index].clone_weak())
     }
 
+    /// Gets the material that should be used to visualize the flow of water with the provided `volume_per_second`.
+    fn get_water_flux_material(&self, volume_per_second: Volume) -> Handle<StandardMaterial> {
+        let normalized_volume = volume_per_second / Self::MAX_FLUX;
+        // How far along the color ramp we should be
+        // Divide by 2 then add 0.5 to shift the range from [-1, 1] to [0, 1]
+        let color_value = normalized_volume / 2. + 0.5;
+        let clamped_color_value = color_value.clamp(0., 1.);
+
+        // Avoid indexing out of bounds by clamping to the maximum value in the case of extreme water volumes
+        let color_index: usize = (clamped_color_value * Self::N_COLORS as f32) as usize;
+        self.flux_color_ramp[color_index.min(Self::N_COLORS - 1)].clone_weak()
+    }
+
     /// Gets the material that should be used to visualize the flow of water with the provided `flow_velocity`.
     pub(crate) fn get_flow_velocity_material(
         &self,
@@ -367,13 +431,18 @@ impl TileOverlay {
     }
 
     /// Gets the handle to the image that should be used to display the legend.
-    pub(crate) fn legend_image_handle(&self, signal_kind: SignalKind) -> Handle<Image> {
-        self.legends[&signal_kind].clone_weak()
+    pub(crate) fn signal_legend_image_handle(&self, signal_kind: SignalKind) -> Handle<Image> {
+        self.signal_legends[&signal_kind].clone_weak()
     }
 
     /// Gets the handle to the material that should be used to display the legend for the water table.
     pub(crate) fn water_table_legend_image_handle(&self) -> Handle<Image> {
         self.water_table_legend.clone_weak()
+    }
+
+    /// Gets the handle to the material that should be used to display the legend for the water flux.
+    pub(crate) fn flux_legend_image_handle(&self) -> Handle<Image> {
+        self.flux_legend.clone_weak()
     }
 }
 
@@ -385,6 +454,7 @@ fn set_overlay_material(
     water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
     tile_overlay: Res<TileOverlay>,
+    fixed_time: Res<FixedTime>,
 ) {
     if tile_overlay.overlay_type == OverlayType::None {
         return;
@@ -402,13 +472,13 @@ fn set_overlay_material(
                 OverlayType::Single(signal_type) => {
                     let signal_strength = signals.get(signal_type, tile_pos);
                     let signal_kind = signal_type.into();
-                    tile_overlay.get_material(signal_kind, signal_strength)
+                    tile_overlay.get_signal_material(signal_kind, signal_strength)
                 }
                 OverlayType::StrongestSignal => signals
                     .strongest_goal_signal_at_position(tile_pos)
                     .and_then(|(signal_type, signal_strength)| {
                         let signal_kind = signal_type.into();
-                        tile_overlay.get_material(signal_kind, signal_strength)
+                        tile_overlay.get_signal_material(signal_kind, signal_strength)
                     }),
                 OverlayType::DepthToWaterTable => {
                     let depth_to_water_table = water_table.water_depth(tile_pos);
@@ -428,6 +498,12 @@ fn set_overlay_material(
                     let flow_velocity = water_table.get_flow_rate(tile_pos);
 
                     tile_overlay.get_flow_velocity_material(flow_velocity)
+                }
+                OverlayType::NetWater => {
+                    let net_water = water_table.flux(tile_pos);
+                    let volume_per_second = net_water / fixed_time.period.as_secs_f32();
+
+                    Some(tile_overlay.get_water_flux_material(volume_per_second))
                 }
             };
 

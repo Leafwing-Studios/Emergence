@@ -148,6 +148,12 @@ impl Plugin for WaterPlugin {
                         .in_set(SimulationSet)
                         .chain(),
                 )
+                .add_system(
+                    cache_water_volume
+                        .before(WaterSet::VerticalWaterMovement)
+                        // This needs to respect pausing
+                        .in_set(SimulationSet),
+                )
                 .add_systems(
                     (
                         tides,
@@ -187,6 +193,8 @@ pub struct WaterTable {
     ocean_height: Height,
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
+    /// The volume of the water at each tile last tick.
+    previous_volume: HashMap<TilePos, Volume>,
     /// The rate and direction of lateral water flow at each tile.
     flow_rate: HashMap<TilePos, FlowVelocity>,
     /// The height of the water table at each tile relative to the soil surface.
@@ -247,6 +255,16 @@ impl WaterTable {
     /// Sets the total volume of water at the given tile.
     pub(crate) fn set_volume(&mut self, tile_pos: TilePos, volume: Volume) {
         self.volume.insert(tile_pos, volume);
+    }
+
+    /// Gets the difference between the volume of water that was present last tick and this tick.
+    pub(crate) fn flux(&self, tile_pos: TilePos) -> Volume {
+        self.volume.get(&tile_pos).copied().unwrap_or_default()
+            - self
+                .previous_volume
+                .get(&tile_pos)
+                .copied()
+                .unwrap_or_default()
     }
 
     /// Adds the given amount of water to the water table at the given tile.
@@ -383,6 +401,13 @@ fn update_water_depth(
 
         water_table.water_depth.insert(tile_pos, water_depth);
     }
+}
+
+/// Caches the previous volume of water at each tile.
+///
+/// Used for computing [`WaterTable::flux`].
+fn cache_water_volume(mut water_table: ResMut<WaterTable>) {
+    water_table.previous_volume = water_table.volume.clone();
 }
 
 /// The rate and direction of lateral water flow.
