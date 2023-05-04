@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         ci-argument:
+          - format
           - clippy
           - compilecheck
           - doccheck
@@ -29,6 +30,8 @@ jobs:
         include:
           - ci-argument: clippy
             toolchain-components: clippy
+          - ci-argument: format
+            toolchain-components: rustfmt            
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
@@ -42,15 +45,3 @@ jobs:
       - name: CI job
         # See tools/ci/src/main.rs for the commands this runs
         run: cargo run -p ci -- ${{ matrix.ci-argument }}
-  formatting:
-    name: cargo fmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      # Ensure rustfmt is installed and setup problem matcher
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
-              
