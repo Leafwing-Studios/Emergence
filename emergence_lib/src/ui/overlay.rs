@@ -159,7 +159,7 @@ fn update_signal_type_display(
                 },
             }];
 
-            legend.texture = tile_overlay.legend_image_handle(signal_kind)
+            legend.texture = tile_overlay.signal_legend_image_handle(signal_kind)
         }
         OverlayType::StrongestSignal => {
             text.sections = vec![
@@ -270,8 +270,7 @@ fn update_signal_type_display(
                 },
             }];
 
-            // TODO: use a better scale; should be bidirectional
-            legend.texture = tile_overlay.water_table_legend_image_handle();
+            legend.texture = tile_overlay.flux_legend_image_handle();
         }
     }
 }

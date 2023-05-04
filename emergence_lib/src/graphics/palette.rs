@@ -140,6 +140,9 @@ pub(crate) mod infovis {
         }
     }
 
+    /// The color used to represent a "neutral" value in bicolor gradients.
+    pub(crate) const NEUTRAL_INFOVIS_COLOR: Color = Color::hsla(0., 0., 0.7, OVERLAY_ALPHA);
+
     /// The color used to indicate that water is far from the surface.
     pub(crate) const WATER_TABLE_COLOR_HIGH: Color = Color::hsla(5., 0.6, 0.5, OVERLAY_ALPHA);
     /// The color used to indicate that water is near the surface.
