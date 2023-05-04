@@ -161,8 +161,8 @@ impl FromWorld for TileOverlay {
 
         // Flux
         let flux_colors = generate_color_bigradient(
-            WATER_TABLE_COLOR_LOW,
             WATER_TABLE_COLOR_HIGH,
+            WATER_TABLE_COLOR_LOW,
             Self::N_COLORS,
         );
         let material_assets: &mut Assets<StandardMaterial> =
@@ -337,7 +337,7 @@ impl TileOverlay {
     /// The maximum volume of water per second of flux to be displayed.
     ///
     /// Above this volume, the water flux is considered to be equally large.
-    const MAX_FLUX: Volume = Volume(1e-9);
+    const MAX_FLUX: Volume = Volume(1e-2);
 
     /// The width of the legend image.
     pub(crate) const LEGEND_WIDTH: u32 = 32;

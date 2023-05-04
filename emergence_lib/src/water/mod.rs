@@ -148,7 +148,12 @@ impl Plugin for WaterPlugin {
                         .in_set(SimulationSet)
                         .chain(),
                 )
-                .add_system(cache_water_volume.before(WaterSet::VerticalWaterMovement))
+                .add_system(
+                    cache_water_volume
+                        .before(WaterSet::VerticalWaterMovement)
+                        // This needs to respect pausing
+                        .in_set(SimulationSet),
+                )
                 .add_systems(
                     (
                         tides,
