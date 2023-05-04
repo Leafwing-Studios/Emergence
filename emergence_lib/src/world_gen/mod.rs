@@ -147,8 +147,8 @@ impl Default for GenerationConfig {
         structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
 
         GenerationConfig {
-            map_radius: 60,
-            number_of_burn_in_ticks: 1e2 as u32,
+            map_radius: 30,
+            number_of_burn_in_ticks: 0,
             unit_chances,
             landmark_chances,
             structure_chances,

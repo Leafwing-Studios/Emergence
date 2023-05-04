@@ -9,6 +9,7 @@ use core::ops::{Div, Mul};
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 
+use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
     items::item_manifest::{Item, ItemManifest},
@@ -19,6 +20,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
 };
 
+use self::ocean::{tides, TideSettings};
 use self::{
     emitters::{add_water_emitters, produce_water_from_emitters},
     roots::draw_water_from_roots,
@@ -26,6 +28,7 @@ use self::{
 };
 
 pub mod emitters;
+mod ocean;
 pub mod roots;
 mod water_dynamics;
 
@@ -58,6 +61,10 @@ pub(crate) struct WaterConfig {
     lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
     soil_lateral_flow_ratio: f32,
+    /// Are oceans enabled?
+    pub(crate) enable_oceans: bool,
+    /// Controls the behavior of the tides.
+    tide_settings: TideSettings,
 }
 
 impl WaterConfig {
@@ -72,6 +79,12 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.3,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
+        enable_oceans: true,
+        tide_settings: TideSettings {
+            amplitude: Height(3.0),
+            period: Days(0.3),
+            minimum: Height(0.1),
+        },
     };
 
     /// A configuration that disables all water behavior.
@@ -86,6 +99,12 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
+        enable_oceans: false,
+        tide_settings: TideSettings {
+            amplitude: Height(0.0),
+            period: Days(1.0),
+            minimum: Height(0.0),
+        },
     };
 
     /// Converts a number of items of water to a [`Volume`] of water.
@@ -131,6 +150,7 @@ impl Plugin for WaterPlugin {
                 )
                 .add_systems(
                     (
+                        tides,
                         produce_water_from_emitters,
                         precipitation,
                         // This system pulls in a ton of dependencies, so it's best to fail silently when they don't exist
@@ -163,6 +183,8 @@ impl Plugin for WaterPlugin {
 /// If it is above ground, it will pool on top of the tile it is on.
 #[derive(Resource, Default, PartialEq, Clone, Debug)]
 pub struct WaterTable {
+    /// The height of the ocean.
+    ocean_height: Height,
     /// The volume of water at each tile.
     volume: HashMap<TilePos, Volume>,
     /// The rate and direction of lateral water flow at each tile.
@@ -181,7 +203,7 @@ impl WaterTable {
 
     /// Gets the height of the water table at the given tile.
     pub(crate) fn get_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
 
         match self.water_depth(tile_pos) {
             WaterDepth::Dry => Height::ZERO,
@@ -211,7 +233,15 @@ impl WaterTable {
 
     /// Get the depth of the water table at the given tile relative to the soil surface.
     pub(crate) fn water_depth(&self, tile_pos: TilePos) -> WaterDepth {
-        self.water_depth.get(&tile_pos).copied().unwrap_or_default()
+        self.water_depth
+            .get(&tile_pos)
+            .copied()
+            .unwrap_or(WaterDepth::Flooded(self.ocean_height))
+    }
+
+    /// Returns the height of the ocean.
+    pub(crate) fn ocean_height(&self) -> Height {
+        self.ocean_height
     }
 
     /// Sets the total volume of water at the given tile.
@@ -337,8 +367,11 @@ fn update_water_depth(
 ) {
     water_table.water_depth.clear();
 
+    // Critically, the depth of tiles *outside* of the map is not updated here.
+    // Instead, they are implicitly treated as the ocean depth.
+    // As a result, the ocean acts as both an infinite source and sink for water.
     for tile_pos in map_geometry.valid_tile_positions() {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap();
+        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
         let water_volume = water_table.get_volume(tile_pos);
 
         let water_depth = WaterDepth::compute(

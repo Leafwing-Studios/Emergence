@@ -128,6 +128,34 @@ pub(super) fn horizontal_water_movement(
         }
     }
 
+    // Flow back in from the ocean tiles
+    // Flowing out to ocean tiles is implicitly handled by the above code: missing values are treated as if they are ocean tiles
+    if water_config.enable_oceans {
+        for tile_pos in map_geometry.ocean_tiles() {
+            // Don't bother flowing to and from ocean tiles
+            for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
+                let neighbor_tile_height =
+                    map_geometry.get_height(valid_neighbor).unwrap_or_default();
+                let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
+
+                let proposed_water_transfer = lateral_flow(
+                    base_water_transfer_amount,
+                    &water_config,
+                    Height::ZERO,
+                    neighbor_tile_height,
+                    water_table.ocean_height,
+                    neighbor_water_height,
+                );
+
+                if proposed_water_transfer > Volume::ZERO {
+                    addition_map.entry(valid_neighbor).and_modify(|v| {
+                        *v += proposed_water_transfer;
+                    });
+                }
+            }
+        }
+    }
+
     for (tile_pos, volume) in addition_map {
         water_table.add(tile_pos, volume);
     }
@@ -152,17 +180,25 @@ fn proposed_lateral_flow_to_neighbors(
     water_table: &WaterTable,
 ) -> HashMap<TilePos, Volume> {
     let water_height = water_table.get_height(tile_pos, map_geometry);
-    let neighbors = tile_pos.all_neighbors(map_geometry);
+
+    // Critically, this includes neighbors that are not valid tiles.
+    // This is important because we need to be able to transfer water off the edge of the map.
+    let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
 
     for neighbor in neighbors {
+        // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
+        if !water_config.enable_oceans && !map_geometry.is_valid(neighbor) {
+            continue;
+        }
+
         let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
 
         let proposed_water_transfer = lateral_flow(
             base_water_transfer_amount,
             water_config,
-            map_geometry.get_height(tile_pos).unwrap(),
-            map_geometry.get_height(neighbor).unwrap(),
+            map_geometry.get_height(tile_pos).unwrap_or_default(),
+            map_geometry.get_height(neighbor).unwrap_or_default(),
             water_height,
             neighbor_water_height,
         );
