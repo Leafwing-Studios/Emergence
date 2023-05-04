@@ -61,6 +61,8 @@ pub(crate) struct WaterConfig {
     lateral_flow_rate: f32,
     /// The relative rate at which water moves horizontally through soil.
     soil_lateral_flow_ratio: f32,
+    /// Are oceans enabled?
+    pub(crate) enable_oceans: bool,
     /// Controls the behavior of the tides.
     tide_settings: TideSettings,
 }
@@ -77,6 +79,7 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.3,
         lateral_flow_rate: 1e3,
         soil_lateral_flow_ratio: 0.2,
+        enable_oceans: true,
         tide_settings: TideSettings {
             amplitude: Height(3.0),
             period: Days(0.3),
@@ -96,6 +99,7 @@ impl WaterConfig {
         relative_soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
         soil_lateral_flow_ratio: 0.0,
+        enable_oceans: false,
         tide_settings: TideSettings {
             amplitude: Height(0.0),
             period: Days(1.0),

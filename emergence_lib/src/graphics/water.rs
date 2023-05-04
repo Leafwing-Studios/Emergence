@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     simulation::geometry::{hexagonal_column, Height, MapGeometry},
-    water::WaterTable,
+    water::{WaterConfig, WaterTable},
 };
 
 use super::palette::environment::WATER;
@@ -59,6 +59,7 @@ fn render_water(
     water_table: Res<WaterTable>,
     water_handles: Res<WaterHandles>,
     water_query: Query<Entity, With<Water>>,
+    water_config: Res<WaterConfig>,
     mut commands: Commands,
 ) {
     // FIXME: don't use immediate mode for this
@@ -85,18 +86,20 @@ fn render_water(
         }
     }
 
-    for tile_pos in map_geometry.ocean_tiles() {
-        commands
-            .spawn(PbrBundle {
-                mesh: water_handles.mesh.clone_weak(),
-                material: water_handles.material.clone_weak(),
-                transform: Transform {
-                    translation: tile_pos.top_of_tile(&map_geometry),
-                    scale: Vec3::new(1.0, water_table.ocean_height().into_world_pos(), 1.0),
+    if water_config.enable_oceans {
+        for tile_pos in map_geometry.ocean_tiles() {
+            commands
+                .spawn(PbrBundle {
+                    mesh: water_handles.mesh.clone_weak(),
+                    material: water_handles.material.clone_weak(),
+                    transform: Transform {
+                        translation: tile_pos.top_of_tile(&map_geometry),
+                        scale: Vec3::new(1.0, water_table.ocean_height().into_world_pos(), 1.0),
+                        ..Default::default()
+                    },
                     ..Default::default()
-                },
-                ..Default::default()
-            })
-            .insert(Water);
+                })
+                .insert(Water);
+        }
     }
 }

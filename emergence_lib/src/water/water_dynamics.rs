@@ -130,25 +130,28 @@ pub(super) fn horizontal_water_movement(
 
     // Flow back in from the ocean tiles
     // Flowing out to ocean tiles is implicitly handled by the above code: missing values are treated as if they are ocean tiles
-    for tile_pos in map_geometry.ocean_tiles() {
-        // Don't bother flowing to and from ocean tiles
-        for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
-            let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap_or_default();
-            let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
+    if water_config.enable_oceans {
+        for tile_pos in map_geometry.ocean_tiles() {
+            // Don't bother flowing to and from ocean tiles
+            for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
+                let neighbor_tile_height =
+                    map_geometry.get_height(valid_neighbor).unwrap_or_default();
+                let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
 
-            let proposed_water_transfer = lateral_flow(
-                base_water_transfer_amount,
-                &water_config,
-                Height::ZERO,
-                neighbor_tile_height,
-                water_table.ocean_height,
-                neighbor_water_height,
-            );
+                let proposed_water_transfer = lateral_flow(
+                    base_water_transfer_amount,
+                    &water_config,
+                    Height::ZERO,
+                    neighbor_tile_height,
+                    water_table.ocean_height,
+                    neighbor_water_height,
+                );
 
-            if proposed_water_transfer > Volume::ZERO {
-                addition_map.entry(valid_neighbor).and_modify(|v| {
-                    *v += proposed_water_transfer;
-                });
+                if proposed_water_transfer > Volume::ZERO {
+                    addition_map.entry(valid_neighbor).and_modify(|v| {
+                        *v += proposed_water_transfer;
+                    });
+                }
             }
         }
     }
@@ -184,6 +187,11 @@ fn proposed_lateral_flow_to_neighbors(
     let mut water_to_neighbors = HashMap::default();
 
     for neighbor in neighbors {
+        // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
+        if !water_config.enable_oceans && !map_geometry.is_valid(neighbor) {
+            continue;
+        }
+
         let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
 
         let proposed_water_transfer = lateral_flow(
