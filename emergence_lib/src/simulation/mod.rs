@@ -16,6 +16,7 @@ use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
 use crate::water::WaterPlugin;
 use crate::world_gen::{GenerationConfig, GenerationPlugin};
+use bevy::core::FrameCount;
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
@@ -50,13 +51,17 @@ impl Plugin for SimulationPlugin {
                 schedule.configure_set(
                     SimulationSet
                         .run_if(in_state(PauseState::Playing))
-                        .run_if(in_state(AssetState::FullyLoaded)),
+                        .run_if(in_state(AssetState::FullyLoaded))
+                        .run_if(max_ticks_not_reached),
                 );
+                schedule.add_system(update_ticks_this_frame.run_if(max_ticks_not_reached));
+
                 schedule.set_build_settings(ScheduleBuildSettings {
                     ambiguity_detection: LogLevel::Warn,
                     ..Default::default()
                 });
             })
+            .insert_resource(TicksThisFrame { current: 0, max: 3 })
             .add_plugin(GenerationPlugin {
                 config: self.gen_config.clone(),
             })
@@ -92,3 +97,28 @@ enum PauseState {
 /// - only run in [`AssetState::FullyLoaded`]
 #[derive(SystemSet, PartialEq, Eq, Hash, Debug, Clone)]
 pub(crate) struct SimulationSet;
+
+/// Tracks how many ticks have passed this frame.
+// BLOCKED: this is a workaround for https://github.com/bevyengine/bevy/issues/8543.
+// Once that's fixed and released all this code should be removed.
+#[derive(Resource, Debug)]
+struct TicksThisFrame {
+    /// The number of ticks that have passed this frame.
+    current: u8,
+    /// The maximum number of ticks that can pass in a frame.
+    max: u8,
+}
+
+/// Updates [`TicksThisFrame`].
+fn update_ticks_this_frame(mut ticks: ResMut<TicksThisFrame>, frame_count: Res<FrameCount>) {
+    if frame_count.is_changed() {
+        ticks.current = 0;
+    }
+
+    ticks.current += 1;
+}
+
+/// Stops
+fn max_ticks_not_reached(ticks: Res<TicksThisFrame>) -> bool {
+    ticks.current < ticks.max
+}
