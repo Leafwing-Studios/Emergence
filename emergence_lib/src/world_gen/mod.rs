@@ -131,8 +131,8 @@ impl Default for GenerationConfig {
     fn default() -> GenerationConfig {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
-        terrain_weights.insert(Id::from_name("loam".to_string()), 1.0);
-        terrain_weights.insert(Id::from_name("muddy".to_string()), 0.3);
+        terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
+        terrain_weights.insert(Id::from_name("swampy".to_string()), 0.3);
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
         let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
