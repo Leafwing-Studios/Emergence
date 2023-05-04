@@ -219,6 +219,11 @@ impl WaterTable {
             .unwrap_or(WaterDepth::Flooded(self.ocean_height))
     }
 
+    /// Returns the height of the ocean.
+    pub(crate) fn ocean_height(&self) -> Height {
+        self.ocean_height
+    }
+
     /// Sets the total volume of water at the given tile.
     pub(crate) fn set_volume(&mut self, tile_pos: TilePos, volume: Volume) {
         self.volume.insert(tile_pos, volume);

@@ -1085,6 +1085,15 @@ impl MapGeometry {
             .iter()
             .all(|tile_pos| water_table.surface_water_depth(*tile_pos) == Height::ZERO)
     }
+
+    /// Returns an iterator over all of the tiles that are ocean tiles.
+    #[inline]
+    #[must_use]
+    pub(crate) fn ocean_tiles(&self) -> impl ExactSizeIterator<Item = TilePos> + '_ {
+        // Oceans ring the entire map currently
+        let hex_ring = Hex::ZERO.ring(self.radius + 1);
+        hex_ring.map(move |hex| TilePos { hex })
+    }
 }
 
 /// The hex direction that this entity is facing.
