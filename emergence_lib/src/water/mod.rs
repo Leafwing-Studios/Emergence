@@ -77,7 +77,7 @@ impl WaterConfig {
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
         relative_soil_water_capacity: 0.02,
-        lateral_flow_rate: 1e3,
+        lateral_flow_rate: 1e5,
         soil_lateral_flow_ratio: 0.1,
         enable_oceans: true,
         tide_settings: TideSettings {
