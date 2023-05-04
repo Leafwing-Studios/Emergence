@@ -254,7 +254,9 @@ fn lateral_flow(
         delta_water_height * medium_coefficient * base_water_transfer_amount / 2.,
     );
     assert!(proposed_amount >= Volume::ZERO);
-    let max_allowable_volume = Volume::from_height(delta_water_height);
+    // We don't want to move more than half the difference in water height.
+    // We *could* move up to the full difference, but that would cause the water to oscillate.
+    let max_allowable_volume = Volume::from_height(delta_water_height / 2.);
 
     proposed_amount.min(max_allowable_volume)
 }
