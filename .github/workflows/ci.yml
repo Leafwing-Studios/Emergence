@@ -38,8 +38,8 @@ jobs:
         with:
           toolchain: stable
           components: ${{ matrix.toolchain-components || null }}
-      # - name: Cache Cargo build files
-      #   uses: Leafwing-Studios/cargo-cache@v1.0.0
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1.0.0
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: CI job
