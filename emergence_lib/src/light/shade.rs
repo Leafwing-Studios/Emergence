@@ -92,7 +92,7 @@ fn shaded_area(center: TilePos, footprint: &Footprint, map_geometry: &MapGeometr
         let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
         // TODO: account for height of originating structure
         for neighbor in center.all_valid_neighbors(map_geometry) {
-            let neighbor_terrain_height = map_geometry.get_height(tile_pos).unwrap();
+            let neighbor_terrain_height = map_geometry.get_height(neighbor).unwrap();
             if neighbor_terrain_height <= originating_terrain_height {
                 shaded_tiles.push(neighbor);
             }
