@@ -195,9 +195,10 @@ impl Display for InGameTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} days elapsed\n{:.2}h",
+            "{} days elapsed\n{:.2}h ({})",
             self.rounded_elapsed_days(),
-            self.twenty_four_hour_time()
+            self.twenty_four_hour_time(),
+            self.time_of_day()
         )
     }
 }
