@@ -2,8 +2,14 @@
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{MapGeometry, TilePos},
-    structures::structure_manifest::Structure,
+    simulation::{
+        geometry::{MapGeometry, TilePos},
+        time::{InGameTime, TimeOfDay},
+    },
+    structures::{
+        structure_manifest::{Structure, StructureManifest},
+        Footprint,
+    },
 };
 use bevy::prelude::*;
 
@@ -42,31 +48,56 @@ impl Display for ReceivedLight {
 /// Computes the amount of shade on each tile.
 pub(super) fn compute_shade(
     mut terrain_query: Query<&mut Shade>,
-    structure_query: Query<&TilePos, With<Id<Structure>>>,
+    structure_query: Query<(&TilePos, &Id<Structure>)>,
     map_geometry: Res<MapGeometry>,
+    in_game_time: Res<InGameTime>,
+    structure_manifest: Res<StructureManifest>,
 ) {
+    // PERF: we can be much less aggressive about computing these values
+    // They only need to be recomputed when the map geometry changes, or when the time of day changes
+
     // Reset the shade for all tiles
     for mut shade in terrain_query.iter_mut() {
         shade.light_fraction = 1.0;
     }
 
+    if in_game_time.time_of_day() == TimeOfDay::Night {
+        return;
+    }
+
     // Cast shade from structures to nearby tiles
     // TODO: vary this by Footprint
-    for tile_pos in structure_query.iter() {
-        let neighbors = tile_pos.all_valid_neighbors(&map_geometry);
-        for neighbor in neighbors {
-            let terrain_entity = map_geometry.get_terrain(neighbor).unwrap();
-            let mut shade = terrain_query.get_mut(terrain_entity).unwrap();
+    for (&center, &structure_id) in structure_query.iter() {
+        let footprint = &structure_manifest.get(structure_id).footprint;
+
+        for shaded_tile_pos in shaded_area(center, footprint, &map_geometry) {
+            let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
+            let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             // TODO: vary this by structure type
             shade.light_fraction *= 0.5;
         }
     }
 
-    // TODO: account for height
-
     // TODO: account for time of day
 
     // TODO: cast shade from terrain to nearby tiles
+}
+
+/// Computes the set of tiles that are shaded by a given footprint.
+fn shaded_area(center: TilePos, footprint: &Footprint, map_geometry: &MapGeometry) -> Vec<TilePos> {
+    let mut shaded_tiles = Vec::new();
+
+    for tile_pos in footprint.in_world_space(center) {
+        let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
+        // TODO: account for height of originating structure
+        for neighbor in center.all_valid_neighbors(map_geometry) {
+            let neighbor_terrain_height = map_geometry.get_height(tile_pos).unwrap();
+            if neighbor_terrain_height <= originating_terrain_height {
+                shaded_tiles.push(neighbor);
+            }
+        }
+    }
+    shaded_tiles
 }
 
 /// Computes the amount of light received by each tile.
