@@ -74,7 +74,7 @@ fn update_production_statistics(
     let mut text = query.single_mut();
     text.sections[0].value = format!("{}\n", *in_game_time);
     text.sections[1].value = format!("Weather: {}\n", current_weather.get());
-    text.sections[2].value = format!("{}\n", *total_light);
+    text.sections[2].value = format!("Light: {}\n", *total_light);
     text.sections[3].value = format!(
         "{} average volume of water per tile \n",
         water_table.average_volume(&map_geometry)
