@@ -57,7 +57,7 @@ pub(crate) struct CelestialBody {
 
 impl CelestialBody {
     /// The default angle that the sun is offset from the zenith in radians.
-    const DEFAULT_NOON_RADIANS: f32 = 23.5 / 360.;
+    const HOUR_ANGLE_AT_NOON: f32 = 23.5 / 360.;
 
     /// Sets the `light_level` of this celestial body.
     pub(crate) fn set_light_level(&mut self, light_level: f32) {
@@ -80,7 +80,7 @@ impl CelestialBody {
     pub(crate) fn compute_max_light(&self) -> Illuminance {
         CelestialBody::compute_illuminance(
             1.0,
-            CelestialBody::DEFAULT_NOON_RADIANS,
+            CelestialBody::HOUR_ANGLE_AT_NOON,
             self.declination,
             self.illuminance,
         )
@@ -107,8 +107,8 @@ impl CelestialBody {
     fn sun() -> CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
-            hour_angle: -PI / 4.,
-            declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
+            hour_angle: CelestialBody::HOUR_ANGLE_AT_NOON,
+            declination: -PI / 4.,
             travel_axis: 0.,
             illuminance: 8e4,
             light_level: 1.0,
@@ -120,7 +120,7 @@ impl CelestialBody {
         CelestialBody {
             height: 2. * Height::MAX.into_world_pos(),
             hour_angle: 0.,
-            declination: CelestialBody::DEFAULT_NOON_RADIANS * PI / 2.,
+            declination: CelestialBody::HOUR_ANGLE_AT_NOON,
             travel_axis: PI / 6.,
             illuminance: 3e4,
             light_level: 1.0,
@@ -137,7 +137,6 @@ pub(crate) struct Sun;
 pub(crate) struct Moon;
 
 /// Spawns a directional light source to illuminate the scene
-#[allow(dead_code)]
 fn spawn_celestial_bodies(mut commands: Commands) {
     let sun = CelestialBody::sun();
     commands
@@ -190,5 +189,13 @@ fn animate_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
+    }
+}
+
+mod test {
+    #[test]
+    fn sun_starts_at_max_illuminance() {
+        let sun = super::CelestialBody::sun();
+        assert_eq!(sun.compute_light(), sun.compute_max_light());
     }
 }
