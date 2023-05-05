@@ -30,7 +30,7 @@ fn animate_sky_color(
                 hue,
                 saturation,
                 lightness: lightness * 0.5,
-                alpha: alpha,
+                alpha,
             }
         }
     };

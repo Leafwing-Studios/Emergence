@@ -166,6 +166,7 @@ pub(crate) mod environment {
     pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
 
     impl Weather {
+        /// The color of the sky for this weather.
         pub(crate) const fn sky_color(&self) -> Color {
             match self {
                 Weather::Clear => Color::hsl(209., 0.7, 0.8),
