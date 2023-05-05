@@ -7,6 +7,7 @@ use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::ghosts::WorkplaceId,
     items::item_manifest::{ItemManifest, RawItemManifest},
+    light::shade::ReceivedLight,
     organisms::{
         energy::{EnergyPool, VigorModifier},
         lifecycle::Lifecycle,
@@ -15,7 +16,6 @@ use crate::{
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
-        light::TotalLight,
         SimulationSet,
     },
     structures::structure_manifest::Structure,
@@ -84,7 +84,7 @@ fn progress_crafting(
     time: Res<FixedTime>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
-    total_light: Res<TotalLight>,
+    terrain_query: Query<&ReceivedLight>,
     mut crafting_query: Query<CraftingQuery>,
     vigor_query: Query<&VigorModifier>,
     map_geometry: Res<MapGeometry>,
@@ -123,8 +123,12 @@ fn progress_crafting(
                 let mut updated_progress = progress;
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
+                    let terrain_entity = map_geometry.get_terrain(*crafter.tile_pos).unwrap();
+
+                    let received_light = terrain_query.get(terrain_entity).unwrap();
+
                     // Check if we can make progress
-                    if recipe.satisfied(crafter.workers_present.current(), &total_light) {
+                    if recipe.satisfied(crafter.workers_present.current(), received_light) {
                         let structure_vigor_bonus = if crafter.maybe_organism.is_some() {
                             let terrain_entity =
                                 map_geometry.get_terrain(*crafter.tile_pos).unwrap();

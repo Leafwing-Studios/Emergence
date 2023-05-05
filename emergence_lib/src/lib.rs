@@ -16,6 +16,7 @@ pub mod filtered_array_iter;
 pub mod graphics;
 pub mod infovis;
 pub mod items;
+pub mod light;
 pub mod organisms;
 pub mod player_interaction;
 pub mod signals;

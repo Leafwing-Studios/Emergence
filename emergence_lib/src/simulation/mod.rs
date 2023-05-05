@@ -5,10 +5,10 @@
 use crate::asset_management::AssetState;
 use crate::construction::ConstructionPlugin;
 use crate::crafting::CraftingPlugin;
+use crate::light::LightPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
 use crate::simulation::geometry::{sync_rotation_to_facing, MapGeometry};
-use crate::simulation::light::LightPlugin;
 use crate::simulation::time::TemporalPlugin;
 use crate::simulation::weather::WeatherPlugin;
 use crate::structures::StructuresPlugin;
@@ -21,7 +21,6 @@ use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
 pub mod geometry;
-pub mod light;
 pub mod time;
 pub mod weather;
 

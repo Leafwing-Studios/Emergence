@@ -4,11 +4,11 @@ use crate::asset_management::manifest::loader::IsRawManifest;
 use crate::asset_management::manifest::{Id, Manifest};
 use crate::items::item_manifest::{Item, ItemManifest};
 use crate::items::{inventory::Inventory, ItemCount};
-use crate::simulation::light::NormalizedIlluminance;
+use crate::light::shade::ReceivedLight;
 use crate::{
     crafting::components::{InputInventory, OutputInventory},
+    light::NormalizedIlluminance,
     organisms::energy::Energy,
-    simulation::light::TotalLight,
 };
 use bevy::reflect::{FromReflect, Reflect, TypeUuid};
 use bevy::utils::HashMap;
@@ -222,8 +222,8 @@ impl From<RawRecipeData> for RecipeData {
 
 impl RecipeData {
     /// Are the conditions to craft this recipe met?
-    pub(crate) fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
-        self.conditions.satisfied(workers, total_light)
+    pub(crate) fn satisfied(&self, workers: u8, received_light: &ReceivedLight) -> bool {
+        self.conditions.satisfied(workers, received_light)
     }
 
     /// An inventory with empty slots for all of the inputs of this recipe.
@@ -334,10 +334,10 @@ impl RecipeConditions {
     }
 
     /// Are the conditions to craft this recipe met?
-    fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
+    fn satisfied(&self, workers: u8, received_light: &ReceivedLight) -> bool {
         let work_satisfied = self.workers_required == 0 || workers >= self.workers_required;
         let light_satisfied = self.allowable_light_range.as_ref().map_or(true, |range| {
-            range.contains(total_light.normalized_illuminance())
+            range.contains(received_light.normalized_illuminance)
         });
 
         work_satisfied && light_satisfied

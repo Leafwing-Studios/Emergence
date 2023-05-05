@@ -7,12 +7,13 @@ use emergence_lib::{
         recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
     },
     items::item_manifest::{RawItemData, RawItemManifest},
+    light::NormalizedIlluminance,
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
         RawOrganismId, RawOrganismVariety,
     },
-    simulation::{geometry::Height, light::NormalizedIlluminance},
+    simulation::geometry::Height,
     structures::{
         structure_manifest::{RawStructureData, RawStructureKind, RawStructureManifest},
         Footprint,

@@ -4,7 +4,10 @@
 
 use crate::{
     self as emergence_lib,
-    graphics::palette::infovis::{NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA},
+    graphics::palette::infovis::{
+        LIGHT_LEVEL_COLOR_HIGH, LIGHT_LEVEL_COLOR_LOW, NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA,
+    },
+    light::shade::ReceivedLight,
     simulation::geometry::Volume,
     water::FlowVelocity,
 };
@@ -78,6 +81,8 @@ pub(crate) struct TileOverlay {
     signal_color_ramps: HashMap<SignalKind, Vec<Handle<StandardMaterial>>>,
     /// The materials used to visualize the distance to the water table.
     water_table_color_ramp: Vec<Handle<StandardMaterial>>,
+    /// The materials used to visualize light levels
+    light_level_color_ramp: Vec<Handle<StandardMaterial>>,
     /// The materials used to visualize the net change in water volume.
     flux_color_ramp: Vec<Handle<StandardMaterial>>,
     /// The materials used to visualize vector fields.
@@ -88,6 +93,8 @@ pub(crate) struct TileOverlay {
     water_table_legend: Handle<Image>,
     /// The image used to display the gradient for the net change in water volume.
     flux_legend: Handle<Image>,
+    /// The image used to display the gradient for light levels
+    light_level_legend: Handle<Image>,
 }
 
 /// The type of information that is being visualized by the overlay.
@@ -108,6 +115,8 @@ pub(crate) enum OverlayType {
     VelocityOfWaterTable,
     /// The net increase or decrease in water volume is being visualized.
     NetWater,
+    /// Shows the current light level of each tile.
+    LightLevel,
 }
 
 impl OverlayType {
@@ -174,6 +183,20 @@ impl FromWorld for TileOverlay {
         let mut image_assets = world.resource_mut::<Assets<Image>>();
         let flux_legend = image_assets.add(flux_legend_image);
 
+        // Light level
+        let light_level_colors = generate_color_gradient(
+            LIGHT_LEVEL_COLOR_LOW,
+            LIGHT_LEVEL_COLOR_HIGH,
+            Self::N_COLORS,
+        );
+
+        let material_assets: &mut Assets<StandardMaterial> =
+            &mut world.resource_mut::<Assets<StandardMaterial>>();
+        let light_level_color_ramp = generate_color_ramp(&light_level_colors, material_assets);
+        let light_level_legend_image = generate_legend(&light_level_colors, Self::LEGEND_WIDTH);
+        let mut image_assets = world.resource_mut::<Assets<Image>>();
+        let light_level_legend = image_assets.add(light_level_legend_image);
+
         // Vector fields
         let material_assets: &mut Assets<StandardMaterial> =
             &mut world.resource_mut::<Assets<StandardMaterial>>();
@@ -184,10 +207,12 @@ impl FromWorld for TileOverlay {
             signal_color_ramps: color_ramps,
             water_table_color_ramp,
             flux_color_ramp,
+            light_level_color_ramp,
             vector_field_materials,
             signal_legends: legends,
             water_table_legend,
             flux_legend,
+            light_level_legend,
         }
     }
 }
@@ -432,6 +457,19 @@ impl TileOverlay {
         )
     }
 
+    /// Gets the material that should be used to visualize the provided `received_light`
+    pub(crate) fn get_light_level_material(
+        &self,
+        received_light: &ReceivedLight,
+    ) -> Handle<StandardMaterial> {
+        let normalized_light = received_light.normalized_illuminance.0.clamp(0.0, 1.0);
+
+        let color_index: usize = (normalized_light * (Self::N_COLORS as f32)) as usize;
+        // Avoid indexing out of bounds by clamping to the maximum value in the case of extremely strong signals
+        let color_index = color_index.min(Self::N_COLORS - 1);
+        self.light_level_color_ramp[color_index].clone_weak()
+    }
+
     /// Gets the handle to the image that should be used to display the legend.
     pub(crate) fn signal_legend_image_handle(&self, signal_kind: SignalKind) -> Handle<Image> {
         self.signal_legends[&signal_kind].clone_weak()
@@ -446,11 +484,16 @@ impl TileOverlay {
     pub(crate) fn flux_legend_image_handle(&self) -> Handle<Image> {
         self.flux_legend.clone_weak()
     }
+
+    /// Gets the handle to the material that should be used to display the legend for the light level.
+    pub(crate) fn light_level_legend_image_handle(&self) -> Handle<Image> {
+        self.light_level_legend.clone_weak()
+    }
 }
 
 /// Sets the material for the currently visualized map overlay.
 fn set_overlay_material(
-    terrain_query: Query<(&TilePos, &Children), With<Id<Terrain>>>,
+    terrain_query: Query<(&TilePos, &Children, &ReceivedLight), With<Id<Terrain>>>,
     mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
     signals: Res<Signals>,
     water_table: Res<WaterTable>,
@@ -462,7 +505,7 @@ fn set_overlay_material(
         return;
     }
 
-    for (&tile_pos, children) in terrain_query.iter() {
+    for (&tile_pos, children, received_light) in terrain_query.iter() {
         // This is promised to be the correct entity in the initialization of the terrain's children
         let overlay_entity = children[1];
 
@@ -506,6 +549,9 @@ fn set_overlay_material(
                     let volume_per_second = net_water / fixed_time.period.as_secs_f32();
 
                     Some(tile_overlay.get_water_flux_material(volume_per_second))
+                }
+                OverlayType::LightLevel => {
+                    Some(tile_overlay.get_light_level_material(received_light))
                 }
             };
 

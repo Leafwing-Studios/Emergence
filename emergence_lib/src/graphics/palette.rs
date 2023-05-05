@@ -147,6 +147,13 @@ pub(crate) mod infovis {
     pub(crate) const WATER_TABLE_COLOR_HIGH: Color = Color::hsla(5., 0.6, 0.5, OVERLAY_ALPHA);
     /// The color used to indicate that water is near the surface.
     pub(crate) const WATER_TABLE_COLOR_LOW: Color = Color::hsla(195., 0.7, 0.2, OVERLAY_ALPHA);
+
+    /// The color used to indicate that it is dark.
+    pub(crate) const LIGHT_LEVEL_COLOR_LOW: Color = Color::hsla(232., 0.68, 0.4, OVERLAY_ALPHA);
+    /// The color used to indicate that it is bright.
+    // This is very hard to see at low alpha, so we use a higher alpha here.
+    pub(crate) const LIGHT_LEVEL_COLOR_HIGH: Color =
+        Color::hsla(52., 0.7, 0.95, (1.0 + OVERLAY_ALPHA) / 2.);
 }
 
 /// Colors used for the world's environment
