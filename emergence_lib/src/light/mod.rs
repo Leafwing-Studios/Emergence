@@ -6,8 +6,10 @@ use derive_more::{Add, AddAssign};
 use serde::{Deserialize, Serialize};
 use std::ops::Mul;
 
-use super::SimulationSet;
-use crate::graphics::lighting::{CelestialBody, PrimaryCelestialBody};
+use crate::{
+    graphics::lighting::{CelestialBody, PrimaryCelestialBody},
+    simulation::SimulationSet,
+};
 
 /// Systems and resources for computing light (in in-game quantities).
 pub(super) struct LightPlugin;

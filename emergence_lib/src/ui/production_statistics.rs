@@ -4,9 +4,8 @@ use bevy::prelude::*;
 
 use crate::{
     infovis::Census,
-    simulation::{
-        geometry::MapGeometry, light::TotalLight, time::InGameTime, weather::CurrentWeather,
-    },
+    light::TotalLight,
+    simulation::{geometry::MapGeometry, time::InGameTime, weather::CurrentWeather},
     water::WaterTable,
     world_gen::WorldGenState,
 };

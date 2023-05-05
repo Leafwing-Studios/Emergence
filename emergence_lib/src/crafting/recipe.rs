@@ -4,11 +4,10 @@ use crate::asset_management::manifest::loader::IsRawManifest;
 use crate::asset_management::manifest::{Id, Manifest};
 use crate::items::item_manifest::{Item, ItemManifest};
 use crate::items::{inventory::Inventory, ItemCount};
-use crate::simulation::light::NormalizedIlluminance;
 use crate::{
     crafting::components::{InputInventory, OutputInventory},
+    light::{NormalizedIlluminance, TotalLight},
     organisms::energy::Energy,
-    simulation::light::TotalLight,
 };
 use bevy::reflect::{FromReflect, Reflect, TypeUuid};
 use bevy::utils::HashMap;

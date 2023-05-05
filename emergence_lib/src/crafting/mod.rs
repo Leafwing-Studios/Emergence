@@ -7,6 +7,7 @@ use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::ghosts::WorkplaceId,
     items::item_manifest::{ItemManifest, RawItemManifest},
+    light::TotalLight,
     organisms::{
         energy::{EnergyPool, VigorModifier},
         lifecycle::Lifecycle,
@@ -15,7 +16,6 @@ use crate::{
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
-        light::TotalLight,
         SimulationSet,
     },
     structures::structure_manifest::Structure,
