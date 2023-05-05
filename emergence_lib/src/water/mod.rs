@@ -10,6 +10,7 @@ use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 
 use crate::simulation::time::Days;
+use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{
     asset_management::manifest::Id,
     items::item_manifest::{Item, ItemManifest},
@@ -33,12 +34,12 @@ pub mod roots;
 mod water_dynamics;
 
 /// Controls the key parameters of water movement and behavior.
+///
+/// Note that soil properties are stored seperately for each soil type in [`TerrainData`](crate::terrain::terrain_manifest::TerrainData).
 #[derive(Resource, Debug, Clone, Copy)]
 pub(crate) struct WaterConfig {
     /// The rate of evaporation per day from each tile.
     evaporation_rate: Height,
-    /// The relative rate of evaporation from soil.
-    soil_evaporation_ratio: f32,
     /// The rate of precipitation per day on each tile.
     precipitation_rate: Height,
     /// The amount of water that is deposited per day on the tile of each water emitter.
@@ -47,10 +48,6 @@ pub(crate) struct WaterConfig {
     emission_pressure: Height,
     /// The number of water items produced for each full tile of water.
     water_items_per_tile: f32,
-    /// The amount of water stored in a tile of soil relative to a pure tile of water.
-    ///
-    /// This value should be less than 1 and must be greater than 0.
-    relative_soil_water_capacity: f32,
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
@@ -59,8 +56,6 @@ pub(crate) struct WaterConfig {
     ///
     /// If this value becomes too large, the simulation may become unstable, with water alternating between fully flooded and fully dry tiles.
     lateral_flow_rate: f32,
-    /// The relative rate at which water moves horizontally through soil.
-    soil_lateral_flow_ratio: f32,
     /// Are oceans enabled?
     pub(crate) enable_oceans: bool,
     /// Controls the behavior of the tides.
@@ -71,14 +66,11 @@ impl WaterConfig {
     /// The default configuration for in-game water behavior.
     const IN_GAME: Self = Self {
         evaporation_rate: Height(2.0),
-        soil_evaporation_ratio: 0.2,
         precipitation_rate: Height(2.0),
         emission_rate: Volume(1e4),
         emission_pressure: Height(1.0),
         water_items_per_tile: 50.0,
-        relative_soil_water_capacity: 0.2,
         lateral_flow_rate: 1e3,
-        soil_lateral_flow_ratio: 0.2,
         enable_oceans: true,
         tide_settings: TideSettings {
             amplitude: Height(3.0),
@@ -91,14 +83,11 @@ impl WaterConfig {
     #[allow(dead_code)]
     const NULL: Self = Self {
         evaporation_rate: Height(0.0),
-        soil_evaporation_ratio: 0.0,
         precipitation_rate: Height(0.0),
         emission_rate: Volume(0.0),
         emission_pressure: Height(0.0),
         water_items_per_tile: 0.0,
-        relative_soil_water_capacity: 0.5,
         lateral_flow_rate: 0.0,
-        soil_lateral_flow_ratio: 0.0,
         enable_oceans: false,
         tide_settings: TideSettings {
             amplitude: Height(0.0),
@@ -173,7 +162,8 @@ impl Plugin for WaterPlugin {
                     // It is important that the computed height of the water is accurate before we start moving it around.
                     update_water_depth
                         .after(WaterSet::VerticalWaterMovement)
-                        .before(WaterSet::HorizontalWaterMovement),
+                        .before(WaterSet::HorizontalWaterMovement)
+                        .in_set(SimulationSet),
                 )
                 .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
                 .add_systems(
@@ -380,8 +370,9 @@ impl Display for WaterDepth {
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 fn update_water_depth(
     mut water_table: ResMut<WaterTable>,
-    water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
+    query: Query<&Id<Terrain>>,
+    terrain_manifest: Res<TerrainManifest>,
 ) {
     water_table.water_depth.clear();
 
@@ -391,13 +382,13 @@ fn update_water_depth(
     for tile_pos in map_geometry.valid_tile_positions() {
         let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
         let water_volume = water_table.get_volume(tile_pos);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let terrain_id = *query.get(terrain_entity).unwrap();
 
-        let water_depth = WaterDepth::compute(
-            water_volume,
-            soil_height,
-            // TODO: vary this based on soil type
-            water_config.relative_soil_water_capacity,
-        );
+        let relative_soil_water_capacity = terrain_manifest.get(terrain_id).water_capacity;
+
+        let water_depth =
+            WaterDepth::compute(water_volume, soil_height, relative_soil_water_capacity);
 
         water_table.water_depth.insert(tile_pos, water_depth);
     }
