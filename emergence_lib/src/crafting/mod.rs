@@ -128,7 +128,7 @@ fn progress_crafting(
                     let received_light = terrain_query.get(terrain_entity).unwrap();
 
                     // Check if we can make progress
-                    if recipe.satisfied(crafter.workers_present.current(), &received_light) {
+                    if recipe.satisfied(crafter.workers_present.current(), received_light) {
                         let structure_vigor_bonus = if crafter.maybe_organism.is_some() {
                             let terrain_entity =
                                 map_geometry.get_terrain(*crafter.tile_pos).unwrap();

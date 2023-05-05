@@ -1,4 +1,4 @@
-// Shade is cast by structures and terrain based on their height and the position of the sun.
+//! Shade is cast by structures and terrain based on their height and the position of the sun.
 
 use crate::{
     asset_management::manifest::Id,
