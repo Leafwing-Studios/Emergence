@@ -2,6 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
+    construction::ghosts::Ghostly,
     simulation::{
         geometry::{MapGeometry, TilePos},
         time::{InGameTime, TimeOfDay},
@@ -48,7 +49,7 @@ impl Display for ReceivedLight {
 /// Computes the amount of shade on each tile.
 pub(super) fn compute_shade(
     mut terrain_query: Query<&mut Shade>,
-    structure_query: Query<(&TilePos, &Id<Structure>)>,
+    structure_query: Query<(&TilePos, &Id<Structure>), Without<Ghostly>>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
     structure_manifest: Res<StructureManifest>,
