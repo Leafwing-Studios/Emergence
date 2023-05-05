@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::Mul;
 
 use super::SimulationSet;
-use crate::graphics::lighting::CelestialBody;
+use crate::graphics::lighting::{CelestialBody, PrimaryCelestialBody};
 
 /// Systems and resources for computing light (in in-game quantities).
 pub(super) struct LightPlugin;
@@ -90,14 +90,15 @@ impl Mul<Illuminance> for f32 {
 }
 
 /// Computes the amount of light available from each celestial body based on its position in the sky and luminous intensity.
-fn compute_light(mut query: Query<&CelestialBody>, mut total_light: ResMut<TotalLight>) {
+fn compute_light(
+    mut query: Query<&CelestialBody>,
+    primary_body_query: Query<&CelestialBody, With<PrimaryCelestialBody>>,
+    mut total_light: ResMut<TotalLight>,
+) {
     if total_light.max_illuminance == Illuminance(0.0) {
-        let mut sum = Illuminance(0.0);
-        for body in query.iter_mut() {
-            let light = body.compute_max_light();
-            sum += light;
+        if let Ok(primary_body) = primary_body_query.get_single() {
+            total_light.max_illuminance = primary_body.compute_max_light();
         }
-        total_light.max_illuminance = sum;
     }
 
     let mut sum = Illuminance(0.0);
