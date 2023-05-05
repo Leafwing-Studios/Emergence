@@ -9,8 +9,10 @@ use bevy::prelude::*;
 
 use super::{NormalizedIlluminance, TotalLight};
 
+use std::fmt::Display;
+
 /// The amount of shade on a tile.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Clone, Debug, Default)]
 pub(crate) struct Shade {
     /// How much shade is cast on this tile.
     ///
@@ -18,11 +20,23 @@ pub(crate) struct Shade {
     pub(crate) light_fraction: f32,
 }
 
+impl Display for Shade {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}", self.light_fraction)
+    }
+}
+
 /// The amount of light currently received by a tile.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Clone, Debug, Default)]
 pub(crate) struct ReceivedLight {
     /// The amount of light received by this tile.
     pub(crate) normalized_illuminance: NormalizedIlluminance,
+}
+
+impl Display for ReceivedLight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.normalized_illuminance)
+    }
 }
 
 /// Computes the amount of shade on each tile.

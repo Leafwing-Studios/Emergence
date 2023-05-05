@@ -397,6 +397,8 @@ fn get_details(
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
                     depth_to_water_table: water_table.water_depth(*tile_pos),
+                    shade: terrain_query_item.shade.clone(),
+                    recieved_light: terrain_query_item.recieved_light.clone(),
                     signals: signals.all_signals_at_position(*tile_pos),
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
@@ -767,6 +769,7 @@ mod terrain_details {
         construction::{terraform::TerraformingAction, zoning::Zoning},
         crafting::components::{InputInventory, OutputInventory, StorageInventory},
         items::item_manifest::ItemManifest,
+        light::shade::{ReceivedLight, Shade},
         organisms::energy::VigorModifier,
         signals::{LocalSignals, SignalModifier},
         simulation::geometry::{Height, TilePos},
@@ -783,6 +786,10 @@ mod terrain_details {
         pub(super) entity: Entity,
         /// The height of the tile
         pub(super) height: &'static Height,
+        /// The shade of the tile
+        pub(super) shade: &'static Shade,
+        /// The recieved light of the tile
+        pub(super) recieved_light: &'static ReceivedLight,
         /// The type of terrain
         pub(super) terrain_id: &'static Id<Terrain>,
         /// The zoning applied to this terrain
@@ -850,6 +857,10 @@ Output: {output}"
         pub(super) height: Height,
         /// The distance from the surface to the water table
         pub(super) depth_to_water_table: WaterDepth,
+        /// The shade of the tile
+        pub(super) shade: Shade,
+        /// The recieved light of the tile
+        pub(super) recieved_light: ReceivedLight,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
@@ -878,6 +889,8 @@ Output: {output}"
             let tile_pos = &self.tile_pos;
             let height = &self.height;
             let depth_to_water_table = &self.depth_to_water_table;
+            let shade = &self.shade;
+            let recieved_light = &self.recieved_light;
             let signals = self.signals.display(
                 item_manifest,
                 structure_manifest,
@@ -895,6 +908,8 @@ Terrain type: {terrain_type}
 Tile: {tile_pos}
 Height: {height}
 Water Table: {depth_to_water_table}
+Shade: {shade}
+Current Light: {recieved_light}
 Zoning: {zoning}
 Vigor modifier: {vigor_modifier}
 Signal modifier: {signal_modifier}
