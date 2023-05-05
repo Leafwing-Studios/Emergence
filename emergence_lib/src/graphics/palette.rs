@@ -160,21 +160,17 @@ pub(crate) mod infovis {
 pub(crate) mod environment {
     use bevy::prelude::Color;
 
-    use crate::simulation::time::TimeOfDay;
+    use crate::simulation::weather::Weather;
 
     /// The color used for columns of dirt underneath tiles
     pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
 
-    impl TimeOfDay {
-        /// The color of the sky at the given time of day.
+    impl Weather {
         pub(crate) const fn sky_color(&self) -> Color {
             match self {
-                TimeOfDay::Dawn => Color::hsl(180., 0.3, 0.6),
-                TimeOfDay::Morning => Color::hsl(190., 0.3, 0.7),
-                TimeOfDay::Noon => Color::hsl(209., 0.7, 0.8),
-                TimeOfDay::Afternoon => Color::hsl(212., 0.55, 0.7),
-                TimeOfDay::Evening => Color::hsl(220., 0.4, 0.3),
-                TimeOfDay::Midnight => Color::hsl(232., 0.2, 0.1),
+                Weather::Clear => Color::hsl(209., 0.7, 0.8),
+                Weather::Cloudy => Color::hsl(209., 0.3, 0.6),
+                Weather::Rainy => Color::hsl(209., 0.3, 0.5),
             }
         }
     }

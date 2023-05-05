@@ -90,53 +90,21 @@ impl Mul<f32> for Days {
 /// These are evenly spaced throughout the 24 hour day.
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TimeOfDay {
-    /// The beginning part of the day.
-    Morning,
-    /// The peak hour of sun.
-    Noon,
-    /// The latter part of the day.
-    Afternoon,
-    /// The beginning of the ngiht.
-    Evening,
-    /// The peak hour of darkness.
-    Midnight,
-    /// The latter part of the night.
-    Dawn,
+    /// The sun is out
+    Day,
+    /// The sun is down
+    Night,
 }
 
 impl TimeOfDay {
-    /// Is this time of day during the day?
-    pub fn is_day(&self) -> bool {
-        matches!(
-            self,
-            TimeOfDay::Morning | TimeOfDay::Noon | TimeOfDay::Afternoon
-        )
-    }
-
-    /// Is this time of day during the night?
-    pub fn is_night(&self) -> bool {
-        matches!(
-            self,
-            TimeOfDay::Evening | TimeOfDay::Midnight | TimeOfDay::Dawn
-        )
-    }
-
     /// Returns the time of day that is closest to the given fraction of a day.
     ///
     /// Values outside of [0.0, 1.0] are modulo'd to fit the range.
     pub fn from_fraction_of_day(fraction: f32) -> Self {
-        let cleaned_fraction = fraction.rem_euclid(1.0);
-        let scaled_fraction = cleaned_fraction * 6.0;
-        // We want to ensure that noon is centered at 0.5.
-        let shifted_fraction = scaled_fraction + 0.5;
-        match shifted_fraction.round() as u32 {
-            0 => TimeOfDay::Dawn,
-            1 => TimeOfDay::Morning,
-            2 => TimeOfDay::Noon,
-            3 => TimeOfDay::Afternoon,
-            4 => TimeOfDay::Evening,
-            5 => TimeOfDay::Midnight,
-            _ => TimeOfDay::Dawn,
+        if fraction < 0.7 {
+            TimeOfDay::Day
+        } else {
+            TimeOfDay::Night
         }
     }
 }
