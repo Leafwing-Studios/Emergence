@@ -54,6 +54,12 @@ pub(super) fn compute_shade(
     in_game_time: Res<InGameTime>,
     structure_manifest: Res<StructureManifest>,
 ) {
+    /// The fraction of light that is blocked by a single shadow.
+    ///
+    /// Should be between 0 and 1.
+    /// A value of 0 means all light is blocked, and a value of 1 means no light is blocked.
+    const SHADE_FRACTION: f32 = 0.5;
+
     // PERF: we can be much less aggressive about computing these values
     // They only need to be recomputed when the map geometry changes, or when the time of day changes
 
@@ -75,13 +81,19 @@ pub(super) fn compute_shade(
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             // TODO: vary this by structure type
-            shade.light_fraction *= 0.5;
+            shade.light_fraction *= SHADE_FRACTION;
         }
     }
 
-    // TODO: account for time of day
-
-    // TODO: cast shade from terrain to nearby tiles
+    for tile_pos in map_geometry.valid_tile_positions() {
+        // PERF: specializing this for single-tile footprints would save on work
+        let footprint = Footprint::single();
+        for shaded_tile_pos in shaded_area(tile_pos, &footprint, &map_geometry) {
+            let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
+            let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
+            shade.light_fraction *= SHADE_FRACTION;
+        }
+    }
 }
 
 /// Computes the set of tiles that are shaded by a given footprint.
