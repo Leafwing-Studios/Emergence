@@ -309,6 +309,7 @@ mod tests {
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
+    use crate::terrain::terrain_manifest::TerrainData;
     use crate::water::WaterPlugin;
 
     use super::*;
@@ -342,7 +343,7 @@ mod tests {
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
 
-        let map_geometry = scenario
+        let mut map_geometry = scenario
             .map_shape
             .set_heights(scenario.map_size.map_geometry());
         let water_table = scenario.water_table_strategy.water_table(&map_geometry);
@@ -356,10 +357,37 @@ mod tests {
         }
 
         app.insert_resource(water_table);
-        app.insert_resource(map_geometry);
         // Override the default water config with one appropriate for testing.
         app.insert_resource(scenario.water_config);
         app.insert_resource(CurrentWeather::new(scenario.weather));
+
+        // Set the terrain properties.
+        let mut terrain_manifest = TerrainManifest::default();
+        terrain_manifest.insert(
+            "test".to_string(),
+            TerrainData {
+                walking_speed: 1.0,
+                water_capacity: 0.5,
+                water_flow_rate: 0.3,
+                water_evaporation_rate: 0.4,
+            },
+        );
+
+        app.world.insert_resource(terrain_manifest);
+
+        // Spawn terrain
+        for tile_pos in map_geometry
+            .valid_tile_positions()
+            .collect::<Vec<TilePos>>()
+        {
+            let terrain_entity = app
+                .world
+                .spawn((Id::<Terrain>::from_name("test".to_string()), tile_pos))
+                .id();
+            map_geometry.add_terrain(tile_pos, terrain_entity)
+        }
+
+        app.insert_resource(map_geometry);
 
         // Spawn emitter
         app.world.spawn((Landmark, TilePos::ZERO));
