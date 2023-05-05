@@ -106,7 +106,7 @@ impl Mul<Illuminance> for f32 {
 
 /// Computes the amount of light available from each celestial body based on its position in the sky and luminous intensity.
 fn compute_light(
-    mut query: Query<&CelestialBody>,
+    mut query: Query<(&CelestialBody, &Visibility)>,
     primary_body_query: Query<&CelestialBody, With<Sun>>,
     mut total_light: ResMut<TotalLight>,
 ) {
@@ -117,9 +117,11 @@ fn compute_light(
     }
 
     let mut sum = Illuminance(0.0);
-    for body in query.iter_mut() {
-        let light = body.compute_light();
-        sum += light;
+    for (body, visibility) in query.iter_mut() {
+        if visibility == Visibility::Visible {
+            let light = body.compute_light();
+            sum += light;
+        }
     }
     total_light.illuminance = sum;
 }
