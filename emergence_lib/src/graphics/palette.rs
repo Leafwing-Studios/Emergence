@@ -153,19 +153,24 @@ pub(crate) mod infovis {
 pub(crate) mod environment {
     use bevy::prelude::Color;
 
+    use crate::simulation::time::TimeOfDay;
+
     /// The color used for columns of dirt underneath tiles
     pub(crate) const COLUMN_COLOR: Color = Color::hsl(21., 0.6, 0.15);
 
-    /// The color of a clear and sunny sky.
-    pub(crate) const SKY_SUNNY: Color = Color::Hsla {
-        hue: 202.,
-        saturation: 0.8,
-        lightness: MIDDAY_LIGHTNESS,
-        alpha: 1.0,
-    };
-
-    /// The amount of lightness at the brightest point in a day cycle
-    pub(crate) const MIDDAY_LIGHTNESS: f32 = 0.8;
+    impl TimeOfDay {
+        /// The color of the sky at the given time of day.
+        pub(crate) const fn sky_color(&self) -> Color {
+            match self {
+                TimeOfDay::Dawn => Color::hsl(180., 0.3, 0.6),
+                TimeOfDay::Morning => Color::hsl(190., 0.3, 0.7),
+                TimeOfDay::Noon => Color::hsl(209., 0.7, 0.8),
+                TimeOfDay::Afternoon => Color::hsl(212., 0.55, 0.7),
+                TimeOfDay::Evening => Color::hsl(220., 0.4, 0.3),
+                TimeOfDay::Midnight => Color::hsl(232., 0.2, 0.1),
+            }
+        }
+    }
 
     /// The color of the surface water.
     pub(crate) const WATER: Color = Color::Hsla {
