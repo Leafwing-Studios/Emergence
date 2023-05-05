@@ -5,7 +5,7 @@ use core::fmt::Display;
 use std::ops::{Div, Mul};
 
 use bevy::prelude::*;
-use derive_more::{Add, AddAssign, Sub, SubAssign};
+use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
 use leafwing_abilities::pool::MaxPoolLessThanZero;
 use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
@@ -85,6 +85,62 @@ impl Mul<f32> for Days {
     }
 }
 
+/// A discrete time of day.
+///
+/// These are evenly spaced throughout the 24 hour day.
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TimeOfDay {
+    /// The beginning part of the day.
+    Morning,
+    /// The peak hour of sun.
+    Noon,
+    /// The latter part of the day.
+    Afternoon,
+    /// The beginning of the ngiht.
+    Evening,
+    /// The peak hour of darkness.
+    Midnight,
+    /// The latter part of the night.
+    Dawn,
+}
+
+impl TimeOfDay {
+    /// Is this time of day during the day?
+    pub fn is_day(&self) -> bool {
+        matches!(
+            self,
+            TimeOfDay::Morning | TimeOfDay::Noon | TimeOfDay::Afternoon
+        )
+    }
+
+    /// Is this time of day during the night?
+    pub fn is_night(&self) -> bool {
+        matches!(
+            self,
+            TimeOfDay::Evening | TimeOfDay::Midnight | TimeOfDay::Dawn
+        )
+    }
+
+    /// Returns the time of day that is closest to the given fraction of a day.
+    ///
+    /// Values outside of [0.0, 1.0] are modulo'd to fit the range.
+    pub fn from_fraction_of_day(fraction: f32) -> Self {
+        let cleaned_fraction = fraction.rem_euclid(1.0);
+        let scaled_fraction = cleaned_fraction * 6.0;
+        // We want to ensure that noon is centered at 0.5.
+        let shifted_fraction = scaled_fraction + 0.5;
+        match shifted_fraction.round() as u32 {
+            0 => TimeOfDay::Dawn,
+            1 => TimeOfDay::Morning,
+            2 => TimeOfDay::Noon,
+            3 => TimeOfDay::Afternoon,
+            4 => TimeOfDay::Evening,
+            5 => TimeOfDay::Midnight,
+            _ => TimeOfDay::Dawn,
+        }
+    }
+}
+
 impl InGameTime {
     /// How many days have elapsed total?
     pub fn elapsed_days(&self) -> f32 {
@@ -97,13 +153,14 @@ impl InGameTime {
 
     /// How far are we through the day?
     ///
-    /// - 0.0 is dawn
-    /// - 0.25 is noon
-    /// - 0.5 is dusk
-    /// - 0.75 is midnight
-    /// - 0.999 is just before dawn
+    /// This begins at dawn, and ends at dawn the next day.
     pub fn fraction_of_day(&self) -> f32 {
         self.elapsed_time.0 % 1.0
+    }
+
+    /// What time of day is it?
+    pub fn time_of_day(&self) -> TimeOfDay {
+        TimeOfDay::from_fraction_of_day(self.fraction_of_day())
     }
 
     /// What time is it, in 24 hour time?
@@ -123,9 +180,10 @@ impl Display for InGameTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} days elapsed\n{:.2}h",
+            "{} days elapsed\n{:.2}h ({})",
             self.rounded_elapsed_days(),
-            self.twenty_four_hour_time()
+            self.twenty_four_hour_time(),
+            self.time_of_day()
         )
     }
 }
