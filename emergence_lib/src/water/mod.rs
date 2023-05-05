@@ -382,7 +382,10 @@ fn update_water_depth(
     for tile_pos in map_geometry.valid_tile_positions() {
         let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
         let water_volume = water_table.get_volume(tile_pos);
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) else {
+            continue;
+        };
+
         let terrain_id = *query.get(terrain_entity).unwrap();
 
         let relative_soil_water_capacity = terrain_manifest.get(terrain_id).water_capacity;
