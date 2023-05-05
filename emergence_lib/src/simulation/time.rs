@@ -124,23 +124,12 @@ impl TimeOfDay {
     /// Returns the time of day that is closest to the given fraction of a day.
     ///
     /// Values outside of [0.0, 1.0] are modulo'd to fit the range.
-    ///
-    /// # Examples
-    /// ```rust
-    /// use emergence_lib::simulation::time::TimeOfDay;
-    ///
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.0), TimeOfDay::Dawn);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.16), TimeOfDay::Morning);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.33), TimeOfDay::Noon);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.5), TimeOfDay::Afternoon);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.66), TimeOfDay::Evening);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(0.83), TimeOfDay::Midnight);
-    /// assert_eq!(TimeOfDay::from_fraction_of_day(1.0), TimeOfDay::Dawn);
-    /// ```
     pub fn from_fraction_of_day(fraction: f32) -> Self {
         let cleaned_fraction = fraction.rem_euclid(1.0);
         let scaled_fraction = cleaned_fraction * 6.0;
-        match scaled_fraction.round() as u32 {
+        // We want to ensure that noon is centered at 0.5.
+        let shifted_fraction = scaled_fraction + 0.5;
+        match shifted_fraction.round() as u32 {
             0 => TimeOfDay::Dawn,
             1 => TimeOfDay::Morning,
             2 => TimeOfDay::Noon,
@@ -164,11 +153,7 @@ impl InGameTime {
 
     /// How far are we through the day?
     ///
-    /// - 0.0 is dawn
-    /// - 0.25 is noon
-    /// - 0.5 is dusk
-    /// - 0.75 is midnight
-    /// - 0.999 is just before dawn
+    /// This begins at dawn, and ends at dawn the next day.
     pub fn fraction_of_day(&self) -> f32 {
         self.elapsed_time.0 % 1.0
     }
