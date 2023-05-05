@@ -64,6 +64,13 @@ fn select_overlay(
             _ => OverlayType::DepthToWaterTable,
         };
     }
+
+    if player_actions.just_pressed(PlayerAction::ToggleLightOverlay) {
+        tile_overlay.overlay_type = match tile_overlay.overlay_type {
+            OverlayType::LightLevel => OverlayType::None,
+            _ => OverlayType::LightLevel,
+        };
+    }
 }
 
 /// Creates the UI needed to display the overlay.
@@ -271,6 +278,18 @@ fn update_signal_type_display(
             }];
 
             legend.texture = tile_overlay.flux_legend_image_handle();
+        }
+        OverlayType::LightLevel => {
+            text.sections = vec![TextSection {
+                value: "Light level".to_string(),
+                style: TextStyle {
+                    font: fonts.regular.clone_weak(),
+                    font_size,
+                    color: Color::WHITE,
+                },
+            }];
+
+            legend.texture = tile_overlay.light_level_legend_image_handle();
         }
     }
 }

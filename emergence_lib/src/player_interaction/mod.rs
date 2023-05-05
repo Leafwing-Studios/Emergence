@@ -129,6 +129,8 @@ pub(crate) enum PlayerAction {
     ToggleStrongestSignalOverlay,
     /// Show / hide the depth to the water table overlay
     ToggleWaterTableOverlay,
+    /// Show / hide the light overlay
+    ToggleLightOverlay,
 }
 
 impl PlayerAction {
@@ -169,6 +171,7 @@ impl PlayerAction {
             ToggleSignalOverlay => KeyCode::F2.into(),
             ToggleStrongestSignalOverlay => KeyCode::F3.into(),
             ToggleWaterTableOverlay => KeyCode::F4.into(),
+            ToggleLightOverlay => KeyCode::F5.into(),
         }
     }
 
@@ -210,9 +213,11 @@ impl PlayerAction {
             RotateCameraLeft => UserInput::chord([camera_modifier, DPadLeft]),
             RotateCameraRight => UserInput::chord([camera_modifier, DPadRight]),
             ToggleStatusInfo => UserInput::chord([infovis_modifier, DPadLeft]),
+            // FIXME: this should just be removed in favor of forcing cursor control
             ToggleSignalOverlay => UserInput::chord([infovis_modifier, DPadUp]),
             ToggleStrongestSignalOverlay => UserInput::chord([infovis_modifier, DPadRight]),
             ToggleWaterTableOverlay => UserInput::chord([infovis_modifier, DPadDown]),
+            ToggleLightOverlay => UserInput::chord([infovis_modifier, DPadUp]),
         }
     }
 
