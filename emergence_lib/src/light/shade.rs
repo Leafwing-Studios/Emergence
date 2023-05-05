@@ -76,10 +76,15 @@ pub(super) fn compute_shade(
     // Cast shade from structures to nearby tiles
     // TODO: vary this by Footprint
     for (&center, &structure_id) in structure_query.iter() {
-        let footprint = &structure_manifest.get(structure_id).footprint;
+        let structure_data = structure_manifest.get(structure_id);
 
         // TODO: vary height by structure type
-        for shaded_tile_pos in shaded_area(center, footprint, &map_geometry, Height(1.0)) {
+        for shaded_tile_pos in shaded_area(
+            center,
+            &structure_data.footprint,
+            &map_geometry,
+            structure_data.height,
+        ) {
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.light_fraction *= SHADE_FRACTION;
