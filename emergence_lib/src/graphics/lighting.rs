@@ -25,10 +25,7 @@ impl Plugin for LightingPlugin {
         //.insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_systems((
-            animate_celestial_body_transform,
-            animate_celestial_body_brightness,
-        ));
+        .add_systems((animate_celestial_body_transform,));
     }
 }
 
@@ -56,8 +53,6 @@ pub(crate) struct CelestialBody {
     ///
     /// This defaults to 1.0, and is multiplied by the base illuminance.
     light_level: f32,
-    /// The number of in-game days required to complete a full cycle.
-    pub(crate) days_per_cycle: f32,
 }
 
 impl CelestialBody {
@@ -117,7 +112,6 @@ impl CelestialBody {
             travel_axis: 0.,
             illuminance: 8e4,
             light_level: 1.0,
-            days_per_cycle: 1.0,
         }
     }
 
@@ -130,14 +124,17 @@ impl CelestialBody {
             travel_axis: PI / 6.,
             illuminance: 3e4,
             light_level: 1.0,
-            days_per_cycle: 29.53,
         }
     }
 }
 
 /// This component signals that this Entity is the primary celestial body for lighting.
 #[derive(Component, Debug)]
-pub(crate) struct PrimaryCelestialBody;
+pub(crate) struct Sun;
+
+/// This component signals that this Entity is the secondary celestial body for lighting.
+#[derive(Component, Debug)]
+pub(crate) struct Moon;
 
 /// Spawns a directional light source to illuminate the scene
 #[allow(dead_code)]
@@ -171,7 +168,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             ..default()
         })
         .insert(sun)
-        .insert(PrimaryCelestialBody);
+        .insert(Sun);
 
     let moon = CelestialBody::moon();
     commands
@@ -184,10 +181,12 @@ fn spawn_celestial_bodies(mut commands: Commands) {
             },
             ..default()
         })
-        .insert(moon);
+        .insert(moon)
+        .insert(Moon);
 }
 
 /// Moves celestial bodies to the correct position and orientation
+// PERF: this doesn't need to run constantly if we're not moving the sun and moon
 fn animate_celestial_body_transform(
     mut query: Query<(&mut Transform, &CelestialBody), Changed<CelestialBody>>,
 ) {
@@ -208,15 +207,5 @@ fn animate_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
-    }
-}
-
-/// Adjusts the brightness of celestial bodies based on their position in the sky
-fn animate_celestial_body_brightness(
-    mut query: Query<(&CelestialBody, &mut DirectionalLight), Changed<CelestialBody>>,
-) {
-    for (celestial_body, mut directional_light) in query.iter_mut() {
-        let current_illuminance = celestial_body.compute_light();
-        directional_light.illuminance = current_illuminance.0;
     }
 }

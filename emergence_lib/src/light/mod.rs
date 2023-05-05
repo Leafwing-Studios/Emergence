@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::Mul;
 
 use crate::{
-    graphics::lighting::{CelestialBody, PrimaryCelestialBody},
+    graphics::lighting::{CelestialBody, Sun},
     simulation::SimulationSet,
 };
 
@@ -107,7 +107,7 @@ impl Mul<Illuminance> for f32 {
 /// Computes the amount of light available from each celestial body based on its position in the sky and luminous intensity.
 fn compute_light(
     mut query: Query<&CelestialBody>,
-    primary_body_query: Query<&CelestialBody, With<PrimaryCelestialBody>>,
+    primary_body_query: Query<&CelestialBody, With<Sun>>,
     mut total_light: ResMut<TotalLight>,
 ) {
     if total_light.max_illuminance == Illuminance(0.0) {
