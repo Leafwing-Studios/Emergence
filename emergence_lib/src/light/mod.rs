@@ -11,13 +11,18 @@ use crate::{
     simulation::SimulationSet,
 };
 
+use self::shade::{compute_recieved_light, compute_shade};
+
+pub(crate) mod shade;
+
 /// Systems and resources for computing light (in in-game quantities).
 pub(super) struct LightPlugin;
 
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TotalLight>().add_systems(
-            (compute_light,)
+            (compute_light, compute_shade, compute_recieved_light)
+                .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -51,12 +56,20 @@ impl Display for TotalLight {
 /// A normalized amount of light.
 ///
 /// This is expected to be 0 in pitch black darkness, and 1 in full daylight.
-#[derive(PartialEq, PartialOrd, Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Default, PartialEq, PartialOrd, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct NormalizedIlluminance(pub f32);
 
 impl Display for NormalizedIlluminance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:.0}%", self.0 * 100.)
+    }
+}
+
+impl Mul<f32> for NormalizedIlluminance {
+    type Output = NormalizedIlluminance;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        NormalizedIlluminance(self.0 * rhs)
     }
 }
 

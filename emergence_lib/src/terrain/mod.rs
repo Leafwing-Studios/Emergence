@@ -9,6 +9,7 @@ use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
 use crate::crafting::components::StorageInventory;
 use crate::crafting::item_tags::ItemKind;
+use crate::light::shade::{ReceivedLight, Shade};
 use crate::organisms::energy::VigorModifier;
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::{Emitter, SignalModifier, SignalStrength, SignalType};
@@ -68,6 +69,10 @@ struct TerrainBundle {
     emitter: Emitter,
     /// Stores littered items
     storage_inventory: StorageInventory,
+    /// The amount of shade cast on this tile.
+    shade: Shade,
+    /// The amount of light currently being received by this tile.
+    received_light: ReceivedLight,
 }
 
 impl TerrainBundle {
@@ -101,6 +106,8 @@ impl TerrainBundle {
             vigor_modifier: VigorModifier::None,
             emitter: Emitter::default(),
             storage_inventory: StorageInventory::new(1, None),
+            shade: Shade::default(),
+            received_light: ReceivedLight::default(),
         }
     }
 }
