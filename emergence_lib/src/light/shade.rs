@@ -4,13 +4,10 @@ use crate::{
     asset_management::manifest::Id,
     construction::ghosts::Ghost,
     simulation::{
-        geometry::{Height, MapGeometry, TilePos},
+        geometry::{Facing, Height, MapGeometry, TilePos},
         time::{InGameTime, TimeOfDay},
     },
-    structures::{
-        structure_manifest::{Structure, StructureManifest},
-        Footprint,
-    },
+    structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
 
@@ -50,7 +47,7 @@ impl Display for ReceivedLight {
 pub(super) fn compute_shade(
     mut terrain_query: Query<&mut Shade>,
     // FIXME: previews cast shadows in the game, but we only want them to be previewed to the player
-    structure_query: Query<(&TilePos, &Id<Structure>), Without<Ghost>>,
+    structure_query: Query<(&TilePos, &Id<Structure>, &Facing), Without<Ghost>>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
     structure_manifest: Res<StructureManifest>,
@@ -75,9 +72,12 @@ pub(super) fn compute_shade(
 
     // Cast shade from structures to nearby tiles
     // TODO: vary this by Footprint
-    for (&center, &structure_id) in structure_query.iter() {
+    for (&center, &structure_id, facing) in structure_query.iter() {
         let structure_data = structure_manifest.get(structure_id);
-        let tiles_in_footprint = structure_data.footprint.in_world_space(center);
+        let tiles_in_footprint = structure_data
+            .footprint
+            .rotated(facing)
+            .in_world_space(center);
 
         for tile_pos in &tiles_in_footprint {
             for shaded_tile_pos in shaded_area(*tile_pos, &map_geometry, structure_data.height) {
