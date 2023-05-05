@@ -77,24 +77,24 @@ pub(super) fn compute_shade(
     // TODO: vary this by Footprint
     for (&center, &structure_id) in structure_query.iter() {
         let structure_data = structure_manifest.get(structure_id);
+        let tiles_in_footprint = structure_data.footprint.in_world_space(center);
 
-        // TODO: vary height by structure type
-        for shaded_tile_pos in shaded_area(
-            center,
-            &structure_data.footprint,
-            &map_geometry,
-            structure_data.height,
-        ) {
-            let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
-            let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
-            shade.light_fraction *= SHADE_FRACTION;
+        for tile_pos in &tiles_in_footprint {
+            for shaded_tile_pos in shaded_area(*tile_pos, &map_geometry, structure_data.height) {
+                // Don't shade yourself
+                if tiles_in_footprint.contains(&shaded_tile_pos) {
+                    continue;
+                }
+
+                let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
+                let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
+                shade.light_fraction *= SHADE_FRACTION;
+            }
         }
     }
 
     for tile_pos in map_geometry.valid_tile_positions() {
-        // PERF: specializing this for single-tile footprints would save on work
-        let footprint = Footprint::single();
-        for shaded_tile_pos in shaded_area(tile_pos, &footprint, &map_geometry, Height::ZERO) {
+        for shaded_tile_pos in shaded_area(tile_pos, &map_geometry, Height::ZERO) {
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.light_fraction *= SHADE_FRACTION;
@@ -102,23 +102,20 @@ pub(super) fn compute_shade(
     }
 }
 
-/// Computes the set of tiles that are shaded by a given footprint.
+/// Computes the set of tiles that are shaded by a given object.
 fn shaded_area(
-    center: TilePos,
-    footprint: &Footprint,
+    tile_pos: TilePos,
     map_geometry: &MapGeometry,
     height_of_caster: Height,
 ) -> Vec<TilePos> {
     let mut shaded_tiles = Vec::new();
 
-    for tile_pos in footprint.in_world_space(center) {
-        let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
-        // TODO: account for height of originating structure
-        for neighbor in center.all_valid_neighbors(map_geometry) {
-            let neighbor_terrain_height = map_geometry.get_height(neighbor).unwrap();
-            if neighbor_terrain_height < originating_terrain_height + height_of_caster {
-                shaded_tiles.push(neighbor);
-            }
+    let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
+    // TODO: account for height of originating structure
+    for neighbor in tile_pos.all_valid_neighbors(map_geometry) {
+        let neighbor_terrain_height = map_geometry.get_height(neighbor).unwrap();
+        if neighbor_terrain_height < originating_terrain_height + height_of_caster {
+            shaded_tiles.push(neighbor);
         }
     }
     shaded_tiles
