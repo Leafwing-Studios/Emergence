@@ -207,7 +207,7 @@ impl Default for InGameTime {
     fn default() -> Self {
         InGameTime {
             elapsed_time: Days(0.0),
-            seconds_per_day: 300.,
+            seconds_per_day: 30.,
         }
     }
 }
