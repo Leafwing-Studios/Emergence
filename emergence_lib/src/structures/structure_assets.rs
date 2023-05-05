@@ -15,6 +15,7 @@ pub(crate) struct StructureHandles {
     /// The scene for each type of structure
     pub(crate) scenes: HashMap<Id<Structure>, Handle<Scene>>,
     /// The raycasting mesh used to select structures
+    // TODO: make this private and require the footprint and height of the structure
     pub(crate) picking_mesh: Handle<Mesh>,
 }
 
