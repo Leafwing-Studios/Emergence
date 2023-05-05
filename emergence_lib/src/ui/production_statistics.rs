@@ -8,6 +8,7 @@ use crate::{
         geometry::MapGeometry, light::TotalLight, time::InGameTime, weather::CurrentWeather,
     },
     water::WaterTable,
+    world_gen::WorldGenState,
 };
 
 use super::{FiraSansFontFamily, LeftPanel};
@@ -18,7 +19,7 @@ pub(super) struct ProductionStatisticsPlugin;
 impl Plugin for ProductionStatisticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_production_statistics_menu)
-            .add_system(update_production_statistics);
+            .add_system(update_production_statistics.run_if(in_state(WorldGenState::Complete)));
     }
 }
 
@@ -73,7 +74,7 @@ fn update_production_statistics(
     let mut text = query.single_mut();
     text.sections[0].value = format!("{}\n", *in_game_time);
     text.sections[1].value = format!("Weather: {}\n", current_weather.get());
-    text.sections[2].value = format!("{}\n", *total_light);
+    text.sections[2].value = format!("Light: {}\n", *total_light);
     text.sections[3].value = format!(
         "{} average volume of water per tile \n",
         water_table.average_volume(&map_geometry)

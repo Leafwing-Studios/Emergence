@@ -7,19 +7,18 @@ use serde::{Deserialize, Serialize};
 use std::ops::Mul;
 
 use super::SimulationSet;
-use crate::graphics::lighting::CelestialBody;
+use crate::graphics::lighting::{CelestialBody, PrimaryCelestialBody};
 
 /// Systems and resources for computing light (in in-game quantities).
 pub(super) struct LightPlugin;
 
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_resource::<TotalLight>().add_systems(
             (compute_light,)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
-        )
-        .init_resource::<TotalLight>();
+        );
     }
 }
 
@@ -28,18 +27,34 @@ impl Plugin for LightPlugin {
 pub(crate) struct TotalLight {
     /// The total amount of light available, in lux.
     illuminance: Illuminance,
+    /// The maximum expected amount of light available, in lux.
+    max_illuminance: Illuminance,
 }
 
 impl TotalLight {
-    /// The total amount of light available, in lux.
-    pub(crate) fn illuminance(&self) -> Illuminance {
-        self.illuminance
+    /// The normalized amount of light available.
+    ///
+    /// This is expected to be 0 in pitch black darkness, and 1 in full daylight.
+    pub(crate) fn normalized_illuminance(&self) -> NormalizedIlluminance {
+        NormalizedIlluminance(self.illuminance.0 / self.max_illuminance.0)
     }
 }
 
 impl Display for TotalLight {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.illuminance())
+        write!(f, "{}", self.normalized_illuminance())
+    }
+}
+
+/// A normalized amount of light.
+///
+/// This is expected to be 0 in pitch black darkness, and 1 in full daylight.
+#[derive(PartialEq, PartialOrd, Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct NormalizedIlluminance(pub f32);
+
+impl Display for NormalizedIlluminance {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.0}%", self.0 * 100.)
     }
 }
 
@@ -75,7 +90,17 @@ impl Mul<Illuminance> for f32 {
 }
 
 /// Computes the amount of light available from each celestial body based on its position in the sky and luminous intensity.
-fn compute_light(mut query: Query<&CelestialBody>, mut total_light: ResMut<TotalLight>) {
+fn compute_light(
+    mut query: Query<&CelestialBody>,
+    primary_body_query: Query<&CelestialBody, With<PrimaryCelestialBody>>,
+    mut total_light: ResMut<TotalLight>,
+) {
+    if total_light.max_illuminance == Illuminance(0.0) {
+        if let Ok(primary_body) = primary_body_query.get_single() {
+            total_light.max_illuminance = primary_body.compute_max_light();
+        }
+    }
+
     let mut sum = Illuminance(0.0);
     for body in query.iter_mut() {
         let light = body.compute_light();

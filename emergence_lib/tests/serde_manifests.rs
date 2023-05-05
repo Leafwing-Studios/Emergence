@@ -12,7 +12,7 @@ use emergence_lib::{
         lifecycle::{RawLifePath, RawLifecycle},
         RawOrganismId, RawOrganismVariety,
     },
-    simulation::{geometry::Height, light::Illuminance},
+    simulation::{geometry::Height, light::NormalizedIlluminance},
     structures::{
         structure_manifest::{RawStructureData, RawStructureKind, RawStructureManifest},
         Footprint,
@@ -167,7 +167,7 @@ fn can_serialize_recipe_manifest() {
                     craft_time: 3.,
                     conditions: Some(RecipeConditions::new(
                         0,
-                        Threshold::new(Illuminance(5e3), Illuminance(6e4)),
+                        Threshold::new(NormalizedIlluminance(0.2), NormalizedIlluminance(0.8)),
                     )),
                     energy: Some(Energy(20.)),
                 },

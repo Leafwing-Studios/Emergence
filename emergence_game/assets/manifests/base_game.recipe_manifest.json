@@ -26,8 +26,8 @@
 			"conditions": {
 				"workers_required": 0,
 				"allowable_light_range": {
-					"min": 5000.0,
-					"max": 60000.0
+					"min": 0.2,
+					"max": 0.6
 				}
 			},
 			"energy": 20.0
@@ -46,8 +46,8 @@
 			"conditions": {
 				"workers_required": 0,
 				"allowable_light_range": {
-					"min": 5000.0,
-					"max": 80000.0
+					"min": 0.4,
+					"max": 1.0
 				}
 			},
 			"energy": 20.0

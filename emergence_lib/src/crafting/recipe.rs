@@ -4,10 +4,11 @@ use crate::asset_management::manifest::loader::IsRawManifest;
 use crate::asset_management::manifest::{Id, Manifest};
 use crate::items::item_manifest::{Item, ItemManifest};
 use crate::items::{inventory::Inventory, ItemCount};
+use crate::simulation::light::NormalizedIlluminance;
 use crate::{
     crafting::components::{InputInventory, OutputInventory},
     organisms::energy::Energy,
-    simulation::light::{Illuminance, TotalLight},
+    simulation::light::TotalLight,
 };
 use bevy::reflect::{FromReflect, Reflect, TypeUuid};
 use bevy::utils::HashMap;
@@ -299,7 +300,7 @@ pub struct RecipeConditions {
     /// The number of workers required to advance this recipe.
     pub workers_required: u8,
     /// The range of light levels that are acceptable for this recipe.
-    pub allowable_light_range: Option<Threshold<Illuminance>>,
+    pub allowable_light_range: Option<Threshold<NormalizedIlluminance>>,
 }
 
 impl Display for RecipeConditions {
@@ -322,7 +323,10 @@ impl RecipeConditions {
     };
 
     /// Creates a new [`RecipeConditions`].
-    pub const fn new(workers_required: u8, allowable_light_range: Threshold<Illuminance>) -> Self {
+    pub const fn new(
+        workers_required: u8,
+        allowable_light_range: Threshold<NormalizedIlluminance>,
+    ) -> Self {
         Self {
             workers_required,
             allowable_light_range: Some(allowable_light_range),
@@ -332,10 +336,9 @@ impl RecipeConditions {
     /// Are the conditions to craft this recipe met?
     fn satisfied(&self, workers: u8, total_light: &TotalLight) -> bool {
         let work_satisfied = self.workers_required == 0 || workers >= self.workers_required;
-        let light_satisfied = self
-            .allowable_light_range
-            .as_ref()
-            .map_or(true, |range| range.contains(total_light.illuminance()));
+        let light_satisfied = self.allowable_light_range.as_ref().map_or(true, |range| {
+            range.contains(total_light.normalized_illuminance())
+        });
 
         work_satisfied && light_satisfied
     }
