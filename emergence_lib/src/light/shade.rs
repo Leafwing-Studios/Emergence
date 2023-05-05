@@ -102,7 +102,7 @@ fn shaded_area(center: TilePos, footprint: &Footprint, map_geometry: &MapGeometr
 }
 
 /// Computes the amount of light received by each tile.
-pub(super) fn compute_recieved_light(
+pub(super) fn compute_received_light(
     mut terrain_query: Query<(&mut ReceivedLight, &Shade)>,
     total_light: Res<TotalLight>,
 ) {

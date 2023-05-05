@@ -11,7 +11,7 @@ use crate::{
     simulation::SimulationSet,
 };
 
-use self::shade::{compute_recieved_light, compute_shade};
+use self::shade::{compute_received_light, compute_shade};
 
 pub(crate) mod shade;
 
@@ -21,7 +21,7 @@ pub(super) struct LightPlugin;
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TotalLight>().add_systems(
-            (compute_light, compute_shade, compute_recieved_light)
+            (compute_light, compute_shade, compute_received_light)
                 .chain()
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
