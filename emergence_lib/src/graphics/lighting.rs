@@ -139,23 +139,6 @@ pub(crate) struct Moon;
 /// Spawns a directional light source to illuminate the scene
 #[allow(dead_code)]
 fn spawn_celestial_bodies(mut commands: Commands) {
-    /*  Shadows are currently disabled for perf reasons:
-    Tracked in https://github.com/Leafwing-Studios/Emergence/issues/726
-
-    let camera_settings = camera_query.single();
-    let cascade_shadow_config = CascadeShadowConfigBuilder {
-        // Max is 4, as of Bevy 0.10
-        num_cascades: 4,
-        // Shadows must be visible even when fully zoomed in
-        minimum_distance: camera_settings.min_zoom,
-        // Shadows must be visible even when fully zoomed out
-        maximum_distance: 4. * camera_settings.max_zoom,
-        first_cascade_far_bound: 2. * camera_settings.min_zoom,
-        overlap_proportion: 0.3,
-    }
-    .build();
-    */
-
     let sun = CelestialBody::sun();
     commands
         .spawn(DirectionalLightBundle {
