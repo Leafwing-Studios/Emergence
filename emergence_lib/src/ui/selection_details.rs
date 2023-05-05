@@ -667,13 +667,15 @@ mod structure_details {
             water_table: &WaterTable,
         ) -> String {
             let entity = self.entity;
-            let structure_id = structure_manifest.name(self.structure_id);
+            let structure_type = structure_manifest.name(self.structure_id);
             let tile_pos = &self.tile_pos;
+            let height = structure_manifest.get(self.structure_id).height;
 
             let mut string = format!(
                 "Entity: {entity:?}
-Structure type: {structure_id}
-Tile: {tile_pos}"
+Structure type: {structure_type}
+Tile: {tile_pos}
+Height: {height}"
             );
 
             if self.marked_for_removal {
