@@ -1,6 +1,5 @@
 //! Controls in-game time: day-night cycles, weather and the passing of seasons
 
-use core::f32::consts::{PI, TAU};
 use core::fmt::Display;
 use std::ops::{Div, Mul};
 
@@ -11,7 +10,7 @@ use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
 use serde::{Deserialize, Serialize};
 
-use crate::graphics::lighting::CelestialBody;
+use crate::graphics::lighting::{Moon, Sun};
 use crate::organisms::lifecycle::Lifecycle;
 use crate::player_interaction::PlayerAction;
 
@@ -90,53 +89,21 @@ impl Mul<f32> for Days {
 /// These are evenly spaced throughout the 24 hour day.
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TimeOfDay {
-    /// The beginning part of the day.
-    Morning,
-    /// The peak hour of sun.
-    Noon,
-    /// The latter part of the day.
-    Afternoon,
-    /// The beginning of the ngiht.
-    Evening,
-    /// The peak hour of darkness.
-    Midnight,
-    /// The latter part of the night.
-    Dawn,
+    /// The sun is out
+    Day,
+    /// The sun is down
+    Night,
 }
 
 impl TimeOfDay {
-    /// Is this time of day during the day?
-    pub fn is_day(&self) -> bool {
-        matches!(
-            self,
-            TimeOfDay::Morning | TimeOfDay::Noon | TimeOfDay::Afternoon
-        )
-    }
-
-    /// Is this time of day during the night?
-    pub fn is_night(&self) -> bool {
-        matches!(
-            self,
-            TimeOfDay::Evening | TimeOfDay::Midnight | TimeOfDay::Dawn
-        )
-    }
-
     /// Returns the time of day that is closest to the given fraction of a day.
     ///
     /// Values outside of [0.0, 1.0] are modulo'd to fit the range.
     pub fn from_fraction_of_day(fraction: f32) -> Self {
-        let cleaned_fraction = fraction.rem_euclid(1.0);
-        let scaled_fraction = cleaned_fraction * 6.0;
-        // We want to ensure that noon is centered at 0.5.
-        let shifted_fraction = scaled_fraction + 0.5;
-        match shifted_fraction.round() as u32 {
-            0 => TimeOfDay::Dawn,
-            1 => TimeOfDay::Morning,
-            2 => TimeOfDay::Noon,
-            3 => TimeOfDay::Afternoon,
-            4 => TimeOfDay::Evening,
-            5 => TimeOfDay::Midnight,
-            _ => TimeOfDay::Dawn,
+        if fraction < 0.7 {
+            TimeOfDay::Day
+        } else {
+            TimeOfDay::Night
         }
     }
 }
@@ -204,15 +171,23 @@ pub fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGam
 }
 
 /// Moves the sun and moon based on the in-game time
-fn move_celestial_bodies(mut query: Query<&mut CelestialBody>, in_game_time: Res<InGameTime>) {
-    for mut celestial_body in query.iter_mut() {
-        // Take the modulo with respect to the period to get the revolution period correct
-        let cycle_normalized_time = (in_game_time.elapsed_time.0 % celestial_body.days_per_cycle)
-            / celestial_body.days_per_cycle;
+fn move_celestial_bodies(
+    mut sun_query: Query<&mut Visibility, (With<Sun>, Without<Moon>)>,
+    mut moon_query: Query<&mut Visibility, With<Moon>>,
+    in_game_time: Res<InGameTime>,
+) {
+    let mut sun_visibility = sun_query.single_mut();
+    let mut moon_visibility = moon_query.single_mut();
 
-        // Scale the progress by TAU to get a full rotation.
-        // Offset by PI / 2 to compensate for the fact that 0 represents the noon sun
-        celestial_body.hour_angle = cycle_normalized_time * TAU - PI / 2.;
+    match in_game_time.time_of_day() {
+        TimeOfDay::Day => {
+            *sun_visibility = Visibility::Visible;
+            *moon_visibility = Visibility::Hidden;
+        }
+        TimeOfDay::Night => {
+            *sun_visibility = Visibility::Hidden;
+            *moon_visibility = Visibility::Visible;
+        }
     }
 }
 

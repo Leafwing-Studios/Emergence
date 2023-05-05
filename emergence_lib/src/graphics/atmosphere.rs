@@ -2,7 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::time::InGameTime;
+use crate::simulation::{
+    time::{InGameTime, TimeOfDay},
+    weather::CurrentWeather,
+};
 
 /// Logic and resources to modify the sky and atmosphere.
 pub(super) struct AtmospherePlugin;
@@ -14,6 +17,21 @@ impl Plugin for AtmospherePlugin {
 }
 
 /// Changes the `ClearColor` resource which drives the sky color based on the time of day.
-fn animate_sky_color(mut clear_color: ResMut<ClearColor>, in_game_time: Res<InGameTime>) {
-    clear_color.0 = in_game_time.time_of_day().sky_color();
+fn animate_sky_color(
+    mut clear_color: ResMut<ClearColor>,
+    weather: Res<CurrentWeather>,
+    in_game_time: Res<InGameTime>,
+) {
+    clear_color.0 = match in_game_time.time_of_day() {
+        TimeOfDay::Day => weather.get().sky_color(),
+        TimeOfDay::Night => {
+            let Color::Hsla { hue, saturation, lightness, alpha } = weather.get().sky_color() else { panic!("Expected HSL color") };
+            Color::Hsla {
+                hue,
+                saturation,
+                lightness: lightness * 0.5,
+                alpha,
+            }
+        }
+    };
 }
