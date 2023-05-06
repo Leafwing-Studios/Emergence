@@ -8,7 +8,13 @@ use bevy::{
 
 use std::fmt::{Display, Formatter};
 
-const ASSET_FOLDER: &str = "emergence_game/assets";
+/// The path to the asset folder, from the root of the repository.
+const ROOT_ASSET_FOLDER: &str = "emergence_game/assets";
+
+/// The path to the asset folder from the perspective of the [`AssetPlugin`] is specified relative to the executable.
+///
+/// As a result, we need to go up two levels to translate.
+const PATH_ADAPTOR: &str = "../../";
 
 pub(super) fn verify_assets_load() {
     App::new()
@@ -19,7 +25,7 @@ pub(super) fn verify_assets_load() {
         })
         .add_plugins(MinimalPlugins)
         .add_plugin(AssetPlugin {
-            asset_folder: ASSET_FOLDER.into(),
+            asset_folder: format!("{}{}", PATH_ADAPTOR, ROOT_ASSET_FOLDER),
             watch_for_changes: false,
         })
         .add_startup_system(load_assets)
@@ -96,24 +102,40 @@ impl TimeOut {
 }
 
 fn load_assets(asset_server: Res<AssetServer>, mut asset_handles: ResMut<AssetHandles>) {
-    // Debug the current directory
-    println!("Current directory: {:?}", std::env::current_dir());
+    // Change folder into the asset folder
+    std::env::set_current_dir(ROOT_ASSET_FOLDER).unwrap();
 
-    // Change directory to the asset folder
-    std::env::set_current_dir(ASSET_FOLDER).unwrap();
+    // List the files in the font directory
+    let files = std::fs::read_dir("fonts")
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect::<Vec<_>>();
 
-    // Debug the current directory
-    println!("New directory: {:?}", std::env::current_dir());
+    for path_from_root in files {
+        // Filter by file extension
+        if let Some(extension) = path_from_root.extension() {
+            if extension == "ttf" {
+                // Load the font
+                let name = path_from_root
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned();
+                let bevy_assets_path =
+                    format!("{}{}", PATH_ADAPTOR, path_from_root.to_str().unwrap());
 
-    // List the files in the current directory
-    println!("Files in current directory:");
-    for entry in std::fs::read_dir(".").unwrap() {
-        let entry = entry.unwrap();
-        println!("    {:?}", entry.path());
+                let handle = asset_server.load(bevy_assets_path);
+                asset_handles.font_handles.insert(
+                    name,
+                    HandleStatus {
+                        handle,
+                        load_state: LoadState::NotLoaded,
+                    },
+                );
+            }
+        }
     }
-
-    // Print the list of all folders and files in the asset folder
-    let all_fonts = asset_server.load_folder(ASSET_FOLDER).unwrap();
 }
 
 fn check_if_assets_loaded(
