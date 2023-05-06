@@ -2,13 +2,16 @@
 
 use bevy::prelude::*;
 use core::fmt::Display;
-use derive_more::{Add, AddAssign};
-use serde::{Deserialize, Serialize};
-use std::ops::Mul;
 
-use crate::{
-    graphics::lighting::{CelestialBody, Sun},
-    simulation::SimulationSet,
+use emergence_macros::IterableEnum;
+use serde::{Deserialize, Serialize};
+
+use crate as emergence_lib;
+
+use crate::simulation::{
+    time::{InGameTime, TimeOfDay},
+    weather::{CurrentWeather, Weather},
+    SimulationSet,
 };
 
 use self::shade::{compute_received_light, compute_shade};
@@ -31,97 +34,63 @@ impl Plugin for LightPlugin {
 
 /// The total current amount of light available.
 #[derive(Resource, Default, Debug)]
-pub(crate) struct TotalLight {
-    /// The total amount of light available, in lux.
-    illuminance: Illuminance,
-    /// The maximum expected amount of light available, in lux.
-    max_illuminance: Illuminance,
-}
-
-impl TotalLight {
-    /// The normalized amount of light available.
-    ///
-    /// This is expected to be 0 in pitch black darkness, and 1 in full daylight.
-    pub(crate) fn normalized_illuminance(&self) -> NormalizedIlluminance {
-        NormalizedIlluminance(self.illuminance.0 / self.max_illuminance.0)
-    }
-}
+pub(crate) struct TotalLight(Illuminance);
 
 impl Display for TotalLight {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.normalized_illuminance())
+        write!(f, "{}", self.0)
     }
 }
 
-/// A normalized amount of light.
-///
-/// This is expected to be 0 in pitch black darkness, and 1 in full daylight.
-#[derive(Default, PartialEq, PartialOrd, Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct NormalizedIlluminance(pub f32);
-
-impl Display for NormalizedIlluminance {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.0}%", self.0 * 100.)
-    }
-}
-
-impl Mul<f32> for NormalizedIlluminance {
-    type Output = NormalizedIlluminance;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        NormalizedIlluminance(self.0 * rhs)
-    }
-}
-
-/// Light illuminance in lux.
+/// A qualitative measurement of light intensity.
 #[derive(
-    Add, AddAssign, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    IterableEnum,
 )]
-pub struct Illuminance(pub f32);
+pub enum Illuminance {
+    /// The tile is in complete darkness.
+    Dark,
+    /// The tile only has some light.
+    DimlyLit,
+    /// The tile has the full light of the sun.
+    #[default]
+    BrightlyLit,
+}
 
 impl Display for Illuminance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // Rounds to the nearest 100 lux
-        let rounded_illuminance = (self.0 / 100.).round() * 100.;
-
-        write!(f, "{rounded_illuminance:.0} lux")
+        match self {
+            Illuminance::Dark => write!(f, "Dark"),
+            Illuminance::DimlyLit => write!(f, "Dimly Lit"),
+            Illuminance::BrightlyLit => write!(f, "Brightly Lit"),
+        }
     }
 }
 
-impl Mul<f32> for Illuminance {
-    type Output = Illuminance;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        Illuminance(self.0 * rhs)
-    }
-}
-
-impl Mul<Illuminance> for f32 {
-    type Output = Illuminance;
-
-    fn mul(self, rhs: Illuminance) -> Self::Output {
-        Illuminance(self * rhs.0)
-    }
-}
-
-/// Computes the amount of light available from each celestial body based on its position in the sky and luminous intensity.
+/// Computes the amount of light available based on the weather and time of day.
 fn compute_light(
-    mut query: Query<(&CelestialBody, &Visibility)>,
-    primary_body_query: Query<&CelestialBody, With<Sun>>,
+    in_game_time: Res<InGameTime>,
+    current_weather: Res<CurrentWeather>,
     mut total_light: ResMut<TotalLight>,
 ) {
-    if total_light.max_illuminance == Illuminance(0.0) {
-        if let Ok(primary_body) = primary_body_query.get_single() {
-            total_light.max_illuminance = primary_body.compute_max_light();
-        }
-    }
+    let time_of_day = in_game_time.time_of_day();
 
-    let mut sum = Illuminance(0.0);
-    for (body, visibility) in query.iter_mut() {
-        if visibility == Visibility::Visible {
-            let light = body.compute_light();
-            sum += light;
+    total_light.0 = if time_of_day == TimeOfDay::Night {
+        Illuminance::Dark
+    } else {
+        match current_weather.get() {
+            Weather::Clear => Illuminance::BrightlyLit,
+            Weather::Cloudy => Illuminance::DimlyLit,
+            Weather::Rainy => Illuminance::DimlyLit,
         }
     }
-    total_light.illuminance = sum;
 }

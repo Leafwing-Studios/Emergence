@@ -289,7 +289,8 @@ fn update_signal_type_display(
                 },
             }];
 
-            legend.texture = tile_overlay.light_level_legend_image_handle();
+            // TODO: add a legend for light levels
+            legend.texture = Handle::default();
         }
     }
 }

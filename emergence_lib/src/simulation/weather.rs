@@ -7,7 +7,6 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 
 use crate as emergence_lib;
-use crate::graphics::lighting::CelestialBody;
 use crate::simulation::time::InGameTime;
 
 /// A plugin that handles weather.
@@ -16,7 +15,7 @@ pub(crate) struct WeatherPlugin;
 impl Plugin for WeatherPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CurrentWeather>().add_systems(
-            (set_daily_weather, modify_lighting)
+            (set_daily_weather,)
                 .in_set(super::SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -79,15 +78,6 @@ impl Weather {
         }
     }
 
-    /// The light level of this kind of weather.
-    pub(crate) fn light_level(self) -> f32 {
-        match self {
-            Self::Clear => 1.,
-            Self::Cloudy => 0.8,
-            Self::Rainy => 0.6,
-        }
-    }
-
     /// The relative rate of evaporation for this kind of weather.
     ///
     /// The evaporation rate of [`Weather::Clear`] is defined to be 1.0.
@@ -119,17 +109,5 @@ fn set_daily_weather(in_game_time: Res<InGameTime>, mut current_weather: ResMut<
         current_weather.last_updated = current_day;
         let rng = &mut rand::thread_rng();
         current_weather.weather = Weather::random(rng);
-    }
-}
-
-/// Dim and modify the light from celestial bodies based on the weather.
-fn modify_lighting(current_weather: Res<CurrentWeather>, mut query: Query<&mut CelestialBody>) {
-    if current_weather.is_changed() {
-        return;
-    }
-
-    let light_level = current_weather.weather.light_level();
-    for mut celestial_body in query.iter_mut() {
-        celestial_body.set_light_level(light_level);
     }
 }

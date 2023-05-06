@@ -4,7 +4,7 @@
 pub(crate) mod infovis {
     use bevy::prelude::Color;
 
-    use crate::signals::SignalKind;
+    use crate::{light::Illuminance, signals::SignalKind};
 
     /// The alpha value used for selection/hovering/other UI overlay
     pub(crate) const OVERLAY_ALPHA: f32 = 0.5;
@@ -148,12 +148,16 @@ pub(crate) mod infovis {
     /// The color used to indicate that water is near the surface.
     pub(crate) const WATER_TABLE_COLOR_LOW: Color = Color::hsla(195., 0.7, 0.2, OVERLAY_ALPHA);
 
-    /// The color used to indicate that it is dark.
-    pub(crate) const LIGHT_LEVEL_COLOR_LOW: Color = Color::hsla(232., 0.68, 0.4, OVERLAY_ALPHA);
-    /// The color used to indicate that it is bright.
-    // This is very hard to see at low alpha, so we use a higher alpha here.
-    pub(crate) const LIGHT_LEVEL_COLOR_HIGH: Color =
-        Color::hsla(52., 0.7, 0.95, (1.0 + OVERLAY_ALPHA) / 2.);
+    impl Illuminance {
+        pub(crate) fn info_vis_color(&self) -> Color {
+            // Because these are discretized, they're easier to understand with a fully opaque color
+            match self {
+                Illuminance::Dark => Color::hsla(232., 0.68, 0.4, 1.0),
+                Illuminance::DimlyLit => Color::hsla(232., 0.68, 0.6, 1.0),
+                Illuminance::BrightlyLit => Color::hsla(52., 0.9, 0.85, 1.0),
+            }
+        }
+    }
 }
 
 /// Colors used for the world's environment

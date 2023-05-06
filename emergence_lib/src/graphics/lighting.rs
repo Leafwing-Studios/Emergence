@@ -6,7 +6,6 @@ use bevy::prelude::*;
 
 use crate::{
     graphics::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
-    light::Illuminance,
     simulation::geometry::Height,
 };
 
@@ -19,10 +18,6 @@ impl Plugin for LightingPlugin {
             brightness: 0.2,
             color: LIGHT_STARS,
         })
-        // Controls the resolution of shadows cast by the sun
-        // FIXME: shadows are blocked on better rendering performance.
-        // Tracked in https://github.com/Leafwing-Studios/Emergence/issues/726
-        //.insert_resource(DirectionalLightShadowMap { size: 8192 })
         // Need to wait for the player camera to spawn
         .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
         .add_systems((animate_celestial_body_transform,));
@@ -47,61 +42,11 @@ pub(crate) struct CelestialBody {
     ///
     /// A value of 0.0 corresponds to east -> west travel.
     travel_axis: f32,
-    /// The base illuminance of the [`DirectionalLight`]
-    illuminance: f32,
-    /// The total effect of temporary modifiers to the [`DirectionalLight`]'s illuminance.
-    ///
-    /// This defaults to 1.0, and is multiplied by the base illuminance.
-    light_level: f32,
 }
 
 impl CelestialBody {
     /// The default angle that the sun is offset from the zenith in radians.
     const HOUR_ANGLE_AT_NOON: f32 = 23.5 / 360.;
-
-    /// Sets the `light_level` of this celestial body.
-    pub(crate) fn set_light_level(&mut self, light_level: f32) {
-        self.light_level = light_level;
-    }
-
-    /// Computes the total irradiance produced by this celestial body based on its position in the sky.
-    pub(crate) fn compute_light(&self) -> Illuminance {
-        CelestialBody::compute_illuminance(
-            self.light_level,
-            self.hour_angle,
-            self.declination,
-            self.illuminance,
-        )
-    }
-
-    /// Computes the maximum total irradiance produced by this celestial body based on its brightest possible position in the sky.
-    ///
-    /// This is used to determine the maximum brightness of the directional light.
-    pub(crate) fn compute_max_light(&self) -> Illuminance {
-        CelestialBody::compute_illuminance(
-            1.0,
-            CelestialBody::HOUR_ANGLE_AT_NOON,
-            self.declination,
-            self.illuminance,
-        )
-    }
-
-    /// Computes the total irradiance produced by a celestial body given `hour_angle`, `declination`, and `illuminance`.
-    fn compute_illuminance(
-        light_level: f32,
-        hour_angle: f32,
-        declination: f32,
-        illuminance: f32,
-    ) -> Illuminance {
-        // Computes the total angle formed by the celestial body and the horizon
-        //
-        // We cannot simply use the progress, as the inclination also needs to be taken into account.
-        // See https://en.wikipedia.org/wiki/Solar_zenith_angle
-        // We're treating the latitude here as equatorial.
-        let cos_solar_zenith_angle = hour_angle.cos() * declination.cos();
-        let solar_zenith_angle = cos_solar_zenith_angle.acos();
-        Illuminance(light_level * illuminance * solar_zenith_angle.cos().max(0.))
-    }
 
     /// The starting settings for the sun
     fn sun() -> CelestialBody {
@@ -110,8 +55,6 @@ impl CelestialBody {
             hour_angle: CelestialBody::HOUR_ANGLE_AT_NOON,
             declination: -PI / 4.,
             travel_axis: 0.,
-            illuminance: 8e4,
-            light_level: 1.0,
         }
     }
 
@@ -122,8 +65,6 @@ impl CelestialBody {
             hour_angle: 0.,
             declination: CelestialBody::HOUR_ANGLE_AT_NOON,
             travel_axis: PI / 6.,
-            illuminance: 3e4,
-            light_level: 1.0,
         }
     }
 }
@@ -143,7 +84,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_SUN,
-                illuminance: sun.illuminance,
+                illuminance: 8e4,
                 shadows_enabled: false,
                 ..Default::default()
             },
@@ -157,7 +98,7 @@ fn spawn_celestial_bodies(mut commands: Commands) {
         .spawn(DirectionalLightBundle {
             directional_light: DirectionalLight {
                 color: LIGHT_MOON,
-                illuminance: moon.illuminance,
+                illuminance: 3e4,
                 shadows_enabled: false,
                 ..Default::default()
             },
@@ -189,13 +130,5 @@ fn animate_celestial_body_transform(
 
         // Look at the origin to point in the right direction
         transform.look_at(Vec3::ZERO, Vec3::Y);
-    }
-}
-
-mod test {
-    #[test]
-    fn sun_starts_at_max_illuminance() {
-        let sun = super::CelestialBody::sun();
-        assert_eq!(sun.compute_light(), sun.compute_max_light());
     }
 }

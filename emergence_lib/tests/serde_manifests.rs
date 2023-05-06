@@ -7,7 +7,7 @@ use emergence_lib::{
         recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
     },
     items::item_manifest::{RawItemData, RawItemManifest},
-    light::NormalizedIlluminance,
+    light::Illuminance,
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
@@ -168,7 +168,7 @@ fn can_serialize_recipe_manifest() {
                     craft_time: 3.,
                     conditions: Some(RecipeConditions::new(
                         0,
-                        Threshold::new(NormalizedIlluminance(0.2), NormalizedIlluminance(0.8)),
+                        Threshold::new(Illuminance::DimlyLit, Illuminance::BrightlyLit),
                     )),
                     energy: Some(Energy(20.)),
                 },

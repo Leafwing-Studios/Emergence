@@ -11,35 +11,63 @@ use crate::{
 };
 use bevy::prelude::*;
 
-use super::{NormalizedIlluminance, TotalLight};
+use super::{Illuminance, TotalLight};
 
 use std::fmt::Display;
 
 /// The amount of shade on a tile.
 #[derive(Component, Clone, Debug, Default)]
-pub(crate) struct Shade {
-    /// How much shade is cast on this tile.
-    ///
-    /// This is a ratio from 0 to 1, where 0 is full shade and 1 is full sun.
-    pub(crate) light_fraction: f32,
+pub(crate) enum Shade {
+    /// This tile is not shaded.
+    #[default]
+    FullSun,
+    /// This tile is partially shaded.
+    PartialSun,
+    /// This tile is fully shaded.
+    FullShade,
+}
+
+impl Shade {
+    /// Adds one level of shade to this tile.
+    fn add_shade(&mut self) {
+        *self = match self {
+            Shade::FullSun => Shade::PartialSun,
+            Shade::PartialSun => Shade::FullShade,
+            Shade::FullShade => Shade::FullShade,
+        };
+    }
+
+    /// Computes the amount of light recieved by a tile given the shade and total light.
+    pub(crate) fn received_light(&self, total_light: &TotalLight) -> Illuminance {
+        match (total_light.0, self) {
+            (Illuminance::Dark, _) => Illuminance::Dark,
+            (Illuminance::DimlyLit, Shade::FullSun) => Illuminance::DimlyLit,
+            (Illuminance::DimlyLit, Shade::PartialSun) => Illuminance::Dark,
+            (Illuminance::DimlyLit, Shade::FullShade) => Illuminance::Dark,
+            (Illuminance::BrightlyLit, Shade::FullSun) => Illuminance::BrightlyLit,
+            (Illuminance::BrightlyLit, Shade::PartialSun) => Illuminance::DimlyLit,
+            (Illuminance::BrightlyLit, Shade::FullShade) => Illuminance::Dark,
+        }
+    }
 }
 
 impl Display for Shade {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.2}", self.light_fraction)
+        match self {
+            Shade::FullSun => write!(f, "Full Sun"),
+            Shade::PartialSun => write!(f, "Partial Sun"),
+            Shade::FullShade => write!(f, "Full Shade"),
+        }
     }
 }
 
 /// The amount of light currently received by a tile.
 #[derive(Component, Clone, Debug, Default)]
-pub(crate) struct ReceivedLight {
-    /// The amount of light received by this tile.
-    pub(crate) normalized_illuminance: NormalizedIlluminance,
-}
+pub(crate) struct ReceivedLight(pub(crate) Illuminance);
 
 impl Display for ReceivedLight {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.normalized_illuminance)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -52,18 +80,12 @@ pub(super) fn compute_shade(
     in_game_time: Res<InGameTime>,
     structure_manifest: Res<StructureManifest>,
 ) {
-    /// The fraction of light that is blocked by a single shadow.
-    ///
-    /// Should be between 0 and 1.
-    /// A value of 0 means all light is blocked, and a value of 1 means no light is blocked.
-    const SHADE_FRACTION: f32 = 0.5;
-
     // PERF: we can be much less aggressive about computing these values
     // They only need to be recomputed when the map geometry changes, or when the time of day changes
 
     // Reset the shade for all tiles
     for mut shade in terrain_query.iter_mut() {
-        shade.light_fraction = 1.0;
+        *shade = Shade::FullSun;
     }
 
     if in_game_time.time_of_day() == TimeOfDay::Night {
@@ -88,7 +110,7 @@ pub(super) fn compute_shade(
 
                 let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
                 let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
-                shade.light_fraction *= SHADE_FRACTION;
+                shade.add_shade();
             }
         }
     }
@@ -102,7 +124,7 @@ pub(super) fn compute_shade(
         for shaded_tile_pos in shaded_area(tile_pos, &map_geometry, Height::ZERO) {
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
-            shade.light_fraction *= SHADE_FRACTION;
+            shade.add_shade();
         }
     }
 }
@@ -142,9 +164,7 @@ pub(super) fn compute_received_light(
     mut terrain_query: Query<(&mut ReceivedLight, &Shade)>,
     total_light: Res<TotalLight>,
 ) {
-    let overall_light = total_light.normalized_illuminance();
-
     for (mut received_light, shade) in terrain_query.iter_mut() {
-        received_light.normalized_illuminance = overall_light * shade.light_fraction;
+        received_light.0 = shade.received_light(&total_light);
     }
 }
