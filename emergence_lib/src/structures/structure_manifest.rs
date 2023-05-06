@@ -6,6 +6,7 @@ use crate::{
     crafting::components::{ActiveRecipe, RawActiveRecipe},
     items::item_manifest::Item,
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
+    simulation::geometry::Height,
     water::roots::RootZone,
 };
 use bevy::{
@@ -63,6 +64,8 @@ pub struct StructureData {
     pub construction_strategy: ConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
+    /// The height of the structure, which controls the shadows it casts.
+    pub height: Height,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
     /// The set of tiles that this structure can reach with its roots.
@@ -84,6 +87,8 @@ pub struct RawStructureData {
     pub construction_strategy: RawConstructionStrategy,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
+    /// The height of the structure, which controls the shadows it casts.
+    pub height: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
     /// The set of tiles that this structure can reach with its roots.
@@ -99,6 +104,7 @@ impl From<RawStructureData> for StructureData {
             kind: raw.kind.into(),
             construction_strategy: raw.construction_strategy.into(),
             max_workers: raw.max_workers,
+            height: Height(raw.height as f32),
             footprint: raw.footprint.unwrap_or_default(),
             root_zone: raw.root_zone,
             passable: raw.passable,

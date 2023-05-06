@@ -111,6 +111,7 @@ impl Command for SpawnStructureCommand {
 
         let structure_handles = world.resource::<StructureHandles>();
 
+        // TODO: vary this with the footprint and height of the structure
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
         let scene_handle = structure_handles
             .scenes
@@ -252,6 +253,7 @@ impl Command for SpawnStructureGhostCommand {
         let ghost_handles = world.resource::<GhostHandles>();
         let structure_handles = world.resource::<StructureHandles>();
 
+        // TODO: vary this with the footprint and height of the structure
         let picking_mesh = structure_handles.picking_mesh.clone_weak();
         let scene_handle = structure_handles
             .scenes
