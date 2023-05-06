@@ -154,6 +154,7 @@ pub(crate) mod infovis {
     pub(crate) const WATER_TABLE_COLOR_LOW: Color = Color::hsla(195., 0.7, 0.2, OVERLAY_ALPHA);
 
     impl Illuminance {
+        /// The color used to describe the illuminance of a tile.
         pub(crate) fn info_vis_color(&self) -> Color {
             // Because these are discretized, they're easier to understand with a fully opaque color
             match self {

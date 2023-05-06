@@ -17,6 +17,7 @@ use std::fmt::Display;
 
 /// The amount of shade on a tile.
 #[derive(Component, Clone, Debug, Default)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum Shade {
     /// This tile is not shaded.
     #[default]
