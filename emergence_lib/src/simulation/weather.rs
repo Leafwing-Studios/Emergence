@@ -78,17 +78,6 @@ impl Weather {
         }
     }
 
-    /// The relative rate of evaporation for this kind of weather.
-    ///
-    /// The evaporation rate of [`Weather::Clear`] is defined to be 1.0.
-    pub(crate) fn evaporation_rate(self) -> f32 {
-        match self {
-            Self::Clear => 1.,
-            Self::Cloudy => 0.5,
-            Self::Rainy => 0.1,
-        }
-    }
-
     /// The relative rate of precipitation for this kind of weather.
     ///
     /// The precipitation rate of [`Weather::Clear`] is defined to be 0.0.
