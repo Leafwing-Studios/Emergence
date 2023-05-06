@@ -8,6 +8,8 @@ use bevy::{
 
 use std::fmt::{Display, Formatter};
 
+const ASSET_FOLDER: &str = "emergence_game/assets";
+
 pub(super) fn verify_assets_load() {
     App::new()
         .init_resource::<AssetHandles>()
@@ -16,7 +18,10 @@ pub(super) fn verify_assets_load() {
             max: Duration::from_secs(10),
         })
         .add_plugins(MinimalPlugins)
-        .add_plugin(AssetPlugin::default())
+        .add_plugin(AssetPlugin {
+            asset_folder: ASSET_FOLDER.into(),
+            watch_for_changes: false,
+        })
         .add_startup_system(load_assets)
         .add_system(check_if_assets_loaded)
         .run()
@@ -91,18 +96,24 @@ impl TimeOut {
 }
 
 fn load_assets(asset_server: Res<AssetServer>, mut asset_handles: ResMut<AssetHandles>) {
-    let all_fonts = vec!["fonts/FiraSans-Bold.ttf"];
+    // Debug the current directory
+    println!("Current directory: {:?}", std::env::current_dir());
 
-    for font in all_fonts {
-        let font_handle = asset_server.load(font);
-        asset_handles.font_handles.insert(
-            font.to_string(),
-            HandleStatus {
-                handle: font_handle,
-                load_state: LoadState::NotLoaded,
-            },
-        );
+    // Change directory to the asset folder
+    std::env::set_current_dir(ASSET_FOLDER).unwrap();
+
+    // Debug the current directory
+    println!("New directory: {:?}", std::env::current_dir());
+
+    // List the files in the current directory
+    println!("Files in current directory:");
+    for entry in std::fs::read_dir(".").unwrap() {
+        let entry = entry.unwrap();
+        println!("    {:?}", entry.path());
     }
+
+    // Print the list of all folders and files in the asset folder
+    let all_fonts = asset_server.load_folder(ASSET_FOLDER).unwrap();
 }
 
 fn check_if_assets_loaded(
