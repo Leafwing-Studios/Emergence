@@ -46,6 +46,10 @@ pub(super) fn evaporation(
 }
 
 impl ReceivedLight {
+    /// The rate at which water evaporates from tiles with this amount of light.
+    ///
+    /// This is a multiplier on the evaporation rate.
+    /// [`Illuminance::BrightlyLit`] should always have a value of 1.0.
     fn evaporation_ratio(&self) -> f32 {
         match self.0 {
             Illuminance::Dark => 0.2,
