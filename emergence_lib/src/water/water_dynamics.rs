@@ -394,7 +394,11 @@ mod tests {
         {
             let terrain_entity = app
                 .world
-                .spawn((Id::<Terrain>::from_name("test".to_string()), tile_pos))
+                .spawn((
+                    Id::<Terrain>::from_name("test".to_string()),
+                    tile_pos,
+                    ReceivedLight::default(),
+                ))
                 .id();
             map_geometry.add_terrain(tile_pos, terrain_entity)
         }
