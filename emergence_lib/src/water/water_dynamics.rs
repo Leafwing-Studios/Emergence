@@ -4,6 +4,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     asset_management::manifest::Id,
+    light::{shade::ReceivedLight, Illuminance},
     simulation::{
         geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
@@ -12,38 +13,49 @@ use crate::{
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{FlowVelocity, WaterConfig, WaterTable};
+use super::{FlowVelocity, WaterConfig, WaterDepth, WaterTable};
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
     mut water_table: ResMut<WaterTable>,
-    terrain_query: Query<&Id<Terrain>>,
+    terrain_query: Query<(&TilePos, &ReceivedLight, &Id<Terrain>)>,
     terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
-    map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
-    current_weather: Res<CurrentWeather>,
 ) {
     let evaporation_per_second = water_config.evaporation_rate.0 / in_game_time.seconds_per_day();
     let elapsed_time = fixed_time.period.as_secs_f32();
 
-    let evaporation_rate =
-        evaporation_per_second * elapsed_time * current_weather.get().evaporation_rate();
+    let evaporation_rate = evaporation_per_second * elapsed_time;
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        // Surface water evaporation
-        let total_evaporated = if water_table.surface_water_depth(tile_pos) > Height::ZERO {
-            Volume(evaporation_rate)
-        } else {
-            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-            let terrain_id = *terrain_query.get(terrain_entity).unwrap();
-            let evaporation_ratio = terrain_manifest.get(terrain_id).water_evaporation_rate;
+    for (&tile_pos, received_light, terrain_id) in terrain_query.iter() {
+        let mut evaporation_this_tile =
+            Volume(evaporation_rate * received_light.evaporation_ratio());
 
-            Volume(evaporation_rate * evaporation_ratio)
-        };
+        if matches!(
+            water_table.water_depth(tile_pos),
+            WaterDepth::Underground(..)
+        ) {
+            let terrain_data = terrain_manifest.get(*terrain_id);
+            evaporation_this_tile = evaporation_this_tile * terrain_data.water_evaporation_rate;
+        }
 
-        water_table.remove(tile_pos, total_evaporated);
+        water_table.remove(tile_pos, evaporation_this_tile);
+    }
+}
+
+impl ReceivedLight {
+    /// The rate at which water evaporates from tiles with this amount of light.
+    ///
+    /// This is a multiplier on the evaporation rate.
+    /// [`Illuminance::BrightlyLit`] should always have a value of 1.0.
+    fn evaporation_ratio(&self) -> f32 {
+        match self.0 {
+            Illuminance::Dark => 0.2,
+            Illuminance::DimlyLit => 0.5,
+            Illuminance::BrightlyLit => 1.0,
+        }
     }
 }
 
@@ -382,7 +394,11 @@ mod tests {
         {
             let terrain_entity = app
                 .world
-                .spawn((Id::<Terrain>::from_name("test".to_string()), tile_pos))
+                .spawn((
+                    Id::<Terrain>::from_name("test".to_string()),
+                    tile_pos,
+                    ReceivedLight::default(),
+                ))
                 .id();
             map_geometry.add_terrain(tile_pos, terrain_entity)
         }
