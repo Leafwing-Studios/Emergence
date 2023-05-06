@@ -9,6 +9,11 @@ pub(crate) mod infovis {
     /// The alpha value used for selection/hovering/other UI overlay
     pub(crate) const OVERLAY_ALPHA: f32 = 0.5;
 
+    /// The alpha value used for discretized overlays.
+    ///
+    /// This is more opaque to ensure that the number of gradations is clear.
+    pub(crate) const DISCRETE_OVERLAY_ALPHA: f32 = 0.8;
+
     /// The hue of selected objects
     pub(crate) const SELECTION_HUE: f32 = 100.;
     /// The saturation of selected objects
@@ -152,9 +157,9 @@ pub(crate) mod infovis {
         pub(crate) fn info_vis_color(&self) -> Color {
             // Because these are discretized, they're easier to understand with a fully opaque color
             match self {
-                Illuminance::Dark => Color::hsla(232., 0.68, 0.4, 1.0),
-                Illuminance::DimlyLit => Color::hsla(232., 0.68, 0.6, 1.0),
-                Illuminance::BrightlyLit => Color::hsla(52., 0.9, 0.85, 1.0),
+                Illuminance::Dark => Color::hsla(232., 0.6, 0.4, DISCRETE_OVERLAY_ALPHA),
+                Illuminance::DimlyLit => Color::hsla(232., 0.6, 0.6, DISCRETE_OVERLAY_ALPHA),
+                Illuminance::BrightlyLit => Color::hsla(40., 0.9, 0.85, DISCRETE_OVERLAY_ALPHA),
             }
         }
     }
