@@ -12,6 +12,8 @@ use bevy::prelude::*;
 use bevy::utils::HashSet;
 use xshell::{cmd, Shell};
 
+mod asset_loading;
+
 /// The checks that can be run in CI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Check {
@@ -147,8 +149,8 @@ fn main() {
     }
 
     if what_to_run.contains(&Check::ValidateAssets) {
-        info!("Starting Bevy app");
-        App::new().run();
+        info!("Starting Bevy app to check assets...");
+        asset_loading::verify_assets_load();
     }
 }
 
