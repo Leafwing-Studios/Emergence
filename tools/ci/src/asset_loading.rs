@@ -2,7 +2,6 @@ use bevy::{
     app::AppExit,
     asset::LoadState,
     prelude::*,
-    reflect::TypeUuid,
     utils::{Duration, HashMap, Instant},
 };
 
@@ -35,15 +34,14 @@ pub(super) fn verify_assets_load() {
 
 #[derive(Default, Resource, Debug, Clone, PartialEq)]
 struct AssetHandles {
-    font_handles: HashMap<String, HandleStatus<Font>>,
+    handles: HashMap<String, HandleStatus>,
 }
 
 impl Display for AssetHandles {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut string = String::new();
 
-        string += "Fonts\n";
-        for (name, handle) in self.font_handles.iter() {
+        for (name, handle) in self.handles.iter() {
             string += &format!("    {} - {:?}\n", name, handle.load_state);
         }
 
@@ -53,40 +51,16 @@ impl Display for AssetHandles {
 
 impl AssetHandles {
     fn all_loaded(&self) -> bool {
-        self.font_handles
+        self.handles
             .values()
             .all(|handle| handle.load_state == LoadState::Loaded)
     }
 }
 
-#[derive(Debug)]
-struct HandleStatus<T: Send + Sync + TypeUuid + 'static> {
-    handle: Handle<T>,
+#[derive(Debug, Clone, PartialEq)]
+struct HandleStatus {
+    handle: HandleUntyped,
     load_state: LoadState,
-}
-
-impl<T: Send + Sync + TypeUuid + 'static> Clone for HandleStatus<T> {
-    fn clone(&self) -> Self {
-        Self {
-            handle: self.handle.clone(),
-            load_state: self.load_state,
-        }
-    }
-}
-
-impl<T: Send + Sync + TypeUuid + 'static> Default for HandleStatus<T> {
-    fn default() -> Self {
-        Self {
-            handle: Handle::default(),
-            load_state: LoadState::NotLoaded,
-        }
-    }
-}
-
-impl<T: Send + Sync + TypeUuid + 'static> PartialEq for HandleStatus<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.handle == other.handle && self.load_state == other.load_state
-    }
 }
 
 #[derive(Resource, Debug)]
@@ -102,39 +76,18 @@ impl TimeOut {
 }
 
 fn load_assets(asset_server: Res<AssetServer>, mut asset_handles: ResMut<AssetHandles>) {
-    // Change folder into the asset folder
-    std::env::set_current_dir(ROOT_ASSET_FOLDER).unwrap();
-
-    // List the files in the font directory
-    let files = std::fs::read_dir("fonts")
-        .unwrap()
-        .map(|entry| entry.unwrap().path())
-        .collect::<Vec<_>>();
-
-    for path_from_root in files {
-        // Filter by file extension
-        if let Some(extension) = path_from_root.extension() {
-            if extension == "ttf" {
-                // Load the font
-                let name = path_from_root
-                    .file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_owned();
-                let bevy_assets_path =
-                    format!("{}{}", PATH_ADAPTOR, path_from_root.to_str().unwrap());
-
-                let handle = asset_server.load(bevy_assets_path);
-                asset_handles.font_handles.insert(
-                    name,
-                    HandleStatus {
-                        handle,
-                        load_state: LoadState::NotLoaded,
-                    },
-                );
-            }
-        }
+    // Try to load all assets
+    let all_handles = asset_server.load_folder(".").unwrap();
+    assert!(all_handles.len() > 0);
+    for handle in all_handles {
+        let asset_path = asset_server.get_handle_path(&handle).unwrap();
+        asset_handles.handles.insert(
+            asset_path.path().to_str().unwrap().to_string(),
+            HandleStatus {
+                handle,
+                load_state: LoadState::NotLoaded,
+            },
+        );
     }
 }
 
@@ -147,7 +100,7 @@ fn check_if_assets_loaded(
 ) {
     *previous_asset_handles = asset_handles.clone();
 
-    for mut handle_status in asset_handles.font_handles.values_mut() {
+    for mut handle_status in asset_handles.handles.values_mut() {
         if handle_status.load_state == LoadState::NotLoaded {
             handle_status.load_state =
                 asset_server.get_load_state(handle_status.handle.clone_weak());
@@ -155,6 +108,7 @@ fn check_if_assets_loaded(
     }
 
     if asset_handles.all_loaded() {
+        println!("{}", *asset_handles);
         println!("All assets loaded successfully, exiting.");
         app_exit_events.send(AppExit);
     } else {
