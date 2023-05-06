@@ -94,6 +94,11 @@ pub(super) fn compute_shade(
     }
 
     for tile_pos in map_geometry.valid_tile_positions() {
+        // Don't double-count shade from tiles with structures
+        if map_geometry.get_structure(tile_pos).is_some() {
+            continue;
+        }
+
         for shaded_tile_pos in shaded_area(tile_pos, &map_geometry, Height::ZERO) {
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
@@ -108,14 +113,25 @@ fn shaded_area(
     map_geometry: &MapGeometry,
     height_of_caster: Height,
 ) -> Vec<TilePos> {
+    /// The unit vector pointing away from the sun.
+    const SHADOW_DIRECTION: TilePos = TilePos::new(0, 1);
+
     let mut shaded_tiles = Vec::new();
 
     let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
-    // TODO: account for height of originating structure
-    for neighbor in tile_pos.all_valid_neighbors(map_geometry) {
-        let neighbor_terrain_height = map_geometry.get_height(neighbor).unwrap();
-        if neighbor_terrain_height < originating_terrain_height + height_of_caster {
-            shaded_tiles.push(neighbor);
+    let total_height = originating_terrain_height + height_of_caster;
+    let total_height = total_height.0.round() as i32;
+
+    for distance_from_caster in 1..=total_height {
+        let candidate = tile_pos + SHADOW_DIRECTION * distance_from_caster;
+
+        let Ok(candidate_terrain_height) = map_geometry.get_height(candidate) else {
+			continue;
+		};
+
+        // The height that a shadow can reach decreases as the distance from the caster increases
+        if candidate_terrain_height.0.round() as i32 + distance_from_caster <= total_height {
+            shaded_tiles.push(candidate);
         }
     }
     shaded_tiles

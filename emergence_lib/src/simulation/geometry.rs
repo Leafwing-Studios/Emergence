@@ -67,7 +67,7 @@ impl TilePos {
     /// Generates a new [`TilePos`] from axial coordinates.
     #[inline]
     #[must_use]
-    pub fn new(x: i32, y: i32) -> Self {
+    pub const fn new(x: i32, y: i32) -> Self {
         TilePos { hex: Hex { x, y } }
     }
 
@@ -280,6 +280,17 @@ impl TilePos {
 
         let dist_sq = ((a_x - b_x).pow(2) + (a_y - b_y).pow(2) + (a_z - b_z).pow(2)) as f32;
         dist_sq.sqrt()
+    }
+}
+
+impl Mul<i32> for TilePos {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: i32) -> Self::Output {
+        TilePos {
+            hex: self.hex * rhs,
+        }
     }
 }
 
