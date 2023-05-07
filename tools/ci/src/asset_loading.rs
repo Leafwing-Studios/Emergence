@@ -32,7 +32,7 @@ pub(super) fn verify_assets_load() {
         .add_plugins(MinimalPlugins)
         // This must come before the asset format plugins for AssetServer to exist
         .add_plugin(AssetPlugin {
-            asset_folder: format!("{}{}", PATH_ADAPTOR, ROOT_ASSET_FOLDER),
+            asset_folder: format!("{PATH_ADAPTOR}{ROOT_ASSET_FOLDER}"),
             watch_for_changes: false,
         })
         // These plugins are required for the asset loaders to be detected.
@@ -99,7 +99,7 @@ impl TimeOut {
 fn load_assets(asset_server: Res<AssetServer>, mut asset_handles: ResMut<AssetHandles>) {
     // Try to load all assets
     let all_handles = asset_server.load_folder(".").unwrap();
-    assert!(all_handles.len() > 0);
+    assert!(!all_handles.is_empty());
     for handle in all_handles {
         let asset_path = asset_server.get_handle_path(&handle).unwrap();
         asset_handles.handles.insert(
