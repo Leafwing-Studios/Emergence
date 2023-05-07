@@ -11,6 +11,7 @@ use bevy::{
     utils::{Duration, HashMap, Instant},
     window::{WindowClosed, WindowCreated, WindowResized},
 };
+use itertools::Itertools;
 
 use std::fmt::{Display, Formatter};
 
@@ -62,7 +63,10 @@ impl Display for AssetHandles {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut string = String::new();
 
-        for (name, handle) in self.handles.iter() {
+        // Sort the handles alphabetically by name
+        for name in self.handles.keys().sorted() {
+            let handle = self.handles.get(name).unwrap();
+
             string += &format!("    {} - {:?}\n", name, handle.load_state);
         }
 
