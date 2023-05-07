@@ -26,6 +26,7 @@ jobs:
           - doccheck
           - doctest
           - test
+          - assets
         include:
           - ci-argument: clippy
             toolchain-components: clippy
