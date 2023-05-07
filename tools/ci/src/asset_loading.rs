@@ -2,9 +2,14 @@ use bevy::{
     app::AppExit,
     asset::LoadState,
     audio::AudioPlugin,
+    core_pipeline::CorePipelinePlugin,
     gltf::GltfPlugin,
+    pbr::PbrPlugin,
     prelude::*,
+    render::RenderPlugin,
+    scene::ScenePlugin,
     utils::{Duration, HashMap, Instant},
+    window::{WindowClosed, WindowCreated, WindowResized},
 };
 
 use std::fmt::{Display, Formatter};
@@ -33,9 +38,16 @@ pub(super) fn verify_assets_load() {
         // These plugins are required for the asset loaders to be detected.
         // Without this, AssetServer::load_folder will return an empty list
         // as file types without an associated loader registered are silently skipped.
-        .add_plugin(ImagePlugin::default())
-        .add_plugin(GltfPlugin)
+        .add_plugin(ScenePlugin)
         .add_plugin(AudioPlugin)
+        .init_resource::<Events<WindowResized>>()
+        .init_resource::<Events<WindowCreated>>()
+        .init_resource::<Events<WindowClosed>>()
+        .add_plugin(RenderPlugin::default())
+        .add_plugin(ImagePlugin::default())
+        .add_plugin(CorePipelinePlugin)
+        .add_plugin(PbrPlugin::default())
+        .add_plugin(GltfPlugin)
         .add_startup_system(load_assets)
         .add_system(check_if_assets_loaded)
         .run()
