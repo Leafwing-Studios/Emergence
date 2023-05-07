@@ -1,6 +1,8 @@
 use bevy::{
     app::AppExit,
     asset::LoadState,
+    audio::AudioPlugin,
+    gltf::GltfPlugin,
     prelude::*,
     utils::{Duration, HashMap, Instant},
 };
@@ -23,10 +25,17 @@ pub(super) fn verify_assets_load() {
             max: Duration::from_secs(10),
         })
         .add_plugins(MinimalPlugins)
+        // This must come before the asset format plugins for AssetServer to exist
         .add_plugin(AssetPlugin {
             asset_folder: format!("{}{}", PATH_ADAPTOR, ROOT_ASSET_FOLDER),
             watch_for_changes: false,
         })
+        // These plugins are required for the asset loaders to be detected.
+        // Without this, AssetServer::load_folder will return an empty list
+        // as file types without an associated loader registered are silently skipped.
+        .add_plugin(ImagePlugin::default())
+        .add_plugin(GltfPlugin)
+        .add_plugin(AudioPlugin)
         .add_startup_system(load_assets)
         .add_system(check_if_assets_loaded)
         .run()
