@@ -319,7 +319,7 @@ impl Height {
     /// The maximum height difference that units can traverse in a single step.
     pub(crate) const MAX_STEP: Height = Height(1.);
 
-    /// The thickness of all terrain topper models.
+    /// The thickness of all terrain topper models in world coordinates.
     /// Note that the diameter of a tile is 1.0 transform units.
     pub(crate) const TOPPER_THICKNESS: f32 = 0.224;
 

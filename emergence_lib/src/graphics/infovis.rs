@@ -40,12 +40,18 @@ impl Plugin for InfoVisPlugin {
             .add_systems(
                 (
                     set_overlay_material,
-                    display_tile_overlay
+                    display_player_selection
                         .after(InteractionSystem::SelectTiles)
                         .after(set_overlay_material),
                 )
                     .distributive_run_if(in_state(AssetState::FullyLoaded)),
-            );
+            )
+            .add_system(
+                spawn_overlay_entities
+                    .in_base_set(CoreSet::PreUpdate)
+                    .run_if(in_state(AssetState::FullyLoaded)),
+            )
+            .add_system(set_overlay_height);
     }
 }
 
@@ -482,8 +488,11 @@ impl TileOverlay {
 
 /// Sets the material for the currently visualized map overlay.
 fn set_overlay_material(
-    terrain_query: Query<(&TilePos, &Children, &ReceivedLight), With<Id<Terrain>>>,
-    mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
+    terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
+    mut overlay_query: Query<
+        (&TilePos, &mut Handle<StandardMaterial>, &mut Visibility),
+        With<Overlay>,
+    >,
     signals: Res<Signals>,
     water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
@@ -494,82 +503,76 @@ fn set_overlay_material(
         return;
     }
 
-    for (&tile_pos, children, received_light) in terrain_query.iter() {
-        // This is promised to be the correct entity in the initialization of the terrain's children
-        let overlay_entity = children[1];
-
-        if let Ok((mut overlay_material, mut overlay_visibility)) =
-            overlay_query.get_mut(overlay_entity)
-        {
-            let maybe_material = match tile_overlay.overlay_type {
-                OverlayType::None => None,
-                OverlayType::Single(signal_type) => {
-                    let signal_strength = signals.get(signal_type, tile_pos);
+    for (&tile_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
+        let maybe_material = match tile_overlay.overlay_type {
+            OverlayType::None => None,
+            OverlayType::Single(signal_type) => {
+                let signal_strength = signals.get(signal_type, tile_pos);
+                let signal_kind = signal_type.into();
+                tile_overlay.get_signal_material(signal_kind, signal_strength)
+            }
+            OverlayType::StrongestSignal => signals
+                .strongest_goal_signal_at_position(tile_pos)
+                .and_then(|(signal_type, signal_strength)| {
                     let signal_kind = signal_type.into();
                     tile_overlay.get_signal_material(signal_kind, signal_strength)
-                }
-                OverlayType::StrongestSignal => signals
-                    .strongest_goal_signal_at_position(tile_pos)
-                    .and_then(|(signal_type, signal_strength)| {
-                        let signal_kind = signal_type.into();
-                        tile_overlay.get_signal_material(signal_kind, signal_strength)
-                    }),
-                OverlayType::DepthToWaterTable => {
-                    let depth_to_water_table = water_table.water_depth(tile_pos);
-                    tile_overlay.get_water_table_material(depth_to_water_table)
-                }
-                OverlayType::HeightOfWaterTable => {
-                    let water_table_height = water_table.get_height(tile_pos, &map_geometry);
-                    // FIXME: use a dedicated color ramp for this, rather than hacking it
-                    // We subtract here to ensure that blue == wet and red == dry
-                    let inverted_height = WaterDepth::Underground(
-                        Height(TileOverlay::MAX_DEPTH_TO_WATER_TABLE) - water_table_height,
-                    );
+                }),
+            OverlayType::DepthToWaterTable => {
+                let depth_to_water_table = water_table.water_depth(tile_pos);
+                tile_overlay.get_water_table_material(depth_to_water_table)
+            }
+            OverlayType::HeightOfWaterTable => {
+                let water_table_height = water_table.get_height(tile_pos, &map_geometry);
+                // FIXME: use a dedicated color ramp for this, rather than hacking it
+                // We subtract here to ensure that blue == wet and red == dry
+                let inverted_height = WaterDepth::Underground(
+                    Height(TileOverlay::MAX_DEPTH_TO_WATER_TABLE) - water_table_height,
+                );
 
-                    tile_overlay.get_water_table_material(inverted_height)
-                }
-                OverlayType::VelocityOfWaterTable => {
-                    let flow_velocity = water_table.get_flow_rate(tile_pos);
+                tile_overlay.get_water_table_material(inverted_height)
+            }
+            OverlayType::VelocityOfWaterTable => {
+                let flow_velocity = water_table.get_flow_rate(tile_pos);
 
-                    tile_overlay.get_flow_velocity_material(flow_velocity)
-                }
-                OverlayType::NetWater => {
-                    let net_water = water_table.flux(tile_pos);
-                    let volume_per_second = net_water / fixed_time.period.as_secs_f32();
+                tile_overlay.get_flow_velocity_material(flow_velocity)
+            }
+            OverlayType::NetWater => {
+                let net_water = water_table.flux(tile_pos);
+                let volume_per_second = net_water / fixed_time.period.as_secs_f32();
 
-                    Some(tile_overlay.get_water_flux_material(volume_per_second))
-                }
-                OverlayType::LightLevel => tile_overlay.get_light_level_material(received_light),
-            };
+                Some(tile_overlay.get_water_flux_material(volume_per_second))
+            }
+            OverlayType::LightLevel => {
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let received_light = terrain_query.get(terrain_entity).unwrap();
 
-            match maybe_material {
-                Some(material) => {
-                    *overlay_visibility = Visibility::Visible;
-                    *overlay_material = material;
-                }
-                None => {
-                    *overlay_visibility = Visibility::Hidden;
-                }
-            };
-        } else {
-            error!("Could not get overlay entity for tile {tile_pos:?}");
-        }
+                tile_overlay.get_light_level_material(received_light)
+            }
+        };
+
+        match maybe_material {
+            Some(material) => {
+                *overlay_visibility = Visibility::Visible;
+                *overlay_material = material;
+            }
+            None => {
+                *overlay_visibility = Visibility::Hidden;
+            }
+        };
     }
 }
 
-/// Displays the overlay of the tile
-fn display_tile_overlay(
-    terrain_query: Query<(&Children, &ObjectInteraction), With<Id<Terrain>>>,
-    mut overlay_query: Query<(&mut Handle<StandardMaterial>, &mut Visibility)>,
+/// Sets the overlay of the tile based on the player's selection.
+fn display_player_selection(
+    terrain_query: Query<&ObjectInteraction, With<Id<Terrain>>>,
+    mut overlay_query: Query<(&TilePos, &mut Handle<StandardMaterial>, &mut Visibility)>,
     terrain_handles: Res<TerrainHandles>,
     tile_overlay: Res<TileOverlay>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (children, object_interaction) in terrain_query.iter() {
-        // This is promised to be the correct entity in the initialization of the terrain's children
-        let overlay_entity = children[1];
-
-        let (mut overlay_material, mut overlay_visibility) =
-            overlay_query.get_mut(overlay_entity).unwrap();
+    for (&tile_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let object_interaction = terrain_query.get(terrain_entity).unwrap();
 
         match object_interaction {
             ObjectInteraction::None => {
@@ -746,5 +749,69 @@ impl DiscretizedMagnitude {
             DiscretizedMagnitude::Strong => 0.8,
             DiscretizedMagnitude::VeryStrong => 1.,
         }
+    }
+}
+
+/// A marker component for overlay entities.
+#[derive(Debug, Clone, Copy, Component)]
+struct Overlay;
+
+/// The components used by an entity that is used to visualize spatial information about the world.
+#[derive(Bundle)]
+struct OverlayBundle {
+    /// The tile position of the overlay.
+    tile_pos: TilePos,
+    /// The components needed to render the overlay.
+    pbr_bundle: PbrBundle,
+}
+
+/// Generates one overlay entity for each valid tile position.
+fn spawn_overlay_entities(
+    new_terrain_query: Query<&TilePos, Added<Id<Terrain>>>,
+    mut commands: Commands,
+    terrain_handles: Res<TerrainHandles>,
+    map_geometry: Res<MapGeometry>,
+) {
+    for &tile_pos in new_terrain_query.iter() {
+        let pbr_bundle = PbrBundle {
+            mesh: terrain_handles.topper_mesh.clone_weak(),
+            // The material is set in `set_overlay_material`.
+            material: Handle::default(),
+            // The height of this is fixed in `set_overlay_height`.
+            transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
+            ..Default::default()
+        };
+
+        commands.spawn(OverlayBundle {
+            tile_pos,
+            pbr_bundle,
+        });
+    }
+}
+
+/// Sets the height of each overlay entity based on the height of the terrain and the height of the water.
+///
+/// Overlays should be positioned just above the water surface when it exists, and just above the terrain when it doesn't.
+fn set_overlay_height(
+    mut overlay_query: Query<(&TilePos, &mut Transform), With<Overlay>>,
+    water_table: Res<WaterTable>,
+    map_geometry: Res<MapGeometry>,
+) {
+    /// Controls how much the overlay is raised above the terrain tiles.
+    ///
+    /// This must be greater than 0 to avoid z-fighting.
+    const EPSILON: f32 = 0.001;
+
+    let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
+
+    for (&tile_pos, mut transform) in overlay_query.iter_mut() {
+        let terrain_height = map_geometry.get_height(tile_pos).unwrap();
+
+        let desired_height = match water_table.water_depth(tile_pos) {
+            WaterDepth::Dry | WaterDepth::Underground(_) => terrain_height + topper_thickness,
+            WaterDepth::Flooded(surface_water_depth) => terrain_height + surface_water_depth,
+        };
+
+        transform.translation.y = desired_height.into_world_pos() + EPSILON;
     }
 }
