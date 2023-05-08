@@ -7,10 +7,7 @@ use bevy::{
 
 use crate::{
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
-    crafting::{
-        components::{CraftingBundle, StorageInventory},
-        recipe::RecipeManifest,
-    },
+    crafting::{inventories::StorageInventory, recipe::RecipeManifest, CraftingBundle},
     graphics::InheritedMaterial,
     items::item_manifest::ItemManifest,
     organisms::OrganismBundle,

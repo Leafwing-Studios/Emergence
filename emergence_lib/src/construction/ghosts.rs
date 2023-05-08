@@ -4,8 +4,10 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::crafting::components::{OutputInventory, WorkersPresent};
+use crate::crafting::inventories::OutputInventory;
 use crate::crafting::item_tags::ItemKind;
+use crate::crafting::recipe::ActiveRecipe;
+use crate::crafting::workers::WorkersPresent;
 use crate::enum_iter::IterableEnum;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
@@ -22,7 +24,7 @@ use emergence_macros::IterableEnum;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::components::{ActiveRecipe, CraftingState, InputInventory},
+    crafting::inventories::{CraftingState, InputInventory},
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Facing, TilePos},

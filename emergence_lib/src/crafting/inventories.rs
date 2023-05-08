@@ -2,7 +2,7 @@
 
 use super::{
     item_tags::ItemTag,
-    recipe::{Recipe, RecipeData, RecipeInput, RecipeManifest, RecipeOutput},
+    recipe::{RecipeData, RecipeInput, RecipeOutput},
 };
 
 use crate::{
@@ -14,12 +14,11 @@ use crate::{
         slot::ItemSlot,
         ItemCount,
     },
-    organisms::energy::VigorModifier,
 };
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 use serde::{Deserialize, Serialize};
 

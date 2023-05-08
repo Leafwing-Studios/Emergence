@@ -16,11 +16,11 @@ use crate::{
         terraform::TerraformingAction,
     },
     crafting::{
-        components::{
+        inventories::{
             AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
-            WorkersPresent,
         },
         item_tags::ItemKind,
+        workers::WorkersPresent,
     },
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{

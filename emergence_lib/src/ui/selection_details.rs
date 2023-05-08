@@ -463,8 +463,8 @@ mod ghost_structure_details {
     use crate::{
         asset_management::manifest::Id,
         crafting::{
-            components::{ActiveRecipe, CraftingState, InputInventory},
-            recipe::RecipeManifest,
+            inventories::{CraftingState, InputInventory},
+            recipe::{ActiveRecipe, RecipeManifest},
         },
         items::item_manifest::ItemManifest,
         signals::Emitter,
@@ -597,11 +597,9 @@ mod structure_details {
         asset_management::manifest::Id,
         construction::demolition::MarkedForDemolition,
         crafting::{
-            components::{
-                ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
-                WorkersPresent,
-            },
-            recipe::RecipeData,
+            inventories::{CraftingState, InputInventory, OutputInventory, StorageInventory},
+            recipe::{ActiveRecipe, RecipeData},
+            workers::WorkersPresent,
         },
         items::{inventory::Inventory, item_manifest::ItemManifest},
         simulation::geometry::TilePos,
@@ -769,7 +767,7 @@ mod terrain_details {
     use crate::{
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
-        crafting::components::{InputInventory, OutputInventory, StorageInventory},
+        crafting::inventories::{InputInventory, OutputInventory, StorageInventory},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
         organisms::energy::VigorModifier,

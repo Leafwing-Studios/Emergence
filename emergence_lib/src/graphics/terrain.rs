@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::components::StorageInventory,
+    crafting::inventories::StorageInventory,
     items::inventory::InventoryState,
     simulation::geometry::TilePos,
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},

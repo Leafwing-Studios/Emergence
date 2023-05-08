@@ -3,7 +3,7 @@
 use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     construction::{ConstructionData, ConstructionStrategy, RawConstructionStrategy},
-    crafting::components::{ActiveRecipe, RawActiveRecipe},
+    crafting::recipe::{ActiveRecipe, RawActiveRecipe},
     items::item_manifest::Item,
     organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
     simulation::geometry::Height,

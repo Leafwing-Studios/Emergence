@@ -7,7 +7,7 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
-use crate::crafting::components::StorageInventory;
+use crate::crafting::inventories::StorageInventory;
 use crate::crafting::item_tags::ItemKind;
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::organisms::energy::VigorModifier;

@@ -1,10 +1,12 @@
 use bevy::utils::HashMap;
 use emergence_lib::{
     construction::RawConstructionStrategy,
-    crafting::components::RawActiveRecipe,
     crafting::{
         item_tags::ItemTag,
-        recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
+        recipe::{
+            RawActiveRecipe, RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions,
+            Threshold,
+        },
     },
     items::item_manifest::{RawItemData, RawItemManifest},
     light::Illuminance,

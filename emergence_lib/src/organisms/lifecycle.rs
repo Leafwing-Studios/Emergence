@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::components::StorageInventory,
+    crafting::inventories::StorageInventory,
     items::item_manifest::ItemManifest,
     player_interaction::clipboard::ClipboardData,
     simulation::{
