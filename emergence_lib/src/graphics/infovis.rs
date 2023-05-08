@@ -488,11 +488,11 @@ impl TileOverlay {
 
 /// Sets the material for the currently visualized map overlay.
 fn set_overlay_material(
-    terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
     mut overlay_query: Query<
         (&TilePos, &mut Handle<StandardMaterial>, &mut Visibility),
         With<Overlay>,
     >,
+    terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
     signals: Res<Signals>,
     water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
@@ -565,7 +565,10 @@ fn set_overlay_material(
 /// Sets the overlay of the tile based on the player's selection.
 fn display_player_selection(
     terrain_query: Query<&ObjectInteraction, With<Id<Terrain>>>,
-    mut overlay_query: Query<(&TilePos, &mut Handle<StandardMaterial>, &mut Visibility)>,
+    mut overlay_query: Query<
+        (&TilePos, &mut Handle<StandardMaterial>, &mut Visibility),
+        With<Overlay>,
+    >,
     terrain_handles: Res<TerrainHandles>,
     tile_overlay: Res<TileOverlay>,
     map_geometry: Res<MapGeometry>,
@@ -759,6 +762,8 @@ struct Overlay;
 /// The components used by an entity that is used to visualize spatial information about the world.
 #[derive(Bundle)]
 struct OverlayBundle {
+    /// The marker component for overlay entities.
+    overlay: Overlay,
     /// The tile position of the overlay.
     tile_pos: TilePos,
     /// The components needed to render the overlay.
@@ -792,6 +797,7 @@ fn spawn_overlay_entities(
         };
 
         commands.spawn(OverlayBundle {
+            overlay: Overlay,
             tile_pos,
             pbr_bundle,
         });
