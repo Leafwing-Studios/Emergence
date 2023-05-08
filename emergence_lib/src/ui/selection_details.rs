@@ -916,7 +916,8 @@ Current Light: {recieved_light}
 Zoning: {zoning}
 Vigor modifier: {vigor_modifier}
 Signal modifier: {signal_modifier}
-Litter: {litter}"
+Litter:
+{litter}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {
