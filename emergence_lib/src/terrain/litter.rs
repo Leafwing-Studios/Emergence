@@ -4,7 +4,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::{inventories::StorageInventory, item_tags::ItemKind},
+    crafting::{
+        inventories::StorageInventory,
+        item_tags::{ItemKind, ItemTag},
+    },
     items::{
         errors::RemoveOneItemError,
         item_manifest::{Item, ItemManifest},
@@ -12,6 +15,7 @@ use crate::{
     },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
+    water::{WaterDepth, WaterTable},
 };
 
 /// Items that are littered without a container.
@@ -170,5 +174,41 @@ pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
     for mut litter in query.iter_mut() {
         litter.on_ground.clear_empty_slots();
         litter.floating.clear_empty_slots();
+    }
+}
+
+/// Make litter in tiles submerged by water float.
+pub(super) fn make_litter_float(
+    mut query: Query<(&TilePos, &mut Litter)>,
+    water_table: Res<WaterTable>,
+    item_manifest: Res<ItemManifest>,
+) {
+    for (&tile_pos, mut litter) in query.iter_mut() {
+        if let WaterDepth::Flooded(..) = water_table.water_depth(tile_pos) {
+            // PERF: this clone is probably not needed, but it helps deal with the borrow checker
+            // It's fine to iterate over a cloned list of items, because we're only moving them out of the list one at a time
+            for item_on_ground in litter.on_ground.clone().iter() {
+                let item_id = item_on_ground.item_id();
+
+                // Check that the item floats
+                if !item_manifest.has_tag(item_id, ItemTag::Buoyant) {
+                    continue;
+                }
+
+                // Try to transfer as many items as possible to the floating inventory
+                let item_count = ItemCount {
+                    item_id: item_on_ground.item_id(),
+                    count: item_on_ground.count(),
+                };
+
+                // PERF: we could use mem::swap plus a local to avoid the clone
+                // Do the hokey-pokey to get around the borrow checker
+                let mut on_ground = litter.on_ground.clone();
+
+                // We don't care how much was transferred; failing to transfer is fine
+                let _ = on_ground.transfer_item(&item_count, &mut litter.floating, &item_manifest);
+                litter.on_ground = on_ground;
+            }
+        }
     }
 }
