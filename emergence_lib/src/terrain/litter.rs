@@ -3,8 +3,9 @@
 use bevy::prelude::*;
 
 use crate::{
+    asset_management::manifest::Id,
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
-    items::item_manifest::ItemManifest,
+    items::item_manifest::{Item, ItemManifest},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
 };
@@ -39,6 +40,15 @@ impl Litter {
     /// Returns a mutable reference to the storage inventory for floating litter.
     pub(crate) fn floating_mut(&mut self) -> &mut StorageInventory {
         &mut self.floating
+    }
+
+    /// Does this litter currently have space for an item of this type?
+    pub(crate) fn currently_accepts(
+        &self,
+        item_id: Id<Item>,
+        item_manifest: &ItemManifest,
+    ) -> bool {
+        self.on_ground.currently_accepts(item_id, item_manifest)
     }
 
     /// The pretty formatting for the litter stored here.
