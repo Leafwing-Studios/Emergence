@@ -16,6 +16,7 @@ use crate::{
         lifecycle::Lifecycle,
         Organism,
     },
+    player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
@@ -51,8 +52,11 @@ impl Plugin for CraftingPlugin {
                 (
                     progress_crafting,
                     gain_energy_when_crafting_completes.after(progress_crafting),
-                    set_crafting_emitter.after(progress_crafting),
-                    set_storage_emitter,
+                    set_crafting_emitter
+                        .after(progress_crafting)
+                        // This must run before zoning, to avoid wiping out the destruction signal
+                        .before(InteractionSystem::ApplyZoning),
+                    set_storage_emitter.before(InteractionSystem::ApplyZoning),
                     clear_empty_storage_slots,
                 )
                     .in_set(SimulationSet)
