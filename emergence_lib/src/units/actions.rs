@@ -364,13 +364,19 @@ pub(super) fn finish_actions(
                                     let transfer_result = match (
                                         &mut maybe_output_inventory,
                                         &mut maybe_storage_inventory,
+                                        &mut maybe_litter,
                                     ) {
-                                        (Some(ref mut output_inventory), _) => {
+                                        (Some(ref mut output_inventory), _, _) => {
                                             output_inventory.remove_item_all_or_nothing(&item_count)
                                         }
-                                        (_, Some(ref mut storage_inventory)) => storage_inventory
-                                            .remove_item_all_or_nothing(&item_count),
-                                        // The entity must have either an output or storage inventory
+                                        (_, Some(ref mut storage_inventory), _) => {
+                                            storage_inventory
+                                                .remove_item_all_or_nothing(&item_count)
+                                        }
+                                        (_, _, Some(ref mut litter)) => {
+                                            litter.remove_item_all_or_nothing(&item_count)
+                                        }
+                                        // The entity must have either an output, storage or litter inventory
                                         _ => unreachable!(),
                                     };
 

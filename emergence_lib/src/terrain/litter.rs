@@ -5,7 +5,11 @@ use bevy::prelude::*;
 use crate::{
     asset_management::manifest::Id,
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
-    items::item_manifest::{Item, ItemManifest},
+    items::{
+        errors::RemoveOneItemError,
+        item_manifest::{Item, ItemManifest},
+        ItemCount,
+    },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
 };
@@ -68,6 +72,20 @@ impl Litter {
         match self.on_ground.matching_item_id(item_kind, item_manifest) {
             Some(item_id) => Some(item_id),
             None => self.floating.matching_item_id(item_kind, item_manifest),
+        }
+    }
+
+    /// Try to remove the given count of items from the inventory, together.
+    ///
+    /// Items on the ground will be checked first, then floating items.
+    /// Items will never be drawn from both inventories simultaneously.
+    pub(crate) fn remove_item_all_or_nothing(
+        &mut self,
+        item_count: &ItemCount,
+    ) -> Result<(), RemoveOneItemError> {
+        match self.on_ground.remove_item_all_or_nothing(item_count) {
+            Ok(()) => Ok(()),
+            Err(_) => self.floating.remove_item_all_or_nothing(item_count),
         }
     }
 
