@@ -363,14 +363,3 @@ impl StorageInventory {
         self.remaining_space_for_item(item_id, item_manifest) > 0
     }
 }
-
-/// Items that are littered without a container.
-///
-/// This component is tracked on a per-tile basis.
-#[derive(Component, Clone, Debug, Default)]
-pub(crate) struct Litter {
-    /// The items that are littered on the ground.
-    on_ground: StorageInventory,
-    /// The items that are floating on the water.
-    floating: StorageInventory,
-}

@@ -6,8 +6,8 @@ use crate::organisms::energy::VigorModifier;
 use crate::signals::{Emitter, ManageSignals, SignalModifier, SignalStrength, SignalType};
 use crate::simulation::geometry::{MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
+use crate::terrain::litter::TerrainEmitters;
 use crate::terrain::terrain_manifest::Terrain;
-use crate::terrain::TerrainEmitters;
 
 use super::clipboard::Tool;
 use super::picking::CursorPos;
