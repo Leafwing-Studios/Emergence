@@ -3,13 +3,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::Id,
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
 };
-
-use super::terrain_manifest::Terrain;
 
 /// Items that are littered without a container.
 ///
@@ -32,16 +29,26 @@ impl Default for Litter {
 }
 
 /// Updates the signals produced by terrain tiles.
-pub(super) fn set_terrain_emitters(
-    mut query: Query<(&mut Emitter, Ref<StorageInventory>), With<Id<Terrain>>>,
-) {
-    for (mut emitter, storage_inventory) in query.iter_mut() {
-        if storage_inventory.is_changed() {
+pub(super) fn set_terrain_emitters(mut query: Query<(&mut Emitter, Ref<Litter>)>) {
+    for (mut emitter, litter) in query.iter_mut() {
+        if litter.is_changed() {
             emitter.signals.clear();
-            for item_slot in storage_inventory.iter() {
+            for item_slot in litter.on_ground.iter() {
                 let item_kind = ItemKind::Single(item_slot.item_id());
 
-                let signal_type = match storage_inventory.is_full() {
+                let signal_type = match litter.on_ground.is_full() {
+                    true => SignalType::Push(item_kind),
+                    false => SignalType::Contains(item_kind),
+                };
+                let signal_strength = SignalStrength::new(10.);
+
+                emitter.signals.push((signal_type, signal_strength));
+            }
+
+            for item_slot in litter.floating.iter() {
+                let item_kind = ItemKind::Single(item_slot.item_id());
+
+                let signal_type = match litter.floating.is_full() {
                     true => SignalType::Push(item_kind),
                     false => SignalType::Contains(item_kind),
                 };
@@ -59,10 +66,11 @@ pub(crate) struct TerrainEmitters;
 
 /// Tracks how much litter is on the ground on each tile.
 pub(super) fn update_litter_index(
-    query: Query<(&TilePos, &StorageInventory), (With<Id<Terrain>>, Changed<StorageInventory>)>,
+    query: Query<(&TilePos, &Litter), Changed<Litter>>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     for (&tile_pos, litter) in query.iter() {
-        map_geometry.update_litter_state(tile_pos, litter.state());
+        // Only litter on the ground is impassable.
+        map_geometry.update_litter_state(tile_pos, litter.on_ground.state());
     }
 }
