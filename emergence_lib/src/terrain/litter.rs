@@ -157,7 +157,7 @@ pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
     }
 }
 
-/// Make litter in tiles submerged by water float.
+/// Make litter in tiles submerged by water float (and stop it from floating when there's no water).
 pub(super) fn make_litter_float(
     mut query: Query<(&TilePos, &mut Litter)>,
     water_table: Res<WaterTable>,
@@ -188,6 +188,22 @@ pub(super) fn make_litter_float(
                 // We don't care how much was transferred; failing to transfer is fine
                 let _ = on_ground.transfer_item(&item_count, &mut litter.floating, &item_manifest);
                 litter.on_ground = on_ground;
+            }
+        } else {
+            for floating_item in litter.floating.clone().iter() {
+                // Try to transfer as many items as possible to the ground inventory
+                let item_count = ItemCount {
+                    item_id: floating_item.item_id(),
+                    count: floating_item.count(),
+                };
+
+                // PERF: we could use mem::swap plus a local to avoid the clone
+                // Do the hokey-pokey to get around the borrow checker
+                let mut floating = litter.floating.clone();
+
+                // We don't care how much was transferred; failing to transfer is fine
+                let _ = floating.transfer_item(&item_count, &mut litter.on_ground, &item_manifest);
+                litter.floating = floating;
             }
         }
     }
