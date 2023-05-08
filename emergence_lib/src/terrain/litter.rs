@@ -74,3 +74,11 @@ pub(super) fn update_litter_index(
         map_geometry.update_litter_state(tile_pos, litter.on_ground.state());
     }
 }
+
+/// The space in litter storage inventories is not reserved, so should be cleared
+pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
+    for mut litter in query.iter_mut() {
+        litter.on_ground.clear_empty_slots();
+        litter.floating.clear_empty_slots();
+    }
+}

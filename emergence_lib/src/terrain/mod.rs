@@ -14,7 +14,9 @@ use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 
-use self::litter::{set_terrain_emitters, update_litter_index, Litter, TerrainEmitters};
+use self::litter::{
+    clear_empty_litter, set_terrain_emitters, update_litter_index, Litter, TerrainEmitters,
+};
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain};
 
@@ -33,6 +35,7 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 (
                     respond_to_height_changes,
+                    clear_empty_litter,
                     set_terrain_emitters.in_set(TerrainEmitters),
                     update_litter_index,
                 )
