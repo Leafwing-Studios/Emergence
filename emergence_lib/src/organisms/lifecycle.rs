@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::inventories::StorageInventory,
     items::item_manifest::ItemManifest,
     player_interaction::clipboard::ClipboardData,
     simulation::{
@@ -15,7 +14,7 @@ use crate::{
         time::{Days, TimePool},
     },
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
-    terrain::terrain_manifest::Terrain,
+    terrain::litter::Litter,
     units::{
         unit_assets::UnitHandles,
         unit_manifest::{Unit, UnitManifest},
@@ -271,7 +270,7 @@ pub(super) fn transform_when_lifecycle_complete(
 
 /// Items with [`ItemTag::Seed`](crate::crafting::item_tags::ItemTag) that are dropped on the ground will be consumed and transformed into a new organism.
 pub(super) fn sprout_seeds(
-    mut litter_query: Query<(&TilePos, &mut StorageInventory), With<Id<Terrain>>>,
+    mut litter_query: Query<(&TilePos, &mut Litter)>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -286,13 +285,13 @@ pub(super) fn sprout_seeds(
 
     let rng = &mut rand::thread_rng();
 
-    for (&tile_pos, mut storage) in litter_query.iter_mut() {
+    for (&tile_pos, mut litter) in litter_query.iter_mut() {
         // Roll to see if any seeds will sprout for this tile this tick.
         if rng.gen::<f32>() > SEED_SPROUT_CHANCE {
             continue;
         }
 
-        for item_slot in storage.iter_mut() {
+        for item_slot in litter.on_ground_mut().iter_mut() {
             let item_id = item_slot.item_id();
             let Some(organism_id) = item_manifest.get(item_id).seed else { continue };
 

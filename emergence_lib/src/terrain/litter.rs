@@ -25,9 +25,19 @@ impl Litter {
         &self.on_ground
     }
 
+    /// Returns a mutable reference to the storage inventory for litter on the ground.
+    pub(crate) fn on_ground_mut(&mut self) -> &mut StorageInventory {
+        &mut self.on_ground
+    }
+
     /// Returns a reference to the storage inventory for floating litter.
     pub(crate) fn floating(&self) -> &StorageInventory {
         &self.floating
+    }
+
+    /// Returns a mutable reference to the storage inventory for floating litter.
+    pub(crate) fn floating_mut(&mut self) -> &mut StorageInventory {
+        &mut self.floating
     }
 }
 
