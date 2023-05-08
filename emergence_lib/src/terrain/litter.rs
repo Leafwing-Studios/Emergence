@@ -19,6 +19,18 @@ pub(crate) struct Litter {
     floating: StorageInventory,
 }
 
+impl Litter {
+    /// Returns a reference to the storage inventory for litter on the ground.
+    pub(crate) fn on_ground(&self) -> &StorageInventory {
+        &self.on_ground
+    }
+
+    /// Returns a reference to the storage inventory for floating litter.
+    pub(crate) fn floating(&self) -> &StorageInventory {
+        &self.floating
+    }
+}
+
 impl Default for Litter {
     fn default() -> Self {
         Litter {

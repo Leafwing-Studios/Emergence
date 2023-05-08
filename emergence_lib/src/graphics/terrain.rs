@@ -1,11 +1,9 @@
 //! Graphics and animation code for terrain.
 
 use crate::{
-    asset_management::manifest::Id,
-    crafting::inventories::StorageInventory,
     items::inventory::InventoryState,
     simulation::geometry::TilePos,
-    terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
+    terrain::{litter::Litter, terrain_assets::TerrainHandles},
 };
 use bevy::{prelude::*, utils::HashMap};
 
@@ -14,15 +12,16 @@ pub(super) fn manage_litter_piles(
     terrain_handles: Res<TerrainHandles>,
     // A simple cache of the current litter piles.
     mut current_litter_piles: Local<HashMap<TilePos, (InventoryState, Entity)>>,
-    terrain_query: Query<(Entity, &TilePos, Ref<StorageInventory>), With<Id<Terrain>>>,
+    terrain_query: Query<(Entity, &TilePos, Ref<Litter>)>,
     mut commands: Commands,
 ) {
-    for (terrain_entity, &tile_pos, storage_inventory) in terrain_query.iter() {
-        if !storage_inventory.is_changed() {
+    for (terrain_entity, &tile_pos, litter) in terrain_query.iter() {
+        if !litter.is_changed() {
             continue;
         }
 
-        let current_inventory_state = storage_inventory.state();
+        // TODO: also draw floating litter piles
+        let current_inventory_state = litter.on_ground().state();
 
         // Clean up any old models
         if let Some((previous_inventory_state, entity)) = current_litter_piles.get(&tile_pos) {
