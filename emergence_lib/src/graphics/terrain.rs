@@ -4,7 +4,7 @@ use crate::{
     items::inventory::InventoryState,
     simulation::geometry::{MapGeometry, TilePos},
     terrain::{litter::Litter, terrain_assets::TerrainHandles},
-    water::{WaterDepth, WaterTable},
+    water::WaterTable,
 };
 use bevy::{prelude::*, utils::HashMap};
 
@@ -18,6 +18,7 @@ pub(super) fn manage_litter_piles(
     // PERF: we could add a marker component to improve parallelism
     mut floating_litter_query: Query<&mut Transform>,
     mut commands: Commands,
+    water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, &tile_pos, litter) in terrain_query.iter() {
@@ -102,7 +103,7 @@ pub(super) fn manage_litter_piles(
     for (tile_pos, (_, entity)) in current_floating_litter_piles.iter() {
         if let Ok(mut transform) = floating_litter_query.get_mut(*entity) {
             if let Ok(new_transform) =
-                floating_litter_transform(*tile_pos, &WaterTable::default(), &map_geometry)
+                floating_litter_transform(*tile_pos, &water_table, &map_geometry)
             {
                 *transform = new_transform;
             } else {
@@ -119,11 +120,8 @@ fn floating_litter_transform(
 ) -> Result<Transform, ()> {
     let mut transform = Transform::from_translation(tile_pos.into_world_pos(&map_geometry));
     let terrain_height = map_geometry.get_height(tile_pos).unwrap();
-
-    let desired_height = match water_table.water_depth(tile_pos) {
-        WaterDepth::Dry | WaterDepth::Underground(_) => return Err(()),
-        WaterDepth::Flooded(surface_water_depth) => terrain_height + surface_water_depth,
-    };
+    let water_depth = water_table.surface_water_depth(tile_pos);
+    let desired_height = terrain_height + water_depth;
 
     transform.translation.y = desired_height.into_world_pos();
     Ok(transform)
