@@ -14,7 +14,6 @@ pub mod crafting;
 pub mod enum_iter;
 pub mod filtered_array_iter;
 pub mod graphics;
-pub mod infovis;
 pub mod items;
 pub mod light;
 pub mod organisms;

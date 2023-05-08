@@ -30,7 +30,7 @@ use crate::{
 };
 
 /// Systems and reources for communicating the state of the world to the player.
-pub struct InfoVisPlugin;
+pub(super) struct InfoVisPlugin;
 
 impl Plugin for InfoVisPlugin {
     fn build(&self, app: &mut App) {

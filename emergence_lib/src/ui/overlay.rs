@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::AssetState,
-    infovis::{OverlayType, TileOverlay},
+    graphics::infovis::{OverlayType, TileOverlay},
     items::item_manifest::ItemManifest,
     player_interaction::PlayerAction,
     signals::{SignalKind, Signals},
