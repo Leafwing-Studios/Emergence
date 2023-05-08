@@ -403,7 +403,7 @@ fn get_details(
                     signal_modifier: *terrain_query_item.signal_modifier,
                     vigor_modifier: *terrain_query_item.vigor_modifier,
                     zoning: terrain_query_item.zoning.clone(),
-                    storage_inventory: terrain_query_item.storage_inventory.clone(),
+                    litter: terrain_query_item.litter.clone(),
                     maybe_terraforming_details,
                 })
             } else {
@@ -767,14 +767,17 @@ mod terrain_details {
     use crate::{
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
-        crafting::inventories::{InputInventory, OutputInventory, StorageInventory},
+        crafting::inventories::{InputInventory, OutputInventory},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
         organisms::energy::VigorModifier,
         signals::{LocalSignals, SignalModifier},
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
-        terrain::terrain_manifest::{Terrain, TerrainManifest},
+        terrain::{
+            litter::Litter,
+            terrain_manifest::{Terrain, TerrainManifest},
+        },
         units::unit_manifest::UnitManifest,
         water::WaterDepth,
     };
@@ -795,7 +798,7 @@ mod terrain_details {
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
         /// Any littered items on this tile
-        pub(super) storage_inventory: &'static StorageInventory,
+        pub(super) litter: &'static Litter,
         /// The signal modifier on this tile
         pub(super) signal_modifier: &'static SignalModifier,
         /// The vigor modifier on this tile
@@ -870,7 +873,7 @@ Output: {output}"
         /// The vigor modifier on this tile
         pub(super) vigor_modifier: VigorModifier,
         /// Any littered items on this tile
-        pub(super) storage_inventory: StorageInventory,
+        pub(super) litter: Litter,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
@@ -900,7 +903,7 @@ Output: {output}"
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
             let vigor_modifier = self.vigor_modifier;
             let signal_modifier = self.signal_modifier;
-            let litter = self.storage_inventory.display(item_manifest);
+            let litter = self.litter.display(item_manifest);
 
             let base_string = format!(
                 "Entity: {entity:?}

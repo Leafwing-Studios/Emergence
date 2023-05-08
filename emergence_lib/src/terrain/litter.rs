@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
+    items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
 };
@@ -38,6 +39,25 @@ impl Litter {
     /// Returns a mutable reference to the storage inventory for floating litter.
     pub(crate) fn floating_mut(&mut self) -> &mut StorageInventory {
         &mut self.floating
+    }
+
+    /// The pretty formatting for the litter stored here.
+    pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
+        let mut display = String::new();
+
+        display.push_str("On Ground: ");
+        for item_slot in self.on_ground.iter() {
+            display.push_str(&item_slot.display(item_manifest));
+            display.push_str(", ");
+        }
+
+        display.push_str("\nFloating: ");
+        for item_slot in self.floating.iter() {
+            display.push_str(&item_slot.display(item_manifest));
+            display.push_str(", ");
+        }
+
+        display
     }
 }
 
