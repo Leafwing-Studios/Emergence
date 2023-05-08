@@ -349,8 +349,10 @@ pub(super) fn finish_actions(
                                 } else if let Some(ref storage_inventory) = maybe_storage_inventory
                                 {
                                     storage_inventory.matching_item_id(*item_kind, item_manifest)
+                                } else if let Some(ref litter) = maybe_litter {
+                                    litter.matching_item_id(*item_kind, item_manifest)
                                 } else {
-                                    // The entity must have either an output or storage inventory
+                                    // The entity must have either an output, storage or litter inventory
                                     unreachable!()
                                 };
 

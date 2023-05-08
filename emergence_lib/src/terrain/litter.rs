@@ -51,6 +51,20 @@ impl Litter {
         self.on_ground.currently_accepts(item_id, item_manifest)
     }
 
+    /// Returns the first [`Id<Item>`] that matches the given [`ItemKind`], if any.
+    ///
+    /// Items on the ground will be checked first, then floating items.
+    pub(crate) fn matching_item_id(
+        &self,
+        item_kind: ItemKind,
+        item_manifest: &ItemManifest,
+    ) -> Option<Id<Item>> {
+        match self.on_ground.matching_item_id(item_kind, item_manifest) {
+            Some(item_id) => Some(item_id),
+            None => self.floating.matching_item_id(item_kind, item_manifest),
+        }
+    }
+
     /// The pretty formatting for the litter stored here.
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let mut display = String::new();
