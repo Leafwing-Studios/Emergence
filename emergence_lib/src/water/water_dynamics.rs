@@ -163,7 +163,8 @@ pub(super) fn horizontal_water_movement(
                 let neighbor_tile_height =
                     map_geometry.get_height(valid_neighbor).unwrap_or_default();
                 let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
-                let neighbor_terrain_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
+                // This can panic if the system runs too early, so just bail if that happened
+                let Some(neighbor_terrain_entity) = map_geometry.get_terrain(valid_neighbor) else { return };
                 let neighbor_terrain_id = *terrain_query.get(neighbor_terrain_entity).unwrap();
                 let neighbor_soil_lateral_flow_ratio =
                     terrain_manifest.get(neighbor_terrain_id).water_flow_rate;

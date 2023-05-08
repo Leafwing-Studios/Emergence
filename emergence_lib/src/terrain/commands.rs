@@ -4,7 +4,7 @@ use bevy::{
     ecs::system::{Command, SystemState},
     prelude::{
         BuildWorldChildren, Commands, DespawnRecursiveExt, Handle, PbrBundle, Query, Res, ResMut,
-        Transform, Vec3, Visibility, World,
+        World,
     },
     scene::Scene,
 };
@@ -114,8 +114,7 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 ///
 /// The order of the chidlren *must* be:
 /// 0: column
-/// 1: overlay
-/// 2: scene root
+/// 1: scene root
 pub(crate) struct SpawnTerrainCommand {
     /// The position to spawn the tile
     pub(crate) tile_pos: TilePos,
@@ -160,25 +159,6 @@ impl Command for SpawnTerrainCommand {
 
         let hex_column = world.spawn(column_bundle).id();
         world.entity_mut(terrain_entity).add_child(hex_column);
-
-        let handles = world.resource::<TerrainHandles>();
-        /// Makes the overlays ever so slightly larger than their base to avoid z-fighting.
-        ///
-        /// This value should be very slightly larger than 1.0
-        const OVERLAY_OVERSIZE_SCALE: f32 = 1.001;
-
-        let overlay_bundle = PbrBundle {
-            mesh: handles.topper_mesh.clone_weak(),
-            visibility: Visibility::Hidden,
-            transform: Transform::from_scale(Vec3 {
-                x: OVERLAY_OVERSIZE_SCALE,
-                y: OVERLAY_OVERSIZE_SCALE,
-                z: OVERLAY_OVERSIZE_SCALE,
-            }),
-            ..Default::default()
-        };
-        let overlay = world.spawn(overlay_bundle).id();
-        world.entity_mut(terrain_entity).add_child(overlay);
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
