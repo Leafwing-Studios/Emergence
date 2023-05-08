@@ -26,8 +26,8 @@ pub(super) fn manage_litter_piles(
         }
 
         // TODO: also draw floating litter piles
-        let current_ground_inventory_state = litter.on_ground().state();
-        let current_floating_inventory_state = litter.floating().state();
+        let current_ground_inventory_state = litter.on_ground.state();
+        let current_floating_inventory_state = litter.floating.state();
 
         // Clean up any old models
         if let Some((previous_inventory_state, entity)) = current_ground_litter_piles.get(&tile_pos)

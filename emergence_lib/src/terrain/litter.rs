@@ -24,32 +24,12 @@ use crate::{
 #[derive(Component, Clone, Debug)]
 pub(crate) struct Litter {
     /// The items that are littered on the ground.
-    on_ground: StorageInventory,
+    pub(crate) on_ground: StorageInventory,
     /// The items that are floating on the water.
-    floating: StorageInventory,
+    pub(crate) floating: StorageInventory,
 }
 
 impl Litter {
-    /// Returns a reference to the storage inventory for litter on the ground.
-    pub(crate) fn on_ground(&self) -> &StorageInventory {
-        &self.on_ground
-    }
-
-    /// Returns a mutable reference to the storage inventory for litter on the ground.
-    pub(crate) fn on_ground_mut(&mut self) -> &mut StorageInventory {
-        &mut self.on_ground
-    }
-
-    /// Returns a reference to the storage inventory for floating litter.
-    pub(crate) fn floating(&self) -> &StorageInventory {
-        &self.floating
-    }
-
-    /// Returns a mutable reference to the storage inventory for floating litter.
-    pub(crate) fn floating_mut(&mut self) -> &mut StorageInventory {
-        &mut self.floating
-    }
-
     /// Does this inventory contain at least one matching item?
     pub(crate) fn contains_kind(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
         self.on_ground.contains_kind(item_kind, item_manifest)
