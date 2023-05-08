@@ -772,13 +772,22 @@ fn spawn_overlay_entities(
     terrain_handles: Res<TerrainHandles>,
     map_geometry: Res<MapGeometry>,
 ) {
+    /// Controls how much larger the overlay is relative to the terrain tiles.
+    ///
+    /// This must be greater than 0 to avoid z-fighting.
+    const EPSILON: f32 = 0.01;
+
     for &tile_pos in new_terrain_query.iter() {
         let pbr_bundle = PbrBundle {
             mesh: terrain_handles.topper_mesh.clone_weak(),
             // The material is set in `set_overlay_material`.
             material: Handle::default(),
             // The height of this is fixed in `set_overlay_height`.
-            transform: Transform::from_translation(tile_pos.into_world_pos(&map_geometry)),
+            transform: Transform {
+                translation: tile_pos.into_world_pos(&map_geometry),
+                scale: Vec3::splat(1. + EPSILON),
+                ..Default::default()
+            },
             ..Default::default()
         };
 
@@ -797,11 +806,6 @@ fn set_overlay_height(
     water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
-    /// Controls how much the overlay is raised above the terrain tiles.
-    ///
-    /// This must be greater than 0 to avoid z-fighting.
-    const EPSILON: f32 = 0.001;
-
     let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
 
     for (&tile_pos, mut transform) in overlay_query.iter_mut() {
@@ -812,6 +816,6 @@ fn set_overlay_height(
             WaterDepth::Flooded(surface_water_depth) => terrain_height + surface_water_depth,
         };
 
-        transform.translation.y = desired_height.into_world_pos() + EPSILON;
+        transform.translation.y = desired_height.into_world_pos();
     }
 }
