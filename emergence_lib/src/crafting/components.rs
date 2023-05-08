@@ -389,6 +389,17 @@ impl StorageInventory {
     }
 }
 
+/// Items that are littered without a container.
+///
+/// This component is tracked on a per-tile basis.
+#[derive(Component, Clone, Debug, Default)]
+pub(crate) struct Litter {
+    /// The items that are littered on the ground.
+    on_ground: StorageInventory,
+    /// The items that are floating on the water.
+    floating: StorageInventory,
+}
+
 /// The recipe that is currently being crafted, if any.
 #[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct ActiveRecipe(Option<Id<Recipe>>);
