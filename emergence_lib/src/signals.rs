@@ -825,6 +825,7 @@ mod tests {
                 stack_size: 1,
                 compostable: false,
                 fluid: false,
+                buoyant: true,
                 seed: None,
             },
         );

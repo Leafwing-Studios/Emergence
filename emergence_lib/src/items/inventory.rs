@@ -662,6 +662,7 @@ mod tests {
                 stack_size: 10,
                 compostable: true,
                 fluid: false,
+                buoyant: true,
                 seed: None,
             },
         );
@@ -671,6 +672,7 @@ mod tests {
                 stack_size: 10,
                 compostable: false,
                 fluid: false,
+                buoyant: true,
                 seed: None,
             },
         );
