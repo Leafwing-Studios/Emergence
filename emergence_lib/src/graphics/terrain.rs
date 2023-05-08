@@ -34,8 +34,9 @@ pub(super) fn manage_litter_piles(
         {
             // Only despawn if the inventory state has changed.
             if *previous_inventory_state != current_ground_inventory_state {
-                commands.entity(*entity).despawn_recursive();
-                current_ground_litter_piles.remove(&tile_pos);
+                if let Some(entity_commands) = commands.get_entity(*entity) {
+                    entity_commands.despawn_recursive();
+                }
             } else {
                 continue;
             }
@@ -46,7 +47,9 @@ pub(super) fn manage_litter_piles(
         {
             // Only despawn if the inventory state has changed.
             if *previous_inventory_state != current_floating_inventory_state {
-                commands.entity(*entity).despawn_recursive();
+                if let Some(entity_commands) = commands.get_entity(*entity) {
+                    entity_commands.despawn_recursive();
+                }
                 current_ground_litter_piles.remove(&tile_pos);
             } else {
                 continue;
