@@ -150,6 +150,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &output_inventory_query,
                             &storage_inventory_query,
+                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -191,6 +192,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &output_inventory_query,
                             &storage_inventory_query,
+                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -698,6 +700,8 @@ impl CurrentAction {
     ///
     /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
     /// The only exception is if the storage inventory is full, in which case the unit will pick up items from there.
+    ///
+    /// Items will never be dropped off at litter, and will only be picked up from litter if no other local options are available.
     fn find(
         unit_inventory: &UnitInventory,
         item_kind: ItemKind,
@@ -709,6 +713,7 @@ impl CurrentAction {
         input_inventory_query: &Query<&InputInventory, Without<MarkedForDemolition>>,
         output_inventory_query: &Query<&OutputInventory>,
         storage_inventory_query: &Query<&StorageInventory>,
+        litter_query: &Query<&Litter>,
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
@@ -753,6 +758,12 @@ impl CurrentAction {
 
                         if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
                             if storage_inventory.contains_kind(item_kind, item_manifest) {
+                                candidates.push((candidate, tile_pos));
+                            }
+                        }
+
+                        if let Ok(litter) = litter_query.get(candidate) {
+                            if litter.contains_kind(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }

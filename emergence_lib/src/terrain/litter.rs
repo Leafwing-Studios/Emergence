@@ -42,6 +42,12 @@ impl Litter {
         &mut self.floating
     }
 
+    /// Does this inventory contain at least one matching item?
+    pub(crate) fn contains_kind(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
+        self.on_ground.contains_kind(item_kind, item_manifest)
+            || self.floating.contains_kind(item_kind, item_manifest)
+    }
+
     /// Does this litter currently have space for an item of this type?
     pub(crate) fn currently_accepts(
         &self,
