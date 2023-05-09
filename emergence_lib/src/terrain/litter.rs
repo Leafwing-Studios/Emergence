@@ -290,7 +290,7 @@ pub(super) fn carry_floating_litter_with_current(
             if litter_drift.direction.is_none() {
                 let direction =
                     direction_from_angle(flow_direction, map_geometry.layout.orientation);
-                let time_to_drift = water_speed * delta_time.as_secs_f32() * ITEM_DRIFT_RATE;
+                let time_to_drift = water_speed * delta_time.as_secs_f32() / ITEM_DRIFT_RATE;
 
                 litter_drift.start(direction, Duration::from_secs_f32(time_to_drift));
             }
