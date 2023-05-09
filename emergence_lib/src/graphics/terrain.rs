@@ -33,6 +33,7 @@ pub(super) fn render_litter_piles(
                 if let Some(entity_commands) = commands.get_entity(*entity) {
                     entity_commands.despawn_recursive();
                 }
+                current_ground_litter_piles.remove(&tile_pos);
             } else {
                 continue;
             }
@@ -46,7 +47,7 @@ pub(super) fn render_litter_piles(
                 if let Some(entity_commands) = commands.get_entity(*entity) {
                     entity_commands.despawn_recursive();
                 }
-                current_ground_litter_piles.remove(&tile_pos);
+                current_floating_litter_piles.remove(&tile_pos);
             } else {
                 continue;
             }
