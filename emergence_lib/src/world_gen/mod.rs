@@ -147,7 +147,7 @@ impl Default for GenerationConfig {
         structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
 
         GenerationConfig {
-            map_radius: 80,
+            map_radius: 60,
             number_of_burn_in_ticks: 0,
             unit_chances,
             landmark_chances,
@@ -159,7 +159,7 @@ impl Default for GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 3.0,
+                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,

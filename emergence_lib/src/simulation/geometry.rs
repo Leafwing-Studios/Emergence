@@ -8,11 +8,11 @@ use bevy::{
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout};
+use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout, HexOrientation};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
-    f32::consts::PI,
+    f32::consts::{PI, TAU},
     fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
@@ -1200,6 +1200,58 @@ impl RotationDirection {
     }
 }
 
+// BLOCKED: manual implementation of https://github.com/ManevilleF/hexx/issues/84
+// PERF: this is terrible, use a lookup table
+/// Converts an angle in radians to a [`Direction`].
+pub(crate) fn direction_from_angle(radians: f32, orientation: HexOrientation) -> Direction {
+    // Clamp to [0, 2π)
+    let radians = radians.rem_euclid(TAU);
+
+    let direction_angle_pairs = Direction::ALL_DIRECTIONS.map(|direction| {
+        let angle = direction.angle(&orientation).rem_euclid(TAU);
+        (direction, angle)
+    });
+
+    let mut current_best_direction = Direction::Top;
+    let mut current_best_delta = f32::MAX;
+
+    let mut lowest_direction = Direction::Top;
+    let mut lowest_angle = f32::MAX;
+
+    let mut highest_direction = Direction::Top;
+    let mut highest_angle = 0.;
+
+    for (direction, angle) in direction_angle_pairs {
+        if angle > highest_angle {
+            highest_direction = direction;
+            highest_angle = angle;
+        }
+
+        if angle < lowest_angle {
+            lowest_direction = direction;
+            lowest_angle = angle;
+        }
+
+        let delta = (angle - radians).abs();
+        if delta < current_best_delta {
+            current_best_direction = direction;
+            current_best_delta = delta;
+        }
+    }
+
+    // Handle the case where the angle is between the highest and lowest angles
+    if radians > highest_angle {
+        let lowest_angle = lowest_angle + TAU;
+        if (radians - highest_angle).abs() < (radians - lowest_angle).abs() {
+            highest_direction
+        } else {
+            lowest_direction
+        }
+    } else {
+        current_best_direction
+    }
+}
+
 /// Constructs the mesh for a single hexagonal column with the specified height.
 #[must_use]
 pub(crate) fn hexagonal_column(hex_layout: &HexLayout, hex_height: f32) -> Mesh {
@@ -1304,6 +1356,59 @@ mod tests {
         for tile_pos in footprint.in_world_space(center) {
             dbg!(tile_pos);
             assert_eq!(None, map_geometry.get_structure(tile_pos));
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_for_exact_values() {
+        for direction in Direction::ALL_DIRECTIONS {
+            let pointy_radians = direction.angle(&HexOrientation::pointy());
+            let pointy_direction = direction_from_angle(pointy_radians, HexOrientation::pointy());
+
+            let flat_radians = direction.angle(&HexOrientation::flat());
+            let flat_direction = direction_from_angle(flat_radians, HexOrientation::flat());
+
+            assert_eq!(
+                direction, pointy_direction,
+                "Failed for {:?}",
+                pointy_radians
+            );
+            assert_eq!(direction, flat_direction, "Failed for {:?}", flat_radians);
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_for_large_and_small_values() {
+        for direction in Direction::ALL_DIRECTIONS {
+            let radians = direction.angle(&HexOrientation::flat());
+
+            let large_radians = radians + TAU;
+            let small_radians = radians - TAU;
+
+            let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
+            let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
+
+            assert_eq!(direction, large_direction, "Failed for {:?}", large_radians);
+            assert_eq!(direction, small_direction, "Failed for {:?}", small_radians);
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_with_small_offsets() {
+        let epsilon = 0.001;
+        assert!(epsilon < TAU / 12.);
+
+        for direction in Direction::ALL_DIRECTIONS {
+            let radians = direction.angle(&HexOrientation::flat());
+
+            let large_radians = radians + epsilon;
+            let small_radians = radians - epsilon;
+
+            let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
+            let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
+
+            assert_eq!(direction, large_direction, "Failed for {:?}", large_radians);
+            assert_eq!(direction, small_direction, "Failed for {:?}", small_radians);
         }
     }
 }

@@ -1,8 +1,8 @@
-//! The components needed to create a `CraftingBundle`.
+//! Various inventory types used in crafting.
 
 use super::{
     item_tags::ItemTag,
-    recipe::{Recipe, RecipeData, RecipeInput, RecipeManifest, RecipeOutput},
+    recipe::{RecipeData, RecipeInput, RecipeOutput},
 };
 
 use crate::{
@@ -14,38 +14,13 @@ use crate::{
         slot::ItemSlot,
         ItemCount,
     },
-    organisms::energy::VigorModifier,
-    signals::Emitter,
-    structures::structure_manifest::{Structure, StructureManifest},
 };
 
 use std::{fmt::Display, time::Duration};
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
 use serde::{Deserialize, Serialize};
-
-/// All components needed to craft stuff.
-#[derive(Debug, Bundle)]
-pub(crate) struct CraftingBundle {
-    /// The input inventory for the items needed for crafting.
-    input_inventory: InputInventory,
-
-    /// The output inventory for the crafted items.
-    output_inventory: OutputInventory,
-
-    /// The recipe that is currently being crafted.
-    active_recipe: ActiveRecipe,
-
-    /// The current state for the crafting process.
-    craft_state: CraftingState,
-
-    /// Emits signals, drawing units towards this structure to ensure crafting flows smoothly
-    emitter: Emitter,
-
-    /// The number of workers present / allowed at this structure
-    workers_present: WorkersPresent,
-}
 
 /// The current state in the crafting progress.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
@@ -386,157 +361,5 @@ impl StorageInventory {
     pub fn currently_accepts(&self, item_id: Id<Item>, item_manifest: &ItemManifest) -> bool {
         // Check that we can fit at least one item of this type
         self.remaining_space_for_item(item_id, item_manifest) > 0
-    }
-}
-
-/// The recipe that is currently being crafted, if any.
-#[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct ActiveRecipe(Option<Id<Recipe>>);
-
-/// The raw version of [`ActiveRecipe`].
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RawActiveRecipe(Option<String>);
-
-impl RawActiveRecipe {
-    /// Creates a new [`RawActiveRecipe`], set to `recipe_name`.
-    pub fn new(recipe_name: &str) -> Self {
-        RawActiveRecipe(Some(recipe_name.to_string()))
-    }
-}
-
-impl From<RawActiveRecipe> for ActiveRecipe {
-    fn from(raw: RawActiveRecipe) -> Self {
-        ActiveRecipe(raw.0.map(Id::from_name))
-    }
-}
-
-impl ActiveRecipe {
-    /// The un-set [`ActiveRecipe`].
-    pub const NONE: ActiveRecipe = ActiveRecipe(None);
-
-    /// Creates a new [`ActiveRecipe`], set to `recipe_id`
-    pub fn new(recipe_id: Id<Recipe>) -> Self {
-        ActiveRecipe(Some(recipe_id))
-    }
-
-    /// The ID of the currently active recipe, if one has been selected.
-    pub fn recipe_id(&self) -> &Option<Id<Recipe>> {
-        &self.0
-    }
-
-    /// The pretty formatting for this type
-    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
-        match self.0 {
-            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
-            None => "None".to_string(),
-        }
-    }
-}
-
-/// The number of workers present / allowed at this structure.
-#[derive(Component, Debug, Clone, PartialEq)]
-pub(crate) struct WorkersPresent {
-    /// The list of workers present
-    workers: HashMap<Entity, VigorModifier>,
-
-    /// The maximum number of workers allowed
-    allowed: u8,
-}
-
-impl WorkersPresent {
-    /// Create a new [`WorkersPresent`] with the provided maximum number of workers allowed.
-    pub(crate) fn new(allowed: u8) -> Self {
-        Self {
-            workers: HashMap::new(),
-            allowed,
-        }
-    }
-
-    /// Are more workers needed?
-    pub(crate) fn needs_more(&self) -> bool {
-        self.current() < self.allowed
-    }
-
-    /// The current number of workers present.
-    pub(crate) fn current(&self) -> u8 {
-        self.workers.len() as u8
-    }
-
-    /// The current number of effective workers, when taking into account the [`VigorModifier`].
-    pub(crate) fn effective_workers(&self) -> f32 {
-        self.workers
-            .values()
-            .map(|vigor_modifier| vigor_modifier.ratio())
-            .sum()
-    }
-
-    /// Adds a worker to this structure if there is room.
-    pub(crate) fn add_worker(
-        &mut self,
-        worker_entity: Entity,
-        vigor_modifier: VigorModifier,
-    ) -> Result<(), ()> {
-        if self.needs_more() {
-            self.workers.insert(worker_entity, vigor_modifier);
-            Ok(())
-        } else {
-            Err(())
-        }
-    }
-
-    /// Removes a worker from this structure
-    pub(crate) fn remove_worker(&mut self, worker_entity: Entity) {
-        self.workers.remove(&worker_entity);
-    }
-}
-
-impl Display for WorkersPresent {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{present} ({effective_workers}) / {allowed}",
-            present = self.current(),
-            effective_workers = self.effective_workers(),
-            allowed = self.allowed
-        )
-    }
-}
-
-impl CraftingBundle {
-    /// Create a new crafting bundle with empty inventories.
-    pub(crate) fn new(
-        structure_id: Id<Structure>,
-        starting_recipe: ActiveRecipe,
-        recipe_manifest: &RecipeManifest,
-        item_manifest: &ItemManifest,
-        structure_manifest: &StructureManifest,
-    ) -> Self {
-        let max_workers = structure_manifest.get(structure_id).max_workers;
-
-        if let Some(recipe_id) = starting_recipe.0 {
-            let recipe = recipe_manifest.get(recipe_id);
-
-            Self {
-                input_inventory: recipe.input_inventory(item_manifest),
-                output_inventory: recipe.output_inventory(item_manifest),
-                active_recipe: ActiveRecipe(Some(recipe_id)),
-                craft_state: CraftingState::NeedsInput,
-                emitter: Emitter::default(),
-                workers_present: WorkersPresent::new(max_workers),
-            }
-        } else {
-            Self {
-                input_inventory: InputInventory::Exact {
-                    inventory: Inventory::new(0, None),
-                },
-                output_inventory: OutputInventory {
-                    inventory: Inventory::new(1, None),
-                },
-                active_recipe: ActiveRecipe(None),
-                craft_state: CraftingState::NeedsInput,
-                emitter: Emitter::default(),
-                workers_present: WorkersPresent::new(max_workers),
-            }
-        }
     }
 }

@@ -16,11 +16,11 @@ use crate::{
         terraform::TerraformingAction,
     },
     crafting::{
-        components::{
+        inventories::{
             AddToInputError, CraftingState, InputInventory, OutputInventory, StorageInventory,
-            WorkersPresent,
         },
         item_tags::ItemKind,
+        workers::WorkersPresent,
     },
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{
@@ -30,7 +30,10 @@ use crate::{
     signals::{SignalType, Signals},
     simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
-    terrain::terrain_manifest::{Terrain, TerrainManifest},
+    terrain::{
+        litter::Litter,
+        terrain_manifest::{Terrain, TerrainManifest},
+    },
     water::WaterTable,
 };
 
@@ -76,7 +79,7 @@ pub(super) fn choose_actions(
     water_table: Res<WaterTable>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
-    terrain_storage_query: Query<&StorageInventory, With<Id<Terrain>>>,
+    litter_query: Query<&Litter>,
     terrain_manifest: Res<TerrainManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -97,7 +100,7 @@ pub(super) fn choose_actions(
                         &map_geometry,
                         &water_table,
                         &item_manifest,
-                        &terrain_storage_query,
+                        &litter_query,
                         &terrain_manifest,
                         &terrain_query,
                         facing,
@@ -129,7 +132,7 @@ pub(super) fn choose_actions(
                             &map_geometry,
                             &water_table,
                             &item_manifest,
-                            &terrain_storage_query,
+                            &litter_query,
                             &terrain_manifest,
                             &terrain_query,
                             facing,
@@ -147,6 +150,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &output_inventory_query,
                             &storage_inventory_query,
+                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -169,7 +173,7 @@ pub(super) fn choose_actions(
                                 &map_geometry,
                                 &water_table,
                                 &item_manifest,
-                                &terrain_storage_query,
+                                &litter_query,
                                 &terrain_manifest,
                                 &terrain_query,
                                 facing,
@@ -188,6 +192,7 @@ pub(super) fn choose_actions(
                             &input_inventory_query,
                             &output_inventory_query,
                             &storage_inventory_query,
+                            &litter_query,
                             &signals,
                             rng,
                             &item_manifest,
@@ -295,6 +300,7 @@ pub(super) fn finish_actions(
             &mut InputInventory,
             &mut OutputInventory,
             &mut StorageInventory,
+            &mut Litter,
         )>,
     >,
     mut workplace_query: Query<(&CraftingState, &mut WorkersPresent)>,
@@ -327,8 +333,12 @@ pub(super) fn finish_actions(
                     item_kind,
                     output_entity,
                 } => {
-                    if let Ok((_, mut maybe_output_inventory, mut maybe_storage_inventory)) =
-                        inventory_query.get_mut(*output_entity)
+                    if let Ok((
+                        _,
+                        mut maybe_output_inventory,
+                        mut maybe_storage_inventory,
+                        mut maybe_litter,
+                    )) = inventory_query.get_mut(*output_entity)
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
                             // We shouldn't be holding anything yet, but if we are get rid of it
@@ -341,8 +351,10 @@ pub(super) fn finish_actions(
                                 } else if let Some(ref storage_inventory) = maybe_storage_inventory
                                 {
                                     storage_inventory.matching_item_id(*item_kind, item_manifest)
+                                } else if let Some(ref litter) = maybe_litter {
+                                    litter.matching_item_id(*item_kind, item_manifest)
                                 } else {
-                                    // The entity must have either an output or storage inventory
+                                    // The entity must have either an output, storage or litter inventory
                                     unreachable!()
                                 };
 
@@ -352,13 +364,19 @@ pub(super) fn finish_actions(
                                     let transfer_result = match (
                                         &mut maybe_output_inventory,
                                         &mut maybe_storage_inventory,
+                                        &mut maybe_litter,
                                     ) {
-                                        (Some(ref mut output_inventory), _) => {
+                                        (Some(ref mut output_inventory), _, _) => {
                                             output_inventory.remove_item_all_or_nothing(&item_count)
                                         }
-                                        (_, Some(ref mut storage_inventory)) => storage_inventory
-                                            .remove_item_all_or_nothing(&item_count),
-                                        // The entity must have either an output or storage inventory
+                                        (_, Some(ref mut storage_inventory), _) => {
+                                            storage_inventory
+                                                .remove_item_all_or_nothing(&item_count)
+                                        }
+                                        (_, _, Some(ref mut litter)) => {
+                                            litter.remove_item_all_or_nothing(&item_count)
+                                        }
+                                        // The entity must have either an output, storage or litter inventory
                                         _ => unreachable!(),
                                     };
 
@@ -399,7 +417,7 @@ pub(super) fn finish_actions(
                     item_kind,
                     input_entity,
                 } => {
-                    if let Ok((maybe_input_inventory, _, maybe_storage_inventory)) =
+                    if let Ok((maybe_input_inventory, _, maybe_storage_inventory, _)) =
                         inventory_query.get_mut(*input_entity)
                     {
                         *unit.goal = match unit.unit_inventory.held_item {
@@ -504,15 +522,16 @@ pub(super) fn finish_actions(
                 UnitAction::Abandon => {
                     let terrain_entity = map_geometry.get_terrain(*unit.tile_pos).unwrap();
 
-                    let (_input, _output, maybe_storage) =
+                    let (_input, _output, _storage, litter) =
                         inventory_query.get_mut(terrain_entity).unwrap();
 
-                    let mut terrain_storage_inventory = maybe_storage.unwrap();
+                    let mut litter_inventory = litter.unwrap();
 
                     if let Some(held_item) = unit.unit_inventory.held_item {
                         let item_count = ItemCount::new(held_item, 1);
                         // Try to transfer the item to the terrain storage
-                        if terrain_storage_inventory
+                        if litter_inventory
+                            .on_ground
                             .add_item_all_or_nothing(&item_count, item_manifest)
                             .is_ok()
                         {
@@ -687,6 +706,8 @@ impl CurrentAction {
     ///
     /// If the `purpose` is [`Purpose::Intrinsic`], items will not be picked up from or dropped off at a [`StorageInventory`].
     /// The only exception is if the storage inventory is full, in which case the unit will pick up items from there.
+    ///
+    /// Items will never be dropped off at litter, and will only be picked up from litter if no other local options are available.
     fn find(
         unit_inventory: &UnitInventory,
         item_kind: ItemKind,
@@ -698,6 +719,7 @@ impl CurrentAction {
         input_inventory_query: &Query<&InputInventory, Without<MarkedForDemolition>>,
         output_inventory_query: &Query<&OutputInventory>,
         storage_inventory_query: &Query<&StorageInventory>,
+        litter_query: &Query<&Litter>,
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
@@ -742,6 +764,12 @@ impl CurrentAction {
 
                         if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
                             if storage_inventory.contains_kind(item_kind, item_manifest) {
+                                candidates.push((candidate, tile_pos));
+                            }
+                        }
+
+                        if let Ok(litter) = litter_query.get(candidate) {
+                            if litter.contains_kind(item_kind, item_manifest) {
                                 candidates.push((candidate, tile_pos));
                             }
                         }
@@ -1191,17 +1219,18 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
         water_table: &WaterTable,
         item_manifest: &ItemManifest,
-        terrain_storage_query: &Query<&StorageInventory, With<Id<Terrain>>>,
+        litter_query: &Query<&Litter>,
         terrain_manifest: &TerrainManifest,
         terrain_query: &Query<&Id<Terrain>>,
         facing: &Facing,
         rng: &mut ThreadRng,
     ) -> Self {
         let terrain_entity = map_geometry.get_terrain(unit_tile_pos).unwrap();
-        let terrain_storage_inventory = terrain_storage_query.get(terrain_entity).unwrap();
+        let litter = litter_query.get(terrain_entity).unwrap();
 
         if let Some(item_id) = unit_inventory.held_item {
-            if terrain_storage_inventory.currently_accepts(item_id, item_manifest) {
+            // TODO: scatter items around if we can't drop them
+            if litter.currently_accepts(item_id, item_manifest) {
                 return CurrentAction {
                     action: UnitAction::Abandon,
                     timer: Timer::from_seconds(0.1, TimerMode::Once),

@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::manifest::Id,
     construction::{ghosts::Preview, terraform::TerraformingTool},
-    crafting::components::ActiveRecipe,
+    crafting::recipe::ActiveRecipe,
     simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::structure_manifest::{Structure, StructureManifest},
 };

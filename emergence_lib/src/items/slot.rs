@@ -74,6 +74,11 @@ impl ItemSlot {
         }
     }
 
+    /// Creates a new [`ItemCount`] from this slot.
+    pub fn item_count(&self) -> ItemCount {
+        ItemCount::new(self.item_id, self.count)
+    }
+
     /// The unique identifier of the item in the slot.
     pub fn item_id(&self) -> Id<Item> {
         self.item_id

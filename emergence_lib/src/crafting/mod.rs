@@ -6,19 +6,23 @@ use recipe::{RawRecipeManifest, RecipeManifest};
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::ghosts::WorkplaceId,
-    items::item_manifest::{ItemManifest, RawItemManifest},
+    items::{
+        inventory::Inventory,
+        item_manifest::{ItemManifest, RawItemManifest},
+    },
     light::shade::ReceivedLight,
     organisms::{
         energy::{EnergyPool, VigorModifier},
         lifecycle::Lifecycle,
         Organism,
     },
+    player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
         geometry::{MapGeometry, TilePos},
         SimulationSet,
     },
-    structures::structure_manifest::Structure,
+    structures::structure_manifest::{Structure, StructureManifest},
 };
 
 use std::time::Duration;
@@ -26,17 +30,16 @@ use std::time::Duration;
 use bevy::{ecs::query::WorldQuery, prelude::*};
 
 use self::{
-    components::{
-        ActiveRecipe, CraftingState, InputInventory, OutputInventory, StorageInventory,
-        WorkersPresent,
-    },
+    inventories::{CraftingState, InputInventory, OutputInventory, StorageInventory},
     item_tags::{ItemKind, ItemTag},
-    recipe::RecipeInput,
+    recipe::{ActiveRecipe, RecipeInput},
+    workers::WorkersPresent,
 };
 
-pub mod components;
+pub mod inventories;
 pub mod item_tags;
 pub mod recipe;
+pub mod workers;
 
 /// Add crafting capabilities to structures.
 pub(crate) struct CraftingPlugin;
@@ -49,13 +52,77 @@ impl Plugin for CraftingPlugin {
                 (
                     progress_crafting,
                     gain_energy_when_crafting_completes.after(progress_crafting),
-                    set_crafting_emitter.after(progress_crafting),
-                    set_storage_emitter,
+                    set_crafting_emitter
+                        .after(progress_crafting)
+                        // This must run before zoning, to avoid wiping out the destruction signal
+                        .before(InteractionSystem::ApplyZoning),
+                    set_storage_emitter.before(InteractionSystem::ApplyZoning),
                     clear_empty_storage_slots,
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
+    }
+}
+
+/// All components needed to craft stuff.
+#[derive(Debug, Bundle)]
+pub(crate) struct CraftingBundle {
+    /// The input inventory for the items needed for crafting.
+    input_inventory: InputInventory,
+
+    /// The output inventory for the crafted items.
+    output_inventory: OutputInventory,
+
+    /// The recipe that is currently being crafted.
+    active_recipe: ActiveRecipe,
+
+    /// The current state for the crafting process.
+    craft_state: CraftingState,
+
+    /// Emits signals, drawing units towards this structure to ensure crafting flows smoothly
+    emitter: Emitter,
+
+    /// The number of workers present / allowed at this structure
+    workers_present: WorkersPresent,
+}
+
+impl CraftingBundle {
+    /// Create a new crafting bundle with empty inventories.
+    pub(crate) fn new(
+        structure_id: Id<Structure>,
+        starting_recipe: ActiveRecipe,
+        recipe_manifest: &RecipeManifest,
+        item_manifest: &ItemManifest,
+        structure_manifest: &StructureManifest,
+    ) -> Self {
+        let max_workers = structure_manifest.get(structure_id).max_workers;
+
+        if let Some(recipe_id) = starting_recipe.0 {
+            let recipe = recipe_manifest.get(recipe_id);
+
+            Self {
+                input_inventory: recipe.input_inventory(item_manifest),
+                output_inventory: recipe.output_inventory(item_manifest),
+                active_recipe: ActiveRecipe(Some(recipe_id)),
+                craft_state: CraftingState::NeedsInput,
+                emitter: Emitter::default(),
+                workers_present: WorkersPresent::new(max_workers),
+            }
+        } else {
+            Self {
+                input_inventory: InputInventory::Exact {
+                    inventory: Inventory::new(0, None),
+                },
+                output_inventory: OutputInventory {
+                    inventory: Inventory::new(1, None),
+                },
+                active_recipe: ActiveRecipe(None),
+                craft_state: CraftingState::NeedsInput,
+                emitter: Emitter::default(),
+                workers_present: WorkersPresent::new(max_workers),
+            }
+        }
     }
 }
 

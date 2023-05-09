@@ -4,17 +4,20 @@
     "acacia_leaf": {
       "stack_size": 8,
       "compostable": true,
-      "fluid": false
+      "fluid": false,
+      "buoyant": true
     },
     "leuco_chunk": {
       "stack_size": 6,
       "compostable": false,
-      "fluid": false
+      "fluid": false,
+      "buoyant": true
     },
     "ant_egg": {
       "stack_size": 3,
       "compostable": false,
       "fluid": false,
+      "buoyant": true,
       "seed": {
         "Unit": "ant"
       }
@@ -23,6 +26,7 @@
       "stack_size": 12,
       "compostable": true,
       "fluid": false,
+      "buoyant": true,
       "seed": {
         "Structure": "acacia_seedling"
       }
@@ -30,11 +34,13 @@
     "soil": {
       "stack_size": 3,
       "compostable": false,
+      "buoyant": false,
       "fluid": false
     },
     "water": {
       "stack_size": 10,
       "compostable": false,
+      "buoyant": false,
       "fluid": true
     }
   }

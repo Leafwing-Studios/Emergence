@@ -7,19 +7,23 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
-use crate::crafting::components::StorageInventory;
-use crate::crafting::item_tags::ItemKind;
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::organisms::energy::VigorModifier;
 use crate::player_interaction::selection::ObjectInteraction;
-use crate::signals::{Emitter, SignalModifier, SignalStrength, SignalType};
+use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
+use crate::water::WaterSet;
 
+use self::litter::{
+    carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
+    set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
+};
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain};
 
 pub(crate) mod commands;
+pub(crate) mod litter;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 
@@ -33,8 +37,19 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 (
                     respond_to_height_changes,
-                    set_terrain_emitters.in_set(TerrainEmitters),
-                    update_litter_index,
+                    make_litter_float.after(respond_to_height_changes),
+                    carry_floating_litter_with_current
+                        .after(make_litter_float)
+                        .after(WaterSet::HorizontalWaterMovement),
+                    // We need two copies of this system
+                    // because we care about cleaning up litter inventories before we try and drift
+                    // but we also want to clean up after because we may have condensed litter inventories by drifting
+                    clear_empty_litter.before(carry_floating_litter_with_current),
+                    clear_empty_litter.after(carry_floating_litter_with_current),
+                    set_terrain_emitters
+                        .after(carry_floating_litter_with_current)
+                        .in_set(TerrainEmitters),
+                    update_litter_index.after(carry_floating_litter_with_current),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
@@ -68,7 +83,9 @@ struct TerrainBundle {
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
     /// Stores littered items
-    storage_inventory: StorageInventory,
+    litter: Litter,
+    /// Tracks how long until litter drifts away
+    litter_drift: LitterDrift,
     /// The amount of shade cast on this tile.
     shade: Shade,
     /// The amount of light currently being received by this tile.
@@ -105,7 +122,8 @@ impl TerrainBundle {
             signal_modifer: SignalModifier::None,
             vigor_modifier: VigorModifier::None,
             emitter: Emitter::default(),
-            storage_inventory: StorageInventory::new(1, None),
+            litter: Litter::default(),
+            litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
         }
@@ -127,41 +145,5 @@ fn respond_to_height_changes(
             let mut column_transform = column_query.get_mut(column_child).unwrap();
             *column_transform = height.column_transform();
         }
-    }
-}
-
-/// Updates the signals produced by terrain tiles.
-fn set_terrain_emitters(
-    mut query: Query<(&mut Emitter, Ref<StorageInventory>), With<Id<Terrain>>>,
-) {
-    for (mut emitter, storage_inventory) in query.iter_mut() {
-        if storage_inventory.is_changed() {
-            emitter.signals.clear();
-            for item_slot in storage_inventory.iter() {
-                let item_kind = ItemKind::Single(item_slot.item_id());
-
-                let signal_type = match storage_inventory.is_full() {
-                    true => SignalType::Push(item_kind),
-                    false => SignalType::Contains(item_kind),
-                };
-                let signal_strength = SignalStrength::new(10.);
-
-                emitter.signals.push((signal_type, signal_strength));
-            }
-        }
-    }
-}
-
-/// The set of systems that update terrain emitters.
-#[derive(SystemSet, Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TerrainEmitters;
-
-/// Tracks how much litter is on the ground on each tile.
-fn update_litter_index(
-    query: Query<(&TilePos, &StorageInventory), (With<Id<Terrain>>, Changed<StorageInventory>)>,
-    mut map_geometry: ResMut<MapGeometry>,
-) {
-    for (&tile_pos, litter) in query.iter() {
-        map_geometry.update_litter_state(tile_pos, litter.state());
     }
 }

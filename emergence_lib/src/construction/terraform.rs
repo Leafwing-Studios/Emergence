@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::components::{InputInventory, OutputInventory},
+    crafting::inventories::{InputInventory, OutputInventory},
     items::{inventory::Inventory, item_manifest::Item},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };

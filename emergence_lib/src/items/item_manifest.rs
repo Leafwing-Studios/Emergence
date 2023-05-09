@@ -27,6 +27,7 @@ impl ItemManifest {
             ItemTag::Compostable => data.compostable,
             ItemTag::Seed => data.seed.is_some(),
             ItemTag::Fluid => data.fluid,
+            ItemTag::Buoyant => data.buoyant,
         }
     }
 
@@ -92,6 +93,8 @@ pub struct ItemData {
     pub compostable: bool,
     /// Is this item a fluid?
     pub fluid: bool,
+    /// Does this item float?
+    pub buoyant: bool,
     /// Is this item a seed?
     ///
     /// If so, what does it grow into when left as litter?
@@ -107,6 +110,8 @@ pub struct RawItemData {
     pub compostable: bool,
     /// Is this item a fluid?
     pub fluid: bool,
+    /// Does this item float?
+    pub buoyant: bool,
     /// Is this item a seed?
     ///
     /// If so, what does it grow into when left as litter?
@@ -119,6 +124,7 @@ impl From<RawItemData> for ItemData {
             stack_size: raw.stack_size,
             compostable: raw.compostable,
             fluid: raw.fluid,
+            buoyant: raw.buoyant,
             seed: raw.seed.map(OrganismId::from),
         }
     }

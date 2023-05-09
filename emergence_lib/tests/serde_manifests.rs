@@ -1,10 +1,12 @@
 use bevy::utils::HashMap;
 use emergence_lib::{
     construction::RawConstructionStrategy,
-    crafting::components::RawActiveRecipe,
     crafting::{
         item_tags::ItemTag,
-        recipe::{RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions, Threshold},
+        recipe::{
+            RawActiveRecipe, RawRecipeData, RawRecipeInput, RawRecipeManifest, RecipeConditions,
+            Threshold,
+        },
     },
     items::item_manifest::{RawItemData, RawItemManifest},
     light::Illuminance,
@@ -39,6 +41,7 @@ fn can_serialize_item_manifest() {
                     stack_size: 1,
                     compostable: true,
                     fluid: false,
+                    buoyant: true,
                     seed: None,
                 },
             ),
@@ -48,6 +51,7 @@ fn can_serialize_item_manifest() {
                     stack_size: 2,
                     compostable: false,
                     fluid: false,
+                    buoyant: false,
                     seed: Some(RawOrganismId::Structure("test_organism".to_string())),
                 },
             ),
@@ -57,6 +61,7 @@ fn can_serialize_item_manifest() {
                     stack_size: 100,
                     compostable: false,
                     fluid: true,
+                    buoyant: false,
                     seed: None,
                 },
             ),

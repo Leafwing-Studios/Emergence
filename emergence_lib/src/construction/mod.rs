@@ -5,7 +5,7 @@ use bevy::utils::{Duration, HashMap};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::crafting::components::InputInventory;
+use crate::crafting::inventories::InputInventory;
 use crate::items::slot::ItemSlot;
 use crate::{asset_management::manifest::Id, structures::structure_manifest::Structure};
 

@@ -1,7 +1,7 @@
 //! Initializes organisms in the world.
 
-use crate::crafting::components::{ActiveRecipe, CraftingState, InputInventory, OutputInventory};
-use crate::crafting::recipe::RecipeManifest;
+use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
+use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
 use crate::organisms::energy::EnergyPool;
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, MapGeometry};

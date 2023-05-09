@@ -6,7 +6,7 @@ use crate::asset_management::AssetState;
 
 use self::{
     atmosphere::AtmospherePlugin, infovis::InfoVisPlugin, lighting::LightingPlugin,
-    structures::remove_ghostly_shadows, terrain::manage_litter_piles, water::WaterRenderingPlugin,
+    structures::remove_ghostly_shadows, terrain::render_litter_piles, water::WaterRenderingPlugin,
 };
 
 mod atmosphere;
@@ -29,7 +29,7 @@ impl Plugin for GraphicsPlugin {
             .add_plugin(AtmospherePlugin)
             .add_plugin(WaterRenderingPlugin)
             .add_plugin(InfoVisPlugin)
-            .add_system(manage_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
+            .add_system(render_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),

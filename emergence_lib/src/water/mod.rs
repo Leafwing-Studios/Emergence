@@ -5,6 +5,7 @@
 
 use core::fmt::{Display, Formatter};
 use core::ops::{Div, Mul};
+use std::f32::consts::PI;
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
@@ -73,8 +74,8 @@ impl WaterConfig {
         lateral_flow_rate: 1e3,
         enable_oceans: true,
         tide_settings: TideSettings {
-            amplitude: Height(3.0),
-            period: Days(0.3),
+            amplitude: Height(10.0),
+            period: Days(0.5),
             minimum: Height(0.1),
         },
     };
@@ -112,7 +113,7 @@ pub(super) struct WaterPlugin;
 
 /// System set for water movement and behavior.
 #[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum WaterSet {
+pub(crate) enum WaterSet {
     /// Systems that increase or decrease the amount of water in the water table.
     VerticalWaterMovement,
     /// Systems that move water horizontally.
@@ -214,7 +215,7 @@ impl WaterTable {
     ///
     /// This is the outgoing flow rate of water from the tile only;
     /// tiles that are only receiving water will have a flow rate of zero.
-    pub(crate) fn get_flow_rate(&self, tile_pos: TilePos) -> FlowVelocity {
+    pub(crate) fn flow_velocity(&self, tile_pos: TilePos) -> FlowVelocity {
         self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
     }
 
@@ -440,7 +441,8 @@ impl FlowVelocity {
         magnitude: Volume,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let angle = direction.angle(&map_geometry.layout.orientation);
+        // Empirically this seems to be the correct angle.
+        let angle = direction.angle(&map_geometry.layout.orientation) + PI;
         let x = magnitude * angle.cos();
         let z = magnitude * angle.sin();
 

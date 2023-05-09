@@ -7,9 +7,10 @@ use crate::items::{inventory::Inventory, ItemCount};
 use crate::light::shade::ReceivedLight;
 use crate::light::Illuminance;
 use crate::{
-    crafting::components::{InputInventory, OutputInventory},
+    crafting::inventories::{InputInventory, OutputInventory},
     organisms::energy::Energy,
 };
+use bevy::prelude::*;
 use bevy::reflect::{FromReflect, Reflect, TypeUuid};
 use bevy::utils::HashMap;
 use itertools::Itertools;
@@ -395,5 +396,49 @@ impl IsRawManifest for RawRecipeManifest {
         }
 
         manifest
+    }
+}
+
+/// The recipe that is currently being crafted, if any.
+#[derive(Component, Debug, Default, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct ActiveRecipe(pub(super) Option<Id<Recipe>>);
+
+/// The raw version of [`ActiveRecipe`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RawActiveRecipe(Option<String>);
+
+impl RawActiveRecipe {
+    /// Creates a new [`RawActiveRecipe`], set to `recipe_name`.
+    pub fn new(recipe_name: &str) -> Self {
+        RawActiveRecipe(Some(recipe_name.to_string()))
+    }
+}
+
+impl From<RawActiveRecipe> for ActiveRecipe {
+    fn from(raw: RawActiveRecipe) -> Self {
+        ActiveRecipe(raw.0.map(Id::from_name))
+    }
+}
+
+impl ActiveRecipe {
+    /// The un-set [`ActiveRecipe`].
+    pub const NONE: ActiveRecipe = ActiveRecipe(None);
+
+    /// Creates a new [`ActiveRecipe`], set to `recipe_id`
+    pub fn new(recipe_id: Id<Recipe>) -> Self {
+        ActiveRecipe(Some(recipe_id))
+    }
+
+    /// The ID of the currently active recipe, if one has been selected.
+    pub fn recipe_id(&self) -> &Option<Id<Recipe>> {
+        &self.0
+    }
+
+    /// The pretty formatting for this type
+    pub(crate) fn display(&self, recipe_manifest: &RecipeManifest) -> String {
+        match self.0 {
+            Some(recipe_id) => recipe_manifest.name(recipe_id).to_string(),
+            None => "None".to_string(),
+        }
     }
 }

@@ -10,7 +10,7 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::{manifest::Id, AssetState},
     construction::terraform::TerraformingAction,
-    crafting::components::CraftingState,
+    crafting::inventories::CraftingState,
     player_interaction::PlayerAction,
     units::{
         goals::{Goal, GoalKind},

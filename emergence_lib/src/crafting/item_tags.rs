@@ -19,6 +19,8 @@ pub enum ItemTag {
     Seed,
     /// A fluid.
     Fluid,
+    /// Items that float
+    Buoyant,
 }
 
 impl ItemTag {
@@ -28,6 +30,7 @@ impl ItemTag {
             ItemTag::Compostable => "Compostable",
             ItemTag::Seed => "Seed",
             ItemTag::Fluid => "Fluid",
+            ItemTag::Buoyant => "Buoyant",
         }
     }
 }
