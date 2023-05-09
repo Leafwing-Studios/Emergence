@@ -1203,6 +1203,9 @@ impl RotationDirection {
 // BLOCKED: manual implementation of https://github.com/ManevilleF/hexx/issues/84
 // PERF: this is terrible, use a lookup table
 pub(crate) fn direction_from_angle(radians: f32, orientation: HexOrientation) -> Direction {
+    // Clamp to [0, 2π)
+    let radians = radians.rem_euclid(TAU);
+
     let direction_angle_pairs = Direction::ALL_DIRECTIONS.map(|direction| {
         let angle = direction.angle(&orientation);
         (direction, angle)
@@ -1353,6 +1356,55 @@ mod tests {
         for tile_pos in footprint.in_world_space(center) {
             dbg!(tile_pos);
             assert_eq!(None, map_geometry.get_structure(tile_pos));
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_for_exact_values() {
+        for direction in Direction::ALL_DIRECTIONS {
+            let pointy_radians = direction.angle(&HexOrientation::pointy());
+            let pointy_direction = direction_from_angle(pointy_radians, HexOrientation::pointy());
+
+            let flat_radians = direction.angle(&HexOrientation::flat());
+            let flat_direction = direction_from_angle(flat_radians, HexOrientation::flat());
+
+            assert_eq!(direction, pointy_direction);
+            assert_eq!(direction, flat_direction);
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_for_large_and_small_values() {
+        for direction in Direction::ALL_DIRECTIONS {
+            let radians = direction.angle(&HexOrientation::pointy());
+
+            let large_radians = radians + TAU;
+            let small_radians = radians - TAU;
+
+            let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
+            let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
+
+            assert_eq!(direction, large_direction);
+            assert_eq!(direction, small_direction);
+        }
+    }
+
+    #[test]
+    fn direction_from_angle_works_with_small_offsets() {
+        let epsilon = 0.1;
+        assert!(epsilon < TAU / 12.);
+
+        for direction in Direction::ALL_DIRECTIONS {
+            let radians = direction.angle(&HexOrientation::pointy());
+
+            let large_radians = radians + epsilon;
+            let small_radians = radians - epsilon;
+
+            let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
+            let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
+
+            assert_eq!(direction, large_direction);
+            assert_eq!(direction, small_direction);
         }
     }
 }
