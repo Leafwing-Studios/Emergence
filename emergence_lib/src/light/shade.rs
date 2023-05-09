@@ -141,7 +141,7 @@ fn shaded_area(
 
     let mut shaded_tiles = Vec::new();
 
-    let originating_terrain_height = map_geometry.get_height(tile_pos).unwrap();
+    let Ok(originating_terrain_height) = map_geometry.get_height(tile_pos) else { return Vec::new() };
     let total_height = originating_terrain_height + height_of_caster;
     let total_height = total_height.0.round() as i32;
 
