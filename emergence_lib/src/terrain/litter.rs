@@ -3,6 +3,8 @@
 use bevy::prelude::*;
 use bevy::utils::Duration;
 use hexx::Direction;
+use rand::thread_rng;
+use rand_distr::{Distribution, Normal};
 
 use crate::{
     asset_management::manifest::Id,
@@ -250,10 +252,19 @@ pub(super) fn carry_floating_litter_with_current(
     /// This must be greater than 0.
     const ITEM_DRIFT_RATE: f32 = 0.01;
 
+    /// Controls how much litter varies relative to the current direction
+    ///
+    /// This is the standard deviation of the normal distribution used to determine the drift angle, and is in units of radians.
+    /// This must be greater than 0.
+    const DRIFT_DEVIATION: f32 = 1.0;
+
     let delta_time = fixed_time.period;
     // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
     // sparing us from the wrath of the borrow checker
     let mut proposed_transfers: Vec<(Entity, TilePos)> = Vec::new();
+
+    let rng = &mut thread_rng();
+    let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
     for (source_entity, &tile_pos, litter, mut litter_drift) in litter_query.iter_mut() {
         if let WaterDepth::Flooded(water_depth) = water_table.water_depth(tile_pos) {
@@ -265,7 +276,7 @@ pub(super) fn carry_floating_litter_with_current(
             }
 
             let flow_velocity = water_table.flow_velocity(tile_pos);
-            let flow_direction = flow_velocity.direction();
+            let flow_direction = flow_velocity.direction() + normal_distribution.sample(rng);
 
             // Volume transferred = cross-sectional area * water speed * time
             // Cross-sectional area = water depth * tile area
