@@ -354,6 +354,9 @@ pub(super) fn ghost_structure_signals(
         With<Ghost>,
     >,
 ) {
+    /// Controls how strong the signals that are emitted by ghosts are
+    const GHOST_SIGNAL_STRENGTH: f32 = 100.;
+
     for (&structure_id, mut emitter, crafting_state, input_inventory, workers_present) in
         ghost_query.iter_mut()
     {
@@ -369,14 +372,14 @@ pub(super) fn ghost_structure_signals(
                             for item_slot in inventory.iter() {
                                 let signal_type =
                                     SignalType::Pull(ItemKind::Single(item_slot.item_id()));
-                                let signal_strength = SignalStrength::new(10.);
+                                let signal_strength = SignalStrength::new(GHOST_SIGNAL_STRENGTH);
                                 emitter.signals.push((signal_type, signal_strength))
                             }
                         }
                         InputInventory::Tagged { tag, .. } => {
                             // Emit signals to cause workers to bring the correct item to this ghost
                             let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
-                            let signal_strength = SignalStrength::new(10.);
+                            let signal_strength = SignalStrength::new(GHOST_SIGNAL_STRENGTH);
                             emitter.signals.push((signal_type, signal_strength))
                         }
                     }
@@ -389,7 +392,7 @@ pub(super) fn ghost_structure_signals(
                         let workplace_id = WorkplaceId::structure(structure_id);
 
                         let signal_type = SignalType::Work(workplace_id);
-                        let signal_strength = SignalStrength::new(10.);
+                        let signal_strength = SignalStrength::new(GHOST_SIGNAL_STRENGTH);
                         emitter.signals.push((signal_type, signal_strength))
                     }
                 }
