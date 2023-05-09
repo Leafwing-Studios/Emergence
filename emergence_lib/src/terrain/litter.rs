@@ -1,6 +1,8 @@
 //! Logic and components for littered items.
 
 use bevy::prelude::*;
+use bevy::utils::Duration;
+use hexx::Direction;
 
 use crate::{
     asset_management::manifest::Id,
@@ -14,7 +16,7 @@ use crate::{
         ItemCount,
     },
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{MapGeometry, TilePos},
+    simulation::geometry::{direction_from_angle, MapGeometry, TilePos},
     water::{WaterDepth, WaterTable},
 };
 
@@ -206,5 +208,117 @@ pub(super) fn make_litter_float(
                 litter.floating = floating;
             }
         }
+    }
+}
+
+/// The direction and time remaining for a piece of litter to drift with the current.
+#[derive(Component, Default)]
+pub(super) struct LitterDrift {
+    /// The direction the litter is drifting.
+    pub(super) direction: Option<Direction>,
+    /// The time remaining for the litter to drift.
+    pub(super) timer: Timer,
+}
+
+impl LitterDrift {
+    /// Starts the timer for the litter to drift with the current.
+    pub(super) fn start(&mut self, direction: Direction, required_time: Duration) {
+        // This attempts to avoid allocations by reusing the timer
+        self.direction = Some(direction);
+        self.timer.set_duration(required_time);
+        self.timer.reset();
+    }
+
+    /// Ends the timer for the litter to drift with the current.
+    pub(super) fn finish(&mut self) {
+        self.direction = None;
+        // The timer is reset when starting, so we don't need to do anything here
+    }
+}
+
+/// Carries floating litter along with the surface water current.
+pub(super) fn carry_floating_litter_with_current(
+    mut litter_query: Query<(Entity, &TilePos, &mut Litter, &mut LitterDrift)>,
+    fixed_time: Res<FixedTime>,
+    water_table: Res<WaterTable>,
+    item_manifest: Res<ItemManifest>,
+    map_geometry: Res<MapGeometry>,
+) {
+    /// Controls how fast litter drifts with the current
+    ///
+    /// Higher values mean litter drifts faster.
+    /// This must be greater than 0.
+    const ITEM_DRIFT_RATE: f32 = 1.;
+
+    let delta_time = fixed_time.period;
+    // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
+    // sparing us from the wrath of the borrow checker
+    let mut proposed_transfers: Vec<(Entity, TilePos)> = Vec::new();
+
+    for (source_entity, &tile_pos, litter, mut litter_drift) in litter_query.iter_mut() {
+        if let WaterDepth::Flooded(water_depth) = water_table.water_depth(tile_pos) {
+            litter_drift.timer.tick(delta_time);
+
+            // Don't both computing drift if there's nothing floating
+            if litter.floating.is_empty() {
+                continue;
+            }
+
+            let flow_velocity = water_table.flow_velocity(tile_pos);
+            let flow_direction = flow_velocity.direction();
+
+            // Volume transferred = cross-sectional area * water speed * time
+            // Cross-sectional area = water depth * tile area
+            // Volume transferred = water depth * tile area * water speed * time
+            // Water speed = volume transferred / time * tile area / water depth
+            // Tile area is 1 (because we're computing on a per-tile basis), and flow_velocity is in tiles per second
+            // Therefore: water speed = flow velocity / water depth
+            let water_speed = flow_velocity.magnitude().0 / water_depth.0;
+
+            // If the litter is not already drifting, start it drifting
+            if litter_drift.direction.is_none() {
+                let direction =
+                    direction_from_angle(flow_direction, map_geometry.layout.orientation);
+                let time_to_drift = water_speed * delta_time.as_secs_f32() * ITEM_DRIFT_RATE;
+
+                litter_drift.start(direction, Duration::from_secs_f32(time_to_drift));
+            }
+
+            // If the litter has finished drifting, stop it drifting and move it
+            if litter_drift.timer.finished() {
+                if let Some(direction) = litter_drift.direction {
+                    let new_position = tile_pos.neighbor(direction);
+                    // Record that this change needs to be tried
+                    proposed_transfers.push((source_entity, new_position));
+                }
+
+                litter_drift.finish();
+            }
+        } else {
+            // PERF: we could probably avoid doing any work in this branch by more carefully tracking when things start floating
+            litter_drift.finish();
+        }
+    }
+
+    for (source_entity, new_position) in proposed_transfers.iter() {
+        let Some(target_entity) = map_geometry.get_terrain(*new_position) else {
+            continue;
+        };
+        let [source_query_item, target_query_item] = litter_query
+            .get_many_mut([*source_entity, target_entity])
+            .unwrap();
+
+        let mut source_litter: Mut<Litter> = source_query_item.2;
+        let mut target_litter: Mut<Litter> = target_query_item.2;
+
+        // Do the hokey-pokey to get around the borrow checker
+        let mut source_floating = source_litter.floating.clone();
+        let mut target_floating = target_litter.floating.clone();
+
+        // We don't care how much was transferred; failing to transfer is fine
+        let _ = source_floating.transfer_all(&mut target_floating, &item_manifest);
+
+        source_litter.floating = source_floating;
+        target_litter.floating = target_floating;
     }
 }

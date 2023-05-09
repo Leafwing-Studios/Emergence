@@ -532,7 +532,7 @@ fn set_overlay_material(
                 tile_overlay.get_water_table_material(inverted_height)
             }
             OverlayType::VelocityOfWaterTable => {
-                let flow_velocity = water_table.get_flow_rate(tile_pos);
+                let flow_velocity = water_table.flow_velocity(tile_pos);
 
                 tile_overlay.get_flow_velocity_material(flow_velocity)
             }

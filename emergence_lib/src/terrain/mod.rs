@@ -13,10 +13,11 @@ use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
+use crate::water::WaterSet;
 
 use self::litter::{
-    clear_empty_litter, make_litter_float, set_terrain_emitters, update_litter_index, Litter,
-    TerrainEmitters,
+    carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
+    set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
 };
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain};
@@ -36,10 +37,15 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 (
                     respond_to_height_changes,
-                    make_litter_float,
+                    make_litter_float.after(respond_to_height_changes),
+                    carry_floating_litter_with_current
+                        .after(make_litter_float)
+                        .after(WaterSet::HorizontalWaterMovement),
                     clear_empty_litter,
-                    set_terrain_emitters.in_set(TerrainEmitters),
-                    update_litter_index,
+                    set_terrain_emitters
+                        .after(clear_empty_litter)
+                        .in_set(TerrainEmitters),
+                    update_litter_index.after(clear_empty_litter),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
@@ -74,6 +80,8 @@ struct TerrainBundle {
     emitter: Emitter,
     /// Stores littered items
     litter: Litter,
+    /// Tracks how long until litter drifts away
+    litter_drift: LitterDrift,
     /// The amount of shade cast on this tile.
     shade: Shade,
     /// The amount of light currently being received by this tile.
@@ -111,6 +119,7 @@ impl TerrainBundle {
             vigor_modifier: VigorModifier::None,
             emitter: Emitter::default(),
             litter: Litter::default(),
+            litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
         }

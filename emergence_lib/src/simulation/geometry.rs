@@ -8,11 +8,11 @@ use bevy::{
 };
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout};
+use hexx::{shapes::hexagon, ColumnMeshBuilder, Direction, Hex, HexLayout, HexOrientation};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
-    f32::consts::PI,
+    f32::consts::{PI, TAU},
     fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
@@ -1197,6 +1197,55 @@ impl RotationDirection {
             true => RotationDirection::Left,
             false => RotationDirection::Right,
         }
+    }
+}
+
+// BLOCKED: manual implementation of https://github.com/ManevilleF/hexx/issues/84
+// PERF: this is terrible, use a lookup table
+pub(crate) fn direction_from_angle(radians: f32, orientation: HexOrientation) -> Direction {
+    let direction_angle_pairs = Direction::ALL_DIRECTIONS.map(|direction| {
+        let angle = direction.angle(&orientation);
+        (direction, angle)
+    });
+
+    let mut current_best_direction = Direction::Top;
+    let mut current_best_delta = f32::MAX;
+
+    let mut lowest_direction = Direction::Top;
+    let mut lowest_angle = f32::MAX;
+
+    let mut highest_direction = Direction::Top;
+    let mut highest_angle = 0.;
+
+    for (direction, angle) in direction_angle_pairs {
+        if angle > highest_angle {
+            highest_direction = direction;
+            highest_angle = angle;
+        }
+
+        if angle < lowest_angle {
+            lowest_direction = direction;
+            lowest_angle = angle;
+        }
+
+        let delta = (angle - radians).abs();
+        if delta < current_best_delta {
+            current_best_direction = direction;
+            current_best_delta = delta;
+        }
+    }
+
+    // Handle the case where the angle is between the highest and lowest angles
+    if radians > highest_angle {
+        // If we are closer to the lowest angle, use that
+        // TAU / 12 is half the angle between each pair of directions
+        if radians - highest_angle > TAU / 12. {
+            lowest_direction
+        } else {
+            highest_direction
+        }
+    } else {
+        current_best_direction
     }
 }
 

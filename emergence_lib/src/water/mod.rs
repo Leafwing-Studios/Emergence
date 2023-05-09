@@ -112,7 +112,7 @@ pub(super) struct WaterPlugin;
 
 /// System set for water movement and behavior.
 #[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum WaterSet {
+pub(crate) enum WaterSet {
     /// Systems that increase or decrease the amount of water in the water table.
     VerticalWaterMovement,
     /// Systems that move water horizontally.
@@ -214,7 +214,7 @@ impl WaterTable {
     ///
     /// This is the outgoing flow rate of water from the tile only;
     /// tiles that are only receiving water will have a flow rate of zero.
-    pub(crate) fn get_flow_rate(&self, tile_pos: TilePos) -> FlowVelocity {
+    pub(crate) fn flow_velocity(&self, tile_pos: TilePos) -> FlowVelocity {
         self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
     }
 

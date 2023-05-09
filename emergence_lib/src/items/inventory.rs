@@ -620,6 +620,32 @@ impl Inventory {
         }
     }
 
+    /// Attempt to transfer as much from `self` to `other` as possible.
+    ///
+    /// If all items are transferred, [`Ok(())`] will be returned.
+    /// Otherwise, an empty error will be returned.
+    // TODO: this could have a more useful error type
+    pub fn transfer_all(
+        &mut self,
+        other: &mut Inventory,
+        item_manifest: &ItemManifest,
+    ) -> Result<(), ()> {
+        let mut result = Ok(());
+        // By cloning self, we can iterate over the slots without borrowing self
+        let cloned_self = self.clone();
+
+        for item_slot in cloned_self.iter() {
+            let item_count = item_slot.item_count();
+
+            let item_transfer_result = self.transfer_item(&item_count, other, item_manifest);
+            if item_transfer_result.is_err() {
+                result = Err(());
+            }
+        }
+
+        result
+    }
+
     /// The pretty formatting for this type
     pub fn display(&self, item_manifest: &ItemManifest) -> String {
         let slot_strings: Vec<String> = self
