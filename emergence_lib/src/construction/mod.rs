@@ -9,6 +9,8 @@ use crate::crafting::inventories::InputInventory;
 use crate::items::slot::ItemSlot;
 use crate::{asset_management::manifest::Id, structures::structure_manifest::Structure};
 
+use self::demolition::set_emitter_for_structures_to_be_demolished;
+
 pub(crate) mod demolition;
 pub(crate) mod ghosts;
 pub(crate) mod terraform;
@@ -20,7 +22,12 @@ pub(crate) struct ConstructionPlugin;
 impl Plugin for ConstructionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ghosts::GhostPlugin)
-            .add_plugin(zoning::ZoningPlugin);
+            .add_plugin(zoning::ZoningPlugin)
+            // Must run after crafting emitters in order to wipe out their signals
+            .add_system(
+                set_emitter_for_structures_to_be_demolished
+                    .after(crate::crafting::set_crafting_emitter),
+            );
     }
 }
 
