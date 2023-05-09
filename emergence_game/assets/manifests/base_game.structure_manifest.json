@@ -18,6 +18,24 @@
 			"height": 1,
 			"passable": false
 		},
+		"chute": {
+			"kind": {
+				"Storage": {
+					"max_slot_count": 1
+				}
+			},
+			"construction_strategy": {
+				"Direct": {
+					"work": 2,
+					"materials": {
+						"acacia_leaf": 1
+					}
+				}
+			},
+			"max_workers": 6,
+			"height": 2,
+			"passable": false
+		},
 		"path": {
 			"kind": "Path",
 			"construction_strategy": {
