@@ -316,9 +316,12 @@ pub(super) fn carry_floating_litter_with_current(
         let mut target_floating = target_litter.floating.clone();
 
         // We don't care how much was transferred; failing to transfer is fine
-        let _ = source_floating.transfer_all(&mut target_floating, &item_manifest);
+        let result = source_floating.transfer_all(&mut target_floating, &item_manifest);
 
-        source_litter.floating = source_floating;
-        target_litter.floating = target_floating;
+        // If the transfer was successful, update the litter
+        if result.is_ok() {
+            source_litter.floating = source_floating;
+            target_litter.floating = target_floating;
+        }
     }
 }
