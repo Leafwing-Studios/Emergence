@@ -41,11 +41,15 @@ impl Plugin for TerrainPlugin {
                     carry_floating_litter_with_current
                         .after(make_litter_float)
                         .after(WaterSet::HorizontalWaterMovement),
-                    clear_empty_litter,
+                    // We need two copies of this system
+                    // because we care about cleaning up litter inventories before we try and drift
+                    // but we also want to clean up after because we may have condensed litter inventories by drifting
+                    clear_empty_litter.before(carry_floating_litter_with_current),
+                    clear_empty_litter.after(carry_floating_litter_with_current),
                     set_terrain_emitters
-                        .after(clear_empty_litter)
+                        .after(carry_floating_litter_with_current)
                         .in_set(TerrainEmitters),
-                    update_litter_index.after(clear_empty_litter),
+                    update_litter_index.after(carry_floating_litter_with_current),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
