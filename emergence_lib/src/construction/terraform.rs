@@ -4,10 +4,21 @@ use bevy::prelude::*;
 
 use crate::{
     asset_management::manifest::Id,
-    crafting::inventories::{InputInventory, OutputInventory},
+    crafting::{
+        inventories::{InputInventory, OutputInventory},
+        item_tags::ItemKind,
+    },
+    graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::Item},
-    terrain::terrain_manifest::{Terrain, TerrainManifest},
+    signals::{Emitter, SignalStrength, SignalType},
+    simulation::geometry::TilePos,
+    terrain::{
+        commands::TerrainCommandsExt,
+        terrain_manifest::{Terrain, TerrainManifest},
+    },
 };
+
+use super::ghosts::{Ghost, GhostBundle, Preview, PreviewBundle};
 
 /// An option presented to players for how to terraform the world.
 ///
@@ -96,6 +107,142 @@ impl From<TerraformingAction> for TerraformingTool {
             TerraformingAction::Raise => Self::Raise,
             TerraformingAction::Lower => Self::Lower,
             TerraformingAction::Change(terrain) => Self::Change(terrain),
+        }
+    }
+}
+
+/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
+#[derive(Bundle)]
+pub(crate) struct GhostTerrainBundle {
+    /// Shared components across all ghosts
+    ghost_bundle: GhostBundle,
+    /// The action that will be performed when this terrain is built
+    terraforming_action: TerraformingAction,
+    /// The inventory that holds any material that needs to be taken away
+    output_inventory: OutputInventory,
+}
+
+impl GhostTerrainBundle {
+    /// Creates a new [`GhostTerrainBundle`].
+    pub(crate) fn new(
+        terraforming_action: TerraformingAction,
+        tile_pos: TilePos,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+        input_inventory: InputInventory,
+        output_inventory: OutputInventory,
+    ) -> Self {
+        GhostTerrainBundle {
+            ghost_bundle: GhostBundle::new(
+                tile_pos,
+                input_inventory,
+                scene_handle,
+                inherited_material,
+                world_pos,
+            ),
+            terraforming_action,
+            output_inventory,
+        }
+    }
+}
+
+/// The components needed to create a preview of a [`TerraformingAction`].
+#[derive(Bundle)]
+pub(crate) struct TerrainPreviewBundle {
+    /// Shared components for all previews
+    preview_bundle: PreviewBundle,
+    /// The action that will be performed when this terrain is built
+    terraforming_action: TerraformingAction,
+}
+
+impl TerrainPreviewBundle {
+    /// Creates a new [`TerrainPreviewBundle`].
+    pub(crate) fn new(
+        tile_pos: TilePos,
+        terraforming_action: TerraformingAction,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        TerrainPreviewBundle {
+            preview_bundle: PreviewBundle {
+                preview: Preview,
+                tile_pos,
+                inherited_material,
+                scene_bundle: SceneBundle {
+                    scene: scene_handle.clone_weak(),
+                    transform: Transform::from_translation(world_pos),
+                    ..default()
+                },
+            },
+            terraforming_action,
+        }
+    }
+}
+
+/// Manages the progression of terraforming ghosts.
+///
+/// Transforms ghosts into terrain once all of their inputs and outputs have been met.
+pub(super) fn terraforming_lifecycle(
+    mut terraforming_ghost_query: Query<
+        (
+            &InputInventory,
+            &OutputInventory,
+            &TilePos,
+            &TerraformingAction,
+        ),
+        With<Ghost>,
+    >,
+    mut commands: Commands,
+) {
+    for (input_inventory, output_inventory, &tile_pos, &terraforming_action) in
+        terraforming_ghost_query.iter_mut()
+    {
+        if input_inventory.inventory().is_full() && output_inventory.is_empty() {
+            commands.despawn_ghost_terrain(tile_pos);
+            commands.apply_terraforming_action(tile_pos, terraforming_action);
+        }
+    }
+}
+
+/// Computes the correct signals for ghost terrain to send throughout their lifecycle
+pub(super) fn ghost_terrain_signals(
+    mut query: Query<
+        (&InputInventory, &OutputInventory, &mut Emitter),
+        (With<Ghost>, With<TerraformingAction>),
+    >,
+) {
+    /// The signal strength for terraforming signals
+    const TERRAFORMING_SIGNAL_STRENGTH: f32 = 20.;
+
+    for (input_inventory, output_inventory, mut emitter) in query.iter_mut() {
+        // Reset all emitters
+        emitter.signals.clear();
+
+        // If the input inventory is not full, emit a pull signal for the item
+        match input_inventory {
+            InputInventory::Exact { inventory } => {
+                // Emit signals to cause workers to bring the correct item to this ghost
+                for item_slot in inventory.iter() {
+                    let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
+                    let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
+                    emitter.signals.push((signal_type, signal_strength))
+                }
+            }
+            InputInventory::Tagged { tag, .. } => {
+                // Emit signals to cause workers to bring the correct item to this ghost
+                let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
+                let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
+                emitter.signals.push((signal_type, signal_strength))
+            }
+        }
+
+        // If the output inventory is not empty, emit a push signal for the item
+        for item_slot in output_inventory.iter() {
+            let signal_type = SignalType::Push(ItemKind::Single(item_slot.item_id()));
+            let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
+            emitter.signals.push((signal_type, signal_strength))
         }
     }
 }

@@ -12,13 +12,8 @@ use crate::{
         selection::CurrentSelection,
         InteractionSystem, PlayerAction, PlayerModifiesWorld,
     },
-    signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{MapGeometry, TilePos},
-    structures::{
-        commands::StructureCommandsExt,
-        structure_manifest::{Structure, StructureManifest},
-        Landmark,
-    },
+    structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest, Landmark},
     terrain::{
         commands::TerrainCommandsExt,
         terrain_manifest::{Terrain, TerrainManifest},
@@ -46,9 +41,7 @@ impl Plugin for ZoningPlugin {
                 .in_set(InteractionSystem::ManagePreviews)
                 .run_if(in_state(AssetState::FullyLoaded))
                 .after(InteractionSystem::ApplyZoning),
-        )
-        // Must run after crafting emitters in order to wipe out their signals
-        .add_system(keep_tiles_clear.after(crate::crafting::set_crafting_emitter));
+        );
     }
 }
 
@@ -266,17 +259,5 @@ fn mark_based_on_zoning(
                 commands.despawn_ghost_structure(tile_pos);
             }
         };
-    }
-}
-
-/// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
-fn keep_tiles_clear(
-    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForDemolition>>,
-) {
-    for (mut doomed_emitter, &structure_id) in structure_query.iter_mut() {
-        doomed_emitter.signals = vec![(
-            SignalType::Demolish(structure_id),
-            SignalStrength::new(100.),
-        )];
     }
 }

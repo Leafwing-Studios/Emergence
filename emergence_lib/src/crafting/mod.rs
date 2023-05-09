@@ -5,7 +5,7 @@ use recipe::{RawRecipeManifest, RecipeManifest};
 
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
-    construction::ghosts::WorkplaceId,
+    construction::{demolition::MarkedForDemolition, ghosts::WorkplaceId},
     items::{
         inventory::Inventory,
         item_manifest::{ItemManifest, RawItemManifest},
@@ -293,15 +293,18 @@ fn gain_energy_when_crafting_completes(
 
 /// Causes crafting structures to emit signals based on the items they have and need.
 pub(crate) fn set_crafting_emitter(
-    mut crafting_query: Query<(
-        &mut Emitter,
-        &InputInventory,
-        &OutputInventory,
-        &CraftingState,
-        &Id<Structure>,
-        &WorkersPresent,
-        &ActiveRecipe,
-    )>,
+    mut crafting_query: Query<
+        (
+            &mut Emitter,
+            &InputInventory,
+            &OutputInventory,
+            &CraftingState,
+            &Id<Structure>,
+            &WorkersPresent,
+            &ActiveRecipe,
+        ),
+        Without<MarkedForDemolition>,
+    >,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
 ) {

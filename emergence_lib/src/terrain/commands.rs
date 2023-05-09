@@ -12,8 +12,8 @@ use bevy::{
 use crate::{
     asset_management::manifest::Id,
     construction::{
-        ghosts::{GhostHandles, GhostKind, GhostTerrainBundle, TerrainPreviewBundle},
-        terraform::TerraformingAction,
+        ghosts::{GhostHandles, GhostKind},
+        terraform::{GhostTerrainBundle, TerraformingAction, TerrainPreviewBundle},
         zoning::Zoning,
     },
     graphics::InheritedMaterial,

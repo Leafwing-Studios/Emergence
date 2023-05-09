@@ -4,6 +4,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::{
     asset_management::manifest::Id,
+    signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{Height, MapGeometry, TilePos},
     structures::structure_manifest::Structure,
 };
@@ -44,5 +45,17 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
             true => Some(entity),
             false => None,
         }
+    }
+}
+
+/// Keeps marked tiles clear by sending removal signals from structures that are marked for removal
+pub(super) fn set_emitter_for_structures_to_be_demolished(
+    mut structure_query: Query<(&mut Emitter, &Id<Structure>), With<MarkedForDemolition>>,
+) {
+    for (mut doomed_emitter, &structure_id) in structure_query.iter_mut() {
+        doomed_emitter.signals = vec![(
+            SignalType::Demolish(structure_id),
+            SignalStrength::new(100.),
+        )];
     }
 }
