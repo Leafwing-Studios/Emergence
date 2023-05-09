@@ -662,6 +662,34 @@ pub(crate) struct Emitter {
     pub(crate) signals: Vec<(SignalType, SignalStrength)>,
 }
 
+impl Emitter {
+    /// The human-readable value of this component.
+    pub(crate) fn display(
+        &self,
+        item_manifest: &ItemManifest,
+        unit_manifest: &UnitManifest,
+        structure_manifest: &StructureManifest,
+        terrain_manifest: &TerrainManifest,
+    ) -> String {
+        self.signals
+            .iter()
+            .map(|(signal_type, signal_strength)| {
+                format!(
+                    "{}: {}",
+                    signal_type.display(
+                        item_manifest,
+                        structure_manifest,
+                        terrain_manifest,
+                        unit_manifest,
+                    ),
+                    signal_strength.value()
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+}
+
 /// Modifies the strength of a signal.
 ///
 /// This is stored as a component on each tile, and is applied to all signals emitted from entities at that tile position.
