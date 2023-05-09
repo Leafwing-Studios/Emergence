@@ -5,6 +5,7 @@
 
 use core::fmt::{Display, Formatter};
 use core::ops::{Div, Mul};
+use std::f32::consts::PI;
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
@@ -440,7 +441,8 @@ impl FlowVelocity {
         magnitude: Volume,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let angle = direction.angle(&map_geometry.layout.orientation);
+        // Empirically this seems to be the correct angle.
+        let angle = direction.angle(&map_geometry.layout.orientation) + PI;
         let x = magnitude * angle.cos();
         let z = magnitude * angle.sin();
 
