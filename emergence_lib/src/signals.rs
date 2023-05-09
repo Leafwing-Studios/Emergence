@@ -737,12 +737,12 @@ fn emit_signals(
         signals: &mut Signals,
         tile_pos: TilePos,
         emitter: &Emitter,
-        modifier: &SignalModifier,
+        modifier: SignalModifier,
         n_tiles: usize,
     ) {
         for (signal_type, signal_strength) in &emitter.signals {
             let mut signal_strength = *signal_strength / n_tiles as f32;
-            signal_strength.apply_modifier(*modifier);
+            signal_strength.apply_modifier(modifier);
             signals.add_signal(*signal_type, tile_pos, signal_strength);
         }
     }
@@ -762,11 +762,13 @@ fn emit_signals(
 
                 for tile_pos in footprint.in_world_space(center) {
                     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-                    let modifier = modifier_query.get(terrain_entity).unwrap();
+                    let mut modifier = modifier_query.get(terrain_entity).unwrap().clone();
                     let cost = modifier.cost() * delta_time / n_tiles as f32;
 
                     if intent_pool.current() >= cost {
                         intent_pool.expend(cost).unwrap();
+                    } else {
+                        modifier = SignalModifier::None;
                     }
 
                     emit(&mut signals, tile_pos, emitter, modifier, n_tiles);
@@ -774,11 +776,13 @@ fn emit_signals(
             }
             None => {
                 let terrain_entity = map_geometry.get_terrain(center).unwrap();
-                let modifier = modifier_query.get(terrain_entity).unwrap();
+                let mut modifier = modifier_query.get(terrain_entity).unwrap().clone();
                 let cost = modifier.cost() * delta_time;
 
                 if intent_pool.current() >= cost {
                     intent_pool.expend(cost).unwrap();
+                } else {
+                    modifier = SignalModifier::None;
                 }
 
                 emit(&mut signals, center, emitter, modifier, 1);
