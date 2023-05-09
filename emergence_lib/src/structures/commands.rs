@@ -18,6 +18,7 @@ use crate::{
 };
 
 use super::{
+    logistic_buildings::{AbsorbsItems, EmitsItems},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     Landmark, StructureBundle,
@@ -169,6 +170,18 @@ impl Command for SpawnStructureCommand {
             StructureKind::Path => {}
             StructureKind::Landmark => {
                 world.entity_mut(structure_entity).insert(Landmark);
+            }
+            StructureKind::Absorber => {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(AbsorbsItems)
+                    .insert(StorageInventory::new(1, None));
+            }
+            StructureKind::Emitter => {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(EmitsItems)
+                    .insert(StorageInventory::new(1, None));
             }
         }
 

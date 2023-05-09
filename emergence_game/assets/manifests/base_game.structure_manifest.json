@@ -19,11 +19,7 @@
 			"passable": false
 		},
 		"chute": {
-			"kind": {
-				"Storage": {
-					"max_slot_count": 1
-				}
-			},
+			"kind": "Emitter",
 			"construction_strategy": {
 				"Direct": {
 					"work": 2,
