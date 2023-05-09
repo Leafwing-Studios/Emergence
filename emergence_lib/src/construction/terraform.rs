@@ -213,6 +213,9 @@ pub(super) fn ghost_terrain_signals(
         (With<Ghost>, With<TerraformingAction>),
     >,
 ) {
+    /// The signal strength for terraforming signals
+    const TERRAFORMING_SIGNAL_STRENGTH: f32 = 20.;
+
     for (input_inventory, output_inventory, mut emitter) in query.iter_mut() {
         // Reset all emitters
         emitter.signals.clear();
@@ -223,14 +226,14 @@ pub(super) fn ghost_terrain_signals(
                 // Emit signals to cause workers to bring the correct item to this ghost
                 for item_slot in inventory.iter() {
                     let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
-                    let signal_strength = SignalStrength::new(10.);
+                    let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
                     emitter.signals.push((signal_type, signal_strength))
                 }
             }
             InputInventory::Tagged { tag, .. } => {
                 // Emit signals to cause workers to bring the correct item to this ghost
                 let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
-                let signal_strength = SignalStrength::new(10.);
+                let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
                 emitter.signals.push((signal_type, signal_strength))
             }
         }
@@ -238,7 +241,7 @@ pub(super) fn ghost_terrain_signals(
         // If the output inventory is not empty, emit a push signal for the item
         for item_slot in output_inventory.iter() {
             let signal_type = SignalType::Push(ItemKind::Single(item_slot.item_id()));
-            let signal_strength = SignalStrength::new(10.);
+            let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
             emitter.signals.push((signal_type, signal_strength))
         }
     }
