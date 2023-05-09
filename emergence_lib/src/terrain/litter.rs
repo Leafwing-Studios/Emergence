@@ -250,7 +250,7 @@ pub(super) fn carry_floating_litter_with_current(
     ///
     /// Higher values mean litter drifts faster.
     /// This must be greater than 0.
-    const ITEM_DRIFT_RATE: f32 = 0.01;
+    const ITEM_DRIFT_RATE: f32 = 1e-4;
 
     /// Controls how much litter varies relative to the current direction
     ///

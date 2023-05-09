@@ -159,7 +159,7 @@ impl Default for GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 3.0,
+                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
