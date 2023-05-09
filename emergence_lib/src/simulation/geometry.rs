@@ -326,6 +326,9 @@ impl Height {
     /// The height of each step up, in world coordinates.
     pub(crate) const STEP_HEIGHT: f32 = 1.0;
 
+    /// The maximum height of water that units can walk through.
+    pub(crate) const WADING_DEPTH: Height = Height(1.);
+
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     #[inline]
     #[must_use]
@@ -676,9 +679,6 @@ impl MapGeometry {
         ending_pos: TilePos,
         water_table: &WaterTable,
     ) -> bool {
-        /// The maximum height of water that units can walk through.
-        const WADING_HEIGHT: Height = Height(1.);
-
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -691,7 +691,7 @@ impl MapGeometry {
             return false;
         }
 
-        if water_table.surface_water_depth(ending_pos) > WADING_HEIGHT {
+        if water_table.surface_water_depth(ending_pos) > Height::WADING_DEPTH {
             return false;
         }
 

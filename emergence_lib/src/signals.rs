@@ -24,7 +24,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -700,6 +700,7 @@ fn emit_signals(
     structure_manifest: Res<StructureManifest>,
     mut intent_pool: ResMut<IntentPool>,
     fixed_time: Res<FixedTime>,
+    water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
@@ -721,6 +722,11 @@ fn emit_signals(
 
     // PERF: this could be parallelized, but requires some thought due to the intent pool.
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
+        // When the water is too deep, no signals can be emitted as no units can walk there.
+        if water_table.surface_water_depth(center) > Height::WADING_DEPTH {
+            continue;
+        }
+
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
             Some(structure_id) => {
@@ -769,7 +775,7 @@ fn diffuse_signals(
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.
-fn degrade_signals(mut signals: ResMut<Signals>) {
+fn degrade_signals(mut signals: ResMut<Signals>, water_table: Res<WaterTable>) {
     /// The fraction of signal that will decay at each step.
     ///
     /// Higher values lead to faster decay and improved signal responsiveness.
@@ -788,6 +794,12 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
 
         for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
+            // Clean up any signals that are now underwater.
+            if water_table.surface_water_depth(*tile_pos) > Height::WADING_DEPTH {
+                tiles_to_clear.push(*tile_pos);
+                continue;
+            }
+
             let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
 
             if new_strength > EPSILON_STRENGTH {
