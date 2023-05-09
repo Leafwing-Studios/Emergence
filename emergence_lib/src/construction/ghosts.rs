@@ -4,7 +4,6 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::crafting::inventories::OutputInventory;
 use crate::crafting::item_tags::ItemKind;
 use crate::crafting::recipe::ActiveRecipe;
 use crate::crafting::workers::WorkersPresent;
@@ -13,7 +12,6 @@ use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
-use crate::terrain::commands::TerrainCommandsExt;
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::water::WaterTable;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
@@ -43,8 +41,6 @@ impl Plugin for GhostPlugin {
                 validate_ghost_structures,
                 ghost_structure_signals.after(validate_ghost_structures),
                 ghost_structure_lifecycle.after(validate_ghost_structures),
-                ghost_terrain_signals,
-                terraforming_lifecycle,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
@@ -88,7 +84,7 @@ pub(crate) struct Ghostly;
 
 /// The components needed to create a functioning ghost of any kind.
 #[derive(Bundle)]
-struct GhostBundle {
+pub(super) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
     /// The location of the ghost
@@ -105,7 +101,7 @@ struct GhostBundle {
 
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
-    fn new(
+    pub(super) fn new(
         tile_pos: TilePos,
         construction_materials: InputInventory,
         scene_handle: Handle<Scene>,
@@ -182,42 +178,6 @@ impl GhostStructureBundle {
     }
 }
 
-/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
-#[derive(Bundle)]
-pub(crate) struct GhostTerrainBundle {
-    /// Shared components across all ghosts
-    ghost_bundle: GhostBundle,
-    /// The action that will be performed when this terrain is built
-    terraforming_action: TerraformingAction,
-    /// The inventory that holds any material that needs to be taken away
-    output_inventory: OutputInventory,
-}
-
-impl GhostTerrainBundle {
-    /// Creates a new [`GhostTerrainBundle`].
-    pub(crate) fn new(
-        terraforming_action: TerraformingAction,
-        tile_pos: TilePos,
-        scene_handle: Handle<Scene>,
-        inherited_material: InheritedMaterial,
-        world_pos: Vec3,
-        input_inventory: InputInventory,
-        output_inventory: OutputInventory,
-    ) -> Self {
-        GhostTerrainBundle {
-            ghost_bundle: GhostBundle::new(
-                tile_pos,
-                input_inventory,
-                scene_handle,
-                inherited_material,
-                world_pos,
-            ),
-            terraforming_action,
-            output_inventory,
-        }
-    }
-}
-
 /// The variety of ghost: this controls how it is rendered.
 #[derive(IterableEnum, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub(crate) enum GhostKind {
@@ -261,13 +221,13 @@ pub(crate) struct Preview;
 #[derive(Bundle)]
 pub(crate) struct PreviewBundle {
     /// Marker component
-    preview: Preview,
+    pub(super) preview: Preview,
     /// The location of the preview
-    tile_pos: TilePos,
+    pub(super) tile_pos: TilePos,
     /// The material to be used by all children in the scene
-    inherited_material: InheritedMaterial,
+    pub(super) inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
-    scene_bundle: SceneBundle,
+    pub(super) scene_bundle: SceneBundle,
 }
 
 /// The components needed to create a preview of a [`Structure`].
@@ -303,40 +263,6 @@ impl StructurePreviewBundle {
             },
             structure_id: data.structure_id,
             facing: data.facing,
-        }
-    }
-}
-
-/// The components needed to create a preview of a [`TerraformingAction`].
-#[derive(Bundle)]
-pub(crate) struct TerrainPreviewBundle {
-    /// Shared components for all previews
-    preview_bundle: PreviewBundle,
-    /// The action that will be performed when this terrain is built
-    terraforming_action: TerraformingAction,
-}
-
-impl TerrainPreviewBundle {
-    /// Creates a new [`TerrainPreviewBundle`].
-    pub(crate) fn new(
-        tile_pos: TilePos,
-        terraforming_action: TerraformingAction,
-        scene_handle: Handle<Scene>,
-        inherited_material: InheritedMaterial,
-        world_pos: Vec3,
-    ) -> Self {
-        TerrainPreviewBundle {
-            preview_bundle: PreviewBundle {
-                preview: Preview,
-                tile_pos,
-                inherited_material,
-                scene_bundle: SceneBundle {
-                    scene: scene_handle.clone_weak(),
-                    transform: Transform::from_translation(world_pos),
-                    ..default()
-                },
-            },
-            terraforming_action,
         }
     }
 }
@@ -398,44 +324,6 @@ pub(super) fn ghost_structure_signals(
                 }
                 _ => (),
             }
-        }
-    }
-}
-
-/// Computes the correct signals for ghost terrain to send throughout their lifecycle
-fn ghost_terrain_signals(
-    mut query: Query<
-        (&InputInventory, &OutputInventory, &mut Emitter),
-        (With<Ghost>, With<TerraformingAction>),
-    >,
-) {
-    for (input_inventory, output_inventory, mut emitter) in query.iter_mut() {
-        // Reset all emitters
-        emitter.signals.clear();
-
-        // If the input inventory is not full, emit a pull signal for the item
-        match input_inventory {
-            InputInventory::Exact { inventory } => {
-                // Emit signals to cause workers to bring the correct item to this ghost
-                for item_slot in inventory.iter() {
-                    let signal_type = SignalType::Pull(ItemKind::Single(item_slot.item_id()));
-                    let signal_strength = SignalStrength::new(10.);
-                    emitter.signals.push((signal_type, signal_strength))
-                }
-            }
-            InputInventory::Tagged { tag, .. } => {
-                // Emit signals to cause workers to bring the correct item to this ghost
-                let signal_type = SignalType::Pull(ItemKind::Tag(*tag));
-                let signal_strength = SignalStrength::new(10.);
-                emitter.signals.push((signal_type, signal_strength))
-            }
-        }
-
-        // If the output inventory is not empty, emit a push signal for the item
-        for item_slot in output_inventory.iter() {
-            let signal_type = SignalType::Push(ItemKind::Single(item_slot.item_id()));
-            let signal_strength = SignalStrength::new(10.);
-            emitter.signals.push((signal_type, signal_strength))
         }
     }
 }
@@ -576,31 +464,6 @@ pub(super) fn ghost_structure_lifecycle(
                 }
             }
             _ => unreachable!(),
-        }
-    }
-}
-
-/// Manages the progression of terraforming ghosts.
-///
-/// Transforms ghosts into terrain once all of their inputs and outputs have been met.
-pub(super) fn terraforming_lifecycle(
-    mut terraforming_ghost_query: Query<
-        (
-            &InputInventory,
-            &OutputInventory,
-            &TilePos,
-            &TerraformingAction,
-        ),
-        With<Ghost>,
-    >,
-    mut commands: Commands,
-) {
-    for (input_inventory, output_inventory, &tile_pos, &terraforming_action) in
-        terraforming_ghost_query.iter_mut()
-    {
-        if input_inventory.inventory().is_full() && output_inventory.is_empty() {
-            commands.despawn_ghost_terrain(tile_pos);
-            commands.apply_terraforming_action(tile_pos, terraforming_action);
         }
     }
 }

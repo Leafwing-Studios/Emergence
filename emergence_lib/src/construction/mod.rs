@@ -7,9 +7,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::crafting::inventories::InputInventory;
 use crate::items::slot::ItemSlot;
+use crate::simulation::SimulationSet;
 use crate::{asset_management::manifest::Id, structures::structure_manifest::Structure};
 
 use self::demolition::set_emitter_for_structures_to_be_demolished;
+use self::terraform::{ghost_terrain_signals, terraforming_lifecycle};
 
 pub(crate) mod demolition;
 pub(crate) mod ghosts;
@@ -26,7 +28,14 @@ impl Plugin for ConstructionPlugin {
             // Must run after crafting emitters in order to wipe out their signals
             .add_system(
                 set_emitter_for_structures_to_be_demolished
-                    .after(crate::crafting::set_crafting_emitter),
+                    .after(crate::crafting::set_crafting_emitter)
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
+            )
+            .add_systems(
+                (terraforming_lifecycle, ghost_terrain_signals)
+                    .in_set(SimulationSet)
+                    .in_schedule(CoreSchedule::FixedUpdate),
             );
     }
 }
