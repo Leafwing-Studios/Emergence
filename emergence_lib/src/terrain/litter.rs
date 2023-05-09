@@ -248,7 +248,7 @@ pub(super) fn carry_floating_litter_with_current(
     ///
     /// Higher values mean litter drifts faster.
     /// This must be greater than 0.
-    const ITEM_DRIFT_RATE: f32 = 1.;
+    const ITEM_DRIFT_RATE: f32 = 0.01;
 
     let delta_time = fixed_time.period;
     // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
