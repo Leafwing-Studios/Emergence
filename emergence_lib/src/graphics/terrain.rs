@@ -104,12 +104,13 @@ pub(super) fn render_litter_piles(
     }
 }
 
+/// Computes the [`Transform`] for a floating litter entity.
 fn floating_litter_transform(
     tile_pos: TilePos,
     water_table: &WaterTable,
     map_geometry: &MapGeometry,
 ) -> Result<Transform, ()> {
-    let mut transform = Transform::from_translation(tile_pos.into_world_pos(&map_geometry));
+    let mut transform = Transform::from_translation(tile_pos.into_world_pos(map_geometry));
     let terrain_height = map_geometry.get_height(tile_pos).unwrap();
     let water_depth = water_table.surface_water_depth(tile_pos);
     let desired_height = terrain_height + water_depth;

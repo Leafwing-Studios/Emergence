@@ -624,7 +624,8 @@ impl Inventory {
     ///
     /// If all items are transferred, [`Ok(())`] will be returned.
     /// Otherwise, an empty error will be returned.
-    // TODO: this could have a more useful error type
+    // TODO: this should have a more useful error type
+    #[allow(clippy::result_unit_err)]
     pub fn transfer_all(
         &mut self,
         other: &mut Inventory,

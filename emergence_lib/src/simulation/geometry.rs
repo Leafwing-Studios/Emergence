@@ -1202,6 +1202,7 @@ impl RotationDirection {
 
 // BLOCKED: manual implementation of https://github.com/ManevilleF/hexx/issues/84
 // PERF: this is terrible, use a lookup table
+/// Converts an angle in radians to a [`Direction`].
 pub(crate) fn direction_from_angle(radians: f32, orientation: HexOrientation) -> Direction {
     // Clamp to [0, 2π)
     let radians = radians.rem_euclid(TAU);
