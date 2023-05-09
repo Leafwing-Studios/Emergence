@@ -9,7 +9,7 @@ use crate::{
 use bevy::{prelude::*, utils::HashMap};
 
 /// Spawn and despawn litter scenes based on the items stored as litter on each tile.
-pub(super) fn manage_litter_piles(
+pub(super) fn render_litter_piles(
     terrain_handles: Res<TerrainHandles>,
     // A simple cache of the current litter piles.
     mut current_ground_litter_piles: Local<HashMap<TilePos, (InventoryState, Entity)>>,
@@ -22,11 +22,6 @@ pub(super) fn manage_litter_piles(
     map_geometry: Res<MapGeometry>,
 ) {
     for (terrain_entity, &tile_pos, litter) in terrain_query.iter() {
-        if !litter.is_changed() {
-            continue;
-        }
-
-        // TODO: also draw floating litter piles
         let current_ground_inventory_state = litter.on_ground.state();
         let current_floating_inventory_state = litter.floating.state();
 
@@ -85,12 +80,8 @@ pub(super) fn manage_litter_piles(
                     scene: scene_handle.clone(),
                     // This can't be a child of the terrain entity because it needs to be able to
                     // change heights with the water.
-                    transform: floating_litter_transform(
-                        tile_pos,
-                        &WaterTable::default(),
-                        &map_geometry,
-                    )
-                    .unwrap_or_default(),
+                    transform: floating_litter_transform(tile_pos, &water_table, &map_geometry)
+                        .unwrap_or_default(),
                     ..Default::default()
                 })
                 .id();
