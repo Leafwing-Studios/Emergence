@@ -167,26 +167,30 @@ pub(super) fn manage_oxygen(
     for (entity, &tile_pos, mut oxygen_pool) in unit_query.iter_mut() {
         let water_depth = water_table.surface_water_depth(tile_pos);
         if water_depth > Height::WADING_DEPTH {
-            oxygen_pool.current -= Oxygen::CONSUMPTION_RATE * delta_time;
+            let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
+            oxygen_pool.set_current(proposed);
 
             if oxygen_pool.is_empty() {
                 commands.entity(entity).despawn_recursive();
             }
         } else {
-            oxygen_pool.current += Oxygen::REGEN_RATE * delta_time;
+            let proposed = oxygen_pool.current + Oxygen::REGEN_RATE * delta_time;
+            oxygen_pool.set_current(proposed);
         }
     }
 
     for (&tile_pos, mut oxygen_pool) in structure_query.iter_mut() {
         let water_depth = water_table.surface_water_depth(tile_pos);
         if water_depth > Height::WADING_DEPTH {
-            oxygen_pool.current -= Oxygen::CONSUMPTION_RATE * delta_time;
+            let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
+            oxygen_pool.set_current(proposed);
 
             if oxygen_pool.is_empty() {
                 commands.despawn_structure(tile_pos);
             }
         } else {
-            oxygen_pool.current += Oxygen::REGEN_RATE * delta_time;
+            let proposed = oxygen_pool.current + Oxygen::REGEN_RATE * delta_time;
+            oxygen_pool.set_current(proposed);
         }
     }
 }
