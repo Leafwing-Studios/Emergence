@@ -90,6 +90,15 @@ impl Inventory {
         }
     }
 
+    /// Creates an empty inventory that can store up to `max` items of the type `item_id`.
+    pub fn empty_from_item(item_id: Id<Item>, max: u32) -> Self {
+        Self {
+            reserved_for: Some(item_id),
+            slots: vec![ItemSlot::empty(item_id, max)],
+            max_slot_count: 1,
+        }
+    }
+
     /// Returns an iterator over the items in the inventory and their count.
     pub(crate) fn iter(&self) -> impl Iterator<Item = &ItemSlot> {
         self.slots.iter()

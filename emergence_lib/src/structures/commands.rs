@@ -6,6 +6,7 @@ use bevy::{
 };
 
 use crate::{
+    asset_management::manifest::Id,
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
     crafting::{
         inventories::{InputInventory, OutputInventory, StorageInventory},
@@ -13,7 +14,7 @@ use crate::{
         CraftingBundle,
     },
     graphics::InheritedMaterial,
-    items::item_manifest::ItemManifest,
+    items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
@@ -186,7 +187,13 @@ impl Command for SpawnStructureCommand {
                 world
                     .entity_mut(structure_entity)
                     .insert(ReleasesItems)
-                    .insert(InputInventory::default())
+                    .insert(InputInventory::Exact {
+                        // TODO: let this be configured by the user using the UI
+                        inventory: Inventory::empty_from_item(
+                            Id::from_name("ant_egg".to_string()),
+                            1,
+                        ),
+                    })
                     .insert(Emitter::default());
             }
         }
