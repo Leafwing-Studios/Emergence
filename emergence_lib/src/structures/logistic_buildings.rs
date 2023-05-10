@@ -65,6 +65,7 @@ fn release_items(
     }
 }
 
+/// Sets the emitters for logistic buildings.
 fn logistic_buildings_signals(
     mut release_query: Query<(&mut Emitter, &mut InputInventory), With<ReleasesItems>>,
 ) {

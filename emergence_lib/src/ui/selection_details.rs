@@ -715,11 +715,11 @@ Height: {height}"
             }
 
             if let Some(crafting_state) = &self.crafting_state {
-                string += &format!("\nCrafting state: {}", crafting_state);
+                string += &format!("\nCrafting state: {crafting_state}");
             }
 
             if let Some(workers_present) = &self.workers_present {
-                string += &format!("\nWorkers present: {}", workers_present);
+                string += &format!("\nWorkers present: {workers_present}");
             }
 
             if let Some(root_zone) = &structure_manifest.get(self.structure_id).root_zone {
