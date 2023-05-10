@@ -18,20 +18,16 @@ pub(super) fn drown(
     water_table: Res<WaterTable>,
     mut commands: Commands,
 ) {
-    /// The water depth at which units and structures drown.
-    // TODO: make drowning characteristics customizable on a per strain basis
-    const DROWNING_DEPTH: Height = Height(2.);
-
     for (entity, &tile_pos) in unit_query.iter() {
         let water_depth = water_table.surface_water_depth(tile_pos);
-        if water_depth >= DROWNING_DEPTH {
+        if water_depth > Height::WADING_DEPTH {
             commands.entity(entity).despawn_recursive();
         }
     }
 
     for &tile_pos in structure_query.iter() {
         let water_depth = water_table.surface_water_depth(tile_pos);
-        if water_depth >= DROWNING_DEPTH {
+        if water_depth > Height::WADING_DEPTH {
             commands.despawn_structure(tile_pos);
         }
     }
