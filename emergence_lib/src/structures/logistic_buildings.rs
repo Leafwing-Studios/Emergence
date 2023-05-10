@@ -47,26 +47,20 @@ fn release_items(
         let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
-        // Do the hokey-pokey to get around the borrow checker
-        let mut source = input_inventory.clone();
-        let mut target = litter.on_ground.clone();
+        let cloned_inventory = input_inventory.clone();
+        for item_slot in cloned_inventory.iter() {
+            let item_count = item_slot.item_count();
 
-        let result = source
-            .inventory_mut()
-            .transfer_all(&mut target, &item_manifest);
-
-        // If the transfer was successful, update the inventories
-        if result.is_ok() {
-            for item_slot in source.iter() {
-                let item_count = item_slot.item_count();
+            if litter
+                .on_ground
+                .add_item_all_or_nothing(&item_count, &item_manifest)
+                .is_ok()
+            {
                 let recipe_input = RecipeInput::Exact(vec![item_count]);
-
                 input_inventory
                     .consume_items(&recipe_input, &item_manifest)
                     .unwrap();
             }
-
-            litter.on_ground = target;
         }
     }
 }
