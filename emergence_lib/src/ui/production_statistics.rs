@@ -3,21 +3,26 @@
 use bevy::prelude::*;
 
 use crate::{
-    graphics::overlay::Census,
+    asset_management::manifest::Id,
     light::TotalLight,
     simulation::{geometry::MapGeometry, time::InGameTime, weather::CurrentWeather},
+    units::unit_manifest::Unit,
     water::WaterTable,
     world_gen::WorldGenState,
 };
 
 use super::{FiraSansFontFamily, LeftPanel};
 
+use std::fmt::Display;
+
 /// Resources and systems for production statistics
 pub(super) struct ProductionStatisticsPlugin;
 
 impl Plugin for ProductionStatisticsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_production_statistics_menu)
+        app.init_resource::<Census>()
+            .add_system(census)
+            .add_startup_system(spawn_production_statistics_menu)
             .add_system(update_production_statistics.run_if(in_state(WorldGenState::Complete)));
     }
 }
@@ -79,4 +84,22 @@ fn update_production_statistics(
         water_table.average_volume(&map_geometry)
     );
     text.sections[4].value = format!("{}", *census);
+}
+
+/// Tracks the population of organisms
+#[derive(Debug, Resource, Default)]
+pub(crate) struct Census {
+    /// The total number of units of any kind
+    total_units: usize,
+}
+
+impl Display for Census {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Population: {}", self.total_units)
+    }
+}
+
+/// Counts the number of organisms
+fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
+    census.total_units = unit_query.iter().len();
 }
