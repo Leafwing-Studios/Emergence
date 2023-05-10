@@ -3,7 +3,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    crafting::{inventories::InputInventory, item_tags::ItemKind, recipe::RecipeInput},
+    crafting::{
+        inventories::{InputInventory, OutputInventory},
+        item_tags::ItemKind,
+        recipe::RecipeInput,
+    },
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
@@ -67,7 +71,14 @@ fn release_items(
 
 /// Sets the emitters for logistic buildings.
 fn logistic_buildings_signals(
-    mut release_query: Query<(&mut Emitter, &mut InputInventory), With<ReleasesItems>>,
+    mut release_query: Query<
+        (&mut Emitter, &mut InputInventory),
+        (With<ReleasesItems>, Without<AbsorbsItems>),
+    >,
+    mut absorb_query: Query<
+        (&mut Emitter, &mut OutputInventory),
+        (With<AbsorbsItems>, Without<ReleasesItems>),
+    >,
 ) {
     /// Controls how strong the signal is for logistic buildings.
     const LOGISTIC_SIGNAL_STRENGTH: f32 = 10.;
@@ -86,6 +97,20 @@ fn logistic_buildings_signals(
                 // This should be a Pull signal, rather than a Stores signal to
                 // ensure that goods can be continuously harvested and shipped.
                 let signal_type: SignalType = SignalType::Pull(item_kind);
+                emitter.signals.push((signal_type, signal_strength));
+            }
+        }
+    }
+
+    for (mut emitter, output_inventory) in absorb_query.iter_mut() {
+        emitter.signals.clear();
+        for item_slot in output_inventory.iter() {
+            if !item_slot.is_full() {
+                let item_kind = ItemKind::Single(item_slot.item_id());
+
+                // This should be a Push signal, rather than a Contains signal to
+                // ensure that the flow of goods becomes unblocked.
+                let signal_type: SignalType = SignalType::Push(item_kind);
                 emitter.signals.push((signal_type, signal_strength));
             }
         }
