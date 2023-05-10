@@ -27,7 +27,7 @@ pub struct EnergyPool {
     warning_threshold: Energy,
     /// The threshold at which no more action is taken to gain energy.
     satiation_threshold: Energy,
-    /// The amount of life regenerated per second.
+    /// The amount of energy regenerated per second.
     pub(crate) regen_per_second: Energy,
 }
 
