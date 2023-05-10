@@ -69,14 +69,14 @@ impl WaterConfig {
         evaporation_rate: Height(2.0),
         precipitation_rate: Height(2.0),
         emission_rate: Volume(1e4),
-        emission_pressure: Height(1.0),
+        emission_pressure: Height(5.0),
         water_items_per_tile: 50.0,
         lateral_flow_rate: 1e3,
         enable_oceans: true,
         tide_settings: TideSettings {
-            amplitude: Height(5.0),
-            period: Days(2.0),
-            minimum: Height(0.1),
+            amplitude: Height(1.0),
+            period: Days(1.5),
+            minimum: Height(0.0),
         },
     };
 
