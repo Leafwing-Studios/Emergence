@@ -78,8 +78,6 @@ fn logistic_buildings_signals(
 
     let signal_strength = SignalStrength::new(LOGISTIC_SIGNAL_STRENGTH);
 
-    info!("Query has {} entities", release_query.iter().len());
-
     for (mut emitter, input_inventory) in release_query.iter_mut() {
         emitter.signals.clear();
         for item_slot in input_inventory.iter() {
