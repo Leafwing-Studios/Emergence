@@ -1,12 +1,15 @@
 //! Displays information about population counts and production over time.
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     asset_management::manifest::Id,
+    crafting::inventories::{InputInventory, OutputInventory, StorageInventory},
+    items::item_manifest::{Item, ItemManifest},
     light::TotalLight,
     simulation::{geometry::MapGeometry, time::InGameTime, weather::CurrentWeather},
-    units::unit_manifest::Unit,
+    terrain::litter::Litter,
+    units::{item_interaction::UnitInventory, unit_manifest::Unit},
     water::WaterTable,
     world_gen::WorldGenState,
 };
@@ -21,7 +24,10 @@ pub(super) struct ProductionStatisticsPlugin;
 impl Plugin for ProductionStatisticsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Census>()
-            .add_system(census)
+            .init_resource::<ItemCount>()
+            .add_systems(
+                (census, update_item_count).distributive_run_if(in_state(WorldGenState::Complete)),
+            )
             .add_startup_system(spawn_production_statistics_menu)
             .add_system(update_production_statistics.run_if(in_state(WorldGenState::Complete)));
     }
@@ -48,7 +54,8 @@ fn spawn_production_statistics_menu(
         TextSection::new("WEATHER", style.clone()),
         TextSection::new("LIGHT", style.clone()),
         TextSection::new("TOTAL_WATER", style.clone()),
-        TextSection::new("CENSUS", style),
+        TextSection::new("CENSUS", style.clone()),
+        TextSection::new("ITEM_COUNT", style),
     ]);
 
     let production_stats_entity = commands
@@ -74,6 +81,8 @@ fn update_production_statistics(
     water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
     census: Res<Census>,
+    item_count: Res<ItemCount>,
+    item_manifest: Res<ItemManifest>,
 ) {
     let mut text = query.single_mut();
     text.sections[0].value = format!("{}\n", *in_game_time);
@@ -83,7 +92,8 @@ fn update_production_statistics(
         "{} average volume of water per tile \n",
         water_table.average_volume(&map_geometry)
     );
-    text.sections[4].value = format!("{}", *census);
+    text.sections[4].value = format!("{}\n", *census);
+    text.sections[5].value = format!("{}", item_count.display(&item_manifest));
 }
 
 /// Tracks the population of organisms
@@ -102,4 +112,71 @@ impl Display for Census {
 /// Counts the number of organisms
 fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
     census.total_units = unit_query.iter().len();
+}
+
+/// Counts the total number of items across all inventories of each type.
+#[derive(Debug, Resource, Default)]
+struct ItemCount {
+    /// The number of items of each type
+    map: HashMap<Id<Item>, u32>,
+}
+
+impl ItemCount {
+    fn display(&self, item_manifest: &ItemManifest) -> String {
+        let mut string = String::new();
+
+        for (item_id, count) in self.map.iter() {
+            let name = item_manifest.name(*item_id);
+            string.push_str(&format!("{name}: {count}\n"));
+        }
+
+        string
+    }
+}
+
+/// Count the total number of items across all inventories of each type.
+fn update_item_count(
+    mut item_count: ResMut<ItemCount>,
+    input_inventory_query: Query<&InputInventory>,
+    output_inventory_query: Query<&OutputInventory>,
+    storage_inventory_query: Query<&StorageInventory>,
+    unit_inventory_query: Query<&UnitInventory>,
+    litter_query: Query<&Litter>,
+) {
+    // Reset the item count
+    item_count.map.clear();
+
+    for inventory in input_inventory_query.iter() {
+        for item_slot in inventory.iter() {
+            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
+        }
+    }
+
+    for inventory in output_inventory_query.iter() {
+        for item_slot in inventory.iter() {
+            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
+        }
+    }
+
+    for inventory in storage_inventory_query.iter() {
+        for item_slot in inventory.iter() {
+            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
+        }
+    }
+
+    for inventory in unit_inventory_query.iter() {
+        for item_id in inventory.iter() {
+            *item_count.map.entry(*item_id).or_default() += 1;
+        }
+    }
+
+    for litter in litter_query.iter() {
+        for item_slot in litter.on_ground.iter() {
+            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
+        }
+
+        for item_slot in litter.floating.iter() {
+            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
+        }
+    }
 }
