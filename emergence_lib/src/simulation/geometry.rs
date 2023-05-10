@@ -208,17 +208,25 @@ impl TilePos {
                 return false;
             }
 
-            // PERF: oh god this is a lot of indirection. We should consider moving away from a pure manifest system
-            let maybe_structure_entity = map_geometry.get_structure(target_pos);
-            let height = if let Some(structure_entity) = maybe_structure_entity {
-                let structure_id = *structure_query.get(structure_entity).unwrap();
-                let structure_data = structure_manifest.get(structure_id);
-                structure_data.height + map_geometry.get_height(target_pos).unwrap()
-            } else {
-                map_geometry.get_height(target_pos).unwrap()
-            };
+            let terrain_height = map_geometry.get_height(target_pos).unwrap();
 
-            self_height.abs_diff(height) <= Height::MAX_STEP
+            if self_height > terrain_height {
+                // PERF: oh god this is a lot of indirection. We should consider moving away from a pure manifest system
+                let maybe_structure_entity = map_geometry.get_structure(target_pos);
+                let structure_height = if let Some(structure_entity) = maybe_structure_entity {
+                    let structure_id = *structure_query.get(structure_entity).unwrap();
+                    let structure_data = structure_manifest.get(structure_id);
+                    structure_data.height
+                } else {
+                    Height::ZERO
+                };
+
+                // If we are reaching down, we can take advantage of the height of the structure
+                self_height - terrain_height <= structure_height + Height::MAX_STEP
+            } else {
+                // We don't care how tall the structure is if we are reaching up
+                terrain_height - self_height <= Height::MAX_STEP
+            }
         });
         iter
     }
