@@ -19,7 +19,7 @@
 			"passable": false
 		},
 		"chute": {
-			"kind": "Emitter",
+			"kind": "Releaser",
 			"construction_strategy": {
 				"Direct": {
 					"work": 2,

@@ -11,7 +11,7 @@ use crate::{
 
 /// A building that spits out items.
 #[derive(Component)]
-pub(super) struct EmitsItems;
+pub(super) struct ReleasesItems;
 
 /// A building that takes in items.
 #[derive(Component)]
@@ -28,7 +28,7 @@ impl Plugin for LogisticsPlugin {
 
 /// Causes buildings that emit items to place them in the litter in front of them.
 fn emit_items(
-    mut structure_query: Query<(&TilePos, &Facing, &mut InputInventory), With<EmitsItems>>,
+    mut structure_query: Query<(&TilePos, &Facing, &mut InputInventory), With<ReleasesItems>>,
     mut litter_query: Query<&mut Litter>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,

@@ -22,7 +22,7 @@ use crate::{
 };
 
 use super::{
-    logistic_buildings::{AbsorbsItems, EmitsItems},
+    logistic_buildings::{AbsorbsItems, ReleasesItems},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     Landmark, StructureBundle,
@@ -182,10 +182,10 @@ impl Command for SpawnStructureCommand {
                     .insert(OutputInventory::default())
                     .insert(Emitter::default());
             }
-            StructureKind::Emitter => {
+            StructureKind::Releaser => {
                 world
                     .entity_mut(structure_entity)
-                    .insert(EmitsItems)
+                    .insert(ReleasesItems)
                     .insert(InputInventory::default())
                     .insert(Emitter::default());
             }

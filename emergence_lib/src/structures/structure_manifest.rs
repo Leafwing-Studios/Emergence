@@ -132,7 +132,7 @@ pub enum StructureKind {
     /// A structure that is used to define a special element of the world.
     Landmark,
     /// A structure that spits out items.
-    Emitter,
+    Releaser,
     /// A structure that takes in items.
     Absorber,
 }
@@ -157,7 +157,7 @@ pub enum RawStructureKind {
     /// A structure that is used to define a special element of the world.
     Landmark,
     /// A structure that spits out items.
-    Emitter,
+    Releaser,
     /// A structure that takes in items.
     Absorber,
 }
@@ -177,7 +177,7 @@ impl From<RawStructureKind> for StructureKind {
             },
             RawStructureKind::Path => Self::Path,
             RawStructureKind::Landmark => Self::Landmark,
-            RawStructureKind::Emitter => Self::Emitter,
+            RawStructureKind::Releaser => Self::Releaser,
             RawStructureKind::Absorber => Self::Absorber,
         }
     }
