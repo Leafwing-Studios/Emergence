@@ -93,7 +93,7 @@ fn update_production_statistics(
         water_table.average_volume(&map_geometry)
     );
     text.sections[4].value = format!("{}\n", *census);
-    text.sections[5].value = format!("{}", item_count.display(&item_manifest));
+    text.sections[5].value = format!("{}\n", item_count.display(&item_manifest));
 }
 
 /// Tracks the population of organisms
@@ -122,6 +122,7 @@ struct ItemCount {
 }
 
 impl ItemCount {
+    /// Returns a human-readable string representation of the item count
     fn display(&self, item_manifest: &ItemManifest) -> String {
         let mut string = String::new();
 
