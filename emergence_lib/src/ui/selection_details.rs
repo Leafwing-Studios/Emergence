@@ -22,7 +22,7 @@ use crate::{
 use self::{
     ghost_structure_details::{GhostStructureDetails, GhostStructureDetailsQuery},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
-    structure_details::{CraftingDetails, StructureDetails, StructureDetailsQuery},
+    structure_details::{StructureDetails, StructureDetailsQuery},
     terrain_details::{
         GhostTerrainDetailsQuery, TerraformingDetails, TerrainDetails, TerrainDetailsQuery,
     },
@@ -230,6 +230,7 @@ fn update_selection_details(
         SelectionDetails::Structure(details) => {
             structure_text.sections[0].value = details.display(
                 &item_manifest,
+                &recipe_manifest,
                 &structure_manifest,
                 &terrain_manifest,
                 &unit_manifest,
@@ -309,7 +310,6 @@ fn get_details(
     map_geometry: Res<MapGeometry>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
-    recipe_manifest: Res<RecipeManifest>,
     signals: Res<Signals>,
     water_table: Res<WaterTable>,
 ) -> Result<(), QueryEntityError> {
@@ -327,25 +327,6 @@ fn get_details(
         }
         CurrentSelection::Structure(structure_entity) => {
             let structure_query_item = structure_query.get(*structure_entity)?;
-
-            let crafting_details =
-                if let Some((input, output, active_recipe, workers_present, state)) =
-                    structure_query_item.crafting
-                {
-                    let maybe_recipe_id = *active_recipe.recipe_id();
-                    let recipe =
-                        maybe_recipe_id.map(|recipe_id| recipe_manifest.get(recipe_id).clone());
-
-                    Some(CraftingDetails {
-                        input_inventory: input.inventory().clone(),
-                        output_inventory: output.inventory.clone(),
-                        recipe,
-                        workers_present: workers_present.clone(),
-                        state: state.clone(),
-                    })
-                } else {
-                    None
-                };
 
             // Not all structures are organisms
             let maybe_organism_details =
@@ -366,12 +347,16 @@ fn get_details(
                 entity: structure_query_item.entity,
                 tile_pos: *structure_query_item.tile_pos,
                 structure_id: *structure_query_item.structure_id,
-                crafting_details,
                 maybe_organism_details,
-                storage_inventory: structure_query_item.storage_inventory.cloned(),
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
                 emitter: structure_query_item.emitter.cloned(),
                 maybe_water_emitter: structure_query_item.maybe_water_emitter.cloned(),
+                storage_inventory: structure_query_item.storage_inventory.cloned(),
+                input_inventory: structure_query_item.input_inventory.cloned(),
+                output_inventory: structure_query_item.output_inventory.cloned(),
+                crafting_state: structure_query_item.crafting_state.cloned(),
+                active_recipe: structure_query_item.active_recipe.cloned(),
+                workers_present: structure_query_item.workers_present.cloned(),
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
@@ -600,10 +585,10 @@ mod structure_details {
         construction::demolition::MarkedForDemolition,
         crafting::{
             inventories::{CraftingState, InputInventory, OutputInventory, StorageInventory},
-            recipe::{ActiveRecipe, RecipeData},
+            recipe::{ActiveRecipe, RecipeManifest},
             workers::WorkersPresent,
         },
-        items::{inventory::Inventory, item_manifest::ItemManifest},
+        items::item_manifest::ItemManifest,
         signals::Emitter,
         simulation::geometry::TilePos,
         structures::structure_manifest::{Structure, StructureManifest},
@@ -621,16 +606,18 @@ mod structure_details {
         pub(super) structure_id: &'static Id<Structure>,
         /// The tile position of this structure
         pub(crate) tile_pos: &'static TilePos,
-        /// Crafting-related components
-        pub(super) crafting: Option<(
-            &'static InputInventory,
-            &'static OutputInventory,
-            &'static ActiveRecipe,
-            &'static WorkersPresent,
-            &'static CraftingState,
-        )>,
+        /// The inventory for the input items.
+        pub(crate) input_inventory: Option<&'static InputInventory>,
+        /// The inventory for the output items.
+        pub(crate) output_inventory: Option<&'static OutputInventory>,
         /// If this structure stores things, its inventory.
-        pub(super) storage_inventory: Option<&'static StorageInventory>,
+        pub(crate) storage_inventory: Option<&'static StorageInventory>,
+        /// The recipe used, if any.
+        pub(crate) active_recipe: Option<&'static ActiveRecipe>,
+        /// The state of the ongoing crafting process.
+        pub(crate) crafting_state: Option<&'static CraftingState>,
+        /// The workers present at this structure.
+        pub(crate) workers_present: Option<&'static WorkersPresent>,
         /// Is this structure marked for removal?
         pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
         /// What signals is this structure emitting?
@@ -648,10 +635,6 @@ mod structure_details {
         pub(crate) tile_pos: TilePos,
         /// The type of structure, e.g. plant or fungus.
         pub(crate) structure_id: Id<Structure>,
-        /// If this structure is crafting something, the details about that.
-        pub(crate) crafting_details: Option<CraftingDetails>,
-        /// If this structure stores things, its inventory.
-        pub(crate) storage_inventory: Option<StorageInventory>,
         /// Details about this organism, if it is one.
         pub(crate) maybe_organism_details: Option<OrganismDetails>,
         /// Is this structure slated for removal?
@@ -660,6 +643,18 @@ mod structure_details {
         pub(crate) emitter: Option<Emitter>,
         /// How much water is emitted by this structure?
         pub(crate) maybe_water_emitter: Option<WaterEmitter>,
+        /// The inventory for the input items.
+        pub(crate) input_inventory: Option<InputInventory>,
+        /// The inventory for the output items.
+        pub(crate) output_inventory: Option<OutputInventory>,
+        /// If this structure stores things, its inventory.
+        pub(crate) storage_inventory: Option<StorageInventory>,
+        /// The recipe used, if any.
+        pub(crate) active_recipe: Option<ActiveRecipe>,
+        /// The state of the ongoing crafting process.
+        pub(crate) crafting_state: Option<CraftingState>,
+        /// The number of workers that are presently working on this.
+        pub(crate) workers_present: Option<WorkersPresent>,
     }
 
     impl StructureDetails {
@@ -667,6 +662,7 @@ mod structure_details {
         pub(crate) fn display(
             &self,
             item_manifest: &ItemManifest,
+            recipe_manifest: &RecipeManifest,
             structure_manifest: &StructureManifest,
             terrain_manifest: &TerrainManifest,
             unit_manifest: &UnitManifest,
@@ -696,12 +692,34 @@ Height: {height}"
                 string += "\nMarked for removal!";
             }
 
-            if let Some(crafting) = &self.crafting_details {
-                string += &format!("\n{}", crafting.display(item_manifest));
-            }
-
             if let Some(storage) = &self.storage_inventory {
                 string += &format!("\nStoring: {}", storage.display(item_manifest));
+            }
+
+            if let Some(input) = &self.input_inventory {
+                string += &format!("\nInput: {}", input.display(item_manifest));
+            }
+
+            if let Some(output) = &self.output_inventory {
+                string += &format!("\nOutput: {}", output.display(item_manifest));
+            }
+
+            if let Some(recipe) = &self.active_recipe {
+                string += &format!("\nRecipe: {}", recipe.display(recipe_manifest));
+                if let Some(recipe_id) = recipe.recipe_id() {
+                    string += &format!(
+                        "\nRecipe data: {}",
+                        recipe_manifest.get(*recipe_id).display(item_manifest)
+                    );
+                }
+            }
+
+            if let Some(crafting_state) = &self.crafting_state {
+                string += &format!("\nCrafting state: {}", crafting_state);
+            }
+
+            if let Some(workers_present) = &self.workers_present {
+                string += &format!("\nWorkers present: {}", workers_present);
             }
 
             if let Some(root_zone) = &structure_manifest.get(self.structure_id).root_zone {
@@ -729,49 +747,6 @@ Max water production: {} tiles per day
             }
 
             string
-        }
-    }
-
-    /// The details about crafting processes.
-    #[derive(Debug, Clone)]
-    pub(crate) struct CraftingDetails {
-        /// The inventory for the input items.
-        pub(crate) input_inventory: Inventory,
-
-        /// The inventory for the output items.
-        pub(crate) output_inventory: Inventory,
-
-        /// The recipe used, if any.
-        pub(crate) recipe: Option<RecipeData>,
-
-        /// The state of the ongoing crafting process.
-        pub(crate) state: CraftingState,
-
-        /// The number of workers that are presently working on this.
-        pub(crate) workers_present: WorkersPresent,
-    }
-
-    impl CraftingDetails {
-        /// The pretty formatting for this type.
-        pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
-            let input_inventory = self.input_inventory.display(item_manifest);
-            let output_inventory = self.output_inventory.display(item_manifest);
-            let crafting_state = &self.state;
-
-            let recipe_string = match &self.recipe {
-                Some(recipe) => recipe.display(item_manifest),
-                None => "None".to_string(),
-            };
-
-            let workers_present = &self.workers_present;
-
-            format!(
-                "Recipe: {recipe_string}
-Input: {input_inventory}
-{crafting_state}
-Workers present: {workers_present}
-Output: {output_inventory}"
-            )
         }
     }
 }
