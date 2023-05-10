@@ -370,7 +370,7 @@ fn get_details(
                 maybe_organism_details,
                 storage_inventory: structure_query_item.storage_inventory.cloned(),
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
-                emitter: structure_query_item.emitter.clone(),
+                emitter: structure_query_item.emitter.cloned(),
                 maybe_water_emitter: structure_query_item.maybe_water_emitter.cloned(),
             })
         }
@@ -634,7 +634,7 @@ mod structure_details {
         /// Is this structure marked for removal?
         pub(super) marked_for_removal: Option<&'static MarkedForDemolition>,
         /// What signals is this structure emitting?
-        pub(crate) emitter: &'static Emitter,
+        pub(crate) emitter: Option<&'static Emitter>,
         /// How much water is emitted by this structure?
         pub(super) maybe_water_emitter: Option<&'static WaterEmitter>,
     }
@@ -657,7 +657,7 @@ mod structure_details {
         /// Is this structure slated for removal?
         pub(crate) marked_for_removal: bool,
         /// What signals is this structure emitting?
-        pub(crate) emitter: Emitter,
+        pub(crate) emitter: Option<Emitter>,
         /// How much water is emitted by this structure?
         pub(crate) maybe_water_emitter: Option<WaterEmitter>,
     }
@@ -677,7 +677,7 @@ mod structure_details {
             let structure_type = structure_manifest.name(self.structure_id);
             let tile_pos = &self.tile_pos;
             let height = structure_manifest.get(self.structure_id).height;
-            let emitter = self.emitter.display(
+            let emitter = self.emitter.clone().unwrap_or_default().display(
                 item_manifest,
                 unit_manifest,
                 structure_manifest,
