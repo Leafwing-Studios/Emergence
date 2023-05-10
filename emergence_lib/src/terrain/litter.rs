@@ -19,6 +19,10 @@ use crate::{
     },
     signals::{Emitter, SignalStrength, SignalType},
     simulation::geometry::{direction_from_angle, Height, MapGeometry, TilePos},
+    structures::{
+        logistic_buildings::AbsorbsItems,
+        structure_manifest::{Structure, StructureManifest},
+    },
     water::{WaterDepth, WaterTable},
 };
 
@@ -241,8 +245,10 @@ impl LitterDrift {
 /// Carries floating litter along with the surface water current.
 pub(super) fn carry_floating_litter_with_current(
     mut litter_query: Query<(Entity, &TilePos, &mut Litter, &mut LitterDrift)>,
+    net_query: Query<&Id<Structure>, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
     water_table: Res<WaterTable>,
+    structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
@@ -273,6 +279,19 @@ pub(super) fn carry_floating_litter_with_current(
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
     for (source_entity, &tile_pos, litter, mut litter_drift) in litter_query.iter_mut() {
+        // Don't cause items to drift out of overfull nets
+        if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
+            if let Ok(structure_id) = net_query.get(structure_entity) {
+                let surface_water_depth = water_table.surface_water_depth(tile_pos);
+                let structure_height = structure_manifest.get(*structure_id).height;
+
+                if structure_height >= surface_water_depth {
+                    // If a net exists, and isn't overtopped, then don't drift items out of it
+                    continue;
+                }
+            }
+        }
+
         if let WaterDepth::Flooded(water_depth) = water_table.water_depth(tile_pos) {
             litter_drift.timer.tick(delta_time);
 

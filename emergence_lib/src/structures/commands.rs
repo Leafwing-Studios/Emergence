@@ -99,13 +99,14 @@ impl Command for SpawnStructureCommand {
         let structure_id = self.data.structure_id;
 
         let manifest = world.resource::<StructureManifest>();
-        let structure_variety = manifest.get(structure_id).clone();
+        let structure_data = manifest.get(structure_id).clone();
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint,
-            &self.data.facing,
+            &structure_data.footprint,
+            structure_data.height,
+            self.data.facing,
             water_table,
         ) {
             // Just give up if the terrain is wrong.
@@ -134,7 +135,7 @@ impl Command for SpawnStructureCommand {
             .id();
 
         // PERF: these operations could be done in a single archetype move with more branching
-        if let Some(organism_details) = &structure_variety.organism_variety {
+        if let Some(organism_details) = &structure_data.organism_variety {
             let energy_pool = organism_details.energy_pool.clone();
 
             world
@@ -145,7 +146,7 @@ impl Command for SpawnStructureCommand {
                 ));
         };
 
-        match structure_variety.kind {
+        match structure_data.kind {
             StructureKind::Storage {
                 max_slot_count,
                 reserved_for,
@@ -201,8 +202,8 @@ impl Command for SpawnStructureCommand {
         let mut geometry = world.resource_mut::<MapGeometry>();
         geometry.add_structure(
             self.tile_pos,
-            &structure_variety.footprint,
-            structure_variety.passable,
+            &structure_data.footprint,
+            structure_data.passable,
             structure_entity,
         );
     }
@@ -251,12 +252,14 @@ impl Command for SpawnStructureGhostCommand {
 
         let manifest = world.resource::<StructureManifest>();
         let construction_footprint = manifest.construction_footprint(structure_id);
+        let structure_data = manifest.get(structure_id);
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
             self.tile_pos,
             construction_footprint,
-            &self.data.facing,
+            structure_data.height,
+            self.data.facing,
             water_table,
         ) {
             return;
@@ -357,15 +360,16 @@ impl Command for SpawnStructurePreviewCommand {
         let world_pos = self.tile_pos.top_of_tile(map_geometry);
 
         let manifest = world.resource::<StructureManifest>();
-        let structure_variety = manifest.get(structure_id).clone();
+        let structure_data = manifest.get(structure_id).clone();
 
         let geometry = world.resource::<MapGeometry>();
 
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
             self.tile_pos,
-            &structure_variety.footprint,
-            &self.data.facing,
+            &structure_data.footprint,
+            structure_data.height,
+            self.data.facing,
             water_table,
         );
 

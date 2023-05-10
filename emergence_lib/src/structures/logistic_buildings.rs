@@ -3,7 +3,12 @@
 use bevy::prelude::*;
 
 use crate::{
-    crafting::{inventories::InputInventory, item_tags::ItemKind, recipe::RecipeInput},
+    asset_management::manifest::Id,
+    crafting::{
+        inventories::{InputInventory, OutputInventory},
+        item_tags::ItemKind,
+        recipe::RecipeInput,
+    },
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
@@ -11,15 +16,18 @@ use crate::{
         SimulationSet,
     },
     terrain::litter::Litter,
+    water::WaterTable,
 };
+
+use super::structure_manifest::{Structure, StructureManifest};
 
 /// A building that spits out items.
 #[derive(Component)]
-pub(super) struct ReleasesItems;
+pub(crate) struct ReleasesItems;
 
 /// A building that takes in items.
 #[derive(Component)]
-pub(super) struct AbsorbsItems;
+pub(crate) struct AbsorbsItems;
 
 /// Logic that controls how items are moved around by structures.
 pub(super) struct LogisticsPlugin;
@@ -27,7 +35,7 @@ pub(super) struct LogisticsPlugin;
 impl Plugin for LogisticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (release_items, logistic_buildings_signals)
+            (release_items, absorb_items, logistic_buildings_signals)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -65,9 +73,69 @@ fn release_items(
     }
 }
 
+/// Absorb litter into the inventory of buildings that absorb items.
+fn absorb_items(
+    mut structure_query: Query<
+        (&TilePos, &mut OutputInventory, &Id<Structure>),
+        With<AbsorbsItems>,
+    >,
+    mut litter_query: Query<&mut Litter>,
+    structure_manifest: Res<StructureManifest>,
+    item_manifest: Res<ItemManifest>,
+    water_table: Res<WaterTable>,
+    map_geometry: Res<MapGeometry>,
+) {
+    for (&tile_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
+        output_inventory.clear_empty_slots();
+
+        if output_inventory.is_full() {
+            continue;
+        }
+
+        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut litter = litter_query.get_mut(litter_entity).unwrap();
+
+        let on_ground = litter.on_ground.clone();
+
+        for item_slot in on_ground.iter() {
+            let item_count = item_slot.item_count();
+
+            if output_inventory
+                .add_item_all_or_nothing(&item_count, &item_manifest)
+                .is_ok()
+            {
+                litter.on_ground.try_remove_item(&item_count).unwrap();
+            }
+        }
+
+        // Only absorb floating items if the structure is tall enough.
+        let structure_data = structure_manifest.get(structure_id);
+        if structure_data.height > water_table.surface_water_depth(tile_pos) {
+            let floating = litter.floating.clone();
+            for item_slot in floating.iter() {
+                let item_count = item_slot.item_count();
+
+                if output_inventory
+                    .add_item_all_or_nothing(&item_count, &item_manifest)
+                    .is_ok()
+                {
+                    litter.floating.try_remove_item(&item_count).unwrap();
+                }
+            }
+        }
+    }
+}
+
 /// Sets the emitters for logistic buildings.
 fn logistic_buildings_signals(
-    mut release_query: Query<(&mut Emitter, &mut InputInventory), With<ReleasesItems>>,
+    mut release_query: Query<
+        (&mut Emitter, &mut InputInventory),
+        (With<ReleasesItems>, Without<AbsorbsItems>),
+    >,
+    mut absorb_query: Query<
+        (&mut Emitter, &mut OutputInventory),
+        (With<AbsorbsItems>, Without<ReleasesItems>),
+    >,
 ) {
     /// Controls how strong the signal is for logistic buildings.
     const LOGISTIC_SIGNAL_STRENGTH: f32 = 10.;
@@ -86,6 +154,20 @@ fn logistic_buildings_signals(
                 // This should be a Pull signal, rather than a Stores signal to
                 // ensure that goods can be continuously harvested and shipped.
                 let signal_type: SignalType = SignalType::Pull(item_kind);
+                emitter.signals.push((signal_type, signal_strength));
+            }
+        }
+    }
+
+    for (mut emitter, output_inventory) in absorb_query.iter_mut() {
+        emitter.signals.clear();
+        for item_slot in output_inventory.iter() {
+            if !item_slot.is_full() {
+                let item_kind = ItemKind::Single(item_slot.item_id());
+
+                // This should be a Push signal, rather than a Contains signal to
+                // ensure that the flow of goods becomes unblocked.
+                let signal_type: SignalType = SignalType::Push(item_kind);
                 emitter.signals.push((signal_type, signal_strength));
             }
         }

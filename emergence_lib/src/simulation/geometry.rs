@@ -212,9 +212,14 @@ impl TilePos {
 
             if self_height > terrain_height {
                 // PERF: oh god this is a lot of indirection. We should consider moving away from a pure manifest system
-                let maybe_structure_entity = map_geometry.get_structure(target_pos);
-                let structure_height = if let Some(structure_entity) = maybe_structure_entity {
+                let structure_height = if let Some(structure_entity) =
+                    map_geometry.get_structure(target_pos)
+                {
                     let structure_id = *structure_query.get(structure_entity).unwrap();
+                    let structure_data = structure_manifest.get(structure_id);
+                    structure_data.height
+                } else if let Some(ghost_entity) = map_geometry.get_ghost_structure(target_pos) {
+                    let structure_id = *structure_query.get(ghost_entity).unwrap();
                     let structure_data = structure_manifest.get(structure_id);
                     structure_data.height
                 } else {
@@ -690,7 +695,7 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -743,7 +748,7 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -762,7 +767,7 @@ impl MapGeometry {
         existing_entity: Entity,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -781,7 +786,7 @@ impl MapGeometry {
         &self,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         let height = self.get_height(center).unwrap();
 
@@ -808,13 +813,14 @@ impl MapGeometry {
         &self,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        height: Height,
+        facing: Facing,
         water_table: &WaterTable,
     ) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
-            && self.is_free_of_water(center, footprint, facing, water_table)
+            && self.is_free_of_water(center, footprint, height, facing, water_table)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -834,7 +840,7 @@ impl MapGeometry {
         existing_entity: Entity,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
@@ -901,7 +907,7 @@ impl MapGeometry {
         height_query: &mut Query<&mut Height>,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) {
         let Ok(target_height) = self.get_height(tile_pos) else { return };
         let rotated_footprint = footprint.rotated(facing);
@@ -1121,14 +1127,15 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        height: Height,
+        facing: Facing,
         water_table: &WaterTable,
     ) -> bool {
         footprint
             .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= Height::WADING_DEPTH)
+            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= height)
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
