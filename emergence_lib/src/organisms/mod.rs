@@ -11,14 +11,14 @@ use crate::{
 };
 
 use self::{
-    drowning::drown,
     energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool, VigorModifier},
     lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
+    oxygen::{manage_oxygen, Oxygen, OxygenPool},
 };
 
-mod drowning;
 pub mod energy;
 pub mod lifecycle;
+mod oxygen;
 
 /// The [`Id`] of an organism.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -84,6 +84,8 @@ pub(crate) struct OrganismBundle {
     organism: Organism,
     /// The energy available to this organism
     energy_pool: EnergyPool,
+    /// The oxygen available to this organism
+    oxygen_pool: OxygenPool,
     /// The modifier to both working speed and energy drain rate.
     vigor_modfiier: VigorModifier,
     /// The ways this organism can transform, and the progress toward doing so.
@@ -96,6 +98,8 @@ impl OrganismBundle {
         OrganismBundle {
             organism: Organism,
             energy_pool,
+            // TODO: consider making this configurable on a per-organism basis
+            oxygen_pool: OxygenPool::new(Oxygen::STANDARD_MAX),
             vigor_modfiier: VigorModifier::None,
             lifecycle,
         }
@@ -149,7 +153,7 @@ impl Plugin for OrganismPlugin {
                 kill_organisms_when_out_of_energy,
                 transform_when_lifecycle_complete,
                 sprout_seeds,
-                drown,
+                manage_oxygen,
             )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
