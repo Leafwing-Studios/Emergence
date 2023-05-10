@@ -257,6 +257,7 @@ impl InputInventory {
 }
 
 /// An error that can occur when trying to consume items from an [`InputInventory`].
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConsumeInputError {
     /// Not enough items in the inventory.
     NotEnoughItems,

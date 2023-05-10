@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    crafting::{inventories::InputInventory, item_tags::ItemKind},
+    crafting::{inventories::InputInventory, item_tags::ItemKind, recipe::RecipeInput},
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
@@ -59,9 +59,10 @@ fn release_items(
         if result.is_ok() {
             for item_slot in source.iter() {
                 let item_count = item_slot.item_count();
+                let recipe_input = RecipeInput::Exact(vec![item_count]);
 
                 input_inventory
-                    .fill_with_items(&item_count, &item_manifest)
+                    .consume_items(&recipe_input, &item_manifest)
                     .unwrap();
             }
 
