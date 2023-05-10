@@ -179,13 +179,15 @@ impl Command for SpawnStructureCommand {
                 world
                     .entity_mut(structure_entity)
                     .insert(AbsorbsItems)
-                    .insert(OutputInventory::default());
+                    .insert(OutputInventory::default())
+                    .insert(Emitter::default());
             }
             StructureKind::Emitter => {
                 world
                     .entity_mut(structure_entity)
                     .insert(EmitsItems)
-                    .insert(InputInventory::default());
+                    .insert(InputInventory::default())
+                    .insert(Emitter::default());
             }
         }
 
