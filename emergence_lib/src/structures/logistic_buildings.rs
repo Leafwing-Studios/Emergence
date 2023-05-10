@@ -3,9 +3,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    crafting::inventories::InputInventory,
+    crafting::{inventories::InputInventory, item_tags::ItemKind},
     items::item_manifest::ItemManifest,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    signals::{Emitter, SignalStrength, SignalType},
+    simulation::{
+        geometry::{Facing, MapGeometry, TilePos},
+        SimulationSet,
+    },
     terrain::litter::Litter,
 };
 
@@ -22,12 +26,16 @@ pub(super) struct LogisticsPlugin;
 
 impl Plugin for LogisticsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(emit_items);
+        app.add_systems(
+            (release_items, logistic_buildings_signals)
+                .in_set(SimulationSet)
+                .in_schedule(CoreSchedule::FixedUpdate),
+        );
     }
 }
 
 /// Causes buildings that emit items to place them in the litter in front of them.
-fn emit_items(
+fn release_items(
     mut structure_query: Query<(&TilePos, &Facing, &mut InputInventory), With<ReleasesItems>>,
     mut litter_query: Query<&mut Litter>,
     item_manifest: Res<ItemManifest>,
@@ -58,6 +66,34 @@ fn emit_items(
             }
 
             litter.on_ground = target;
+        }
+    }
+}
+
+fn logistic_buildings_signals(
+    mut release_query: Query<(&mut Emitter, &mut InputInventory), With<ReleasesItems>>,
+) {
+    /// Controls how strong the signal is for logistic buildings.
+    const LOGISTIC_SIGNAL_STRENGTH: f32 = 10.;
+
+    let signal_strength = SignalStrength::new(LOGISTIC_SIGNAL_STRENGTH);
+
+    info!("Query has {} entities", release_query.iter().len());
+
+    for (mut emitter, input_inventory) in release_query.iter_mut() {
+        emitter.signals.clear();
+        for item_slot in input_inventory.iter() {
+            if !item_slot.is_full() {
+                let item_kind = match *input_inventory {
+                    InputInventory::Exact { .. } => ItemKind::Single(item_slot.item_id()),
+                    InputInventory::Tagged { tag, .. } => ItemKind::Tag(tag),
+                };
+
+                // This should be a Pull signal, rather than a Stores signal to
+                // ensure that goods can be continuously harvested and shipped.
+                let signal_type: SignalType = SignalType::Pull(item_kind);
+                emitter.signals.push((signal_type, signal_strength));
+            }
         }
     }
 }

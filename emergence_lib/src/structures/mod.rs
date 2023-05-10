@@ -18,6 +18,7 @@ use crate::{
 };
 
 use self::{
+    logistic_buildings::LogisticsPlugin,
     structure_assets::StructureHandles,
     structure_manifest::{RawStructureManifest, Structure},
 };
@@ -33,6 +34,7 @@ pub(super) struct StructuresPlugin;
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ManifestPlugin::<RawStructureManifest>::new())
+            .add_plugin(LogisticsPlugin)
             .add_asset_collection::<StructureHandles>();
     }
 }
