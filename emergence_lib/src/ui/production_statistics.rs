@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    graphics::infovis::Census,
+    graphics::overlay::Census,
     light::TotalLight,
     simulation::{geometry::MapGeometry, time::InGameTime, weather::CurrentWeather},
     water::WaterTable,

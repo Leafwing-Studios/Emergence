@@ -1,4 +1,4 @@
-//! Computes and displays helpful information about the state of the world.
+//! Computes and displays helpful spatial information about the state of the world.
 //!
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
@@ -30,9 +30,9 @@ use crate::{
 };
 
 /// Systems and reources for communicating the state of the world to the player.
-pub(super) struct InfoVisPlugin;
+pub(super) struct OverlayPlugin;
 
-impl Plugin for InfoVisPlugin {
+impl Plugin for OverlayPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(census)
             .init_resource::<Census>()
