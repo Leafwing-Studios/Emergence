@@ -18,7 +18,7 @@ use crate::{
         ItemCount,
     },
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{direction_from_angle, MapGeometry, TilePos},
+    simulation::geometry::{direction_from_angle, Height, MapGeometry, TilePos},
     water::{WaterDepth, WaterTable},
 };
 
@@ -305,8 +305,14 @@ pub(super) fn carry_floating_litter_with_current(
             if litter_drift.timer.finished() {
                 if let Some(direction) = litter_drift.direction {
                     let new_position = tile_pos.neighbor(direction);
-                    // Record that this change needs to be tried
-                    proposed_transfers.push((source_entity, new_position));
+                    let source_height = water_table.surface_height(tile_pos, &map_geometry);
+                    let target_height = water_table.surface_height(new_position, &map_geometry);
+                    // Verify that we're not trying to deposit goods up a cliff or waterfall
+                    // Note that this is a one-way check; we don't care if the source is higher than the target
+                    if target_height - source_height <= Height::MAX_STEP {
+                        // Record that this change needs to be tried
+                        proposed_transfers.push((source_entity, new_position));
+                    }
                 }
 
                 litter_drift.finish();

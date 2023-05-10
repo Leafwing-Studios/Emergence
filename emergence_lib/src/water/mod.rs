@@ -219,6 +219,17 @@ impl WaterTable {
         self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
     }
 
+    /// Computes the height of the surface water at `tile_pos`, or the terrain height if there is no water.
+    pub(crate) fn surface_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
+        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
+
+        match self.water_depth(tile_pos) {
+            WaterDepth::Dry => soil_height,
+            WaterDepth::Underground(..) => soil_height,
+            WaterDepth::Flooded(depth) => soil_height + depth,
+        }
+    }
+
     /// Computes the height of water that is above the soil at `tile_pos`.
     pub(crate) fn surface_water_depth(&self, tile_pos: TilePos) -> Height {
         let depth_to_water_table = self.water_depth(tile_pos);
