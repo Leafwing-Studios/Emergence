@@ -24,7 +24,7 @@ use self::{
 };
 
 pub(crate) mod commands;
-mod logistic_buildings;
+pub(crate) mod logistic_buildings;
 mod structure_assets;
 pub mod structure_manifest;
 

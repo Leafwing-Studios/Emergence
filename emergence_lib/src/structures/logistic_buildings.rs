@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    asset_management::manifest::Id,
     crafting::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
@@ -15,15 +16,18 @@ use crate::{
         SimulationSet,
     },
     terrain::litter::Litter,
+    water::WaterTable,
 };
+
+use super::structure_manifest::{Structure, StructureManifest};
 
 /// A building that spits out items.
 #[derive(Component)]
-pub(super) struct ReleasesItems;
+pub(crate) struct ReleasesItems;
 
 /// A building that takes in items.
 #[derive(Component)]
-pub(super) struct AbsorbsItems;
+pub(crate) struct AbsorbsItems;
 
 /// Logic that controls how items are moved around by structures.
 pub(super) struct LogisticsPlugin;
@@ -71,12 +75,17 @@ fn release_items(
 
 /// Absorb litter into the inventory of buildings that absorb items.
 fn absorb_items(
-    mut structure_query: Query<(&TilePos, &mut OutputInventory), With<AbsorbsItems>>,
+    mut structure_query: Query<
+        (&TilePos, &mut OutputInventory, &Id<Structure>),
+        With<AbsorbsItems>,
+    >,
     mut litter_query: Query<&mut Litter>,
+    structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
+    water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (&tile_pos, mut output_inventory) in structure_query.iter_mut() {
+    for (&tile_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
         output_inventory.clear_empty_slots();
 
         if output_inventory.is_full() {
@@ -99,16 +108,19 @@ fn absorb_items(
             }
         }
 
-        // TODO: only absorb floating items if the structure is tall enough.
-        let floating = litter.floating.clone();
-        for item_slot in floating.iter() {
-            let item_count = item_slot.item_count();
+        // Only absorb floating items if the structure is tall enough.
+        let structure_data = structure_manifest.get(structure_id);
+        if structure_data.height > water_table.surface_water_depth(tile_pos) {
+            let floating = litter.floating.clone();
+            for item_slot in floating.iter() {
+                let item_count = item_slot.item_count();
 
-            if output_inventory
-                .add_item_all_or_nothing(&item_count, &item_manifest)
-                .is_ok()
-            {
-                litter.floating.try_remove_item(&item_count).unwrap();
+                if output_inventory
+                    .add_item_all_or_nothing(&item_count, &item_manifest)
+                    .is_ok()
+                {
+                    litter.floating.try_remove_item(&item_count).unwrap();
+                }
             }
         }
     }
