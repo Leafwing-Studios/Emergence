@@ -281,7 +281,7 @@ pub(super) fn sprout_seeds(
 ) {
     // TODO: add germination conditions, and vary this based on the seed type.
     /// The chance that a seed will sprout when dropped on the ground each tick.
-    const SEED_SPROUT_CHANCE: f32 = 0.01;
+    const SEED_SPROUT_CHANCE: f32 = 0.05;
 
     let rng = &mut rand::thread_rng();
 
