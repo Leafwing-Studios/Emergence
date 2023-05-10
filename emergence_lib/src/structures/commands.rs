@@ -6,10 +6,15 @@ use bevy::{
 };
 
 use crate::{
+    asset_management::manifest::Id,
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
-    crafting::{inventories::StorageInventory, recipe::RecipeManifest, CraftingBundle},
+    crafting::{
+        inventories::{InputInventory, OutputInventory, StorageInventory},
+        recipe::RecipeManifest,
+        CraftingBundle,
+    },
     graphics::InheritedMaterial,
-    items::item_manifest::ItemManifest,
+    items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::OrganismBundle,
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
@@ -18,6 +23,7 @@ use crate::{
 };
 
 use super::{
+    logistic_buildings::{AbsorbsItems, ReleasesItems},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     Landmark, StructureBundle,
@@ -169,6 +175,26 @@ impl Command for SpawnStructureCommand {
             StructureKind::Path => {}
             StructureKind::Landmark => {
                 world.entity_mut(structure_entity).insert(Landmark);
+            }
+            StructureKind::Absorber => {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(AbsorbsItems)
+                    .insert(OutputInventory::default())
+                    .insert(Emitter::default());
+            }
+            StructureKind::Releaser => {
+                world
+                    .entity_mut(structure_entity)
+                    .insert(ReleasesItems)
+                    .insert(InputInventory::Exact {
+                        // TODO: let this be configured by the user using the UI
+                        inventory: Inventory::empty_from_item(
+                            Id::from_name("ant_egg".to_string()),
+                            1,
+                        ),
+                    })
+                    .insert(Emitter::default());
             }
         }
 

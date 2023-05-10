@@ -131,6 +131,10 @@ pub enum StructureKind {
     Path,
     /// A structure that is used to define a special element of the world.
     Landmark,
+    /// A structure that spits out items.
+    Releaser,
+    /// A structure that takes in items.
+    Absorber,
 }
 
 /// The unprocessed equivalent of [`StructureKind`].
@@ -152,6 +156,10 @@ pub enum RawStructureKind {
     Path,
     /// A structure that is used to define a special element of the world.
     Landmark,
+    /// A structure that spits out items.
+    Releaser,
+    /// A structure that takes in items.
+    Absorber,
 }
 
 impl From<RawStructureKind> for StructureKind {
@@ -169,6 +177,8 @@ impl From<RawStructureKind> for StructureKind {
             },
             RawStructureKind::Path => Self::Path,
             RawStructureKind::Landmark => Self::Landmark,
+            RawStructureKind::Releaser => Self::Releaser,
+            RawStructureKind::Absorber => Self::Absorber,
         }
     }
 }

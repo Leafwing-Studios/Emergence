@@ -250,13 +250,19 @@ pub(super) fn carry_floating_litter_with_current(
     ///
     /// Higher values mean litter drifts faster.
     /// This must be greater than 0.
-    const ITEM_DRIFT_RATE: f32 = 1e-4;
+    const ITEM_DRIFT_RATE: f32 = 1e2;
 
     /// Controls how much litter varies relative to the current direction
     ///
     /// This is the standard deviation of the normal distribution used to determine the drift angle, and is in units of radians.
     /// This must be greater than 0.
     const DRIFT_DEVIATION: f32 = 1.0;
+
+    /// The maximum amount of time in seconds litter can take to drift a single step
+    ///
+    /// Must be greater than 0.
+    /// If this is larger than the maximum number of seconds that can be stored in a Duration, the app will panic.
+    const MAX_DRIFT_TIME: f32 = 10.0;
 
     let delta_time = fixed_time.period;
     // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
@@ -290,7 +296,7 @@ pub(super) fn carry_floating_litter_with_current(
             if litter_drift.direction.is_none() {
                 let direction =
                     direction_from_angle(flow_direction, map_geometry.layout.orientation);
-                let time_to_drift = water_speed * delta_time.as_secs_f32() / ITEM_DRIFT_RATE;
+                let time_to_drift = (1. / (ITEM_DRIFT_RATE * water_speed)).min(MAX_DRIFT_TIME);
 
                 litter_drift.start(direction, Duration::from_secs_f32(time_to_drift));
             }
@@ -326,7 +332,6 @@ pub(super) fn carry_floating_litter_with_current(
         let mut source_floating = source_litter.floating.clone();
         let mut target_floating = target_litter.floating.clone();
 
-        // We don't care how much was transferred; failing to transfer is fine
         let result = source_floating.transfer_all(&mut target_floating, &item_manifest);
 
         // If the transfer was successful, update the litter

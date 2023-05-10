@@ -113,7 +113,7 @@ impl InputInventory {
     }
 
     /// Returns a mutable reference the underlying [`Inventory`].
-    fn inventory_mut(&mut self) -> &mut Inventory {
+    pub fn inventory_mut(&mut self) -> &mut Inventory {
         match self {
             InputInventory::Exact { inventory } => inventory,
             InputInventory::Tagged { inventory, .. } => inventory,
@@ -257,6 +257,7 @@ impl InputInventory {
 }
 
 /// An error that can occur when trying to consume items from an [`InputInventory`].
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConsumeInputError {
     /// Not enough items in the inventory.
     NotEnoughItems,
@@ -265,6 +266,7 @@ pub enum ConsumeInputError {
 }
 
 /// An error that can occur when trying to add items to an [`InputInventory`].
+#[derive(Clone, Debug)]
 pub enum AddToInputError {
     /// Not enough space in the inventory.
     NotEnoughSpace {

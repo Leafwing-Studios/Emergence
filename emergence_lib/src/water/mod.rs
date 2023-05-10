@@ -74,8 +74,8 @@ impl WaterConfig {
         lateral_flow_rate: 1e3,
         enable_oceans: true,
         tide_settings: TideSettings {
-            amplitude: Height(10.0),
-            period: Days(0.5),
+            amplitude: Height(5.0),
+            period: Days(2.0),
             minimum: Height(0.1),
         },
     };
