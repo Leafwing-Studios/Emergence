@@ -1,5 +1,7 @@
 //! Logic and components for littered items.
 
+use std::f32::consts::TAU;
+
 use bevy::prelude::*;
 use bevy::utils::Duration;
 use hexx::Direction;
@@ -262,7 +264,7 @@ pub(super) fn carry_floating_litter_with_current(
     ///
     /// This is the standard deviation of the normal distribution used to determine the drift angle, and is in units of radians.
     /// This must be greater than 0.
-    const DRIFT_DEVIATION: f32 = 1.0;
+    const DRIFT_DEVIATION: f32 = 0.5;
 
     /// The maximum amount of time in seconds litter can take to drift a single step
     ///
@@ -301,7 +303,10 @@ pub(super) fn carry_floating_litter_with_current(
             }
 
             let flow_velocity = water_table.flow_velocity(tile_pos);
-            let flow_direction = flow_velocity.direction() + normal_distribution.sample(rng);
+            let flow_direction = flow_velocity.direction()
+                // Truncate the noise so it never makes the litter drift more than 90 degrees off-course
+                // to prevent goods flowing upstream
+                + normal_distribution.sample(rng).clamp(-TAU / 4., TAU / 4.);
 
             // Volume transferred = cross-sectional area * water speed * time
             // Cross-sectional area = water depth * tile area
