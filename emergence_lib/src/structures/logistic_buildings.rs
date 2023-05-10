@@ -31,7 +31,7 @@ pub(super) struct LogisticsPlugin;
 impl Plugin for LogisticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (release_items, logistic_buildings_signals)
+            (release_items, absorb_items, logistic_buildings_signals)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -64,6 +64,51 @@ fn release_items(
                 input_inventory
                     .consume_items(&recipe_input, &item_manifest)
                     .unwrap();
+            }
+        }
+    }
+}
+
+/// Absorb litter into the inventory of buildings that absorb items.
+fn absorb_items(
+    mut structure_query: Query<(&TilePos, &mut OutputInventory), With<AbsorbsItems>>,
+    mut litter_query: Query<&mut Litter>,
+    item_manifest: Res<ItemManifest>,
+    map_geometry: Res<MapGeometry>,
+) {
+    for (&tile_pos, mut output_inventory) in structure_query.iter_mut() {
+        output_inventory.clear_empty_slots();
+
+        if output_inventory.is_full() {
+            continue;
+        }
+
+        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut litter = litter_query.get_mut(litter_entity).unwrap();
+
+        let on_ground = litter.on_ground.clone();
+
+        for item_slot in on_ground.iter() {
+            let item_count = item_slot.item_count();
+
+            if output_inventory
+                .add_item_all_or_nothing(&item_count, &item_manifest)
+                .is_ok()
+            {
+                litter.on_ground.try_remove_item(&item_count).unwrap();
+            }
+        }
+
+        // TODO: only absorb floating items if the structure is tall enough.
+        let floating = litter.floating.clone();
+        for item_slot in floating.iter() {
+            let item_count = item_slot.item_count();
+
+            if output_inventory
+                .add_item_all_or_nothing(&item_count, &item_manifest)
+                .is_ok()
+            {
+                litter.floating.try_remove_item(&item_count).unwrap();
             }
         }
     }
