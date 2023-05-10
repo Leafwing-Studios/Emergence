@@ -132,10 +132,10 @@ impl Footprint {
     }
 
     /// Rotates the footprint by the provided [`Facing`].
-    pub(crate) fn rotated(&self, facing: &Facing) -> Self {
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
         let mut set = HashSet::new();
         for &tile_pos in self.set.iter() {
-            set.insert(tile_pos.rotated(*facing));
+            set.insert(tile_pos.rotated(facing));
         }
 
         Footprint { set }

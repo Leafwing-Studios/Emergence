@@ -225,9 +225,15 @@ fn mark_based_on_zoning(
             Zoning::Structure(clipboard_data) => {
                 let footprint =
                     structure_manifest.construction_footprint(clipboard_data.structure_id);
+                let structure_details = structure_manifest.get(clipboard_data.structure_id);
 
-                if map_geometry.can_build(tile_pos, footprint, &clipboard_data.facing, &water_table)
-                {
+                if map_geometry.can_build(
+                    tile_pos,
+                    footprint,
+                    structure_details.height,
+                    clipboard_data.facing,
+                    &water_table,
+                ) {
                     commands.spawn_ghost_structure(tile_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

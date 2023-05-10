@@ -695,7 +695,7 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -748,7 +748,7 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -767,7 +767,7 @@ impl MapGeometry {
         existing_entity: Entity,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         footprint
             .rotated(facing)
@@ -786,7 +786,7 @@ impl MapGeometry {
         &self,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         let height = self.get_height(center).unwrap();
 
@@ -813,13 +813,14 @@ impl MapGeometry {
         &self,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        height: Height,
+        facing: Facing,
         water_table: &WaterTable,
     ) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
-            && self.is_free_of_water(center, footprint, facing, water_table)
+            && self.is_free_of_water(center, footprint, height, facing, water_table)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -839,7 +840,7 @@ impl MapGeometry {
         existing_entity: Entity,
         center: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
@@ -906,7 +907,7 @@ impl MapGeometry {
         height_query: &mut Query<&mut Height>,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        facing: Facing,
     ) {
         let Ok(target_height) = self.get_height(tile_pos) else { return };
         let rotated_footprint = footprint.rotated(facing);
@@ -1126,14 +1127,15 @@ impl MapGeometry {
         &self,
         tile_pos: TilePos,
         footprint: &Footprint,
-        facing: &Facing,
+        height: Height,
+        facing: Facing,
         water_table: &WaterTable,
     ) -> bool {
         footprint
             .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= Height::WADING_DEPTH)
+            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= height)
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.

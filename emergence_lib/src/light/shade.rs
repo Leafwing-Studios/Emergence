@@ -94,8 +94,7 @@ pub(super) fn compute_shade(
     }
 
     // Cast shade from structures to nearby tiles
-    // TODO: vary this by Footprint
-    for (&center, &structure_id, facing) in structure_query.iter() {
+    for (&center, &structure_id, &facing) in structure_query.iter() {
         let structure_data = structure_manifest.get(structure_id);
         let tiles_in_footprint = structure_data
             .footprint

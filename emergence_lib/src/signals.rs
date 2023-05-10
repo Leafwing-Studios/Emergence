@@ -762,7 +762,7 @@ fn emit_signals(
                 let footprint = &structure_manifest
                     .get(*structure_id)
                     .footprint
-                    .rotated(facing);
+                    .rotated(*facing);
 
                 let n_tiles = footprint.set.len();
 
