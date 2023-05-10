@@ -7,7 +7,11 @@ use bevy::{
 
 use crate::{
     construction::ghosts::{GhostHandles, GhostKind, GhostStructureBundle, StructurePreviewBundle},
-    crafting::{inventories::StorageInventory, recipe::RecipeManifest, CraftingBundle},
+    crafting::{
+        inventories::{InputInventory, OutputInventory, StorageInventory},
+        recipe::RecipeManifest,
+        CraftingBundle,
+    },
     graphics::InheritedMaterial,
     items::item_manifest::ItemManifest,
     organisms::OrganismBundle,
@@ -175,13 +179,13 @@ impl Command for SpawnStructureCommand {
                 world
                     .entity_mut(structure_entity)
                     .insert(AbsorbsItems)
-                    .insert(StorageInventory::new(1, None));
+                    .insert(OutputInventory::default());
             }
             StructureKind::Emitter => {
                 world
                     .entity_mut(structure_entity)
                     .insert(EmitsItems)
-                    .insert(StorageInventory::new(1, None));
+                    .insert(InputInventory::default());
             }
         }
 
