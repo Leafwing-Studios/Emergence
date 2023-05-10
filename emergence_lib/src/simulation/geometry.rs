@@ -1094,7 +1094,7 @@ impl MapGeometry {
             .rotated(facing)
             .in_world_space(tile_pos)
             .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) == Height::ZERO)
+            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= Height::WADING_DEPTH)
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
