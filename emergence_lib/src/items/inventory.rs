@@ -17,7 +17,7 @@ use super::{
 };
 
 /// An inventory to store multiple types of items.
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Inventory {
     /// Is this inventory reserved for a single item type?
     ///
@@ -31,6 +31,12 @@ pub struct Inventory {
 
     /// The maximum number of item slots this inventory can hold.
     max_slot_count: usize,
+}
+
+impl Default for Inventory {
+    fn default() -> Self {
+        Inventory::new(1, None)
+    }
 }
 
 /// The fullness of an inventory

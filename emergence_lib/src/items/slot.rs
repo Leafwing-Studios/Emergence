@@ -30,7 +30,7 @@ pub struct ItemSlot {
 #[allow(dead_code)]
 impl ItemSlot {
     /// Create an empty slot for the given item.
-    pub fn empty(item_id: Id<Item>, max_item_count: u32) -> Self {
+    pub const fn empty(item_id: Id<Item>, max_item_count: u32) -> Self {
         Self {
             item_id,
             max_item_count,
@@ -39,7 +39,7 @@ impl ItemSlot {
     }
 
     /// Create a full slot for the given item.
-    pub fn full(item_id: Id<Item>, max_item_count: u32) -> Self {
+    pub const fn full(item_id: Id<Item>, max_item_count: u32) -> Self {
         Self {
             item_id,
             max_item_count,
@@ -53,7 +53,7 @@ impl ItemSlot {
     ///
     /// It must be `count <= max_item_count` or this function will panic.
     #[cfg(test)]
-    pub fn new_with_count(item_id: Id<Item>, max_item_count: u32, count: u32) -> Self {
+    pub const fn new_with_count(item_id: Id<Item>, max_item_count: u32, count: u32) -> Self {
         assert!(count <= max_item_count);
 
         Self {
