@@ -154,7 +154,10 @@ impl Pool for OxygenPool {
 /// Increases and decreases oxygen levels over time, and kills all organisms that run out of oxygen.
 pub(super) fn manage_oxygen(
     mut unit_query: Query<(Entity, &TilePos, &mut OxygenPool), With<Id<Unit>>>,
-    mut structure_query: Query<(&TilePos, &mut OxygenPool), (With<Id<Structure>>, With<Organism>)>,
+    mut structure_query: Query<
+        (&TilePos, &mut OxygenPool),
+        (With<Id<Structure>>, Without<Id<Unit>>, With<Organism>),
+    >,
     water_table: Res<WaterTable>,
     fixed_time: Res<FixedTime>,
     mut commands: Commands,

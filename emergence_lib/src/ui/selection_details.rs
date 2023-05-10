@@ -341,6 +341,7 @@ fn get_details(
                             .prototypical_form,
                         lifecycle: query_item.lifecycle.clone(),
                         energy_pool: query_item.energy_pool.clone(),
+                        oxygen_pool: query_item.oxygen_pool.clone(),
                     });
 
             SelectionDetails::Structure(StructureDetails {
@@ -408,6 +409,7 @@ fn get_details(
                     .prototypical_form,
                 lifecycle: organism_query_item.lifecycle.clone(),
                 energy_pool: organism_query_item.energy_pool.clone(),
+                oxygen_pool: organism_query_item.oxygen_pool.clone(),
             };
 
             let unit_data = unit_manifest.get(*unit_query_item.unit_id);
@@ -527,7 +529,7 @@ mod organism_details {
     use bevy::ecs::query::WorldQuery;
 
     use crate::{
-        organisms::{energy::EnergyPool, lifecycle::Lifecycle, OrganismId},
+        organisms::{energy::EnergyPool, lifecycle::Lifecycle, oxygen::OxygenPool, OrganismId},
         structures::structure_manifest::StructureManifest,
         units::unit_manifest::UnitManifest,
     };
@@ -539,6 +541,8 @@ mod organism_details {
         pub(super) lifecycle: &'static Lifecycle,
         /// The current and max energy
         pub(super) energy_pool: &'static EnergyPool,
+        /// The currrent and max oxygen
+        pub(super) oxygen_pool: &'static OxygenPool,
     }
 
     /// Detailed info about a given organism.
@@ -550,6 +554,8 @@ mod organism_details {
         pub(super) lifecycle: Lifecycle,
         /// The current and max energy
         pub(super) energy_pool: EnergyPool,
+        /// The currrent and max oxygen
+        pub(super) oxygen_pool: OxygenPool,
     }
 
     impl OrganismDetails {
@@ -565,11 +571,13 @@ mod organism_details {
             let lifecycle = self.lifecycle.display(structure_manifest, unit_manifest);
 
             let energy_pool = &self.energy_pool;
+            let oxygen_pool = &self.oxygen_pool;
 
             format!(
                 "Prototypical form: {prototypical_form}
 Lifecycle: {lifecycle}
-Energy: {energy_pool}"
+Energy: {energy_pool}
+Oxygen: {oxygen_pool}"
             )
         }
     }

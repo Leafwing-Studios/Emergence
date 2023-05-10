@@ -18,7 +18,7 @@ use self::{
 
 pub mod energy;
 pub mod lifecycle;
-mod oxygen;
+pub mod oxygen;
 
 /// The [`Id`] of an organism.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
