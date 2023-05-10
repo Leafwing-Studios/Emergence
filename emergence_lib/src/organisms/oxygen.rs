@@ -18,7 +18,7 @@ use crate::{
 
 use super::Organism;
 
-/// The amount of energy available to an organism.
+/// The amount of oxygen available to an organism.
 /// If they run out, they die.
 #[derive(Debug, Clone, PartialEq, Component, Resource, Serialize, Deserialize)]
 pub struct OxygenPool {
@@ -29,7 +29,7 @@ pub struct OxygenPool {
 }
 
 impl OxygenPool {
-    /// Construct a new oxygen pool with a max energy of `max` and a rate of `regen_per_second`.
+    /// Construct a new full oxygen pool with a max oxygen of `max`.
     pub fn new(max: Oxygen) -> Self {
         OxygenPool { current: max, max }
     }
@@ -46,9 +46,9 @@ impl Display for OxygenPool {
     }
 }
 
-/// A quantity of energy, used to modify a [`EnergyPool`].
+/// A quantity of oxygen, used to modify a [`OxygenPool`].
 ///
-/// Organisms produce energy by crafting recipes.
+/// Organisms produce oxygen while above the water, and lose it while underwater.
 #[derive(
     Debug,
     Clone,
