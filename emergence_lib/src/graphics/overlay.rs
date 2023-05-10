@@ -1,4 +1,4 @@
-//! Computes and displays helpful information about the state of the world.
+//! Computes and displays helpful spatial information about the state of the world.
 //!
 //! UI elements generated for / by this work belong in the `ui` module instead.
 
@@ -14,7 +14,6 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
     utils::HashMap,
 };
-use core::fmt::Display;
 use emergence_macros::IterableEnum;
 
 use crate::{
@@ -25,18 +24,15 @@ use crate::{
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
-    units::unit_manifest::Unit,
     water::{WaterDepth, WaterTable},
 };
 
 /// Systems and reources for communicating the state of the world to the player.
-pub(super) struct InfoVisPlugin;
+pub(super) struct OverlayPlugin;
 
-impl Plugin for InfoVisPlugin {
+impl Plugin for OverlayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(census)
-            .init_resource::<Census>()
-            .init_resource::<TileOverlay>()
+        app.init_resource::<TileOverlay>()
             .add_systems(
                 (
                     set_overlay_material,
@@ -53,24 +49,6 @@ impl Plugin for InfoVisPlugin {
             )
             .add_system(set_overlay_height);
     }
-}
-
-/// Tracks the population of organisms
-#[derive(Debug, Resource, Default)]
-pub(crate) struct Census {
-    /// The total number of units of any kind
-    total_units: usize,
-}
-
-impl Display for Census {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Population: {}", self.total_units)
-    }
-}
-
-/// Counts the number of organisms
-fn census(mut census: ResMut<Census>, unit_query: Query<(), With<Id<Unit>>>) {
-    census.total_units = unit_query.iter().len();
 }
 
 /// Controls the display of the tile overlay.

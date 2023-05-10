@@ -5,13 +5,13 @@ use bevy::prelude::*;
 use crate::asset_management::AssetState;
 
 use self::{
-    atmosphere::AtmospherePlugin, infovis::InfoVisPlugin, lighting::LightingPlugin,
+    atmosphere::AtmospherePlugin, lighting::LightingPlugin, overlay::OverlayPlugin,
     structures::remove_ghostly_shadows, terrain::render_litter_piles, water::WaterRenderingPlugin,
 };
 
 mod atmosphere;
-pub(crate) mod infovis;
 pub(crate) mod lighting;
+pub(crate) mod overlay;
 pub(crate) mod palette;
 mod structures;
 mod terrain;
@@ -28,7 +28,7 @@ impl Plugin for GraphicsPlugin {
         app.add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
             .add_plugin(WaterRenderingPlugin)
-            .add_plugin(InfoVisPlugin)
+            .add_plugin(OverlayPlugin)
             .add_system(render_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
