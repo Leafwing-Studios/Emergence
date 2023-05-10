@@ -212,9 +212,14 @@ impl TilePos {
 
             if self_height > terrain_height {
                 // PERF: oh god this is a lot of indirection. We should consider moving away from a pure manifest system
-                let maybe_structure_entity = map_geometry.get_structure(target_pos);
-                let structure_height = if let Some(structure_entity) = maybe_structure_entity {
+                let structure_height = if let Some(structure_entity) =
+                    map_geometry.get_structure(target_pos)
+                {
                     let structure_id = *structure_query.get(structure_entity).unwrap();
+                    let structure_data = structure_manifest.get(structure_id);
+                    structure_data.height
+                } else if let Some(ghost_entity) = map_geometry.get_ghost_structure(target_pos) {
+                    let structure_id = *structure_query.get(ghost_entity).unwrap();
                     let structure_data = structure_manifest.get(structure_id);
                     structure_data.height
                 } else {
