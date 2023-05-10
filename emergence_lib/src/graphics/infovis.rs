@@ -362,7 +362,7 @@ impl TileOverlay {
     /// The maximum displayed depth to the water table.
     ///
     /// Below this level, the water table is considered to be equally deep.
-    const MAX_DEPTH_TO_WATER_TABLE: f32 = 5.;
+    const MAX_DEPTH_TO_WATER_TABLE: f32 = 10.;
 
     /// The maximum volume of water per second of flux to be displayed.
     ///
