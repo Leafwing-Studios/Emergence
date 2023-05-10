@@ -29,7 +29,10 @@ use crate::{
     },
     signals::{SignalType, Signals},
     simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
-    structures::{commands::StructureCommandsExt, structure_manifest::Structure},
+    structures::{
+        commands::StructureCommandsExt,
+        structure_manifest::{Structure, StructureManifest},
+    },
     terrain::{
         litter::Litter,
         terrain_manifest::{Terrain, TerrainManifest},
@@ -80,6 +83,8 @@ pub(super) fn choose_actions(
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     litter_query: Query<&Litter>,
+    structure_query: Query<&Id<Structure>>,
+    structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -151,10 +156,12 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &storage_inventory_query,
                             &litter_query,
+                            &structure_query,
                             &signals,
                             rng,
                             &item_manifest,
                             &terrain_query,
+                            &structure_manifest,
                             &terrain_manifest,
                             &map_geometry,
                             &water_table,
@@ -193,10 +200,12 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &storage_inventory_query,
                             &litter_query,
+                            &structure_query,
                             &signals,
                             rng,
                             &item_manifest,
                             &terrain_query,
+                            &structure_manifest,
                             &terrain_manifest,
                             &map_geometry,
                             &water_table,
@@ -210,7 +219,9 @@ pub(super) fn choose_actions(
                     &workplace_query,
                     &signals,
                     rng,
+                    &structure_query,
                     &terrain_query,
+                    &structure_manifest,
                     &terrain_manifest,
                     &item_manifest,
                     &map_geometry,
@@ -224,7 +235,9 @@ pub(super) fn choose_actions(
                     &signals,
                     rng,
                     &item_manifest,
+                    &structure_query,
                     &terrain_query,
+                    &structure_manifest,
                     &terrain_manifest,
                     &map_geometry,
                     &water_table,
@@ -720,15 +733,18 @@ impl CurrentAction {
         output_inventory_query: &Query<&OutputInventory>,
         storage_inventory_query: &Query<&StorageInventory>,
         litter_query: &Query<&Litter>,
+        structure_query: &Query<&Id<Structure>>,
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
+        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
         water_table: &WaterTable,
     ) -> CurrentAction {
-        let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
+        let neighboring_tiles =
+            unit_tile_pos.reachable_neighbors(structure_query, structure_manifest, map_geometry);
         let mut candidates: Vec<(Entity, TilePos)> = Vec::new();
         let held_item = unit_inventory.held_item;
 
@@ -836,7 +852,9 @@ impl CurrentAction {
         workplace_query: &WorkplaceQuery,
         signals: &Signals,
         rng: &mut ThreadRng,
+        structure_query: &Query<&Id<Structure>>,
         terrain_query: &Query<&Id<Terrain>>,
+        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
@@ -854,7 +872,11 @@ impl CurrentAction {
         {
             CurrentAction::work(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(
+                structure_query,
+                structure_manifest,
+                map_geometry,
+            );
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {
@@ -905,7 +927,9 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
+        structure_query: &Query<&Id<Structure>>,
         terrain_query: &Query<&Id<Terrain>>,
+        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
         water_table: &WaterTable,
@@ -923,7 +947,11 @@ impl CurrentAction {
         ) {
             CurrentAction::demolish(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.reachable_neighbors(map_geometry);
+            let neighboring_tiles = unit_tile_pos.reachable_neighbors(
+                structure_query,
+                structure_manifest,
+                map_geometry,
+            );
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
             for neighbor in neighboring_tiles {
