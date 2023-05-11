@@ -688,7 +688,7 @@ impl UnitAction {
             UnitAction::Eat => 0.3,
             UnitAction::Idle => 0.1,
             UnitAction::Spin { .. } => 0.1,
-            UnitAction::MoveForward => 0.1,
+            UnitAction::MoveForward => 0.3,
         };
 
         Duration::from_secs_f32(seconds)
@@ -713,6 +713,7 @@ impl Default for CurrentAction {
 }
 
 impl CurrentAction {
+    /// Creates a new action with the default duration.
     fn new(action: UnitAction) -> Self {
         let duration = action.duration();
         Self {
@@ -1123,8 +1124,6 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
     ) -> Self {
-        /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
-        const BASE_WALKING_DURATION: f32 = 0.5;
         /// The multiplier applied to the walking speed when walking on a path.
         // TODO: vary this based on the path type
         const PATH_MULTIPLIER: f32 = 1.5;
@@ -1138,7 +1137,7 @@ impl CurrentAction {
             terrain_manifest.get(*terrain_standing_on).walking_speed
         };
 
-        let walking_duration = BASE_WALKING_DURATION / walking_speed;
+        let walking_duration = UnitAction::MoveForward.duration().as_secs_f32() / walking_speed;
 
         if map_geometry.is_passable(current_tile, target_tile, water_table) {
             CurrentAction {
