@@ -14,7 +14,7 @@ use crate::{
         AssetCollectionExt,
     },
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
-    simulation::geometry::{Facing, TilePos},
+    simulation::geometry::{Facing, Height, MapGeometry, TilePos},
 };
 
 use self::{
@@ -138,6 +138,21 @@ impl Footprint {
     pub(crate) fn normalized(&self, facing: Facing, center: TilePos) -> HashSet<TilePos> {
         let rotated = self.rotated(facing);
         rotated.in_world_space(center)
+    }
+
+    /// Returns the height of an arbitrary tile in this footprint after normalization.
+    ///
+    /// As buildings must be flat, this is the height of all tiles in a valid footprint.
+    /// Returns `None` if the footprint is empty or the tile is not on the map.
+    pub(crate) fn height(
+        &self,
+        facing: Facing,
+        center: TilePos,
+        map_geometry: &MapGeometry,
+    ) -> Option<Height> {
+        let first = *self.normalized(facing, center).iter().next()?;
+
+        map_geometry.get_height(first).ok()
     }
 }
 

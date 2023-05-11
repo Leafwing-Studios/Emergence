@@ -784,15 +784,10 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        let computed_footprint = footprint.normalized(facing, center);
-        let Some(first) = computed_footprint.iter().next() else {
-            return false;
-        };
-        let Ok(height) = self.get_height(*first) else {
-            return false;
-        };
+        let Some(height) = footprint.height(facing, center, self) else { return false };
 
-        computed_footprint
+        footprint
+            .normalized(facing, center)
             .iter()
             .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
     }
