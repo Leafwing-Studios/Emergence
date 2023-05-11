@@ -548,7 +548,6 @@ pub(super) fn finish_actions(
                             .add_item_all_or_nothing(&item_count, item_manifest)
                             .is_ok()
                         {
-                            // FIXME: this seems to be leaking items
                             unit.unit_inventory.held_item = None;
                         }
                     }
