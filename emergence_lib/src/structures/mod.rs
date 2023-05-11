@@ -140,19 +140,39 @@ impl Footprint {
         rotated.in_world_space(center)
     }
 
-    /// Returns the height of an arbitrary tile in this footprint after normalization.
+    /// Returns the highest height of tiles in this footprint after normalization.
     ///
-    /// As buildings must be flat, this is the height of all tiles in a valid footprint.
-    /// Returns `None` if the footprint is empty or the tile is not on the map.
+    /// Returns [`Height::ZERO`] if the footprint is empty or no valid tiles are found.
     pub(crate) fn height(
         &self,
         facing: Facing,
         center: TilePos,
         map_geometry: &MapGeometry,
     ) -> Option<Height> {
-        let first = *self.normalized(facing, center).iter().next()?;
+        self.normalized(facing, center)
+            .iter()
+            .map(|&tile_pos| map_geometry.get_height(tile_pos).unwrap_or_default())
+            .reduce(|a, b| a.max(b))
+    }
 
-        map_geometry.get_height(first).ok()
+    /// Computes the translation (in world space) of the center of this footprint.
+    ///
+    /// Uses the height of the first tile in the footprint.
+    pub(crate) fn world_pos(
+        &self,
+        facing: Facing,
+        center: TilePos,
+        map_geometry: &MapGeometry,
+    ) -> Option<Vec3> {
+        let mut transform_of_center = center.into_world_pos(map_geometry);
+
+        let structure_height = self.height(facing, center, map_geometry)?;
+
+        // Adjust the height in case the structure does not cover the origin tile of the footprint.
+        // This occurs in bridges, which are elevated above the ground.
+        transform_of_center.y = structure_height.into_world_pos() + Height::TOPPER_THICKNESS;
+
+        Some(transform_of_center)
     }
 }
 

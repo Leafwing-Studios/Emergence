@@ -131,7 +131,13 @@ impl Command for SpawnStructureCommand {
             .get(&structure_id)
             .unwrap()
             .clone_weak();
-        let world_pos = self.center.top_of_tile(world.resource::<MapGeometry>());
+
+        let map_geometry = world.resource::<MapGeometry>();
+        let world_pos = structure_data
+            .footprint
+            .world_pos(self.data.facing, self.center, map_geometry)
+            .unwrap_or_default();
+
         let facing = self.data.facing;
 
         let structure_entity = world
@@ -254,11 +260,11 @@ struct SpawnStructureGhostCommand {
 impl Command for SpawnStructureGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
-        let geometry = world.resource::<MapGeometry>();
+        let map_geometry = world.resource::<MapGeometry>();
         let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.center) {
+        if !map_geometry.is_valid(self.center) {
             return;
         }
 
@@ -266,8 +272,13 @@ impl Command for SpawnStructureGhostCommand {
         let construction_footprint = manifest.construction_footprint(structure_id);
         let structure_data = manifest.get(structure_id);
 
+        let world_pos = structure_data
+            .footprint
+            .world_pos(self.data.facing, self.center, map_geometry)
+            .unwrap_or_default();
+
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(
+        if !map_geometry.can_build(
             self.center,
             construction_footprint,
             structure_data.height,
@@ -301,7 +312,6 @@ impl Command for SpawnStructureGhostCommand {
         let ghostly_handle = ghost_handles.get_material(GhostKind::Ghost);
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
-        let world_pos = self.center.top_of_tile(world.resource::<MapGeometry>());
         let facing = self.data.facing;
 
         let ghost_entity = world
@@ -369,13 +379,16 @@ impl Command for SpawnStructurePreviewCommand {
             return;
         }
 
-        // Compute the world position
-        let world_pos = self.center.top_of_tile(map_geometry);
-
         let manifest = world.resource::<StructureManifest>();
         let structure_data = manifest.get(structure_id).clone();
 
         let geometry = world.resource::<MapGeometry>();
+
+        // Compute the world position
+        let world_pos = structure_data
+            .footprint
+            .world_pos(self.data.facing, self.center, map_geometry)
+            .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
