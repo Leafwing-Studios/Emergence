@@ -58,7 +58,7 @@ impl TerraformingAction {
             Self::Raise => InputInventory::Exact {
                 inventory: Inventory::new_from_item(soil_id, Self::N_ITEMS),
             },
-            Self::Lower => InputInventory::default(),
+            Self::Lower => InputInventory::NULL,
             Self::Change(_terrain) => InputInventory::Exact {
                 inventory: Inventory::new_from_item(soil_id, Self::N_ITEMS),
             },
@@ -71,7 +71,7 @@ impl TerraformingAction {
         let soil_id = Id::<Item>::from_name("soil".to_string());
 
         match self {
-            Self::Raise => OutputInventory::default(),
+            Self::Raise => OutputInventory::NULL,
             Self::Lower => OutputInventory {
                 inventory: Inventory::full_from_item(soil_id, Self::N_ITEMS),
             },

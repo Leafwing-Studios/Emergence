@@ -104,6 +104,11 @@ impl Default for InputInventory {
 }
 
 impl InputInventory {
+    /// An input inventory with no slots.
+    pub(crate) const NULL: Self = Self::Exact {
+        inventory: Inventory::NULL,
+    };
+
     /// Returns a reference the underlying [`Inventory`].
     pub fn inventory(&self) -> &Inventory {
         match self {
@@ -285,6 +290,11 @@ pub(crate) struct OutputInventory {
 }
 
 impl OutputInventory {
+    /// An output inventory with no slots.
+    pub(crate) const NULL: Self = Self {
+        inventory: Inventory::NULL,
+    };
+
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
     pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
         for item_slot in self.iter_mut() {

@@ -69,6 +69,13 @@ impl InventoryState {
 
 #[allow(dead_code)]
 impl Inventory {
+    /// An inventory with no slots.
+    pub const NULL: Inventory = Inventory {
+        reserved_for: None,
+        slots: Vec::new(),
+        max_slot_count: 0,
+    };
+
     /// Create an empty inventory with the given amount of slots.
     pub fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
         Self {
@@ -984,6 +991,46 @@ mod tests {
                 assert_eq!(
                     inventory.item_count(Id::from_name("mushroom".to_string())),
                     3
+                );
+            }
+
+            #[test]
+            fn adding_to_an_empty_inventory_should_be_fine() {
+                let mut inventory = Inventory::new(1, None);
+
+                assert_eq!(
+                    inventory.add_item_all_or_nothing(
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 1),
+                        &item_manifest()
+                    ),
+                    Ok(())
+                );
+                assert_eq!(inventory.item_count(Id::from_name("leaf".to_string())), 1);
+            }
+
+            #[test]
+            fn adding_to_an_inventory_full_of_something_else_fails() {
+                let mut inventory = Inventory::new(1, None);
+                inventory
+                    .add_item_all_or_nothing(
+                        &ItemCount::new(Id::from_name("mushroom".to_string()), 1),
+                        &item_manifest(),
+                    )
+                    .unwrap();
+
+                assert_eq!(
+                    inventory.add_item_all_or_nothing(
+                        &ItemCount::new(Id::from_name("leaf".to_string()), 1),
+                        &item_manifest()
+                    ),
+                    Err(AddOneItemError {
+                        excess_count: ItemCount::new(Id::from_name("leaf".to_string()), 1)
+                    })
+                );
+
+                assert_eq!(
+                    inventory.item_count(Id::from_name("mushroom".to_string())),
+                    1
                 );
             }
 
