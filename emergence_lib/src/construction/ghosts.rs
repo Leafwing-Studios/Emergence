@@ -403,7 +403,7 @@ pub(super) fn ghost_structure_lifecycle(
     for (
         mut crafting_state,
         input_inventory,
-        &tile_pos,
+        &center,
         &structure_id,
         &facing,
         active_recipe,
@@ -438,14 +438,18 @@ pub(super) fn ghost_structure_lifecycle(
                 }
             }
             CraftingState::RecipeComplete => {
-                commands.despawn_ghost_structure(tile_pos);
+                let structure_data = structure_manifest.get(structure_id);
+
+                for &tile_pos in structure_data.footprint.normalized(facing, center).iter() {
+                    commands.despawn_ghost_structure(tile_pos);
+                }
 
                 // Spawn the seedling form of a structure if any
                 if let ConstructionStrategy::Seedling(seedling) =
                     structure_manifest.get(structure_id).construction_strategy
                 {
                     commands.spawn_structure(
-                        tile_pos,
+                        center,
                         ClipboardData {
                             structure_id: seedling,
                             facing,
@@ -454,7 +458,7 @@ pub(super) fn ghost_structure_lifecycle(
                     );
                 } else {
                     commands.spawn_structure(
-                        tile_pos,
+                        center,
                         ClipboardData {
                             structure_id,
                             facing,
