@@ -1,7 +1,7 @@
 //! The clipboard stores selected structures, to later be placed via zoning.
 
 use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
-use hexx::{Hex, HexIterExt};
+use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
@@ -146,20 +146,20 @@ impl Tool {
         }
     }
 
-    /// Rotates the contents of the clipboard around the `center`.
+    /// Rotates the contents of the clipboard around the origin.
     ///
     /// You must ensure that the contents are normalized first.
-    fn rotate_around(&mut self, clockwise: bool) {
+    fn rotate(&mut self, clockwise: bool) {
         if let Tool::Structures(map) = self {
             let mut new_map = HashMap::with_capacity(map.capacity());
 
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
                     item.facing.rotate_clockwise();
-                    original_pos.cw_around(Hex::ZERO)
+                    original_pos.clockwise()
                 } else {
                     item.facing.rotate_counterclockwise();
-                    original_pos.ccw_around(Hex::ZERO)
+                    original_pos.counter_clockwise()
                 };
 
                 new_map.insert(TilePos { hex: new_pos }, item.clone());
@@ -276,10 +276,10 @@ fn rotate_selection(actions: Res<ActionState<PlayerAction>>, mut clipboard: ResM
     }
 
     if actions.just_pressed(PlayerAction::RotateClipboardLeft) {
-        clipboard.rotate_around(false);
+        clipboard.rotate(false);
     }
 
     if actions.just_pressed(PlayerAction::RotateClipboardRight) {
-        clipboard.rotate_around(true);
+        clipboard.rotate(true);
     }
 }
