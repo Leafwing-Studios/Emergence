@@ -117,7 +117,7 @@ impl Footprint {
     }
 
     /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
-    pub(crate) fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
+    fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
         self.set
             .iter()
             .map(|&offset| center + offset)
@@ -125,13 +125,19 @@ impl Footprint {
     }
 
     /// Rotates the footprint by the provided [`Facing`].
-    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+    fn rotated(&self, facing: Facing) -> Self {
         let mut set = HashSet::new();
         for &tile_pos in self.set.iter() {
             set.insert(tile_pos.rotated(facing));
         }
 
         Footprint { set }
+    }
+
+    /// Returns this footprint after correcting for offset and rotation.
+    pub(crate) fn normalized(&self, facing: Facing, center: TilePos) -> HashSet<TilePos> {
+        let rotated = self.rotated(facing);
+        rotated.in_world_space(center)
     }
 }
 

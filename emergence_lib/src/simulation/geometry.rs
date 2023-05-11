@@ -695,13 +695,12 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_footprint_valid(
         &self,
-        tile_pos: TilePos,
+        center: TilePos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
         footprint
-            .rotated(facing)
-            .in_world_space(tile_pos)
+            .normalized(facing, center)
             .iter()
             .all(|tile_pos| self.is_valid(*tile_pos))
     }
@@ -748,13 +747,12 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_space_available(
         &self,
-        tile_pos: TilePos,
+        center: TilePos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
         footprint
-            .rotated(facing)
-            .in_world_space(tile_pos)
+            .normalized(facing, center)
             .iter()
             .all(|tile_pos| self.get_structure(*tile_pos).is_none())
     }
@@ -771,14 +769,10 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        footprint
-            .rotated(facing)
-            .in_world_space(center)
-            .iter()
-            .all(|tile_pos| {
-                let entity = self.get_structure(*tile_pos);
-                entity.is_none() || entity == Some(existing_entity)
-            })
+        footprint.normalized(facing, center).iter().all(|tile_pos| {
+            let entity = self.get_structure(*tile_pos);
+            entity.is_none() || entity == Some(existing_entity)
+        })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
@@ -790,7 +784,7 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        let computed_footprint = footprint.rotated(facing).in_world_space(center);
+        let computed_footprint = footprint.normalized(facing, center);
         let Some(first) = computed_footprint.iter().next() else {
             return false;
         };
@@ -911,13 +905,12 @@ impl MapGeometry {
     pub(crate) fn flatten_height(
         &mut self,
         height_query: &mut Query<&mut Height>,
-        tile_pos: TilePos,
+        center: TilePos,
         footprint: &Footprint,
         facing: Facing,
     ) {
-        let Ok(target_height) = self.get_height(tile_pos) else { return };
-        let rotated_footprint = footprint.rotated(facing);
-        for tile_pos in rotated_footprint.in_world_space(tile_pos) {
+        let Ok(target_height) = self.get_height(center) else { return };
+        for tile_pos in footprint.normalized(facing, center) {
             if let Some(entity) = self.get_terrain(tile_pos) {
                 if let Ok(mut height) = height_query.get_mut(entity) {
                     *height = target_height;
@@ -1015,12 +1008,13 @@ impl MapGeometry {
     #[inline]
     pub(crate) fn add_structure(
         &mut self,
+        facing: Facing,
         center: TilePos,
         footprint: &Footprint,
         passable: bool,
         structure_entity: Entity,
     ) {
-        for tile_pos in footprint.in_world_space(center) {
+        for tile_pos in footprint.normalized(facing, center) {
             self.structure_index.insert(tile_pos, structure_entity);
             if !passable {
                 self.impassable_tiles.insert(tile_pos);
@@ -1056,11 +1050,12 @@ impl MapGeometry {
     #[inline]
     pub(crate) fn add_ghost_structure(
         &mut self,
+        facing: Facing,
         center: TilePos,
         footprint: &Footprint,
         ghost_structure_entity: Entity,
     ) {
-        for tile_pos in footprint.in_world_space(center) {
+        for tile_pos in footprint.normalized(facing, center) {
             self.ghost_structure_index
                 .insert(tile_pos, ghost_structure_entity);
         }
@@ -1131,15 +1126,14 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_free_of_water(
         &self,
-        tile_pos: TilePos,
+        center: TilePos,
         footprint: &Footprint,
         height: Height,
         facing: Facing,
         water_table: &WaterTable,
     ) -> bool {
         footprint
-            .rotated(facing)
-            .in_world_space(tile_pos)
+            .normalized(facing, center)
             .iter()
             .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= height)
     }
@@ -1376,13 +1370,14 @@ mod tests {
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
+        let facing = Facing::default();
         let center = TilePos::new(17, -2);
         let passable = false;
 
-        map_geometry.add_structure(center, &footprint, passable, structure_entity);
+        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
 
         // Check that the structure index was updated correctly
-        for tile_pos in footprint.in_world_space(center) {
+        for tile_pos in footprint.normalized(facing, center) {
             assert_eq!(Some(structure_entity), map_geometry.get_structure(tile_pos));
         }
     }
@@ -1393,14 +1388,15 @@ mod tests {
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
+        let facing = Facing::default();
         let center = TilePos::new(17, -2);
         let passable = false;
 
-        map_geometry.add_structure(center, &footprint, passable, structure_entity);
+        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
         map_geometry.remove_structure(center);
 
         // Check that the structure index was updated correctly
-        for tile_pos in footprint.in_world_space(center) {
+        for tile_pos in footprint.normalized(facing, center) {
             dbg!(tile_pos);
             assert_eq!(None, map_geometry.get_structure(tile_pos));
         }

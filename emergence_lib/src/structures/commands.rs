@@ -67,7 +67,10 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     }
 
     fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnStructureGhostCommand { tile_pos, data });
+        self.add(SpawnStructureGhostCommand {
+            center: tile_pos,
+            data,
+        });
     }
 
     fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
@@ -123,6 +126,7 @@ impl Command for SpawnStructureCommand {
             .unwrap()
             .clone_weak();
         let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
+        let facing = self.data.facing;
 
         let structure_entity = world
             .spawn(StructureBundle::new(
@@ -200,7 +204,9 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
+
         geometry.add_structure(
+            facing,
             self.tile_pos,
             &structure_data.footprint,
             structure_data.passable,
@@ -234,7 +240,7 @@ impl Command for DespawnStructureCommand {
 /// A [`Command`] used to spawn a ghost via [`StructureCommandsExt`].
 struct SpawnStructureGhostCommand {
     /// The tile position at which to spawn the structure.
-    tile_pos: TilePos,
+    center: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -246,7 +252,7 @@ impl Command for SpawnStructureGhostCommand {
         let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.tile_pos) {
+        if !geometry.is_valid(self.center) {
             return;
         }
 
@@ -256,7 +262,7 @@ impl Command for SpawnStructureGhostCommand {
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
-            self.tile_pos,
+            self.center,
             construction_footprint,
             structure_data.height,
             self.data.facing,
@@ -267,7 +273,7 @@ impl Command for SpawnStructureGhostCommand {
 
         // Remove any existing ghosts
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_existing_ghost = geometry.remove_ghost_structure(self.tile_pos);
+        let maybe_existing_ghost = geometry.remove_ghost_structure(self.center);
 
         if let Some(existing_ghost) = maybe_existing_ghost {
             world.entity_mut(existing_ghost).despawn_recursive();
@@ -289,11 +295,12 @@ impl Command for SpawnStructureGhostCommand {
         let ghostly_handle = ghost_handles.get_material(GhostKind::Ghost);
         let inherited_material = InheritedMaterial(ghostly_handle.clone_weak());
 
-        let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
+        let world_pos = self.center.top_of_tile(world.resource::<MapGeometry>());
+        let facing = self.data.facing;
 
         let ghost_entity = world
             .spawn(GhostStructureBundle::new(
-                self.tile_pos,
+                self.center,
                 self.data,
                 structure_manifest,
                 picking_mesh,
@@ -309,7 +316,7 @@ impl Command for SpawnStructureGhostCommand {
             let structure_variety = structure_manifest.get(structure_id);
             let footprint = &structure_variety.footprint;
 
-            map_geometry.add_ghost_structure(self.tile_pos, footprint, ghost_entity);
+            map_geometry.add_ghost_structure(facing, self.center, footprint, ghost_entity);
         });
     }
 }
