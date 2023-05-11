@@ -282,7 +282,9 @@ impl TilePos {
         let n_rotations = facing.rotation_count();
 
         TilePos {
-            hex: self.hex.rotate_cw(n_rotations),
+            // This must rotate counter-clockwise,
+            // as we are rotating the tile around the origin.
+            hex: self.hex.rotate_ccw(n_rotations),
         }
     }
 
@@ -1183,7 +1185,7 @@ impl Facing {
 
     /// Returns the number of clockwise 60 degree rotations needed to face this direction, starting from [`Direction::Top`].
     ///
-    /// This is intended to be paired with [`Hex::rotate_right`](hexx::Hex) to rotate a hex to face this direction.
+    /// This is intended to be paired with [`Hex::rotate_clockwise`](hexx::Hex) to rotate a hex to face this direction.
     #[inline]
     pub(crate) const fn rotation_count(&self) -> u32 {
         match self.direction {
