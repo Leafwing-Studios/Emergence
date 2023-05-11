@@ -58,6 +58,36 @@
 			"height": 0,
 			"passable": true
 		},
+		"bridge": {
+			"kind": "Path",
+			"construction_strategy": {
+				"Direct": {
+					"work": 5.0,
+					"materials": {
+						"acacia_leaf": 3
+					}
+				}
+			},
+			"max_workers": 3,
+			"passable": true,
+			"height": 0,
+			"footprint": {
+				"set": [
+					{
+						"hex": {
+							"x": 1,
+							"y": 0
+						}
+					},
+					{
+						"hex": {
+							"x": -1,
+							"y": 0
+						}
+					}
+				]
+			}
+		},
 		"acacia_seedling": {
 			"organism_variety": {
 				"prototypical_form": {
