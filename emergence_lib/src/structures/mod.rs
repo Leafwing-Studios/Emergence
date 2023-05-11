@@ -116,6 +116,11 @@ impl Footprint {
         Footprint { set }
     }
 
+    /// The number of tiles in this footprint.
+    pub fn len(&self) -> usize {
+        self.set.len()
+    }
+
     /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
     fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
         self.set

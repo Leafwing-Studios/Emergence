@@ -39,7 +39,12 @@ pub(super) struct LogisticsPlugin;
 impl Plugin for LogisticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (release_items, absorb_items, logistic_buildings_signals)
+            (
+                release_items,
+                absorb_items,
+                logistic_buildings_signals,
+                update_wormhole_index,
+            )
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),
         );
@@ -175,5 +180,28 @@ fn logistic_buildings_signals(
                 emitter.signals.push((signal_type, signal_strength));
             }
         }
+    }
+}
+
+/// Updates the list of wormhole locations.
+fn update_wormhole_index(
+    query: Query<(&TilePos, &Facing, &Id<Structure>), With<Wormhole>>,
+    structure_manifest: Res<StructureManifest>,
+    mut map_geometry: ResMut<MapGeometry>,
+) {
+    // PERF: don't rebuild the index every frame.
+    map_geometry.wormhole_index.clear();
+
+    for (&center, &facing, &structure_id) in query.iter() {
+        let structure_data = structure_manifest.get(structure_id);
+        let footprint = &structure_data.footprint;
+        assert!(footprint.len() == 2, "Wormholes must have exactly two tiles in their footprint to allow for an entrance and an exit.");
+
+        let normalized_footprint = footprint.normalized(facing, center);
+        let start = *normalized_footprint.iter().nth(0).unwrap();
+        let end = *normalized_footprint.iter().nth(1).unwrap();
+
+        map_geometry.wormhole_index.insert(start, end);
+        map_geometry.wormhole_index.insert(end, start);
     }
 }

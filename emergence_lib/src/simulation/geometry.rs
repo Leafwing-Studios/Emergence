@@ -648,6 +648,12 @@ pub struct MapGeometry {
     impassable_litter_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
+    /// Tracks any current wormholes, and their destinations.
+    ///
+    /// The key is the tile position of the wormhole's entrance.
+    /// The value is the tile position of the wormhole's exit.
+    /// This map is symmetric, so the exit tile position is also a key.
+    pub(crate) wormhole_index: HashMap<TilePos, TilePos>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -675,6 +681,7 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_structure_tiles: HashSet::default(),
             impassable_litter_tiles: HashSet::default(),
+            wormhole_index: HashMap::default(),
             height_index,
         }
     }
