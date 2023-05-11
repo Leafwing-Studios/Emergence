@@ -642,8 +642,10 @@ pub struct MapGeometry {
     ghost_structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
     ghost_terrain_index: HashMap<TilePos, Entity>,
-    /// The set of tiles that cannot be traversed by units.
-    impassable_tiles: HashSet<TilePos>,
+    /// The set of tiles that cannot be traversed by units due to structures.
+    impassable_structure_tiles: HashSet<TilePos>,
+    /// The set of tiles that cannot be traversed by units due to litter.
+    impassable_litter_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
 }
@@ -671,7 +673,8 @@ impl MapGeometry {
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
-            impassable_tiles: HashSet::default(),
+            impassable_structure_tiles: HashSet::default(),
+            impassable_litter_tiles: HashSet::default(),
             height_index,
         }
     }
@@ -727,7 +730,11 @@ impl MapGeometry {
             return false;
         }
 
-        if self.impassable_tiles.contains(&ending_pos) {
+        if self.impassable_structure_tiles.contains(&ending_pos) {
+            return false;
+        }
+
+        if self.impassable_litter_tiles.contains(&ending_pos) {
             return false;
         }
 
@@ -1012,7 +1019,7 @@ impl MapGeometry {
         for tile_pos in footprint.normalized(facing, center) {
             self.structure_index.insert(tile_pos, structure_entity);
             if !passable {
-                self.impassable_tiles.insert(tile_pos);
+                self.impassable_structure_tiles.insert(tile_pos);
             }
         }
     }
@@ -1028,7 +1035,7 @@ impl MapGeometry {
         // PERF: this could be faster, but would require a different data structure.
         if let Some(removed_entity) = removed {
             self.structure_index.retain(|_k, v| *v != removed_entity);
-            self.impassable_tiles.remove(&tile_pos);
+            self.impassable_structure_tiles.remove(&tile_pos);
         };
 
         removed
@@ -1108,10 +1115,10 @@ impl MapGeometry {
     pub(crate) fn update_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
         match litter_state {
             InventoryState::Empty | InventoryState::Partial => {
-                self.impassable_tiles.remove(&tile_pos);
+                self.impassable_litter_tiles.remove(&tile_pos);
             }
             InventoryState::Full => {
-                self.impassable_tiles.insert(tile_pos);
+                self.impassable_litter_tiles.insert(tile_pos);
             }
         }
     }
