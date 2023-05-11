@@ -106,13 +106,6 @@ impl Footprint {
         }
     }
 
-    /// A footprint that occupies a single tile and allows units to pass over it.
-    pub fn path() -> Self {
-        Self {
-            set: HashSet::from_iter(vec![TilePos::ZERO]),
-        }
-    }
-
     /// A footprint that occupies a set of tiles in a solid hexagon.
     pub fn hexagon(radius: u32) -> Self {
         let mut set = HashSet::new();

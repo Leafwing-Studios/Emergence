@@ -269,7 +269,7 @@ fn can_serialize_structure_manifest() {
                     },
                     max_workers: 1,
                     height: 0,
-                    footprint: Some(Footprint::path()),
+                    footprint: Some(Footprint::single()),
                     root_zone: None,
                     passable: true,
                 },
