@@ -69,6 +69,13 @@ impl InventoryState {
 
 #[allow(dead_code)]
 impl Inventory {
+    /// An inventory with no slots.
+    pub const NULL: Inventory = Inventory {
+        reserved_for: None,
+        slots: Vec::new(),
+        max_slot_count: 0,
+    };
+
     /// Create an empty inventory with the given amount of slots.
     pub fn new(max_slot_count: usize, reserved_for: Option<Id<Item>>) -> Self {
         Self {
