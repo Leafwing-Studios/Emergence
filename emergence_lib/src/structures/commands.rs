@@ -59,7 +59,10 @@ pub(crate) trait StructureCommandsExt {
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnStructureCommand { tile_pos, data });
+        self.add(SpawnStructureCommand {
+            center: tile_pos,
+            data,
+        });
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
@@ -78,14 +81,17 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     }
 
     fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
-        self.add(SpawnStructurePreviewCommand { tile_pos, data });
+        self.add(SpawnStructurePreviewCommand {
+            center: tile_pos,
+            data,
+        });
     }
 }
 
 /// A [`Command`] used to spawn a structure via [`StructureCommandsExt`].
 struct SpawnStructureCommand {
     /// The tile position at which to spawn the structure.
-    tile_pos: TilePos,
+    center: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -94,7 +100,7 @@ impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
         let geometry = world.resource::<MapGeometry>();
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.tile_pos) {
+        if !geometry.is_valid(self.center) {
             return;
         }
         let water_table = world.resource::<WaterTable>();
@@ -106,7 +112,7 @@ impl Command for SpawnStructureCommand {
 
         // Check that the tiles needed are appropriate.
         if !geometry.can_build(
-            self.tile_pos,
+            self.center,
             &structure_data.footprint,
             structure_data.height,
             self.data.facing,
@@ -125,12 +131,12 @@ impl Command for SpawnStructureCommand {
             .get(&structure_id)
             .unwrap()
             .clone_weak();
-        let world_pos = self.tile_pos.top_of_tile(world.resource::<MapGeometry>());
+        let world_pos = self.center.top_of_tile(world.resource::<MapGeometry>());
         let facing = self.data.facing;
 
         let structure_entity = world
             .spawn(StructureBundle::new(
-                self.tile_pos,
+                self.center,
                 self.data,
                 picking_mesh,
                 scene_handle,
@@ -207,7 +213,7 @@ impl Command for SpawnStructureCommand {
 
         geometry.add_structure(
             facing,
-            self.tile_pos,
+            self.center,
             &structure_data.footprint,
             structure_data.passable,
             structure_entity,
@@ -346,7 +352,7 @@ impl Command for DespawnGhostCommand {
 /// A [`Command`] used to spawn a preview via [`StructureCommandsExt`].
 struct SpawnStructurePreviewCommand {
     /// The tile position at which to spawn the structure.
-    tile_pos: TilePos,
+    center: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -358,13 +364,13 @@ impl Command for SpawnStructurePreviewCommand {
         let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.tile_pos) {
-            warn!("Preview position {:?} not valid.", self.tile_pos);
+        if !map_geometry.is_valid(self.center) {
+            warn!("Preview position {:?} not valid.", self.center);
             return;
         }
 
         // Compute the world position
-        let world_pos = self.tile_pos.top_of_tile(map_geometry);
+        let world_pos = self.center.top_of_tile(map_geometry);
 
         let manifest = world.resource::<StructureManifest>();
         let structure_data = manifest.get(structure_id).clone();
@@ -373,7 +379,7 @@ impl Command for SpawnStructurePreviewCommand {
 
         // Check that the tiles needed are appropriate.
         let forbidden = !geometry.can_build(
-            self.tile_pos,
+            self.center,
             &structure_data.footprint,
             structure_data.height,
             self.data.facing,
@@ -400,7 +406,7 @@ impl Command for SpawnStructurePreviewCommand {
 
         // Spawn a preview
         world.spawn(StructurePreviewBundle::new(
-            self.tile_pos,
+            self.center,
             self.data,
             scene_handle,
             inherited_material,
