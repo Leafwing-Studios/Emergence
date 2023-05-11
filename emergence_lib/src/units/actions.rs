@@ -483,8 +483,8 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::Spin { rotation_direction } => match rotation_direction {
-                    RotationDirection::Left => unit.facing.rotate_left(),
-                    RotationDirection::Right => unit.facing.rotate_right(),
+                    RotationDirection::Left => unit.facing.rotate_counterclockwise(),
+                    RotationDirection::Right => unit.facing.rotate_clockwise(),
                 },
                 UnitAction::MoveForward => {
                     let direction = unit.facing.direction;

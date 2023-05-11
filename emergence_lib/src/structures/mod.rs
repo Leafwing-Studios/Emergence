@@ -147,3 +147,196 @@ impl Footprint {
 /// Landmarks cannot be created or destroyed by players.
 #[derive(Component, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct Landmark;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A footprint that occupies a line of two adjacent tiles,
+    /// beginning at the origin and moving right one.
+    ///
+    /// This is a horizontal line, in the axial coordinate diagram shown here:
+    /// https://www.redblobgames.com/grids/hexagons/#coordinates
+    fn two_tile_footprint() -> Footprint {
+        let mut set = HashSet::new();
+        set.insert(TilePos::ZERO);
+        set.insert(TilePos::new(1, 0));
+
+        Footprint { set }
+    }
+
+    #[test]
+    fn hexagon_footprint_matches() {
+        let footprint = Footprint::hexagon(1);
+        let expected = HashSet::from_iter(vec![
+            TilePos::ZERO,
+            TilePos::new(0, 1),
+            TilePos::new(1, 0),
+            TilePos::new(1, -1),
+            TilePos::new(0, -1),
+            TilePos::new(-1, 0),
+            TilePos::new(-1, 1),
+        ]);
+
+        assert_eq!(footprint.set, expected);
+    }
+
+    #[test]
+    fn footprint_in_world_space_is_correct_at_origin() {
+        let footprint = two_tile_footprint();
+        let expected = HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(1, 0)]);
+
+        assert_eq!(footprint.in_world_space(TilePos::ZERO), expected);
+    }
+
+    #[test]
+    fn footprint_in_world_space_is_correct_at_non_origin() {
+        let footprint = two_tile_footprint();
+
+        let expected = HashSet::from_iter(vec![TilePos::new(1, 0), TilePos::new(2, 0)]);
+        assert_eq!(footprint.in_world_space(TilePos::new(1, 0)), expected);
+
+        let expected = HashSet::from_iter(vec![TilePos::new(0, 1), TilePos::new(1, 1)]);
+        assert_eq!(footprint.in_world_space(TilePos::new(0, 1)), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_0_is_unchanged() {
+        let footprint = two_tile_footprint();
+        assert_eq!(footprint.rotated(Facing::default()), footprint);
+    }
+
+    #[test]
+    fn footprint_rotated_by_60_is_correct() {
+        let footprint = two_tile_footprint();
+        let expected = Footprint {
+            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(0, 1)]),
+        };
+
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_120_is_correct() {
+        let footprint = two_tile_footprint();
+        let expected = Footprint {
+            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(-1, 1)]),
+        };
+
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_180_is_correct() {
+        let footprint = two_tile_footprint();
+        let expected = Footprint {
+            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(-1, 0)]),
+        };
+
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_240_is_correct() {
+        let footprint = two_tile_footprint();
+        let expected = Footprint {
+            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(0, -1)]),
+        };
+
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_300_is_correct() {
+        let footprint = two_tile_footprint();
+        let expected = Footprint {
+            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(1, -1)]),
+        };
+
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), expected);
+    }
+
+    #[test]
+    fn footprint_rotated_by_360_is_unchanged() {
+        let footprint = two_tile_footprint();
+        let mut facing = Facing::default();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+        facing.rotate_clockwise();
+
+        assert_eq!(footprint.rotated(facing), footprint);
+
+        let mut facing = Facing::default();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+        facing.rotate_counterclockwise();
+
+        assert_eq!(footprint.rotated(facing), footprint);
+    }
+}

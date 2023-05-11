@@ -1169,15 +1169,15 @@ impl Facing {
         Self { direction }
     }
 
-    /// Rotates this facing one 60 degree step clockwise.
+    /// Rotates this facing one 60 degree step counterclockwise.
     #[inline]
-    pub(crate) fn rotate_left(&mut self) {
+    pub(crate) fn rotate_counterclockwise(&mut self) {
         self.direction = self.direction.counter_clockwise();
     }
 
-    /// Rotates this facing one 60 degree step counterclockwise.
+    /// Rotates this facing one 60 degree step clockwise.
     #[inline]
-    pub(crate) fn rotate_right(&mut self) {
+    pub(crate) fn rotate_clockwise(&mut self) {
         self.direction = self.direction.clockwise();
     }
 

@@ -155,10 +155,10 @@ impl Tool {
 
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
-                    item.facing.rotate_right();
+                    item.facing.rotate_clockwise();
                     original_pos.cw_around(Hex::ZERO)
                 } else {
-                    item.facing.rotate_left();
+                    item.facing.rotate_counterclockwise();
                     original_pos.ccw_around(Hex::ZERO)
                 };
 
