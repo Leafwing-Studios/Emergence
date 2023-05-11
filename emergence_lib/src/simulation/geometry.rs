@@ -71,6 +71,14 @@ impl TilePos {
         hex: Hex { x: 0, y: 0 },
     };
 
+    /// An invalid tile position
+    pub const INVALID: TilePos = TilePos {
+        hex: Hex {
+            x: i32::MIN,
+            y: i32::MIN,
+        },
+    };
+
     /// Generates a new [`TilePos`] from axial coordinates.
     #[inline]
     #[must_use]
@@ -247,18 +255,34 @@ impl TilePos {
         water_table: &WaterTable,
     ) -> impl IntoIterator<Item = TilePos> {
         if !map_geometry.is_valid(*self) {
-            let null_array = [TilePos::ZERO; 6];
+            let null_array = [TilePos::ZERO; 7];
             let mut null_iter = FilteredArrayIter::from(null_array);
             null_iter.filter(|_| false);
             return null_iter;
         }
 
+        // Check to see if we're on a wormhole
+        // The current tile position is the wormhole start
+        let maybe_wormhole_end = map_geometry.wormhole_index.get(&self);
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
+        let wormhole_and_neighbors = if let Some(wormhole_end) = maybe_wormhole_end {
+            // If we are on a wormhole, we need to check the wormhole end as well
+            let mut wormhole_and_neighbors = [TilePos::ZERO; 7];
+            wormhole_and_neighbors[0] = *wormhole_end;
+            wormhole_and_neighbors[1..7].copy_from_slice(&neighbors);
+            wormhole_and_neighbors
+        } else {
+            let mut candidates = [TilePos::INVALID; 7];
+            candidates[0..6].copy_from_slice(&neighbors);
+            candidates
+        };
+
+        let mut iter = FilteredArrayIter::from(wormhole_and_neighbors);
         iter.filter(|&target_pos| {
             map_geometry.is_valid(target_pos)
                 && map_geometry.is_passable(*self, target_pos, water_table)
         });
+
         iter
     }
 
