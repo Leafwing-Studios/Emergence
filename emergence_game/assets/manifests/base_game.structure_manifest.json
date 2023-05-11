@@ -59,7 +59,7 @@
 			"passable": true
 		},
 		"bridge": {
-			"kind": "Path",
+			"kind": "Wormhole",
 			"construction_strategy": {
 				"Direct": {
 					"work": 5.0,

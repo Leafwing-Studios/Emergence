@@ -20,7 +20,7 @@ use crate::{
 };
 
 use super::{
-    logistic_buildings::{AbsorbsItems, ReleasesItems},
+    logistic_buildings::{AbsorbsItems, ReleasesItems, Wormhole},
     structure_assets::StructureHandles,
     structure_manifest::{StructureKind, StructureManifest},
     Landmark, StructureBundle,
@@ -187,6 +187,9 @@ impl Command for SpawnStructureCommand {
                 })
             }
             StructureKind::Path => {}
+            StructureKind::Wormhole => {
+                world.entity_mut(structure_entity).insert(Wormhole);
+            }
             StructureKind::Landmark => {
                 world.entity_mut(structure_entity).insert(Landmark);
             }

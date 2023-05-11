@@ -29,6 +29,10 @@ pub(crate) struct ReleasesItems;
 #[derive(Component)]
 pub(crate) struct AbsorbsItems;
 
+/// A building that transports units (and signals) between two points.
+#[derive(Component)]
+pub(crate) struct Wormhole;
+
 /// Logic that controls how items are moved around by structures.
 pub(super) struct LogisticsPlugin;
 

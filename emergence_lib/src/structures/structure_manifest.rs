@@ -135,6 +135,8 @@ pub enum StructureKind {
     Releaser,
     /// A structure that takes in items.
     Absorber,
+    /// A structure that transports units from one place to another.
+    Wormhole,
 }
 
 /// The unprocessed equivalent of [`StructureKind`].
@@ -160,6 +162,8 @@ pub enum RawStructureKind {
     Releaser,
     /// A structure that takes in items.
     Absorber,
+    /// A structure that transports units from one place to another.
+    Wormhole,
 }
 
 impl From<RawStructureKind> for StructureKind {
@@ -179,6 +183,7 @@ impl From<RawStructureKind> for StructureKind {
             RawStructureKind::Landmark => Self::Landmark,
             RawStructureKind::Releaser => Self::Releaser,
             RawStructureKind::Absorber => Self::Absorber,
+            RawStructureKind::Wormhole => Self::Wormhole,
         }
     }
 }
