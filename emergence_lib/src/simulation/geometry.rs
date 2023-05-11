@@ -777,8 +777,11 @@ impl MapGeometry {
         facing: Facing,
     ) -> bool {
         footprint.normalized(facing, center).iter().all(|tile_pos| {
-            let entity = self.get_structure(*tile_pos);
-            entity.is_none() || entity == Some(existing_entity)
+            let structure_entity = self.get_structure(*tile_pos);
+            let ghost_structure_entity = self.get_ghost_structure(*tile_pos);
+
+            (structure_entity.is_none() || structure_entity == Some(existing_entity))
+                && ghost_structure_entity.is_none()
         })
     }
 
