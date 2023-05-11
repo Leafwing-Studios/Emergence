@@ -1,9 +1,6 @@
 //! Methods to use [`Commands`] to manipulate structures.
 
-use bevy::{
-    ecs::system::Command,
-    prelude::{warn, Commands, DespawnRecursiveExt, Mut, World},
-};
+use bevy::{ecs::system::Command, prelude::*};
 
 use crate::{
     asset_management::manifest::Id,
@@ -269,8 +266,9 @@ impl Command for SpawnStructureGhostCommand {
         }
 
         let manifest = world.resource::<StructureManifest>();
-        let construction_footprint = manifest.construction_footprint(structure_id);
+        let footprint = manifest.construction_footprint(structure_id).clone();
         let structure_data = manifest.get(structure_id);
+        let facing = self.data.facing;
 
         let world_pos = structure_data
             .footprint
@@ -280,20 +278,26 @@ impl Command for SpawnStructureGhostCommand {
         // Check that the tiles needed are appropriate.
         if !map_geometry.can_build(
             self.center,
-            construction_footprint,
+            &footprint,
             structure_data.height,
-            self.data.facing,
+            facing,
             water_table,
         ) {
             return;
         }
 
         // Remove any existing ghosts
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_existing_ghost = geometry.remove_ghost_structure(self.center);
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
 
-        if let Some(existing_ghost) = maybe_existing_ghost {
-            world.entity_mut(existing_ghost).despawn_recursive();
+        let mut existing_ghosts: Vec<Entity> = Vec::new();
+        for tile_pos in footprint.normalized(facing, self.center) {
+            if let Some(ghost_entity) = map_geometry.remove_ghost_structure(tile_pos) {
+                existing_ghosts.push(ghost_entity);
+            }
+        }
+
+        for ghost_entity in existing_ghosts {
+            world.entity_mut(ghost_entity).despawn_recursive();
         }
 
         let structure_manifest = world.resource::<StructureManifest>();
