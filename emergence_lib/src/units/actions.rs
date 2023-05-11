@@ -483,8 +483,8 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::Spin { rotation_direction } => match rotation_direction {
-                    RotationDirection::Left => unit.facing.rotate_left(),
-                    RotationDirection::Right => unit.facing.rotate_right(),
+                    RotationDirection::Left => unit.facing.rotate_counterclockwise(),
+                    RotationDirection::Right => unit.facing.rotate_clockwise(),
                 },
                 UnitAction::MoveForward => {
                     let direction = unit.facing.direction;
@@ -510,6 +510,7 @@ pub(super) fn finish_actions(
                 }
                 UnitAction::Demolish { structure_entity } => {
                     if let Ok(&structure_tile_pos) = structure_query.get(*structure_entity) {
+                        // FIXME: this doesn't work for structures that don't cover the origin of their footprint
                         // TODO: this should probably take time and use work?
                         commands.despawn_structure(structure_tile_pos);
                     }
@@ -674,6 +675,24 @@ impl UnitAction {
             UnitAction::Abandon => "Abandoning held object".to_string(),
         }
     }
+
+    /// The amount of time it takes to complete this action.
+    // PERF: this needs nightly to be const
+    fn duration(&self) -> Duration {
+        let seconds = match self {
+            UnitAction::PickUp { .. } => 0.2,
+            UnitAction::DropOff { .. } => 0.2,
+            UnitAction::Abandon => 0.2,
+            UnitAction::Work { .. } => 0.1,
+            UnitAction::Demolish { .. } => 0.1,
+            UnitAction::Eat => 0.3,
+            UnitAction::Idle => 0.1,
+            UnitAction::Spin { .. } => 0.1,
+            UnitAction::MoveForward => 0.3,
+        };
+
+        Duration::from_secs_f32(seconds)
+    }
 }
 
 #[derive(Component, Clone, Debug)]
@@ -694,6 +713,16 @@ impl Default for CurrentAction {
 }
 
 impl CurrentAction {
+    /// Creates a new action with the default duration.
+    fn new(action: UnitAction) -> Self {
+        let duration = action.duration();
+        Self {
+            action,
+            timer: Timer::new(duration, TimerMode::Once),
+            just_started: true,
+        }
+    }
+
     /// Pretty formatting for this type
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let action = &self.action;
@@ -998,11 +1027,7 @@ impl CurrentAction {
 
     /// Spins 60 degrees left or right.
     pub(super) fn spin(rotation_direction: RotationDirection) -> Self {
-        CurrentAction {
-            action: UnitAction::Spin { rotation_direction },
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
-            just_started: true,
-        }
+        CurrentAction::new(UnitAction::Spin { rotation_direction })
     }
 
     /// Rotate to face the `required_direction`.
@@ -1099,8 +1124,6 @@ impl CurrentAction {
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
     ) -> Self {
-        /// The time in seconds that it takes a standard unit to walk to an adjacent tile.
-        const BASE_WALKING_DURATION: f32 = 0.5;
         /// The multiplier applied to the walking speed when walking on a path.
         // TODO: vary this based on the path type
         const PATH_MULTIPLIER: f32 = 1.5;
@@ -1114,7 +1137,7 @@ impl CurrentAction {
             terrain_manifest.get(*terrain_standing_on).walking_speed
         };
 
-        let walking_duration = BASE_WALKING_DURATION / walking_speed;
+        let walking_duration = UnitAction::MoveForward.duration().as_secs_f32() / walking_speed;
 
         if map_geometry.is_passable(current_tile, target_tile, water_table) {
             CurrentAction {
@@ -1155,11 +1178,7 @@ impl CurrentAction {
 
     /// Wait, as there is nothing to be done.
     pub(super) fn idle() -> Self {
-        CurrentAction {
-            action: UnitAction::Idle,
-            timer: Timer::from_seconds(0.1, TimerMode::Once),
-            just_started: true,
-        }
+        CurrentAction::new(UnitAction::Idle)
     }
 
     /// Picks up the `item_id` at the `output_entity`.
@@ -1173,14 +1192,10 @@ impl CurrentAction {
         let required_direction = unit_tile_pos.main_direction_to(output_tile_pos.hex);
 
         if required_direction == facing.direction {
-            CurrentAction {
-                action: UnitAction::PickUp {
-                    item_kind,
-                    output_entity,
-                },
-                timer: Timer::from_seconds(0.5, TimerMode::Once),
-                just_started: true,
-            }
+            CurrentAction::new(UnitAction::PickUp {
+                item_kind,
+                output_entity,
+            })
         } else {
             CurrentAction::spin_towards(facing, required_direction)
         }
@@ -1197,14 +1212,10 @@ impl CurrentAction {
         let required_direction = unit_tile_pos.main_direction_to(input_tile_pos.hex);
 
         if required_direction == facing.direction {
-            CurrentAction {
-                action: UnitAction::DropOff {
-                    item_kind,
-                    input_entity,
-                },
-                timer: Timer::from_seconds(0.2, TimerMode::Once),
-                just_started: true,
-            }
+            CurrentAction::new(UnitAction::DropOff {
+                item_kind,
+                input_entity,
+            })
         } else {
             CurrentAction::spin_towards(facing, required_direction)
         }
@@ -1212,29 +1223,17 @@ impl CurrentAction {
 
     /// Eats the currently held item.
     pub(super) fn eat() -> Self {
-        CurrentAction {
-            action: UnitAction::Eat,
-            timer: Timer::from_seconds(0.5, TimerMode::Once),
-            just_started: true,
-        }
+        CurrentAction::new(UnitAction::Eat)
     }
 
     /// Work at the specified structure
     pub(super) fn work(structure_entity: Entity) -> Self {
-        CurrentAction {
-            action: UnitAction::Work { structure_entity },
-            timer: Timer::from_seconds(1.0, TimerMode::Once),
-            just_started: true,
-        }
+        CurrentAction::new(UnitAction::Work { structure_entity })
     }
 
     /// Demolish the specified structure
     pub(super) fn demolish(structure_entity: Entity) -> Self {
-        CurrentAction {
-            action: UnitAction::Demolish { structure_entity },
-            timer: Timer::from_seconds(1.0, TimerMode::Once),
-            just_started: true,
-        }
+        CurrentAction::new(UnitAction::Demolish { structure_entity })
     }
 
     /// Drops the currently held item on the ground.
@@ -1259,11 +1258,7 @@ impl CurrentAction {
         if let Some(item_id) = unit_inventory.held_item {
             // TODO: scatter items around if we can't drop them
             if litter.currently_accepts(item_id, item_manifest) {
-                return CurrentAction {
-                    action: UnitAction::Abandon,
-                    timer: Timer::from_seconds(0.1, TimerMode::Once),
-                    just_started: true,
-                };
+                return CurrentAction::new(UnitAction::Abandon);
             }
         }
 

@@ -758,15 +758,12 @@ fn emit_signals(
         match maybe_structure_id {
             // Signals should be emitted from all tiles in the footprint of a structure.
             Some(structure_id) => {
-                let facing = maybe_facing.expect("Structures must have a facing");
-                let footprint = &structure_manifest
-                    .get(*structure_id)
-                    .footprint
-                    .rotated(*facing);
+                let facing = *maybe_facing.expect("Structures must have a facing");
+                let footprint = &structure_manifest.get(*structure_id).footprint;
 
                 let n_tiles = footprint.set.len();
 
-                for tile_pos in footprint.in_world_space(center) {
+                for tile_pos in footprint.normalized(facing, center) {
                     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
                     let mut modifier = *modifier_query.get(terrain_entity).unwrap();
                     let cost = modifier.cost() * delta_time / n_tiles as f32;

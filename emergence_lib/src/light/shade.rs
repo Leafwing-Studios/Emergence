@@ -96,10 +96,7 @@ pub(super) fn compute_shade(
     // Cast shade from structures to nearby tiles
     for (&center, &structure_id, &facing) in structure_query.iter() {
         let structure_data = structure_manifest.get(structure_id);
-        let tiles_in_footprint = structure_data
-            .footprint
-            .rotated(facing)
-            .in_world_space(center);
+        let tiles_in_footprint = structure_data.footprint.normalized(facing, center);
 
         for tile_pos in &tiles_in_footprint {
             for shaded_tile_pos in shaded_area(*tile_pos, &map_geometry, structure_data.height) {
