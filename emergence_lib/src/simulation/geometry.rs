@@ -790,11 +790,15 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        let height = self.get_height(center).unwrap();
+        let computed_footprint = footprint.rotated(facing).in_world_space(center);
+        let Some(first) = computed_footprint.iter().next() else {
+            return false;
+        };
+        let Ok(height) = self.get_height(*first) else {
+            return false;
+        };
 
-        footprint
-            .rotated(facing)
-            .in_world_space(center)
+        computed_footprint
             .iter()
             .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
     }
