@@ -510,6 +510,7 @@ pub(super) fn finish_actions(
                 }
                 UnitAction::Demolish { structure_entity } => {
                     if let Ok(&structure_tile_pos) = structure_query.get(*structure_entity) {
+                        // FIXME: this doesn't work for structures that don't cover the origin of their footprint
                         // TODO: this should probably take time and use work?
                         commands.despawn_structure(structure_tile_pos);
                     }
