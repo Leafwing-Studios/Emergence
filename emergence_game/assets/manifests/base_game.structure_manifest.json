@@ -126,7 +126,7 @@
 			},
 			"height": 0,
 			"max_workers": 1,
-			"passable": false
+			"passable": true
 		},
 		"leuco": {
 			"organism_variety": {
