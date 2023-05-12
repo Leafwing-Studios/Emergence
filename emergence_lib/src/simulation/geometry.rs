@@ -26,7 +26,6 @@ use crate::{
         Footprint,
     },
     units::actions::DeliveryMode,
-    water::WaterTable,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -803,18 +802,10 @@ impl MapGeometry {
     /// - there is no surface water present
     #[inline]
     #[must_use]
-    pub(crate) fn can_build(
-        &self,
-        center: TilePos,
-        footprint: &Footprint,
-        height: Height,
-        facing: Facing,
-        water_table: &WaterTable,
-    ) -> bool {
+    pub(crate) fn can_build(&self, center: TilePos, footprint: &Footprint, facing: Facing) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
-            && self.is_free_of_water(center, footprint, height, facing, water_table)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -1113,23 +1104,6 @@ impl MapGeometry {
                 self.impassable_litter_tiles.insert(tile_pos);
             }
         }
-    }
-
-    /// Are all of the tiles defined by `footprint` located at the `center` tile free of surface water?
-    #[inline]
-    #[must_use]
-    pub(crate) fn is_free_of_water(
-        &self,
-        center: TilePos,
-        footprint: &Footprint,
-        height: Height,
-        facing: Facing,
-        water_table: &WaterTable,
-    ) -> bool {
-        footprint
-            .normalized(facing, center)
-            .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= height)
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
