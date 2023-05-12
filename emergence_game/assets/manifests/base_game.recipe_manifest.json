@@ -40,7 +40,7 @@
 			},
 			"outputs": {
 				"acacia_leaf": 1,
-				"acacia_seed": 0.3
+				"acacia_seed": 0.05
 			},
 			"craft_time": 3,
 			"conditions": {
