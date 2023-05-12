@@ -48,6 +48,11 @@ impl OxygenPool {
         self.current <= Oxygen(0.)
     }
 
+    /// Is this organism full on oxygen?
+    pub(crate) fn is_full(&self) -> bool {
+        self.current >= self.max
+    }
+
     /// Should this organism be panicking?
     ///
     /// An organism panics when it is below the panic threshold.

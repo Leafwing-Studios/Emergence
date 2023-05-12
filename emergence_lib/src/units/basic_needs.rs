@@ -88,8 +88,12 @@ impl Diet {
 /// Swaps the goal to [`Goal::Breathe`] when oxygen is low
 pub(super) fn check_for_oxygen(mut unit_query: Query<(&mut Goal, &OxygenPool)>) {
     for (mut goal, oxygen) in unit_query.iter_mut() {
-        if oxygen.should_panic() {
-            *goal = Goal::Breathe;
+        if oxygen.is_full() && matches!(*goal, Goal::Breathe) {
+            *goal = Goal::Wander {
+                remaining_actions: None,
+            }
+        } else if oxygen.should_panic() {
+            goal.set_if_neq(Goal::Breathe);
         }
     }
 }
