@@ -205,3 +205,35 @@ fn update_wormhole_index(
         map_geometry.wormhole_index.insert(end, start);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::simulation::geometry::TilePos;
+
+    use super::*;
+
+    #[test]
+    fn wormhole_tiles_are_in_passable_neighbors() {
+        let mut map_geometry = MapGeometry::new(3);
+        let water_table = WaterTable::default();
+        let wormhole_a = TilePos::new(0, 3);
+        let wormhole_b = TilePos::new(0, -3);
+
+        assert!(wormhole_a.manhattan_tile_distance(wormhole_b) > 1.0);
+
+        map_geometry.wormhole_index.insert(wormhole_a, wormhole_b);
+        map_geometry.wormhole_index.insert(wormhole_b, wormhole_a);
+
+        let neighbors_a = wormhole_a
+            .passable_neighbors(&map_geometry, &water_table)
+            .into_iter()
+            .collect::<Vec<_>>();
+        let neighbors_b = wormhole_b
+            .passable_neighbors(&map_geometry, &water_table)
+            .into_iter()
+            .collect::<Vec<_>>();
+
+        assert!(neighbors_a.contains(&wormhole_b));
+        assert!(neighbors_b.contains(&wormhole_a));
+    }
+}
