@@ -11,7 +11,10 @@ use std::{
 use crate::{
     asset_management::manifest::Id,
     simulation::geometry::{Height, TilePos},
-    structures::{commands::StructureCommandsExt, structure_manifest::Structure},
+    structures::{
+        commands::StructureCommandsExt,
+        structure_manifest::{Structure, StructureManifest},
+    },
     units::unit_manifest::Unit,
     water::WaterTable,
 };
@@ -155,9 +158,10 @@ impl Pool for OxygenPool {
 pub(super) fn manage_oxygen(
     mut unit_query: Query<(Entity, &TilePos, &mut OxygenPool), With<Id<Unit>>>,
     mut structure_query: Query<
-        (&TilePos, &mut OxygenPool),
-        (With<Id<Structure>>, Without<Id<Unit>>, With<Organism>),
+        (&TilePos, &mut OxygenPool, &Id<Structure>),
+        (Without<Id<Unit>>, With<Organism>),
     >,
+    structure_manifest: Res<StructureManifest>,
     water_table: Res<WaterTable>,
     fixed_time: Res<FixedTime>,
     mut commands: Commands,
@@ -179,9 +183,11 @@ pub(super) fn manage_oxygen(
         }
     }
 
-    for (&tile_pos, mut oxygen_pool) in structure_query.iter_mut() {
+    for (&tile_pos, mut oxygen_pool, &structure_id) in structure_query.iter_mut() {
         let water_depth = water_table.surface_water_depth(tile_pos);
-        if water_depth > Height::WADING_DEPTH {
+        let structure_data = structure_manifest.get(structure_id);
+
+        if water_depth > structure_data.height {
             let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
             oxygen_pool.set_current(proposed);
 
