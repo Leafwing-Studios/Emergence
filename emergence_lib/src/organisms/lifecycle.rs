@@ -314,7 +314,7 @@ pub(super) fn sprout_seeds(
                 }
             } else {
                 // For units, just make sure the tile is empty.
-                if !map_geometry.is_passable(tile_pos, tile_pos, &water_table) {
+                if !map_geometry.is_passable(tile_pos, tile_pos) {
                     continue;
                 }
             }

@@ -269,12 +269,7 @@ impl Signals {
     }
 
     /// Diffuses signals from one cell into the next
-    pub fn diffuse(
-        &mut self,
-        map_geometry: &MapGeometry,
-        water_table: &WaterTable,
-        diffusion_fraction: f32,
-    ) {
+    pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, original_map)| {
@@ -295,9 +290,7 @@ impl Signals {
                         .out_of_bounds_neighbors(map_geometry)
                         .into_iter()
                         .count() as f32;
-                    for neighboring_tile in
-                        occupied_tile.passable_neighbors(map_geometry, water_table)
-                    {
+                    for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
                         num_neighbors += 1.0;
                         addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
@@ -795,12 +788,8 @@ fn emit_signals(
 }
 
 /// Spreads signals between tiles.
-fn diffuse_signals(
-    mut signals: ResMut<Signals>,
-    map_geometry: Res<MapGeometry>,
-    water_table: Res<WaterTable>,
-) {
-    signals.diffuse(&map_geometry, &water_table, DIFFUSION_FRACTION);
+fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>) {
+    signals.diffuse(&map_geometry, DIFFUSION_FRACTION);
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.

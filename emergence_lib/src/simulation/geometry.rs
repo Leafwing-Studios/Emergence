@@ -244,7 +244,6 @@ impl TilePos {
     pub(crate) fn passable_neighbors(
         &self,
         map_geometry: &MapGeometry,
-        water_table: &WaterTable,
     ) -> impl IntoIterator<Item = TilePos> {
         if !map_geometry.is_valid(*self) {
             let null_array = [TilePos::ZERO; 6];
@@ -256,8 +255,7 @@ impl TilePos {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&target_pos| {
-            map_geometry.is_valid(target_pos)
-                && map_geometry.is_passable(*self, target_pos, water_table)
+            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
         });
         iter
     }
@@ -716,12 +714,7 @@ impl MapGeometry {
     /// Tiles that are completely full of litter will return `false`.
     #[inline]
     #[must_use]
-    pub(crate) fn is_passable(
-        &self,
-        starting_pos: TilePos,
-        ending_pos: TilePos,
-        water_table: &WaterTable,
-    ) -> bool {
+    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -735,10 +728,6 @@ impl MapGeometry {
         }
 
         if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if water_table.surface_water_depth(ending_pos) > Height::WADING_DEPTH {
             return false;
         }
 
