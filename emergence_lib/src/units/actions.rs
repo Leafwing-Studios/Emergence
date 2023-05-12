@@ -37,6 +37,7 @@ use crate::{
         litter::Litter,
         terrain_manifest::{Terrain, TerrainManifest},
     },
+    water::WaterTable,
 };
 
 use super::{
@@ -78,6 +79,7 @@ pub(super) fn choose_actions(
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
+    water_table: Res<WaterTable>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     litter_query: Query<&Litter>,
@@ -259,6 +261,15 @@ pub(super) fn choose_actions(
                     &terrain_query,
                     &terrain_manifest,
                     &map_geometry,
+                ),
+                Goal::Breathe => CurrentAction::find_oxygen(
+                    unit_tile_pos,
+                    facing,
+                    &water_table,
+                    &terrain_query,
+                    &terrain_manifest,
+                    &map_geometry,
+                    rng,
                 ),
             }
         }
@@ -1372,6 +1383,42 @@ impl CurrentAction {
 
         // Otherwise, idle.
         CurrentAction::idle()
+    }
+
+    /// Attempts to move to shallower water.
+    fn find_oxygen(
+        current_tile: TilePos,
+        facing: &Facing,
+        water_table: &WaterTable,
+        terrain_query: &Query<&Id<Terrain>>,
+        terrain_manifest: &TerrainManifest,
+        map_geometry: &MapGeometry,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        let current_depth = water_table.surface_water_depth(current_tile);
+        let mut candidates = Vec::new();
+
+        // Find all adjacent tiles that are shallower than the current tile.
+        for adjacent_tile in current_tile.passable_neighbors(map_geometry) {
+            let adjacent_depth = water_table.surface_water_depth(adjacent_tile);
+            if adjacent_depth < current_depth {
+                candidates.push(adjacent_tile);
+            }
+        }
+
+        // Pick a random candidate.
+        if let Some(target_tile) = candidates.choose(rng) {
+            CurrentAction::move_or_spin(
+                current_tile,
+                *target_tile,
+                facing,
+                terrain_query,
+                terrain_manifest,
+                map_geometry,
+            )
+        } else {
+            CurrentAction::random_spin(rng)
+        }
     }
 }
 

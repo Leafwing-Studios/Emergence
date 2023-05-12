@@ -1,4 +1,4 @@
-//! Logic for finding and eating food when the [`EnergyPool`] is low.
+//! Logic for meeting basic needs when they are critical.
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,10 @@ use crate::{
     asset_management::manifest::Id,
     crafting::item_tags::ItemKind,
     items::item_manifest::{Item, ItemManifest},
-    organisms::energy::{Energy, EnergyPool},
+    organisms::{
+        energy::{Energy, EnergyPool},
+        oxygen::OxygenPool,
+    },
 };
 
 use super::{
@@ -79,6 +82,15 @@ impl Diet {
             item_manifest.name_of_kind(self.item_kind),
             self.energy
         )
+    }
+}
+
+/// Swaps the goal to [`Goal::Breathe`] when oxygen is low
+pub(super) fn check_for_oxygen(mut unit_query: Query<(&mut Goal, &OxygenPool)>) {
+    for (mut goal, oxygen) in unit_query.iter_mut() {
+        if oxygen.should_panic() {
+            *goal = Goal::Breathe;
+        }
     }
 }
 

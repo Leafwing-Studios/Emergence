@@ -31,8 +31,8 @@ use crate::organisms::OrganismBundle;
 
 pub(crate) mod actions;
 pub mod age;
+pub mod basic_needs;
 pub(crate) mod goals;
-pub mod hunger;
 pub(crate) mod impatience;
 pub(crate) mod item_interaction;
 pub(crate) mod unit_assets;
@@ -225,11 +225,13 @@ impl Plugin for UnitsPlugin {
                         .in_set(UnitSystem::ChooseNewAction)
                         .after(UnitSystem::Act)
                         .after(UnitSystem::ChooseGoal),
-                    hunger::check_for_hunger
+                    basic_needs::check_for_hunger
                         // Avoid a delay
                         .before(UnitSystem::ChooseNewAction)
                         // Make sure to overwrite any existing goal
                         .after(UnitSystem::ChooseGoal),
+                    // Oxygen is more important than hunger, so it should overwrite
+                    basic_needs::check_for_oxygen.after(basic_needs::check_for_hunger),
                     age::aging,
                 )
                     .in_set(SimulationSet)

@@ -27,19 +27,32 @@ use super::Organism;
 pub struct OxygenPool {
     /// The current amount of stored oxygen.
     current: Oxygen,
+    /// The point at which the organism begins to panic and seek oxygen.
+    panic_threshold: Oxygen,
     /// The maximum oxygen that can be stored.
     max: Oxygen,
 }
 
 impl OxygenPool {
     /// Construct a new full oxygen pool with a max oxygen of `max`.
-    pub fn new(max: Oxygen) -> Self {
-        OxygenPool { current: max, max }
+    pub fn new(max: Oxygen, panic_threshold: f32) -> Self {
+        OxygenPool {
+            current: max,
+            panic_threshold: panic_threshold * max,
+            max,
+        }
     }
 
     /// Is this organism out of oxygen?
     pub(crate) fn is_empty(&self) -> bool {
         self.current <= Oxygen(0.)
+    }
+
+    /// Should this organism be panicking?
+    ///
+    /// An organism panics when it is below the panic threshold.
+    pub(crate) fn should_panic(&self) -> bool {
+        self.current <= self.panic_threshold
     }
 }
 
@@ -114,11 +127,11 @@ impl Pool for OxygenPool {
     const ZERO: Oxygen = Oxygen(0.);
 
     fn new(
-        current: Self::Quantity,
-        max: Self::Quantity,
+        _current: Self::Quantity,
+        _max: Self::Quantity,
         _regen_per_second: Self::Quantity,
     ) -> Self {
-        OxygenPool { current, max }
+        unimplemented!("Cannot set regen per second for oxygen pool.")
     }
 
     fn current(&self) -> Self::Quantity {

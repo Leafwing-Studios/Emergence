@@ -58,6 +58,8 @@ pub(crate) enum Goal {
     Demolish(Id<Structure>),
     /// Attempting to feed self.
     Eat(ItemKind),
+    /// Attempting to get to oxygen.
+    Breathe,
     /// Following [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure).
     Lure,
     /// Retreating from [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel).
@@ -91,6 +93,8 @@ pub(crate) enum GoalKind {
     Repel,
     /// Trying to avoid a specific unit.
     Avoid,
+    /// Trying to get to oxygen.
+    Breathe,
 }
 
 impl From<&Goal> for GoalKind {
@@ -107,6 +111,7 @@ impl From<&Goal> for GoalKind {
             Goal::Lure => GoalKind::Lure,
             Goal::Repel => GoalKind::Repel,
             Goal::Avoid(_) => GoalKind::Avoid,
+            Goal::Breathe => GoalKind::Breathe,
         }
     }
 }
@@ -155,6 +160,7 @@ impl Goal {
             Goal::Lure => None,
             Goal::Repel => None,
             Goal::Avoid(_) => None,
+            Goal::Breathe => None,
         }
     }
 
@@ -169,6 +175,7 @@ impl Goal {
             Goal::Work(_) => Purpose::Intrinsic,
             Goal::Demolish(_) => Purpose::Intrinsic,
             Goal::Eat(_) => Purpose::Instrumental,
+            Goal::Breathe => Purpose::Instrumental,
             Goal::Lure => Purpose::Intrinsic,
             Goal::Repel => Purpose::Intrinsic,
             Goal::Avoid(_) => Purpose::Instrumental,
@@ -205,6 +212,7 @@ impl Goal {
             Goal::Lure => "Lure".to_string(),
             Goal::Repel => "Repel".to_string(),
             Goal::Avoid(unit) => format!("Avoid {}", unit_manifest.name(*unit)),
+            Goal::Breathe => "Breathe".to_string(),
         }
     }
 }

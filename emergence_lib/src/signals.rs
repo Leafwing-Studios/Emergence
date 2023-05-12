@@ -209,7 +209,10 @@ impl Signals {
         map_geometry: &MapGeometry,
     ) -> HashMap<TilePos, SignalStrength> {
         match goal {
+            // Does not follow any signal
             Goal::Wander { .. } => HashMap::new(),
+            // Follows gradient of water depth instead of signal
+            Goal::Breathe => HashMap::new(),
             Goal::Fetch(item_kind)
             | Goal::Eat(item_kind)
             | Goal::Store(item_kind)

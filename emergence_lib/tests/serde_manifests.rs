@@ -22,7 +22,7 @@ use emergence_lib::{
     },
     terrain::terrain_manifest::{RawTerrainManifest, TerrainData},
     units::{
-        hunger::RawDiet,
+        basic_needs::RawDiet,
         unit_manifest::{RawUnitData, RawUnitManifest},
         WanderingBehavior,
     },
