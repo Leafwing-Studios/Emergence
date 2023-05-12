@@ -943,8 +943,8 @@ mod unit_details {
         units::{
             actions::CurrentAction,
             age::Age,
+            basic_needs::Diet,
             goals::Goal,
-            hunger::Diet,
             impatience::ImpatiencePool,
             item_interaction::UnitInventory,
             unit_manifest::{Unit, UnitManifest},

@@ -26,7 +26,6 @@ use crate::{
         Footprint,
     },
     units::actions::DeliveryMode,
-    water::WaterTable,
 };
 
 /// A hex-based coordinate, that represents exactly one tile.
@@ -244,7 +243,6 @@ impl TilePos {
     pub(crate) fn passable_neighbors(
         &self,
         map_geometry: &MapGeometry,
-        water_table: &WaterTable,
     ) -> impl IntoIterator<Item = TilePos> {
         if !map_geometry.is_valid(*self) {
             let null_array = [TilePos::ZERO; 6];
@@ -256,8 +254,7 @@ impl TilePos {
         let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
         let mut iter = FilteredArrayIter::from(neighbors);
         iter.filter(|&target_pos| {
-            map_geometry.is_valid(target_pos)
-                && map_geometry.is_passable(*self, target_pos, water_table)
+            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
         });
         iter
     }
@@ -716,12 +713,7 @@ impl MapGeometry {
     /// Tiles that are completely full of litter will return `false`.
     #[inline]
     #[must_use]
-    pub(crate) fn is_passable(
-        &self,
-        starting_pos: TilePos,
-        ending_pos: TilePos,
-        water_table: &WaterTable,
-    ) -> bool {
+    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(starting_pos) {
             return false;
         }
@@ -735,10 +727,6 @@ impl MapGeometry {
         }
 
         if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if water_table.surface_water_depth(ending_pos) > Height::WADING_DEPTH {
             return false;
         }
 
@@ -814,18 +802,10 @@ impl MapGeometry {
     /// - there is no surface water present
     #[inline]
     #[must_use]
-    pub(crate) fn can_build(
-        &self,
-        center: TilePos,
-        footprint: &Footprint,
-        height: Height,
-        facing: Facing,
-        water_table: &WaterTable,
-    ) -> bool {
+    pub(crate) fn can_build(&self, center: TilePos, footprint: &Footprint, facing: Facing) -> bool {
         self.is_footprint_valid(center, footprint, facing)
             && self.is_terrain_flat(center, footprint, facing)
             && self.is_space_available(center, footprint, facing)
-            && self.is_free_of_water(center, footprint, height, facing, water_table)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -1124,23 +1104,6 @@ impl MapGeometry {
                 self.impassable_litter_tiles.insert(tile_pos);
             }
         }
-    }
-
-    /// Are all of the tiles defined by `footprint` located at the `center` tile free of surface water?
-    #[inline]
-    #[must_use]
-    pub(crate) fn is_free_of_water(
-        &self,
-        center: TilePos,
-        footprint: &Footprint,
-        height: Height,
-        facing: Facing,
-        water_table: &WaterTable,
-    ) -> bool {
-        footprint
-            .normalized(facing, center)
-            .iter()
-            .all(|tile_pos| water_table.surface_water_depth(*tile_pos) <= height)
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.

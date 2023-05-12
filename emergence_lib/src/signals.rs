@@ -24,7 +24,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -209,7 +209,10 @@ impl Signals {
         map_geometry: &MapGeometry,
     ) -> HashMap<TilePos, SignalStrength> {
         match goal {
+            // Does not follow any signal
             Goal::Wander { .. } => HashMap::new(),
+            // Follows gradient of water depth instead of signal
+            Goal::Breathe => HashMap::new(),
             Goal::Fetch(item_kind)
             | Goal::Eat(item_kind)
             | Goal::Store(item_kind)
@@ -269,12 +272,7 @@ impl Signals {
     }
 
     /// Diffuses signals from one cell into the next
-    pub fn diffuse(
-        &mut self,
-        map_geometry: &MapGeometry,
-        water_table: &WaterTable,
-        diffusion_fraction: f32,
-    ) {
+    pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, original_map)| {
@@ -295,9 +293,7 @@ impl Signals {
                         .out_of_bounds_neighbors(map_geometry)
                         .into_iter()
                         .count() as f32;
-                    for neighboring_tile in
-                        occupied_tile.passable_neighbors(map_geometry, water_table)
-                    {
+                    for neighboring_tile in occupied_tile.passable_neighbors(map_geometry) {
                         num_neighbors += 1.0;
                         addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
@@ -750,9 +746,13 @@ fn emit_signals(
 
     // PERF: this could be parallelized, but requires some thought due to the intent pool.
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
-        // When the water is too deep, no signals can be emitted as no units can walk there.
-        if water_table.surface_water_depth(center) > Height::WADING_DEPTH {
-            continue;
+        // When the water is too deep, disable the flooded buildings to avoid drowning units constantly
+        if let Some(structure_id) = maybe_structure_id {
+            let structure_data = structure_manifest.get(*structure_id);
+
+            if structure_data.height < water_table.surface_water_depth(center) {
+                continue;
+            }
         }
 
         match maybe_structure_id {
@@ -795,16 +795,12 @@ fn emit_signals(
 }
 
 /// Spreads signals between tiles.
-fn diffuse_signals(
-    mut signals: ResMut<Signals>,
-    map_geometry: Res<MapGeometry>,
-    water_table: Res<WaterTable>,
-) {
-    signals.diffuse(&map_geometry, &water_table, DIFFUSION_FRACTION);
+fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>) {
+    signals.diffuse(&map_geometry, DIFFUSION_FRACTION);
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.
-fn degrade_signals(mut signals: ResMut<Signals>, water_table: Res<WaterTable>) {
+fn degrade_signals(mut signals: ResMut<Signals>) {
     /// The fraction of signal that will decay at each step.
     ///
     /// Higher values lead to faster decay and improved signal responsiveness.
@@ -823,12 +819,6 @@ fn degrade_signals(mut signals: ResMut<Signals>, water_table: Res<WaterTable>) {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
 
         for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
-            // Clean up any signals that are now underwater.
-            if water_table.surface_water_depth(*tile_pos) > Height::WADING_DEPTH {
-                tiles_to_clear.push(*tile_pos);
-                continue;
-            }
-
             let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
 
             if new_strength > EPSILON_STRENGTH {

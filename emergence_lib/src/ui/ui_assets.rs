@@ -199,6 +199,7 @@ impl FromWorld for Icons<GoalKind> {
         let asset_server = world.resource::<AssetServer>();
         let mut map = HashMap::new();
 
+        // TODO: don't hardcode these
         map.insert(GoalKind::Avoid, asset_server.load("icons/goals/avoid.png"));
         map.insert(
             GoalKind::Deliver,
@@ -222,6 +223,10 @@ impl FromWorld for Icons<GoalKind> {
             asset_server.load("icons/goals/wander.png"),
         );
         map.insert(GoalKind::Work, asset_server.load("icons/goals/work.png"));
+        map.insert(
+            GoalKind::Breathe,
+            asset_server.load("icons/goals/breathe.png"),
+        );
 
         Icons { map }
     }

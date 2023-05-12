@@ -16,7 +16,6 @@ use crate::{
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{MapGeometry, TilePos},
-    water::WaterTable,
 };
 
 use super::{
@@ -100,7 +99,6 @@ impl Command for SpawnStructureCommand {
         if !geometry.is_valid(self.center) {
             return;
         }
-        let water_table = world.resource::<WaterTable>();
 
         let structure_id = self.data.structure_id;
 
@@ -108,13 +106,7 @@ impl Command for SpawnStructureCommand {
         let structure_data = manifest.get(structure_id).clone();
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(
-            self.center,
-            &structure_data.footprint,
-            structure_data.height,
-            self.data.facing,
-            water_table,
-        ) {
+        if !geometry.can_build(self.center, &structure_data.footprint, self.data.facing) {
             // Just give up if the terrain is wrong.
             return;
         }
@@ -258,7 +250,6 @@ impl Command for SpawnStructureGhostCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
-        let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.center) {
@@ -276,13 +267,7 @@ impl Command for SpawnStructureGhostCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        if !map_geometry.can_build(
-            self.center,
-            &footprint,
-            structure_data.height,
-            facing,
-            water_table,
-        ) {
+        if !map_geometry.can_build(self.center, &footprint, facing) {
             return;
         }
 
@@ -375,7 +360,6 @@ impl Command for SpawnStructurePreviewCommand {
     fn write(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
-        let water_table = world.resource::<WaterTable>();
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.center) {
@@ -395,13 +379,8 @@ impl Command for SpawnStructurePreviewCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        let forbidden = !geometry.can_build(
-            self.center,
-            &structure_data.footprint,
-            structure_data.height,
-            self.data.facing,
-            water_table,
-        );
+        let forbidden =
+            !geometry.can_build(self.center, &structure_data.footprint, self.data.facing);
 
         // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();

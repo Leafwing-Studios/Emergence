@@ -99,7 +99,7 @@ impl OrganismBundle {
             organism: Organism,
             energy_pool,
             // TODO: consider making this configurable on a per-organism basis
-            oxygen_pool: OxygenPool::new(Oxygen::STANDARD_MAX),
+            oxygen_pool: OxygenPool::new(Oxygen::STANDARD_MAX, 0.5),
             vigor_modfiier: VigorModifier::None,
             lifecycle,
         }

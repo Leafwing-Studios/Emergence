@@ -11,7 +11,10 @@ use std::{
 use crate::{
     asset_management::manifest::Id,
     simulation::geometry::{Height, TilePos},
-    structures::{commands::StructureCommandsExt, structure_manifest::Structure},
+    structures::{
+        commands::StructureCommandsExt,
+        structure_manifest::{Structure, StructureManifest},
+    },
     units::unit_manifest::Unit,
     water::WaterTable,
 };
@@ -24,19 +27,37 @@ use super::Organism;
 pub struct OxygenPool {
     /// The current amount of stored oxygen.
     current: Oxygen,
+    /// The point at which the organism begins to panic and seek oxygen.
+    panic_threshold: Oxygen,
     /// The maximum oxygen that can be stored.
     max: Oxygen,
 }
 
 impl OxygenPool {
     /// Construct a new full oxygen pool with a max oxygen of `max`.
-    pub fn new(max: Oxygen) -> Self {
-        OxygenPool { current: max, max }
+    pub fn new(max: Oxygen, panic_threshold: f32) -> Self {
+        OxygenPool {
+            current: max,
+            panic_threshold: panic_threshold * max,
+            max,
+        }
     }
 
     /// Is this organism out of oxygen?
     pub(crate) fn is_empty(&self) -> bool {
         self.current <= Oxygen(0.)
+    }
+
+    /// Is this organism full on oxygen?
+    pub(crate) fn is_full(&self) -> bool {
+        self.current >= self.max
+    }
+
+    /// Should this organism be panicking?
+    ///
+    /// An organism panics when it is below the panic threshold.
+    pub(crate) fn should_panic(&self) -> bool {
+        self.current <= self.panic_threshold
     }
 }
 
@@ -111,11 +132,11 @@ impl Pool for OxygenPool {
     const ZERO: Oxygen = Oxygen(0.);
 
     fn new(
-        current: Self::Quantity,
-        max: Self::Quantity,
+        _current: Self::Quantity,
+        _max: Self::Quantity,
         _regen_per_second: Self::Quantity,
     ) -> Self {
-        OxygenPool { current, max }
+        unimplemented!("Cannot set regen per second for oxygen pool.")
     }
 
     fn current(&self) -> Self::Quantity {
@@ -155,9 +176,10 @@ impl Pool for OxygenPool {
 pub(super) fn manage_oxygen(
     mut unit_query: Query<(Entity, &TilePos, &mut OxygenPool), With<Id<Unit>>>,
     mut structure_query: Query<
-        (&TilePos, &mut OxygenPool),
-        (With<Id<Structure>>, Without<Id<Unit>>, With<Organism>),
+        (&TilePos, &mut OxygenPool, &Id<Structure>),
+        (Without<Id<Unit>>, With<Organism>),
     >,
+    structure_manifest: Res<StructureManifest>,
     water_table: Res<WaterTable>,
     fixed_time: Res<FixedTime>,
     mut commands: Commands,
@@ -179,9 +201,11 @@ pub(super) fn manage_oxygen(
         }
     }
 
-    for (&tile_pos, mut oxygen_pool) in structure_query.iter_mut() {
+    for (&tile_pos, mut oxygen_pool, &structure_id) in structure_query.iter_mut() {
         let water_depth = water_table.surface_water_depth(tile_pos);
-        if water_depth > Height::WADING_DEPTH {
+        let structure_data = structure_manifest.get(structure_id);
+
+        if water_depth > structure_data.height {
             let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
             oxygen_pool.set_current(proposed);
 

@@ -10,10 +10,10 @@ use crate::{
     asset_management::manifest::loader::IsRawManifest,
     organisms::{OrganismVariety, RawOrganismVariety},
     simulation::time::Days,
-    units::{hunger::Diet, WanderingBehavior},
+    units::{basic_needs::Diet, WanderingBehavior},
 };
 
-use super::{hunger::RawDiet, Manifest};
+use super::{basic_needs::RawDiet, Manifest};
 
 /// The marker type for [`Id<Unit>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
