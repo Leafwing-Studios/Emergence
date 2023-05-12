@@ -743,9 +743,13 @@ fn emit_signals(
 
     // PERF: this could be parallelized, but requires some thought due to the intent pool.
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
-        // When the water is too deep, no signals can be emitted as no units can walk there.
-        if water_table.surface_water_depth(center) > Height::WADING_DEPTH {
-            continue;
+        // When the water is too deep, disable the flooded buildings to avoid drowning units constantly
+        if let Some(structure_id) = maybe_structure_id {
+            let structure_data = structure_manifest.get(*structure_id);
+
+            if structure_data.height < water_table.surface_height(center, &map_geometry) {
+                continue;
+            }
         }
 
         match maybe_structure_id {
