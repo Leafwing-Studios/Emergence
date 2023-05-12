@@ -24,7 +24,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{Facing, Height, MapGeometry, TilePos};
+use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -797,7 +797,7 @@ fn diffuse_signals(mut signals: ResMut<Signals>, map_geometry: Res<MapGeometry>)
 }
 
 /// Degrades signals, allowing them to approach an asymptotically constant level.
-fn degrade_signals(mut signals: ResMut<Signals>, water_table: Res<WaterTable>) {
+fn degrade_signals(mut signals: ResMut<Signals>) {
     /// The fraction of signal that will decay at each step.
     ///
     /// Higher values lead to faster decay and improved signal responsiveness.
@@ -816,12 +816,6 @@ fn degrade_signals(mut signals: ResMut<Signals>, water_table: Res<WaterTable>) {
         let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
 
         for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
-            // Clean up any signals that are now underwater.
-            if water_table.surface_water_depth(*tile_pos) > Height::WADING_DEPTH {
-                tiles_to_clear.push(*tile_pos);
-                continue;
-            }
-
             let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
 
             if new_strength > EPSILON_STRENGTH {
