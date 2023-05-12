@@ -7,7 +7,7 @@ pub(crate) mod infovis {
     use crate::{light::Illuminance, signals::SignalKind};
 
     /// The alpha value used for selection/hovering/other UI overlay
-    pub(crate) const OVERLAY_ALPHA: f32 = 0.5;
+    pub(crate) const OVERLAY_ALPHA: f32 = 0.7;
 
     /// The alpha value used for discretized overlays.
     ///
@@ -191,7 +191,7 @@ pub(crate) mod environment {
         hue: 202.,
         saturation: 0.7,
         lightness: 0.5,
-        alpha: 0.3,
+        alpha: 0.5,
     };
 }
 
