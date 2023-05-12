@@ -750,7 +750,7 @@ fn emit_signals(
         if let Some(structure_id) = maybe_structure_id {
             let structure_data = structure_manifest.get(*structure_id);
 
-            if structure_data.height < water_table.surface_height(center, &map_geometry) {
+            if structure_data.height < water_table.surface_water_depth(center) {
                 continue;
             }
         }
