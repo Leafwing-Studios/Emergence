@@ -430,7 +430,14 @@ impl Div<f32> for FlowVelocity {
     }
 }
 
-fn cache_water_volume() {}
+/// Records the previous water volume for each tile at the start of the tick.
+///
+/// This is later used to compute the flow velocity and rate of water flux.
+fn cache_water_volume(mut water_query: Query<(&WaterVolume, &mut PreviousWaterVolume)>) {
+    for (&water_volume, mut previous_water_volume) in water_query.iter_mut() {
+        previous_water_volume.0 = water_volume;
+    }
+}
 
 #[cfg(test)]
 mod tests {

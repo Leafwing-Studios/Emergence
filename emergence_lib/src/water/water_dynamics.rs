@@ -2,7 +2,7 @@
 
 use std::ops::Div;
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
 use derive_more::{Add, Sub};
 use serde::{Deserialize, Serialize};
 
@@ -17,11 +17,17 @@ use crate::{
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{FlowVelocity, WaterConfig, WaterDepth};
+use super::{ocean::Ocean, FlowVelocity, WaterConfig, WaterDepth, WaterVolume};
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
-    terrain_query: Query<(&TilePos, &ReceivedLight, &Id<Terrain>)>,
+    mut terrain_query: Query<(
+        &TilePos,
+        &ReceivedLight,
+        &Id<Terrain>,
+        &WaterDepth,
+        &mut WaterVolume,
+    )>,
     terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
@@ -32,19 +38,18 @@ pub(super) fn evaporation(
 
     let evaporation_rate = evaporation_per_second * elapsed_time;
 
-    for (&tile_pos, received_light, terrain_id) in terrain_query.iter() {
+    for (&tile_pos, received_light, terrain_id, water_depth, mut water_volume) in
+        terrain_query.iter_mut()
+    {
         let mut evaporation_this_tile =
             Volume(evaporation_rate * received_light.evaporation_ratio());
 
-        if matches!(
-            water_table.water_depth(tile_pos),
-            WaterDepth::Underground(..)
-        ) {
+        if matches!(water_depth, WaterDepth::Underground(..)) {
             let terrain_data = terrain_manifest.get(*terrain_id);
             evaporation_this_tile = evaporation_this_tile * terrain_data.water_evaporation_rate;
         }
 
-        water_table.remove(tile_pos, evaporation_this_tile);
+        water_volume.remove(evaporation_this_tile);
     }
 }
 
@@ -68,6 +73,7 @@ pub(super) fn precipitation(
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
     current_weather: Res<CurrentWeather>,
+    mut water_query: Query<&mut WaterVolume>,
     map_geometry: Res<MapGeometry>,
 ) {
     let precipitation_per_second =
@@ -78,8 +84,8 @@ pub(super) fn precipitation(
         precipitation_per_second * elapsed_time * current_weather.get().precipitation_rate(),
     );
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.add(tile_pos, precipitation_rate);
+    for mut water_volume in water_query.iter_mut() {
+        water_volume.add(precipitation_rate);
     }
 }
 
@@ -102,18 +108,31 @@ impl Div<f32> for SoilWaterFlowRate {
     }
 }
 
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+struct LateralFlowQuery {
+    water_volume: &'static mut WaterVolume,
+    flow_velocity: &'static mut FlowVelocity,
+    water_depth: &'static WaterDepth,
+    terrain_height: &'static Height,
+    tile_pos: &'static TilePos,
+    soil_water_flow_rate: &'static SoilWaterFlowRate,
+}
+
 /// Moves water from one tile to another, according to the relative height of the water table.
 pub fn horizontal_water_movement(
-    terrain_query: Query<&SoilWaterFlowRate>,
+    mut terrain_query: Query<LateralFlowQuery>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
+    ocean: Res<Ocean>,
 ) {
     let base_water_transfer_amount = water_config.lateral_flow_rate
         / in_game_time.seconds_per_day()
         * fixed_time.period.as_secs_f32();
 
+    // PERF: it will probably be much faster to store scratch space on components
     // Stores the total volume to be removed from each tile
     let mut addition_map = HashMap::<TilePos, Volume>::default();
     // Stores the total volume to be added to each tile
@@ -127,19 +146,19 @@ pub fn horizontal_water_movement(
         flow_direction_map.insert(tile_pos, FlowVelocity::ZERO);
     }
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        let total_available = water_table.get_volume(tile_pos);
+    for mut query_item in terrain_query.iter_mut() {
+        let total_available = query_item.water_volume.volume();
         if total_available <= Volume::ZERO {
             continue;
         }
 
         let water_to_neighbors = proposed_lateral_flow_to_neighbors(
-            tile_pos,
+            *query_item.tile_pos,
             base_water_transfer_amount,
             &water_config,
             &map_geometry,
-            &water_table,
             &terrain_query,
+            ocean.height(),
         );
 
         // Ensure that we divide the water evenly between all neighbors
@@ -156,19 +175,21 @@ pub fn horizontal_water_movement(
                 .entry(neighbor)
                 .and_modify(|v| *v += actual_water_transfer);
             removal_map
-                .entry(tile_pos)
+                .entry(*query_item.tile_pos)
                 .and_modify(|v| *v += actual_water_transfer);
 
-            let direction_to_neighbor = neighbor.main_direction_to(tile_pos.hex);
+            let direction_to_neighbor = neighbor.main_direction_to(query_item.tile_pos.hex);
 
             // This map only tracks outward flow, so we don't need to update the neighbor.
-            flow_direction_map.entry(tile_pos).and_modify(|v| {
-                *v += FlowVelocity::from_hex_direction(
-                    direction_to_neighbor,
-                    actual_water_transfer,
-                    &map_geometry,
-                )
-            });
+            flow_direction_map
+                .entry(*query_item.tile_pos)
+                .and_modify(|v| {
+                    *v += FlowVelocity::from_hex_direction(
+                        direction_to_neighbor,
+                        actual_water_transfer,
+                        &map_geometry,
+                    )
+                });
         }
     }
 
@@ -178,13 +199,14 @@ pub fn horizontal_water_movement(
         for tile_pos in map_geometry.ocean_tiles() {
             // Don't bother flowing to and from ocean tiles
             for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
-                let neighbor_tile_height =
-                    map_geometry.get_height(valid_neighbor).unwrap_or_default();
-                let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
-                // This can panic if the system runs too early, so just bail if that happened
-                let Some(neighbor_terrain_entity) = map_geometry.get_terrain(valid_neighbor) else { return };
-                let neighbor_soil_lateral_flow_ratio =
-                    *terrain_query.get(neighbor_terrain_entity).unwrap();
+                let neighbor_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
+                let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
+
+                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+                let neighbor_water_height = neighbor_query_item
+                    .water_depth
+                    .water_table_height(neighbor_tile_height);
+                let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
 
                 let proposed_water_transfer = lateral_flow(
                     base_water_transfer_amount,
@@ -192,7 +214,7 @@ pub fn horizontal_water_movement(
                     neighbor_soil_lateral_flow_ratio,
                     Height::ZERO,
                     neighbor_tile_height,
-                    water_table.ocean_height,
+                    ocean.height(),
                     neighbor_water_height,
                 );
 
@@ -206,14 +228,22 @@ pub fn horizontal_water_movement(
     }
 
     for (tile_pos, volume) in addition_map {
-        water_table.add(tile_pos, volume);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        query_item.water_volume.add(volume);
     }
 
     for (tile_pos, volume) in removal_map {
-        water_table.remove(tile_pos, volume);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        query_item.water_volume.remove(volume);
     }
 
-    water_table.flow_rate = flow_direction_map;
+    for (tile_pos, flow_velocity) in flow_direction_map {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        query_item.flow_velocity = flow_velocity;
+    }
 }
 
 /// Computes how much water should be removed from one tile to its neigbors.
@@ -226,16 +256,19 @@ fn proposed_lateral_flow_to_neighbors(
     base_water_transfer_amount: f32,
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
-    terrain_query: &Query<&SoilWaterFlowRate>,
+    mut terrain_query: &Query<LateralFlowQuery>,
+    ocean_height: Height,
 ) -> HashMap<TilePos, Volume> {
-    let water_height = water_table.get_height(tile_pos, map_geometry);
+    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+    let query_item = terrain_query.get(terrain_entity).unwrap();
+    let soil_lateral_flow_ratio = *query_item.soil_water_flow_rate;
+    let tile_height = *query_item.terrain_height;
+    let water_height = query_item.water_depth.water_table_height(tile_height);
 
     // Critically, this includes neighbors that are not valid tiles.
     // This is important because we need to be able to transfer water off the edge of the map.
     let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
-    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-    let soil_lateral_flow_ratio = *terrain_query.get(terrain_entity).unwrap();
 
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
@@ -243,26 +276,39 @@ fn proposed_lateral_flow_to_neighbors(
             continue;
         }
 
-        let neighbor_soil_lateral_flow_ratio =
+        // Neighbor is not an ocean tile
+        let proposed_water_transfer =
             if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor) {
-                *terrain_query.get(neigbor_entity).unwrap()
+                let neighbor_query_item = terrain_query.get(neigbor_entity).unwrap();
+
+                let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
+                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+
+                let neighbor_water_height = neighbor_query_item
+                    .water_depth
+                    .water_table_height(neighbor_tile_height);
+
+                lateral_flow(
+                    base_water_transfer_amount,
+                    soil_lateral_flow_ratio,
+                    neighbor_soil_lateral_flow_ratio,
+                    tile_height,
+                    neighbor_tile_height,
+                    water_height,
+                    neighbor_water_height,
+                )
+            // Neigbor is an ocean tile
             } else {
-                // If the neighbor is not a valid tile, then it is an ocean tile.
-                // This should never have soil, but if it does, let it flow like surface water.
-                SoilWaterFlowRate::SURFACE_WATER
+                lateral_flow(
+                    base_water_transfer_amount,
+                    soil_lateral_flow_ratio,
+                    SoilWaterFlowRate::SURFACE_WATER,
+                    tile_height,
+                    Height::ZERO,
+                    water_height,
+                    ocean_height,
+                )
             };
-
-        let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
-
-        let proposed_water_transfer = lateral_flow(
-            base_water_transfer_amount,
-            soil_lateral_flow_ratio,
-            neighbor_soil_lateral_flow_ratio,
-            map_geometry.get_height(tile_pos).unwrap_or_default(),
-            map_geometry.get_height(neighbor).unwrap_or_default(),
-            water_height,
-            neighbor_water_height,
-        );
 
         water_to_neighbors.insert(neighbor, proposed_water_transfer);
     }
