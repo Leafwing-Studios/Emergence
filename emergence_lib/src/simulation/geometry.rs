@@ -834,7 +834,7 @@ impl MapGeometry {
 
     /// Updates the height of the tile at `tile_pos`
     #[inline]
-    pub(crate) fn update_height(&mut self, tile_pos: TilePos, height: Height) {
+    pub fn update_height(&mut self, tile_pos: TilePos, height: Height) {
         assert!(
             self.is_valid(tile_pos),
             "Invalid tile position: {:?} with a radius of {:?}",
@@ -978,7 +978,7 @@ impl MapGeometry {
 
     /// Adds the provided `terrain_entity` to the terrain index at the provided `tile_pos`.
     #[inline]
-    pub(crate) fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
+    pub fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
         self.terrain_index.insert(tile_pos, terrain_entity);
     }
 

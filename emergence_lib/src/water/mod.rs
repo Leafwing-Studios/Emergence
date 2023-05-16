@@ -270,7 +270,7 @@ impl WaterTable {
     }
 
     /// Adds the given amount of water to the water table at the given tile.
-    pub(crate) fn add(&mut self, tile_pos: TilePos, amount: Volume) {
+    pub fn add(&mut self, tile_pos: TilePos, amount: Volume) {
         let height = self.get_volume(tile_pos);
         let new_height = height + amount;
         self.set_volume(tile_pos, new_height);
@@ -281,7 +281,7 @@ impl WaterTable {
     /// This will never return a height below zero.
     ///
     /// Returns the amount of water that was actually subtracted.
-    pub(crate) fn remove(&mut self, tile_pos: TilePos, amount: Volume) -> Volume {
+    pub fn remove(&mut self, tile_pos: TilePos, amount: Volume) -> Volume {
         let volume = self.get_volume(tile_pos);
         // We cannot take more water than there is.
         let water_drawn = amount.min(volume);
@@ -380,7 +380,7 @@ impl Display for WaterDepth {
 }
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
-fn update_water_depth(
+pub fn update_water_depth(
     mut water_table: ResMut<WaterTable>,
     map_geometry: Res<MapGeometry>,
     query: Query<&Id<Terrain>>,

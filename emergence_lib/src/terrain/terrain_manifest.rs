@@ -42,6 +42,17 @@ pub struct TerrainData {
     pub water_evaporation_rate: f32,
 }
 
+impl Default for TerrainData {
+    fn default() -> Self {
+        Self {
+            walking_speed: 1.0,
+            water_capacity: 0.2,
+            water_flow_rate: 0.1,
+            water_evaporation_rate: 0.1,
+        }
+    }
+}
+
 /// The [`TerrainManifest`] as seen in the manifest file.
 #[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
 #[uuid = "8d6b3b65-9b11-42a9-a795-f95b06653070"]
