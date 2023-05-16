@@ -16,7 +16,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
-    water::{WaterConfig, WaterTable},
+    water::WaterConfig,
 };
 
 use self::{
@@ -177,7 +177,6 @@ fn update_selection_details(
     terrain_manifest: Res<TerrainManifest>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
-    water_table: Res<WaterTable>,
     water_config: Res<WaterConfig>,
 ) {
     let mut parent_visibility = selection_panel_query.single_mut();
@@ -235,7 +234,6 @@ fn update_selection_details(
                 &terrain_manifest,
                 &unit_manifest,
                 &water_config,
-                &water_table,
             );
         }
         SelectionDetails::Terrain(details) => {
@@ -311,7 +309,6 @@ fn get_details(
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
-    water_table: Res<WaterTable>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
         CurrentSelection::GhostStructure(ghost_structure_entity) => {
@@ -384,7 +381,7 @@ fn get_details(
                     terrain_id: *terrain_query_item.terrain_id,
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
-                    depth_to_water_table: water_table.water_depth(*tile_pos),
+                    depth_to_water_table: terrain_query_item.water_depth.clone(),
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
                     signals: signals.all_signals_at_position(*tile_pos),
@@ -602,7 +599,7 @@ mod structure_details {
         structures::structure_manifest::{Structure, StructureManifest},
         terrain::terrain_manifest::TerrainManifest,
         units::unit_manifest::UnitManifest,
-        water::{emitters::WaterEmitter, WaterConfig, WaterTable},
+        water::{emitters::WaterEmitter, WaterConfig},
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -675,7 +672,6 @@ mod structure_details {
             terrain_manifest: &TerrainManifest,
             unit_manifest: &UnitManifest,
             water_config: &WaterConfig,
-            water_table: &WaterTable,
         ) -> String {
             let entity = self.entity;
             let structure_type = structure_manifest.name(self.structure_id);
@@ -738,22 +734,6 @@ Height: {height}"
                 string += &format!("\n{}", organism.display(structure_manifest, unit_manifest));
             };
 
-            if let Some(water_emitter) = &self.maybe_water_emitter {
-                let surface_water_height = water_table.surface_water_depth(self.tile_pos);
-
-                string += &format!(
-                    "\nSpring pressure: {} tiles
-Surface water pressure: {} tiles
-Current water production: {} tiles per day
-Max water production: {} tiles per day
-                ",
-                    water_emitter.pressure(),
-                    surface_water_height,
-                    water_emitter.current_water_production(surface_water_height, water_config),
-                    water_emitter.max_water_production(water_config)
-                );
-            }
-
             string
         }
     }
@@ -802,6 +782,8 @@ mod terrain_details {
         pub(super) signal_modifier: &'static SignalModifier,
         /// The vigor modifier on this tile
         pub(super) vigor_modifier: &'static VigorModifier,
+        /// The depth of water on this tile
+        pub(super) water_depth: &'static WaterDepth,
     }
 
     /// Data needed to populate [`TerraformingDetails`].

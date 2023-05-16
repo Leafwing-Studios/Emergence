@@ -37,7 +37,7 @@ use crate::{
         litter::Litter,
         terrain_manifest::{Terrain, TerrainManifest},
     },
-    water::WaterTable,
+    water::WaterDepth,
 };
 
 use super::{
@@ -79,10 +79,10 @@ pub(super) fn choose_actions(
     workplace_query: WorkplaceQuery,
     demolition_query: DemolitionQuery,
     map_geometry: Res<MapGeometry>,
-    water_table: Res<WaterTable>,
     signals: Res<Signals>,
     terrain_query: Query<&Id<Terrain>>,
     litter_query: Query<&Litter>,
+    water_depth_query: Query<&WaterDepth>,
     structure_query: Query<&Id<Structure>>,
     structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
@@ -265,7 +265,7 @@ pub(super) fn choose_actions(
                 Goal::Breathe => CurrentAction::find_oxygen(
                     unit_tile_pos,
                     facing,
-                    &water_table,
+                    &water_depth_query,
                     &terrain_query,
                     &terrain_manifest,
                     &map_geometry,
@@ -1389,18 +1389,27 @@ impl CurrentAction {
     fn find_oxygen(
         current_tile: TilePos,
         facing: &Facing,
-        water_table: &WaterTable,
+        water_depth_query: &Query<&WaterDepth>,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
         rng: &mut ThreadRng,
     ) -> Self {
-        let current_depth = water_table.surface_water_depth(current_tile);
+        let terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
+        let current_depth = water_depth_query
+            .get(terrain_entity)
+            .unwrap()
+            .surface_water_depth();
         let mut candidates = Vec::new();
 
         // Find all adjacent tiles that are shallower than the current tile.
         for adjacent_tile in current_tile.passable_neighbors(map_geometry) {
-            let adjacent_depth = water_table.surface_water_depth(adjacent_tile);
+            let adjacent_terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
+            let adjacent_depth = water_depth_query
+                .get(adjacent_terrain_entity)
+                .unwrap()
+                .surface_water_depth();
+
             if adjacent_depth < current_depth {
                 candidates.push(adjacent_tile);
             }

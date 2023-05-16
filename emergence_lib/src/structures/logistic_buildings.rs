@@ -16,7 +16,7 @@ use crate::{
         SimulationSet,
     },
     terrain::litter::Litter,
-    water::WaterTable,
+    water::WaterDepth,
 };
 
 use super::structure_manifest::{Structure, StructureManifest};
@@ -82,7 +82,7 @@ fn absorb_items(
     mut litter_query: Query<&mut Litter>,
     structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
-    water_table: Res<WaterTable>,
+    water_depth_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (&tile_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
@@ -110,7 +110,10 @@ fn absorb_items(
 
         // Only absorb floating items if the structure is tall enough.
         let structure_data = structure_manifest.get(structure_id);
-        if structure_data.height > water_table.surface_water_depth(tile_pos) {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let water_depth = water_depth_query.get(terrain_entity).unwrap();
+
+        if structure_data.height > water_depth.surface_water_depth() {
             let floating = litter.floating.clone();
             for item_slot in floating.iter() {
                 let item_count = item_slot.item_count();

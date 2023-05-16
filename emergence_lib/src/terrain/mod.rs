@@ -14,7 +14,9 @@ use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::water::water_dynamics::SoilWaterFlowRate;
-use crate::water::{SoilWaterCapacity, WaterDepth, WaterSet, WaterVolume};
+use crate::water::{
+    FlowVelocity, PreviousWaterVolume, SoilWaterCapacity, WaterDepth, WaterSet, WaterVolume,
+};
 
 use self::litter::{
     carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
@@ -91,11 +93,15 @@ struct TerrainBundle {
     shade: Shade,
     /// The amount of light currently being received by this tile.
     received_light: ReceivedLight,
-    /// The volume of water stored at this tile
+    /// The volume of water stored at this tile.
     water_volume: WaterVolume,
-    /// The depth of water at this tile
+    /// The volume of water stored at this tile the previous tick.
+    previous_water_volume: PreviousWaterVolume,
+    /// The rate and direction of water flow at this tile.
+    flow_velocity: FlowVelocity,
+    /// The depth of water at this tile.
     water_depth: WaterDepth,
-    /// The amount of water that can be stored at this tile
+    /// The amount of water that can be stored at this tile.
     water_capacity: SoilWaterCapacity,
     /// The rate at which soil water flows through this tile.
     soil_water_flow_rate: SoilWaterFlowRate,
@@ -139,6 +145,8 @@ impl TerrainBundle {
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_volume: WaterVolume::default(),
+            previous_water_volume: PreviousWaterVolume::default(),
+            flow_velocity: FlowVelocity::default(),
             water_depth: WaterDepth::default(),
             water_capacity: terrain_data.soil_water_capacity,
             soil_water_flow_rate,

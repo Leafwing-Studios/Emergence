@@ -17,11 +17,10 @@ use crate::{
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{FlowVelocity, WaterConfig, WaterDepth, WaterTable};
+use super::{FlowVelocity, WaterConfig, WaterDepth};
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
-    mut water_table: ResMut<WaterTable>,
     terrain_query: Query<(&TilePos, &ReceivedLight, &Id<Terrain>)>,
     terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
@@ -65,7 +64,6 @@ impl ReceivedLight {
 
 /// Adds water to the water table via rainfall.
 pub(super) fn precipitation(
-    mut water_table: ResMut<WaterTable>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
@@ -106,7 +104,6 @@ impl Div<f32> for SoilWaterFlowRate {
 
 /// Moves water from one tile to another, according to the relative height of the water table.
 pub fn horizontal_water_movement(
-    mut water_table: ResMut<WaterTable>,
     terrain_query: Query<&SoilWaterFlowRate>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
@@ -229,7 +226,6 @@ fn proposed_lateral_flow_to_neighbors(
     base_water_transfer_amount: f32,
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
-    water_table: &WaterTable,
     terrain_query: &Query<&SoilWaterFlowRate>,
 ) -> HashMap<TilePos, Volume> {
     let water_height = water_table.get_height(tile_pos, map_geometry);

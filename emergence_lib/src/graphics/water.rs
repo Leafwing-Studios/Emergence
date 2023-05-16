@@ -3,8 +3,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    simulation::geometry::{hexagonal_column, Height, MapGeometry},
-    water::{WaterConfig, WaterTable},
+    simulation::geometry::{hexagonal_column, Height, MapGeometry, TilePos},
+    water::{ocean::Ocean, WaterConfig, WaterDepth},
 };
 
 use super::palette::environment::WATER;
@@ -55,20 +55,21 @@ struct Water;
 
 /// Renders surface water.
 fn render_water(
-    map_geometry: Res<MapGeometry>,
-    water_table: Res<WaterTable>,
     water_handles: Res<WaterHandles>,
-    water_query: Query<Entity, With<Water>>,
+    rendered_water_query: Query<Entity, With<Water>>,
     water_config: Res<WaterConfig>,
+    water_depth_query: Query<(&TilePos, &WaterDepth)>,
+    map_geometry: Res<MapGeometry>,
+    ocean: Res<Ocean>,
     mut commands: Commands,
 ) {
     // FIXME: don't use immediate mode for this
-    for entity in water_query.iter() {
+    for entity in rendered_water_query.iter() {
         commands.entity(entity).despawn();
     }
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        let surface_water_depth = water_table.surface_water_depth(tile_pos);
+    for (tile_pos, water_depth) in water_depth_query.iter() {
+        let surface_water_depth = water_depth.surface_water_depth();
 
         if surface_water_depth > Height::ZERO {
             commands
@@ -94,7 +95,7 @@ fn render_water(
                     material: water_handles.material.clone_weak(),
                     transform: Transform {
                         translation: tile_pos.top_of_tile(&map_geometry),
-                        scale: Vec3::new(1.0, water_table.ocean_height().into_world_pos(), 1.0),
+                        scale: Vec3::new(1.0, ocean.height().into_world_pos(), 1.0),
                         ..Default::default()
                     },
                     ..Default::default()

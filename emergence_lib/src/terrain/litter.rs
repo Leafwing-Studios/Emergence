@@ -25,7 +25,7 @@ use crate::{
         logistic_buildings::AbsorbsItems,
         structure_manifest::{Structure, StructureManifest},
     },
-    water::{WaterDepth, WaterTable},
+    water::{FlowVelocity, WaterDepth},
 };
 
 /// Items that are littered without a container.
@@ -169,12 +169,11 @@ pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
 
 /// Make litter in tiles submerged by water float (and stop it from floating when there's no water).
 pub(super) fn make_litter_float(
-    mut query: Query<(&TilePos, &mut Litter)>,
-    water_table: Res<WaterTable>,
+    mut query: Query<(&TilePos, &mut Litter, &WaterDepth)>,
     item_manifest: Res<ItemManifest>,
 ) {
-    for (&tile_pos, mut litter) in query.iter_mut() {
-        if let WaterDepth::Flooded(..) = water_table.water_depth(tile_pos) {
+    for (&tile_pos, mut litter, water_depth) in query.iter_mut() {
+        if let WaterDepth::Flooded(..) = water_depth {
             // PERF: this clone is probably not needed, but it helps deal with the borrow checker
             // It's fine to iterate over a cloned list of items, because we're only moving them out of the list one at a time
             for item_on_ground in litter.on_ground.clone().iter() {
@@ -246,10 +245,18 @@ impl LitterDrift {
 
 /// Carries floating litter along with the surface water current.
 pub(super) fn carry_floating_litter_with_current(
-    mut litter_query: Query<(Entity, &TilePos, &mut Litter, &mut LitterDrift)>,
+    mut terrain_query: Query<(
+        Entity,
+        &TilePos,
+        &mut Litter,
+        &mut LitterDrift,
+        &WaterDepth,
+        &Height,
+        &FlowVelocity,
+    )>,
+    water_height_query: Query<(&Height, &WaterDepth)>,
     net_query: Query<&Id<Structure>, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
-    water_table: Res<WaterTable>,
     structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
@@ -280,21 +287,29 @@ pub(super) fn carry_floating_litter_with_current(
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
-    for (source_entity, &tile_pos, litter, mut litter_drift) in litter_query.iter_mut() {
+    for (
+        source_entity,
+        &tile_pos,
+        litter,
+        mut litter_drift,
+        water_depth,
+        &tile_height,
+        flow_velocity,
+    ) in terrain_query.iter_mut()
+    {
         // Don't cause items to drift out of overfull nets
         if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
             if let Ok(structure_id) = net_query.get(structure_entity) {
-                let surface_water_depth = water_table.surface_water_depth(tile_pos);
                 let structure_height = structure_manifest.get(*structure_id).height;
 
-                if structure_height >= surface_water_depth {
+                if structure_height >= water_depth.surface_water_depth() {
                     // If a net exists, and isn't overtopped, then don't drift items out of it
                     continue;
                 }
             }
         }
 
-        if let WaterDepth::Flooded(water_depth) = water_table.water_depth(tile_pos) {
+        if let WaterDepth::Flooded(surface_water_depth) = water_depth {
             litter_drift.timer.tick(delta_time);
 
             // Don't both computing drift if there's nothing floating
@@ -302,7 +317,6 @@ pub(super) fn carry_floating_litter_with_current(
                 continue;
             }
 
-            let flow_velocity = water_table.flow_velocity(tile_pos);
             let flow_direction = flow_velocity.direction()
                 // Truncate the noise so it never makes the litter drift more than 90 degrees off-course
                 // to prevent goods flowing upstream
@@ -314,7 +328,7 @@ pub(super) fn carry_floating_litter_with_current(
             // Water speed = volume transferred / time * tile area / water depth
             // Tile area is 1 (because we're computing on a per-tile basis), and flow_velocity is in tiles per second
             // Therefore: water speed = flow velocity / water depth
-            let water_speed = flow_velocity.magnitude().0 / water_depth.0;
+            let water_speed = flow_velocity.magnitude().0 / surface_water_depth.0;
 
             // If the litter is not already drifting, start it drifting
             if litter_drift.direction.is_none() {
@@ -329,8 +343,13 @@ pub(super) fn carry_floating_litter_with_current(
             if litter_drift.timer.finished() {
                 if let Some(direction) = litter_drift.direction {
                     let new_position = tile_pos.neighbor(direction);
-                    let source_height = water_table.surface_height(tile_pos, &map_geometry);
-                    let target_height = water_table.surface_height(new_position, &map_geometry);
+                    let source_height = water_depth.surface_height(tile_height);
+                    let target_entity = map_geometry.get_terrain(new_position).unwrap();
+
+                    let (target_tile_height, target_water_depth) =
+                        water_height_query.get(target_entity).unwrap();
+                    let target_height = target_water_depth.surface_height(*target_tile_height);
+
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
                     // Note that this is a one-way check; we don't care if the source is higher than the target
                     if target_height - source_height <= Height::MAX_STEP {
@@ -351,7 +370,7 @@ pub(super) fn carry_floating_litter_with_current(
         let Some(target_entity) = map_geometry.get_terrain(*new_position) else {
             continue;
         };
-        let [source_query_item, target_query_item] = litter_query
+        let [source_query_item, target_query_item] = terrain_query
             .get_many_mut([*source_entity, target_entity])
             .unwrap();
 

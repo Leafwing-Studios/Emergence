@@ -10,7 +10,7 @@ use emergence_lib::{
     water::{
         update_water_depth,
         water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
-        SoilWaterCapacity, WaterConfig, WaterDepth, WaterTable, WaterVolume,
+        SoilWaterCapacity, WaterConfig, WaterDepth, WaterVolume,
     },
 };
 

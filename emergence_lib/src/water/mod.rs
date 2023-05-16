@@ -7,7 +7,7 @@ use core::fmt::{Display, Formatter};
 use core::ops::{Div, Mul};
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -22,7 +22,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
 };
 
-use self::ocean::{tides, TideSettings};
+use self::ocean::{tides, Ocean, TideSettings};
 use self::{
     emitters::{add_water_emitters, produce_water_from_emitters},
     roots::draw_water_from_roots,
@@ -30,7 +30,7 @@ use self::{
 };
 
 pub mod emitters;
-mod ocean;
+pub mod ocean;
 pub mod roots;
 pub mod water_dynamics;
 
@@ -123,8 +123,8 @@ pub(crate) enum WaterSet {
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<WaterTable>()
-            .insert_resource(WaterConfig::IN_GAME);
+        app.insert_resource(WaterConfig::IN_GAME)
+            .init_resource::<Ocean>();
 
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
             schedule
@@ -170,147 +170,6 @@ impl Plugin for WaterPlugin {
                     (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
                 );
         });
-    }
-}
-
-/// The amount and height of water across the map.
-///
-/// This can be underground, at ground level, or above ground.
-/// If it is above ground, it will pool on top of the tile it is on.
-#[derive(Resource, Default, PartialEq, Clone, Debug)]
-pub struct WaterTable {
-    /// The height of the ocean.
-    ocean_height: Height,
-    /// The volume of water at each tile.
-    volume: HashMap<TilePos, Volume>,
-    /// The volume of the water at each tile last tick.
-    previous_volume: HashMap<TilePos, Volume>,
-    /// The rate and direction of lateral water flow at each tile.
-    flow_rate: HashMap<TilePos, FlowVelocity>,
-    /// The height of the water table at each tile relative to the soil surface.
-    ///
-    /// This is updated in [`update_water_depth`], and cached for both performance and plumbing reasons.
-    water_depth: HashMap<TilePos, WaterDepth>,
-}
-
-impl WaterTable {
-    /// Gets the total volume of water on the given tile.
-    pub(crate) fn get_volume(&self, tile_pos: TilePos) -> Volume {
-        self.volume.get(&tile_pos).copied().unwrap_or_default()
-    }
-
-    /// Gets the height of the water table at the given tile.
-    pub(crate) fn get_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
-
-        match self.water_depth(tile_pos) {
-            WaterDepth::Dry => Height::ZERO,
-            WaterDepth::Underground(depth) => soil_height - depth,
-            WaterDepth::Flooded(depth) => soil_height + depth,
-        }
-    }
-
-    /// Gets the [`FlowVelocity`] of water at the given tile.
-    ///
-    /// This is the outgoing flow rate of water from the tile only;
-    /// tiles that are only receiving water will have a flow rate of zero.
-    pub(crate) fn flow_velocity(&self, tile_pos: TilePos) -> FlowVelocity {
-        self.flow_rate.get(&tile_pos).cloned().unwrap_or_default()
-    }
-
-    /// Computes the height of the surface water at `tile_pos`, or the terrain height if there is no water.
-    pub(crate) fn surface_height(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Height {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
-
-        match self.water_depth(tile_pos) {
-            WaterDepth::Dry => soil_height,
-            WaterDepth::Underground(..) => soil_height,
-            WaterDepth::Flooded(depth) => soil_height + depth,
-        }
-    }
-
-    /// Computes the height of water that is above the soil at `tile_pos`.
-    pub(crate) fn surface_water_depth(&self, tile_pos: TilePos) -> Height {
-        let depth_to_water_table = self.water_depth(tile_pos);
-
-        match depth_to_water_table {
-            WaterDepth::Dry => Height::ZERO,
-            WaterDepth::Underground(..) => Height::ZERO,
-            WaterDepth::Flooded(depth) => depth,
-        }
-    }
-
-    /// Get the depth of the water table at the given tile relative to the soil surface.
-    pub(crate) fn water_depth(&self, tile_pos: TilePos) -> WaterDepth {
-        self.water_depth
-            .get(&tile_pos)
-            .copied()
-            .unwrap_or(WaterDepth::Flooded(self.ocean_height))
-    }
-
-    /// Returns the height of the ocean.
-    pub(crate) fn ocean_height(&self) -> Height {
-        self.ocean_height
-    }
-
-    /// Sets the total volume of water at the given tile.
-    pub(crate) fn set_volume(&mut self, tile_pos: TilePos, volume: Volume) {
-        self.volume.insert(tile_pos, volume);
-    }
-
-    /// Gets the difference between the volume of water that was present last tick and this tick.
-    pub(crate) fn flux(&self, tile_pos: TilePos) -> Volume {
-        self.volume.get(&tile_pos).copied().unwrap_or_default()
-            - self
-                .previous_volume
-                .get(&tile_pos)
-                .copied()
-                .unwrap_or_default()
-    }
-
-    /// Adds the given amount of water to the water table at the given tile.
-    pub fn add(&mut self, tile_pos: TilePos, amount: Volume) {
-        let height = self.get_volume(tile_pos);
-        let new_height = height + amount;
-        self.set_volume(tile_pos, new_height);
-    }
-
-    /// Subtracts the given amount of water from the water table at the given tile.
-    ///
-    /// This will never return a height below zero.
-    ///
-    /// Returns the amount of water that was actually subtracted.
-    pub fn remove(&mut self, tile_pos: TilePos, amount: Volume) -> Volume {
-        let volume = self.get_volume(tile_pos);
-        // We cannot take more water than there is.
-        let water_drawn = amount.min(volume);
-        let new_volume = volume - water_drawn;
-        self.set_volume(tile_pos, new_volume);
-        water_drawn
-    }
-
-    /// Computes the total volume of water in the water table.
-    pub(crate) fn total_water(&self) -> Volume {
-        self.volume
-            .values()
-            .copied()
-            .reduce(|a, b| a + b)
-            .unwrap_or_default()
-    }
-
-    /// Computes the average height of the water table.
-    #[allow(dead_code)]
-    pub(crate) fn average_height(&self, map_geometry: &MapGeometry) -> Height {
-        let total_water = self.total_water();
-        let total_area = map_geometry.valid_tile_positions().count() as f32;
-        (total_water / total_area).into_height()
-    }
-
-    /// Compute the average amount of water per tile.
-    pub(crate) fn average_volume(&self, map_geometry: &MapGeometry) -> Volume {
-        let total_water = self.total_water();
-        let total_area = map_geometry.valid_tile_positions().count() as f32;
-        total_water / total_area
     }
 }
 
@@ -366,6 +225,35 @@ impl WaterDepth {
             WaterDepth::Flooded(above_surface_volume.into_height())
         }
     }
+
+    /// Computes the height of the surface water, or the terrain height if there is no water.
+    pub(crate) fn surface_height(&self, terrain_height: Height) -> Height {
+        match self {
+            WaterDepth::Dry => terrain_height,
+            WaterDepth::Underground(..) => terrain_height,
+            WaterDepth::Flooded(depth) => terrain_height + *depth,
+        }
+    }
+
+    /// Computes the depth of the surface water above the soil surface.
+    ///
+    /// Returns [`Height::ZERO`] if there is no surface water.
+    pub(crate) fn surface_water_depth(&self) -> Height {
+        match self {
+            WaterDepth::Dry => Height::ZERO,
+            WaterDepth::Underground(..) => Height::ZERO,
+            WaterDepth::Flooded(depth) => *depth,
+        }
+    }
+
+    /// Computes the absolute height of the water table.
+    pub(crate) fn water_table_height(&self, terrain_height: Height) -> Height {
+        match self {
+            WaterDepth::Dry => Height::ZERO,
+            WaterDepth::Underground(depth) => terrain_height - *depth,
+            WaterDepth::Flooded(depth) => terrain_height + *depth,
+        }
+    }
 }
 
 impl Display for WaterDepth {
@@ -389,9 +277,62 @@ pub struct SoilWaterCapacity(pub f32);
 #[derive(Component, Default, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
 pub struct WaterVolume(Volume);
 
+impl WaterVolume {
+    /// Creates a new [`WaterVolume`] with the given amount of water.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given volume is negative.
+    #[must_use]
+    pub(crate) fn new(volume: Volume) -> Self {
+        assert!(volume >= Volume::ZERO);
+
+        Self(volume)
+    }
+
+    /// Adds the given amount of water to the tile.
+    pub(crate) fn add(&mut self, volume: Volume) {
+        self.0 += volume;
+    }
+
+    /// Subtracts the given amount of water from the tile.
+    ///
+    /// Returns the amount of water that was actually removed.
+    pub(crate) fn remove(&mut self, volume: Volume) -> Volume {
+        if self.0 < volume {
+            let removed = self.0;
+            self.0 = Volume::ZERO;
+            removed
+        } else {
+            self.0 -= volume;
+            volume
+        }
+    }
+
+    /// Gets the amount of water stored on this tile.
+    pub(crate) fn volume(&self) -> Volume {
+        self.0
+    }
+
+    /// Sets the amount of water stored on this tile.
+    ///
+    /// Note that in most cases, you should use `add` or `remove` instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given volume is negative.
+    pub(crate) fn set(&mut self, volume: Volume) {
+        assert!(volume >= Volume::ZERO, "Cannot set negative water volume");
+        self.0 = volume;
+    }
+}
+
+/// The water volume at this tile on the previous tick.
+#[derive(Component, Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub(crate) struct PreviousWaterVolume(pub(crate) WaterVolume);
+
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
-    mut water_table: ResMut<WaterTable>,
     mut query: Query<(
         &TilePos,
         &Height,
@@ -400,32 +341,19 @@ pub fn update_water_depth(
         &mut WaterDepth,
     )>,
 ) {
-    water_table.water_depth.clear();
-
     // Critically, the depth of tiles *outside* of the map is not updated here.
     // Instead, they are implicitly treated as the ocean depth.
     // As a result, the ocean acts as both an infinite source and sink for water.
     for (&tile_pos, &soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
         query.iter_mut()
     {
-        let new_water_depth =
+        *water_depth =
             WaterDepth::compute(water_volume.0, soil_height, relative_soil_water_capacity);
-
-        *water_depth = new_water_depth;
-
-        water_table.water_depth.insert(tile_pos, new_water_depth);
     }
 }
 
-/// Caches the previous volume of water at each tile.
-///
-/// Used for computing [`WaterTable::flux`].
-fn cache_water_volume(mut water_table: ResMut<WaterTable>) {
-    water_table.previous_volume = water_table.volume.clone();
-}
-
 /// The rate and direction of lateral water flow.
-#[derive(Debug, Default, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
+#[derive(Component, Debug, Default, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
 pub(crate) struct FlowVelocity {
     /// The x component (in world coordinates) of the flow velocity.
     x: Volume,
@@ -501,6 +429,8 @@ impl Div<f32> for FlowVelocity {
         }
     }
 }
+
+fn cache_water_volume() {}
 
 #[cfg(test)]
 mod tests {

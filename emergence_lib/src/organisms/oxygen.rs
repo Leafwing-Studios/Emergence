@@ -10,13 +10,13 @@ use std::{
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{Height, TilePos},
+    simulation::geometry::{Height, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},
     },
     units::unit_manifest::Unit,
-    water::WaterTable,
+    water::WaterDepth,
 };
 
 use super::Organism;
@@ -179,16 +179,22 @@ pub(super) fn manage_oxygen(
         (&TilePos, &mut OxygenPool, &Id<Structure>),
         (Without<Id<Unit>>, With<Organism>),
     >,
+    water_depth_query: Query<&WaterDepth>,
     structure_manifest: Res<StructureManifest>,
-    water_table: Res<WaterTable>,
     fixed_time: Res<FixedTime>,
+    map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
 
     for (entity, &tile_pos, mut oxygen_pool) in unit_query.iter_mut() {
-        let water_depth = water_table.surface_water_depth(tile_pos);
-        if water_depth > Height::WADING_DEPTH {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let surface_water_depth = water_depth_query
+            .get(terrain_entity)
+            .unwrap()
+            .surface_water_depth();
+
+        if surface_water_depth > Height::WADING_DEPTH {
             let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
             oxygen_pool.set_current(proposed);
 
@@ -202,10 +208,15 @@ pub(super) fn manage_oxygen(
     }
 
     for (&tile_pos, mut oxygen_pool, &structure_id) in structure_query.iter_mut() {
-        let water_depth = water_table.surface_water_depth(tile_pos);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let surface_water_depth = water_depth_query
+            .get(terrain_entity)
+            .unwrap()
+            .surface_water_depth();
+
         let structure_data = structure_manifest.get(structure_id);
 
-        if water_depth > structure_data.height {
+        if surface_water_depth > structure_data.height {
             let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
             oxygen_pool.set_current(proposed);
 

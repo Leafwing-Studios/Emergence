@@ -24,7 +24,7 @@ use crate::{
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
-    water::{WaterDepth, WaterTable},
+    water::{PreviousWaterVolume, WaterDepth, WaterVolume},
 };
 
 /// Systems and reources for communicating the state of the world to the player.
@@ -471,8 +471,11 @@ fn set_overlay_material(
         With<Overlay>,
     >,
     terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
+    water_depth_query: Query<&WaterDepth>,
+    water_volume_query: Query<(&WaterVolume, &PreviousWaterVolume)>,
+    terrain_height_query: Query<&Height, With<Id<Terrain>>>,
+    flow_velocity_query: Query<&FlowVelocity>,
     signals: Res<Signals>,
-    water_table: Res<WaterTable>,
     map_geometry: Res<MapGeometry>,
     tile_overlay: Res<TileOverlay>,
     fixed_time: Res<FixedTime>,
@@ -496,11 +499,17 @@ fn set_overlay_material(
                     tile_overlay.get_signal_material(signal_kind, signal_strength)
                 }),
             OverlayType::DepthToWaterTable => {
-                let depth_to_water_table = water_table.water_depth(tile_pos);
-                tile_overlay.get_water_table_material(depth_to_water_table)
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let water_depth = *water_depth_query.get(terrain_entity).unwrap();
+
+                tile_overlay.get_water_table_material(water_depth)
             }
             OverlayType::HeightOfWaterTable => {
-                let water_table_height = water_table.get_height(tile_pos, &map_geometry);
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let water_depth = *water_depth_query.get(terrain_entity).unwrap();
+                let terrain_height = *terrain_height_query.get(terrain_entity).unwrap();
+                let water_table_height = water_depth.water_table_height(terrain_height);
+
                 // FIXME: use a dedicated color ramp for this, rather than hacking it
                 // We subtract here to ensure that blue == wet and red == dry
                 let inverted_height = WaterDepth::Underground(
@@ -510,13 +519,18 @@ fn set_overlay_material(
                 tile_overlay.get_water_table_material(inverted_height)
             }
             OverlayType::VelocityOfWaterTable => {
-                let flow_velocity = water_table.flow_velocity(tile_pos);
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let flow_velocity = *flow_velocity_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_flow_velocity_material(flow_velocity)
             }
             OverlayType::NetWater => {
-                let net_water = water_table.flux(tile_pos);
-                let volume_per_second = net_water / fixed_time.period.as_secs_f32();
+                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let (current_water_volume, previous_water_volume) =
+                    water_volume_query.get(terrain_entity).unwrap();
+
+                let net_water = *current_water_volume - previous_water_volume.0;
+                let volume_per_second = net_water.volume() / fixed_time.period.as_secs_f32();
 
                 Some(tile_overlay.get_water_flux_material(volume_per_second))
             }
@@ -787,15 +801,16 @@ fn spawn_overlay_entities(
 /// Overlays should be positioned just above the water surface when it exists, and just above the terrain when it doesn't.
 fn set_overlay_height(
     mut overlay_query: Query<(&TilePos, &mut Transform), With<Overlay>>,
-    water_table: Res<WaterTable>,
+    terrain_query: Query<(&WaterDepth, &Height)>,
     map_geometry: Res<MapGeometry>,
 ) {
     let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
 
     for (&tile_pos, mut transform) in overlay_query.iter_mut() {
-        let terrain_height = map_geometry.get_height(tile_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let (&water_depth, &terrain_height) = terrain_query.get(terrain_entity).unwrap();
 
-        let desired_height = match water_table.water_depth(tile_pos) {
+        let desired_height = match water_depth {
             WaterDepth::Dry | WaterDepth::Underground(_) => terrain_height + topper_thickness,
             WaterDepth::Flooded(surface_water_depth) => terrain_height + surface_water_depth,
         };

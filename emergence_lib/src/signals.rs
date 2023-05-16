@@ -12,7 +12,7 @@ use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
 use crate::units::unit_manifest::{Unit, UnitManifest};
-use crate::water::WaterTable;
+use crate::water::WaterDepth;
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use derive_more::Display;
@@ -724,7 +724,7 @@ fn emit_signals(
     structure_manifest: Res<StructureManifest>,
     mut intent_pool: ResMut<IntentPool>,
     fixed_time: Res<FixedTime>,
-    water_table: Res<WaterTable>,
+    terrain_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
     let delta_time = fixed_time.period.as_secs_f32();
@@ -749,8 +749,10 @@ fn emit_signals(
         // When the water is too deep, disable the flooded buildings to avoid drowning units constantly
         if let Some(structure_id) = maybe_structure_id {
             let structure_data = structure_manifest.get(*structure_id);
+            let terrain_entity = map_geometry.get_terrain(center).unwrap();
+            let water_depth = terrain_query.get(terrain_entity).unwrap();
 
-            if structure_data.height < water_table.surface_water_depth(center) {
+            if structure_data.height < water_depth.surface_water_depth() {
                 continue;
             }
         }

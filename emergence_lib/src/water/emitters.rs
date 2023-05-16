@@ -4,34 +4,36 @@ use bevy::prelude::*;
 
 use crate::{
     simulation::{
-        geometry::{Height, TilePos, Volume},
+        geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
     },
     structures::Landmark,
 };
 
-use super::{WaterConfig, WaterTable};
+use super::{WaterConfig, WaterDepth, WaterVolume};
 
 // FIXME: not all landmarks should produce water
 /// Creates water from each emitter.
 pub(super) fn produce_water_from_emitters(
     water_config: Res<WaterConfig>,
     query: Query<(&WaterEmitter, &TilePos)>,
-    mut water_table: ResMut<WaterTable>,
+    mut terrain_query: Query<(&mut WaterVolume, &WaterDepth)>,
+    map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
 ) {
     let elapsed_time = fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day();
 
     for (water_emitter, &tile_pos) in query.iter() {
-        let surface_water_depth = water_table.surface_water_depth(tile_pos);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let (mut water_volume, water_depth) = terrain_query.get_mut(terrain_entity).unwrap();
 
         // Use a seperate scaling factor for the water production rate,
         // so then we can tweak the water production rate without affecting the max depth.
         let produced_water = water_emitter
-            .current_water_production(surface_water_depth, &water_config)
+            .current_water_production(water_depth.surface_water_depth(), &water_config)
             * elapsed_time;
-        water_table.add(tile_pos, produced_water);
+        water_volume.add(produced_water);
     }
 }
 
