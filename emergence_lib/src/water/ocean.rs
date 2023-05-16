@@ -11,13 +11,13 @@ use super::{WaterConfig, WaterTable};
 
 /// Controls the dynamics of [`tides`].
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(super) struct TideSettings {
+pub struct TideSettings {
     /// The amplitude of the tide.
-    pub(super) amplitude: Height,
+    pub amplitude: Height,
     /// The period of the tide.
-    pub(super) period: Days,
+    pub period: Days,
     /// The minimum water level of the ocean
-    pub(super) minimum: Height,
+    pub minimum: Height,
 }
 
 /// Controls the ebb and flow of the tides, raising and lowering the ocean level.

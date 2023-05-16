@@ -82,7 +82,7 @@ pub(super) fn precipitation(
 }
 
 /// Moves water from one tile to another, according to the relative height of the water table.
-pub(super) fn horizontal_water_movement(
+pub fn horizontal_water_movement(
     mut water_table: ResMut<WaterTable>,
     terrain_query: Query<&Id<Terrain>>,
     terrain_manifest: Res<TerrainManifest>,
