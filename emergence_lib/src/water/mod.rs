@@ -32,23 +32,23 @@ use self::{
 pub mod emitters;
 mod ocean;
 pub mod roots;
-mod water_dynamics;
+pub mod water_dynamics;
 
 /// Controls the key parameters of water movement and behavior.
 ///
 /// Note that soil properties are stored seperately for each soil type in [`TerrainData`](crate::terrain::terrain_manifest::TerrainData).
 #[derive(Resource, Debug, Clone, Copy)]
-pub(crate) struct WaterConfig {
+pub struct WaterConfig {
     /// The rate of evaporation per day from each tile.
-    evaporation_rate: Height,
+    pub evaporation_rate: Height,
     /// The rate of precipitation per day on each tile.
-    precipitation_rate: Height,
+    pub precipitation_rate: Height,
     /// The amount of water that is deposited per day on the tile of each water emitter.
-    emission_rate: Volume,
+    pub emission_rate: Volume,
     /// The amount of water that emitters can be covered with before they stop producing.
-    emission_pressure: Height,
+    pub emission_pressure: Height,
     /// The number of water items produced for each full tile of water.
-    water_items_per_tile: f32,
+    pub water_items_per_tile: f32,
     /// The rate at which water moves horizontally.
     ///
     /// The units are cubic tiles per day per tile of height difference.
@@ -56,16 +56,16 @@ pub(crate) struct WaterConfig {
     /// # Warning
     ///
     /// If this value becomes too large, the simulation may become unstable, with water alternating between fully flooded and fully dry tiles.
-    lateral_flow_rate: f32,
+    pub lateral_flow_rate: f32,
     /// Are oceans enabled?
-    pub(crate) enable_oceans: bool,
+    pub enable_oceans: bool,
     /// Controls the behavior of the tides.
-    tide_settings: TideSettings,
+    pub tide_settings: TideSettings,
 }
 
 impl WaterConfig {
     /// The default configuration for in-game water behavior.
-    const IN_GAME: Self = Self {
+    pub const IN_GAME: Self = Self {
         evaporation_rate: Height(2.0),
         precipitation_rate: Height(2.0),
         emission_rate: Volume(1e4),
@@ -81,8 +81,7 @@ impl WaterConfig {
     };
 
     /// A configuration that disables all water behavior.
-    #[allow(dead_code)]
-    const NULL: Self = Self {
+    pub const NULL: Self = Self {
         evaporation_rate: Height(0.0),
         precipitation_rate: Height(0.0),
         emission_rate: Volume(0.0),
