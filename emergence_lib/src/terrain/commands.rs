@@ -21,7 +21,7 @@ use crate::{
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
 
-use super::TerrainBundle;
+use super::{terrain_manifest::TerrainManifest, TerrainBundle};
 
 /// An extension trait for [`Commands`] for working with terrain.
 pub(crate) trait TerrainCommandsExt {
@@ -136,6 +136,7 @@ impl Command for SpawnTerrainCommand {
 
         // Drop the borrow so the borrow checker is happy
         let map_geometry = world.resource::<MapGeometry>();
+        let terrain_manifest = world.resource::<TerrainManifest>();
 
         // Spawn the terrain entity
         let terrain_entity = world
@@ -144,6 +145,7 @@ impl Command for SpawnTerrainCommand {
                 self.tile_pos,
                 scene_handle,
                 mesh,
+                terrain_manifest,
                 map_geometry,
             ))
             .id();

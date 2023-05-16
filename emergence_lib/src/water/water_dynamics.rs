@@ -1,6 +1,10 @@
 //! Systems that control the movement of water.
 
+use std::ops::Div;
+
 use bevy::{prelude::*, utils::HashMap};
+use derive_more::{Add, Sub};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
@@ -81,11 +85,29 @@ pub(super) fn precipitation(
     }
 }
 
+/// The relative rate at which water flows between soil of this type.
+///
+/// This should be less than 1.0, as 1.0 is the rate at which surface water flows.
+#[derive(Component, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
+pub struct SoilWaterFlowRate(pub f32);
+
+impl SoilWaterFlowRate {
+    /// The value of this coefficient for water that is above the surface of the soil.
+    const SURFACE_WATER: SoilWaterFlowRate = SoilWaterFlowRate(1.0);
+}
+
+impl Div<f32> for SoilWaterFlowRate {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        SoilWaterFlowRate(self.0 / rhs)
+    }
+}
+
 /// Moves water from one tile to another, according to the relative height of the water table.
 pub fn horizontal_water_movement(
     mut water_table: ResMut<WaterTable>,
-    terrain_query: Query<&Id<Terrain>>,
-    terrain_manifest: Res<TerrainManifest>,
+    terrain_query: Query<&SoilWaterFlowRate>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
@@ -121,7 +143,6 @@ pub fn horizontal_water_movement(
             &map_geometry,
             &water_table,
             &terrain_query,
-            &terrain_manifest,
         );
 
         // Ensure that we divide the water evenly between all neighbors
@@ -165,13 +186,12 @@ pub fn horizontal_water_movement(
                 let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
                 // This can panic if the system runs too early, so just bail if that happened
                 let Some(neighbor_terrain_entity) = map_geometry.get_terrain(valid_neighbor) else { return };
-                let neighbor_terrain_id = *terrain_query.get(neighbor_terrain_entity).unwrap();
                 let neighbor_soil_lateral_flow_ratio =
-                    terrain_manifest.get(neighbor_terrain_id).water_flow_rate;
+                    *terrain_query.get(neighbor_terrain_entity).unwrap();
 
                 let proposed_water_transfer = lateral_flow(
                     base_water_transfer_amount,
-                    1.0,
+                    SoilWaterFlowRate(1.0),
                     neighbor_soil_lateral_flow_ratio,
                     Height::ZERO,
                     neighbor_tile_height,
@@ -210,8 +230,7 @@ fn proposed_lateral_flow_to_neighbors(
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
     water_table: &WaterTable,
-    terrain_query: &Query<&Id<Terrain>>,
-    terrain_manifest: &TerrainManifest,
+    terrain_query: &Query<&SoilWaterFlowRate>,
 ) -> HashMap<TilePos, Volume> {
     let water_height = water_table.get_height(tile_pos, map_geometry);
 
@@ -220,8 +239,7 @@ fn proposed_lateral_flow_to_neighbors(
     let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-    let terrain_id = *terrain_query.get(terrain_entity).unwrap();
-    let soil_lateral_flow_ratio = terrain_manifest.get(terrain_id).water_flow_rate;
+    let soil_lateral_flow_ratio = *terrain_query.get(terrain_entity).unwrap();
 
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
@@ -231,12 +249,11 @@ fn proposed_lateral_flow_to_neighbors(
 
         let neighbor_soil_lateral_flow_ratio =
             if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor) {
-                let neighbor_id = *terrain_query.get(neigbor_entity).unwrap();
-                terrain_manifest.get(neighbor_id).water_flow_rate
+                *terrain_query.get(neigbor_entity).unwrap()
             } else {
                 // If the neighbor is not a valid tile, then it is an ocean tile.
                 // This should never have soil, but if it does, let it flow like surface water.
-                1.0
+                SoilWaterFlowRate::SURFACE_WATER
             };
 
         let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
@@ -262,8 +279,8 @@ fn proposed_lateral_flow_to_neighbors(
 #[must_use]
 fn lateral_flow(
     base_water_transfer_amount: f32,
-    soil_lateral_flow_ratio: f32,
-    neighbor_soil_lateral_flow_ratio: f32,
+    soil_lateral_flow_ratio: SoilWaterFlowRate,
+    neighbor_soil_lateral_flow_ratio: SoilWaterFlowRate,
     tile_height: Height,
     neighbor_tile_height: Height,
     water_height: Height,
@@ -292,11 +309,12 @@ fn lateral_flow(
 
     // Water flows more easily between tiles that are both flooded.
     let medium_coefficient = match (surface_water_present, neighbor_surface_water_present) {
-        (true, true) => 1.,
+        (true, true) => SoilWaterFlowRate::SURFACE_WATER,
         (false, false) => (soil_lateral_flow_ratio + neighbor_soil_lateral_flow_ratio) / 2.,
-        (true, false) => (1. + soil_lateral_flow_ratio) / 2.,
-        (false, true) => (1. + neighbor_soil_lateral_flow_ratio) / 2.,
-    };
+        (true, false) => (SoilWaterFlowRate::SURFACE_WATER + soil_lateral_flow_ratio) / 2.,
+        (false, true) => (SoilWaterFlowRate::SURFACE_WATER + neighbor_soil_lateral_flow_ratio) / 2.,
+    }
+    .0;
 
     let proposed_amount = Volume::from_height(
         delta_water_height * medium_coefficient * base_water_transfer_amount / 2.,
@@ -381,7 +399,7 @@ mod tests {
             TerrainData {
                 walking_speed: 1.0,
                 water_capacity: 0.5,
-                water_flow_rate: 0.3,
+                soil_water_flow_rate: SoilWaterFlowRate(0.3),
                 water_evaporation_rate: 0.4,
             },
         );
@@ -884,7 +902,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_moves_water_from_high_to_low() {
-        let soil_lateral_flow_ratio = 0.7;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.7);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -905,7 +923,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_from_low_to_high() {
-        let soil_lateral_flow_ratio = 0.3;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.3);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -922,7 +940,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_at_equal_heights() {
-        let soil_lateral_flow_ratio = 0.4;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.4);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -942,7 +960,7 @@ mod tests {
         let water_height = Height(2.0);
         let neighbor_water_height = Height(1.0);
         // This must be less than 1.0 for the test to be valid
-        let soil_lateral_flow_ratio = 0.5;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.5);
 
         let surface_water_flow = lateral_flow(
             1.0,
@@ -1003,7 +1021,7 @@ mod tests {
 
     #[test]
     fn lateral_water_flows_faster_with_larger_height_difference() {
-        let soil_lateral_flow_ratio = 0.1;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.1);
 
         let small_height_difference = lateral_flow(
             1.0,
@@ -1036,7 +1054,7 @@ mod tests {
     #[test]
     fn lateral_flow_eventually_equalizes_height_differences() {
         let base_water_transfer_amount = 0.1;
-        let soil_lateral_flow_ratio = 0.1;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.1);
 
         let mut water_height_a = Height(2.0);
         let mut water_height_b = Height(1.0);
@@ -1103,7 +1121,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_should_not_result_in_higher_neighbor() {
-        let soil_lateral_flow_ratio = 1.0;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(1.0);
 
         // This is a very high transfer rate, to ensure that the water transfer is maximized
         let base_water_transfer_amount = 1e10;

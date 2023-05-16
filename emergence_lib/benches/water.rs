@@ -10,7 +10,9 @@ use emergence_lib::{
     },
     terrain::terrain_manifest::{Terrain, TerrainData, TerrainManifest},
     water::{
-        update_water_depth, water_dynamics::horizontal_water_movement, WaterConfig, WaterTable,
+        update_water_depth,
+        water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
+        WaterConfig, WaterTable,
     },
 };
 
@@ -50,8 +52,12 @@ fn criterion_benchmark(c: &mut Criterion) {
         let volume_per_tile = Volume(20.);
         let terrain_string = if tile_pos.y % 2 == 0 { &porous } else { &dense };
         let terrain_id = Id::<Terrain>::from_name(terrain_string.clone());
+        let soil_water_flow_rate = SoilWaterFlowRate(0.1);
 
-        let terrain_entity = app.world.spawn((tile_pos, height, terrain_id)).id();
+        let terrain_entity = app
+            .world
+            .spawn((tile_pos, height, terrain_id, soil_water_flow_rate))
+            .id();
 
         map_geometry.update_height(tile_pos, height);
         map_geometry.add_terrain(tile_pos, terrain_entity);
