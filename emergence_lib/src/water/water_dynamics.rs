@@ -341,7 +341,7 @@ mod tests {
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
     use crate::terrain::terrain_manifest::TerrainData;
-    use crate::water::WaterPlugin;
+    use crate::water::{SoilWaterCapacity, WaterPlugin};
 
     use super::*;
     use crate::structures::Landmark;
@@ -398,7 +398,7 @@ mod tests {
             "test".to_string(),
             TerrainData {
                 walking_speed: 1.0,
-                water_capacity: 0.5,
+                soil_water_capacity: SoilWaterCapacity(0.5),
                 soil_water_flow_rate: SoilWaterFlowRate(0.3),
                 water_evaporation_rate: 0.4,
             },

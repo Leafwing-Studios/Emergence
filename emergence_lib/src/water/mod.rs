@@ -9,9 +9,9 @@ use std::f32::consts::PI;
 
 use bevy::{prelude::*, utils::HashMap};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
 use crate::simulation::time::Days;
-use crate::terrain::terrain_manifest::{Terrain, TerrainManifest};
 use crate::{
     asset_management::manifest::Id,
     items::item_manifest::{Item, ItemManifest},
@@ -323,8 +323,8 @@ impl Id<Item> {
 }
 
 /// The depth of the water table at a given tile relative to the soil surface.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub(crate) enum WaterDepth {
+#[derive(Component, Debug, Clone, Copy, PartialEq, Default)]
+pub enum WaterDepth {
     /// The water table is completely empty.
     #[default]
     Dry,
@@ -345,19 +345,19 @@ impl WaterDepth {
     fn compute(
         water_volume: Volume,
         soil_height: Height,
-        relative_soil_water_capacity: f32,
+        relative_soil_water_capacity: SoilWaterCapacity,
     ) -> WaterDepth {
         if water_volume == Volume::ZERO {
             return WaterDepth::Dry;
         }
 
         let max_volume_stored_by_soil =
-            Volume::from_height(soil_height * relative_soil_water_capacity);
+            Volume::from_height(soil_height * relative_soil_water_capacity.0);
 
         if max_volume_stored_by_soil >= water_volume {
             // If the soil water capacity is low, then we will need more height to store the same volume of water.
             let height_of_water_stored_by_soil =
-                water_volume.into_height() / relative_soil_water_capacity;
+                water_volume.into_height() / relative_soil_water_capacity.0;
 
             let depth = soil_height - height_of_water_stored_by_soil;
             WaterDepth::Underground(depth)
@@ -378,33 +378,32 @@ impl Display for WaterDepth {
     }
 }
 
+/// The relative volume of water that can be stored in the soil.
+///
+/// This is relative to water above the soil, which has a value of 1.0.
+/// As a result, this value is always between 0.0 and 1.0.
+#[derive(Component, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
+pub struct SoilWaterCapacity(pub f32);
+
+/// The amount of water stored on this terrain tile.
+#[derive(Component, Default, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
+pub struct WaterVolume(Volume);
+
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
     mut water_table: ResMut<WaterTable>,
-    map_geometry: Res<MapGeometry>,
-    query: Query<&Id<Terrain>>,
-    terrain_manifest: Res<TerrainManifest>,
+    mut query: Query<(&Height, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
 ) {
     water_table.water_depth.clear();
 
     // Critically, the depth of tiles *outside* of the map is not updated here.
     // Instead, they are implicitly treated as the ocean depth.
     // As a result, the ocean acts as both an infinite source and sink for water.
-    for tile_pos in map_geometry.valid_tile_positions() {
-        let soil_height = map_geometry.get_height(tile_pos).unwrap_or_default();
-        let water_volume = water_table.get_volume(tile_pos);
-        let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) else {
-            continue;
-        };
-
-        let terrain_id = *query.get(terrain_entity).unwrap();
-
-        let relative_soil_water_capacity = terrain_manifest.get(terrain_id).water_capacity;
-
-        let water_depth =
-            WaterDepth::compute(water_volume, soil_height, relative_soil_water_capacity);
-
-        water_table.water_depth.insert(tile_pos, water_depth);
+    for (&soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
+        query.iter_mut()
+    {
+        *water_depth =
+            WaterDepth::compute(water_volume.0, soil_height, relative_soil_water_capacity);
     }
 }
 
@@ -499,31 +498,45 @@ mod tests {
 
     #[test]
     fn water_depth_returns_dry_when_volume_is_zero() {
-        let water_depth = WaterDepth::compute(Volume::ZERO, Height::ZERO, 0.5);
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height::ZERO, SoilWaterCapacity(0.5));
 
         assert_eq!(water_depth, WaterDepth::Dry);
 
-        let water_depth = WaterDepth::compute(Volume::ZERO, Height(1.0), 0.5);
+        let water_depth = WaterDepth::compute(Volume::ZERO, Height(1.0), SoilWaterCapacity(0.5));
         assert_eq!(water_depth, WaterDepth::Dry);
     }
 
     #[test]
     fn water_depth_returns_underground_when_volume_is_less_than_soil_capacity() {
-        let water_depth: WaterDepth =
-            WaterDepth::compute(Volume::from_height(Height(0.1)), Height(1.0), 0.5);
+        let water_depth: WaterDepth = WaterDepth::compute(
+            Volume::from_height(Height(0.1)),
+            Height(1.0),
+            SoilWaterCapacity(0.5),
+        );
         assert_eq!(water_depth, WaterDepth::Underground(Height(0.8)));
 
-        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.5)), Height(1.0), 0.5);
+        let water_depth = WaterDepth::compute(
+            Volume::from_height(Height(0.5)),
+            Height(1.0),
+            SoilWaterCapacity(0.5),
+        );
         assert_eq!(water_depth, WaterDepth::Underground(Height(0.0)));
     }
 
     #[test]
     fn water_depth_returns_flooded_when_volume_is_greater_than_soil_capacity() {
-        let water_depth: WaterDepth =
-            WaterDepth::compute(Volume::from_height(Height(1.0)), Height(1.0), 0.5);
+        let water_depth: WaterDepth = WaterDepth::compute(
+            Volume::from_height(Height(1.0)),
+            Height(1.0),
+            SoilWaterCapacity(0.5),
+        );
         assert_eq!(water_depth, WaterDepth::Flooded(Height(0.5)));
 
-        let water_depth = WaterDepth::compute(Volume::from_height(Height(0.7)), Height(1.0), 0.0);
+        let water_depth = WaterDepth::compute(
+            Volume::from_height(Height(0.7)),
+            Height(1.0),
+            SoilWaterCapacity(0.5),
+        );
         assert_eq!(water_depth, WaterDepth::Flooded(Height(0.7)));
     }
 }

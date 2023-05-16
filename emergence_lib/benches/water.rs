@@ -3,16 +3,14 @@ use std::time::Duration;
 use bevy::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::{
-    asset_management::manifest::Id,
     simulation::{
         geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
     },
-    terrain::terrain_manifest::{Terrain, TerrainData, TerrainManifest},
     water::{
         update_water_depth,
         water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
-        WaterConfig, WaterTable,
+        SoilWaterCapacity, WaterConfig, WaterDepth, WaterTable, WaterVolume,
     },
 };
 
@@ -23,25 +21,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let mut map_geometry = MapGeometry::new(MAP_RADIUS);
     let mut water_table = WaterTable::default();
-    let mut terrain_manifest = TerrainManifest::default();
-    let porous = "porous".to_string();
-    let dense = "dense".to_string();
-
-    terrain_manifest.insert(
-        porous.clone(),
-        TerrainData {
-            water_capacity: 0.8,
-            ..Default::default()
-        },
-    );
-
-    terrain_manifest.insert(
-        dense.clone(),
-        TerrainData {
-            water_capacity: 0.2,
-            ..Default::default()
-        },
-    );
 
     for tile_pos in map_geometry
         .valid_tile_positions()
@@ -50,13 +29,19 @@ fn criterion_benchmark(c: &mut Criterion) {
         // Make sure we cover a range of heights
         let height = Height(tile_pos.x.max(0) as f32);
         let volume_per_tile = Volume(20.);
-        let terrain_string = if tile_pos.y % 2 == 0 { &porous } else { &dense };
-        let terrain_id = Id::<Terrain>::from_name(terrain_string.clone());
         let soil_water_flow_rate = SoilWaterFlowRate(0.1);
+        let soil_water_capacity = SoilWaterCapacity(0.5);
 
         let terrain_entity = app
             .world
-            .spawn((tile_pos, height, terrain_id, soil_water_flow_rate))
+            .spawn((
+                tile_pos,
+                height,
+                WaterVolume::default(),
+                WaterDepth::default(),
+                soil_water_flow_rate,
+                soil_water_capacity,
+            ))
             .id();
 
         map_geometry.update_height(tile_pos, height);
@@ -66,7 +51,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     app.insert_resource(map_geometry);
     app.insert_resource(water_table);
-    app.insert_resource(terrain_manifest);
     app.insert_resource(WaterConfig::IN_GAME);
     app.insert_resource(InGameTime::default());
     app.insert_resource(FixedTime::new(Duration::from_secs_f32(1. / 30.)));
