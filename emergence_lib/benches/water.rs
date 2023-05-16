@@ -39,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         .collect::<Vec<TilePos>>()
     {
         // Make sure we cover a range of heights
-        let height = Height(tile_pos.x as f32);
+        let height = Height(tile_pos.x.max(0) as f32);
         let volume_per_tile = Volume(20.);
         let terrain_string = if tile_pos.y % 2 == 0 { &porous } else { &dense };
         let terrain_id = Id::<Terrain>::from_name(terrain_string.clone());
