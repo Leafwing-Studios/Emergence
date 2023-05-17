@@ -185,6 +185,7 @@ impl Id<Item> {
 /// The components needed to track the water table.
 ///
 /// These are stored on terrain tile entities.
+/// To fully compute basic water dynamics, you also need the [`TilePos`](crate::simulation::geometry::TilePos) and [`Height`] components.
 #[derive(Bundle, Debug, Default)]
 pub struct WaterBundle {
     /// The volume of water stored at this tile.
@@ -300,10 +301,15 @@ impl Default for SoilWaterCapacity {
 }
 
 /// The amount of water stored on this terrain tile.
-#[derive(Component, Default, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
+#[derive(
+    Component, Default, Clone, Copy, Debug, Add, Sub, PartialEq, PartialOrd, Serialize, Deserialize,
+)]
 pub struct WaterVolume(Volume);
 
 impl WaterVolume {
+    /// Represents no water.
+    pub const ZERO: Self = Self(Volume::ZERO);
+
     /// Creates a new [`WaterVolume`] with the given amount of water.
     ///
     /// # Panics

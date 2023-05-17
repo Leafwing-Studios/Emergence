@@ -381,7 +381,7 @@ mod tests {
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
-    use crate::water::{SoilWaterCapacity, WaterPlugin};
+    use crate::water::{SoilWaterCapacity, WaterBundle, WaterPlugin};
 
     use super::*;
     use crate::structures::Landmark;
@@ -427,12 +427,21 @@ mod tests {
             .valid_tile_positions()
             .collect::<Vec<TilePos>>()
         {
+            let height = map_geometry.get_height(tile_pos).unwrap();
+            let water_volume = scenario
+                .water_table_strategy
+                .starting_water_volume(tile_pos, &map_geometry);
+
             let terrain_entity = app
                 .world
                 .spawn((
-                    Id::<Terrain>::from_name("test".to_string()),
                     tile_pos,
+                    height,
                     ReceivedLight::default(),
+                    WaterBundle {
+                        water_volume,
+                        ..Default::default()
+                    },
                 ))
                 .id();
             map_geometry.add_terrain(tile_pos, terrain_entity)
@@ -467,8 +476,12 @@ mod tests {
     }
 
     impl WaterTableStrategy {
-        fn starting_water_volume(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Volume {
-            match self {
+        fn starting_water_volume(
+            &self,
+            tile_pos: TilePos,
+            map_geometry: &MapGeometry,
+        ) -> WaterVolume {
+            let volume = match self {
                 WaterTableStrategy::Dry => Volume(0.),
                 WaterTableStrategy::DepthHalf => Volume(0.5),
                 WaterTableStrategy::DepthOne => Volume(1.),
@@ -478,7 +491,9 @@ mod tests {
                 WaterTableStrategy::Flooded => {
                     Volume::from_height(map_geometry.get_height(tile_pos).unwrap() + Height(1.))
                 }
-            }
+            };
+
+            WaterVolume::new(volume)
         }
     }
 
@@ -538,44 +553,12 @@ mod tests {
     }
 
     #[test]
-    fn water_table_arithmetic() {
-        let tile_pos = TilePos::new(0, 0);
-        water_table.set_volume(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(1.0));
-
-        water_table.add(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(2.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(1.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(0.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(0.0));
-    }
-
-    #[test]
-    fn water_testing_applies_water_dynamics() {
-        let scenario = Scenario {
-            map_size: MapSize::Tiny,
-            map_shape: MapShape::Flat,
-            water_table_strategy: WaterTableStrategy::DepthOne,
-            water_config: WaterConfig::IN_GAME,
-            weather: Weather::Cloudy,
-            simulated_duration: Duration::from_secs(1),
-        };
-
-        let mut app = water_testing_app(scenario);
-
-        app.update();
-
-        assert!(
-            water_table != &initial_water_table,
-            "Water table was not updated in {:?}",
-            scenario
-        );
+    fn volume_arithmetic() {
+        let volume = Volume(1.0);
+        assert_eq!(volume + Volume(1.0), Volume(2.0));
+        assert_eq!(volume - Volume(1.0), Volume(0.0));
+        assert_eq!(volume * 2.0, Volume(2.0));
+        assert_eq!(volume / 2.0, Volume(0.5));
     }
 
     #[test]
@@ -598,27 +581,27 @@ mod tests {
                     let mut app = water_testing_app(scenario);
                     app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
+                    let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
                     let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.volume.keys() {
+                    for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                         if water_table_strategy.starting_water_volume(tile_pos, &map_geometry)
-                            > Volume::ZERO
+                            > WaterVolume::ZERO
                         {
                             assert!(
-                                water_table.get_volume(tile_pos) < water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_volume < water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?} in {:?}",
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 tile_pos,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 scenario
                             );
                         } else {
                             assert_eq!(
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is not equal to the starting water level of {:?} in {:?}",
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 tile_pos,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 scenario
@@ -650,14 +633,14 @@ mod tests {
                     let mut app = water_testing_app(scenario);
                     app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
+                    let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
                     let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.volume.keys() {
+                    for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                         assert!(
-                            water_table.get_volume(tile_pos) > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
-                            water_table.get_volume(tile_pos),
+                            water_volume,
                             tile_pos,
                             water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             scenario
@@ -687,26 +670,39 @@ mod tests {
                 };
 
                 let mut app = water_testing_app(scenario);
-                let initial_water = water_table.total_water();
+
+                let mut water_volume_query = app.world.query::<&WaterVolume>();
+                let mut starting_total_water: Volume = Volume::ZERO;
+
+                for water_volume in water_volume_query.iter(&app.world) {
+                    starting_total_water += water_volume.volume();
+                }
 
                 app.update();
 
-                let map_geometry = app.world.resource::<MapGeometry>();
-                let final_water = water_table.total_water();
+                let mut water_volume_query = app.world.query::<&WaterVolume>();
+                let mut final_total_water: Volume = Volume::ZERO;
+
+                for water_volume in water_volume_query.iter(&app.world) {
+                    final_total_water += water_volume.volume();
+                }
 
                 assert!(
-                    final_water > initial_water,
+                    final_total_water > starting_total_water,
                     "Water level {:?} is not greater than the initial water level of {:?} in {:?}",
-                    final_water,
-                    initial_water,
+                    final_total_water,
+                    starting_total_water,
                     scenario
                 );
 
-                for &tile_pos in water_table.volume.keys() {
+                let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
+                let map_geometry = app.world.resource::<MapGeometry>();
+
+                for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                     assert!(
-                            water_table.get_volume(tile_pos) > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than or equal to the starting water level of {:?} in {:?}",
-                            water_table.get_volume(tile_pos),
+                            water_volume,
                             tile_pos,
                             water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             scenario
@@ -731,24 +727,35 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        water_table.add(TilePos::ZERO, Volume(1.0));
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(1.));
 
         app.update();
 
-        let map_geometry = app.world.resource::<MapGeometry>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut total_water_height = Height::ZERO;
 
-        let average_water_height = water_table.average_height(map_geometry);
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_height);
+        }
 
-        for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos, map_geometry);
+        let average_water_height =
+            total_water_height / water_depth_query.iter(&app.world).len() as f32;
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_height);
+
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
-                The water table is {:?}",
+                "Water level {:?} is not equal to the average water level of {:?}",
                 height,
-                tile_pos,
                 average_water_height,
-                water_table
             )
         }
     }
@@ -768,26 +775,35 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        let mut water_table = app.world.resource_mut::<WaterTable>();
-        water_table.remove(TilePos::ZERO, Volume(1.0));
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(0.));
 
         app.update();
 
-        let water_table = app.world.resource::<WaterTable>();
-        let map_geometry = app.world.resource::<MapGeometry>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut total_water_height = Height::ZERO;
 
-        let average_water_height = water_table.average_height(map_geometry);
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_height);
+        }
 
-        for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos, map_geometry);
+        let average_water_height =
+            total_water_height / water_depth_query.iter(&app.world).len() as f32;
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_height);
+
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
-                The water table is {:?}",
+                "Water level {:?} is not equal to the average water level of {:?}",
                 height,
-                tile_pos,
                 average_water_height,
-                water_table
             )
         }
     }
@@ -807,11 +823,22 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
 
                     assert!(
                         final_total_water == starting_total_water,
@@ -843,11 +870,23 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
+
                     let water_difference = final_total_water.abs_diff(starting_total_water);
 
                     assert!(
@@ -880,16 +919,29 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let water_difference = final_total_water.abs_diff(starting_total_water);
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
+
+                    let water_difference = starting_total_water.abs_diff(final_total_water);
 
                     assert!(
                         water_difference < EPSILON,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
-                        starting_total_water,
+                        final_total_water,
                         scenario
                     );
                 }
