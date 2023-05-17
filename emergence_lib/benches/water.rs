@@ -10,7 +10,7 @@ use emergence_lib::{
     water::{
         update_water_depth,
         water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
-        SoilWaterCapacity, WaterBundle, WaterConfig, WaterDepth, WaterVolume,
+        SoilWaterCapacity, WaterBundle, WaterConfig, WaterVolume,
     },
 };
 
@@ -37,12 +37,10 @@ fn criterion_benchmark(c: &mut Criterion) {
                 tile_pos,
                 height,
                 WaterBundle {
-                    water_volume: todo!(),
-                    previous_water_volume: todo!(),
-                    flow_velocity: todo!(),
-                    water_depth: todo!(),
-                    water_capacity: todo!(),
+                    water_volume: volume_per_tile,
+                    soil_water_capacity,
                     soil_water_flow_rate,
+                    ..Default::default()
                 },
             ))
             .id();

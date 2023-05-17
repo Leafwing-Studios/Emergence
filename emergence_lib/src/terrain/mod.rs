@@ -13,9 +13,7 @@ use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
-use crate::water::{
-    FlowVelocity, PreviousWaterVolume, WaterBundle, WaterDepth, WaterSet, WaterVolume,
-};
+use crate::water::{WaterBundle, WaterSet};
 
 use self::litter::{
     carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
@@ -134,7 +132,7 @@ impl TerrainBundle {
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle {
-                water_capacity: terrain_data.soil_water_capacity,
+                soil_water_capacity: terrain_data.soil_water_capacity,
                 soil_water_flow_rate,
                 ..Default::default()
             },

@@ -197,7 +197,7 @@ pub struct WaterBundle {
     /// The depth of water at this tile.
     pub water_depth: WaterDepth,
     /// The amount of water that can be stored at this tile.
-    pub water_capacity: SoilWaterCapacity,
+    pub soil_water_capacity: SoilWaterCapacity,
     /// The rate at which soil water flows through this tile.
     pub soil_water_flow_rate: SoilWaterFlowRate,
 }

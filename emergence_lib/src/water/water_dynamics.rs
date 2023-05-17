@@ -381,7 +381,7 @@ mod tests {
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
-    use crate::water::{SoilWaterCapacity, WaterBundle, WaterPlugin};
+    use crate::water::{WaterBundle, WaterPlugin};
 
     use super::*;
     use crate::structures::Landmark;
