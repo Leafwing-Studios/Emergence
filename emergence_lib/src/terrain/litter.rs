@@ -344,10 +344,10 @@ pub(super) fn carry_floating_litter_with_current(
                 if let Some(direction) = litter_drift.direction {
                     let new_position = tile_pos.neighbor(direction);
                     let source_height = water_depth.surface_height(tile_height);
-                    let target_entity = map_geometry.get_terrain(new_position).unwrap();
+                    let Some(target_entity) = map_geometry.get_terrain(new_position) else { continue };
 
-                    let (target_tile_height, target_water_depth) =
-                        water_height_query.get(target_entity).unwrap();
+                    let Ok((target_tile_height, target_water_depth)) =
+                        water_height_query.get(target_entity) else { continue };
                     let target_height = target_water_depth.surface_height(*target_tile_height);
 
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
