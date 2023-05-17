@@ -519,14 +519,6 @@ pub(crate) enum SignalKind {
     Stores,
     /// Has a unit of this type.
     Unit,
-    /// Draws units in.
-    ///
-    /// Corrresponds to [`IntentAbility::Lure`].
-    Lure,
-    /// Pushes units away.
-    ///
-    /// Corresponds to [`IntentAbility::Repel`].
-    Repel,
 }
 
 impl From<SignalType> for SignalKind {

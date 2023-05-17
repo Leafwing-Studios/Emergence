@@ -112,10 +112,6 @@ pub(crate) mod infovis {
                 SignalKind::Demolish => 0.,
                 // Blue
                 SignalKind::Unit => 220.,
-                // Blue-purple
-                SignalKind::Lure => 270.,
-                // Orange-red
-                SignalKind::Repel => 10.,
             }
         }
 

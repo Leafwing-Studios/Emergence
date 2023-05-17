@@ -170,7 +170,7 @@ impl Pool for EnergyPool {
     }
 }
 
-/// Consumes [`Energy`] over time, taking into account the tile's [`VigorModifier`].
+/// Steadily depletes [`Energy`] over time.
 pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query<&mut EnergyPool>) {
     let delta_time = fixed_time.period.as_secs_f32();
 

@@ -1222,8 +1222,6 @@ impl CurrentAction {
     }
 
     /// Flee a [`SignalType::Unit`] signal matching `unit_id`.
-    ///
-    /// If [`SignalType::Repel`] is not the strongest signal at the unit's position, then idle instead.
     fn avoid(
         unit_id: Id<Unit>,
         current_tile: TilePos,
