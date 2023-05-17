@@ -14,7 +14,6 @@
   - [Selection Tools](./player-actions/selection-tools.md)
   - [Zoning](./player-actions/zoning.md)
   - [Terraforming](./player-actions/terraforming.md)
-  - [Intent](./player-actions/intent.md)
   - [Informational Tools](./player-actions/informational-tools.md)
 - [Research](./research/index.md)
   - [Assimilation](./research/assimilation.md)

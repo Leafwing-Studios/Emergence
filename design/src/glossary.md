@@ -615,12 +615,6 @@ Capturing and domesticating a species, giving you access to it as part of your c
 
 An inorganic [structure](glossary.md#structure) that is not alive.
 
-### [Intent](player-actions/intent.md)
-
-Represents your the hive mind's focus and special attention.
-
-Mechanically, this is a regenerating resource that can be spent to directly affect the world through the units of the hive.
-
 ### [Life cycle](organisms/life-cycles.md)
 
 The collection of [life stages](glossary.md#life-stage) of an organism, and the pathways between them.

@@ -70,7 +70,6 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
 - emphasis on sustainability pushes designers and players towards more interesting resource refinement pathways
 - assimilating new species offers a natural and high impact path to adding more options for players
   - this can be done as horizontal progression, allowing new players to jump into whatever interests them most
-- the [intent](../glossary.md#intent) mechanic offers the player more ability to respond to the world (at a cost), and a more engaging gameplay experience
 - lack of player avatar reduces frustration of inventory management and walking around
 - modded Factorio has really nailed much of the UX and QoL features that we needed, and offers a clear base to learn from
 

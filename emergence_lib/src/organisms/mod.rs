@@ -11,7 +11,7 @@ use crate::{
 };
 
 use self::{
-    energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool, VigorModifier},
+    energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool},
     lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
     oxygen::{manage_oxygen, Oxygen, OxygenPool},
 };
@@ -86,8 +86,6 @@ pub(crate) struct OrganismBundle {
     energy_pool: EnergyPool,
     /// The oxygen available to this organism
     oxygen_pool: OxygenPool,
-    /// The modifier to both working speed and energy drain rate.
-    vigor_modfiier: VigorModifier,
     /// The ways this organism can transform, and the progress toward doing so.
     lifecycle: Lifecycle,
 }
@@ -100,7 +98,6 @@ impl OrganismBundle {
             energy_pool,
             // TODO: consider making this configurable on a per-organism basis
             oxygen_pool: OxygenPool::new(Oxygen::STANDARD_MAX, 0.5),
-            vigor_modfiier: VigorModifier::None,
             lifecycle,
         }
     }

@@ -12,10 +12,7 @@ use crate::{
     structures::structure_manifest::{Structure, StructureManifest},
 };
 
-use super::{
-    abilities::IntentAbility, picking::CursorPos, selection::CurrentSelection, InteractionSystem,
-    PlayerAction,
-};
+use super::{picking::CursorPos, selection::CurrentSelection, InteractionSystem, PlayerAction};
 
 /// Code and data for working with the clipboard
 pub(super) struct ClipboardPlugin;
@@ -47,8 +44,6 @@ pub(crate) enum Tool {
     Terraform(TerraformingTool),
     /// A structure / structure to place
     Structures(HashMap<TilePos, ClipboardData>),
-    /// An ability to use.
-    Ability(IntentAbility),
     /// No tool is selected.
     #[default]
     None,
@@ -61,7 +56,6 @@ impl Tool {
             Tool::None => true,
             Tool::Structures(map) => map.is_empty(),
             Tool::Terraform(_) => false,
-            Tool::Ability(_) => false,
         }
     }
 

@@ -3,14 +3,11 @@
 use crate::{
     asset_management::{manifest::Id, AssetCollectionExt},
     construction::terraform::TerraformingTool,
-    player_interaction::abilities::IntentAbility,
     structures::structure_manifest::Structure,
     ui::{
         cursor::CursorPlugin,
-        intent::IntentPlugin,
         overlay::OverlayMenuPlugin,
         production_statistics::ProductionStatisticsPlugin,
-        select_ability::SelectAbilityPlugin,
         select_structure::SelectStructurePlugin,
         select_terraforming::SelectTerraformingPlugin,
         selection_details::SelectionDetailsPlugin,
@@ -23,10 +20,8 @@ use bevy::prelude::*;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 
 mod cursor;
-mod intent;
 mod overlay;
 mod production_statistics;
-mod select_ability;
 mod select_structure;
 mod select_terraforming;
 mod selection_details;
@@ -59,7 +54,6 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<Icons<Id<Structure>>>()
         .add_asset_collection::<Icons<Id<Unit>>>()
         .add_asset_collection::<Icons<TerraformingTool>>()
-        .add_asset_collection::<Icons<IntentAbility>>()
         .add_asset_collection::<Icons<CraftingProgress>>()
         .add_asset_collection::<Icons<GoalKind>>()
         .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
@@ -68,12 +62,10 @@ impl Plugin for UiPlugin {
         .add_plugin(CursorPlugin)
         .add_plugin(SelectionDetailsPlugin)
         .add_plugin(ProductionStatisticsPlugin)
-        .add_plugin(IntentPlugin)
         .add_plugin(StatusPlugin)
         .add_plugin(OverlayMenuPlugin)
         .add_plugin(SelectStructurePlugin)
-        .add_plugin(SelectTerraformingPlugin)
-        .add_plugin(SelectAbilityPlugin);
+        .add_plugin(SelectTerraformingPlugin);
     }
 }
 

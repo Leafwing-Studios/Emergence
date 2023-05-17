@@ -7,9 +7,7 @@ use core::hash::Hash;
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     construction::terraform::TerraformingTool,
-    enum_iter::IterableEnum,
     items::item_manifest::{Item, ItemManifest},
-    player_interaction::abilities::IntentAbility,
     structures::structure_manifest::{Structure, StructureManifest},
     terrain::terrain_manifest::TerrainManifest,
     units::{
@@ -150,22 +148,6 @@ impl FromWorld for Icons<Id<Unit>> {
     }
 }
 
-impl FromWorld for Icons<IntentAbility> {
-    fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
-        let mut map = HashMap::new();
-
-        for ability in IntentAbility::variants() {
-            let ability_name = format!("{ability}").to_lowercase();
-            let ability_path = format!("icons/abilities/{ability_name}.png");
-            let icon = asset_server.load(ability_path);
-            map.insert(ability, icon);
-        }
-
-        Icons { map }
-    }
-}
-
 impl FromWorld for Icons<CraftingProgress> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
@@ -211,12 +193,10 @@ impl FromWorld for Icons<GoalKind> {
         );
         map.insert(GoalKind::Eat, asset_server.load("icons/goals/eat.png"));
         map.insert(GoalKind::Fetch, asset_server.load("icons/goals/fetch.png"));
-        map.insert(GoalKind::Lure, asset_server.load("icons/goals/lure.png"));
         map.insert(
             GoalKind::Remove,
             asset_server.load("icons/goals/remove.png"),
         );
-        map.insert(GoalKind::Repel, asset_server.load("icons/goals/repel.png"));
         map.insert(GoalKind::Store, asset_server.load("icons/goals/store.png"));
         map.insert(
             GoalKind::Wander,

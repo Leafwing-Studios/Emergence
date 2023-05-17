@@ -7,7 +7,6 @@ use crate as emergence_lib;
 use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
 use crate::items::item_manifest::ItemManifest;
-use crate::player_interaction::abilities::{Intent, IntentAbility, IntentPool};
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::units::actions::{DeliveryMode, Purpose};
@@ -15,10 +14,8 @@ use crate::units::unit_manifest::{Unit, UnitManifest};
 use crate::water::WaterDepth;
 use bevy::{prelude::*, utils::HashMap};
 use core::ops::{Add, AddAssign, Mul, Sub, SubAssign};
-use derive_more::Display;
 use emergence_macros::IterableEnum;
 use itertools::Itertools;
-use leafwing_abilities::prelude::Pool;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
@@ -241,8 +238,6 @@ impl Signals {
             Goal::Work(structure_id) => {
                 self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
             }
-            Goal::Lure => self.neighboring_signals(SignalType::Lure, tile_pos, map_geometry),
-            Goal::Repel => self.neighboring_signals(SignalType::Repel, tile_pos, map_geometry),
             Goal::Avoid(unit_id) => {
                 self.neighboring_signals(SignalType::Unit(*unit_id), tile_pos, map_geometry)
             }
@@ -425,14 +420,6 @@ pub enum SignalType {
     Stores(ItemKind),
     /// Has a unit of this type.
     Unit(Id<Unit>),
-    /// Draws units in.
-    ///
-    /// Corrresponds to [`IntentAbility::Lure`].
-    Lure,
-    /// Pushes units away.
-    ///
-    /// Corresponds to [`IntentAbility::Repel`].
-    Repel,
 }
 
 impl SignalType {
@@ -505,8 +492,6 @@ impl SignalType {
                 format!("Stores({})", item_manifest.name_of_kind(*item_kind))
             }
             SignalType::Unit(unit_id) => format!("Unit({})", unit_manifest.name(*unit_id)),
-            SignalType::Lure => "Lure".to_string(),
-            SignalType::Repel => "Repel".to_string(),
         }
     }
 }
@@ -534,14 +519,6 @@ pub(crate) enum SignalKind {
     Stores,
     /// Has a unit of this type.
     Unit,
-    /// Draws units in.
-    ///
-    /// Corrresponds to [`IntentAbility::Lure`].
-    Lure,
-    /// Pushes units away.
-    ///
-    /// Corresponds to [`IntentAbility::Repel`].
-    Repel,
 }
 
 impl From<SignalType> for SignalKind {
@@ -554,8 +531,6 @@ impl From<SignalType> for SignalKind {
             SignalType::Contains(_) => SignalKind::Contains,
             SignalType::Stores(_) => SignalKind::Stores,
             SignalType::Unit(_) => SignalKind::Unit,
-            SignalType::Lure => SignalKind::Lure,
-            SignalType::Repel => SignalKind::Repel,
         }
     }
 }
@@ -581,15 +556,6 @@ impl SignalStrength {
     /// The underlying value
     pub fn value(&self) -> f32 {
         self.0
-    }
-
-    /// Applies a [`SignalModifier`] to this signal strength.
-    pub fn apply_modifier(&mut self, modifier: SignalModifier) {
-        *self *= match modifier {
-            SignalModifier::None => 1.,
-            SignalModifier::Amplify => SignalModifier::RATIO,
-            SignalModifier::Dampen => 1. / SignalModifier::RATIO,
-        }
     }
 }
 
@@ -686,60 +652,18 @@ impl Emitter {
     }
 }
 
-/// Modifies the strength of a signal.
-///
-/// This is stored as a component on each tile, and is applied to all signals emitted from entities at that tile position.
-#[derive(Component, Debug, Display, Default, Clone, Copy, PartialEq, Eq)]
-pub enum SignalModifier {
-    /// No modifier is applied.
-    #[default]
-    None,
-    /// The signal strength is multiplied for the duration of this effect.
-    Amplify,
-    /// The signal strength is divided for the duration of this effect.
-    Dampen,
-}
-
-impl SignalModifier {
-    /// Controls the ratio of the signal strength when modified.
-    ///
-    /// This should be greater than 1.
-    const RATIO: f32 = 10.;
-
-    /// The cost (in intent) of applying to a single emitter for one second.
-    fn cost(&self) -> Intent {
-        match self {
-            SignalModifier::None => Intent(0.),
-            SignalModifier::Amplify => IntentAbility::Amplify.cost(),
-            SignalModifier::Dampen => IntentAbility::Dampen.cost(),
-        }
-    }
-}
-
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(
     mut signals: ResMut<Signals>,
     emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
-    modifier_query: Query<&SignalModifier>,
     structure_manifest: Res<StructureManifest>,
-    mut intent_pool: ResMut<IntentPool>,
-    fixed_time: Res<FixedTime>,
     terrain_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
-    let delta_time = fixed_time.period.as_secs_f32();
-
     /// Emits signals that correspond to a single [`Emitter`].
-    fn emit(
-        signals: &mut Signals,
-        tile_pos: TilePos,
-        emitter: &Emitter,
-        modifier: SignalModifier,
-        n_tiles: usize,
-    ) {
+    fn emit(signals: &mut Signals, tile_pos: TilePos, emitter: &Emitter, n_tiles: usize) {
         for (signal_type, signal_strength) in &emitter.signals {
-            let mut signal_strength = *signal_strength / n_tiles as f32;
-            signal_strength.apply_modifier(modifier);
+            let signal_strength = *signal_strength / n_tiles as f32;
             signals.add_signal(*signal_type, tile_pos, signal_strength);
         }
     }
@@ -766,31 +690,11 @@ fn emit_signals(
                 let n_tiles = footprint.set.len();
 
                 for tile_pos in footprint.normalized(facing, center) {
-                    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-                    let mut modifier = *modifier_query.get(terrain_entity).unwrap();
-                    let cost = modifier.cost() * delta_time / n_tiles as f32;
-
-                    if intent_pool.current() >= cost {
-                        intent_pool.expend(cost).unwrap();
-                    } else {
-                        modifier = SignalModifier::None;
-                    }
-
-                    emit(&mut signals, tile_pos, emitter, modifier, n_tiles);
+                    emit(&mut signals, tile_pos, emitter, n_tiles);
                 }
             }
             None => {
-                let terrain_entity = map_geometry.get_terrain(center).unwrap();
-                let mut modifier = *modifier_query.get(terrain_entity).unwrap();
-                let cost = modifier.cost() * delta_time;
-
-                if intent_pool.current() >= cost {
-                    intent_pool.expend(cost).unwrap();
-                } else {
-                    modifier = SignalModifier::None;
-                }
-
-                emit(&mut signals, center, emitter, modifier, 1);
+                emit(&mut signals, center, emitter, 1);
             }
         }
     }

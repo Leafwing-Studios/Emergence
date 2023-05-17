@@ -184,7 +184,6 @@ fn set_zoning(
                 }
             }
         }
-        Tool::Ability(..) => (),
         Tool::None => (),
     }
 }
