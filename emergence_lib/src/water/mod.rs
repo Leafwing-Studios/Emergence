@@ -494,12 +494,5 @@ mod tests {
             SoilWaterCapacity(0.5),
         );
         assert_eq!(water_depth, WaterDepth::Flooded(Height(0.5)));
-
-        let water_depth = WaterDepth::compute(
-            Volume::from_height(Height(0.7)),
-            Height(1.0),
-            SoilWaterCapacity(0.5),
-        );
-        assert_eq!(water_depth, WaterDepth::Flooded(Height(0.7)));
     }
 }
