@@ -6,7 +6,13 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::asset_management::manifest::{loader::IsRawManifest, Manifest};
+use crate::{
+    asset_management::manifest::{loader::IsRawManifest, Manifest},
+    water::{
+        water_dynamics::{SoilWaterEvaporationRate, SoilWaterFlowRate},
+        SoilWaterCapacity,
+    },
+};
 
 /// The marker type for [`Id<Terrain>`](super::Id).
 #[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
@@ -29,26 +35,26 @@ pub struct TerrainData {
     ///
     /// This is relative to empty space, which has a capacity of 1.0.
     /// Generally this value should be between 0.05 and 0.5.
-    pub water_capacity: f32,
+    pub soil_water_capacity: SoilWaterCapacity,
     /// The relative rate at which water flows through this terrain type.
     ///
     /// This is relative to empty space, which has a flow rate of 1.0.
     /// Generally this value should be between 0.05 and 0.3.
-    pub water_flow_rate: f32,
+    pub soil_water_flow_rate: SoilWaterFlowRate,
     /// The evaporation rate of water from this terrain type.
     ///
     /// This is relative to empty space, which has an evaporation rate of 1.0.
     /// Generally this value should be between 0.05 and 0.5.
-    pub water_evaporation_rate: f32,
+    pub soil_water_evaporation_rate: SoilWaterEvaporationRate,
 }
 
 impl Default for TerrainData {
     fn default() -> Self {
         Self {
             walking_speed: 1.0,
-            water_capacity: 0.2,
-            water_flow_rate: 0.1,
-            water_evaporation_rate: 0.1,
+            soil_water_capacity: SoilWaterCapacity::default(),
+            soil_water_flow_rate: SoilWaterFlowRate::default(),
+            soil_water_evaporation_rate: SoilWaterEvaporationRate::default(),
         }
     }
 }

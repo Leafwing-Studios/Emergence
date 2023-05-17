@@ -7,9 +7,9 @@ use crate::simulation::{
     time::{Days, InGameTime},
 };
 
-use super::{WaterConfig, WaterTable};
+use super::WaterConfig;
 
-/// Controls the dynamics of [`tides`].
+/// Controls the dynamics of the tides.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TideSettings {
     /// The amplitude of the tide.
@@ -20,9 +20,23 @@ pub struct TideSettings {
     pub minimum: Height,
 }
 
+/// Stores data about the current state of the ocean.
+#[derive(Resource, Debug, Default)]
+pub struct Ocean {
+    /// The global height of the ocean.
+    height: Height,
+}
+
+impl Ocean {
+    /// The current height of the ocean.
+    pub(crate) fn height(&self) -> Height {
+        self.height
+    }
+}
+
 /// Controls the ebb and flow of the tides, raising and lowering the ocean level.
 pub(super) fn tides(
-    mut water_table: ResMut<WaterTable>,
+    mut ocean: ResMut<Ocean>,
     in_game_time: Res<InGameTime>,
     water_config: Res<WaterConfig>,
 ) {
@@ -38,5 +52,5 @@ pub(super) fn tides(
     // we add the minimum water level to the amplitude before applying the sine component.
     let tide_height =
         settings.minimum + settings.amplitude + settings.amplitude * scaled_time.sin();
-    water_table.ocean_height = tide_height;
+    ocean.height = tide_height;
 }

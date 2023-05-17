@@ -7,10 +7,10 @@ use crate::{
     crafting::inventories::{InputInventory, OutputInventory, StorageInventory},
     items::item_manifest::{Item, ItemManifest},
     light::TotalLight,
-    simulation::{geometry::MapGeometry, time::InGameTime, weather::CurrentWeather},
+    simulation::{geometry::Volume, time::InGameTime, weather::CurrentWeather},
     terrain::litter::Litter,
     units::{item_interaction::UnitInventory, unit_manifest::Unit},
-    water::WaterTable,
+    water::WaterVolume,
     world_gen::WorldGenState,
 };
 
@@ -78,20 +78,23 @@ fn update_production_statistics(
     in_game_time: Res<InGameTime>,
     current_weather: Res<CurrentWeather>,
     total_light: Res<TotalLight>,
-    water_table: Res<WaterTable>,
-    map_geometry: Res<MapGeometry>,
+    water_volume_query: Query<&WaterVolume>,
     census: Res<Census>,
     item_count: Res<ItemCount>,
     item_manifest: Res<ItemManifest>,
 ) {
     let mut text = query.single_mut();
+    let mut total_water_volume = Volume::ZERO;
+    for water_volume in water_volume_query.iter() {
+        total_water_volume += water_volume.volume();
+    }
+
+    let average_water_volume = total_water_volume / water_volume_query.iter().len() as f32;
+
     text.sections[0].value = format!("{}\n", *in_game_time);
     text.sections[1].value = format!("Weather: {}\n", current_weather.get());
     text.sections[2].value = format!("Light: {}\n", *total_light);
-    text.sections[3].value = format!(
-        "{} average volume of water per tile \n",
-        water_table.average_volume(&map_geometry)
-    );
+    text.sections[3].value = format!("{average_water_volume} average volume of water per tile \n",);
     text.sections[4].value = format!("{}\n", *census);
     text.sections[5].value = format!("{}\n", item_count.display(&item_manifest));
 }

@@ -14,7 +14,7 @@ use crate::{
 };
 use bevy::prelude::*;
 
-use super::{WaterConfig, WaterTable};
+use super::{WaterConfig, WaterDepth, WaterVolume};
 
 /// The volume around a tile that roots can draw water from.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -32,22 +32,23 @@ impl RootZone {
     fn relevant_tiles(
         &self,
         center: TilePos,
-        water_table: &WaterTable,
+        water_depth_query: &Query<&WaterDepth>,
         map_geometry: &MapGeometry,
     ) -> Vec<TilePos> {
         let hexagon = hexagon(center.hex, self.radius);
         let mut relevant_tiles = Vec::with_capacity(hexagon.len());
         for hex in hexagon {
             let tile_pos = TilePos { hex };
-            if !map_geometry.is_valid(tile_pos) {
+            let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) else {
                 continue;
             };
+            let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
-            match water_table.water_depth(tile_pos) {
+            match water_depth {
                 super::WaterDepth::Flooded(..) => relevant_tiles.push(tile_pos),
                 super::WaterDepth::Dry => (),
                 super::WaterDepth::Underground(depth) => {
-                    if depth <= self.max_depth {
+                    if *depth <= self.max_depth {
                         relevant_tiles.push(tile_pos);
                     }
                 }
@@ -72,7 +73,6 @@ impl Display for RootZone {
 // PERF: we could store RootZone as a component on the structure at the cost of some memory.
 // This would give us faster lookups, but force duplication.
 pub(super) fn draw_water_from_roots(
-    mut water_table: ResMut<WaterTable>,
     water_config: Res<WaterConfig>,
     mut structure_query: Query<(
         &TilePos,
@@ -80,6 +80,8 @@ pub(super) fn draw_water_from_roots(
         &CraftingState,
         &mut InputInventory,
     )>,
+    water_depth_query: Query<&WaterDepth>,
+    mut water_volume_query: Query<&mut WaterVolume>,
     structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
@@ -106,17 +108,21 @@ pub(super) fn draw_water_from_roots(
             None => continue,
         };
 
-        let relevant_tiles = root_zone.relevant_tiles(center, &water_table, &map_geometry);
+        let relevant_tiles = root_zone.relevant_tiles(center, &water_depth_query, &map_geometry);
         let n = relevant_tiles.len() as f32;
         let water_per_tile = water_tiles_requested / n;
 
         let mut total_water = Volume::ZERO;
 
         for tile_pos in relevant_tiles {
+            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+
+            let mut water_volume = water_volume_query.get_mut(terrain_entity).unwrap();
+
             // This can ever so slightly overdraw water, but that's fine.
             // Accounting for this would significantly complicate the code.
             // Pretend it's capillary action or something!
-            total_water += water_table.remove(tile_pos, water_per_tile);
+            total_water += water_volume.remove(water_per_tile);
         }
 
         let water_items_produced = water_config.tiles_to_items(total_water);

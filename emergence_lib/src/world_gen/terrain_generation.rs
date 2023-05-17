@@ -7,7 +7,7 @@ use crate::{
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
     terrain::{commands::TerrainCommandsExt, terrain_manifest::Terrain},
     utils::noise::simplex_noise,
-    water::WaterTable,
+    water::WaterVolume,
 };
 use bevy::prelude::*;
 use hexx::{shapes::hexagon, Hex};
@@ -87,14 +87,10 @@ pub(super) fn generate_landmarks(
 }
 
 /// Sets the starting water table
-pub(super) fn initialize_water_table(
-    mut water_table: ResMut<WaterTable>,
-    map_geometry: Res<MapGeometry>,
-) {
-    /// The amount of water stored in each tile to begin with.
-    const STARTING_VOLUME_PER_TILE: Volume = Volume(1.5);
+pub(super) fn initialize_water_table(mut water_query: Query<&mut WaterVolume>) {
+    let starting_volume = WaterVolume::new(Volume(1.5));
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.set_volume(tile_pos, STARTING_VOLUME_PER_TILE);
+    for mut water_volume in water_query.iter_mut() {
+        *water_volume = starting_volume;
     }
 }

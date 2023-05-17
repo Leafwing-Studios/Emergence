@@ -1,25 +1,44 @@
 //! Systems that control the movement of water.
 
-use bevy::{prelude::*, utils::HashMap};
+use std::ops::Div;
+
+use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
+use derive_more::{Add, Sub};
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::Id,
     light::{shade::ReceivedLight, Illuminance},
     simulation::{
         geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
         weather::CurrentWeather,
     },
-    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
-use super::{FlowVelocity, WaterConfig, WaterDepth, WaterTable};
+use super::{ocean::Ocean, FlowVelocity, WaterConfig, WaterDepth, WaterVolume};
+
+/// Controls the relative rate at which water evaporates from this tile.
+///
+/// This varies by terrain type, and is a multiplier on the evaporation rate.
+/// Open water has a value of 1.0.
+/// As a result, this should always be greater than 0.0 and typically less than 1.0.
+#[derive(Component, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub struct SoilWaterEvaporationRate(pub f32);
+
+impl Default for SoilWaterEvaporationRate {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
-    mut water_table: ResMut<WaterTable>,
-    terrain_query: Query<(&TilePos, &ReceivedLight, &Id<Terrain>)>,
-    terrain_manifest: Res<TerrainManifest>,
+    mut terrain_query: Query<(
+        &ReceivedLight,
+        &WaterDepth,
+        &SoilWaterEvaporationRate,
+        &mut WaterVolume,
+    )>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
@@ -29,19 +48,17 @@ pub(super) fn evaporation(
 
     let evaporation_rate = evaporation_per_second * elapsed_time;
 
-    for (&tile_pos, received_light, terrain_id) in terrain_query.iter() {
+    for (received_light, water_depth, soil_evaporation_rate, mut water_volume) in
+        terrain_query.iter_mut()
+    {
         let mut evaporation_this_tile =
             Volume(evaporation_rate * received_light.evaporation_ratio());
 
-        if matches!(
-            water_table.water_depth(tile_pos),
-            WaterDepth::Underground(..)
-        ) {
-            let terrain_data = terrain_manifest.get(*terrain_id);
-            evaporation_this_tile = evaporation_this_tile * terrain_data.water_evaporation_rate;
+        if matches!(water_depth, WaterDepth::Underground(..)) {
+            evaporation_this_tile = evaporation_this_tile * soil_evaporation_rate.0;
         }
 
-        water_table.remove(tile_pos, evaporation_this_tile);
+        water_volume.remove(evaporation_this_tile);
     }
 }
 
@@ -61,12 +78,11 @@ impl ReceivedLight {
 
 /// Adds water to the water table via rainfall.
 pub(super) fn precipitation(
-    mut water_table: ResMut<WaterTable>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
     current_weather: Res<CurrentWeather>,
-    map_geometry: Res<MapGeometry>,
+    mut water_query: Query<&mut WaterVolume>,
 ) {
     let precipitation_per_second =
         water_config.precipitation_rate.0 / in_game_time.seconds_per_day();
@@ -76,25 +92,68 @@ pub(super) fn precipitation(
         precipitation_per_second * elapsed_time * current_weather.get().precipitation_rate(),
     );
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        water_table.add(tile_pos, precipitation_rate);
+    for mut water_volume in water_query.iter_mut() {
+        water_volume.add(precipitation_rate);
     }
+}
+
+/// The relative rate at which water flows between soil of this type.
+///
+/// This should be less than 1.0, as 1.0 is the rate at which surface water flows.
+#[derive(Component, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
+pub struct SoilWaterFlowRate(pub f32);
+
+impl Default for SoilWaterFlowRate {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
+
+impl SoilWaterFlowRate {
+    /// The value of this coefficient for water that is above the surface of the soil.
+    const SURFACE_WATER: SoilWaterFlowRate = SoilWaterFlowRate(1.0);
+}
+
+impl Div<f32> for SoilWaterFlowRate {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        SoilWaterFlowRate(self.0 / rhs)
+    }
+}
+
+/// Data needed to compute lateral flow.
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+pub struct LateralFlowQuery {
+    /// The volume of water in this tile.
+    water_volume: &'static mut WaterVolume,
+    /// The total flow out of this tile.
+    flow_velocity: &'static mut FlowVelocity,
+    /// The depth of water in this tile.
+    water_depth: &'static WaterDepth,
+    /// The height of the terrain at this tile.
+    terrain_height: &'static Height,
+    /// The position of this tile.
+    tile_pos: &'static TilePos,
+    /// The rate at which water flows between soil of this type.
+    soil_water_flow_rate: &'static SoilWaterFlowRate,
 }
 
 /// Moves water from one tile to another, according to the relative height of the water table.
 pub fn horizontal_water_movement(
-    mut water_table: ResMut<WaterTable>,
-    terrain_query: Query<&Id<Terrain>>,
-    terrain_manifest: Res<TerrainManifest>,
+    mut terrain_query: Query<LateralFlowQuery>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
     fixed_time: Res<FixedTime>,
     in_game_time: Res<InGameTime>,
+    ocean: Res<Ocean>,
 ) {
     let base_water_transfer_amount = water_config.lateral_flow_rate
         / in_game_time.seconds_per_day()
         * fixed_time.period.as_secs_f32();
 
+    // PERF: it will probably be much faster to store scratch space on components
     // Stores the total volume to be removed from each tile
     let mut addition_map = HashMap::<TilePos, Volume>::default();
     // Stores the total volume to be added to each tile
@@ -108,20 +167,19 @@ pub fn horizontal_water_movement(
         flow_direction_map.insert(tile_pos, FlowVelocity::ZERO);
     }
 
-    for tile_pos in map_geometry.valid_tile_positions() {
-        let total_available = water_table.get_volume(tile_pos);
+    for query_item in terrain_query.iter() {
+        let total_available = query_item.water_volume.volume();
         if total_available <= Volume::ZERO {
             continue;
         }
 
         let water_to_neighbors = proposed_lateral_flow_to_neighbors(
-            tile_pos,
+            *query_item.tile_pos,
             base_water_transfer_amount,
             &water_config,
             &map_geometry,
-            &water_table,
             &terrain_query,
-            &terrain_manifest,
+            ocean.height(),
         );
 
         // Ensure that we divide the water evenly between all neighbors
@@ -138,19 +196,21 @@ pub fn horizontal_water_movement(
                 .entry(neighbor)
                 .and_modify(|v| *v += actual_water_transfer);
             removal_map
-                .entry(tile_pos)
+                .entry(*query_item.tile_pos)
                 .and_modify(|v| *v += actual_water_transfer);
 
-            let direction_to_neighbor = neighbor.main_direction_to(tile_pos.hex);
+            let direction_to_neighbor = neighbor.main_direction_to(query_item.tile_pos.hex);
 
             // This map only tracks outward flow, so we don't need to update the neighbor.
-            flow_direction_map.entry(tile_pos).and_modify(|v| {
-                *v += FlowVelocity::from_hex_direction(
-                    direction_to_neighbor,
-                    actual_water_transfer,
-                    &map_geometry,
-                )
-            });
+            flow_direction_map
+                .entry(*query_item.tile_pos)
+                .and_modify(|v| {
+                    *v += FlowVelocity::from_hex_direction(
+                        direction_to_neighbor,
+                        actual_water_transfer,
+                        &map_geometry,
+                    )
+                });
         }
     }
 
@@ -160,22 +220,22 @@ pub fn horizontal_water_movement(
         for tile_pos in map_geometry.ocean_tiles() {
             // Don't bother flowing to and from ocean tiles
             for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
-                let neighbor_tile_height =
-                    map_geometry.get_height(valid_neighbor).unwrap_or_default();
-                let neighbor_water_height = water_table.get_height(valid_neighbor, &map_geometry);
-                // This can panic if the system runs too early, so just bail if that happened
-                let Some(neighbor_terrain_entity) = map_geometry.get_terrain(valid_neighbor) else { return };
-                let neighbor_terrain_id = *terrain_query.get(neighbor_terrain_entity).unwrap();
-                let neighbor_soil_lateral_flow_ratio =
-                    terrain_manifest.get(neighbor_terrain_id).water_flow_rate;
+                let neighbor_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
+                let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
+
+                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+                let neighbor_water_height = neighbor_query_item
+                    .water_depth
+                    .water_table_height(neighbor_tile_height);
+                let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
 
                 let proposed_water_transfer = lateral_flow(
                     base_water_transfer_amount,
-                    1.0,
+                    SoilWaterFlowRate(1.0),
                     neighbor_soil_lateral_flow_ratio,
                     Height::ZERO,
                     neighbor_tile_height,
-                    water_table.ocean_height,
+                    ocean.height(),
                     neighbor_water_height,
                 );
 
@@ -189,14 +249,22 @@ pub fn horizontal_water_movement(
     }
 
     for (tile_pos, volume) in addition_map {
-        water_table.add(tile_pos, volume);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        query_item.water_volume.add(volume);
     }
 
     for (tile_pos, volume) in removal_map {
-        water_table.remove(tile_pos, volume);
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        query_item.water_volume.remove(volume);
     }
 
-    water_table.flow_rate = flow_direction_map;
+    for (tile_pos, flow_velocity) in flow_direction_map {
+        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
+        *query_item.flow_velocity = flow_velocity;
+    }
 }
 
 /// Computes how much water should be removed from one tile to its neigbors.
@@ -209,19 +277,19 @@ fn proposed_lateral_flow_to_neighbors(
     base_water_transfer_amount: f32,
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
-    water_table: &WaterTable,
-    terrain_query: &Query<&Id<Terrain>>,
-    terrain_manifest: &TerrainManifest,
+    terrain_query: &Query<LateralFlowQuery>,
+    ocean_height: Height,
 ) -> HashMap<TilePos, Volume> {
-    let water_height = water_table.get_height(tile_pos, map_geometry);
+    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+    let query_item = terrain_query.get(terrain_entity).unwrap();
+    let soil_lateral_flow_ratio = *query_item.soil_water_flow_rate;
+    let tile_height = *query_item.terrain_height;
+    let water_height = query_item.water_depth.water_table_height(tile_height);
 
     // Critically, this includes neighbors that are not valid tiles.
     // This is important because we need to be able to transfer water off the edge of the map.
     let neighbors = tile_pos.all_neighbors();
     let mut water_to_neighbors = HashMap::default();
-    let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-    let terrain_id = *terrain_query.get(terrain_entity).unwrap();
-    let soil_lateral_flow_ratio = terrain_manifest.get(terrain_id).water_flow_rate;
 
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
@@ -229,27 +297,39 @@ fn proposed_lateral_flow_to_neighbors(
             continue;
         }
 
-        let neighbor_soil_lateral_flow_ratio =
+        // Neighbor is not an ocean tile
+        let proposed_water_transfer =
             if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor) {
-                let neighbor_id = *terrain_query.get(neigbor_entity).unwrap();
-                terrain_manifest.get(neighbor_id).water_flow_rate
+                let neighbor_query_item = terrain_query.get(neigbor_entity).unwrap();
+
+                let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
+                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+
+                let neighbor_water_height = neighbor_query_item
+                    .water_depth
+                    .water_table_height(neighbor_tile_height);
+
+                lateral_flow(
+                    base_water_transfer_amount,
+                    soil_lateral_flow_ratio,
+                    neighbor_soil_lateral_flow_ratio,
+                    tile_height,
+                    neighbor_tile_height,
+                    water_height,
+                    neighbor_water_height,
+                )
+            // Neigbor is an ocean tile
             } else {
-                // If the neighbor is not a valid tile, then it is an ocean tile.
-                // This should never have soil, but if it does, let it flow like surface water.
-                1.0
+                lateral_flow(
+                    base_water_transfer_amount,
+                    soil_lateral_flow_ratio,
+                    SoilWaterFlowRate::SURFACE_WATER,
+                    tile_height,
+                    Height::ZERO,
+                    water_height,
+                    ocean_height,
+                )
             };
-
-        let neighbor_water_height = water_table.get_height(neighbor, map_geometry);
-
-        let proposed_water_transfer = lateral_flow(
-            base_water_transfer_amount,
-            soil_lateral_flow_ratio,
-            neighbor_soil_lateral_flow_ratio,
-            map_geometry.get_height(tile_pos).unwrap_or_default(),
-            map_geometry.get_height(neighbor).unwrap_or_default(),
-            water_height,
-            neighbor_water_height,
-        );
 
         water_to_neighbors.insert(neighbor, proposed_water_transfer);
     }
@@ -262,8 +342,8 @@ fn proposed_lateral_flow_to_neighbors(
 #[must_use]
 fn lateral_flow(
     base_water_transfer_amount: f32,
-    soil_lateral_flow_ratio: f32,
-    neighbor_soil_lateral_flow_ratio: f32,
+    soil_lateral_flow_ratio: SoilWaterFlowRate,
+    neighbor_soil_lateral_flow_ratio: SoilWaterFlowRate,
     tile_height: Height,
     neighbor_tile_height: Height,
     water_height: Height,
@@ -292,11 +372,12 @@ fn lateral_flow(
 
     // Water flows more easily between tiles that are both flooded.
     let medium_coefficient = match (surface_water_present, neighbor_surface_water_present) {
-        (true, true) => 1.,
+        (true, true) => SoilWaterFlowRate::SURFACE_WATER,
         (false, false) => (soil_lateral_flow_ratio + neighbor_soil_lateral_flow_ratio) / 2.,
-        (true, false) => (1. + soil_lateral_flow_ratio) / 2.,
-        (false, true) => (1. + neighbor_soil_lateral_flow_ratio) / 2.,
-    };
+        (true, false) => (SoilWaterFlowRate::SURFACE_WATER + soil_lateral_flow_ratio) / 2.,
+        (false, true) => (SoilWaterFlowRate::SURFACE_WATER + neighbor_soil_lateral_flow_ratio) / 2.,
+    }
+    .0;
 
     let proposed_amount = Volume::from_height(
         delta_water_height * medium_coefficient * base_water_transfer_amount / 2.,
@@ -322,8 +403,7 @@ mod tests {
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
-    use crate::terrain::terrain_manifest::TerrainData;
-    use crate::water::WaterPlugin;
+    use crate::water::{WaterBundle, WaterPlugin};
 
     use super::*;
     use crate::structures::Landmark;
@@ -359,46 +439,31 @@ mod tests {
         let mut map_geometry = scenario
             .map_shape
             .set_heights(scenario.map_size.map_geometry());
-        let water_table = scenario.water_table_strategy.water_table(&map_geometry);
 
-        for &tile_pos in water_table.volume.keys() {
-            assert!(
-                map_geometry.is_valid(tile_pos),
-                "Invalid tile position {} found in water table.",
-                tile_pos
-            );
-        }
-
-        app.insert_resource(water_table);
         // Override the default water config with one appropriate for testing.
         app.insert_resource(scenario.water_config);
         app.insert_resource(CurrentWeather::new(scenario.weather));
-
-        // Set the terrain properties.
-        let mut terrain_manifest = TerrainManifest::default();
-        terrain_manifest.insert(
-            "test".to_string(),
-            TerrainData {
-                walking_speed: 1.0,
-                water_capacity: 0.5,
-                water_flow_rate: 0.3,
-                water_evaporation_rate: 0.4,
-            },
-        );
-
-        app.world.insert_resource(terrain_manifest);
 
         // Spawn terrain
         for tile_pos in map_geometry
             .valid_tile_positions()
             .collect::<Vec<TilePos>>()
         {
+            let height = map_geometry.get_height(tile_pos).unwrap();
+            let water_volume = scenario
+                .water_table_strategy
+                .starting_water_volume(tile_pos, &map_geometry);
+
             let terrain_entity = app
                 .world
                 .spawn((
-                    Id::<Terrain>::from_name("test".to_string()),
                     tile_pos,
+                    height,
                     ReceivedLight::default(),
+                    WaterBundle {
+                        water_volume,
+                        ..Default::default()
+                    },
                 ))
                 .id();
             map_geometry.add_terrain(tile_pos, terrain_entity)
@@ -433,8 +498,12 @@ mod tests {
     }
 
     impl WaterTableStrategy {
-        fn starting_water_volume(&self, tile_pos: TilePos, map_geometry: &MapGeometry) -> Volume {
-            match self {
+        fn starting_water_volume(
+            &self,
+            tile_pos: TilePos,
+            map_geometry: &MapGeometry,
+        ) -> WaterVolume {
+            let volume = match self {
                 WaterTableStrategy::Dry => Volume(0.),
                 WaterTableStrategy::DepthHalf => Volume(0.5),
                 WaterTableStrategy::DepthOne => Volume(1.),
@@ -444,17 +513,9 @@ mod tests {
                 WaterTableStrategy::Flooded => {
                     Volume::from_height(map_geometry.get_height(tile_pos).unwrap() + Height(1.))
                 }
-            }
-        }
+            };
 
-        fn water_table(&self, map_geometry: &MapGeometry) -> WaterTable {
-            let mut water_table = WaterTable::default();
-            for tile_pos in map_geometry.valid_tile_positions() {
-                water_table
-                    .set_volume(tile_pos, self.starting_water_volume(tile_pos, map_geometry));
-            }
-
-            water_table
+            WaterVolume::new(volume)
         }
     }
 
@@ -514,47 +575,12 @@ mod tests {
     }
 
     #[test]
-    fn water_table_arithmetic() {
-        let mut water_table = WaterTable::default();
-        let tile_pos = TilePos::new(0, 0);
-        water_table.set_volume(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(1.0));
-
-        water_table.add(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(2.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(1.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(0.0));
-
-        water_table.remove(tile_pos, Volume(1.0));
-        assert_eq!(water_table.get_volume(tile_pos), Volume(0.0));
-    }
-
-    #[test]
-    fn water_testing_applies_water_dynamics() {
-        let scenario = Scenario {
-            map_size: MapSize::Tiny,
-            map_shape: MapShape::Flat,
-            water_table_strategy: WaterTableStrategy::DepthOne,
-            water_config: WaterConfig::IN_GAME,
-            weather: Weather::Cloudy,
-            simulated_duration: Duration::from_secs(1),
-        };
-
-        let mut app = water_testing_app(scenario);
-        let initial_water_table = app.world.resource::<WaterTable>().clone();
-
-        app.update();
-
-        let water_table = app.world.resource::<WaterTable>();
-        assert!(
-            water_table != &initial_water_table,
-            "Water table was not updated in {:?}",
-            scenario
-        );
+    fn volume_arithmetic() {
+        let volume = Volume(1.0);
+        assert_eq!(volume + Volume(1.0), Volume(2.0));
+        assert_eq!(volume - Volume(1.0), Volume(0.0));
+        assert_eq!(volume * 2.0, Volume(2.0));
+        assert_eq!(volume / 2.0, Volume(0.5));
     }
 
     #[test]
@@ -577,27 +603,27 @@ mod tests {
                     let mut app = water_testing_app(scenario);
                     app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
+                    let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
                     let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.volume.keys() {
+                    for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                         if water_table_strategy.starting_water_volume(tile_pos, &map_geometry)
-                            > Volume::ZERO
+                            > WaterVolume::ZERO
                         {
                             assert!(
-                                water_table.get_volume(tile_pos) < water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_volume < water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?} in {:?}",
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 tile_pos,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 scenario
                             );
                         } else {
                             assert_eq!(
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 "Water level {:?} at tile position {} is not equal to the starting water level of {:?} in {:?}",
-                                water_table.get_volume(tile_pos),
+                                water_volume,
                                 tile_pos,
                                 water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                                 scenario
@@ -629,14 +655,14 @@ mod tests {
                     let mut app = water_testing_app(scenario);
                     app.update();
 
-                    let water_table = app.world.resource::<WaterTable>();
+                    let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
                     let map_geometry = app.world.resource::<MapGeometry>();
 
-                    for &tile_pos in water_table.volume.keys() {
+                    for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                         assert!(
-                            water_table.get_volume(tile_pos) > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
-                            water_table.get_volume(tile_pos),
+                            water_volume,
                             tile_pos,
                             water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             scenario
@@ -666,28 +692,39 @@ mod tests {
                 };
 
                 let mut app = water_testing_app(scenario);
-                let water_table = app.world.resource::<WaterTable>();
-                let initial_water = water_table.total_water();
+
+                let mut water_volume_query = app.world.query::<&WaterVolume>();
+                let mut starting_total_water: Volume = Volume::ZERO;
+
+                for water_volume in water_volume_query.iter(&app.world) {
+                    starting_total_water += water_volume.volume();
+                }
 
                 app.update();
 
-                let water_table = app.world.resource::<WaterTable>();
-                let map_geometry = app.world.resource::<MapGeometry>();
-                let final_water = water_table.total_water();
+                let mut water_volume_query = app.world.query::<&WaterVolume>();
+                let mut final_total_water: Volume = Volume::ZERO;
+
+                for water_volume in water_volume_query.iter(&app.world) {
+                    final_total_water += water_volume.volume();
+                }
 
                 assert!(
-                    final_water > initial_water,
+                    final_total_water > starting_total_water,
                     "Water level {:?} is not greater than the initial water level of {:?} in {:?}",
-                    final_water,
-                    initial_water,
+                    final_total_water,
+                    starting_total_water,
                     scenario
                 );
 
-                for &tile_pos in water_table.volume.keys() {
+                let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
+                let map_geometry = app.world.resource::<MapGeometry>();
+
+                for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                     assert!(
-                            water_table.get_volume(tile_pos) > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             "Water level {:?} at tile position {} is less than or equal to the starting water level of {:?} in {:?}",
-                            water_table.get_volume(tile_pos),
+                            water_volume,
                             tile_pos,
                             water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
                             scenario
@@ -712,26 +749,35 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        let mut water_table = app.world.resource_mut::<WaterTable>();
-        water_table.add(TilePos::ZERO, Volume(1.0));
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(1.));
 
         app.update();
 
-        let water_table = app.world.resource::<WaterTable>();
-        let map_geometry = app.world.resource::<MapGeometry>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut total_water_height = Height::ZERO;
 
-        let average_water_height = water_table.average_height(map_geometry);
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_height);
+        }
 
-        for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos, map_geometry);
+        let average_water_height =
+            total_water_height / water_depth_query.iter(&app.world).len() as f32;
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_height);
+
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
-                The water table is {:?}",
+                "Water level {:?} is not equal to the average water level of {:?}",
                 height,
-                tile_pos,
                 average_water_height,
-                water_table
             )
         }
     }
@@ -751,26 +797,35 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        let mut water_table = app.world.resource_mut::<WaterTable>();
-        water_table.remove(TilePos::ZERO, Volume(1.0));
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(0.));
 
         app.update();
 
-        let water_table = app.world.resource::<WaterTable>();
-        let map_geometry = app.world.resource::<MapGeometry>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut total_water_height = Height::ZERO;
 
-        let average_water_height = water_table.average_height(map_geometry);
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_height);
+        }
 
-        for tile_pos in map_geometry.valid_tile_positions() {
-            let height = water_table.get_height(tile_pos, map_geometry);
+        let average_water_height =
+            total_water_height / water_depth_query.iter(&app.world).len() as f32;
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_height);
+
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} at tile position {} is not equal to the average water level of {:?}
-                The water table is {:?}",
+                "Water level {:?} is not equal to the average water level of {:?}",
                 height,
-                tile_pos,
                 average_water_height,
-                water_table
             )
         }
     }
@@ -790,11 +845,22 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
 
                     assert!(
                         final_total_water == starting_total_water,
@@ -826,11 +892,23 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
+
                     let water_difference = final_total_water.abs_diff(starting_total_water);
 
                     assert!(
@@ -863,18 +941,29 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut starting_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        starting_total_water += water_volume.volume();
+                    }
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
-                    let water_difference = final_total_water.abs_diff(starting_total_water);
+                    let mut water_volume_query = app.world.query::<&WaterVolume>();
+                    let mut final_total_water: Volume = Volume::ZERO;
+
+                    for water_volume in water_volume_query.iter(&app.world) {
+                        final_total_water += water_volume.volume();
+                    }
+
+                    let water_difference = starting_total_water.abs_diff(final_total_water);
 
                     assert!(
                         water_difference < EPSILON,
                         "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
                         final_total_water,
-                        starting_total_water,
+                        final_total_water,
                         scenario
                     );
                 }
@@ -884,7 +973,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_moves_water_from_high_to_low() {
-        let soil_lateral_flow_ratio = 0.7;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.7);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -905,7 +994,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_from_low_to_high() {
-        let soil_lateral_flow_ratio = 0.3;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.3);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -922,7 +1011,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_does_not_move_water_at_equal_heights() {
-        let soil_lateral_flow_ratio = 0.4;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.4);
 
         let water_transferred = lateral_flow(
             1.0,
@@ -942,7 +1031,7 @@ mod tests {
         let water_height = Height(2.0);
         let neighbor_water_height = Height(1.0);
         // This must be less than 1.0 for the test to be valid
-        let soil_lateral_flow_ratio = 0.5;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.5);
 
         let surface_water_flow = lateral_flow(
             1.0,
@@ -1003,7 +1092,7 @@ mod tests {
 
     #[test]
     fn lateral_water_flows_faster_with_larger_height_difference() {
-        let soil_lateral_flow_ratio = 0.1;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.1);
 
         let small_height_difference = lateral_flow(
             1.0,
@@ -1036,7 +1125,7 @@ mod tests {
     #[test]
     fn lateral_flow_eventually_equalizes_height_differences() {
         let base_water_transfer_amount = 0.1;
-        let soil_lateral_flow_ratio = 0.1;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(0.1);
 
         let mut water_height_a = Height(2.0);
         let mut water_height_b = Height(1.0);
@@ -1103,7 +1192,7 @@ mod tests {
 
     #[test]
     fn lateral_flow_should_not_result_in_higher_neighbor() {
-        let soil_lateral_flow_ratio = 1.0;
+        let soil_lateral_flow_ratio = SoilWaterFlowRate(1.0);
 
         // This is a very high transfer rate, to ensure that the water transfer is maximized
         let base_water_transfer_amount = 1e10;

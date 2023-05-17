@@ -13,14 +13,14 @@ use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::{Emitter, SignalModifier};
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
-use crate::water::WaterSet;
+use crate::water::{WaterBundle, WaterSet};
 
 use self::litter::{
     carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
     set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
 };
 use self::terrain_assets::TerrainHandles;
-use self::terrain_manifest::{RawTerrainManifest, Terrain};
+use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
 
 pub(crate) mod commands;
 pub(crate) mod litter;
@@ -90,6 +90,8 @@ struct TerrainBundle {
     shade: Shade,
     /// The amount of light currently being received by this tile.
     received_light: ReceivedLight,
+    /// The components used to track the water table at this tile.
+    water_bundle: WaterBundle,
 }
 
 impl TerrainBundle {
@@ -99,6 +101,7 @@ impl TerrainBundle {
         tile_pos: TilePos,
         scene: Handle<Scene>,
         mesh: Handle<Mesh>,
+        terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
         let world_pos = tile_pos.into_world_pos(map_geometry);
@@ -109,6 +112,7 @@ impl TerrainBundle {
         };
 
         let height = map_geometry.get_height(tile_pos).unwrap();
+        let terrain_data = terrain_manifest.get(terrain_id);
 
         TerrainBundle {
             terrain_id,
@@ -126,6 +130,12 @@ impl TerrainBundle {
             litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
+            water_bundle: WaterBundle {
+                soil_water_capacity: terrain_data.soil_water_capacity,
+                soil_water_evaporation_rate: terrain_data.soil_water_evaporation_rate,
+                soil_water_flow_rate: terrain_data.soil_water_flow_rate,
+                ..Default::default()
+            },
         }
     }
 }
