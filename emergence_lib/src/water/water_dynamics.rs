@@ -86,6 +86,12 @@ pub(super) fn precipitation(
 #[derive(Component, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
 pub struct SoilWaterFlowRate(pub f32);
 
+impl Default for SoilWaterFlowRate {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
+
 impl SoilWaterFlowRate {
     /// The value of this coefficient for water that is above the surface of the soil.
     const SURFACE_WATER: SoilWaterFlowRate = SoilWaterFlowRate(1.0);
@@ -375,7 +381,6 @@ mod tests {
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
-    use crate::terrain::terrain_manifest::TerrainData;
     use crate::water::{SoilWaterCapacity, WaterPlugin};
 
     use super::*;
@@ -412,34 +417,10 @@ mod tests {
         let mut map_geometry = scenario
             .map_shape
             .set_heights(scenario.map_size.map_geometry());
-        let water_table = scenario.water_table_strategy.water_table(&map_geometry);
 
-        for &tile_pos in water_table.volume.keys() {
-            assert!(
-                map_geometry.is_valid(tile_pos),
-                "Invalid tile position {} found in water table.",
-                tile_pos
-            );
-        }
-
-        app.insert_resource(water_table);
         // Override the default water config with one appropriate for testing.
         app.insert_resource(scenario.water_config);
         app.insert_resource(CurrentWeather::new(scenario.weather));
-
-        // Set the terrain properties.
-        let mut terrain_manifest = TerrainManifest::default();
-        terrain_manifest.insert(
-            "test".to_string(),
-            TerrainData {
-                walking_speed: 1.0,
-                soil_water_capacity: SoilWaterCapacity(0.5),
-                soil_water_flow_rate: SoilWaterFlowRate(0.3),
-                water_evaporation_rate: 0.4,
-            },
-        );
-
-        app.world.insert_resource(terrain_manifest);
 
         // Spawn terrain
         for tile_pos in map_geometry
@@ -498,16 +479,6 @@ mod tests {
                     Volume::from_height(map_geometry.get_height(tile_pos).unwrap() + Height(1.))
                 }
             }
-        }
-
-        fn water_table(&self, map_geometry: &MapGeometry) -> WaterTable {
-            let mut water_table = WaterTable::default();
-            for tile_pos in map_geometry.valid_tile_positions() {
-                water_table
-                    .set_volume(tile_pos, self.starting_water_volume(tile_pos, map_geometry));
-            }
-
-            water_table
         }
     }
 
@@ -568,7 +539,6 @@ mod tests {
 
     #[test]
     fn water_table_arithmetic() {
-        let mut water_table = WaterTable::default();
         let tile_pos = TilePos::new(0, 0);
         water_table.set_volume(tile_pos, Volume(1.0));
         assert_eq!(water_table.get_volume(tile_pos), Volume(1.0));
@@ -598,11 +568,9 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        let initial_water_table = app.world.resource::<WaterTable>().clone();
 
         app.update();
 
-        let water_table = app.world.resource::<WaterTable>();
         assert!(
             water_table != &initial_water_table,
             "Water table was not updated in {:?}",
@@ -719,12 +687,10 @@ mod tests {
                 };
 
                 let mut app = water_testing_app(scenario);
-                let water_table = app.world.resource::<WaterTable>();
                 let initial_water = water_table.total_water();
 
                 app.update();
 
-                let water_table = app.world.resource::<WaterTable>();
                 let map_geometry = app.world.resource::<MapGeometry>();
                 let final_water = water_table.total_water();
 
@@ -765,12 +731,10 @@ mod tests {
         };
 
         let mut app = water_testing_app(scenario);
-        let mut water_table = app.world.resource_mut::<WaterTable>();
         water_table.add(TilePos::ZERO, Volume(1.0));
 
         app.update();
 
-        let water_table = app.world.resource::<WaterTable>();
         let map_geometry = app.world.resource::<MapGeometry>();
 
         let average_water_height = water_table.average_height(map_geometry);
@@ -916,11 +880,9 @@ mod tests {
                     };
 
                     let mut app = water_testing_app(scenario);
-                    let starting_total_water = app.world.resource::<WaterTable>().total_water();
 
                     app.update();
 
-                    let final_total_water = app.world.resource::<WaterTable>().total_water();
                     let water_difference = final_total_water.abs_diff(starting_total_water);
 
                     assert!(

@@ -23,6 +23,7 @@ use crate::{
 };
 
 use self::ocean::{tides, Ocean, TideSettings};
+use self::water_dynamics::SoilWaterFlowRate;
 use self::{
     emitters::{add_water_emitters, produce_water_from_emitters},
     roots::draw_water_from_roots,
@@ -181,6 +182,25 @@ impl Id<Item> {
     }
 }
 
+/// The components needed to track the water table.
+///
+/// These are stored on terrain tile entities.
+#[derive(Bundle, Debug, Default)]
+pub struct WaterBundle {
+    /// The volume of water stored at this tile.
+    pub water_volume: WaterVolume,
+    /// The volume of water stored at this tile the previous tick.
+    pub previous_water_volume: PreviousWaterVolume,
+    /// The rate and direction of water flow at this tile.
+    pub flow_velocity: FlowVelocity,
+    /// The depth of water at this tile.
+    pub water_depth: WaterDepth,
+    /// The amount of water that can be stored at this tile.
+    pub water_capacity: SoilWaterCapacity,
+    /// The rate at which soil water flows through this tile.
+    pub soil_water_flow_rate: SoilWaterFlowRate,
+}
+
 /// The depth of the water table at a given tile relative to the soil surface.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Default)]
 pub enum WaterDepth {
@@ -273,6 +293,12 @@ impl Display for WaterDepth {
 #[derive(Component, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
 pub struct SoilWaterCapacity(pub f32);
 
+impl Default for SoilWaterCapacity {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
+
 /// The amount of water stored on this terrain tile.
 #[derive(Component, Default, Clone, Copy, Debug, Add, Sub, PartialEq, Serialize, Deserialize)]
 pub struct WaterVolume(Volume);
@@ -284,7 +310,7 @@ impl WaterVolume {
     ///
     /// Panics if the given volume is negative.
     #[must_use]
-    pub(crate) fn new(volume: Volume) -> Self {
+    pub fn new(volume: Volume) -> Self {
         assert!(volume >= Volume::ZERO);
 
         Self(volume)
@@ -317,7 +343,7 @@ impl WaterVolume {
 
 /// The water volume at this tile on the previous tick.
 #[derive(Component, Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
-pub(crate) struct PreviousWaterVolume(pub(crate) WaterVolume);
+pub struct PreviousWaterVolume(pub(crate) WaterVolume);
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
@@ -336,7 +362,7 @@ pub fn update_water_depth(
 
 /// The rate and direction of lateral water flow.
 #[derive(Component, Debug, Default, PartialEq, Clone, Add, AddAssign, Sub, SubAssign)]
-pub(crate) struct FlowVelocity {
+pub struct FlowVelocity {
     /// The x component (in world coordinates) of the flow velocity.
     x: Volume,
     /// The z component (in world coordinates) of the flow velocity.

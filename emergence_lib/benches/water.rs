@@ -10,7 +10,7 @@ use emergence_lib::{
     water::{
         update_water_depth,
         water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
-        SoilWaterCapacity, WaterConfig, WaterDepth, WaterVolume,
+        SoilWaterCapacity, WaterBundle, WaterConfig, WaterDepth, WaterVolume,
     },
 };
 
@@ -20,7 +20,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut app = App::new();
 
     let mut map_geometry = MapGeometry::new(MAP_RADIUS);
-    let mut water_table = WaterTable::default();
 
     for tile_pos in map_geometry
         .valid_tile_positions()
@@ -28,7 +27,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     {
         // Make sure we cover a range of heights
         let height = Height(tile_pos.x.max(0) as f32);
-        let volume_per_tile = Volume(20.);
+        let volume_per_tile = WaterVolume::new(Volume(20.));
         let soil_water_flow_rate = SoilWaterFlowRate(0.1);
         let soil_water_capacity = SoilWaterCapacity(0.5);
 
@@ -37,20 +36,22 @@ fn criterion_benchmark(c: &mut Criterion) {
             .spawn((
                 tile_pos,
                 height,
-                WaterVolume::default(),
-                WaterDepth::default(),
-                soil_water_flow_rate,
-                soil_water_capacity,
+                WaterBundle {
+                    water_volume: todo!(),
+                    previous_water_volume: todo!(),
+                    flow_velocity: todo!(),
+                    water_depth: todo!(),
+                    water_capacity: todo!(),
+                    soil_water_flow_rate,
+                },
             ))
             .id();
 
         map_geometry.update_height(tile_pos, height);
         map_geometry.add_terrain(tile_pos, terrain_entity);
-        water_table.add(tile_pos, volume_per_tile);
     }
 
     app.insert_resource(map_geometry);
-    app.insert_resource(water_table);
     app.insert_resource(WaterConfig::IN_GAME);
     app.insert_resource(InGameTime::default());
     app.insert_resource(FixedTime::new(Duration::from_secs_f32(1. / 30.)));
