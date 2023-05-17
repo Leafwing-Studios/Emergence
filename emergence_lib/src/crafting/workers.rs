@@ -1,7 +1,6 @@
 //! Code for allowing workers to help with crafting.
 
-use crate::organisms::energy::VigorModifier;
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{prelude::*, utils::HashSet};
 
 use std::fmt::Display;
 
@@ -9,7 +8,7 @@ use std::fmt::Display;
 #[derive(Component, Debug, Clone, PartialEq)]
 pub(crate) struct WorkersPresent {
     /// The list of workers present
-    workers: HashMap<Entity, VigorModifier>,
+    workers: HashSet<Entity>,
 
     /// The maximum number of workers allowed
     allowed: u8,
@@ -19,7 +18,7 @@ impl WorkersPresent {
     /// Create a new [`WorkersPresent`] with the provided maximum number of workers allowed.
     pub(crate) fn new(allowed: u8) -> Self {
         Self {
-            workers: HashMap::new(),
+            workers: HashSet::new(),
             allowed,
         }
     }
@@ -34,22 +33,15 @@ impl WorkersPresent {
         self.workers.len() as u8
     }
 
-    /// The current number of effective workers, when taking into account the [`VigorModifier`].
+    /// The current number of effective workers present.
     pub(crate) fn effective_workers(&self) -> f32 {
-        self.workers
-            .values()
-            .map(|vigor_modifier| vigor_modifier.ratio())
-            .sum()
+        self.workers.len() as f32
     }
 
     /// Adds a worker to this structure if there is room.
-    pub(crate) fn add_worker(
-        &mut self,
-        worker_entity: Entity,
-        vigor_modifier: VigorModifier,
-    ) -> Result<(), ()> {
+    pub(crate) fn add_worker(&mut self, worker_entity: Entity) -> Result<(), ()> {
         if self.needs_more() {
-            self.workers.insert(worker_entity, vigor_modifier);
+            self.workers.insert(worker_entity);
             Ok(())
         } else {
             Err(())

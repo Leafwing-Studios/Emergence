@@ -3,15 +3,13 @@
 use bevy::prelude::*;
 use core::fmt::Display;
 use core::ops::{Div, Mul};
-use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
+use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
-use crate::player_interaction::abilities::{Intent, IntentAbility, IntentPool};
-use crate::simulation::geometry::MapGeometry;
 use crate::structures::structure_manifest::Structure;
 use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
 
@@ -173,27 +171,12 @@ impl Pool for EnergyPool {
 }
 
 /// Consumes [`Energy`] over time, taking into account the tile's [`VigorModifier`].
-pub(super) fn consume_energy(
-    fixed_time: Res<FixedTime>,
-    mut energy_query: Query<(&mut EnergyPool, &TilePos)>,
-    mut vigor_modifier_query: Query<&mut VigorModifier>,
-    mut intent_pool: ResMut<IntentPool>,
-    map_geometry: Res<MapGeometry>,
-) {
+pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query<&mut EnergyPool>) {
     let delta_time = fixed_time.period.as_secs_f32();
 
-    for (mut energy_pool, &tile_pos) in energy_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let mut vigor_modifier = vigor_modifier_query.get_mut(terrain_entity).unwrap();
-        let cost = vigor_modifier.cost() * delta_time;
-
-        // Pay the vigor modifier's cost, if possible.
-        if let Err(..) = intent_pool.expend(cost) {
-            *vigor_modifier = VigorModifier::None;
-        }
-
+    for mut energy_pool in energy_query.iter_mut() {
         // Note that regen rates are almost always negative.
-        let regen_rate = energy_pool.regen_per_second * vigor_modifier.ratio();
+        let regen_rate = energy_pool.regen_per_second;
         let current = energy_pool.current();
 
         energy_pool.set_current(current + regen_rate * delta_time);
@@ -211,47 +194,6 @@ pub(super) fn kill_organisms_when_out_of_energy(
                 Some(_) => commands.despawn_structure(*tile_pos),
                 None => commands.entity(entity).despawn_recursive(),
             }
-        }
-    }
-}
-
-/// Modifies the working speed and energy consumption rate of an organism.
-///
-/// This is stored as a component on each tile, and is applied to all entities at that tile position.
-#[derive(Component, Debug, Display, Default, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum VigorModifier {
-    /// No modifier is applied.
-    #[default]
-    None,
-    /// Working speed and energy consumption is multiplied.
-    Flourish,
-    /// Working speed and energy consumption is divided.
-    Fallow,
-}
-
-impl VigorModifier {
-    /// Controls the ratio of the signal strength when modified.
-    ///
-    /// This should be greater than 1.
-    const RATIO: f32 = 2.;
-
-    /// The cost of this modifier, in [`Intent`] per second.
-    ///
-    /// This is paid when computing the energy consumption rate.
-    pub fn cost(&self) -> Intent {
-        match self {
-            VigorModifier::None => Intent(0.),
-            VigorModifier::Flourish => IntentAbility::Flourish.cost(),
-            VigorModifier::Fallow => IntentAbility::Fallow.cost(),
-        }
-    }
-
-    /// The ratio of the working speed and energy consumption rate.
-    pub fn ratio(&self) -> f32 {
-        match self {
-            VigorModifier::None => 1.,
-            VigorModifier::Flourish => Self::RATIO,
-            VigorModifier::Fallow => 1. / Self::RATIO,
         }
     }
 }

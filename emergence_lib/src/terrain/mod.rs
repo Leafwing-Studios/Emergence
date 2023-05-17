@@ -8,9 +8,8 @@ use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
 use crate::light::shade::{ReceivedLight, Shade};
-use crate::organisms::energy::VigorModifier;
 use crate::player_interaction::selection::ObjectInteraction;
-use crate::signals::{Emitter, SignalModifier};
+use crate::signals::Emitter;
 use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::water::{WaterBundle, WaterSet};
@@ -76,10 +75,6 @@ struct TerrainBundle {
     zoning: Zoning,
     /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
-    /// Modifies the intensity of emitters on this tile.
-    signal_modifer: SignalModifier,
-    /// Modifies the rate of work and the energy costs on this tile.
-    vigor_modifier: VigorModifier,
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
     /// Stores littered items
@@ -123,8 +118,6 @@ impl TerrainBundle {
             object_interaction: ObjectInteraction::None,
             zoning: Zoning::None,
             scene_bundle,
-            signal_modifer: SignalModifier::None,
-            vigor_modifier: VigorModifier::None,
             emitter: Emitter::default(),
             litter: Litter::default(),
             litter_drift: LitterDrift::default(),

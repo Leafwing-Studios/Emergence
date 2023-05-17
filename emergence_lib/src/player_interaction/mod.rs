@@ -9,7 +9,6 @@ use leafwing_input_manager::{
 
 use crate::world_gen::WorldGenState;
 
-pub mod abilities;
 pub(crate) mod camera;
 pub(crate) mod clipboard;
 pub(crate) mod picking;
@@ -24,7 +23,6 @@ impl Plugin for InteractionPlugin {
             .init_resource::<ActionState<PlayerAction>>()
             .insert_resource(PlayerAction::default_input_map())
             .add_plugin(camera::CameraPlugin)
-            .add_plugin(abilities::AbilitiesPlugin)
             .add_plugin(picking::PickingPlugin)
             .add_plugin(selection::SelectionPlugin)
             .add_plugin(clipboard::ClipboardPlugin)

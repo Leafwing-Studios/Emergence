@@ -30,7 +30,6 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - [clipboard](../glossary.md#clipboard)
   - basic [encyclopedia](../glossary.md#encyclopedia)
   - zoning strength
-  - intent
   - terraforming
   - [map](../glossary.md#map)
 - informational upgrades
@@ -40,7 +39,7 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - soil and water statistics
   - signal [overlays](../glossary.md#overlay)
   - geographical status [overlays](../glossary.md#overlay)
-  - organism intent and actions
+  - unit goals and actions
   - expanded [encyclopedia](../glossary.md#encyclopedia) entries
 - simulation [sandbox](../glossary.md#sandbox) upgrades
   - this is a special creative mode, used to test designs quickly and at no cost

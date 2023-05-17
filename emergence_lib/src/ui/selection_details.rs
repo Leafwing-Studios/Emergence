@@ -381,8 +381,6 @@ fn get_details(
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
                     signals: signals.all_signals_at_position(*tile_pos),
-                    signal_modifier: *terrain_query_item.signal_modifier,
-                    vigor_modifier: *terrain_query_item.vigor_modifier,
                     zoning: terrain_query_item.zoning.clone(),
                     litter: terrain_query_item.litter.clone(),
                     maybe_terraforming_details,
@@ -742,8 +740,7 @@ mod terrain_details {
         crafting::inventories::{InputInventory, OutputInventory},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
-        organisms::energy::VigorModifier,
-        signals::{LocalSignals, SignalModifier},
+        signals::LocalSignals,
         simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
         terrain::{
@@ -771,10 +768,6 @@ mod terrain_details {
         pub(super) zoning: &'static Zoning,
         /// Any littered items on this tile
         pub(super) litter: &'static Litter,
-        /// The signal modifier on this tile
-        pub(super) signal_modifier: &'static SignalModifier,
-        /// The vigor modifier on this tile
-        pub(super) vigor_modifier: &'static VigorModifier,
         /// The depth of water on this tile
         pub(super) water_depth: &'static WaterDepth,
     }
@@ -842,10 +835,6 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
-        /// The signal modifier on this tile
-        pub(super) signal_modifier: SignalModifier,
-        /// The vigor modifier on this tile
-        pub(super) vigor_modifier: VigorModifier,
         /// Any littered items on this tile
         pub(super) litter: Litter,
         /// The details about the terraforming process, if any
@@ -875,8 +864,6 @@ Output: {output}"
                 unit_manifest,
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
-            let vigor_modifier = self.vigor_modifier;
-            let signal_modifier = self.signal_modifier;
             let litter = self.litter.display(item_manifest);
 
             let base_string = format!(
@@ -888,8 +875,6 @@ Water Table: {depth_to_water_table}
 Shade: {shade}
 Current Light: {recieved_light}
 Zoning: {zoning}
-Vigor modifier: {vigor_modifier}
-Signal modifier: {signal_modifier}
 Litter:
 {litter}"
             );

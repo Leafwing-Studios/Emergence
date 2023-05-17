@@ -11,11 +11,7 @@ use crate::{
         item_manifest::{ItemManifest, RawItemManifest},
     },
     light::shade::ReceivedLight,
-    organisms::{
-        energy::{EnergyPool, VigorModifier},
-        lifecycle::Lifecycle,
-        Organism,
-    },
+    organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::{
@@ -153,7 +149,6 @@ fn progress_crafting(
     item_manifest: Res<ItemManifest>,
     terrain_query: Query<&ReceivedLight>,
     mut crafting_query: Query<CraftingQuery>,
-    vigor_query: Query<&VigorModifier>,
     map_geometry: Res<MapGeometry>,
 ) {
     let rng = &mut rand::thread_rng();
@@ -196,27 +191,15 @@ fn progress_crafting(
 
                     // Check if we can make progress
                     if recipe.satisfied(crafter.workers_present.current(), received_light) {
-                        let structure_vigor_bonus = if crafter.maybe_organism.is_some() {
-                            let terrain_entity =
-                                map_geometry.get_terrain(*crafter.tile_pos).unwrap();
-                            let vigor_modifier = vigor_query.get(terrain_entity).unwrap();
-                            vigor_modifier.ratio()
-                        } else {
-                            1.
-                        };
-
                         // Many hands make light work!
                         if recipe.workers_required() > 0 {
                             updated_progress += Duration::from_secs_f32(
                                 time.period.as_secs_f32()
-                                    * structure_vigor_bonus
                                     * crafter.workers_present.effective_workers()
                                     / recipe.workers_required() as f32,
                             );
                         } else {
-                            updated_progress += Duration::from_secs_f32(
-                                time.period.as_secs_f32() * structure_vigor_bonus,
-                            );
+                            updated_progress += time.period;
                         }
 
                         if updated_progress >= required {

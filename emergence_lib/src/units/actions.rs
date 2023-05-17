@@ -23,10 +23,7 @@ use crate::{
         workers::WorkersPresent,
     },
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
-    organisms::{
-        energy::{EnergyPool, VigorModifier},
-        lifecycle::Lifecycle,
-    },
+    organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
     simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{
@@ -49,19 +46,13 @@ use super::{
 
 /// Ticks the timer for each [`CurrentAction`].
 pub(super) fn advance_action_timer(
-    mut units_query: Query<(&mut CurrentAction, &TilePos)>,
+    mut units_query: Query<&mut CurrentAction>,
     time: Res<FixedTime>,
-    modifier_query: Query<&VigorModifier>,
-    map_geometry: Res<MapGeometry>,
 ) {
     let delta = time.period;
 
-    for (mut current_action, tile_pos) in units_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
-        let vigor_modifier = modifier_query.get(terrain_entity).unwrap();
-        let modified_delta = Duration::from_secs_f32(delta.as_secs_f32() * vigor_modifier.ratio());
-
-        current_action.timer.tick(modified_delta);
+    for mut current_action in units_query.iter_mut() {
+        current_action.timer.tick(delta);
     }
 }
 
@@ -234,24 +225,6 @@ pub(super) fn choose_actions(
                     &terrain_manifest,
                     &map_geometry,
                 ),
-                Goal::Lure => CurrentAction::lure(
-                    unit_tile_pos,
-                    facing,
-                    &signals,
-                    &item_manifest,
-                    &terrain_query,
-                    &terrain_manifest,
-                    &map_geometry,
-                ),
-                Goal::Repel => CurrentAction::repel(
-                    unit_tile_pos,
-                    facing,
-                    &signals,
-                    &item_manifest,
-                    &terrain_query,
-                    &terrain_manifest,
-                    &map_geometry,
-                ),
                 Goal::Avoid(unit_id) => CurrentAction::avoid(
                     *unit_id,
                     unit_tile_pos,
@@ -278,20 +251,15 @@ pub(super) fn choose_actions(
 
 /// Exhaustively handles the setup for each planned action
 pub(super) fn start_actions(
-    mut unit_query: Query<(Entity, &mut CurrentAction, &TilePos)>,
-    modifier_query: Query<&VigorModifier>,
+    mut unit_query: Query<(Entity, &mut CurrentAction)>,
     mut workplace_query: Query<&mut WorkersPresent>,
-    map_geometry: Res<MapGeometry>,
 ) {
-    for (worker_entity, mut action, tile_pos) in unit_query.iter_mut() {
+    for (worker_entity, mut action) in unit_query.iter_mut() {
         if action.just_started {
             if let Some(workplace_entity) = action.action().workplace() {
                 if let Ok(mut workers_present) = workplace_query.get_mut(workplace_entity) {
-                    let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
-                    let vigor_modifier = *modifier_query.get(terrain_entity).unwrap();
-
                     // This has a side effect of adding the worker to the workplace
-                    let result = workers_present.add_worker(worker_entity, vigor_modifier);
+                    let result = workers_present.add_worker(worker_entity);
                     if result.is_err() {
                         *action = CurrentAction::idle();
                     }
@@ -1048,32 +1016,6 @@ impl CurrentAction {
         CurrentAction::spin(rotation_direction)
     }
 
-    /// Move towards the signals matching the provided `goal` if able.
-    pub(super) fn move_towards(
-        goal: &Goal,
-        current_tile: TilePos,
-        facing: &Facing,
-        signals: &Signals,
-        item_manifest: &ItemManifest,
-        terrain_query: &Query<&Id<Terrain>>,
-        terrain_manifest: &TerrainManifest,
-        map_geometry: &MapGeometry,
-    ) -> Self {
-        if let Some(target_tile) = signals.upstream(current_tile, goal, item_manifest, map_geometry)
-        {
-            CurrentAction::move_or_spin(
-                current_tile,
-                target_tile,
-                facing,
-                terrain_query,
-                terrain_manifest,
-                map_geometry,
-            )
-        } else {
-            CurrentAction::idle()
-        }
-    }
-
     /// Move away from the signals matching the provided `goal` if able.
     pub(super) fn move_away_from(
         goal: &Goal,
@@ -1276,68 +1218,6 @@ impl CurrentAction {
                 terrain_manifest,
             ),
             _ => CurrentAction::random_spin(rng),
-        }
-    }
-
-    /// Follow a [`IntentAbility::Lure`](crate::player_interaction::abilities::IntentAbility::Lure) signal.
-    ///
-    /// If [`SignalType::Lure`] is not the strongest signal at the unit's position, then idle instead.
-    fn lure(
-        current_tile: TilePos,
-        facing: &Facing,
-        signals: &Signals,
-        item_manifest: &ItemManifest,
-        terrain_query: &Query<&Id<Terrain>>,
-        terrain_manifest: &TerrainManifest,
-        map_geometry: &MapGeometry,
-    ) -> Self {
-        let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
-        let strongest_signal_type = strongest_signal.map(|signal| signal.0);
-
-        if strongest_signal_type == Some(SignalType::Lure) {
-            CurrentAction::move_towards(
-                &Goal::Lure,
-                current_tile,
-                facing,
-                signals,
-                item_manifest,
-                terrain_query,
-                terrain_manifest,
-                map_geometry,
-            )
-        } else {
-            CurrentAction::idle()
-        }
-    }
-
-    /// Flee a [`IntentAbility::Repel`](crate::player_interaction::abilities::IntentAbility::Repel) signal.
-    ///
-    /// If [`SignalType::Repel`] is not the strongest signal at the unit's position, then idle instead.
-    fn repel(
-        current_tile: TilePos,
-        facing: &Facing,
-        signals: &Signals,
-        item_manifest: &ItemManifest,
-        terrain_query: &Query<&Id<Terrain>>,
-        terrain_manifest: &TerrainManifest,
-        map_geometry: &MapGeometry,
-    ) -> Self {
-        let strongest_signal = signals.strongest_goal_signal_at_position(current_tile);
-        let strongest_signal_type = strongest_signal.map(|signal| signal.0);
-
-        if strongest_signal_type == Some(SignalType::Repel) {
-            CurrentAction::move_away_from(
-                &Goal::Repel,
-                current_tile,
-                facing,
-                signals,
-                item_manifest,
-                terrain_query,
-                terrain_manifest,
-                map_geometry,
-            )
-        } else {
-            CurrentAction::idle()
         }
     }
 
