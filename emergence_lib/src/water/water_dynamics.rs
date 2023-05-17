@@ -7,22 +7,38 @@ use derive_more::{Add, Sub};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    asset_management::manifest::Id,
     light::{shade::ReceivedLight, Illuminance},
     simulation::{
         geometry::{Height, MapGeometry, TilePos, Volume},
         time::InGameTime,
         weather::CurrentWeather,
     },
-    terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 
 use super::{ocean::Ocean, FlowVelocity, WaterConfig, WaterDepth, WaterVolume};
 
+/// Controls the relative rate at which water evaporates from this tile.
+///
+/// This varies by terrain type, and is a multiplier on the evaporation rate.
+/// Open water has a value of 1.0.
+/// As a result, this should always be greater than 0.0 and typically less than 1.0.
+#[derive(Component, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub struct SoilWaterEvaporationRate(pub f32);
+
+impl Default for SoilWaterEvaporationRate {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
+
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
-    mut terrain_query: Query<(&ReceivedLight, &Id<Terrain>, &WaterDepth, &mut WaterVolume)>,
-    terrain_manifest: Res<TerrainManifest>,
+    mut terrain_query: Query<(
+        &ReceivedLight,
+        &WaterDepth,
+        &SoilWaterEvaporationRate,
+        &mut WaterVolume,
+    )>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
     fixed_time: Res<FixedTime>,
@@ -32,13 +48,14 @@ pub(super) fn evaporation(
 
     let evaporation_rate = evaporation_per_second * elapsed_time;
 
-    for (received_light, terrain_id, water_depth, mut water_volume) in terrain_query.iter_mut() {
+    for (received_light, water_depth, soil_evaporation_rate, mut water_volume) in
+        terrain_query.iter_mut()
+    {
         let mut evaporation_this_tile =
             Volume(evaporation_rate * received_light.evaporation_ratio());
 
         if matches!(water_depth, WaterDepth::Underground(..)) {
-            let terrain_data = terrain_manifest.get(*terrain_id);
-            evaporation_this_tile = evaporation_this_tile * terrain_data.water_evaporation_rate;
+            evaporation_this_tile = evaporation_this_tile * soil_evaporation_rate.0;
         }
 
         water_volume.remove(evaporation_this_tile);

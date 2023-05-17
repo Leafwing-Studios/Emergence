@@ -5,19 +5,19 @@
       "walking_speed": 0.5,
       "soil_water_capacity": 0.7,
       "soil_water_flow_rate": 0.4,
-      "water_evaporation_rate": 0.6
+      "soil_water_evaporation_rate": 0.6
     },
     "rocky": {
       "walking_speed": 1.5,
       "soil_water_capacity": 0.1,
       "soil_water_flow_rate": 0.05,
-      "water_evaporation_rate": 0.3
+      "soil_water_evaporation_rate": 0.3
     },
     "grassy": {
       "walking_speed": 1.0,
       "soil_water_capacity": 0.3,
       "soil_water_flow_rate": 0.3,
-      "water_evaporation_rate": 0.1
+      "soil_water_evaporation_rate": 0.1
     }
   }
 }

@@ -26,7 +26,11 @@ use emergence_lib::{
         unit_manifest::{RawUnitData, RawUnitManifest},
         WanderingBehavior,
     },
-    water::{roots::RootZone, water_dynamics::SoilWaterFlowRate, SoilWaterCapacity},
+    water::{
+        roots::RootZone,
+        water_dynamics::{SoilWaterEvaporationRate, SoilWaterFlowRate},
+        SoilWaterCapacity,
+    },
 };
 use leafwing_abilities::prelude::Pool;
 
@@ -89,7 +93,7 @@ fn can_serialize_terrain_manifest() {
                 walking_speed: 1.0,
                 soil_water_capacity: SoilWaterCapacity(0.3),
                 soil_water_flow_rate: SoilWaterFlowRate(0.1),
-                water_evaporation_rate: 0.2,
+                soil_water_evaporation_rate: SoilWaterEvaporationRate(0.2),
             },
         )]),
     };

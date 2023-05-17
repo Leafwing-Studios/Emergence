@@ -113,7 +113,6 @@ impl TerrainBundle {
 
         let height = map_geometry.get_height(tile_pos).unwrap();
         let terrain_data = terrain_manifest.get(terrain_id);
-        let soil_water_flow_rate = terrain_data.soil_water_flow_rate;
 
         TerrainBundle {
             terrain_id,
@@ -133,7 +132,8 @@ impl TerrainBundle {
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle {
                 soil_water_capacity: terrain_data.soil_water_capacity,
-                soil_water_flow_rate,
+                soil_water_evaporation_rate: terrain_data.soil_water_evaporation_rate,
+                soil_water_flow_rate: terrain_data.soil_water_flow_rate,
                 ..Default::default()
             },
         }

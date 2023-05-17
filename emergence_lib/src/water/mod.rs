@@ -23,7 +23,7 @@ use crate::{
 };
 
 use self::ocean::{tides, Ocean, TideSettings};
-use self::water_dynamics::SoilWaterFlowRate;
+use self::water_dynamics::{SoilWaterEvaporationRate, SoilWaterFlowRate};
 use self::{
     emitters::{add_water_emitters, produce_water_from_emitters},
     roots::draw_water_from_roots,
@@ -198,6 +198,8 @@ pub struct WaterBundle {
     pub water_depth: WaterDepth,
     /// The amount of water that can be stored at this tile.
     pub soil_water_capacity: SoilWaterCapacity,
+    /// The relative rate at which water evaporates from this tile.
+    pub soil_water_evaporation_rate: SoilWaterEvaporationRate,
     /// The rate at which soil water flows through this tile.
     pub soil_water_flow_rate: SoilWaterFlowRate,
 }

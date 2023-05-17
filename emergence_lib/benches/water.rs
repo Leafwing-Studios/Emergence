@@ -8,10 +8,8 @@ use emergence_lib::{
         time::InGameTime,
     },
     water::{
-        ocean::Ocean,
-        update_water_depth,
-        water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
-        SoilWaterCapacity, WaterBundle, WaterConfig, WaterVolume,
+        ocean::Ocean, update_water_depth, water_dynamics::horizontal_water_movement, WaterBundle,
+        WaterConfig, WaterVolume,
     },
 };
 
@@ -28,9 +26,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     {
         // Make sure we cover a range of heights
         let height = Height(tile_pos.x.max(0) as f32);
-        let volume_per_tile = WaterVolume::new(Volume(20.));
-        let soil_water_flow_rate = SoilWaterFlowRate(0.1);
-        let soil_water_capacity = SoilWaterCapacity(0.5);
+        let water_volume = WaterVolume::new(Volume(20.));
 
         let terrain_entity = app
             .world
@@ -38,9 +34,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 tile_pos,
                 height,
                 WaterBundle {
-                    water_volume: volume_per_tile,
-                    soil_water_capacity,
-                    soil_water_flow_rate,
+                    water_volume,
                     ..Default::default()
                 },
             ))
