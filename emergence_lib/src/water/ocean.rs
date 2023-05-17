@@ -9,7 +9,7 @@ use crate::simulation::{
 
 use super::WaterConfig;
 
-/// Controls the dynamics of [`tides`].
+/// Controls the dynamics of the tides.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TideSettings {
     /// The amplitude of the tide.
