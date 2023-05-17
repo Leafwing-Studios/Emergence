@@ -23,6 +23,7 @@ pub struct TideSettings {
 /// Stores data about the current state of the ocean.
 #[derive(Resource, Debug, Default)]
 pub struct Ocean {
+    /// The global height of the ocean.
     height: Height,
 }
 

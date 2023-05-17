@@ -106,15 +106,20 @@ impl Div<f32> for SoilWaterFlowRate {
 }
 
 /// Data needed to compute lateral flow.
-#[allow(missing_docs)]
 #[derive(WorldQuery)]
 #[world_query(mutable)]
 pub struct LateralFlowQuery {
+    /// The volume of water in this tile.
     water_volume: &'static mut WaterVolume,
+    /// The total flow out of this tile.
     flow_velocity: &'static mut FlowVelocity,
+    /// The depth of water in this tile.
     water_depth: &'static WaterDepth,
+    /// The height of the terrain at this tile.
     terrain_height: &'static Height,
+    /// The position of this tile.
     tile_pos: &'static TilePos,
+    /// The rate at which water flows between soil of this type.
     soil_water_flow_rate: &'static SoilWaterFlowRate,
 }
 

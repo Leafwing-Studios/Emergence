@@ -377,7 +377,7 @@ fn get_details(
                     terrain_id: *terrain_query_item.terrain_id,
                     tile_pos: *tile_pos,
                     height: *terrain_query_item.height,
-                    depth_to_water_table: terrain_query_item.water_depth.clone(),
+                    depth_to_water_table: *terrain_query_item.water_depth,
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
                     signals: signals.all_signals_at_position(*tile_pos),
