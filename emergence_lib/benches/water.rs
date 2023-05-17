@@ -8,6 +8,7 @@ use emergence_lib::{
         time::InGameTime,
     },
     water::{
+        ocean::Ocean,
         update_water_depth,
         water_dynamics::{horizontal_water_movement, SoilWaterFlowRate},
         SoilWaterCapacity, WaterBundle, WaterConfig, WaterVolume,
@@ -50,6 +51,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     }
 
     app.insert_resource(map_geometry);
+    app.insert_resource(Ocean::default());
     app.insert_resource(WaterConfig::IN_GAME);
     app.insert_resource(InGameTime::default());
     app.insert_resource(FixedTime::new(Duration::from_secs_f32(1. / 30.)));
