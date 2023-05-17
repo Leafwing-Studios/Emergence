@@ -33,8 +33,6 @@
 - **Resource sinks**
   - lossy conversions: energy and water will commonly be lost during resource transformations
   - resource upkeep: energy and water will commonly be lost to keep things alive
-  - intent: used to exert control over the colony and interactively boost effectiveness
-    - refine and then spend base resources to improve production rate
   - guided evolution: research analogue used to modify and enhance existing species
   - assimilation: research analogue used to add new species to the colony
   - hive mind: research analogue, used to unlock new features in the lab
@@ -86,7 +84,6 @@
   - guided evolution: research analogue used to modify and enhance existing species
   - assimilation: research analogue used to add new species to the colony
 - **Production enhancements**
-  - intent: spent manually by the player to temporarily and locally enhance
   - upgrades: done via guided evolution, affecting all organisms of that strain
   - enhancements: higher quality fertilizers can be produced and applied automatically via workers
 - **Multiple transportation options**

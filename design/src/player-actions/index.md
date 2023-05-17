@@ -13,7 +13,6 @@ Then, they can use a handful of tools to alter the game world directly:
 - [terraforming](terraforming.md), which controls the height of each tile and the soil composition of each voxel
 - [recipe selection](../production-chains/recipes.md), which changes what buildings are producing
 - [signal configuration](../signals/configuring-properties.md), which modifies the signal production and preferences of a [strain](../glossary.md#strain)
-- [intent](intent.md), which expend a limited but renewable resource to temporarily alter behavior and provide localized boosts
 
 Players also have some options that are simply used to [control the information](informational-tools.md) being displayed:
 
