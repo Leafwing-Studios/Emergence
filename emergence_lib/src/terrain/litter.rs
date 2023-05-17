@@ -169,10 +169,10 @@ pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
 
 /// Make litter in tiles submerged by water float (and stop it from floating when there's no water).
 pub(super) fn make_litter_float(
-    mut query: Query<(&TilePos, &mut Litter, &WaterDepth)>,
+    mut query: Query<(&mut Litter, &WaterDepth)>,
     item_manifest: Res<ItemManifest>,
 ) {
-    for (&tile_pos, mut litter, water_depth) in query.iter_mut() {
+    for (mut litter, water_depth) in query.iter_mut() {
         if let WaterDepth::Flooded(..) = water_depth {
             // PERF: this clone is probably not needed, but it helps deal with the borrow checker
             // It's fine to iterate over a cloned list of items, because we're only moving them out of the list one at a time

@@ -48,6 +48,7 @@ pub(crate) struct WaterEmitter {
 
 impl WaterEmitter {
     /// The maximum height of water that this emitter can be covered with before it stops producing.
+    #[cfg(test)]
     pub(crate) fn pressure(&self) -> Height {
         self.pressure
     }
@@ -70,6 +71,7 @@ impl WaterEmitter {
     }
 
     /// Computes the maximum amount of water that this emitter can produce in a single day.
+    #[cfg(test)]
     pub(crate) fn max_water_production(&self, water_config: &WaterConfig) -> Volume {
         water_config.emission_rate
     }

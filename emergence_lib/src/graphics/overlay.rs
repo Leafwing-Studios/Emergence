@@ -417,7 +417,7 @@ impl TileOverlay {
     /// Gets the material that should be used to visualize the flow of water with the provided `flow_velocity`.
     pub(crate) fn get_flow_velocity_material(
         &self,
-        flow_velocity: FlowVelocity,
+        flow_velocity: &FlowVelocity,
     ) -> Option<Handle<StandardMaterial>> {
         let magnitude = DiscretizedMagnitude::from_water_flow_volume(flow_velocity.magnitude());
         if magnitude == DiscretizedMagnitude::None {
@@ -520,7 +520,7 @@ fn set_overlay_material(
             }
             OverlayType::VelocityOfWaterTable => {
                 let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-                let flow_velocity = *flow_velocity_query.get(terrain_entity).unwrap();
+                let flow_velocity = flow_velocity_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_flow_velocity_material(flow_velocity)
             }

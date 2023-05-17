@@ -16,7 +16,6 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
-    water::WaterConfig,
 };
 
 use self::{
@@ -177,7 +176,6 @@ fn update_selection_details(
     terrain_manifest: Res<TerrainManifest>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
-    water_config: Res<WaterConfig>,
 ) {
     let mut parent_visibility = selection_panel_query.single_mut();
     let (mut ghost_structure_style, mut ghost_structure_text) =
@@ -233,7 +231,6 @@ fn update_selection_details(
                 &structure_manifest,
                 &terrain_manifest,
                 &unit_manifest,
-                &water_config,
             );
         }
         SelectionDetails::Terrain(details) => {
@@ -348,7 +345,6 @@ fn get_details(
                 maybe_organism_details,
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
                 emitter: structure_query_item.emitter.cloned(),
-                maybe_water_emitter: structure_query_item.maybe_water_emitter.cloned(),
                 storage_inventory: structure_query_item.storage_inventory.cloned(),
                 input_inventory: structure_query_item.input_inventory.cloned(),
                 output_inventory: structure_query_item.output_inventory.cloned(),
@@ -599,7 +595,7 @@ mod structure_details {
         structures::structure_manifest::{Structure, StructureManifest},
         terrain::terrain_manifest::TerrainManifest,
         units::unit_manifest::UnitManifest,
-        water::{emitters::WaterEmitter, WaterConfig},
+        water::emitters::WaterEmitter,
     };
 
     /// Data needed to populate [`StructureDetails`].
@@ -646,8 +642,6 @@ mod structure_details {
         pub(crate) marked_for_removal: bool,
         /// What signals is this structure emitting?
         pub(crate) emitter: Option<Emitter>,
-        /// How much water is emitted by this structure?
-        pub(crate) maybe_water_emitter: Option<WaterEmitter>,
         /// The inventory for the input items.
         pub(crate) input_inventory: Option<InputInventory>,
         /// The inventory for the output items.
@@ -671,7 +665,6 @@ mod structure_details {
             structure_manifest: &StructureManifest,
             terrain_manifest: &TerrainManifest,
             unit_manifest: &UnitManifest,
-            water_config: &WaterConfig,
         ) -> String {
             let entity = self.entity;
             let structure_type = structure_manifest.name(self.structure_id);

@@ -21,13 +21,7 @@ use super::{ocean::Ocean, FlowVelocity, WaterConfig, WaterDepth, WaterVolume};
 
 /// Evaporates water from surface water.
 pub(super) fn evaporation(
-    mut terrain_query: Query<(
-        &TilePos,
-        &ReceivedLight,
-        &Id<Terrain>,
-        &WaterDepth,
-        &mut WaterVolume,
-    )>,
+    mut terrain_query: Query<(&ReceivedLight, &Id<Terrain>, &WaterDepth, &mut WaterVolume)>,
     terrain_manifest: Res<TerrainManifest>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
@@ -38,9 +32,7 @@ pub(super) fn evaporation(
 
     let evaporation_rate = evaporation_per_second * elapsed_time;
 
-    for (&tile_pos, received_light, terrain_id, water_depth, mut water_volume) in
-        terrain_query.iter_mut()
-    {
+    for (received_light, terrain_id, water_depth, mut water_volume) in terrain_query.iter_mut() {
         let mut evaporation_this_tile =
             Volume(evaporation_rate * received_light.evaporation_ratio());
 
@@ -74,7 +66,6 @@ pub(super) fn precipitation(
     fixed_time: Res<FixedTime>,
     current_weather: Res<CurrentWeather>,
     mut water_query: Query<&mut WaterVolume>,
-    map_geometry: Res<MapGeometry>,
 ) {
     let precipitation_per_second =
         water_config.precipitation_rate.0 / in_game_time.seconds_per_day();
@@ -108,9 +99,11 @@ impl Div<f32> for SoilWaterFlowRate {
     }
 }
 
+/// Data needed to compute lateral flow.
+#[allow(missing_docs)]
 #[derive(WorldQuery)]
 #[world_query(mutable)]
-struct LateralFlowQuery {
+pub struct LateralFlowQuery {
     water_volume: &'static mut WaterVolume,
     flow_velocity: &'static mut FlowVelocity,
     water_depth: &'static WaterDepth,
@@ -146,7 +139,7 @@ pub fn horizontal_water_movement(
         flow_direction_map.insert(tile_pos, FlowVelocity::ZERO);
     }
 
-    for mut query_item in terrain_query.iter_mut() {
+    for query_item in terrain_query.iter() {
         let total_available = query_item.water_volume.volume();
         if total_available <= Volume::ZERO {
             continue;
@@ -242,7 +235,7 @@ pub fn horizontal_water_movement(
     for (tile_pos, flow_velocity) in flow_direction_map {
         let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
         let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
-        query_item.flow_velocity = flow_velocity;
+        *query_item.flow_velocity = flow_velocity;
     }
 }
 
@@ -256,7 +249,7 @@ fn proposed_lateral_flow_to_neighbors(
     base_water_transfer_amount: f32,
     water_config: &WaterConfig,
     map_geometry: &MapGeometry,
-    mut terrain_query: &Query<LateralFlowQuery>,
+    terrain_query: &Query<LateralFlowQuery>,
     ocean_height: Height,
 ) -> HashMap<TilePos, Volume> {
     let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();

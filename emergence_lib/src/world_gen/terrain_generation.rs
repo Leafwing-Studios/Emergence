@@ -88,10 +88,9 @@ pub(super) fn generate_landmarks(
 
 /// Sets the starting water table
 pub(super) fn initialize_water_table(mut water_query: Query<&mut WaterVolume>) {
-    /// The amount of water stored in each tile to begin with.
-    const STARTING_VOLUME_PER_TILE: WaterVolume = WaterVolume::new(Volume(1.5));
+    let starting_volume = WaterVolume::new(Volume(1.5));
 
     for mut water_volume in water_query.iter_mut() {
-        *water_volume = STARTING_VOLUME_PER_TILE;
+        *water_volume = starting_volume;
     }
 }

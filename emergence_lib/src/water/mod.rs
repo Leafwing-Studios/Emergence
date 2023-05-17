@@ -16,7 +16,7 @@ use crate::{
     asset_management::manifest::Id,
     items::item_manifest::{Item, ItemManifest},
     simulation::{
-        geometry::{Height, MapGeometry, TilePos, Volume},
+        geometry::{Height, MapGeometry, Volume},
         SimulationSet,
     },
     structures::structure_manifest::StructureManifest,
@@ -313,18 +313,6 @@ impl WaterVolume {
     pub(crate) fn volume(&self) -> Volume {
         self.0
     }
-
-    /// Sets the amount of water stored on this tile.
-    ///
-    /// Note that in most cases, you should use `add` or `remove` instead.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given volume is negative.
-    pub(crate) fn set(&mut self, volume: Volume) {
-        assert!(volume >= Volume::ZERO, "Cannot set negative water volume");
-        self.0 = volume;
-    }
 }
 
 /// The water volume at this tile on the previous tick.
@@ -333,18 +321,12 @@ pub(crate) struct PreviousWaterVolume(pub(crate) WaterVolume);
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
-    mut query: Query<(
-        &TilePos,
-        &Height,
-        &WaterVolume,
-        &SoilWaterCapacity,
-        &mut WaterDepth,
-    )>,
+    mut query: Query<(&Height, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
 ) {
     // Critically, the depth of tiles *outside* of the map is not updated here.
     // Instead, they are implicitly treated as the ocean depth.
     // As a result, the ocean acts as both an infinite source and sink for water.
-    for (&tile_pos, &soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
+    for (&soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
         query.iter_mut()
     {
         *water_depth =
