@@ -18,7 +18,7 @@
 - [Research](./research/index.md)
     - [Domestication](./research/domestication.md)
     - [Genetics](./research/guided-evolution.md)
-    - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
+    - [Technology](./research/technology.md)
 - [Production Chains](./production-chains/index.md)
     - [Recipes](./production-chains/recipes.md)
     - [Raw Resources](./production-chains/raw-resources.md)
