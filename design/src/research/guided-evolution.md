@@ -18,9 +18,37 @@ The mechanics for assigning mutations are fairly simple:
 1. There are some number of slots for each species, typically corresponding to some visible part of their body.
 2. Each strain may select up to 1 mutation for each slot.
 
-To unlock mutations, you must acquire resources, and perform research at a dedicated species-specific facility.
+Unlocking mutations costs biotic mastery for that species, as outlined in [domestication](domestication.md).
+Creating new strains and changing strain-level settings (other than to select the first mutation for each slot) comes with some cost to avoid thoughtless twiddling.
+The total numbers of strains of each species is limited by your unlocked [technology](technology.md).
 
-Creating strains and changing strain-level settings (other than to select the first mutation for each slot) comes with some cost to avoid thoughtless twiddling.
+## Controlling which strain is produced
+
+Each species has its own way to select which strain of an organism is born.
+For sessile organisms, this is selected at construction time, and any natural reproduction will produce organisms of the same strain.
+For egg-based units, this is selected at the hatchery, and naturally hatched eggs will produce a random strain.
+
+## Unlocking mutations
+
+Mutations are unlocked by spending biotic mastery (see [domestication](domestication.md)), in a free choice fashion.
+Biotic mastery can be banked, up to a generous cap.
+
+Not all mutations can be chosen initially: these are broken down into tiers to gate complexity.
+Higher tiers can be unlocked with [technology](technology.md).
+
+## Designing strains
+
+Each species has a small number of mutation slots (3-5), corresponding to a different part of its body.
+You can have up to one active mutation in each of these slots.
+
+## Mutation design
+
+Mutations are ultimately about specialization, not improvement.
+Each mutation should come with a tradeoff: no mutation should be strictly positive, although all should be power-positive over the base form.
+Generally, these should be designed to either solve a problem encountered when trying to use the organism in your factory, or present an oppportunity at the cost of a new problem.
+Particularly important problems should be solvable through mutations in different slots to avoid lock-in.
+
+At higher tiers, variations on existing mutations may be found that offer weaker or stronger tradeoffs, or come with an entirely new drawback.
 
 ## Realism
 
@@ -57,6 +85,7 @@ Again, this game is [*inspired* by biology, not a model of it](../high-level/gam
 
 - each upgrade must be visually distinguishable
   - this follows from the [key design constraints](../high-level/game-thesis.md#key-design-constraints)
+  - this may wait until a larger art budget is acquired
 - strains must be visually distinguishable
 - this should be done via player-driven color selection
 - all combinations of mutations across different slots should be compatible
