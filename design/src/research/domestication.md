@@ -1,22 +1,30 @@
-# Assimilation
+# Domestication
 
-When the player **assimilates** a species, they domesticate it, learning how to care for and reproduce it, and bringing it into the broader multi-species hive.
+When the player **domesticates** a species, they domesticate it, learning how to care for and reproduce it, and bringing it into the broader multi-species hive.
 
-Assimilation serves several gameplay purposes:
+Domestication serves several gameplay purposes:
 
 1. Gate wildly different technology in a visually distinctive way.
 2. Tutorialize the process of caring for a new species.
 3. Give players a reason to care about and get excited by the flora and fauna they see around them.
 4. Encourage players to explore new areas.
 
-In order to assimilate a species you must:
+In order to domesticate a species you must:
 
-1. Study the species in the wild for a time.
-   1. You must observe key life cycle events, which unlocks that section of their encyclopedia entry.
+1. Optionally, study the species in the wild for a time.
+   1. When a **scout** observes key life cycle events, the corresponding section of their encyclopedia entry is unlocked.
+   2. These are also unlocked when the event happens inside a research reserve.
 2. Capture a number of specimens of a species.
-3. Keep that population alive for several life cycles.
+   1. These must be placed inside a **research reserve**. Research reserves are closed areas that:
+      1. Have at least one **research outpost** building.
+      2. Have no other crafting buildings in them.
+      3. Are fully isolated, except via gates.
+3. Keep that population alive until a threshold of **biotic mastery** is reached.
+   1. Progress advances each time a new individual is born there while the research outpost is staffed.
+   2. Progress also advances steadily for each individual kept alive in the research reserve.
 
-Once you have assimilated a new species, you unlock control over [genetics](genetics.md) for that species, and can build reproductive structures for that species.
+Once you have domesticated a new species, you unlock control over [guided evolution](guided-evolution.md) for that species, and can build reproductive structures for that species.
+Non-wild strains of this species will be cooperative, following signals or performing other actions to assist the colony.
 
 ## Implied Constraints
 
