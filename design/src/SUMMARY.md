@@ -16,7 +16,7 @@
     - [Terraforming](./player-actions/terraforming.md)
     - [Informational Tools](./player-actions/informational-tools.md)
 - [Research](./research/index.md)
-    - [Assimilation](./research/assimilation.md)
+    - [Domestication](./research/domestication.md)
     - [Genetics](./research/genetics.md)
     - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
 - [Production Chains](./production-chains/index.md)

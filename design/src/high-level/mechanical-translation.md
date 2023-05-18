@@ -34,7 +34,7 @@
   - lossy conversions: energy and water will commonly be lost during resource transformations
   - resource upkeep: energy and water will commonly be lost to keep things alive
   - guided evolution: research analogue used to modify and enhance existing species
-  - assimilation: research analogue used to add new species to the colony
+  - domestication: research analogue used to add new species to the colony
   - hive mind: research analogue, used to unlock new features in the lab
   - ???: some kind of final goal to work towards building
   
@@ -82,7 +82,7 @@
   - modifying the topology etc should be possible, but very expensive
 - **Technology**
   - guided evolution: research analogue used to modify and enhance existing species
-  - assimilation: research analogue used to add new species to the colony
+  - domestication: research analogue used to add new species to the colony
 - **Production enhancements**
   - upgrades: done via guided evolution, affecting all organisms of that strain
   - enhancements: higher quality fertilizers can be produced and applied automatically via workers

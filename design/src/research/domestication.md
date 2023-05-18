@@ -1,22 +1,22 @@
-# Assimilation
+# Domestication
 
-When the player **assimilates** a species, they domesticate it, learning how to care for and reproduce it, and bringing it into the broader multi-species hive.
+When the player **domesticates** a species, they domesticate it, learning how to care for and reproduce it, and bringing it into the broader multi-species hive.
 
-Assimilation serves several gameplay purposes:
+Domestication serves several gameplay purposes:
 
 1. Gate wildly different technology in a visually distinctive way.
 2. Tutorialize the process of caring for a new species.
 3. Give players a reason to care about and get excited by the flora and fauna they see around them.
 4. Encourage players to explore new areas.
 
-In order to assimilate a species you must:
+In order to domesticate a species you must:
 
 1. Study the species in the wild for a time.
    1. You must observe key life cycle events, which unlocks that section of their encyclopedia entry.
 2. Capture a number of specimens of a species.
 3. Keep that population alive for several life cycles.
 
-Once you have assimilated a new species, you unlock control over [genetics](genetics.md) for that species, and can build reproductive structures for that species.
+Once you have domesticated a new species, you unlock control over [genetics](genetics.md) for that species, and can build reproductive structures for that species.
 
 ## Implied Constraints
 

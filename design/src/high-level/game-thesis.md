@@ -68,7 +68,7 @@ These are self-imposed, and chosen to create a more compelling and cohesive game
 - disruptions can create much more interesting emotional pacing in a genre that struggles with flatness
 - tiny scale offers interesting mechanical and experiential possibilities that will feel new and interesting
 - emphasis on sustainability pushes designers and players towards more interesting resource refinement pathways
-- assimilating new species offers a natural and high impact path to adding more options for players
+- domesticating new species offers a natural and high impact path to adding more options for players
   - this can be done as horizontal progression, allowing new players to jump into whatever interests them most
 - lack of player avatar reduces frustration of inventory management and walking around
 - modded Factorio has really nailed much of the UX and QoL features that we needed, and offers a clear base to learn from

@@ -6,7 +6,7 @@
 
 Manage a bustling colony in this miniature organic factory builder.
 Survive changing seasons, floods and predators without cascading failures.
-Explore a diverse environment in search of new species to assimilate,
+Explore a diverse environment in search of new species to domesticate,
 and evolve to take advantage of nature's bounty.
 
 ## Tags
@@ -22,7 +22,7 @@ automation, base building, resource management
 Humanity has gone extinct: victim to its own hubris and waste.
 But life itself lives on, and a new form of civilization has begun to emerge:
 a symbiotic cross-species emergent intelligence.
-What was once a simple ant-plant-fungi system is now a sprawling microscopic metropolis as more and more species are domesticated and ultimately assimilated.
+What was once a simple ant-plant-fungi system is now a sprawling microscopic metropolis as more and more species are domesticated and ultimately domesticated.
 
 Guide this civilization as it grows, adapts and evolves in a challenging dynamic environment.
 Fight to build a robust, sustainable system, and fall in love with a factory builder unlike anything you've ever seen before.
@@ -87,6 +87,6 @@ With enough generations, anything is possible.
 But when you need something truly different, you must master new techniques, and expand into the untamed wilds.
 There, you will encounter completely new species (like mycorrhizae, carnivorous plants, flying bees and predatory spiders) and, through hard work and clever thinking, domesticate them.
 
-Over time, they will become fully assimilated, providing radically new capabilities for your colony and unlocking the ability to shape both their preferences and the course of their evolution.
+Over time, they will become fully domesticated, providing radically new capabilities for your colony and unlocking the ability to shape both their preferences and the course of their evolution.
 
 Join us, for together we are stronger.

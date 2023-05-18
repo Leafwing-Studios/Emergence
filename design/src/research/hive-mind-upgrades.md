@@ -51,7 +51,7 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - customizable [alerts](../glossary.md#alert)
   - map [notes](../glossary.md#notes)
 - [complexity](../glossary.md#depth-and-complexity) upgrades
-  - [assimilation](assimilation.md)
+  - [domestication](domestication.md)
   - [genetics](genetics.md) research
   - maximum number of strains of each species
   - tame and perform genetics research on multiple species at once

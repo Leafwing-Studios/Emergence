@@ -14,5 +14,5 @@ Research serves many goals:
    1. In most games, this effect is quite limited, as you are steadily unlocking a fixed tree with limited actual freedom.
 5. Showcases late-game mechanics to let players plan and get them excited about how cool it's going to be.
 
-In *Emergence*, there are three distinct forms of research: [assimilation](assimilation.md) (capturing new species), [genetics](genetics.md) (refining and branching existing species) and [hive mind upgrades](hive-mind-upgrades.md) (increasing information and direct player upgrades).
+In *Emergence*, there are three distinct forms of research: [domestication](domestication.md) (capturing new species), [genetics](genetics.md) (refining and branching existing species) and [hive mind upgrades](hive-mind-upgrades.md) (increasing information and direct player upgrades).
 These are primarily split for thematic cohesion, but that choice also serves to increase system richness and add more interesting and distinct end goals.
