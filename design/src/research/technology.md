@@ -130,18 +130,6 @@ Some technologies may require multiple distinct varieties of research, and may d
 
 **Lessons:** assemble goods from a more complex production chain
 
-### Chemical Research
-
-**Uses:** unlock late-game chemistry and fire tech
-
-**Ingredients:** acid, ash, bonemeal, adhesive
-
-**Recipe building:** chemistry lab
-
-**Crafting conditions:** 1 worker, risk of chemical accidents
-
-**Lessons:** chemical safety
-
 ### Pure Research
 
 **Uses:** unlock overlays and other informational / QoL upgrades
