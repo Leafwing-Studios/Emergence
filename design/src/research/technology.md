@@ -74,3 +74,82 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - tame and perform guided-evolution research on multiple species at once
   - complex game mechanics unlocked via guided-evolution research
   - [research](../glossary.md#research) queues
+
+## Types of Technology
+
+Technology is split into several variants in order to provide more diverse resource sinks and gate technology behind mastery of prerequisite systems.
+Each variety presents a puzzle that teaches a lesson about an area of the game through the ingredients required and the crafting requirements of the research recipe.
+
+Some technologies may require multiple distinct varieties of research, and may depend on research from other trees.
+
+### Food Research
+
+**Uses:** unlock new meals, and more efficient ways to store and process food.
+
+**Ingredients:** mushrooms and fruit
+
+**Recipe building:** kitchen
+
+**Crafting conditions:** 1 worker
+
+**Lessons:** generate a surplus production of food.
+
+### Agricultural Research
+
+**Uses:** unlock domestication and guided evolution, improve agricultural production
+
+**Ingredients:** compost, seeds and water
+
+**Recipe building:** research station
+
+**Crafting conditions:** bright sun, 1 worker
+
+**Lessons:** learn how to create basic resources for agriculture
+
+### Construction Research
+
+**Uses:** unlock new buildings, building materials and terraforming
+
+**Ingredients:** dirt, wood and adhesive
+
+**Recipe building:** workbench
+
+**Crafting conditions:** 1 worker
+
+**Lessons:** sustainable production of mid-tier building ingredients
+
+### Logistic Research
+
+**Uses:** unlock better ways to move goods and units around
+
+**Ingredients:** daub and rope
+
+**Recipe building:** manufactory
+
+**Crafting conditions:** 3 workers
+
+**Lessons:** assemble goods from a more complex production chain
+
+### Chemical Research
+
+**Uses:** unlock late-game chemistry and fire tech
+
+**Ingredients:** acid, ash, bonemeal, adhesive
+
+**Recipe building:** chemistry lab
+
+**Crafting conditions:** 1 worker, risk of chemical accidents
+
+**Lessons:** chemical safety
+
+### Pure Research
+
+**Uses:** unlock overlays and other informational / QoL upgrades
+
+**Ingredients:** anything, but with a hard cap for each item type
+
+**Recipe building:** playground
+
+**Crafting conditions:** 1 worker
+
+**Lessons:** try out new things!
