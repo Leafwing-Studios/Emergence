@@ -10,7 +10,7 @@ However, there's a better approach: enable them slowly over time in a [diagetic]
 In *Emergence*, the player controls the hive as a whole.
 We can play into this theme by framing quality of life and information upgrades as the hive mind getting smarter.
 
-To differentiate these further from [genetics](genetics.md) research, these upgrades don't cost resources.
+To differentiate these further from [guided evolution](guided-evolution.md) research, these upgrades don't cost resources.
 Instead, they unlock as various milestones are completed for each playthrough.
 
 These upgrades are arranged in a tree structure: both for complexity management and because many of these upgrades are logically locked behind earlier ones.
@@ -52,10 +52,10 @@ Several categories of [upgrade](../glossary.md#upgrade) belong here:
   - map [notes](../glossary.md#notes)
 - [complexity](../glossary.md#depth-and-complexity) upgrades
   - [domestication](domestication.md)
-  - [genetics](genetics.md) research
+  - [guided evolution](guided-evolution.md) research
   - maximum number of strains of each species
-  - tame and perform genetics research on multiple species at once
-  - complex game mechanics unlocked via genetics research
+  - tame and perform guided-evolution research on multiple species at once
+  - complex game mechanics unlocked via guided-evolution research
   - [research](../glossary.md#research) queues
 
 Players can choose to opt out of this system during [world generation](../glossary.md#world-generation), allowing them to access all of the complexity at the very beginning.

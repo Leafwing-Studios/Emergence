@@ -17,7 +17,7 @@
     - [Informational Tools](./player-actions/informational-tools.md)
 - [Research](./research/index.md)
     - [Domestication](./research/domestication.md)
-    - [Genetics](./research/genetics.md)
+    - [Genetics](./research/guided-evolution.md)
     - [Hive Mind Upgrades](./research/hive-mind-upgrades.md)
 - [Production Chains](./production-chains/index.md)
     - [Recipes](./production-chains/recipes.md)

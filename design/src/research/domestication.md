@@ -16,7 +16,7 @@ In order to domesticate a species you must:
 2. Capture a number of specimens of a species.
 3. Keep that population alive for several life cycles.
 
-Once you have domesticated a new species, you unlock control over [genetics](genetics.md) for that species, and can build reproductive structures for that species.
+Once you have domesticated a new species, you unlock control over [guided evolution](guided-evolution.md) for that species, and can build reproductive structures for that species.
 
 ## Implied Constraints
 

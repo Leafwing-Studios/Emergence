@@ -1,6 +1,6 @@
-# Genetics
+# Guided evolution
 
-**Genetics** allows the player to modify species that are [part of their hive](domestication.md).
+**Guided evolution** allows the player to modify species that are [part of their hive](domestication.md).
 In this menu, players can:
 
 1. Unlock **mutations** for a species.
