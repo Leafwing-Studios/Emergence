@@ -65,6 +65,25 @@
 			"conditions": {
 				"workers_required": 2
 			}
+		},
+		"tide_weed_production": {
+			"inputs": {
+				"Exact": {
+					"water": 1
+				}
+			},
+			"outputs": {
+				"tide_weed_frond": 1
+			},
+			"craft_time": 3,
+			"conditions": {
+				"workers_required": 0,
+				"allowable_light_range": {
+					"min": "DimlyLit",
+					"max": "BrightlyLit"
+				}
+			},
+			"energy": 10.0
 		}
 	}
 }

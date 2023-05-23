@@ -11,7 +11,7 @@ pub mod loader;
 pub mod plugin;
 
 use bevy::{prelude::*, utils::HashMap};
-use std::fmt::Debug;
+use std::{any::type_name, fmt::Debug};
 
 /// Write-only data definitions.
 ///
@@ -86,9 +86,13 @@ where
     /// This function panics when the given ID does not exist in the manifest.
     /// We assume that all IDs are valid and the manifests are complete.
     pub fn name(&self, id: Id<T>) -> &str {
-        self.name_map
-            .get(&id)
-            .unwrap_or_else(|| panic!("ID {id:?} not found in manifest"))
+        self.name_map.get(&id).unwrap_or_else(|| {
+            panic!(
+                "ID {:?} of type {:?} not found in manifest",
+                id,
+                type_name::<T>()
+            )
+        })
     }
 
     /// Returns the complete list of names of the loaded options.
