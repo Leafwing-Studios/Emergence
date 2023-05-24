@@ -198,3 +198,44 @@ Water should not:
   - visually distracting
   - severly detracts from aesthetics
   - likely to cause weird exploits
+
+## Base water mechanics
+
+*Emergence* uses an unconventional (for a video game) approach to modelling water: ground water dynamics.
+This allows for intuitive emergent behavior, good hooks (especially for plant growth!) and a ton of creative power relative to the simplicity of the design.
+
+Water is stored on a per-tile basis.
+Water first fills all available pore space in the soil as **surface water**. Above that level, it overflows as **surface water**.
+The characteristics of soil and surface water differ dramatically, creating a meaningful (and intuitive) nonlinearity in behavior.
+Water characteristics also vary by soil type, allowing for meaningful emergent distinctions between different soil types (and thus biomes).
+
+### Evaporation
+
+Evaporation is simple: water is removed from each tile.
+This varies with:
+
+- the presence or absence of surface water
+- the soil type (if no surface water is present)
+- the light level on each tile (which in turn varies with local conditions, time of day and weather)
+
+Because surface water evaporates at a much faster rate than soil water, this leads to a substantially stable equilibrium with rivers and islands.
+As the amount of water increases locally, the rate of evaporation also increases automatically, creating a local balance.
+
+### Precipitation
+
+Precipitation is similarly simple: on each tile, add water based on the current weather.
+This operates to refill water reserves that are far from rivers and oceans.
+
+### Lateral water movement
+
+Water flows from high to low.
+The rate at which this flow occurs is proportional to the difference in height of the water column.
+
+The overall effect creates a **flow velocity**, which can be used to transport floating goods, push units and more.
+
+### Floating litter
+
+Litter which is sufficiently light floats on the surface of the water, travelling in a rate (and direction) proportional to the flow velocity.
+Each tile may only have one litter pile on it: litter that exceeds the stack size of the item (or is of a different type) piles up.
+
+This effect is slightly randomized to reduce log jams and create a more visually appealing effect.
