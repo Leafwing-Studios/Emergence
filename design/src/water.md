@@ -78,6 +78,24 @@ However, it has several key limitations:
 - immersion challenges: growing crops doesn't take more water, no floods, no rainfall, water from nowhere
 - river-centric design with high water sources seems quite fragile: hand-authored maps only
 
+### Oxygen Not Included
+
+In ONI, water is an essential resource. It comes in three forms: water, polluted water, and salt water and is regularly converted back and forth between them.
+
+It is used for:
+
+- sanitation
+- crop production (optional)
+- oxygen production (optional, but very effective)
+- heat exchange
+- luxury end products
+
+Water can carry germs, and is routinely recycled as part of gameplay to avoid spreading germs.
+Water also has a temperature, and water's role as a heat exchange fluid
+
+For better or worse, the water mechanics in ONI wildly violate conservation laws: it is possible to create water from nothing, and destroy it.
+To resolve this, geysers are a key feature, continually producing water. They can however be blocked to limit production.
+
 ## Gameplay value of water
 
 Water must:
