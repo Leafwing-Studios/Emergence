@@ -240,10 +240,10 @@
 					"life_paths": []
 				},
 				"energy_pool": {
-					"current": 50.0,
-					"max": 50.0,
-					"warning_threshold": 25.0,
-					"satiation_threshold": 50.0,
+					"current": 10.0,
+					"max": 10.0,
+					"warning_threshold": 2.0,
+					"satiation_threshold": 10.0,
 					"regen_per_second": -1.0
 				}
 			},
@@ -258,6 +258,9 @@
 						"tide_weed_frond": 1
 					}
 				}
+			},
+			"vegetative_reproduction": {
+				"period": 5.0
 			},
 			"root_zone": {
 				"max_depth": 1,

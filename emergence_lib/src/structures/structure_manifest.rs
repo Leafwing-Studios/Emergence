@@ -5,7 +5,10 @@ use crate::{
     construction::{ConstructionData, ConstructionStrategy, RawConstructionStrategy},
     crafting::recipe::{ActiveRecipe, RawActiveRecipe},
     items::item_manifest::Item,
-    organisms::{OrganismId, OrganismVariety, RawOrganismVariety},
+    organisms::{
+        vegetative_reproduction::{RawVegetativeReproduction, VegetativeReproduction},
+        OrganismId, OrganismVariety, RawOrganismVariety,
+    },
     simulation::geometry::Height,
     water::roots::RootZone,
 };
@@ -52,7 +55,7 @@ impl StructureManifest {
 }
 
 /// Information about a single [`Id<Structure>`] variety of structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructureData {
     /// Data needed for living structures
     pub organism_variety: Option<OrganismVariety>,
@@ -62,6 +65,8 @@ pub struct StructureData {
     pub kind: StructureKind,
     /// How new copies of this structure can be built
     pub construction_strategy: ConstructionStrategy,
+    /// Can this structure spread vegetatively? If so, how?
+    pub vegetative_reproduction: Option<VegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
     /// The height of the structure, which controls the shadows it casts.
@@ -85,6 +90,8 @@ pub struct RawStructureData {
     pub kind: RawStructureKind,
     /// How new copies of this structure can be built
     pub construction_strategy: RawConstructionStrategy,
+    /// Can this structure spread vegetatively? If so, how?
+    pub vegetative_reproduction: Option<RawVegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
     /// The height of the structure, which controls the shadows it casts.
@@ -103,6 +110,7 @@ impl From<RawStructureData> for StructureData {
             organism_variety: raw.organism_variety.map(Into::into),
             kind: raw.kind.into(),
             construction_strategy: raw.construction_strategy.into(),
+            vegetative_reproduction: raw.vegetative_reproduction.map(Into::into),
             max_workers: raw.max_workers,
             height: Height(raw.height as f32),
             footprint: raw.footprint.unwrap_or_default(),

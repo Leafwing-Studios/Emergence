@@ -204,6 +204,13 @@ impl Command for SpawnStructureCommand {
             }
         }
 
+        // TODO: yeet StructureKind and just do this everywhere
+        if let Some(vegetative_reproduction) = structure_data.vegetative_reproduction {
+            world
+                .entity_mut(structure_entity)
+                .insert(vegetative_reproduction);
+        }
+
         let mut geometry = world.resource_mut::<MapGeometry>();
 
         geometry.add_structure(

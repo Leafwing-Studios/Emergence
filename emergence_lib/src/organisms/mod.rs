@@ -14,11 +14,13 @@ use self::{
     energy::{consume_energy, kill_organisms_when_out_of_energy, EnergyPool},
     lifecycle::{sprout_seeds, transform_when_lifecycle_complete, Lifecycle, RawLifecycle},
     oxygen::{manage_oxygen, Oxygen, OxygenPool},
+    vegetative_reproduction::vegetative_spread,
 };
 
 pub mod energy;
 pub mod lifecycle;
 pub mod oxygen;
+pub mod vegetative_reproduction;
 
 /// The [`Id`] of an organism.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -149,6 +151,7 @@ impl Plugin for OrganismPlugin {
                 consume_energy,
                 kill_organisms_when_out_of_energy,
                 transform_when_lifecycle_complete,
+                vegetative_spread,
                 sprout_seeds,
                 manage_oxygen,
             )

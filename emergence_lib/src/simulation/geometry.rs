@@ -180,6 +180,24 @@ impl TilePos {
         iter
     }
 
+    /// All adjacent tiles that are clear of structures and ghosts and have a limited terrain height gap.
+    ///
+    /// This is used to control vegetative reproduction.
+    pub(crate) fn empty_neighbors(
+        &self,
+        map_geometry: &MapGeometry,
+    ) -> impl IntoIterator<Item = TilePos> {
+        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
+        let mut iter = FilteredArrayIter::from(neighbors);
+        iter.filter(|&tile_pos| {
+            map_geometry.is_valid(tile_pos)
+                && map_geometry.get_ghost_structure(tile_pos).is_none()
+                && map_geometry.get_ghost_terrain(tile_pos).is_none()
+                && map_geometry.get_structure(tile_pos).is_none()
+        });
+        iter
+    }
+
     /// All adjacent tiles that are at most [`Height::MAX_STEP`] higher or lower than `self`.
     ///
     /// If the adjacent tile contains a structure, the height of the structure is added to the tile height.
