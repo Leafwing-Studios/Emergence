@@ -69,13 +69,13 @@
 		"tide_weed_production": {
 			"inputs": {
 				"Exact": {
-					"water": 1
+					"water": 2
 				}
 			},
 			"outputs": {
 				"tide_weed_frond": 1
 			},
-			"craft_time": 3,
+			"craft_time": 5,
 			"conditions": {
 				"workers_required": 0,
 				"allowable_light_range": {

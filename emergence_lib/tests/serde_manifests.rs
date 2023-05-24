@@ -344,7 +344,10 @@ fn can_serialize_structure_manifest() {
                         radius: 2,
                     }),
                     passable: false,
-                    vegetative_reproduction: Some(RawVegetativeReproduction { period: 10. }),
+                    vegetative_reproduction: Some(RawVegetativeReproduction {
+                        period: 10.,
+                        energy_cost: 30.,
+                    }),
                 },
             ),
             (
