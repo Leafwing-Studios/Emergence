@@ -231,6 +231,46 @@
 			"max_workers": 6,
 			"passable": false
 		},
+		"tide_weed": {
+			"organism_variety": {
+				"prototypical_form": {
+					"Structure": "tide_weed"
+				},
+				"lifecycle": {
+					"life_paths": []
+				},
+				"energy_pool": {
+					"current": 100.0,
+					"max": 100.0,
+					"warning_threshold": 25.0,
+					"satiation_threshold": 50.0,
+					"regen_per_second": -1.0
+				}
+			},
+			"kind": {
+				"Crafting": {
+					"starting_recipe": "tide_weed_production"
+				}
+			},
+			"construction_strategy": {
+				"Direct": {
+					"materials": {
+						"tide_weed_frond": 1
+					}
+				}
+			},
+			"vegetative_reproduction": {
+				"period": 2.0,
+				"energy_threshold": 80.0
+			},
+			"root_zone": {
+				"max_depth": 1,
+				"radius": 0
+			},
+			"height": 0,
+			"max_workers": 6,
+			"passable": true
+		},
 		"ant_hive": {
 			"kind": {
 				"Crafting": {

@@ -145,6 +145,7 @@ impl Default for GenerationConfig {
         structure_chances.insert(Id::from_name("ant_hive".to_string()), 1e-3);
         structure_chances.insert(Id::from_name("acacia".to_string()), 2e-2);
         structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
+        structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
 
         GenerationConfig {
             map_radius: 30,

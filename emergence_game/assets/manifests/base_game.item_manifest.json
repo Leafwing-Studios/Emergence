@@ -42,6 +42,15 @@
       "compostable": false,
       "buoyant": false,
       "fluid": true
+    },
+    "tide_weed_frond": {
+      "stack_size": 10,
+      "compostable": true,
+      "buoyant": true,
+      "fluid": false,
+      "seed": {
+        "Structure": "tide_weed"
+      }
     }
   }
 }

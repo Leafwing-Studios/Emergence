@@ -1,6 +1,7 @@
 //! Methods to use [`Commands`] to manipulate structures.
 
 use bevy::{ecs::system::Command, prelude::*};
+use leafwing_abilities::prelude::Pool;
 
 use crate::{
     asset_management::manifest::Id,
@@ -12,7 +13,7 @@ use crate::{
     },
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::ItemManifest},
-    organisms::OrganismBundle,
+    organisms::{energy::StartingEnergy, OrganismBundle},
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
     simulation::geometry::{MapGeometry, TilePos},
@@ -30,7 +31,12 @@ pub(crate) trait StructureCommandsExt {
     /// Spawns a structure defined by `data` at `tile_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
-    fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_structure(
+        &mut self,
+        tile_pos: TilePos,
+        data: ClipboardData,
+        starting_energy: StartingEnergy,
+    );
 
     /// Despawns any structure at the provided `tile_pos`.
     ///
@@ -54,10 +60,16 @@ pub(crate) trait StructureCommandsExt {
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
-    fn spawn_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_structure(
+        &mut self,
+        tile_pos: TilePos,
+        data: ClipboardData,
+        starting_energy: StartingEnergy,
+    ) {
         self.add(SpawnStructureCommand {
             center: tile_pos,
             data,
+            starting_energy,
         });
     }
 
@@ -90,6 +102,8 @@ struct SpawnStructureCommand {
     center: TilePos,
     /// Data about the structure to spawn.
     data: ClipboardData,
+    /// The amount of energy to give the organism.
+    starting_energy: StartingEnergy,
 }
 
 impl Command for SpawnStructureCommand {
@@ -141,7 +155,18 @@ impl Command for SpawnStructureCommand {
 
         // PERF: these operations could be done in a single archetype move with more branching
         if let Some(organism_details) = &structure_data.organism_variety {
-            let energy_pool = organism_details.energy_pool.clone();
+            let mut energy_pool = organism_details.energy_pool.clone();
+            match self.starting_energy {
+                StartingEnergy::Specific(energy) => {
+                    energy_pool.set_current(energy);
+                },
+                StartingEnergy::Random => {
+                    let rng = &mut rand::thread_rng();
+                    energy_pool.randomize(rng)
+                },
+                StartingEnergy::Full => {},
+                StartingEnergy::NotAnOrganism => panic!("All organisms must have energy pools, and this variant should never be constructed for organisms."),
+            };
 
             world
                 .entity_mut(structure_entity)
@@ -202,6 +227,13 @@ impl Command for SpawnStructureCommand {
                     })
                     .insert(Emitter::default());
             }
+        }
+
+        // TODO: yeet StructureKind and just do this everywhere
+        if let Some(vegetative_reproduction) = structure_data.vegetative_reproduction {
+            world
+                .entity_mut(structure_entity)
+                .insert(vegetative_reproduction);
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();

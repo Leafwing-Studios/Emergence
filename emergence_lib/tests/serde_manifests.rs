@@ -13,6 +13,7 @@ use emergence_lib::{
     organisms::{
         energy::{Energy, EnergyPool},
         lifecycle::{RawLifePath, RawLifecycle},
+        vegetative_reproduction::RawVegetativeReproduction,
         RawOrganismId, RawOrganismVariety,
     },
     simulation::geometry::Height,
@@ -260,6 +261,7 @@ fn can_serialize_structure_manifest() {
                     footprint: Some(Footprint::single()),
                     root_zone: None,
                     passable: false,
+                    vegetative_reproduction: None,
                 },
             ),
             (
@@ -276,6 +278,7 @@ fn can_serialize_structure_manifest() {
                     footprint: Some(Footprint::single()),
                     root_zone: None,
                     passable: true,
+                    vegetative_reproduction: None,
                 },
             ),
             (
@@ -289,6 +292,7 @@ fn can_serialize_structure_manifest() {
                     root_zone: None,
                     height: 1,
                     passable: false,
+                    vegetative_reproduction: None,
                 },
             ),
             (
@@ -315,34 +319,7 @@ fn can_serialize_structure_manifest() {
                     root_zone: None,
                     height: 0,
                     passable: false,
-                },
-            ),
-            (
-                "acacia_sprout".to_string(),
-                RawStructureData {
-                    organism_variety: Some(RawOrganismVariety {
-                        prototypical_form: RawOrganismId::structure("acacia"),
-                        lifecycle: RawLifecycle::new(vec![RawLifePath {
-                            new_form: RawOrganismId::structure("acacia"),
-                            energy_required: Some(500.),
-                            time_required: None,
-                        }]),
-                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
-                    }),
-                    kind: RawStructureKind::Crafting {
-                        starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
-                    },
-                    construction_strategy: RawConstructionStrategy::Seedling(
-                        "acacia_seedling".to_string(),
-                    ),
-                    max_workers: 1,
-                    height: 1,
-                    footprint: Some(Footprint::single()),
-                    root_zone: Some(RootZone {
-                        max_depth: Height(1.5),
-                        radius: 1,
-                    }),
-                    passable: false,
+                    vegetative_reproduction: None,
                 },
             ),
             (
@@ -367,6 +344,10 @@ fn can_serialize_structure_manifest() {
                         radius: 2,
                     }),
                     passable: false,
+                    vegetative_reproduction: Some(RawVegetativeReproduction {
+                        period: 10.,
+                        energy_threshold: 30.,
+                    }),
                 },
             ),
             (
@@ -385,6 +366,7 @@ fn can_serialize_structure_manifest() {
                     footprint: Some(Footprint::hexagon(1)),
                     root_zone: None,
                     passable: false,
+                    vegetative_reproduction: None,
                 },
             ),
             (
@@ -404,6 +386,7 @@ fn can_serialize_structure_manifest() {
                     footprint: Some(Footprint::single()),
                     root_zone: None,
                     passable: false,
+                    vegetative_reproduction: None,
                 },
             ),
         ]),

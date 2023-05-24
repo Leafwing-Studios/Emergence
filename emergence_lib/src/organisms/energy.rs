@@ -170,6 +170,19 @@ impl Pool for EnergyPool {
     }
 }
 
+/// The amount of energy that an organism should start with.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub(crate) enum StartingEnergy {
+    /// The organism should start with a specific amount of energy.
+    Specific(Energy),
+    /// The organism should start with a random amount of energy.
+    Random,
+    /// The organism should start with full energy.
+    Full,
+    /// The structure being spawned is not an organism.
+    NotAnOrganism,
+}
+
 /// Steadily depletes [`Energy`] over time.
 pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query<&mut EnergyPool>) {
     let delta_time = fixed_time.period.as_secs_f32();

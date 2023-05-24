@@ -1,12 +1,13 @@
 //! Initializes organisms in the world.
 
+use crate::asset_management::manifest::Id;
 use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
 use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
-use crate::organisms::energy::EnergyPool;
+use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::simulation::geometry::{Facing, Height, MapGeometry};
 use crate::structures::commands::StructureCommandsExt;
-use crate::structures::structure_manifest::StructureManifest;
+use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::units::unit_assets::UnitHandles;
 use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
@@ -49,6 +50,7 @@ pub(super) fn generate_organisms(
                     commands.spawn_structure(
                         tile_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
+                        StartingEnergy::Random,
                     );
                 }
             }
@@ -71,7 +73,8 @@ pub(super) fn generate_organisms(
 
 /// Sets all the starting organisms to a random state to avoid strange synchronization issues.
 pub(super) fn randomize_starting_organisms(
-    mut energy_pool_query: Query<&mut EnergyPool>,
+    // Energy pools for structures are randomized upon creation
+    mut energy_pool_query: Query<&mut EnergyPool, Without<Id<Structure>>>,
     mut input_inventory_query: Query<&mut InputInventory>,
     mut output_inventory_query: Query<&mut OutputInventory>,
     mut crafting_state_query: Query<(&mut CraftingState, &ActiveRecipe)>,

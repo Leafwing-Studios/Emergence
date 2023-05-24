@@ -8,6 +8,7 @@ use crate::crafting::item_tags::ItemKind;
 use crate::crafting::recipe::ActiveRecipe;
 use crate::crafting::workers::WorkersPresent;
 use crate::enum_iter::IterableEnum;
+use crate::organisms::energy::StartingEnergy;
 use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
@@ -454,6 +455,7 @@ pub(super) fn ghost_structure_lifecycle(
                             facing,
                             active_recipe: active_recipe.clone(),
                         },
+                        StartingEnergy::Full,
                     );
                 } else {
                     commands.spawn_structure(
@@ -463,6 +465,7 @@ pub(super) fn ghost_structure_lifecycle(
                             facing,
                             active_recipe: active_recipe.clone(),
                         },
+                        StartingEnergy::NotAnOrganism,
                     );
                 }
             }
