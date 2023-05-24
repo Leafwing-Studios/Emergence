@@ -17,12 +17,12 @@ Instead, it is used:
 - as a reskinned resource (*Mindustry*, *Against the Storm*, *Factorio*)
 - as a medium for first-person transport (*Raft*, *Stormworks*)
 
-Let's focus on a few particularly relevant examples.
+Some games do a better job though: let's focus on a few particularly relevant examples.
 
 ### Factorio
 
 Water is a resource. It can be extracted endlessly and rapidly, and shipped huge distances.
-It's vital for power production, but in base Factorio it's only used after that for oil production.
+It's vital for power production (both initially and in the late game), but in base Factorio it's only used after that for oil production.
 
 Water is also an obstacle, both for the player's factory and the biters. It serves as both a natural defense and limit to factory growth.
 This can be overcome by building landfill, a mid-game tech that allows players to replace water with land.
@@ -34,7 +34,7 @@ but this will shape how their factory must grow.
 Ultimately this doesn't end up mattering a ton, as marginal costs to longer distance transportation of goods is quite low.
 
 Critically though, the utter impassability of Factorio's water severely hamstrings their map design.
-Only lakes can exist, as river networks would both completely stop the ability for players to ship goods, explore or be attacked by biters.
+Only lakes can exist, as river networks would completely stop the ability for players to ship goods, explore or be attacked by biters.
 Islands would be simply unreachable.
 
 This means that interesting potential mechanics (choke points! river shipping! ocean liners! islands with unique resources!) are unexplored,
@@ -42,14 +42,15 @@ and water ends up feeling largely cosmetic.
 
 ### Sea Block
 
-The AngelBob's mod pack for Factorio, especially in its SeaBlock form, do much more interesting things with water:
+The AngelBob's mod pack for Factorio, especially in its SeaBlock form, does much more interesting things with water:
 
 - as a thematic element: surrounded by water, you must find a way to make something from nothing
 - as a source for hydrogen and oxygen
 - as a source of raw resources, by purifying or evaporating water
   - mud, geodes, slag
+  - purified, mineralized and salt water
 - as a waste output from processes
-- as a way to eliminate excess resources via clarifiers
+- as a way to eliminate excess resources by transforming solid waste into a water type and then eliminating via clarifiers
 - as an input for renewable plant growth (which then feeds animals or can be used directly to make key goods or power)
 - as a solvent for chemicals like sulfuric acid
 - to add serious costs (but not spatial constraints) to expanding the factory footprint
@@ -59,10 +60,10 @@ The AngelBob's mod pack for Factorio, especially in its SeaBlock form, do much m
 *Timberborn* has by far the most sophisticated water dynamics in the genre to date.
 Key features:
 
-- seasonal variability
+- seasonal variability: water flows most of the time, then stops for a modest drought
 - steady evaporation
 - controls where and when crops can be grown
-- essential to sustain life
+- beavers must drink water to not die
 - flows downstream, and dynamically responds to height changes
 - can be stored, either in open pits, via dams or in dedicated storage structures
 - irrigation
@@ -73,8 +74,8 @@ Key features:
 However, it has several key limitations:
 
 - serious aesthetic issues: dried terrain looks horrible
-- interesting water engineering mechanics are limited to late game
-- drought mechanics are frustrating: limited ability to respond but strong ability to predict, leaving you slowly watching as your population dies
+- most of the interesting tools to control water flow (digging holes, pumping water, irrigation) are limited to late game
+- drought mechanics are frustrating: limited ability to respond but strong ability to predict, leaving you to slowly watch as your population dies when things go wrong
 - immersion challenges: growing crops doesn't take more water, no floods, no rainfall, water from nowhere
 - river-centric design with high water sources seems quite fragile: hand-authored maps only
 
@@ -91,7 +92,11 @@ It is used for:
 - luxury end products
 
 Water can carry germs, and is routinely recycled as part of gameplay to avoid spreading germs.
-Water also has a temperature, and water's role as a heat exchange fluid
+Water also has a temperature, and water's role as a heat exchange fluid is quite important in the early game.
+
+Water leaks through some soil types, forming irritating puddles that must be cleaned up.
+
+Water can also be frozen, forming various types of ice (each with their own freezing point!) or boiled, creating steam that can be used to drive engines (or accidentally kill your workers).
 
 For better or worse, the water mechanics in ONI wildly violate conservation laws: it is possible to create water from nothing, and destroy it.
 To resolve this, geysers are a key feature, continually producing water. They can however be blocked to limit production.
@@ -112,9 +117,12 @@ Water must:
 - present meaningful barriers to exploration and logistics that can be overcome
   - units cannot cross deep or extended water
   - units move more slowly in shallow water
-- be required by all plants to grow
-  - roots are the primary mechanism
-  - manually watering also works though
+  - units can cross water via bridges (limited span), terraforming (expensive) or water transport (spiky, complex)
+- offer meaningful opportunities for logistics and defense
+  - goods can be carried on the water
+    - goods should naturally float downriver (implying a water velocity)
+    - goods should also be able to be ferried up river or across relatively still bodies of water at higher cost
+  - moats! flood traps! navies!
 - be able to be meaningfully observed and understood by the player
   - weather and season cues
   - selection details
@@ -122,7 +130,7 @@ Water must:
   - surface water visualization
 - be able to be meaningfully manipulated by the player, especially in the mid and late game
   - terraforming allows players to durably shape the landscape, at fairly high time investment
-  - as water flows downhill, players must be able to raise
+  - as water flows downhill, players must be able to raise water to higher levels reliably
 - can be stored
   - surface-area based evaporation mechanics mean that deep holes are effective natural storage
   - lower loss storage should be possible, but expensive
@@ -132,9 +140,6 @@ Water must:
 - reach a stable equilibrium, even as water is added or removed from the system
   - surface-area based evaporation mechanics do an excellent job stabilizing this
   - draining to the ocean / filling up from the ocean also stabilizes this effectively
-- be able to carry goods
-  - goods should naturally float downriver (implying a water velocity)
-  - goods should also be able to be ferried up river or across relatively still bodies of water at higher cost
 
 Water should:
 
@@ -142,16 +147,25 @@ Water should:
   - solution and evaporation of solids
   - to create mud
   - cooking
-  - circular processing?
+  - washing and purification
+  - fertilized water distributed via irrigation
+  - circular processing is a key element
 - be a useful trigger for conditional effects that players can use to respond to changes
   - seeds that only germinate in water / plants that only become non-dormant when wet
   - goods that begin to float and move when submerged
   - specialized storage that allows stored goods to float when submerged
 - be fairly expensive to transport from place to place (to preserve spatial variability)
-- be fairly expensive to store for long periods of time (to preserve temporal variability)
+  - canals are the main exception to this - they require significant investment though
+- be somewhat expensive to store for long periods of time (to preserve temporal variability)
 - flow downriver even over shallow gradients
   - this creates much more natural river designs
   - implies continuous water height
+- flow relatively quickly
+- be required by plants to grow
+  - roots are the primary mechanism of gathering water
+  - not all plants require the same type of water
+  - manually watering also works though
+- flow through canals and other player-made paths
 
 Water should not:
 
@@ -170,24 +184,32 @@ Water must:
 - move laterally, flowing downhill
 - have plausible sources
   - recipes that create more water than they consume should be treated with extreme caution
+  - sinks are much less concerning: evaporation is widespread, and water is often incorporated into products
 - fill up during the rain
-- dry out over time (faster from deepr pools)
+- dry out over time (faster from wider pools)
 - be able to support crops on rainfall alone
+  - follows from the fact that plants need water
+  - WARNING: this does not work reliably with the current set of water mechanics: plants growing on hills generally die
 - cause loose goods to float
 
 Water should:
 
 - create waterfalls
-- create oceans
+  - WARNING: this needs serious design, as it is not at all supported currently
+- interact naturally with oceans
 - create tidepools
 - support tides
 - leak out of imperfect holding vessels
-- vary by biome (either causal direction is fine)
-- run off the surface
+- vary by biome
+  - in Terraria, weather is dictated by the biome
+  - in Minecraft, climate dictates which biomes go where
 - meaningfully interact with soil type in plausible ways
-- come in different flavors
+- come in different flavors: salt water, muddy water etc.
+  - WARNING: this needs serious design consideration, fluid mixing is hard
 - carry dissolved / suspended solids
+  - WARNING: this needs more design
 - cause organisms to drown
+  - organisms should only drown when they are overtopped completely
 - push light organisms with the current
 
 Water should not:
