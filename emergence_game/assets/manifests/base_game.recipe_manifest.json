@@ -75,7 +75,7 @@
 			"outputs": {
 				"tide_weed_frond": 1
 			},
-			"craft_time": 5,
+			"craft_time": 2,
 			"conditions": {
 				"workers_required": 0,
 				"allowable_light_range": {

@@ -260,7 +260,7 @@
 				}
 			},
 			"vegetative_reproduction": {
-				"period": 10.0,
+				"period": 2.0,
 				"energy_threshold": 80.0
 			},
 			"root_zone": {
