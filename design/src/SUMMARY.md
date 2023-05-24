@@ -29,6 +29,7 @@
     - [Life Cycles](./organisms/life-cycles.md)
     - [Sessile Organisms](./organisms/sessile-organisms.md)
     - [Units](./organisms/units.md)
+- [Water](./water.md)
 - [Logistics](./logistics/index.md)
     - [Signals](./logistics/signals/index.md)
         - [Configuring Signal Properties](./logistics/signals/configuring-properties.md)
