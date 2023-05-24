@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
 use rand::prelude::SliceRandom;
 use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display, Formatter};
 
 use crate::{
     asset_management::manifest::Id,
@@ -25,6 +26,18 @@ pub struct VegetativeReproduction {
     timer: Timer,
     /// The energy cost to reproduce.
     energy_cost: Energy,
+}
+
+impl Display for VegetativeReproduction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:.1}/{:.1} s ({} energy)",
+            self.timer.elapsed().as_secs_f32(),
+            self.timer.duration().as_secs_f32(),
+            self.energy_cost.0,
+        )
+    }
 }
 
 /// The unprocessed equivalent of [`VegetativeReproduction`].

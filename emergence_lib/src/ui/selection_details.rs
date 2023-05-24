@@ -351,6 +351,7 @@ fn get_details(
                 crafting_state: structure_query_item.crafting_state.cloned(),
                 active_recipe: structure_query_item.active_recipe.cloned(),
                 workers_present: structure_query_item.workers_present.cloned(),
+                vegetative_reproduction: structure_query_item.vegetative_reproduction.cloned(),
             })
         }
         CurrentSelection::Terrain(selected_tiles) => {
@@ -588,6 +589,7 @@ mod structure_details {
             workers::WorkersPresent,
         },
         items::item_manifest::ItemManifest,
+        organisms::vegetative_reproduction::VegetativeReproduction,
         signals::Emitter,
         simulation::geometry::TilePos,
         structures::structure_manifest::{Structure, StructureManifest},
@@ -623,6 +625,8 @@ mod structure_details {
         pub(crate) emitter: Option<&'static Emitter>,
         /// How much water is emitted by this structure?
         pub(super) maybe_water_emitter: Option<&'static WaterEmitter>,
+        /// The vegetative reproduction strategy, if any.
+        pub(crate) vegetative_reproduction: Option<&'static VegetativeReproduction>,
     }
 
     /// Detailed info about a given structure.
@@ -652,6 +656,8 @@ mod structure_details {
         pub(crate) crafting_state: Option<CraftingState>,
         /// The number of workers that are presently working on this.
         pub(crate) workers_present: Option<WorkersPresent>,
+        /// The vegetative reproduction strategy, if any.
+        pub(crate) vegetative_reproduction: Option<VegetativeReproduction>,
     }
 
     impl StructureDetails {
@@ -724,6 +730,10 @@ Height: {height}"
             if let Some(organism) = &self.maybe_organism_details {
                 string += &format!("\n{}", organism.display(structure_manifest, unit_manifest));
             };
+
+            if let Some(vegetative_reproduction) = &self.vegetative_reproduction {
+                string += &format!("\nVegetative reproduction: {vegetative_reproduction}",);
+            }
 
             string
         }
