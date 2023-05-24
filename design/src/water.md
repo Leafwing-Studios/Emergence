@@ -77,3 +77,60 @@ However, it has several key limitations:
 - drought mechanics are frustrating: limited ability to respond but strong ability to predict, leaving you slowly watching as your population dies
 - immersion challenges: growing crops doesn't take more water, no floods, no rainfall, water from nowhere
 - river-centric design with high water sources seems quite fragile: hand-authored maps only
+
+## Gameplay value of water
+
+Water must:
+
+- be scarce (at least some of the time)
+- be an important source of temporal variability
+- be an important source of spatial variability
+- present meaningful barriers to exploration and logistics that can be overcome
+- be required by plants to grow
+- be able to be meaningfully observed and understood by the player
+- be able to be meaningfully manipulated by the player, especially in the mid and late game
+- reach a stable equilibrium, even as water is added or removed from the system
+- have a single value at each tile
+
+Water should:
+
+- play other meaningful roles in factory production chains
+- be a useful trigger for conditional effects that players can use to respond to changes
+- be fairly expensive to transport from place to place (to preserve spatial variability)
+- be fairly expensive to store for long periods of time (to preserve temporal variability)
+
+Water should not:
+
+- create extreme levels of disruption
+- create disruption that requires constant manual work to respond to
+
+## Aesthetic and versimilitude constraints
+
+Water must:
+
+- create lakes
+- create rivers
+- create marshes
+- move laterally, flowing downhill
+- fill up during the rain
+- dry out over time (faster from deepr pools)
+- be able to support crops on rainfall alone
+- cause loose goods to float
+
+Water should:
+
+- create waterfalls
+- create oceans
+- support tides
+- leak out of imperfect holding vessels
+- vary by biome (either causal direction is fine)
+- run off the surface
+- meaningfully interact with soil type in plausible ways
+- come in different flavors
+- carry dissolved / suspended solids
+- cause organisms to drown
+
+Water should not:
+
+- have waves
+- behave unpredictably or erratically
