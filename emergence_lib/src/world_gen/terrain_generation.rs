@@ -2,6 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
+    organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     simulation::geometry::{Facing, Height, MapGeometry, TilePos, Volume},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
@@ -79,6 +80,7 @@ pub(super) fn generate_landmarks(
                     commands.spawn_structure(
                         tile_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
+                        StartingEnergy::NotAnOrganism,
                     );
                 }
             }

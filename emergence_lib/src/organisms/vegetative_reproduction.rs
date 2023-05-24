@@ -17,15 +17,17 @@ use crate::{
     },
 };
 
-use super::energy::{Energy, EnergyPool};
+use super::energy::{Energy, EnergyPool, StartingEnergy};
 
 /// A component that allows an organism to spread to nearby tiles.
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct VegetativeReproduction {
     /// The minimum time remaining until this organism can spread again.
     timer: Timer,
-    /// The energy cost to reproduce.
-    energy_cost: Energy,
+    /// The minimum energy required to reproduce.
+    ///
+    /// Energy is split between the parent and child organisms.
+    energy_threshold: Energy,
 }
 
 impl Display for VegetativeReproduction {
@@ -35,7 +37,7 @@ impl Display for VegetativeReproduction {
             "{:.1}/{:.1} s ({} energy)",
             self.timer.elapsed().as_secs_f32(),
             self.timer.duration().as_secs_f32(),
-            self.energy_cost.0,
+            self.energy_threshold.0,
         )
     }
 }
@@ -45,15 +47,17 @@ impl Display for VegetativeReproduction {
 pub struct RawVegetativeReproduction {
     /// The minimum time between each spread, measured in seconds.
     pub period: f32,
-    /// The energy cost to reproduce.
-    pub energy_cost: f32,
+    /// The minimum energy required to reproduce.
+    ///
+    /// Energy is split between the parent and child organisms.
+    pub energy_threshold: f32,
 }
 
 impl From<RawVegetativeReproduction> for VegetativeReproduction {
     fn from(raw: RawVegetativeReproduction) -> Self {
         VegetativeReproduction {
             timer: Timer::from_seconds(raw.period, TimerMode::Once),
-            energy_cost: Energy(raw.energy_cost),
+            energy_threshold: Energy(raw.energy_threshold),
         }
     }
 }
@@ -82,7 +86,7 @@ pub(super) fn vegetative_spread(
         }
 
         let current_energy = energy_pool.current();
-        if current_energy < vegetative_reproduction.energy_cost {
+        if current_energy < vegetative_reproduction.energy_threshold {
             continue;
         }
 
@@ -103,12 +107,19 @@ pub(super) fn vegetative_spread(
                 .clone(),
         };
 
-        commands.spawn_structure(tile_to_spawn_in, clipboard_data);
+        // Split the energy between the parent and child organisms
+        let half_current = current_energy / 2.;
+        energy_pool.set_current(half_current);
+
+        commands.spawn_structure(
+            tile_to_spawn_in,
+            clipboard_data,
+            StartingEnergy::Specific(half_current),
+        );
 
         // Reset the timer once we've successfully spawned a new organism
         vegetative_reproduction.timer.reset();
 
         // Pay the energy cost
-        energy_pool.set_current(current_energy - vegetative_reproduction.energy_cost);
     }
 }

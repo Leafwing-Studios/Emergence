@@ -23,7 +23,7 @@ use crate::{
 };
 
 use super::{
-    energy::{Energy, EnergyPool},
+    energy::{Energy, EnergyPool, StartingEnergy},
     OrganismId, RawOrganismId,
 };
 
@@ -210,14 +210,21 @@ impl LifePath {
 
 /// Checks if lifecycles are complete, and transitions the organism to that form.
 pub(super) fn transform_when_lifecycle_complete(
-    query: Query<(Entity, &Lifecycle, &TilePos, &Facing, Option<&Id<Unit>>)>,
+    query: Query<(
+        Entity,
+        &Lifecycle,
+        &TilePos,
+        &Facing,
+        &EnergyPool,
+        Option<&Id<Unit>>,
+    )>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
     unit_handles: Res<UnitHandles>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    for (entity, lifecycle, &tile_pos, &facing, maybe_unit) in query.iter() {
+    for (entity, lifecycle, &tile_pos, &facing, energy_pool, maybe_unit) in query.iter() {
         for new_form in lifecycle.new_forms() {
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
@@ -246,7 +253,10 @@ pub(super) fn transform_when_lifecycle_complete(
                             .starting_recipe()
                             .clone(),
                     };
-                    commands.spawn_structure(tile_pos, data);
+                    // Preserve the energy of the parent organism.
+                    let starting_energy = StartingEnergy::Specific(energy_pool.current());
+
+                    commands.spawn_structure(tile_pos, data, starting_energy);
                 }
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();
@@ -324,7 +334,7 @@ pub(super) fn sprout_seeds(
                             .starting_recipe()
                             .clone(),
                     };
-                    commands.spawn_structure(tile_pos, data);
+                    commands.spawn_structure(tile_pos, data, StartingEnergy::Full);
                 }
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();

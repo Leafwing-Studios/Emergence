@@ -346,7 +346,7 @@ fn can_serialize_structure_manifest() {
                     passable: false,
                     vegetative_reproduction: Some(RawVegetativeReproduction {
                         period: 10.,
-                        energy_cost: 30.,
+                        energy_threshold: 30.,
                     }),
                 },
             ),

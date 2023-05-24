@@ -240,8 +240,8 @@
 					"life_paths": []
 				},
 				"energy_pool": {
-					"current": 50.0,
-					"max": 50.0,
+					"current": 100.0,
+					"max": 100.0,
 					"warning_threshold": 25.0,
 					"satiation_threshold": 50.0,
 					"regen_per_second": -1.0
@@ -261,7 +261,7 @@
 			},
 			"vegetative_reproduction": {
 				"period": 10.0,
-				"energy_cost": 40.0
+				"energy_threshold": 80.0
 			},
 			"root_zone": {
 				"max_depth": 1,
