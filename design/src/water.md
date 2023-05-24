@@ -82,26 +82,64 @@ However, it has several key limitations:
 
 Water must:
 
-- be scarce (at least some of the time)
-- be an important source of temporal variability
-- be an important source of spatial variability
+- be finite but renewable
+  - varies heavily by biome
+  - some types of water may be scarce while others are abundant
+- be an important source of external temporal variability
+  - weather
+  - seasons
+- be an important source of external spatial variability
+  - geography shaping water dynamics
+  - biomes
 - present meaningful barriers to exploration and logistics that can be overcome
-- be required by plants to grow
+  - units cannot cross deep or extended water
+  - units move more slowly in shallow water
+- be required by all plants to grow
+  - roots are the primary mechanism
+  - manually watering also works though
 - be able to be meaningfully observed and understood by the player
+  - weather and season cues
+  - selection details
+  - overlays
+  - surface water visualization
 - be able to be meaningfully manipulated by the player, especially in the mid and late game
+  - terraforming allows players to durably shape the landscape, at fairly high time investment
+  - as water flows downhill, players must be able to raise
+- can be stored
+  - surface-area based evaporation mechanics mean that deep holes are effective natural storage
+  - lower loss storage should be possible, but expensive
+- can be transported
+  - canals work great for both irrigation and transport
+  - more flexible (upstream, dynamic) mechanisms should be possible but expensive
 - reach a stable equilibrium, even as water is added or removed from the system
-- have a single value at each tile
+  - surface-area based evaporation mechanics do an excellent job stabilizing this
+  - draining to the ocean / filling up from the ocean also stabilizes this effectively
+- be able to carry goods
+  - goods should naturally float downriver (implying a water velocity)
+  - goods should also be able to be ferried up river or across relatively still bodies of water at higher cost
 
 Water should:
 
 - play other meaningful roles in factory production chains
+  - solution and evaporation of solids
+  - to create mud
+  - cooking
+  - circular processing?
 - be a useful trigger for conditional effects that players can use to respond to changes
+  - seeds that only germinate in water / plants that only become non-dormant when wet
+  - goods that begin to float and move when submerged
+  - specialized storage that allows stored goods to float when submerged
 - be fairly expensive to transport from place to place (to preserve spatial variability)
 - be fairly expensive to store for long periods of time (to preserve temporal variability)
+- flow downriver even over shallow gradients
+  - this creates much more natural river designs
+  - implies continuous water height
 
 Water should not:
 
 - create extreme levels of disruption
+  - no extreme floods (without very strong tools to mitigate it)
+  - stored goods are never washed away
 - create disruption that requires constant manual work to respond to
 
 ## Aesthetic and versimilitude constraints
@@ -112,6 +150,8 @@ Water must:
 - create rivers
 - create marshes
 - move laterally, flowing downhill
+- have plausible sources
+  - recipes that create more water than they consume should be treated with extreme caution
 - fill up during the rain
 - dry out over time (faster from deepr pools)
 - be able to support crops on rainfall alone
@@ -121,6 +161,7 @@ Water should:
 
 - create waterfalls
 - create oceans
+- create tidepools
 - support tides
 - leak out of imperfect holding vessels
 - vary by biome (either causal direction is fine)
@@ -129,8 +170,13 @@ Water should:
 - come in different flavors
 - carry dissolved / suspended solids
 - cause organisms to drown
+- push light organisms with the current
 
 Water should not:
 
 - have waves
-- behave unpredictably or erratically
+  - this level of simulation is too fine-scale, and will create pointless disruption with poor tools to manage it
+- behave erratically (flickering, oscillations, teleporting etc.)
+  - visually distracting
+  - severly detracts from aesthetics
+  - likely to cause weird exploits
