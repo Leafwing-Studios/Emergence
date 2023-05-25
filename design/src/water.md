@@ -231,19 +231,15 @@ Water first fills all available pore space in the soil as **surface water**. Abo
 The characteristics of soil and surface water differ dramatically, creating a meaningful (and intuitive) nonlinearity in behavior.
 Water characteristics also vary by soil type, allowing for meaningful emergent distinctions between different soil types (and thus biomes).
 
+Water has **momentum**: the velocity of the water at a tile is determined in part by how fast it was moving before it moved into the tile it was added to.
+This enables us to make straight rivers faster, and makes critical overflow and top-up mechanics more reliable.
+
 ### Lateral water movement
 
 Water flows from high to low.
 The rate at which this flow occurs is proportional to the difference in height of the water column.
 
 The overall effect creates a **flow velocity**, which can be used to transport floating goods, push units and more.
-
-### Floating litter
-
-Litter which is sufficiently light floats on the surface of the water, travelling in a rate (and direction) proportional to the flow velocity.
-Each tile may only have one litter pile on it: litter that exceeds the stack size of the item (or is of a different type) piles up.
-
-This effect is slightly randomized to reduce log jams and create a more visually appealing effect.
 
 ## Creating water
 
@@ -349,3 +345,106 @@ With upgrades though, this can be tilted to the side, allowing you to move water
 ## Converting water
 
 TBD.
+
+## Floating goods down-river
+
+Litter which is sufficiently light floats on the surface of the water, travelling in a rate (and direction) proportional to the flow velocity.
+Each tile may only have one litter pile on it: litter that exceeds the stack size of the item (or is of a different type) piles up.
+
+This effect is slightly randomized to reduce log jams and create a more visually appealing effect.
+
+### Adding floating goods to rivers
+
+Litter on the ground will automatically start floating once the tile floods.
+
+While this can happen accidentally, the primary mechanism for adding goods to rivers is via chutes.
+Chutes have an item filter, which control which item they are requesting.
+Once items are added to the chutes, they are dropped at their output tile as litter.
+
+Water striders can be loaded directly by adjacent workers.
+
+### Removing floating goods from rivers
+
+Nets collect any floating litter that attempts to move into their tile.
+However, they let water pass through unhindered.
+They have storage inventories, and can become full.
+
+Units can also reach floating goods as long as they are in adjacent tile.
+This is an effective distribution mechanism for last-mile transport.
+
+### Filtering and sorting floating goods
+
+Streams of goods that contain only a single kind of good are generally much easier to work with.
+Mixed streams may be created either by accident (through random junk accumulating in your river),
+or deliberately, when we need to move multiple types of goods through a single waterway.
+
+There are four fundamental operations a player may want to perform. Let's go over how they might accomplish each:
+
+- **allow list:** remove all floating goods except those that match the provided filter
+  - WARNING: no good mechanism exists yet
+- **block list:** remove only floating goods that match the provided filter
+  - use a narrow stream, and create a demand for the good on the shores. Workers wait beside the shore, grabbing goods
+    - very simple, no tech needed
+    - fails if there are not enough workers (or demand is stopped)
+    - only works with narrow streams
+  - use swimming workers, and create a demand for the goods
+    - requires workers that can swim or wade succesfully
+    - fails if there are not enough workers (or demand is stopped)
+- **purge:** remove all floating goods
+  - add a net, which is routinely cleaned
+    - can be challenging to build nets across wide rivers
+    - nets will block water striders
+    - can back up if net is not emptied fast enough
+  - WARNING: no mechanism exists that works with water striders yet
+- **filtered split:** split the stream, filtering goods to the left and right
+  - create a net, then split the river beyond the net with a chute for each
+    - no added tech needed
+    - very labor intensive
+    - scales to multiple rivers
+    - scales to wider rivers
+  - WARNING: this mechanism is extremely labor intensive
+
+### Merging, dividing and balancing floating goods
+
+Merging streams is straightforward: simply join the streams.
+There are complications involved, since this will cause their height to drop to the lowest height.
+During implementation, we need to be careful to deliberate about when one stream of good never dominates over the other.
+
+Dividing streams is similarly easy: simply fork the streams.
+
+Balancing goods between two streams seems quite challenging.
+Players could use an overflow mechanism that gets extracted, and then a chute leading to the other stream.
+Repeat, and we have basic, although quite costly, balancing.
+
+Fortunately this shouldn't be nearly as necessary as in Factorio.
+To increase throughput, simply make a wider, faster flowing river!
+
+### Top-up and overflow mechanisms
+
+**Overflow** mechanisms allow players to divert excess goods to a lower priority use.
+If water has velocity, we should be able to get this working by creating side channels.
+By splitting it off of the main path, goods will only attempt to drift there when the main path is backed up.
+
+**Top-up** mechanisms allow players to add goods, but only when needed.
+Similarly, we should be able to use incoming side channels, much like how side loading works in Factorio.
+If the main river is backed up, goods should only be added from the side channel when there is space for them.
+
+### Increasing throughput
+
+Increasing the throughput of a river can be done in several ways:
+
+1. Increase its width
+   1. Very simple to do (and discover)
+   2. Tends to lead to logistical complications in construction, efficient loading, and efficient unloading
+2. Increase its speed by changing the height differential
+   1. Requires extensive renovation along the entire length
+   2. Relies on good mechanisms to raise water higher
+3. Increase its speed by straightening it out
+   1. Can be performed locally
+   2. Can only be done up to a point
+   3. May requiring refactoring your factory around it
+4. Store goods more effectively
+   1. Containers can be used rather than raw goods, which will store more total items per tile
+5. Create multiple parallel rivers using splitting and merging
+   1. Works well when you need narrow rivers for whatever reason
+   2. Less space efficient (but you can grow things in the middle)
