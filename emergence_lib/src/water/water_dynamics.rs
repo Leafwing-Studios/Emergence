@@ -424,6 +424,9 @@ mod tests {
     /// The smallest height difference that we care about in these tests.
     const EPSILON_HEIGHT: Height = Height(0.001);
 
+    /// The smallest volume difference that we care about in these tests.
+    const EPSILON_VOLUME: Volume = Volume(0.001);
+
     fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
@@ -826,6 +829,98 @@ mod tests {
                 "Water level {:?} is not equal to the average water level of {:?}",
                 height,
                 average_water_height,
+            )
+        }
+    }
+
+    #[test]
+    fn lateral_flow_divides_water_evenly_from_hill() {
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 1000.,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let arbitrary_neighbor = map_geometry.get_terrain(TilePos::new(1, 1)).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(1e4));
+
+        app.update();
+
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+
+        let (neighbor_depth, neighbor_height) = water_depth_query
+            .get(&app.world, arbitrary_neighbor)
+            .unwrap();
+        let water_height_of_arbitrary_neighbor =
+            neighbor_depth.water_table_height(*neighbor_height);
+        assert!(water_height_of_arbitrary_neighbor > Height::ZERO);
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let water_height = water_depth.water_table_height(terrain_height);
+
+            assert!(
+                water_height.abs_diff(water_height_of_arbitrary_neighbor) < EPSILON_HEIGHT,
+                "Water level is not equal between neighbor: {:?} vs. {:?}",
+                water_height,
+                water_height_of_arbitrary_neighbor,
+            )
+        }
+    }
+
+    #[test]
+    fn high_lateral_water_flow_does_not_cause_oscillations() {
+        /// The amount of water to start with in the system.
+        const STARTING_WATER: WaterVolume = WaterVolume(Volume(1.0));
+
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 1e7,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = STARTING_WATER;
+
+        app.update();
+
+        let mut water_volume_query = app.world.query::<(&WaterVolume, &TilePos)>();
+
+        let desired_water_volume = STARTING_WATER / 7.;
+
+        for (water_volume, tile_pos) in water_volume_query.iter(&app.world) {
+            assert!(
+                water_volume.abs_diff(desired_water_volume) < EPSILON_VOLUME,
+                "Water level is not level: found {:?} at {} but expected {:?}",
+                water_volume,
+                tile_pos,
+                desired_water_volume,
             )
         }
     }

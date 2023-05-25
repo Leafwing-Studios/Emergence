@@ -72,7 +72,7 @@ impl WaterConfig {
         emission_rate: Volume(1e4),
         emission_pressure: Height(5.0),
         water_items_per_tile: 50.0,
-        lateral_flow_rate: 1e3,
+        lateral_flow_rate: 1e4,
         enable_oceans: true,
         tide_settings: TideSettings {
             amplitude: Height(1.0),
@@ -308,6 +308,22 @@ impl Default for SoilWaterCapacity {
 )]
 pub struct WaterVolume(Volume);
 
+impl Mul<f32> for WaterVolume {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self(self.0 * rhs)
+    }
+}
+
+impl Div<f32> for WaterVolume {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Self(self.0 / rhs)
+    }
+}
+
 impl WaterVolume {
     /// Represents no water.
     pub const ZERO: Self = Self(Volume::ZERO);
@@ -346,6 +362,12 @@ impl WaterVolume {
     /// Gets the amount of water stored on this tile.
     pub(crate) fn volume(&self) -> Volume {
         self.0
+    }
+
+    /// Returns the absolute difference in water volume between this tile and the other tile.
+    #[cfg(test)]
+    pub(crate) fn abs_diff(&self, other: Self) -> Volume {
+        self.0.abs_diff(other.0)
     }
 }
 
