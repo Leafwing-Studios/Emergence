@@ -231,23 +231,6 @@ Water first fills all available pore space in the soil as **surface water**. Abo
 The characteristics of soil and surface water differ dramatically, creating a meaningful (and intuitive) nonlinearity in behavior.
 Water characteristics also vary by soil type, allowing for meaningful emergent distinctions between different soil types (and thus biomes).
 
-### Evaporation
-
-Evaporation is simple: water is removed from each tile.
-This varies with:
-
-- the presence or absence of surface water
-- the soil type (if no surface water is present)
-- the light level on each tile (which in turn varies with local conditions, time of day and weather)
-
-Because surface water evaporates at a much faster rate than soil water, this leads to a substantially stable equilibrium with rivers and islands.
-As the amount of water increases locally, the rate of evaporation also increases automatically, creating a local balance.
-
-### Precipitation
-
-Precipitation is similarly simple: on each tile, add water based on the current weather.
-This operates to refill water reserves that are far from rivers and oceans.
-
 ### Lateral water movement
 
 Water flows from high to low.
@@ -261,3 +244,108 @@ Litter which is sufficiently light floats on the surface of the water, travellin
 Each tile may only have one litter pile on it: litter that exceeds the stack size of the item (or is of a different type) piles up.
 
 This effect is slightly randomized to reduce log jams and create a more visually appealing effect.
+
+## Creating water
+
+### Precipitation
+
+Precipitation is similarly simple: on each tile, add water based on the current weather.
+This operates to refill water reserves that are far from rivers and oceans.
+
+### Emitters
+
+Emitters are point sources of water, constantly pouring forth from the ground.
+
+Emitters can be produced by players, but these are dramatically weaker (and come at a high cost) relative to built-in emitters.
+
+### Tidal inflow
+
+Water can flow into the world via tides.
+
+This produces huge amounts of water across the entire coast, but the water is only salt water.
+
+## Destroying water
+
+### Crafting
+
+Water can be used by plants to perform photosynthesis.
+This is the primary use and sink of water.
+Water used in this way is drawn in by roots, which have both an area (typically a radius) and a depth.
+
+Water can also be stored in item form using reusable containers, and carried back and forth.
+Water used for crafting must be supplied in this form.
+When these containers are emptied, they add water to the tile that they are on.
+
+### Evaporation
+
+Evaporation is simple: water is removed from each tile.
+This varies with:
+
+- the presence or absence of surface water
+- the soil type (if no surface water is present)
+- the light level on each tile (which in turn varies with local conditions, time of day and weather)
+
+Because surface water evaporates at a much faster rate than soil water, this leads to a substantially stable equilibrium with rivers and islands.
+As the amount of water increases locally, the rate of evaporation also increases automatically, creating a local balance.
+
+### Drain to ocean
+
+When water flows into the ocean (because the water level is lower there than anywhere else), it is simply destroyed: oceans are very big!
+
+This acts as an ultimate water sink, and avoids flooding the map, even with very powerful rivers.
+
+## Storing water
+
+### Holes
+
+Water can be deliberately stored in holes in the ground.
+This is cheap and relatively effective (especially deep, shaded holes) but can be challenging to extract again and make use of.
+
+### In containers
+
+Water can be captured by more expensive, disposable sealed containers, which can then be stored in standard item storage.
+This is lossless, but not very dense and quite expensive.
+
+This is intended purely as a buffer for crafting.
+
+### Storage tanks
+
+Storage tanks can store large volumes of water without water loss.
+
+They can be moved, but are super heavy (requiring multiple crabs to move). Unsurprisingly, they're lighter when empty.
+
+## Moving water
+
+### In pots
+
+Basket crabs can choose to wear a heavier earthen pot, rather than a basket.
+These are water-tight and can carry fluids.
+
+When a basket crab wearing a pot travels under water, its pot automatically fills.
+
+### In containers
+
+With the help of an organic, consumable sealed containers, water can be transformed into a solid item.
+These can be used directly in crafting recipes, but can also be broken, releasing water into the ground.
+
+### In storage tanks
+
+Storage tanks can be shipped using large, dedicated workers in a matter very similar to tanker trains.
+This is a great way to transport huge volumes of water, but is significantly challenging logistically and results in bursty transport.
+
+### Canals
+
+Canals are the primary way to move water across the map.
+These flow downhill, and while they require significant and disruptive engineering effort, they are entirely passive.
+Some water is lost due to evaporation, but this can be substantially mitigated through shading.
+
+### Fountain reeds
+
+Fountain reeds are the primary vertical pump: they draw in shallow water from a large region, and spit it out in a vertical fountain.
+By default, this has minimal effect: it creates a bit of water churn.
+
+With upgrades though, this can be tilted to the side, allowing you to move water up terraces.
+
+## Converting water
+
+TBD.
