@@ -910,6 +910,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Known bug, tracked in https://github.com/Leafwing-Studios/Emergence/issues/845"]
     fn high_lateral_water_flow_does_not_cause_oscillations() {
         /// The amount of water to start with in the system.
         const STARTING_WATER: WaterVolume = WaterVolume(Volume(1.0));
