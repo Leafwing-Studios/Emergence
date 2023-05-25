@@ -186,7 +186,9 @@ pub fn horizontal_water_movement(
         // Only transfer as much water as is available.
         let total_proposed = water_to_neighbors
             .values()
-            .fold(Volume::ZERO, |acc, proposed| acc + *proposed);
+            .fold(Volume::ZERO, |running_sum, proposed| {
+                running_sum + *proposed
+            });
         let actual_water_transfer_ratio = (total_available / total_proposed).min(1.0);
 
         for (&neighbor, &proposed_water_transfer) in water_to_neighbors.iter() {
@@ -289,8 +291,30 @@ fn proposed_lateral_flow_to_neighbors(
     // Critically, this includes neighbors that are not valid tiles.
     // This is important because we need to be able to transfer water off the edge of the map.
     let neighbors = tile_pos.all_neighbors();
+
+    // FIXME: doesn't account for soil shenanigans
+    let mut total_water_height = query_item.water_depth.water_table_height(tile_height);
+    for neighbor in neighbors {
+        if let Some(neighbor_entity) = map_geometry.get_terrain(neighbor) {
+            let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
+            total_water_height += neighbor_query_item
+                .water_depth
+                .water_table_height(*neighbor_query_item.terrain_height);
+        } else {
+            total_water_height += ocean_height;
+        }
+    }
+
+    // 7 = 6 neighbors + 1 self
+    let average_local_water_height = total_water_height / 7.;
+    let max_water_transfer =
+        // If the tile is the below the average water height, it can't transfer water to its neighbors.
+        Volume::from_height((water_height - average_local_water_height).max(Height::ZERO));
+
     let mut water_to_neighbors = HashMap::default();
 
+    // PERF we don't need to allocate this twice
+    let neighbors = tile_pos.all_neighbors();
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
         if !water_config.enable_oceans && !map_geometry.is_valid(neighbor) {
@@ -331,6 +355,10 @@ fn proposed_lateral_flow_to_neighbors(
                 )
             };
 
+        // Cap the amount of water transferred so then it never drops below the average water height.
+        // This prevents oscillations.
+        let proposed_water_transfer = proposed_water_transfer.min(max_water_transfer);
+
         water_to_neighbors.insert(neighbor, proposed_water_transfer);
     }
 
@@ -338,6 +366,9 @@ fn proposed_lateral_flow_to_neighbors(
 }
 
 /// Computes how much water should be moved from one tile to another.
+///
+/// Note that this does not bound the amount of water that can be moved: this naively allows more than half of the water to be transferred in a single step.
+/// The caller is responsible for ensuring that the final results are reasonable to avoid oscillations.
 #[inline]
 #[must_use]
 fn lateral_flow(
@@ -383,11 +414,8 @@ fn lateral_flow(
         delta_water_height * medium_coefficient * base_water_transfer_amount / 2.,
     );
     assert!(proposed_amount >= Volume::ZERO);
-    // We don't want to move more than half the difference in water height.
-    // We *could* move up to the full difference, but that would cause the water to oscillate.
-    let max_allowable_volume = Volume::from_height(delta_water_height / 2.);
 
-    proposed_amount.min(max_allowable_volume)
+    proposed_amount
 }
 
 #[cfg(test)]
@@ -423,6 +451,9 @@ mod tests {
 
     /// The smallest height difference that we care about in these tests.
     const EPSILON_HEIGHT: Height = Height(0.001);
+
+    /// The smallest volume difference that we care about in these tests.
+    const EPSILON_VOLUME: Volume = Volume(0.001);
 
     fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
@@ -831,6 +862,99 @@ mod tests {
     }
 
     #[test]
+    fn lateral_flow_divides_water_evenly_from_hill() {
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 1000.,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let arbitrary_neighbor = map_geometry.get_terrain(TilePos::new(1, 1)).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = WaterVolume::new(Volume(1e4));
+
+        app.update();
+
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+
+        let (neighbor_depth, neighbor_height) = water_depth_query
+            .get(&app.world, arbitrary_neighbor)
+            .unwrap();
+        let water_height_of_arbitrary_neighbor =
+            neighbor_depth.water_table_height(*neighbor_height);
+        assert!(water_height_of_arbitrary_neighbor > Height::ZERO);
+
+        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
+            let water_height = water_depth.water_table_height(terrain_height);
+
+            assert!(
+                water_height.abs_diff(water_height_of_arbitrary_neighbor) < EPSILON_HEIGHT,
+                "Water level is not equal between neighbor: {:?} vs. {:?}",
+                water_height,
+                water_height_of_arbitrary_neighbor,
+            )
+        }
+    }
+
+    #[test]
+    #[ignore = "Known bug, tracked in https://github.com/Leafwing-Studios/Emergence/issues/845"]
+    fn high_lateral_water_flow_does_not_cause_oscillations() {
+        /// The amount of water to start with in the system.
+        const STARTING_WATER: WaterVolume = WaterVolume(Volume(1.0));
+
+        let scenario = Scenario {
+            map_size: MapSize::Tiny,
+            map_shape: MapShape::Bedrock,
+            water_table_strategy: WaterTableStrategy::DepthOne,
+            water_config: WaterConfig {
+                lateral_flow_rate: 1e7,
+                ..WaterConfig::NULL
+            },
+            weather: Weather::Clear,
+            simulated_duration: Duration::from_secs(10),
+        };
+
+        let mut app = water_testing_app(scenario);
+        let map_geometry = app.world.resource::<MapGeometry>();
+
+        let terrain_entity = map_geometry.get_terrain(TilePos::ZERO).unwrap();
+        let mut water_volume_query = app.world.query::<&mut WaterVolume>();
+        let mut water_volume = water_volume_query
+            .get_mut(&mut app.world, terrain_entity)
+            .unwrap();
+        *water_volume = STARTING_WATER;
+
+        app.update();
+
+        let mut water_volume_query = app.world.query::<(&WaterVolume, &TilePos)>();
+
+        let desired_water_volume = STARTING_WATER / 7.;
+
+        for (water_volume, tile_pos) in water_volume_query.iter(&app.world) {
+            assert!(
+                water_volume.abs_diff(desired_water_volume) < EPSILON_VOLUME,
+                "Water level is not level: found {:?} at {} but expected {:?}",
+                water_volume,
+                tile_pos,
+                desired_water_volume,
+            )
+        }
+    }
+
+    #[test]
     fn doing_nothing_conserves_water() {
         for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
@@ -1187,53 +1311,6 @@ mod tests {
             water_difference < EPSILON_HEIGHT,
             "Water levels did not stabilize, ending with a height difference of ({:?}) ",
             water_difference
-        );
-    }
-
-    #[test]
-    fn lateral_flow_should_not_result_in_higher_neighbor() {
-        let soil_lateral_flow_ratio = SoilWaterFlowRate(1.0);
-
-        // This is a very high transfer rate, to ensure that the water transfer is maximized
-        let base_water_transfer_amount = 1e10;
-
-        let mut water_height_a = Height(2.0);
-        let mut water_height_b = Height(1.0);
-
-        let tile_height_a = Height(0.0);
-        let tile_height_b = Height(0.0);
-
-        let water_transferred_a_to_b = lateral_flow(
-            base_water_transfer_amount,
-            soil_lateral_flow_ratio,
-            soil_lateral_flow_ratio,
-            tile_height_a,
-            tile_height_b,
-            water_height_a,
-            water_height_b,
-        );
-
-        let water_transferred_b_to_a = lateral_flow(
-            base_water_transfer_amount,
-            soil_lateral_flow_ratio,
-            soil_lateral_flow_ratio,
-            tile_height_b,
-            tile_height_a,
-            water_height_b,
-            water_height_a,
-        );
-
-        water_height_a += water_transferred_b_to_a.into_height();
-        water_height_a -= water_transferred_a_to_b.into_height();
-
-        water_height_b += water_transferred_a_to_b.into_height();
-        water_height_b -= water_transferred_b_to_a.into_height();
-
-        assert!(
-            water_height_a >= water_height_b,
-            "Water height A ({:?}) should be greater than or equal to water height B ({:?}) as it started higher.",
-            water_height_a,
-            water_height_b
         );
     }
 }
