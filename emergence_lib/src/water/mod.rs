@@ -72,10 +72,10 @@ impl WaterConfig {
         emission_rate: Volume(1e4),
         emission_pressure: Height(5.0),
         water_items_per_tile: 50.0,
-        lateral_flow_rate: 1e4,
+        lateral_flow_rate: 1e3,
         enable_oceans: true,
         tide_settings: TideSettings {
-            amplitude: Height(10.0),
+            amplitude: Height(3.0),
             period: Days(0.3),
             minimum: Height(0.0),
         },
