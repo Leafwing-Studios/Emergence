@@ -219,7 +219,7 @@ pub fn horizontal_water_movement(
         for tile_pos in map_geometry.ocean_tiles() {
             // Don't bother flowing to and from ocean tiles
             for maybe_neighbor in map_geometry.valid_neighbors(tile_pos) {
-                let Some(valid_neighbor) = maybe_neighbor else { continue };
+                let &Some(valid_neighbor) = maybe_neighbor else { continue };
 
                 let neighbor_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();

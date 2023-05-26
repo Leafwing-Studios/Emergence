@@ -731,7 +731,7 @@ impl CurrentAction {
         }
 
         for maybe_tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
-            let Some(tile_pos) = maybe_tile_pos else {
+            let &Some(tile_pos) = maybe_tile_pos else {
                 continue;
             };
 
@@ -852,7 +852,7 @@ impl CurrentAction {
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
             for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
-                let Some(neighbor) = maybe_neighbor else {
+                let &Some(neighbor) = maybe_neighbor else {
                     continue;
                 };
 
@@ -921,7 +921,7 @@ impl CurrentAction {
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
             for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
-                let Some(neighbor) = maybe_neighbor else {
+                let &Some(neighbor) = maybe_neighbor else {
                     continue;
                 };
 
@@ -1263,7 +1263,7 @@ impl CurrentAction {
 
         // Find all adjacent tiles that are shallower than the current tile.
         for maybe_adjacent_tile in map_geometry.passable_neighbors(current_tile) {
-            let Some(adjacent_tile) = maybe_adjacent_tile else {
+            let &Some(adjacent_tile) = maybe_adjacent_tile else {
                 continue;
             };
 

@@ -260,7 +260,7 @@ impl Signals {
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
         for maybe_neighbor in map_geometry.valid_neighbors(tile_pos) {
-            let Some(neighbor) = maybe_neighbor else { continue };
+            let &Some(neighbor) = maybe_neighbor else { continue };
 
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
@@ -306,7 +306,7 @@ impl Signals {
                 }
 
                 for (maybe_addition_pos, addition_strength) in addition_map.into_iter() {
-                    let Some(addition_pos) = maybe_addition_pos else { continue };
+                    let &Some(addition_pos) = maybe_addition_pos else { continue };
                     original_map.add_signal(addition_pos, addition_strength)
                 }
             });
@@ -877,7 +877,7 @@ mod tests {
         );
 
         for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
-            let Some(neighbor) = maybe_neighbor else { continue };
+            let &Some(neighbor) = maybe_neighbor else { continue };
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -906,7 +906,7 @@ mod tests {
         );
 
         for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
-            let Some(neighbor) = maybe_neighbor else { continue };
+            let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
@@ -929,7 +929,7 @@ mod tests {
         let item_manifest = test_manifest();
 
         for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
-            let Some(neighbor) = maybe_neighbor else { continue };
+            let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
@@ -957,7 +957,7 @@ mod tests {
         );
 
         for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
-            let Some(neighbor) = maybe_neighbor else { continue };
+            let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
         }
