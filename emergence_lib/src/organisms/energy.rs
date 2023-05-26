@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 use crate::structures::structure_manifest::Structure;
-use crate::{simulation::geometry::TilePos, structures::commands::StructureCommandsExt};
+use crate::{geometry::TilePos, structures::commands::StructureCommandsExt};
 
 /// The amount of energy available to an organism.
 /// If they run out, they die.

@@ -16,8 +16,8 @@ use crate::{
         terraform::{GhostTerrainBundle, TerraformingAction, TerrainPreviewBundle},
         zoning::Zoning,
     },
+    geometry::{Height, MapGeometry, TilePos},
     graphics::InheritedMaterial,
-    simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
 

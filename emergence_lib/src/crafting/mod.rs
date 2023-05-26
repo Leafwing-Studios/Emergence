@@ -6,6 +6,7 @@ use recipe::{RawRecipeManifest, RecipeManifest};
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::{demolition::MarkedForDemolition, ghosts::WorkplaceId},
+    geometry::{MapGeometry, TilePos},
     items::{
         inventory::Inventory,
         item_manifest::{ItemManifest, RawItemManifest},
@@ -14,10 +15,7 @@ use crate::{
     organisms::{energy::EnergyPool, lifecycle::Lifecycle, Organism},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::{
-        geometry::{MapGeometry, TilePos},
-        SimulationSet,
-    },
+    simulation::SimulationSet,
     structures::structure_manifest::{Structure, StructureManifest},
 };
 

@@ -4,9 +4,9 @@
 
 use crate::{
     self as emergence_lib,
+    geometry::Volume,
     graphics::palette::infovis::{NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA},
     light::{shade::ReceivedLight, Illuminance},
-    simulation::geometry::Volume,
     water::FlowVelocity,
 };
 use bevy::{
@@ -19,10 +19,10 @@ use emergence_macros::IterableEnum;
 use crate::{
     asset_management::{manifest::Id, AssetState},
     enum_iter::IterableEnum,
+    geometry::{Height, MapGeometry, TilePos},
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
-    simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     water::{PreviousWaterVolume, WaterDepth, WaterVolume},
 };

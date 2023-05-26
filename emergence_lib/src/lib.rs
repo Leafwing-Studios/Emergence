@@ -13,6 +13,7 @@ pub mod construction;
 pub mod crafting;
 pub mod enum_iter;
 pub mod filtered_array_iter;
+pub mod geometry;
 pub mod graphics;
 pub mod items;
 pub mod light;

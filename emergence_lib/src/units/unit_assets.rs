@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    simulation::geometry::{hexagonal_column, MapGeometry},
+    geometry::{hexagonal_column, MapGeometry},
     units::unit_manifest::{Unit, UnitManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};

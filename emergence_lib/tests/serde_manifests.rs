@@ -8,6 +8,7 @@ use emergence_lib::{
             Threshold,
         },
     },
+    geometry::Height,
     items::item_manifest::{RawItemData, RawItemManifest},
     light::Illuminance,
     organisms::{
@@ -16,7 +17,6 @@ use emergence_lib::{
         vegetative_reproduction::RawVegetativeReproduction,
         RawOrganismId, RawOrganismVariety,
     },
-    simulation::geometry::Height,
     structures::{
         structure_manifest::{RawStructureData, RawStructureKind, RawStructureManifest},
         Footprint,

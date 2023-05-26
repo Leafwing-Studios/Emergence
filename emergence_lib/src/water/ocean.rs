@@ -2,10 +2,8 @@
 
 use bevy::prelude::*;
 
-use crate::simulation::{
-    geometry::Height,
-    time::{Days, InGameTime},
-};
+use crate::geometry::Height;
+use crate::simulation::time::{Days, InGameTime};
 
 use super::WaterConfig;
 

@@ -11,12 +11,12 @@ use crate::{
         recipe::RecipeManifest,
         CraftingBundle,
     },
+    geometry::{MapGeometry, TilePos},
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::{energy::StartingEnergy, OrganismBundle},
     player_interaction::clipboard::ClipboardData,
     signals::Emitter,
-    simulation::geometry::{MapGeometry, TilePos},
 };
 
 use super::{

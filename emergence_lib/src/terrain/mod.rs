@@ -7,10 +7,10 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
+use crate::geometry::{Height, MapGeometry, TilePos};
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::Emitter;
-use crate::simulation::geometry::{Height, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::water::{WaterBundle, WaterSet};
 

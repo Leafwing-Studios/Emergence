@@ -5,9 +5,10 @@ use bevy::{prelude::*, utils::HashMap};
 use crate::{
     asset_management::manifest::Id,
     crafting::inventories::{InputInventory, OutputInventory, StorageInventory},
+    geometry::Volume,
     items::item_manifest::{Item, ItemManifest},
     light::TotalLight,
-    simulation::{geometry::Volume, time::InGameTime, weather::CurrentWeather},
+    simulation::{time::InGameTime, weather::CurrentWeather},
     terrain::litter::Litter,
     units::{item_interaction::UnitInventory, unit_manifest::Unit},
     water::WaterVolume,

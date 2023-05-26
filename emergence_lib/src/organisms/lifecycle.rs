@@ -7,12 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
+    geometry::{Facing, MapGeometry, TilePos},
     items::item_manifest::ItemManifest,
     player_interaction::clipboard::ClipboardData,
-    simulation::{
-        geometry::{Facing, MapGeometry, TilePos},
-        time::{Days, TimePool},
-    },
+    simulation::time::{Days, TimePool},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
     terrain::litter::Litter,
     units::{

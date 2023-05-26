@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    simulation::geometry::{hexagonal_column, Height, MapGeometry, TilePos},
+    geometry::{hexagonal_column, Height, MapGeometry, TilePos},
     water::{ocean::Ocean, WaterConfig, WaterDepth},
 };
 

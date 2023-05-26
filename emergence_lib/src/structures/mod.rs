@@ -13,8 +13,8 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id},
         AssetCollectionExt,
     },
+    geometry::{Facing, Height, MapGeometry, TilePos},
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
-    simulation::geometry::{Facing, Height, MapGeometry, TilePos},
 };
 
 use self::{

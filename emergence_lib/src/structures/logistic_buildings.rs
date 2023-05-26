@@ -9,12 +9,10 @@ use crate::{
         item_tags::ItemKind,
         recipe::RecipeInput,
     },
+    geometry::{Facing, MapGeometry, TilePos},
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::{
-        geometry::{Facing, MapGeometry, TilePos},
-        SimulationSet,
-    },
+    simulation::SimulationSet,
     terrain::litter::Litter,
     water::WaterDepth,
 };

@@ -3,10 +3,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    simulation::{
-        geometry::{Height, MapGeometry, TilePos, Volume},
-        time::InGameTime,
-    },
+    geometry::{Height, MapGeometry, TilePos, Volume},
+    simulation::time::InGameTime,
     structures::Landmark,
 };
 

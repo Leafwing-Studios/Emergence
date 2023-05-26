@@ -2,7 +2,7 @@
 
 use noisy_bevy::fbm_simplex_2d_seeded;
 
-use crate::simulation::geometry::{Height, TilePos};
+use crate::geometry::{Height, TilePos};
 use bevy::math::Vec2;
 
 /// A settings struct for [`simplex_noise`].

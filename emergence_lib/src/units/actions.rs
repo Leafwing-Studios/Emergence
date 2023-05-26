@@ -22,10 +22,10 @@ use crate::{
         item_tags::ItemKind,
         workers::WorkersPresent,
     },
+    geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
-    simulation::geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},

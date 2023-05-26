@@ -4,12 +4,12 @@ use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     construction::{ConstructionData, ConstructionStrategy, RawConstructionStrategy},
     crafting::recipe::{ActiveRecipe, RawActiveRecipe},
+    geometry::Height,
     items::item_manifest::Item,
     organisms::{
         vegetative_reproduction::{RawVegetativeReproduction, VegetativeReproduction},
         OrganismId, OrganismVariety, RawOrganismVariety,
     },
-    simulation::geometry::Height,
     water::roots::RootZone,
 };
 use bevy::{
