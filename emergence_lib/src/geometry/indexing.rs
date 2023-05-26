@@ -1,3 +1,5 @@
+//! Tracks the location of key entities on the map, and caches information about the map for faster access.
+
 use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},

@@ -1,4 +1,5 @@
-/// Types for positioning and measuring coordinates.
+//! Types for positioning and measuring coordinates.
+
 use bevy::{math::Vec3Swizzles, prelude::*};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
