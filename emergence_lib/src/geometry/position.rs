@@ -534,3 +534,44 @@ impl Div<Volume> for Volume {
         self.0 / rhs.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn height_is_invertable() {
+        for i in u8::MIN..=u8::MAX {
+            let height = Height(i as f32);
+            let z = height.into_world_pos();
+            let remapped_height = Height::from_world_pos(z);
+
+            assert_eq!(height, remapped_height);
+        }
+    }
+
+    #[test]
+    fn height_clamps() {
+        assert_eq!(Height::MIN, Height::from_world_pos(0.));
+        assert_eq!(Height::MIN, Height::from_world_pos(-1.));
+        assert_eq!(Height::MAX, Height::from_world_pos(9000.));
+        assert_eq!(Height::MAX, Height::from_world_pos(f32::MAX));
+    }
+
+    #[test]
+    fn world_to_tile_pos_conversions_are_invertable() {
+        let mut map_geometry = MapGeometry::new(20);
+
+        for x in -10..=10 {
+            for y in -10..=10 {
+                let tile_pos = TilePos::new(x, y);
+                // Height chosen arbitrarily to reduce odds of this accidentally working
+                map_geometry.update_height(tile_pos, Height(17.));
+                let world_pos = tile_pos.into_world_pos(&map_geometry);
+                let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
+
+                assert_eq!(tile_pos, remapped_tile_pos);
+            }
+        }
+    }
+}
