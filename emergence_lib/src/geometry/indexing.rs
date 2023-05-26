@@ -585,6 +585,52 @@ mod tests {
     use super::*;
 
     #[test]
+    fn map_geometry_is_initialized_successfully() {
+        let radius = 10;
+
+        let map_geometry = MapGeometry::new(radius);
+        let hexagon = hexagon(Hex::ZERO, radius);
+        let n = hexagon.len();
+
+        assert_eq!(map_geometry.radius, radius);
+        let n_valid_neighbors = map_geometry.valid_neighbors.iter().count();
+        assert_eq!(n_valid_neighbors, n);
+        let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
+        assert_eq!(n_passable_neighbors, n);
+        let n_reachable_neighbors = map_geometry.reachable_neighbors.iter().count();
+        assert_eq!(n_reachable_neighbors, n);
+
+        for hex in hexagon {
+            let tile_pos = TilePos { hex };
+            assert!(
+                map_geometry.valid_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
+            assert!(
+                map_geometry.passable_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
+            assert!(
+                map_geometry.reachable_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
+        }
+
+        // All of the neighbors should be the same for a newly initialized map
+        assert_eq!(
+            map_geometry.valid_neighbors,
+            map_geometry.passable_neighbors
+        );
+        assert_eq!(
+            map_geometry.passable_neighbors,
+            map_geometry.reachable_neighbors
+        );
+    }
+
+    #[test]
     fn adding_multi_tile_structure_adds_to_index() {
         let mut map_geometry = MapGeometry::new(10);
 
