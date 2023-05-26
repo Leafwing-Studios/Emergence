@@ -71,7 +71,7 @@ impl MapGeometry {
                 let mut neighbors = [None; 6];
 
                 for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
-                    if hex.distance_to(neighboring_hex) <= radius as i32 {
+                    if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
                         neighbors[i] = Some(TilePos {
                             hex: neighboring_hex,
                         })
