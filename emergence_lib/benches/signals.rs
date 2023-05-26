@@ -6,7 +6,7 @@ use emergence_lib::signals::{SignalStrength, SignalType, Signals, DIFFUSION_FRAC
 use rand::thread_rng;
 
 /// Setup function
-fn add_signals(settings: Settings) -> (Signals, MapGeometry) {
+fn setup(settings: Settings) -> (Signals, MapGeometry) {
     let mut signals = Signals::default();
     let map_geometry = MapGeometry::new(settings.map_radius);
     let mut rng = thread_rng();
@@ -22,13 +22,6 @@ fn add_signals(settings: Settings) -> (Signals, MapGeometry) {
     }
 
     (signals, map_geometry)
-}
-
-/// Benchmarks the signal diffusion process
-fn signal_diffusion(settings: Settings) {
-    let (mut signals, map_geometry) = add_signals(settings);
-
-    signals.diffuse(&map_geometry, DIFFUSION_FRACTION);
 }
 
 /// Benchmark settings, in a reusable form
@@ -70,25 +63,19 @@ impl Settings {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("add_signal_minimal", |b| {
-        b.iter(|| add_signals(Settings::MINIMAL))
-    });
+    let (mut minimal_signals, minimal_map_geometry) = setup(Settings::MINIMAL);
     c.bench_function("signal_diffusion_minimal", |b| {
-        b.iter(|| signal_diffusion(Settings::MINIMAL))
+        b.iter(|| minimal_signals.diffuse(&minimal_map_geometry, DIFFUSION_FRACTION));
     });
 
-    c.bench_function("add_signal_tiny", |b| {
-        b.iter(|| add_signals(Settings::TINY))
-    });
+    let (mut tiny_signals, tiny_map_geometry) = setup(Settings::TINY);
     c.bench_function("signal_diffusion_tiny", |b| {
-        b.iter(|| signal_diffusion(Settings::TINY))
+        b.iter(|| tiny_signals.diffuse(&tiny_map_geometry, DIFFUSION_FRACTION));
     });
 
-    c.bench_function("add_signal_modest", |b| {
-        b.iter(|| add_signals(Settings::MODEST))
-    });
+    let (mut modest_signals, modest_map_geometry) = setup(Settings::MODEST);
     c.bench_function("signal_diffusion_modest", |b| {
-        b.iter(|| signal_diffusion(Settings::MODEST))
+        b.iter(|| modest_signals.diffuse(&modest_map_geometry, DIFFUSION_FRACTION));
     });
 }
 
