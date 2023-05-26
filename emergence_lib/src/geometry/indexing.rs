@@ -619,6 +619,21 @@ mod tests {
             );
         }
 
+        for (tile_pos, valid_neighbors) in &map_geometry.valid_neighbors {
+            assert!(valid_neighbors.len() <= 6, "{}", tile_pos);
+            for maybe_neighbor in valid_neighbors {
+                if let Some(neighbor) = maybe_neighbor {
+                    assert!(map_geometry.is_valid(*neighbor), "{}", neighbor);
+
+                    assert!(
+                        map_geometry.valid_neighbors.contains_key(neighbor),
+                        "{}",
+                        neighbor
+                    );
+                }
+            }
+        }
+
         // All of the neighbors should be the same for a newly initialized map
         assert_eq!(
             map_geometry.valid_neighbors,
