@@ -5,12 +5,10 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
+    geometry::{Facing, MapGeometry, TilePos},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::{
-        geometry::{Facing, MapGeometry, TilePos},
-        SimulationSet,
-    },
+    simulation::SimulationSet,
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;

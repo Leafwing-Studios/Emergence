@@ -6,8 +6,8 @@ use hexx::shapes::hexagon;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::simulation::geometry::MapGeometry;
-use crate::simulation::geometry::TilePos;
+use crate::geometry::MapGeometry;
+use crate::geometry::TilePos;
 
 use crate as emergence_lib;
 
@@ -720,11 +720,11 @@ mod tests {
     use super::SelectedTiles;
     use crate::{
         enum_iter::IterableEnum,
+        geometry::TilePos,
         player_interaction::{
             picking::CursorPos,
             selection::{CurrentSelection, SelectionVariant},
         },
-        simulation::geometry::TilePos,
     };
 
     #[test]

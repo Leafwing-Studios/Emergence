@@ -6,13 +6,13 @@ use leafwing_input_manager::prelude::ActionState;
 use crate::{
     asset_management::{manifest::Id, AssetState},
     construction::{demolition::MarkedForDemolition, ghosts::Preview},
+    geometry::{MapGeometry, TilePos},
     player_interaction::{
         clipboard::{ClipboardData, Tool},
         picking::CursorPos,
         selection::CurrentSelection,
         InteractionSystem, PlayerAction, PlayerModifiesWorld,
     },
-    simulation::geometry::{MapGeometry, TilePos},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest, Landmark},
     terrain::{
         commands::TerrainCommandsExt,

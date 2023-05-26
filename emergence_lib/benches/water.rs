@@ -3,10 +3,8 @@ use std::time::Duration;
 use bevy::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::{
-    simulation::{
-        geometry::{Height, MapGeometry, TilePos, Volume},
-        time::InGameTime,
-    },
+    geometry::{Height, MapGeometry, TilePos, Volume},
+    simulation::time::InGameTime,
     water::{
         ocean::Ocean, update_water_depth, water_dynamics::horizontal_water_movement, WaterBundle,
         WaterConfig, WaterVolume,

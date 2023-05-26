@@ -8,7 +8,7 @@ use crate::{
     asset_management::manifest::Id,
     construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::recipe::ActiveRecipe,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, TilePos},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 

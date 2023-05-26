@@ -10,7 +10,7 @@ use std::{
 
 use crate::{
     asset_management::manifest::Id,
-    simulation::geometry::{Height, MapGeometry, TilePos},
+    geometry::{Height, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},

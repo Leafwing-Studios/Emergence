@@ -2,12 +2,12 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState},
+    geometry::Facing,
     graphics::palette::ui::{MENU_HIGHLIGHT_COLOR, MENU_NEUTRAL_COLOR},
     player_interaction::{
         clipboard::{ClipboardData, Tool},
         PlayerAction,
     },
-    simulation::geometry::Facing,
     structures::structure_manifest::{Structure, StructureManifest},
 };
 

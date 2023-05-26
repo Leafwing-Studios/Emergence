@@ -9,9 +9,9 @@ use rand::thread_rng;
 use crate::asset_management::manifest::Id;
 use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
+use crate::geometry::TilePos;
 use crate::items::item_manifest::ItemManifest;
 use crate::signals::{SignalType, Signals};
-use crate::simulation::geometry::TilePos;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::terrain::terrain_manifest::TerrainManifest;
 

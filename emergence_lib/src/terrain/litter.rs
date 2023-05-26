@@ -14,13 +14,13 @@ use crate::{
         inventories::StorageInventory,
         item_tags::{ItemKind, ItemTag},
     },
+    geometry::{direction_from_angle, Height, MapGeometry, TilePos},
     items::{
         errors::RemoveOneItemError,
         item_manifest::{Item, ItemManifest},
         ItemCount,
     },
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{direction_from_angle, Height, MapGeometry, TilePos},
     structures::{
         logistic_buildings::AbsorbsItems,
         structure_manifest::{Structure, StructureManifest},

@@ -5,10 +5,10 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     enum_iter::IterableEnum,
+    geometry::{hexagonal_column, Height, MapGeometry},
     graphics::palette::environment::COLUMN_COLOR,
     items::inventory::InventoryState,
     player_interaction::selection::ObjectInteraction,
-    simulation::geometry::{hexagonal_column, Height, MapGeometry},
     terrain::terrain_manifest::{Terrain, TerrainManifest},
 };
 

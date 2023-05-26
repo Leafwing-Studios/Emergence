@@ -7,12 +7,9 @@ use derive_more::{Add, Sub};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    geometry::{Height, MapGeometry, TilePos, Volume},
     light::{shade::ReceivedLight, Illuminance},
-    simulation::{
-        geometry::{Height, MapGeometry, TilePos, Volume},
-        time::InGameTime,
-        weather::CurrentWeather,
-    },
+    simulation::{time::InGameTime, weather::CurrentWeather},
 };
 
 use super::{ocean::Ocean, FlowVelocity, WaterConfig, WaterDepth, WaterVolume};
@@ -427,7 +424,7 @@ mod tests {
 
     use crate as emergence_lib;
     use crate::enum_iter::IterableEnum;
-    use crate::simulation::geometry::TilePos;
+    use crate::geometry::TilePos;
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;

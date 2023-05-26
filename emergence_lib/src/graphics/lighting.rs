@@ -5,8 +5,8 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::{
+    geometry::Height,
     graphics::palette::lighting::{LIGHT_MOON, LIGHT_STARS, LIGHT_SUN},
-    simulation::geometry::Height,
 };
 
 /// Handles all lighting logic

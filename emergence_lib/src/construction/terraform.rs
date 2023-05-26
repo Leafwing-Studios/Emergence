@@ -8,10 +8,10 @@ use crate::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
     },
+    geometry::TilePos,
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::Item},
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::TilePos,
     terrain::{
         commands::TerrainCommandsExt,
         terrain_manifest::{Terrain, TerrainManifest},

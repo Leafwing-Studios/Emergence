@@ -3,10 +3,8 @@
 use crate::{
     asset_management::manifest::Id,
     construction::ghosts::Ghost,
-    simulation::{
-        geometry::{Facing, Height, MapGeometry, TilePos},
-        time::{InGameTime, TimeOfDay},
-    },
+    geometry::{Facing, Height, MapGeometry, TilePos},
+    simulation::time::{InGameTime, TimeOfDay},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;

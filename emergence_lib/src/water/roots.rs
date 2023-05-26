@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     asset_management::manifest::Id,
     crafting::inventories::{CraftingState, InputInventory},
+    geometry::{Height, MapGeometry, TilePos, Volume},
     items::{item_manifest::ItemManifest, ItemCount},
-    simulation::geometry::{Height, MapGeometry, TilePos, Volume},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;

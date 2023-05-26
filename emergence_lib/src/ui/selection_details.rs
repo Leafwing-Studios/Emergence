@@ -5,6 +5,7 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 use crate::{
     asset_management::AssetState,
     crafting::recipe::RecipeManifest,
+    geometry::MapGeometry,
     items::item_manifest::ItemManifest,
     player_interaction::{
         camera::{CameraMode, CameraSettings},
@@ -12,7 +13,6 @@ use crate::{
         InteractionSystem,
     },
     signals::Signals,
-    simulation::geometry::MapGeometry,
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
@@ -447,9 +447,9 @@ mod ghost_structure_details {
             inventories::{CraftingState, InputInventory},
             recipe::{ActiveRecipe, RecipeManifest},
         },
+        geometry::TilePos,
         items::item_manifest::ItemManifest,
         signals::Emitter,
-        simulation::geometry::TilePos,
         structures::structure_manifest::{Structure, StructureManifest},
     };
 
@@ -588,10 +588,10 @@ mod structure_details {
             recipe::{ActiveRecipe, RecipeManifest},
             workers::WorkersPresent,
         },
+        geometry::TilePos,
         items::item_manifest::ItemManifest,
         organisms::vegetative_reproduction::VegetativeReproduction,
         signals::Emitter,
-        simulation::geometry::TilePos,
         structures::structure_manifest::{Structure, StructureManifest},
         terrain::terrain_manifest::TerrainManifest,
         units::unit_manifest::UnitManifest,
@@ -748,10 +748,10 @@ mod terrain_details {
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
         crafting::inventories::{InputInventory, OutputInventory},
+        geometry::{Height, TilePos},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
         signals::LocalSignals,
-        simulation::geometry::{Height, TilePos},
         structures::structure_manifest::StructureManifest,
         terrain::{
             litter::Litter,
@@ -906,8 +906,8 @@ mod unit_details {
 
     use crate::{
         asset_management::manifest::Id,
+        geometry::TilePos,
         items::item_manifest::ItemManifest,
-        simulation::geometry::TilePos,
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::TerrainManifest,
         units::{

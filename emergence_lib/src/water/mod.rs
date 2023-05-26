@@ -14,11 +14,9 @@ use serde::{Deserialize, Serialize};
 use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
+    geometry::{Height, MapGeometry, Volume},
     items::item_manifest::{Item, ItemManifest},
-    simulation::{
-        geometry::{Height, MapGeometry, Volume},
-        SimulationSet,
-    },
+    simulation::SimulationSet,
     structures::structure_manifest::StructureManifest,
 };
 
@@ -185,7 +183,7 @@ impl Id<Item> {
 /// The components needed to track the water table.
 ///
 /// These are stored on terrain tile entities.
-/// To fully compute basic water dynamics, you also need the [`TilePos`](crate::simulation::geometry::TilePos) and [`Height`] components.
+/// To fully compute basic water dynamics, you also need the [`TilePos`](crate::geometry::TilePos) and [`Height`] components.
 #[derive(Bundle, Debug, Default)]
 pub struct WaterBundle {
     /// The volume of water stored at this tile.

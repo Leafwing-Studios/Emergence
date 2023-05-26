@@ -3,9 +3,9 @@
 use crate::asset_management::manifest::Id;
 use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
 use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
+use crate::geometry::{Facing, Height, MapGeometry};
 use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
-use crate::simulation::geometry::{Facing, Height, MapGeometry};
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::units::unit_assets::UnitHandles;

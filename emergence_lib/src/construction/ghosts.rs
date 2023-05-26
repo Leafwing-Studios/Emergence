@@ -8,8 +8,8 @@ use crate::crafting::item_tags::ItemKind;
 use crate::crafting::recipe::ActiveRecipe;
 use crate::crafting::workers::WorkersPresent;
 use crate::enum_iter::IterableEnum;
+use crate::geometry::MapGeometry;
 use crate::organisms::energy::StartingEnergy;
-use crate::simulation::geometry::MapGeometry;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
@@ -23,9 +23,9 @@ use emergence_macros::IterableEnum;
 use crate::{
     asset_management::manifest::Id,
     crafting::inventories::{CraftingState, InputInventory},
+    geometry::{Facing, TilePos},
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{Facing, TilePos},
 };
 
 use super::terraform::TerraformingAction;

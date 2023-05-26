@@ -1,8 +1,8 @@
 //! Graphics and animation code for terrain.
 
 use crate::{
+    geometry::{Height, MapGeometry, TilePos},
     items::inventory::InventoryState,
-    simulation::geometry::{Height, MapGeometry, TilePos},
     terrain::{litter::Litter, terrain_assets::TerrainHandles},
     water::WaterDepth,
 };

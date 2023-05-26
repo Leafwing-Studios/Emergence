@@ -4,8 +4,8 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::{
     asset_management::manifest::Id,
+    geometry::{Height, MapGeometry, TilePos},
     signals::{Emitter, SignalStrength, SignalType},
-    simulation::geometry::{Height, MapGeometry, TilePos},
     structures::structure_manifest::Structure,
 };
 

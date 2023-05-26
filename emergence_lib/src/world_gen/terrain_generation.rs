@@ -2,9 +2,9 @@
 
 use crate::{
     asset_management::manifest::Id,
+    geometry::{Facing, Height, MapGeometry, TilePos, Volume},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
-    simulation::geometry::{Facing, Height, MapGeometry, TilePos, Volume},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
     terrain::{commands::TerrainCommandsExt, terrain_manifest::Terrain},
     utils::noise::simplex_noise,

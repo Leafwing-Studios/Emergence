@@ -9,8 +9,8 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::{
     asset_management::manifest::Id,
+    geometry::{Facing, MapGeometry, TilePos},
     player_interaction::clipboard::ClipboardData,
-    simulation::geometry::{Facing, MapGeometry, TilePos},
     structures::{
         commands::StructureCommandsExt,
         structure_manifest::{Structure, StructureManifest},

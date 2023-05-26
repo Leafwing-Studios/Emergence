@@ -21,7 +21,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::simulation::geometry::{Facing, MapGeometry, TilePos};
+use crate::geometry::{Facing, MapGeometry, TilePos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
