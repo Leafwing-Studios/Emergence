@@ -35,6 +35,12 @@ pub struct MapGeometry {
     impassable_litter_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
+    /// The list of all valid neighbors for each tile position.
+    valid_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    /// The list of all passable neighbors for each tile position.
+    passable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    /// The list of all reachable neighbors for each tile position.
+    reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -49,9 +55,35 @@ impl MapGeometry {
     ///
     /// All indexes will be empty.
     pub fn new(radius: u32) -> Self {
-        let tiles = hexagon(Hex::ZERO, radius).map(|hex| TilePos { hex });
+        let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
+        let tiles: Vec<TilePos> = hexes.iter().map(|hex| TilePos { hex: *hex }).collect();
+
         // We can start with the minimum height everywhere as no entities need to be spawned.
-        let height_index = tiles.map(|tile_pos| (tile_pos, Height::MIN)).collect();
+        let height_index = tiles
+            .iter()
+            .map(|tile_pos| (*tile_pos, Height::MIN))
+            .collect();
+
+        let valid_neighbors: HashMap<TilePos, [Option<TilePos>; 6]> = hexes
+            .iter()
+            .map(|hex| {
+                let tile_pos = TilePos { hex: *hex };
+                let mut neighbors = [None; 6];
+
+                for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
+                    if hex.distance_to(neighboring_hex) <= radius as i32 {
+                        neighbors[i] = Some(TilePos {
+                            hex: neighboring_hex,
+                        })
+                    }
+                }
+
+                (tile_pos, neighbors)
+            })
+            .collect();
+
+        let passable_neighbors = valid_neighbors.clone();
+        let reachable_neighbors = valid_neighbors.clone();
 
         MapGeometry {
             layout: HexLayout::default(),
@@ -62,6 +94,9 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_structure_tiles: HashSet::default(),
             impassable_litter_tiles: HashSet::default(),
+            valid_neighbors,
+            passable_neighbors,
+            reachable_neighbors,
             height_index,
         }
     }
