@@ -259,7 +259,9 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for neighbor in map_geometry.valid_neighbors(tile_pos) {
+        for maybe_neighbor in map_geometry.valid_neighbors(tile_pos) {
+            let Some(neighbor) = maybe_neighbor else { continue };
+
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
         }
 
@@ -303,7 +305,8 @@ impl Signals {
                     original_map.subtract_signal(removal_pos, removal_strength)
                 }
 
-                for (addition_pos, addition_strength) in addition_map.into_iter() {
+                for (maybe_addition_pos, addition_strength) in addition_map.into_iter() {
+                    let Some(addition_pos) = maybe_addition_pos else { continue };
                     original_map.add_signal(addition_pos, addition_strength)
                 }
             });
@@ -873,7 +876,8 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+            let Some(neighbor) = maybe_neighbor else { continue };
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -901,7 +905,9 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+            let Some(neighbor) = maybe_neighbor else { continue };
+
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -922,7 +928,9 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
         let item_manifest = test_manifest();
 
-        for neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+            let Some(neighbor) = maybe_neighbor else { continue };
+
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
         }
 
@@ -948,7 +956,9 @@ mod tests {
             SignalStrength(0.5),
         );
 
-        for neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+            let Some(neighbor) = maybe_neighbor else { continue };
+
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
         }
 

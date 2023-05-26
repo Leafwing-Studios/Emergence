@@ -730,7 +730,11 @@ impl CurrentAction {
             return CurrentAction::idle();
         }
 
-        for tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
+        for maybe_tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
+            let Some(tile_pos) = maybe_tile_pos else {
+                continue;
+            };
+
             for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
@@ -847,7 +851,11 @@ impl CurrentAction {
         } else {
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
-            for neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+                let Some(neighbor) = maybe_neighbor else {
+                    continue;
+                };
+
                 if let Some(workplace) =
                     workplace_query.needs_work(unit_tile_pos, neighbor, workplace_id, map_geometry)
                 {
@@ -912,7 +920,11 @@ impl CurrentAction {
         } else {
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
-            for neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+                let Some(neighbor) = maybe_neighbor else {
+                    continue;
+                };
+
                 if let Some(demo_site) = demolition_query.needs_demolition(
                     unit_tile_pos,
                     neighbor,
@@ -1250,7 +1262,11 @@ impl CurrentAction {
         let mut candidates = Vec::new();
 
         // Find all adjacent tiles that are shallower than the current tile.
-        for adjacent_tile in map_geometry.passable_neighbors(current_tile) {
+        for maybe_adjacent_tile in map_geometry.passable_neighbors(current_tile) {
+            let Some(adjacent_tile) = maybe_adjacent_tile else {
+                continue;
+            };
+
             let adjacent_terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
             let adjacent_depth = water_depth_query
                 .get(adjacent_terrain_entity)
