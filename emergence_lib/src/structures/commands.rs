@@ -11,7 +11,7 @@ use crate::{
         recipe::RecipeManifest,
         CraftingBundle,
     },
-    geometry::{MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, TilePos},
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::{energy::StartingEnergy, OrganismBundle},
@@ -22,7 +22,7 @@ use crate::{
 use super::{
     logistic_buildings::{AbsorbsItems, ReleasesItems},
     structure_assets::StructureHandles,
-    structure_manifest::{StructureKind, StructureManifest},
+    structure_manifest::{Structure, StructureKind, StructureManifest},
     Landmark, StructureBundle,
 };
 
@@ -74,7 +74,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     }
 
     fn despawn_structure(&mut self, tile_pos: TilePos) {
-        self.add(DespawnStructureCommand { tile_pos });
+        self.add(DespawnStructureCommand { center: tile_pos });
     }
 
     fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
@@ -251,13 +251,25 @@ impl Command for SpawnStructureCommand {
 /// A [`Command`] used to despawn a structure via [`StructureCommandsExt`].
 struct DespawnStructureCommand {
     /// The tile position at which the structure to be despawned is found.
-    tile_pos: TilePos,
+    center: TilePos,
 }
 
 impl Command for DespawnStructureCommand {
     fn write(self, world: &mut World) {
+        let map_geometry = world.resource::<MapGeometry>();
+        let Some(structure_entity) = map_geometry.get_structure(self.center) else { return; };
+
+        let facing = *world.entity(structure_entity).get::<Facing>().unwrap();
+        let structure_id = *world
+            .entity(structure_entity)
+            .get::<Id<Structure>>()
+            .unwrap();
+        let structure_manifest = world.resource::<StructureManifest>();
+        let structure_data = structure_manifest.get(structure_id);
+        let footprint = structure_data.footprint.clone();
+
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_structure(self.tile_pos);
+        let maybe_entity = geometry.remove_structure(facing, self.center, &footprint);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {

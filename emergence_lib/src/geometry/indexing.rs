@@ -282,8 +282,10 @@ impl MapGeometry {
             self.radius
         );
         assert!(height >= Height(0.));
-
         self.height_index.insert(tile_pos, height);
+
+        self.recompute_passable_neighbors(tile_pos);
+        self.recompute_reachable_neighbors(tile_pos);
     }
 
     /// Returns the height of the tile at `tile_pos`, if available.
@@ -444,6 +446,9 @@ impl MapGeometry {
             if !passable {
                 self.impassable_structure_tiles.insert(tile_pos);
             }
+
+            self.recompute_passable_neighbors(tile_pos);
+            self.recompute_reachable_neighbors(tile_pos);
         }
     }
 
@@ -451,15 +456,23 @@ impl MapGeometry {
     ///
     /// Returns the removed entity, if any.
     #[inline]
-    pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.structure_index.remove(&tile_pos);
+    pub(crate) fn remove_structure(
+        &mut self,
+        facing: Facing,
+        center: TilePos,
+        footprint: &Footprint,
+    ) -> Option<Entity> {
+        let mut removed = None;
 
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.structure_index.retain(|_k, v| *v != removed_entity);
+        for tile_pos in footprint.normalized(facing, center) {
+            removed = self.structure_index.remove(&tile_pos);
+            // We can do this even for passable structures, since we have a guarantee that only one structure can be at a tile
+            // If that occurs, this fails silently, but that's intended behavior
             self.impassable_structure_tiles.remove(&tile_pos);
-        };
+
+            self.recompute_passable_neighbors(center);
+            self.recompute_reachable_neighbors(center);
+        }
 
         removed
     }
@@ -544,6 +557,9 @@ impl MapGeometry {
                 self.impassable_litter_tiles.insert(tile_pos);
             }
         }
+
+        self.recompute_passable_neighbors(tile_pos);
+        self.recompute_reachable_neighbors(tile_pos);
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
@@ -593,6 +609,16 @@ impl MapGeometry {
             .get(&tile_pos)
             .unwrap_or_else(|| panic!("Tile position {:?} is not a valid tile position", tile_pos))
     }
+
+    /// Recomputes the set of passable neighbors for the provided `tile_pos`.
+    ///
+    /// This will update the provided tile and all of its neighbors.
+    fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {}
+
+    /// Recomputes the set of reachable neighbors for the provided `tile_pos`.
+    ///
+    /// This will update the provided tile and all of its neighbors.
+    fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {}
 }
 
 #[cfg(test)]
@@ -684,7 +710,7 @@ mod tests {
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
-        map_geometry.remove_structure(center);
+        map_geometry.remove_structure(facing, center, &footprint);
 
         // Check that the structure index was updated correctly
         for tile_pos in footprint.normalized(facing, center) {
