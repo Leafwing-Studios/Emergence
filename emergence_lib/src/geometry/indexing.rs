@@ -64,7 +64,7 @@ impl MapGeometry {
             .map(|tile_pos| (*tile_pos, Height::MIN))
             .collect();
 
-        let valid_neighbors: HashMap<TilePos, [Option<TilePos>; 6]> = hexes
+        let reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]> = hexes
             .iter()
             .map(|hex| {
                 let tile_pos = TilePos { hex: *hex };
@@ -82,8 +82,23 @@ impl MapGeometry {
             })
             .collect();
 
-        let passable_neighbors = valid_neighbors.clone();
-        let reachable_neighbors = valid_neighbors.clone();
+        let passable_neighbors = reachable_neighbors.clone();
+        let mut valid_neighbors = reachable_neighbors.clone();
+
+        // Define valid neighbors for ocean tiles
+        for hex in Hex::ZERO.ring(radius + 1) {
+            let tile_pos = TilePos { hex };
+            let mut neighbors = [None; 6];
+            for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
+                if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
+                    neighbors[i] = Some(TilePos {
+                        hex: neighboring_hex,
+                    })
+                }
+            }
+
+            valid_neighbors.insert(tile_pos, neighbors);
+        }
 
         MapGeometry {
             layout: HexLayout::default(),
@@ -593,8 +608,7 @@ mod tests {
         let n = hexagon.len();
 
         assert_eq!(map_geometry.radius, radius);
-        let n_valid_neighbors = map_geometry.valid_neighbors.iter().count();
-        assert_eq!(n_valid_neighbors, n);
+        // Valid neighbors is larger, as this information is needed for ocean tiles
         let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
         assert_eq!(n_passable_neighbors, n);
         let n_reachable_neighbors = map_geometry.reachable_neighbors.iter().count();
@@ -635,10 +649,6 @@ mod tests {
         }
 
         // All of the neighbors should be the same for a newly initialized map
-        assert_eq!(
-            map_geometry.valid_neighbors,
-            map_geometry.passable_neighbors
-        );
         assert_eq!(
             map_geometry.passable_neighbors,
             map_geometry.reachable_neighbors
