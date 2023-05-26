@@ -26,10 +26,7 @@ use crate::{
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
-    structures::{
-        commands::StructureCommandsExt,
-        structure_manifest::{Structure, StructureManifest},
-    },
+    structures::{commands::StructureCommandsExt, structure_manifest::Structure},
     terrain::{
         litter::Litter,
         terrain_manifest::{Terrain, TerrainManifest},
@@ -74,8 +71,6 @@ pub(super) fn choose_actions(
     terrain_query: Query<&Id<Terrain>>,
     litter_query: Query<&Litter>,
     water_depth_query: Query<&WaterDepth>,
-    structure_query: Query<&Id<Structure>>,
-    structure_manifest: Res<StructureManifest>,
     terrain_manifest: Res<TerrainManifest>,
     item_manifest: Res<ItemManifest>,
 ) {
@@ -144,12 +139,10 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &storage_inventory_query,
                             &litter_query,
-                            &structure_query,
                             &signals,
                             rng,
                             &item_manifest,
                             &terrain_query,
-                            &structure_manifest,
                             &terrain_manifest,
                             &map_geometry,
                         )
@@ -186,12 +179,10 @@ pub(super) fn choose_actions(
                             &output_inventory_query,
                             &storage_inventory_query,
                             &litter_query,
-                            &structure_query,
                             &signals,
                             rng,
                             &item_manifest,
                             &terrain_query,
-                            &structure_manifest,
                             &terrain_manifest,
                             &map_geometry,
                         )
@@ -204,9 +195,7 @@ pub(super) fn choose_actions(
                     &workplace_query,
                     &signals,
                     rng,
-                    &structure_query,
                     &terrain_query,
-                    &structure_manifest,
                     &terrain_manifest,
                     &item_manifest,
                     &map_geometry,
@@ -219,9 +208,7 @@ pub(super) fn choose_actions(
                     &signals,
                     rng,
                     &item_manifest,
-                    &structure_query,
                     &terrain_query,
-                    &structure_manifest,
                     &terrain_manifest,
                     &map_geometry,
                 ),
@@ -728,17 +715,13 @@ impl CurrentAction {
         output_inventory_query: &Query<&OutputInventory>,
         storage_inventory_query: &Query<&StorageInventory>,
         litter_query: &Query<&Litter>,
-        structure_query: &Query<&Id<Structure>>,
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
         terrain_query: &Query<&Id<Terrain>>,
-        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let neighboring_tiles =
-            unit_tile_pos.reachable_neighbors(structure_query, structure_manifest, map_geometry);
         let mut candidates: Vec<(Entity, TilePos)> = Vec::new();
         let held_item = unit_inventory.held_item;
 
@@ -747,7 +730,11 @@ impl CurrentAction {
             return CurrentAction::idle();
         }
 
-        for tile_pos in neighboring_tiles {
+        for maybe_tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
+            let Some(tile_pos) = maybe_tile_pos else {
+                continue;
+            };
+
             for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
@@ -845,9 +832,7 @@ impl CurrentAction {
         workplace_query: &WorkplaceQuery,
         signals: &Signals,
         rng: &mut ThreadRng,
-        structure_query: &Query<&Id<Structure>>,
         terrain_query: &Query<&Id<Terrain>>,
-        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
@@ -864,14 +849,13 @@ impl CurrentAction {
         {
             CurrentAction::work(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.reachable_neighbors(
-                structure_query,
-                structure_manifest,
-                map_geometry,
-            );
             let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
 
-            for neighbor in neighboring_tiles {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+                let Some(neighbor) = maybe_neighbor else {
+                    continue;
+                };
+
                 if let Some(workplace) =
                     workplace_query.needs_work(unit_tile_pos, neighbor, workplace_id, map_geometry)
                 {
@@ -917,9 +901,7 @@ impl CurrentAction {
         signals: &Signals,
         rng: &mut ThreadRng,
         item_manifest: &ItemManifest,
-        structure_query: &Query<&Id<Structure>>,
         terrain_query: &Query<&Id<Terrain>>,
-        structure_manifest: &StructureManifest,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
@@ -936,14 +918,13 @@ impl CurrentAction {
         ) {
             CurrentAction::demolish(workplace)
         } else {
-            let neighboring_tiles = unit_tile_pos.reachable_neighbors(
-                structure_query,
-                structure_manifest,
-                map_geometry,
-            );
             let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
 
-            for neighbor in neighboring_tiles {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+                let Some(neighbor) = maybe_neighbor else {
+                    continue;
+                };
+
                 if let Some(demo_site) = demolition_query.needs_demolition(
                     unit_tile_pos,
                     neighbor,
@@ -1281,7 +1262,11 @@ impl CurrentAction {
         let mut candidates = Vec::new();
 
         // Find all adjacent tiles that are shallower than the current tile.
-        for adjacent_tile in current_tile.passable_neighbors(map_geometry) {
+        for maybe_adjacent_tile in map_geometry.passable_neighbors(current_tile) {
+            let Some(adjacent_tile) = maybe_adjacent_tile else {
+                continue;
+            };
+
             let adjacent_terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
             let adjacent_depth = water_depth_query
                 .get(adjacent_terrain_entity)

@@ -11,11 +11,7 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use crate::{
-    asset_management::manifest::Id,
-    filtered_array_iter::FilteredArrayIter,
-    structures::structure_manifest::{Structure, StructureManifest},
-};
+use crate::filtered_array_iter::FilteredArrayIter;
 
 use super::{Facing, MapGeometry};
 
@@ -158,19 +154,6 @@ impl TilePos {
         self.hex.all_neighbors().map(|hex| TilePos { hex })
     }
 
-    /// All adjacent tiles that are on the map.
-    #[inline]
-    #[must_use]
-    pub fn all_valid_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&pos| map_geometry.is_valid(pos));
-        iter
-    }
-
     /// All adjacent tiles that are clear of structures and ghosts and have a limited terrain height gap.
     ///
     /// This is used to control vegetative reproduction.
@@ -185,85 +168,6 @@ impl TilePos {
                 && map_geometry.get_ghost_structure(tile_pos).is_none()
                 && map_geometry.get_ghost_terrain(tile_pos).is_none()
                 && map_geometry.get_structure(tile_pos).is_none()
-        });
-        iter
-    }
-
-    /// All adjacent tiles that are at most [`Height::MAX_STEP`] higher or lower than `self`.
-    ///
-    /// If the adjacent tile contains a structure, the height of the structure is added to the tile height.
-    #[inline]
-    #[must_use]
-    pub(crate) fn reachable_neighbors(
-        &self,
-        structure_query: &Query<&Id<Structure>>,
-        structure_manifest: &StructureManifest,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        if !map_geometry.is_valid(*self) {
-            let null_array = [TilePos::ZERO; 6];
-            let mut null_iter = FilteredArrayIter::from(null_array);
-            null_iter.filter(|_| false);
-            return null_iter;
-        }
-
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        let self_height = map_geometry.get_height(*self).unwrap();
-
-        iter.filter(|&target_pos| {
-            if !map_geometry.is_valid(target_pos) {
-                return false;
-            }
-
-            let terrain_height = map_geometry.get_height(target_pos).unwrap();
-
-            if self_height > terrain_height {
-                // PERF: oh god this is a lot of indirection. We should consider moving away from a pure manifest system
-                let structure_height = if let Some(structure_entity) =
-                    map_geometry.get_structure(target_pos)
-                {
-                    let structure_id = *structure_query.get(structure_entity).unwrap();
-                    let structure_data = structure_manifest.get(structure_id);
-                    structure_data.height
-                } else if let Some(ghost_entity) = map_geometry.get_ghost_structure(target_pos) {
-                    let structure_id = *structure_query.get(ghost_entity).unwrap();
-                    let structure_data = structure_manifest.get(structure_id);
-                    structure_data.height
-                } else {
-                    Height::ZERO
-                };
-
-                // If we are reaching down, we can take advantage of the height of the structure
-                self_height - terrain_height <= structure_height + Height::MAX_STEP
-            } else {
-                // We don't care how tall the structure is if we are reaching up
-                terrain_height - self_height <= Height::MAX_STEP
-            }
-        });
-        iter
-    }
-
-    /// All adjacent tiles that are passable.
-    ///
-    /// This is distinct from [`reachable_neighbors`](Self::reachable_neighbors), which includes tiles filled with litter.
-    #[inline]
-    #[must_use]
-    pub(crate) fn passable_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        if !map_geometry.is_valid(*self) {
-            let null_array = [TilePos::ZERO; 6];
-            let mut null_iter = FilteredArrayIter::from(null_array);
-            null_iter.filter(|_| false);
-            return null_iter;
-        }
-
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&target_pos| {
-            map_geometry.is_valid(target_pos) && map_geometry.is_passable(*self, target_pos)
         });
         iter
     }

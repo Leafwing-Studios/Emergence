@@ -539,6 +539,30 @@ impl MapGeometry {
         let hex_ring = Hex::ZERO.ring(self.radius + 1);
         hex_ring.map(move |hex| TilePos { hex })
     }
+
+    /// The set of adjacent tiles that are on the map.
+    #[inline]
+    #[must_use]
+    pub(crate) fn valid_neighbors(&self, tile_pos: TilePos) -> [Option<TilePos>; 6] {
+        *self.valid_neighbors.get(&tile_pos).unwrap_or(&[None; 6])
+    }
+
+    /// The set of tiles that can be walked to by a basket crab from `tile_pos`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn passable_neighbors(&self, tile_pos: TilePos) -> [Option<TilePos>; 6] {
+        *self.passable_neighbors.get(&tile_pos).unwrap_or(&[None; 6])
+    }
+
+    /// The set of tiles that can be reached by a basket crab from `tile_pos`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn reachable_neighbors(&self, tile_pos: TilePos) -> [Option<TilePos>; 6] {
+        *self
+            .reachable_neighbors
+            .get(&tile_pos)
+            .unwrap_or(&[None; 6])
+    }
 }
 
 #[cfg(test)]
