@@ -147,7 +147,6 @@ impl TilePos {
     /// # Warning
     ///
     /// This includes neighbors that are not on the map.
-    /// Use [`TilePos::all_valid_neighbors`] to get only valid neighbors.
     #[inline]
     #[must_use]
     pub(crate) fn all_neighbors(&self) -> impl IntoIterator<Item = TilePos> {
