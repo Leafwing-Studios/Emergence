@@ -171,19 +171,6 @@ impl TilePos {
         iter
     }
 
-    /// All adjacent tiles that are out of bounds.
-    #[inline]
-    #[must_use]
-    pub(crate) fn out_of_bounds_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&target_pos| !map_geometry.is_valid(target_pos));
-        iter
-    }
-
     /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
     #[inline]
     #[must_use]

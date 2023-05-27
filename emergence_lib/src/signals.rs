@@ -272,43 +272,32 @@ impl Signals {
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
         self.maps
             .par_iter_mut()
-            .for_each(|(_signal_type, original_map)| {
-                let num_elements = original_map.map.len();
-                let size_hint = num_elements * 6;
-                let mut addition_map = Vec::with_capacity(size_hint);
-                let mut removal_map = Vec::with_capacity(size_hint);
-
-                for (&occupied_tile, original_strength) in original_map
-                    .map
+            .for_each(|(_signal_type, signal_map)| {
+                for (&occupied_tile, original_strength) in signal_map
+                    .current
                     .iter()
                     .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
                 {
                     let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
-                    // Signal that goes out of bounds is lost
-                    let mut num_neighbors = occupied_tile
-                        .out_of_bounds_neighbors(map_geometry)
-                        .into_iter()
-                        .count() as f32;
-                    for neighboring_tile in map_geometry.passable_neighbors(occupied_tile) {
-                        num_neighbors += 1.0;
-                        addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
+                    for maybe_neighboring_tile in map_geometry.passable_neighbors(occupied_tile) {
+                        let &Some(neighboring_tile) = maybe_neighboring_tile else { continue };
+                        signal_map
+                            .pending_addition
+                            .push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
-                    removal_map.push((
+                    signal_map.pending_removal.push((
                         occupied_tile,
-                        amount_to_send_to_each_neighbor * num_neighbors,
+                        // Signal that goes out of bounds or into an impassable tile is lost
+                        // This is both a simplification and a performance optimization
+                        // But it also has a gameplay effect: it makes circuitous routes less efficient
+                        amount_to_send_to_each_neighbor * 6.0,
                     ));
                 }
 
                 // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
-                for (removal_pos, removal_strength) in removal_map.into_iter() {
-                    original_map.subtract_signal(removal_pos, removal_strength)
-                }
-
-                for (maybe_addition_pos, addition_strength) in addition_map.into_iter() {
-                    let &Some(addition_pos) = maybe_addition_pos else { continue };
-                    original_map.add_signal(addition_pos, addition_strength)
-                }
+                signal_map.apply_pending_removals();
+                signal_map.apply_pending_additions();
             });
     }
 
@@ -370,8 +359,12 @@ impl LocalSignals {
 /// Stores the [`SignalStrength`] of the given [`SignalType`] at each [`TilePos`].
 #[derive(Debug, Default)]
 struct SignalMap {
-    /// The lookup data structure
-    map: HashMap<TilePos, SignalStrength>,
+    /// The current amount of signal at each location.
+    current: HashMap<TilePos, SignalStrength>,
+    /// The amount of signal that will be added to each location at the end of the frame.
+    pending_addition: Vec<(TilePos, SignalStrength)>,
+    /// The amount of signal that will be removed from each location at the end of the frame.
+    pending_removal: Vec<(TilePos, SignalStrength)>,
 }
 
 impl SignalMap {
@@ -379,14 +372,14 @@ impl SignalMap {
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
     fn get(&self, tile_pos: TilePos) -> SignalStrength {
-        *self.map.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
+        *self.current.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
     }
 
     /// Returns a mutable reference to the signal strength at the given [`TilePos`].
     ///
     /// Missing values will be inserted with [`SignalStrength::ZERO`].
     fn get_mut(&mut self, tile_pos: TilePos) -> &mut SignalStrength {
-        self.map.entry(tile_pos).or_insert(SignalStrength::ZERO)
+        self.current.entry(tile_pos).or_insert(SignalStrength::ZERO)
     }
 
     /// Adds the `signal_strength` to the signal at `tile_pos`.
@@ -394,11 +387,26 @@ impl SignalMap {
         *self.get_mut(tile_pos) += signal_strength
     }
 
-    /// Subtracts the `signal_strength` to the signal at `tile_pos`.
+    /// Applies all pending additions to the current signal map.
     ///
-    /// The value is capped a minimum of [`SignalStrength::ZERO`].
-    fn subtract_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        *self.get_mut(tile_pos) -= signal_strength;
+    /// This clears the pending addition map.
+    fn apply_pending_additions(&mut self) {
+        for (tile_pos, signal_strength) in self.pending_addition.drain(..) {
+            self.current.entry(tile_pos).and_modify(|current_strength| {
+                *current_strength += signal_strength;
+            });
+        }
+    }
+
+    /// Applies all pending removals to the current signal map.
+    ///
+    /// This clears the pending removal map.
+    fn apply_pending_removals(&mut self) {
+        for (tile_pos, signal_strength) in self.pending_removal.drain(..) {
+            self.current.entry(tile_pos).and_modify(|current_strength| {
+                *current_strength -= signal_strength;
+            });
+        }
     }
 }
 
@@ -725,9 +733,9 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
 
     signals.maps.par_iter_mut().for_each(|(_, signal_map)| {
-        let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.map.len());
+        let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.current.len());
 
-        for (tile_pos, signal_strength) in signal_map.map.iter_mut() {
+        for (tile_pos, signal_strength) in signal_map.current.iter_mut() {
             let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
 
             if new_strength > EPSILON_STRENGTH {
@@ -738,7 +746,7 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
         }
 
         for tile_to_clear in tiles_to_clear {
-            signal_map.map.remove(&tile_to_clear);
+            signal_map.current.remove(&tile_to_clear);
         }
     });
 }
