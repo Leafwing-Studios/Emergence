@@ -798,7 +798,7 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(17, -2);
+        let center = TilePos::new(0, 0);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
@@ -816,7 +816,7 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(17, -2);
+        let center = TilePos::new(3, -2);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
