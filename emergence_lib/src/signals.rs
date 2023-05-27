@@ -285,18 +285,15 @@ impl Signals {
                 {
                     let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
-                    // Signal that goes out of bounds is lost
-                    let mut num_neighbors = occupied_tile
-                        .out_of_bounds_neighbors(map_geometry)
-                        .into_iter()
-                        .count() as f32;
                     for neighboring_tile in map_geometry.passable_neighbors(occupied_tile) {
-                        num_neighbors += 1.0;
                         addition_map.push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
                     removal_map.push((
                         occupied_tile,
-                        amount_to_send_to_each_neighbor * num_neighbors,
+                        // Signal that goes out of bounds or into an impassable tile is lost
+                        // This is both a simplification and a performance optimization
+                        // But it also has a gameplay effect: it makes circuitous routes less efficient
+                        amount_to_send_to_each_neighbor * 6.0,
                     ));
                 }
 
