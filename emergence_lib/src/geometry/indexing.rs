@@ -586,6 +586,8 @@ impl MapGeometry {
 
     /// The set of tiles that can be walked to by a basket crab from `tile_pos`.
     ///
+    /// The function signature is unfortunate, but this is meaningfully faster in a hot loop than returning a vec of tile positions.
+    ///
     /// # Panics
     ///
     /// The provided `tile_pos` must be a valid tile position.
