@@ -284,15 +284,15 @@ impl Signals {
                         let &Some(neighboring_tile) = maybe_neighboring_tile else { continue };
                         signal_map
                             .pending_addition
-                            .insert(neighboring_tile, amount_to_send_to_each_neighbor);
+                            .push((neighboring_tile, amount_to_send_to_each_neighbor));
                     }
-                    signal_map.pending_removal.insert(
+                    signal_map.pending_removal.push((
                         occupied_tile,
                         // Signal that goes out of bounds or into an impassable tile is lost
                         // This is both a simplification and a performance optimization
                         // But it also has a gameplay effect: it makes circuitous routes less efficient
                         amount_to_send_to_each_neighbor * 6.0,
-                    );
+                    ));
                 }
 
                 // We cannot do this in one step, as we need to avoid bizarre iteration order dependencies
@@ -362,9 +362,9 @@ struct SignalMap {
     /// The current amount of signal at each location.
     current: HashMap<TilePos, SignalStrength>,
     /// The amount of signal that will be added to each location at the end of the frame.
-    pending_addition: HashMap<TilePos, SignalStrength>,
+    pending_addition: Vec<(TilePos, SignalStrength)>,
     /// The amount of signal that will be removed from each location at the end of the frame.
-    pending_removal: HashMap<TilePos, SignalStrength>,
+    pending_removal: Vec<(TilePos, SignalStrength)>,
 }
 
 impl SignalMap {
@@ -391,7 +391,7 @@ impl SignalMap {
     ///
     /// This clears the pending addition map.
     fn apply_pending_additions(&mut self) {
-        for (tile_pos, signal_strength) in self.pending_addition.drain() {
+        for (tile_pos, signal_strength) in self.pending_addition.drain(..) {
             self.current.entry(tile_pos).and_modify(|current_strength| {
                 *current_strength += signal_strength;
             });
@@ -402,7 +402,7 @@ impl SignalMap {
     ///
     /// This clears the pending removal map.
     fn apply_pending_removals(&mut self) {
-        for (tile_pos, signal_strength) in self.pending_addition.drain() {
+        for (tile_pos, signal_strength) in self.pending_removal.drain(..) {
             self.current.entry(tile_pos).and_modify(|current_strength| {
                 *current_strength -= signal_strength;
             });
