@@ -549,17 +549,24 @@ impl MapGeometry {
 
     /// Updates the passability of the provided `tile_pos` based on the state of the litter at that location.
     pub(crate) fn update_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
-        match litter_state {
-            InventoryState::Empty | InventoryState::Partial => {
-                self.impassable_litter_tiles.remove(&tile_pos);
+        let current_litter_state = self.impassable_litter_tiles.contains(&tile_pos);
+
+        match current_litter_state {
+            true => {
+                if litter_state != InventoryState::Full {
+                    self.impassable_litter_tiles.remove(&tile_pos);
+                    self.recompute_passable_neighbors(tile_pos);
+                    self.recompute_reachable_neighbors(tile_pos);
+                }
             }
-            InventoryState::Full => {
-                self.impassable_litter_tiles.insert(tile_pos);
+            false => {
+                if litter_state == InventoryState::Full {
+                    self.impassable_litter_tiles.insert(tile_pos);
+                    self.recompute_passable_neighbors(tile_pos);
+                    self.recompute_reachable_neighbors(tile_pos);
+                }
             }
         }
-
-        self.recompute_passable_neighbors(tile_pos);
-        self.recompute_reachable_neighbors(tile_pos);
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
