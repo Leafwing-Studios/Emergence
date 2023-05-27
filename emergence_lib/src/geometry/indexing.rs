@@ -613,12 +613,120 @@ impl MapGeometry {
     /// Recomputes the set of passable neighbors for the provided `tile_pos`.
     ///
     /// This will update the provided tile and all of its neighbors.
-    fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {}
+    fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {
+        let neighbors = self.valid_neighbors(tile_pos).clone();
+        let mut passable_neighbors: [Option<TilePos>; 6] = [None; 6];
+
+        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
+            let &Some(neighbor) = maybe_neighbor else { continue };
+
+            let can_pass_from_tile_to_neighbor = self.compute_passability(tile_pos, neighbor);
+            let can_pass_from_neighbor_to_tile = self.compute_passability(neighbor, tile_pos);
+
+            match can_pass_from_tile_to_neighbor {
+                true => {
+                    passable_neighbors[i] = Some(neighbor);
+                }
+                // This edge was already initialized as None
+                false => (),
+            }
+
+            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
+            // PERF: we could compute this faster by relying on
+            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
+                .iter()
+                .position(|&maybe_self| maybe_self == Some(tile_pos))
+                .unwrap();
+            let neigbors_of_neighbor = self.passable_neighbors.get_mut(&neighbor).unwrap();
+
+            match can_pass_from_neighbor_to_tile {
+                true => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
+                }
+                false => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                }
+            }
+        }
+
+        self.passable_neighbors.insert(tile_pos, passable_neighbors);
+    }
 
     /// Recomputes the set of reachable neighbors for the provided `tile_pos`.
     ///
     /// This will update the provided tile and all of its neighbors.
-    fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {}
+    fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {
+        let neighbors = self.valid_neighbors(tile_pos).clone();
+        let mut reachable_neighbors: [Option<TilePos>; 6] = [None; 6];
+
+        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
+            let &Some(neighbor) = maybe_neighbor else { continue };
+
+            let can_reach_from_tile_to_neighbor = self.compute_reachability(tile_pos, neighbor);
+            let can_reach_from_neighbor_to_tile = self.compute_reachability(neighbor, tile_pos);
+
+            match can_reach_from_tile_to_neighbor {
+                true => {
+                    reachable_neighbors[i] = Some(neighbor);
+                }
+                // This edge was already initialized as None
+                false => (),
+            }
+
+            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
+            // PERF: we could compute this faster by relying on
+            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
+                .iter()
+                .position(|&maybe_self| maybe_self == Some(tile_pos))
+                .unwrap();
+            let neigbors_of_neighbor = self.reachable_neighbors.get_mut(&neighbor).unwrap();
+
+            match can_reach_from_neighbor_to_tile {
+                true => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
+                }
+                false => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                }
+            }
+        }
+
+        self.reachable_neighbors
+            .insert(tile_pos, reachable_neighbors);
+    }
+
+    fn compute_passability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(ending_pos) {
+            return false;
+        }
+
+        if self.impassable_structure_tiles.contains(&ending_pos) {
+            return false;
+        }
+
+        if self.impassable_litter_tiles.contains(&ending_pos) {
+            return false;
+        }
+
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
+    }
+
+    fn compute_reachability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(ending_pos) {
+            return false;
+        }
+
+        // TODO: does not take into account height of structures
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
