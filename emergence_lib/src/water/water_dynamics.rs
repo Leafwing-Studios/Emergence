@@ -1267,9 +1267,7 @@ mod tests {
                 "Water was not conserved, starting with {initial_water:?} and ending with {current_water:?}"
             );
 
-            println!(
-                "Water height A: {water_height_a:?}, Water height B: {water_height_b:?}"
-            )
+            println!("Water height A: {water_height_a:?}, Water height B: {water_height_b:?}")
         }
 
         let water_difference = water_height_a.abs_diff(water_height_b);
