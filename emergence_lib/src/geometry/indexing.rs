@@ -470,8 +470,8 @@ impl MapGeometry {
             // If that occurs, this fails silently, but that's intended behavior
             self.impassable_structure_tiles.remove(&tile_pos);
 
-            self.recompute_passable_neighbors(center);
-            self.recompute_reachable_neighbors(center);
+            self.recompute_passable_neighbors(tile_pos);
+            self.recompute_reachable_neighbors(tile_pos);
         }
 
         removed
