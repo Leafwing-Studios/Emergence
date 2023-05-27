@@ -186,12 +186,8 @@ mod tests {
             let flat_radians = direction.angle(&HexOrientation::flat());
             let flat_direction = direction_from_angle(flat_radians, HexOrientation::flat());
 
-            assert_eq!(
-                direction, pointy_direction,
-                "Failed for {:?}",
-                pointy_radians
-            );
-            assert_eq!(direction, flat_direction, "Failed for {:?}", flat_radians);
+            assert_eq!(direction, pointy_direction, "Failed for {pointy_radians:?}");
+            assert_eq!(direction, flat_direction, "Failed for {flat_radians:?}");
         }
     }
 
@@ -206,8 +202,8 @@ mod tests {
             let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
             let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
 
-            assert_eq!(direction, large_direction, "Failed for {:?}", large_radians);
-            assert_eq!(direction, small_direction, "Failed for {:?}", small_radians);
+            assert_eq!(direction, large_direction, "Failed for {large_radians:?}");
+            assert_eq!(direction, small_direction, "Failed for {small_radians:?}");
         }
     }
 
@@ -225,8 +221,8 @@ mod tests {
             let large_direction = direction_from_angle(large_radians, HexOrientation::flat());
             let small_direction = direction_from_angle(small_radians, HexOrientation::flat());
 
-            assert_eq!(direction, large_direction, "Failed for {:?}", large_radians);
-            assert_eq!(direction, small_direction, "Failed for {:?}", small_radians);
+            assert_eq!(direction, large_direction, "Failed for {large_radians:?}");
+            assert_eq!(direction, small_direction, "Failed for {small_radians:?}");
         }
     }
 }

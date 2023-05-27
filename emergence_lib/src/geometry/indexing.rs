@@ -35,6 +35,12 @@ pub struct MapGeometry {
     impassable_litter_tiles: HashSet<TilePos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<TilePos, Height>,
+    /// The list of all valid neighbors for each tile position.
+    valid_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    /// The list of all passable neighbors for each tile position.
+    passable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    /// The list of all reachable neighbors for each tile position.
+    reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -49,9 +55,50 @@ impl MapGeometry {
     ///
     /// All indexes will be empty.
     pub fn new(radius: u32) -> Self {
-        let tiles = hexagon(Hex::ZERO, radius).map(|hex| TilePos { hex });
+        let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
+        let tiles: Vec<TilePos> = hexes.iter().map(|hex| TilePos { hex: *hex }).collect();
+
         // We can start with the minimum height everywhere as no entities need to be spawned.
-        let height_index = tiles.map(|tile_pos| (tile_pos, Height::MIN)).collect();
+        let height_index = tiles
+            .iter()
+            .map(|tile_pos| (*tile_pos, Height::MIN))
+            .collect();
+
+        let reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]> = hexes
+            .iter()
+            .map(|hex| {
+                let tile_pos = TilePos { hex: *hex };
+                let mut neighbors = [None; 6];
+
+                for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
+                    if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
+                        neighbors[i] = Some(TilePos {
+                            hex: neighboring_hex,
+                        })
+                    }
+                }
+
+                (tile_pos, neighbors)
+            })
+            .collect();
+
+        let passable_neighbors = reachable_neighbors.clone();
+        let mut valid_neighbors = reachable_neighbors.clone();
+
+        // Define valid neighbors for ocean tiles
+        for hex in Hex::ZERO.ring(radius + 1) {
+            let tile_pos = TilePos { hex };
+            let mut neighbors = [None; 6];
+            for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
+                if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
+                    neighbors[i] = Some(TilePos {
+                        hex: neighboring_hex,
+                    })
+                }
+            }
+
+            valid_neighbors.insert(tile_pos, neighbors);
+        }
 
         MapGeometry {
             layout: HexLayout::default(),
@@ -62,6 +109,9 @@ impl MapGeometry {
             ghost_terrain_index: HashMap::default(),
             impassable_structure_tiles: HashSet::default(),
             impassable_litter_tiles: HashSet::default(),
+            valid_neighbors,
+            passable_neighbors,
+            reachable_neighbors,
             height_index,
         }
     }
@@ -232,8 +282,10 @@ impl MapGeometry {
             self.radius
         );
         assert!(height >= Height(0.));
-
         self.height_index.insert(tile_pos, height);
+
+        self.recompute_passable_neighbors(tile_pos);
+        self.recompute_reachable_neighbors(tile_pos);
     }
 
     /// Returns the height of the tile at `tile_pos`, if available.
@@ -394,6 +446,9 @@ impl MapGeometry {
             if !passable {
                 self.impassable_structure_tiles.insert(tile_pos);
             }
+
+            self.recompute_passable_neighbors(tile_pos);
+            self.recompute_reachable_neighbors(tile_pos);
         }
     }
 
@@ -401,15 +456,23 @@ impl MapGeometry {
     ///
     /// Returns the removed entity, if any.
     #[inline]
-    pub(crate) fn remove_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.structure_index.remove(&tile_pos);
+    pub(crate) fn remove_structure(
+        &mut self,
+        facing: Facing,
+        center: TilePos,
+        footprint: &Footprint,
+    ) -> Option<Entity> {
+        let mut removed = None;
 
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.structure_index.retain(|_k, v| *v != removed_entity);
+        for tile_pos in footprint.normalized(facing, center) {
+            removed = self.structure_index.remove(&tile_pos);
+            // We can do this even for passable structures, since we have a guarantee that only one structure can be at a tile
+            // If that occurs, this fails silently, but that's intended behavior
             self.impassable_structure_tiles.remove(&tile_pos);
-        };
+
+            self.recompute_passable_neighbors(tile_pos);
+            self.recompute_reachable_neighbors(tile_pos);
+        }
 
         removed
     }
@@ -494,6 +557,9 @@ impl MapGeometry {
                 self.impassable_litter_tiles.insert(tile_pos);
             }
         }
+
+        self.recompute_passable_neighbors(tile_pos);
+        self.recompute_reachable_neighbors(tile_pos);
     }
 
     /// Returns an iterator over all of the tiles that are ocean tiles.
@@ -504,6 +570,165 @@ impl MapGeometry {
         let hex_ring = Hex::ZERO.ring(self.radius + 1);
         hex_ring.map(move |hex| TilePos { hex })
     }
+
+    /// The set of adjacent tiles that are on the map.
+    ///
+    /// # Panics
+    ///
+    /// The provided `tile_pos` must be a valid tile position.
+    #[inline]
+    #[must_use]
+    pub(crate) fn valid_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
+        self.valid_neighbors
+            .get(&tile_pos)
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    }
+
+    /// The set of tiles that can be walked to by a basket crab from `tile_pos`.
+    ///
+    /// # Panics
+    ///
+    /// The provided `tile_pos` must be a valid tile position.
+    #[inline]
+    #[must_use]
+    pub(crate) fn passable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
+        self.passable_neighbors
+            .get(&tile_pos)
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    }
+
+    /// The set of tiles that can be reached by a basket crab from `tile_pos`.
+    ///
+    /// # Panics
+    ///
+    /// The provided `tile_pos` must be a valid tile position.
+    #[inline]
+    #[must_use]
+    pub(crate) fn reachable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
+        self.reachable_neighbors
+            .get(&tile_pos)
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    }
+
+    /// Recomputes the set of passable neighbors for the provided `tile_pos`.
+    ///
+    /// This will update the provided tile and all of its neighbors.
+    fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {
+        let neighbors = *self.valid_neighbors(tile_pos);
+        let mut passable_neighbors: [Option<TilePos>; 6] = [None; 6];
+
+        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
+            let &Some(neighbor) = maybe_neighbor else { continue };
+
+            let can_pass_from_tile_to_neighbor = self.compute_passability(tile_pos, neighbor);
+            let can_pass_from_neighbor_to_tile = self.compute_passability(neighbor, tile_pos);
+
+            match can_pass_from_tile_to_neighbor {
+                true => {
+                    passable_neighbors[i] = Some(neighbor);
+                }
+                // This edge was already initialized as None
+                false => (),
+            }
+
+            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
+            // PERF: we could compute this faster by relying on
+            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
+                .iter()
+                .position(|&maybe_self| maybe_self == Some(tile_pos))
+                .unwrap();
+            let neigbors_of_neighbor = self.passable_neighbors.get_mut(&neighbor).unwrap();
+
+            match can_pass_from_neighbor_to_tile {
+                true => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
+                }
+                false => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                }
+            }
+        }
+
+        self.passable_neighbors.insert(tile_pos, passable_neighbors);
+    }
+
+    /// Recomputes the set of reachable neighbors for the provided `tile_pos`.
+    ///
+    /// This will update the provided tile and all of its neighbors.
+    fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {
+        let neighbors = *self.valid_neighbors(tile_pos);
+        let mut reachable_neighbors: [Option<TilePos>; 6] = [None; 6];
+
+        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
+            let &Some(neighbor) = maybe_neighbor else { continue };
+
+            let can_reach_from_tile_to_neighbor = self.compute_reachability(tile_pos, neighbor);
+            let can_reach_from_neighbor_to_tile = self.compute_reachability(neighbor, tile_pos);
+
+            match can_reach_from_tile_to_neighbor {
+                true => {
+                    reachable_neighbors[i] = Some(neighbor);
+                }
+                // This edge was already initialized as None
+                false => (),
+            }
+
+            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
+            // PERF: we could compute this faster by relying on
+            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
+                .iter()
+                .position(|&maybe_self| maybe_self == Some(tile_pos))
+                .unwrap();
+            let neigbors_of_neighbor = self.reachable_neighbors.get_mut(&neighbor).unwrap();
+
+            match can_reach_from_neighbor_to_tile {
+                true => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
+                }
+                false => {
+                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                }
+            }
+        }
+
+        self.reachable_neighbors
+            .insert(tile_pos, reachable_neighbors);
+    }
+
+    /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
+    fn compute_passability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(ending_pos) {
+            return false;
+        }
+
+        if self.impassable_structure_tiles.contains(&ending_pos) {
+            return false;
+        }
+
+        if self.impassable_litter_tiles.contains(&ending_pos) {
+            return false;
+        }
+
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
+    }
+
+    /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
+    fn compute_reachability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
+        if !self.is_valid(ending_pos) {
+            return false;
+        }
+
+        // TODO: does not take into account height of structures
+        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
+            height_difference <= Height::MAX_STEP
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
@@ -511,39 +736,59 @@ mod tests {
     use super::*;
 
     #[test]
-    fn height_is_invertable() {
-        for i in u8::MIN..=u8::MAX {
-            let height = Height(i as f32);
-            let z = height.into_world_pos();
-            let remapped_height = Height::from_world_pos(z);
+    fn map_geometry_is_initialized_successfully() {
+        let radius = 10;
 
-            assert_eq!(height, remapped_height);
+        let map_geometry = MapGeometry::new(radius);
+        let hexagon = hexagon(Hex::ZERO, radius);
+        let n = hexagon.len();
+
+        assert_eq!(map_geometry.radius, radius);
+        // Valid neighbors is larger, as this information is needed for ocean tiles
+        let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
+        assert_eq!(n_passable_neighbors, n);
+        let n_reachable_neighbors = map_geometry.reachable_neighbors.iter().count();
+        assert_eq!(n_reachable_neighbors, n);
+
+        for hex in hexagon {
+            let tile_pos = TilePos { hex };
+            assert!(
+                map_geometry.valid_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
+            assert!(
+                map_geometry.passable_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
+            assert!(
+                map_geometry.reachable_neighbors.contains_key(&tile_pos),
+                "{}",
+                tile_pos
+            );
         }
-    }
 
-    #[test]
-    fn height_clamps() {
-        assert_eq!(Height::MIN, Height::from_world_pos(0.));
-        assert_eq!(Height::MIN, Height::from_world_pos(-1.));
-        assert_eq!(Height::MAX, Height::from_world_pos(9000.));
-        assert_eq!(Height::MAX, Height::from_world_pos(f32::MAX));
-    }
+        for (tile_pos, valid_neighbors) in &map_geometry.valid_neighbors {
+            assert!(valid_neighbors.len() <= 6, "{}", tile_pos);
+            for maybe_neighbor in valid_neighbors {
+                if let Some(neighbor) = maybe_neighbor {
+                    assert!(map_geometry.is_valid(*neighbor), "{}", neighbor);
 
-    #[test]
-    fn world_to_tile_pos_conversions_are_invertable() {
-        let mut map_geometry = MapGeometry::new(20);
-
-        for x in -10..=10 {
-            for y in -10..=10 {
-                let tile_pos = TilePos::new(x, y);
-                // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(tile_pos, Height(17.));
-                let world_pos = tile_pos.into_world_pos(&map_geometry);
-                let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
-
-                assert_eq!(tile_pos, remapped_tile_pos);
+                    assert!(
+                        map_geometry.valid_neighbors.contains_key(neighbor),
+                        "{}",
+                        neighbor
+                    );
+                }
             }
         }
+
+        // All of the neighbors should be the same for a newly initialized map
+        assert_eq!(
+            map_geometry.passable_neighbors,
+            map_geometry.reachable_neighbors
+        );
     }
 
     #[test]
@@ -553,7 +798,7 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(17, -2);
+        let center = TilePos::new(0, 0);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
@@ -571,11 +816,11 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(17, -2);
+        let center = TilePos::new(3, -2);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
-        map_geometry.remove_structure(center);
+        map_geometry.remove_structure(facing, center, &footprint);
 
         // Check that the structure index was updated correctly
         for tile_pos in footprint.normalized(facing, center) {

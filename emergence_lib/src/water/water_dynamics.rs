@@ -218,7 +218,9 @@ pub fn horizontal_water_movement(
     if water_config.enable_oceans {
         for tile_pos in map_geometry.ocean_tiles() {
             // Don't bother flowing to and from ocean tiles
-            for valid_neighbor in tile_pos.all_valid_neighbors(&map_geometry) {
+            for maybe_neighbor in map_geometry.valid_neighbors(tile_pos) {
+                let &Some(valid_neighbor) = maybe_neighbor else { continue };
+
                 let neighbor_entity = map_geometry.get_terrain(valid_neighbor).unwrap();
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
@@ -635,25 +637,25 @@ mod tests {
                     let map_geometry = app.world.resource::<MapGeometry>();
 
                     for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
-                        if water_table_strategy.starting_water_volume(tile_pos, &map_geometry)
+                        if water_table_strategy.starting_water_volume(tile_pos, map_geometry)
                             > WaterVolume::ZERO
                         {
                             assert!(
-                                water_volume < water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_volume < water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                                 "Water level {:?} at tile position {} is greater than or equal to the starting water level of {:?} in {:?}",
                                 water_volume,
                                 tile_pos,
-                                water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                                 scenario
                             );
                         } else {
                             assert_eq!(
                                 water_volume,
-                                water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                                 "Water level {:?} at tile position {} is not equal to the starting water level of {:?} in {:?}",
                                 water_volume,
                                 tile_pos,
-                                water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                                water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                                 scenario
                             );
                         }
@@ -688,11 +690,11 @@ mod tests {
 
                     for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                         assert!(
-                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                             "Water level {:?} at tile position {} is less than the starting water level of {:?} in {:?}",
                             water_volume,
                             tile_pos,
-                            water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                             scenario
                         );
                     }
@@ -739,10 +741,7 @@ mod tests {
 
                 assert!(
                     final_total_water > starting_total_water,
-                    "Water level {:?} is not greater than the initial water level of {:?} in {:?}",
-                    final_total_water,
-                    starting_total_water,
-                    scenario
+                    "Water level {final_total_water:?} is not greater than the initial water level of {starting_total_water:?} in {scenario:?}"
                 );
 
                 let mut water_query = app.world.query::<(&TilePos, &WaterVolume)>();
@@ -750,11 +749,11 @@ mod tests {
 
                 for (&tile_pos, &water_volume) in water_query.iter(&app.world) {
                     assert!(
-                            water_volume > water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_volume > water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                             "Water level {:?} at tile position {} is less than or equal to the starting water level of {:?} in {:?}",
                             water_volume,
                             tile_pos,
-                            water_table_strategy.starting_water_volume(tile_pos, &map_geometry),
+                            water_table_strategy.starting_water_volume(tile_pos, map_geometry),
                             scenario
                         );
                 }
@@ -803,9 +802,7 @@ mod tests {
 
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} is not equal to the average water level of {:?}",
-                height,
-                average_water_height,
+                "Water level {height:?} is not equal to the average water level of {average_water_height:?}",
             )
         }
     }
@@ -851,9 +848,7 @@ mod tests {
 
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
-                "Water level {:?} is not equal to the average water level of {:?}",
-                height,
-                average_water_height,
+                "Water level {height:?} is not equal to the average water level of {average_water_height:?}",
             )
         }
     }
@@ -899,9 +894,7 @@ mod tests {
 
             assert!(
                 water_height.abs_diff(water_height_of_arbitrary_neighbor) < EPSILON_HEIGHT,
-                "Water level is not equal between neighbor: {:?} vs. {:?}",
-                water_height,
-                water_height_of_arbitrary_neighbor,
+                "Water level is not equal between neighbor: {water_height:?} vs. {water_height_of_arbitrary_neighbor:?}",
             )
         }
     }
@@ -943,10 +936,7 @@ mod tests {
         for (water_volume, tile_pos) in water_volume_query.iter(&app.world) {
             assert!(
                 water_volume.abs_diff(desired_water_volume) < EPSILON_VOLUME,
-                "Water level is not level: found {:?} at {} but expected {:?}",
-                water_volume,
-                tile_pos,
-                desired_water_volume,
+                "Water level is not level: found {water_volume:?} at {tile_pos} but expected {desired_water_volume:?}",
             )
         }
     }
@@ -985,10 +975,7 @@ mod tests {
 
                     assert!(
                         final_total_water == starting_total_water,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
-                        final_total_water,
-                        starting_total_water,
-                        scenario
+                        "Total water at the end ({final_total_water:?}) is not equal to the amount of water that we started with ({starting_total_water:?}) in {scenario:?}"
                     );
                 }
             }
@@ -1034,10 +1021,7 @@ mod tests {
 
                     assert!(
                         water_difference < EPSILON,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
-                        final_total_water,
-                        starting_total_water,
-                        scenario
+                        "Total water at the end ({final_total_water:?}) is not equal to the amount of water that we started with ({starting_total_water:?}) in {scenario:?}"
                     );
                 }
             }
@@ -1082,10 +1066,7 @@ mod tests {
 
                     assert!(
                         water_difference < EPSILON,
-                        "Total water at the end ({:?}) is not equal to the amount of water that we started with ({:?}) in {:?}",
-                        final_total_water,
-                        final_total_water,
-                        scenario
+                        "Total water at the end ({final_total_water:?}) is not equal to the amount of water that we started with ({final_total_water:?}) in {scenario:?}"
                     );
                 }
             }
@@ -1108,8 +1089,7 @@ mod tests {
 
         assert!(
             water_transferred > Volume::ZERO,
-            "{:?} water was transferred",
-            water_transferred
+            "{water_transferred:?} water was transferred"
         )
     }
 
@@ -1196,18 +1176,14 @@ mod tests {
 
         assert!(
             surface_water_flow > subsurface_water_flow,
-            "Surface water flow ({:?}) is not faster than subsurface water flow ({:?})",
-            surface_water_flow,
-            subsurface_water_flow
+            "Surface water flow ({surface_water_flow:?}) is not faster than subsurface water flow ({subsurface_water_flow:?})"
         );
 
         assert_eq!(surface_to_soil_flow, soil_to_surface_flow);
 
         assert!(
             surface_to_soil_flow < surface_water_flow,
-            "Surface to soil water flow ({:?}) is not slower than surface water flow ({:?})",
-            surface_to_soil_flow,
-            surface_water_flow
+            "Surface to soil water flow ({surface_to_soil_flow:?}) is not slower than surface water flow ({surface_water_flow:?})"
         );
     }
 
@@ -1237,9 +1213,7 @@ mod tests {
 
         assert!(
             large_height_difference > small_height_difference,
-            "Large height difference ({:?}) does not flow faster than small height difference ({:?})",
-            large_height_difference,
-            small_height_difference
+            "Large height difference ({large_height_difference:?}) does not flow faster than small height difference ({small_height_difference:?})"
         );
     }
 
@@ -1278,8 +1252,7 @@ mod tests {
             );
 
             println!(
-                "Water transferred A to B: {:?}, Water transferred B to A: {:?}",
-                water_transferred_a_to_b, water_transferred_b_to_a
+                "Water transferred A to B: {water_transferred_a_to_b:?}, Water transferred B to A: {water_transferred_b_to_a:?}"
             );
 
             water_height_a += water_transferred_b_to_a.into_height();
@@ -1291,23 +1264,17 @@ mod tests {
             let current_water = water_height_a + water_height_b;
             assert!(
                 current_water == initial_water,
-                "Water was not conserved, starting with {:?} and ending with {:?}",
-                initial_water,
-                current_water
+                "Water was not conserved, starting with {initial_water:?} and ending with {current_water:?}"
             );
 
-            println!(
-                "Water height A: {:?}, Water height B: {:?}",
-                water_height_a, water_height_b
-            )
+            println!("Water height A: {water_height_a:?}, Water height B: {water_height_b:?}")
         }
 
         let water_difference = water_height_a.abs_diff(water_height_b);
 
         assert!(
             water_difference < EPSILON_HEIGHT,
-            "Water levels did not stabilize, ending with a height difference of ({:?}) ",
-            water_difference
+            "Water levels did not stabilize, ending with a height difference of ({water_difference:?}) "
         );
     }
 }
