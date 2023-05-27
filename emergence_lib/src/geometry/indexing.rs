@@ -581,7 +581,7 @@ impl MapGeometry {
     pub(crate) fn valid_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
         self.valid_neighbors
             .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {:?} is not a valid tile position", tile_pos))
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
     }
 
     /// The set of tiles that can be walked to by a basket crab from `tile_pos`.
@@ -594,7 +594,7 @@ impl MapGeometry {
     pub(crate) fn passable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
         self.passable_neighbors
             .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {:?} is not a valid tile position", tile_pos))
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
     }
 
     /// The set of tiles that can be reached by a basket crab from `tile_pos`.
@@ -607,14 +607,14 @@ impl MapGeometry {
     pub(crate) fn reachable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
         self.reachable_neighbors
             .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {:?} is not a valid tile position", tile_pos))
+            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
     }
 
     /// Recomputes the set of passable neighbors for the provided `tile_pos`.
     ///
     /// This will update the provided tile and all of its neighbors.
     fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {
-        let neighbors = self.valid_neighbors(tile_pos).clone();
+        let neighbors = *self.valid_neighbors(tile_pos);
         let mut passable_neighbors: [Option<TilePos>; 6] = [None; 6];
 
         for (i, maybe_neighbor) in neighbors.iter().enumerate() {
@@ -656,7 +656,7 @@ impl MapGeometry {
     ///
     /// This will update the provided tile and all of its neighbors.
     fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {
-        let neighbors = self.valid_neighbors(tile_pos).clone();
+        let neighbors = *self.valid_neighbors(tile_pos);
         let mut reachable_neighbors: [Option<TilePos>; 6] = [None; 6];
 
         for (i, maybe_neighbor) in neighbors.iter().enumerate() {
@@ -695,6 +695,7 @@ impl MapGeometry {
             .insert(tile_pos, reachable_neighbors);
     }
 
+    /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
     fn compute_passability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(ending_pos) {
             return false;
@@ -715,6 +716,7 @@ impl MapGeometry {
         }
     }
 
+    /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
     fn compute_reachability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
         if !self.is_valid(ending_pos) {
             return false;
