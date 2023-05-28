@@ -273,11 +273,7 @@ impl Signals {
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, signal_map)| {
-                for (&occupied_tile, original_strength) in signal_map
-                    .current
-                    .iter()
-                    .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
-                {
+                for (&occupied_tile, original_strength) in signal_map.current.iter() {
                     let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
                     for maybe_neighboring_tile in map_geometry.passable_neighbors(occupied_tile) {
