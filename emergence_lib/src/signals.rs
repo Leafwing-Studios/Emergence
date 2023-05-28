@@ -270,6 +270,8 @@ impl Signals {
 
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
+        assert!(diffusion_fraction >= 0.0 && diffusion_fraction <= 1.0 / 6.0);
+
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, signal_map)| {
@@ -814,7 +816,7 @@ mod tests {
             SignalStrength(1.)
         );
 
-        signals.diffuse(&map_geometry, 0.5);
+        signals.diffuse(&map_geometry, 0.1);
 
         assert_eq!(signals.maps.len(), 1);
         let signal_map = signals.maps.values().next().unwrap();
