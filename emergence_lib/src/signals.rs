@@ -270,7 +270,7 @@ impl Signals {
 
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
-        assert!((0.0..=1 / 0 / 6.0).contains(&diffusion_fraction));
+        assert!((0.0..=1.0 / 6.0).contains(&diffusion_fraction));
 
         self.maps
             .par_iter_mut()
