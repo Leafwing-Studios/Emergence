@@ -785,6 +785,11 @@ mod tests {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
 
+        let passable_neighbors = map_geometry.passable_neighbors(TilePos::ZERO);
+        for maybe_neighbor in passable_neighbors {
+            assert!(maybe_neighbor.is_some());
+        }
+
         signals.add_signal(
             SignalType::Contains(test_item()),
             TilePos::ZERO,
