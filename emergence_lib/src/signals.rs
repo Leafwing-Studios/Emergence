@@ -392,9 +392,12 @@ impl SignalMap {
     /// This clears the pending addition map.
     fn apply_pending_additions(&mut self) {
         for (tile_pos, signal_strength) in self.pending_addition.drain(..) {
-            self.current.entry(tile_pos).and_modify(|current_strength| {
-                *current_strength += signal_strength;
-            });
+            self.current
+                .entry(tile_pos)
+                .and_modify(|current_strength| {
+                    *current_strength += signal_strength;
+                })
+                .or_insert(signal_strength);
         }
     }
 
@@ -403,6 +406,8 @@ impl SignalMap {
     /// This clears the pending removal map.
     fn apply_pending_removals(&mut self) {
         for (tile_pos, signal_strength) in self.pending_removal.drain(..) {
+            // We deliberately do not insert a zero or negative signal strength here if the entry is missing
+            // That would either be useless or a bug respectively.
             self.current.entry(tile_pos).and_modify(|current_strength| {
                 *current_strength -= signal_strength;
             });
@@ -778,6 +783,18 @@ mod tests {
             },
         );
         manifest
+    }
+
+    #[test]
+    fn pending_additions_are_applied() {
+        let mut signal_map = SignalMap::default();
+        signal_map
+            .pending_addition
+            .push((TilePos::ZERO, SignalStrength(1.)));
+
+        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength::ZERO);
+        signal_map.apply_pending_additions();
+        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength(1.));
     }
 
     #[test]
