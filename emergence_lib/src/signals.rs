@@ -781,6 +781,40 @@ mod tests {
     }
 
     #[test]
+    fn signals_diffuse() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        signals.add_signal(
+            SignalType::Contains(test_item()),
+            TilePos::ZERO,
+            SignalStrength(1.),
+        );
+
+        assert_eq!(
+            signals.get(SignalType::Contains(test_item()), TilePos::ZERO),
+            SignalStrength(1.)
+        );
+
+        signals.diffuse(&map_geometry, 0.5);
+
+        assert_eq!(signals.maps.len(), 1);
+        let signal_map = signals.maps.values().next().unwrap();
+        dbg!(&signal_map);
+
+        let current_signals = signal_map.current.clone();
+
+        assert_eq!(
+            current_signals.len(),
+            7,
+            "Signal should have diffused to all 7 neigboring tiles"
+        );
+        for (_, &signal_strength) in current_signals.iter() {
+            assert!(signal_strength > SignalStrength::ZERO);
+        }
+    }
+
+    #[test]
     fn neighboring_signals_checks_origin_tile() {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
