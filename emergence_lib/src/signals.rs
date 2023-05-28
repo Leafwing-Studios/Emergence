@@ -270,13 +270,15 @@ impl Signals {
 
     /// Diffuses signals from one cell into the next
     pub fn diffuse(&mut self, map_geometry: &MapGeometry, diffusion_fraction: f32) {
+        assert!((0.0..=1.0 / 6.0).contains(&diffusion_fraction));
+
         self.maps
             .par_iter_mut()
             .for_each(|(_signal_type, signal_map)| {
                 for (&occupied_tile, original_strength) in signal_map
                     .current
                     .iter()
-                    .filter(|(_, signal_strength)| SignalStrength::ZERO.ne(signal_strength))
+                    .filter(|(_, &strength)| strength != SignalStrength::ZERO)
                 {
                     let amount_to_send_to_each_neighbor = *original_strength * diffusion_fraction;
 
@@ -392,9 +394,12 @@ impl SignalMap {
     /// This clears the pending addition map.
     fn apply_pending_additions(&mut self) {
         for (tile_pos, signal_strength) in self.pending_addition.drain(..) {
-            self.current.entry(tile_pos).and_modify(|current_strength| {
-                *current_strength += signal_strength;
-            });
+            self.current
+                .entry(tile_pos)
+                .and_modify(|current_strength| {
+                    *current_strength += signal_strength;
+                })
+                .or_insert(signal_strength);
         }
     }
 
@@ -403,6 +408,8 @@ impl SignalMap {
     /// This clears the pending removal map.
     fn apply_pending_removals(&mut self) {
         for (tile_pos, signal_strength) in self.pending_removal.drain(..) {
+            // We deliberately do not insert a zero or negative signal strength here if the entry is missing
+            // That would either be useless or a bug respectively.
             self.current.entry(tile_pos).and_modify(|current_strength| {
                 *current_strength -= signal_strength;
             });
@@ -778,6 +785,57 @@ mod tests {
             },
         );
         manifest
+    }
+
+    #[test]
+    fn pending_additions_are_applied() {
+        let mut signal_map = SignalMap::default();
+        signal_map
+            .pending_addition
+            .push((TilePos::ZERO, SignalStrength(1.)));
+
+        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength::ZERO);
+        signal_map.apply_pending_additions();
+        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength(1.));
+    }
+
+    #[test]
+    fn signals_diffuse() {
+        let mut signals = Signals::default();
+        let map_geometry = MapGeometry::new(1);
+
+        let passable_neighbors = map_geometry.passable_neighbors(TilePos::ZERO);
+        for maybe_neighbor in passable_neighbors {
+            assert!(maybe_neighbor.is_some());
+        }
+
+        signals.add_signal(
+            SignalType::Contains(test_item()),
+            TilePos::ZERO,
+            SignalStrength(1.),
+        );
+
+        assert_eq!(
+            signals.get(SignalType::Contains(test_item()), TilePos::ZERO),
+            SignalStrength(1.)
+        );
+
+        signals.diffuse(&map_geometry, 0.1);
+
+        assert_eq!(signals.maps.len(), 1);
+        let signal_map = signals.maps.values().next().unwrap();
+        dbg!(&signal_map);
+
+        let current_signals = signal_map.current.clone();
+
+        assert_eq!(
+            current_signals.len(),
+            7,
+            "Signal should have diffused to all 7 neigboring tiles"
+        );
+        for (_, &signal_strength) in current_signals.iter() {
+            assert!(signal_strength > SignalStrength::ZERO);
+        }
     }
 
     #[test]
