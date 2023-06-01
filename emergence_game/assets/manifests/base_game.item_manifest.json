@@ -13,13 +13,13 @@
       "fluid": false,
       "buoyant": true
     },
-    "ant_egg": {
+    "crab_egg": {
       "stack_size": 3,
       "compostable": false,
       "fluid": false,
       "buoyant": true,
       "seed": {
-        "Unit": "ant"
+        "Unit": "basket-crab"
       }
     },
     "acacia_seed": {
