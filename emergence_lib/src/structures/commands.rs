@@ -221,7 +221,7 @@ impl Command for SpawnStructureCommand {
                     .insert(InputInventory::Exact {
                         // TODO: let this be configured by the user using the UI
                         inventory: Inventory::empty_from_item(
-                            Id::from_name("ant_egg".to_string()),
+                            Id::from_name("crab_egg".to_string()),
                             1,
                         ),
                     })

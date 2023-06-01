@@ -139,7 +139,7 @@ impl Default for GenerationConfig {
         landmark_chances.insert(Id::from_name("spring".to_string()), 5e-4);
 
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
-        unit_chances.insert(Id::from_name("ant".to_string()), 1e-2);
+        unit_chances.insert(Id::from_name("basket_crab".to_string()), 1e-2);
 
         let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
         structure_chances.insert(Id::from_name("ant_hive".to_string()), 1e-3);

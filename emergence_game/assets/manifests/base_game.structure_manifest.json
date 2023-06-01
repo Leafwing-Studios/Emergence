@@ -274,7 +274,7 @@
 		"ant_hive": {
 			"kind": {
 				"Crafting": {
-					"starting_recipe": "ant_egg_production"
+					"starting_recipe": "crab_egg_production"
 				}
 			},
 			"construction_strategy": {
