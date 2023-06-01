@@ -209,19 +209,6 @@ fn can_serialize_recipe_manifest() {
                     energy: None,
                 },
             ),
-            (
-                "hatch_ants".to_string(),
-                RawRecipeData {
-                    inputs: RawRecipeInput::single("ant_egg", 1),
-                    outputs: HashMap::new(),
-                    craft_time: 10.,
-                    conditions: Some(RecipeConditions {
-                        workers_required: 1,
-                        allowable_light_range: None,
-                    }),
-                    energy: None,
-                },
-            ),
         ]),
     };
 
