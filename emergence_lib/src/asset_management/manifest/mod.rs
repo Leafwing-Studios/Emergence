@@ -76,7 +76,7 @@ where
     pub fn get(&self, id: Id<T>) -> &Data {
         self.data_map
             .get(&id)
-            .unwrap_or_else(|| panic!("ID {id:?} not found in manifest"))
+            .unwrap_or_else(|| panic!("ID {id:?} {} not found in manifest", self.name(id)))
     }
 
     /// Returns the human-readable name associated with the provided `id`.
