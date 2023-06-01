@@ -19,7 +19,7 @@
       "fluid": false,
       "buoyant": true,
       "seed": {
-        "Unit": "basket-crab"
+        "Unit": "basket_crab"
       }
     },
     "acacia_seed": {
