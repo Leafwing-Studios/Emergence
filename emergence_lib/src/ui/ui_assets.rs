@@ -228,7 +228,12 @@ where
             let load_state = asset_server.get_load_state(icon_handle);
 
             if load_state != LoadState::Loaded {
-                info!("{data:?}'s icon is {load_state:?}");
+                let maybe_path = asset_server.get_handle_path(icon_handle);
+                let path = maybe_path
+                    .map(|p| format!("{:?}", p.path()))
+                    .unwrap_or("unknown_path".to_string());
+
+                info!("Icon {data:?}'s scene at {path} is {load_state:?}");
                 return load_state;
             }
         }

@@ -91,7 +91,12 @@ impl Loadable for TerrainHandles {
             let scene_load_state = asset_server.get_load_state(scene_handle);
 
             if scene_load_state != LoadState::Loaded {
-                info!("Terrain {terrain:?}'s scene is {scene_load_state:?}");
+                let maybe_path = asset_server.get_handle_path(scene_handle);
+                let path = maybe_path
+                    .map(|p| format!("{:?}", p.path()))
+                    .unwrap_or("unknown_path".to_string());
+
+                info!("Terrain {terrain:?}'s scene at {path} is {scene_load_state:?}");
                 return scene_load_state;
             }
         }
