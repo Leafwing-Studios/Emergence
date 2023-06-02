@@ -1,235 +1,16 @@
 //! Types for positioning and measuring coordinates.
 
-use bevy::{math::Vec3Swizzles, prelude::*, reflect::Map};
+use bevy::{prelude::*, reflect::Map};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex};
-use rand::{rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use crate::filtered_array_iter::FilteredArrayIter;
-
 use super::{Facing, MapGeometry};
-
-/// A hex-based coordinate, that represents exactly one tile.
-#[derive(
-    Component,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    Deref,
-    DerefMut,
-    Default,
-    Add,
-    Sub,
-    AddAssign,
-    SubAssign,
-    Serialize,
-    Deserialize,
-)]
-pub struct TilePos {
-    /// The underlying hex coordinate
-    pub(crate) hex: Hex,
-}
-
-impl Display for TilePos {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let cubic = self.to_cubic_array();
-
-        let x = cubic[0];
-        let y = cubic[1];
-        let z = cubic[2];
-
-        write!(f, "({x}, {y}, {z})")
-    }
-}
-
-impl TilePos {
-    /// The position of the central tile
-    pub const ZERO: TilePos = TilePos {
-        hex: Hex { x: 0, y: 0 },
-    };
-
-    /// Generates a new [`TilePos`] from axial coordinates.
-    #[inline]
-    #[must_use]
-    pub const fn new(x: i32, y: i32) -> Self {
-        TilePos { hex: Hex { x, y } }
-    }
-
-    /// Generates a random [`TilePos`], sampled uniformly from the valid positions in `map_geometry`
-    #[inline]
-    #[must_use]
-    pub fn random(map_geometry: &MapGeometry, rng: &mut ThreadRng) -> TilePos {
-        let range = -(map_geometry.radius as i32)..(map_geometry.radius as i32);
-
-        // Just use rejection sampling: easy to get right
-        let mut chosen_tile: Option<TilePos> = None;
-        while chosen_tile.is_none() {
-            let x = rng.gen_range(range.clone());
-            let y = rng.gen_range(range.clone());
-
-            let proposed_tile = TilePos::new(x, y);
-
-            if map_geometry.is_valid(proposed_tile) {
-                chosen_tile = Some(proposed_tile)
-            }
-        }
-
-        chosen_tile.unwrap()
-    }
-
-    /// Returns the world position (in [`Transform`] units) associated with this tile.
-    ///
-    /// The `y` value returned corresponds to the top of the tile column at this location.
-    #[inline]
-    #[must_use]
-    pub(crate) fn into_world_pos(self, map_geometry: &MapGeometry) -> Vec3 {
-        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
-        let y = map_geometry
-            .get_height(self)
-            .unwrap_or_default()
-            .into_world_pos();
-
-        Vec3 {
-            x: xz.x,
-            y,
-            z: xz.y,
-        }
-    }
-
-    /// Returns the world position (in [`Transform`] units) associated with the top of this tile.
-    ///
-    /// The `y` value returned corresponds to the top of the tile topper at this location.
-    #[inline]
-    #[must_use]
-    pub(crate) fn top_of_tile(self, map_geometry: &MapGeometry) -> Vec3 {
-        self.into_world_pos(map_geometry)
-            + Vec3 {
-                x: 0.,
-                y: Height::TOPPER_THICKNESS,
-                z: 0.,
-            }
-    }
-
-    /// Returns the nearest tile position to the provided `world_pos`
-    ///
-    /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
-    #[inline]
-    #[must_use]
-    pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
-        TilePos {
-            hex: map_geometry.layout.world_pos_to_hex(Vec2 {
-                x: world_pos.x,
-                y: world_pos.z,
-            }),
-        }
-    }
-
-    /// Returns the [`TilePos`] in the provided `direction` from `self`.
-    #[inline]
-    #[must_use]
-    pub(crate) fn neighbor(&self, direction: Direction) -> Self {
-        TilePos {
-            hex: self.hex.neighbor(direction),
-        }
-    }
-
-    /// All neighbors of `self`.
-    ///
-    /// # Warning
-    ///
-    /// This includes neighbors that are not on the map.
-    #[inline]
-    #[must_use]
-    pub(crate) fn all_neighbors(&self) -> impl IntoIterator<Item = TilePos> {
-        self.hex.all_neighbors().map(|hex| TilePos { hex })
-    }
-
-    /// All adjacent tiles that are clear of structures and ghosts and have a limited terrain height gap.
-    ///
-    /// This is used to control vegetative reproduction.
-    pub(crate) fn empty_neighbors(
-        &self,
-        map_geometry: &MapGeometry,
-    ) -> impl IntoIterator<Item = TilePos> {
-        let neighbors = self.hex.all_neighbors().map(|hex| TilePos { hex });
-        let mut iter = FilteredArrayIter::from(neighbors);
-        iter.filter(|&tile_pos| {
-            map_geometry.is_valid(tile_pos)
-                && map_geometry.get_ghost_structure(tile_pos).is_none()
-                && map_geometry.get_ghost_terrain(tile_pos).is_none()
-                && map_geometry.get_structure(tile_pos).is_none()
-        });
-        iter
-    }
-
-    /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
-    #[inline]
-    #[must_use]
-    pub(crate) fn rotated(&self, facing: Facing) -> Self {
-        let n_rotations = facing.rotation_count();
-
-        TilePos {
-            // This must rotate counter-clockwise,
-            // as we are rotating the tile around the origin.
-            hex: self.hex.rotate_ccw(n_rotations),
-        }
-    }
-
-    /// Computes the flat distance between the centers of self and `other` in world coordinates.
-    ///
-    /// Note that this is not the same as the distance between tiles in tile coordinates!
-    #[inline]
-    #[must_use]
-    #[allow(dead_code)]
-    pub(crate) fn world_space_distance(&self, other: TilePos, map_geometry: &MapGeometry) -> f32 {
-        let self_pos = self.into_world_pos(map_geometry).xz();
-        let other_pos = other.into_world_pos(map_geometry).xz();
-
-        self_pos.distance(other_pos)
-    }
-
-    /// Computes the length of the shortest path between the centers of self and `other` in tile coordinates.
-    ///
-    /// Note that this is not the same as the distance between tiles in world coordinates!
-    #[inline]
-    #[must_use]
-    #[allow(dead_code)]
-    pub(crate) fn manhattan_tile_distance(&self, other: TilePos) -> f32 {
-        (self.hex - other.hex).length() as f32
-    }
-
-    /// Computes the Euclidean distance between the centers of self and `other` in tile coordinates.
-    #[inline]
-    #[must_use]
-    #[allow(dead_code)]
-    pub(crate) fn euclidean_tile_distance(&self, other: TilePos) -> f32 {
-        let [a_x, a_y, a_z] = self.hex.to_cubic_array();
-        let [b_x, b_y, b_z] = other.hex.to_cubic_array();
-
-        let dist_sq = ((a_x - b_x).pow(2) + (a_y - b_y).pow(2) + (a_z - b_z).pow(2)) as f32;
-        dist_sq.sqrt()
-    }
-}
-
-impl Mul<i32> for TilePos {
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rhs: i32) -> Self::Output {
-        TilePos {
-            hex: self.hex * rhs,
-        }
-    }
-}
 
 /// The discretized height of this tile
 ///
@@ -416,9 +197,9 @@ impl Div<f32> for Height {
 /// A voxel position in the game world.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct VoxelPos {
-    /// Corresponds to the x coordinate of the [`TilePos`]
+    /// Corresponds to the x coordinate of the [`VoxelPos`]
     x: i32,
-    /// Corresponds to the y coordinate of the [`TilePos`]
+    /// Corresponds to the y coordinate of the [`VoxelPos`]
     y: i32,
     /// The discretized [`Height`] of the voxel.
     height: i32,
@@ -492,7 +273,7 @@ impl VoxelPos {
         VoxelPos::new(hex, height)
     }
 
-    /// Returns the [`TilePos`] in the provided `direction` from `self`.
+    /// Returns the [`VoxelPos`] in the provided `direction` from `self`.
     #[inline]
     #[must_use]
     pub(crate) fn neighbor(&self, direction: Direction) -> Self {
@@ -514,7 +295,7 @@ impl VoxelPos {
             .map(|hex| VoxelPos::new(hex, self.height()))
     }
 
-    /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
+    /// Returns the [`VoxelPos`] rotated to match the `facing` around the origin.
     #[inline]
     #[must_use]
     pub(crate) fn rotated(&self, facing: Facing) -> Self {
@@ -664,13 +445,13 @@ mod tests {
 
         for x in -10..=10 {
             for y in -10..=10 {
-                let tile_pos = TilePos::new(x, y);
+                let voxel_pos = VoxelPos::new(x, y);
                 // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(tile_pos, Height(17.));
-                let world_pos = tile_pos.into_world_pos(&map_geometry);
-                let remapped_tile_pos = TilePos::from_world_pos(world_pos, &map_geometry);
+                map_geometry.update_height(voxel_pos, Height(17.));
+                let world_pos = voxel_pos.into_world_pos(&map_geometry);
+                let remapped_tile_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
 
-                assert_eq!(tile_pos, remapped_tile_pos);
+                assert_eq!(voxel_pos, remapped_tile_pos);
             }
         }
     }

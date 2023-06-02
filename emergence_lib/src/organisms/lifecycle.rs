@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
     player_interaction::clipboard::ClipboardData,
     simulation::time::{Days, TimePool},
@@ -211,7 +211,7 @@ pub(super) fn transform_when_lifecycle_complete(
     query: Query<(
         Entity,
         &Lifecycle,
-        &TilePos,
+        &VoxelPos,
         &Facing,
         &EnergyPool,
         Option<&Id<Unit>>,
@@ -222,13 +222,13 @@ pub(super) fn transform_when_lifecycle_complete(
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    for (entity, lifecycle, &tile_pos, &facing, energy_pool, maybe_unit) in query.iter() {
+    for (entity, lifecycle, &voxel_pos, &facing, energy_pool, maybe_unit) in query.iter() {
         for new_form in lifecycle.new_forms() {
             // Make sure that there's a valid place to spawn the new form.
             if let OrganismId::Structure(structure_id) = new_form {
                 let variety = structure_manifest.get(structure_id);
 
-                if !map_geometry.can_transform(entity, tile_pos, &variety.footprint, facing) {
+                if !map_geometry.can_transform(entity, voxel_pos, &variety.footprint, facing) {
                     // Look for another viable form to transform into.
                     continue;
                 }
@@ -238,7 +238,7 @@ pub(super) fn transform_when_lifecycle_complete(
             if maybe_unit.is_some() {
                 commands.entity(entity).despawn_recursive();
             } else {
-                commands.despawn_structure(tile_pos);
+                commands.despawn_structure(voxel_pos);
             }
 
             match new_form {
@@ -254,14 +254,14 @@ pub(super) fn transform_when_lifecycle_complete(
                     // Preserve the energy of the parent organism.
                     let starting_energy = StartingEnergy::Specific(energy_pool.current());
 
-                    commands.spawn_structure(tile_pos, data, starting_energy);
+                    commands.spawn_structure(voxel_pos, data, starting_energy);
                 }
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();
 
                     commands.spawn(UnitBundle::newborn(
                         unit_id,
-                        tile_pos,
+                        voxel_pos,
                         unit_data,
                         &unit_handles,
                         &map_geometry,
@@ -277,7 +277,7 @@ pub(super) fn transform_when_lifecycle_complete(
 
 /// Items with [`ItemTag::Seed`](crate::crafting::item_tags::ItemTag) that are dropped on the ground will be consumed and transformed into a new organism.
 pub(super) fn sprout_seeds(
-    mut litter_query: Query<(&TilePos, &mut Litter)>,
+    mut litter_query: Query<(&VoxelPos, &mut Litter)>,
     item_manifest: Res<ItemManifest>,
     structure_manifest: Res<StructureManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -291,7 +291,7 @@ pub(super) fn sprout_seeds(
 
     let rng = &mut rand::thread_rng();
 
-    for (&tile_pos, mut litter) in litter_query.iter_mut() {
+    for (&voxel_pos, mut litter) in litter_query.iter_mut() {
         // Roll to see if any seeds will sprout for this tile this tick.
         if rng.gen::<f32>() > SEED_SPROUT_CHANCE {
             continue;
@@ -308,13 +308,13 @@ pub(super) fn sprout_seeds(
             if let OrganismId::Structure(structure_id) = organism_id {
                 let structure_data = structure_manifest.get(structure_id);
 
-                if !map_geometry.can_build(tile_pos, &structure_data.footprint, facing) {
+                if !map_geometry.can_build(voxel_pos, &structure_data.footprint, facing) {
                     // We can't germinate here
                     continue;
                 }
             } else {
                 // For units, just make sure the tile is empty.
-                if !map_geometry.is_passable(tile_pos, tile_pos) {
+                if !map_geometry.is_passable(voxel_pos, voxel_pos) {
                     continue;
                 }
             }
@@ -332,14 +332,14 @@ pub(super) fn sprout_seeds(
                             .starting_recipe()
                             .clone(),
                     };
-                    commands.spawn_structure(tile_pos, data, StartingEnergy::Full);
+                    commands.spawn_structure(voxel_pos, data, StartingEnergy::Full);
                 }
                 OrganismId::Unit(unit_id) => {
                     let unit_data = unit_manifest.get(unit_id).clone();
 
                     commands.spawn(UnitBundle::newborn(
                         unit_id,
-                        tile_pos,
+                        voxel_pos,
                         unit_data,
                         &unit_handles,
                         &map_geometry,

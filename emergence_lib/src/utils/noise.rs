@@ -2,7 +2,7 @@
 
 use noisy_bevy::fbm_simplex_2d_seeded;
 
-use crate::geometry::{Height, TilePos};
+use crate::geometry::{Height, VoxelPos};
 use bevy::math::Vec2;
 
 /// A settings struct for [`simplex_noise`].
@@ -31,7 +31,7 @@ pub struct SimplexSettings {
 /// Computes the value of the noise function at a given position.
 ///
 /// This can then be used to determine the height of a tile.
-pub fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
+pub fn simplex_noise(voxel_pos: VoxelPos, settings: &SimplexSettings) -> f32 {
     let SimplexSettings {
         frequency,
         amplitude,
@@ -41,7 +41,7 @@ pub fn simplex_noise(tile_pos: TilePos, settings: &SimplexSettings) -> f32 {
         seed,
     } = *settings;
 
-    let pos = Vec2::new(tile_pos.hex.x as f32, tile_pos.hex.y as f32);
+    let pos = Vec2::new(voxel_pos.hex.x as f32, voxel_pos.hex.y as f32);
 
     Height::MIN.into_world_pos()
         + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed) * amplitude)

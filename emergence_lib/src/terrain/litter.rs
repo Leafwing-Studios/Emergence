@@ -14,7 +14,7 @@ use crate::{
         inventories::StorageInventory,
         item_tags::{ItemKind, ItemTag},
     },
-    geometry::{direction_from_angle, Height, MapGeometry, TilePos},
+    geometry::{direction_from_angle, Height, MapGeometry, VoxelPos},
     items::{
         errors::RemoveOneItemError,
         item_manifest::{Item, ItemManifest},
@@ -150,12 +150,12 @@ pub(crate) struct TerrainEmitters;
 
 /// Tracks how much litter is on the ground on each tile.
 pub(super) fn update_litter_index(
-    query: Query<(&TilePos, &Litter), Changed<Litter>>,
+    query: Query<(&VoxelPos, &Litter), Changed<Litter>>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (&tile_pos, litter) in query.iter() {
+    for (&voxel_pos, litter) in query.iter() {
         // Only litter on the ground is impassable.
-        map_geometry.update_litter_state(tile_pos, litter.on_ground.state());
+        map_geometry.update_litter_state(voxel_pos, litter.on_ground.state());
     }
 }
 
@@ -247,7 +247,7 @@ impl LitterDrift {
 pub(super) fn carry_floating_litter_with_current(
     mut terrain_query: Query<(
         Entity,
-        &TilePos,
+        &VoxelPos,
         &mut Litter,
         &mut LitterDrift,
         &WaterDepth,
@@ -282,14 +282,14 @@ pub(super) fn carry_floating_litter_with_current(
     let delta_time = fixed_time.period;
     // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
     // sparing us from the wrath of the borrow checker
-    let mut proposed_transfers: Vec<(Entity, TilePos)> = Vec::new();
+    let mut proposed_transfers: Vec<(Entity, VoxelPos)> = Vec::new();
 
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
     for (
         source_entity,
-        &tile_pos,
+        &voxel_pos,
         litter,
         mut litter_drift,
         water_depth,
@@ -298,7 +298,7 @@ pub(super) fn carry_floating_litter_with_current(
     ) in terrain_query.iter_mut()
     {
         // Don't cause items to drift out of overfull nets
-        if let Some(structure_entity) = map_geometry.get_structure(tile_pos) {
+        if let Some(structure_entity) = map_geometry.get_structure(voxel_pos) {
             if let Ok(structure_id) = net_query.get(structure_entity) {
                 let structure_height = structure_manifest.get(*structure_id).height;
 
@@ -342,7 +342,7 @@ pub(super) fn carry_floating_litter_with_current(
             // If the litter has finished drifting, stop it drifting and move it
             if litter_drift.timer.finished() {
                 if let Some(direction) = litter_drift.direction {
-                    let new_position = tile_pos.neighbor(direction);
+                    let new_position = voxel_pos.neighbor(direction);
                     let source_height = water_depth.surface_height(tile_height);
                     let Some(target_entity) = map_geometry.get_terrain(new_position) else { continue };
 

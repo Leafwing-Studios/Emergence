@@ -9,7 +9,7 @@ use crate::{
         item_tags::ItemKind,
         recipe::RecipeInput,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
@@ -42,15 +42,15 @@ impl Plugin for LogisticsPlugin {
 
 /// Causes buildings that emit items to place them in the litter in front of them.
 fn release_items(
-    mut structure_query: Query<(&TilePos, &Facing, &mut InputInventory), With<ReleasesItems>>,
+    mut structure_query: Query<(&VoxelPos, &Facing, &mut InputInventory), With<ReleasesItems>>,
     mut litter_query: Query<&mut Litter>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (structure_pos, structure_facing, mut input_inventory) in structure_query.iter_mut() {
-        let tile_pos = structure_pos.neighbor(structure_facing.direction);
+        let voxel_pos = structure_pos.neighbor(structure_facing.direction);
 
-        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
         let cloned_inventory = input_inventory.clone();
@@ -74,7 +74,7 @@ fn release_items(
 /// Absorb litter into the inventory of buildings that absorb items.
 fn absorb_items(
     mut structure_query: Query<
-        (&TilePos, &mut OutputInventory, &Id<Structure>),
+        (&VoxelPos, &mut OutputInventory, &Id<Structure>),
         With<AbsorbsItems>,
     >,
     mut litter_query: Query<&mut Litter>,
@@ -83,14 +83,14 @@ fn absorb_items(
     water_depth_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (&tile_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
+    for (&voxel_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
         output_inventory.clear_empty_slots();
 
         if output_inventory.is_full() {
             continue;
         }
 
-        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
         let on_ground = litter.on_ground.clone();
@@ -108,7 +108,7 @@ fn absorb_items(
 
         // Only absorb floating items if the structure is tall enough.
         let structure_data = structure_manifest.get(structure_id);
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
         if structure_data.height > water_depth.surface_water_depth() {

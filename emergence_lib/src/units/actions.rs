@@ -22,7 +22,7 @@ use crate::{
         item_tags::ItemKind,
         workers::WorkersPresent,
     },
-    geometry::{Facing, Height, MapGeometry, RotationDirection, TilePos},
+    geometry::{Facing, Height, MapGeometry, RotationDirection, VoxelPos},
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
@@ -56,7 +56,13 @@ pub(super) fn advance_action_timer(
 /// Choose the unit's action for this turn
 pub(super) fn choose_actions(
     mut units_query: Query<
-        (&TilePos, &Facing, &Goal, &mut CurrentAction, &UnitInventory),
+        (
+            &VoxelPos,
+            &Facing,
+            &Goal,
+            &mut CurrentAction,
+            &UnitInventory,
+        ),
         With<Id<Unit>>,
     >,
     // We shouldn't be dropping off new stuff at structures that are about to be destroyed!
@@ -271,7 +277,7 @@ pub(super) fn finish_actions(
     >,
     mut workplace_query: Query<(&CraftingState, &mut WorkersPresent)>,
     // This must be compatible with unit_query
-    structure_query: Query<&TilePos, (With<Id<Structure>>, Without<Goal>)>,
+    structure_query: Query<&VoxelPos, (With<Id<Structure>>, Without<Goal>)>,
     map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
     unit_manifest: Res<UnitManifest>,
@@ -357,7 +363,7 @@ pub(super) fn finish_actions(
                                                     DeliveryMode::DropOff,
                                                     Purpose::Instrumental,
                                                 ),
-                                                *unit.tile_pos,
+                                                *unit.voxel_pos,
                                             ) {
                                                 // If we can see any `Pull` signals of the right type, deliver the item.
                                                 Goal::Deliver(*item_kind)
@@ -441,9 +447,9 @@ pub(super) fn finish_actions(
                 },
                 UnitAction::MoveForward => {
                     let direction = unit.facing.direction;
-                    let target_tile = unit.tile_pos.neighbor(direction);
+                    let target_tile = unit.voxel_pos.neighbor(direction);
 
-                    *unit.tile_pos = target_tile;
+                    *unit.voxel_pos = target_tile;
                     unit.transform.translation = target_tile.top_of_tile(&map_geometry);
                 }
                 UnitAction::Work { structure_entity } => {
@@ -487,7 +493,7 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::Abandon => {
-                    let terrain_entity = map_geometry.get_terrain(*unit.tile_pos).unwrap();
+                    let terrain_entity = map_geometry.get_terrain(*unit.voxel_pos).unwrap();
 
                     let (_input, _output, _storage, litter) =
                         inventory_query.get_mut(terrain_entity).unwrap();
@@ -530,7 +536,7 @@ pub(super) struct ActionDataQuery {
     /// The unit's spatial position for rendering
     transform: &'static mut Transform,
     /// The tile that the unit is on
-    tile_pos: &'static mut TilePos,
+    voxel_pos: &'static mut VoxelPos,
     /// How much energy the unit has
     energy_pool: &'static mut EnergyPool,
     /// How frustrated this unit is about not being able to progress towards its goal
@@ -708,7 +714,7 @@ impl CurrentAction {
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
         purpose: Purpose,
-        unit_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
         facing: &Facing,
         goal: &Goal,
         input_inventory_query: &Query<&InputInventory, Without<MarkedForDemolition>>,
@@ -722,7 +728,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let mut candidates: Vec<(Entity, TilePos)> = Vec::new();
+        let mut candidates: Vec<(Entity, VoxelPos)> = Vec::new();
         let held_item = unit_inventory.held_item;
 
         // If we're not holding anyhing, we can't drop it off
@@ -731,16 +737,16 @@ impl CurrentAction {
         }
 
         for maybe_tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
-            let &Some(tile_pos) = maybe_tile_pos else {
+            let &Some(voxel_pos) = maybe_tile_pos else {
                 continue;
             };
 
-            for candidate in map_geometry.get_candidates(tile_pos, delivery_mode) {
+            for candidate in map_geometry.get_candidates(voxel_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
 
@@ -748,26 +754,26 @@ impl CurrentAction {
                             if storage_inventory.is_full()
                                 && storage_inventory.contains_kind(item_kind, item_manifest)
                             {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
                     }
                     (DeliveryMode::PickUp, Purpose::Instrumental) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
                             if output_inventory.contains_kind(item_kind, item_manifest) {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
 
                         if let Ok(storage_inventory) = storage_inventory_query.get(candidate) {
                             if storage_inventory.contains_kind(item_kind, item_manifest) {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
 
                         if let Ok(litter) = litter_query.get(candidate) {
                             if litter.contains_kind(item_kind, item_manifest) {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
                     }
@@ -775,7 +781,7 @@ impl CurrentAction {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
                             if input_inventory.currently_accepts(held_item.unwrap(), item_manifest)
                             {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
                     }
@@ -783,7 +789,7 @@ impl CurrentAction {
                         if let Ok(input_inventory) = input_inventory_query.get(candidate) {
                             if input_inventory.currently_accepts(held_item.unwrap(), item_manifest)
                             {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
 
@@ -791,7 +797,7 @@ impl CurrentAction {
                             if storage_inventory
                                 .currently_accepts(held_item.unwrap(), item_manifest)
                             {
-                                candidates.push((candidate, tile_pos));
+                                candidates.push((candidate, voxel_pos));
                             }
                         }
                     }
@@ -799,13 +805,13 @@ impl CurrentAction {
             }
         }
 
-        if let Some((entity, tile_pos)) = candidates.choose(rng) {
+        if let Some((entity, voxel_pos)) = candidates.choose(rng) {
             match delivery_mode {
                 DeliveryMode::PickUp => {
-                    CurrentAction::pickup(item_kind, *entity, facing, unit_tile_pos, *tile_pos)
+                    CurrentAction::pickup(item_kind, *entity, facing, unit_tile_pos, *voxel_pos)
                 }
                 DeliveryMode::DropOff => {
-                    CurrentAction::dropoff(item_kind, *entity, facing, unit_tile_pos, *tile_pos)
+                    CurrentAction::dropoff(item_kind, *entity, facing, unit_tile_pos, *voxel_pos)
                 }
             }
         } else if let Some(upstream) =
@@ -827,7 +833,7 @@ impl CurrentAction {
     /// Attempt to find something that matches `workplace_id` to perform work
     fn find_workplace(
         workplace_id: WorkplaceId,
-        unit_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
         facing: &Facing,
         workplace_query: &WorkplaceQuery,
         signals: &Signals,
@@ -849,7 +855,7 @@ impl CurrentAction {
         {
             CurrentAction::work(workplace)
         } else {
-            let mut workplaces: Vec<(Entity, TilePos)> = Vec::new();
+            let mut workplaces: Vec<(Entity, VoxelPos)> = Vec::new();
 
             for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
                 let &Some(neighbor) = maybe_neighbor else {
@@ -895,7 +901,7 @@ impl CurrentAction {
     /// Attempt to find a structure of type `structure_id` to perform work
     fn find_demolition_site(
         structure_id: Id<Structure>,
-        unit_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
         facing: &Facing,
         demolition_query: &DemolitionQuery,
         signals: &Signals,
@@ -918,7 +924,7 @@ impl CurrentAction {
         ) {
             CurrentAction::demolish(workplace)
         } else {
-            let mut demo_sites: Vec<(Entity, TilePos)> = Vec::new();
+            let mut demo_sites: Vec<(Entity, VoxelPos)> = Vec::new();
 
             for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
                 let &Some(neighbor) = maybe_neighbor else {
@@ -1000,7 +1006,7 @@ impl CurrentAction {
     /// Move away from the signals matching the provided `goal` if able.
     pub(super) fn move_away_from(
         goal: &Goal,
-        current_tile: TilePos,
+        current_tile: VoxelPos,
         facing: &Facing,
         signals: &Signals,
         item_manifest: &ItemManifest,
@@ -1026,7 +1032,7 @@ impl CurrentAction {
 
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
-        current_tile: TilePos,
+        current_tile: VoxelPos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -1060,8 +1066,8 @@ impl CurrentAction {
 
     /// Attempt to move toward the `target_tile_pos`.
     pub(super) fn move_or_spin(
-        unit_tile_pos: TilePos,
-        target_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
+        target_tile_pos: VoxelPos,
         facing: &Facing,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
@@ -1092,8 +1098,8 @@ impl CurrentAction {
         item_kind: ItemKind,
         output_entity: Entity,
         facing: &Facing,
-        unit_tile_pos: TilePos,
-        output_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
+        output_tile_pos: VoxelPos,
     ) -> Self {
         let required_direction = unit_tile_pos.main_direction_to(output_tile_pos.hex);
 
@@ -1112,8 +1118,8 @@ impl CurrentAction {
         item_kind: ItemKind,
         input_entity: Entity,
         facing: &Facing,
-        unit_tile_pos: TilePos,
-        input_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
+        input_tile_pos: VoxelPos,
     ) -> Self {
         let required_direction = unit_tile_pos.main_direction_to(input_tile_pos.hex);
 
@@ -1147,7 +1153,7 @@ impl CurrentAction {
     /// If we cannot, wander around instead.
     pub(super) fn abandon(
         previous_action: UnitAction,
-        unit_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
         unit_inventory: &UnitInventory,
         map_geometry: &MapGeometry,
         item_manifest: &ItemManifest,
@@ -1183,7 +1189,7 @@ impl CurrentAction {
     /// This will alternate between moving forward and spinning.
     pub(super) fn wander(
         previous_action: UnitAction,
-        unit_tile_pos: TilePos,
+        unit_tile_pos: VoxelPos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -1205,7 +1211,7 @@ impl CurrentAction {
     /// Flee a [`SignalType::Unit`] signal matching `unit_id`.
     fn avoid(
         unit_id: Id<Unit>,
-        current_tile: TilePos,
+        current_tile: VoxelPos,
         facing: &Facing,
         signals: &Signals,
         item_manifest: &ItemManifest,
@@ -1246,7 +1252,7 @@ impl CurrentAction {
 
     /// Attempts to move to shallower water.
     fn find_oxygen(
-        current_tile: TilePos,
+        current_tile: VoxelPos,
         facing: &Facing,
         water_depth_query: &Query<&WaterDepth>,
         terrain_query: &Query<&Id<Terrain>>,
@@ -1315,8 +1321,8 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
     /// If so, returns `Some(matching_structure_entity_that_needs_work)`.
     pub(crate) fn needs_work(
         &self,
-        current: TilePos,
-        target: TilePos,
+        current: VoxelPos,
+        target: VoxelPos,
         workplace_id: WorkplaceId,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {

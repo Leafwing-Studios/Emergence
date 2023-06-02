@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::{
-    geometry::{Height, MapGeometry, TilePos, Volume},
+    geometry::{Height, MapGeometry, Volume, VoxelPos},
     simulation::time::InGameTime,
     water::{
         ocean::Ocean, update_water_depth, water_dynamics::horizontal_water_movement, WaterBundle,
@@ -18,18 +18,18 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let mut map_geometry = MapGeometry::new(MAP_RADIUS);
 
-    for tile_pos in map_geometry
+    for voxel_pos in map_geometry
         .valid_tile_positions()
-        .collect::<Vec<TilePos>>()
+        .collect::<Vec<VoxelPos>>()
     {
         // Make sure we cover a range of heights
-        let height = Height(tile_pos.x.max(0) as f32);
+        let height = Height(voxel_pos.x.max(0) as f32);
         let water_volume = WaterVolume::new(Volume(20.));
 
         let terrain_entity = app
             .world
             .spawn((
-                tile_pos,
+                voxel_pos,
                 height,
                 WaterBundle {
                     water_volume,
@@ -38,8 +38,8 @@ fn criterion_benchmark(c: &mut Criterion) {
             ))
             .id();
 
-        map_geometry.update_height(tile_pos, height);
-        map_geometry.add_terrain(tile_pos, terrain_entity);
+        map_geometry.update_height(voxel_pos, height);
+        map_geometry.add_terrain(voxel_pos, terrain_entity);
     }
 
     app.insert_resource(map_geometry);

@@ -8,7 +8,7 @@ use crate::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
     },
-    geometry::TilePos,
+    geometry::VoxelPos,
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::Item},
     signals::{Emitter, SignalStrength, SignalType},
@@ -126,7 +126,7 @@ impl GhostTerrainBundle {
     /// Creates a new [`GhostTerrainBundle`].
     pub(crate) fn new(
         terraforming_action: TerraformingAction,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
@@ -135,7 +135,7 @@ impl GhostTerrainBundle {
     ) -> Self {
         GhostTerrainBundle {
             ghost_bundle: GhostBundle::new(
-                tile_pos,
+                voxel_pos,
                 input_inventory,
                 scene_handle,
                 inherited_material,
@@ -159,7 +159,7 @@ pub(crate) struct TerrainPreviewBundle {
 impl TerrainPreviewBundle {
     /// Creates a new [`TerrainPreviewBundle`].
     pub(crate) fn new(
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terraforming_action: TerraformingAction,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
@@ -168,7 +168,7 @@ impl TerrainPreviewBundle {
         TerrainPreviewBundle {
             preview_bundle: PreviewBundle {
                 preview: Preview,
-                tile_pos,
+                voxel_pos,
                 inherited_material,
                 scene_bundle: SceneBundle {
                     scene: scene_handle.clone_weak(),
@@ -189,19 +189,19 @@ pub(super) fn terraforming_lifecycle(
         (
             &InputInventory,
             &OutputInventory,
-            &TilePos,
+            &VoxelPos,
             &TerraformingAction,
         ),
         With<Ghost>,
     >,
     mut commands: Commands,
 ) {
-    for (input_inventory, output_inventory, &tile_pos, &terraforming_action) in
+    for (input_inventory, output_inventory, &voxel_pos, &terraforming_action) in
         terraforming_ghost_query.iter_mut()
     {
         if input_inventory.inventory().is_full() && output_inventory.is_empty() {
-            commands.despawn_ghost_terrain(tile_pos);
-            commands.apply_terraforming_action(tile_pos, terraforming_action);
+            commands.despawn_ghost_terrain(voxel_pos);
+            commands.apply_terraforming_action(voxel_pos, terraforming_action);
         }
     }
 }

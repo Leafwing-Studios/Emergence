@@ -183,7 +183,7 @@ impl Id<Item> {
 /// The components needed to track the water table.
 ///
 /// These are stored on terrain tile entities.
-/// To fully compute basic water dynamics, you also need the [`TilePos`](crate::geometry::TilePos) and [`Height`] components.
+/// To fully compute basic water dynamics, you also need the [`VoxelPos`](crate::geometry::VoxelPos) and [`Height`] components.
 #[derive(Bundle, Debug, Default)]
 pub struct WaterBundle {
     /// The volume of water stored at this tile.

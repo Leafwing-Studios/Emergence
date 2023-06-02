@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
 use crate::structures::structure_manifest::Structure;
-use crate::{geometry::TilePos, structures::commands::StructureCommandsExt};
+use crate::{geometry::VoxelPos, structures::commands::StructureCommandsExt};
 
 /// The amount of energy available to an organism.
 /// If they run out, they die.
@@ -198,13 +198,13 @@ pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query
 
 /// Despawns organisms when they run out of energy
 pub(super) fn kill_organisms_when_out_of_energy(
-    organism_query: Query<(Entity, &EnergyPool, &TilePos, Option<&Id<Structure>>)>,
+    organism_query: Query<(Entity, &EnergyPool, &VoxelPos, Option<&Id<Structure>>)>,
     mut commands: Commands,
 ) {
-    for (entity, energy_pool, tile_pos, maybe_structure) in organism_query.iter() {
+    for (entity, energy_pool, voxel_pos, maybe_structure) in organism_query.iter() {
         if energy_pool.is_empty() {
             match maybe_structure {
-                Some(_) => commands.despawn_structure(*tile_pos),
+                Some(_) => commands.despawn_structure(*voxel_pos),
                 None => commands.entity(entity).despawn_recursive(),
             }
         }

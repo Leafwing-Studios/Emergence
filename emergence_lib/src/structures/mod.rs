@@ -13,7 +13,7 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id},
         AssetCollectionExt,
     },
-    geometry::{Facing, Height, MapGeometry, TilePos},
+    geometry::{Facing, Height, MapGeometry, VoxelPos},
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
 };
 
@@ -47,7 +47,7 @@ struct StructureBundle {
     /// The direction this structure is facing
     facing: Facing,
     /// The location of this structure
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// Makes structures pickable
     raycast_mesh: RaycastMesh<Structure>,
     /// How is this structure being interacted with
@@ -61,7 +61,7 @@ struct StructureBundle {
 impl StructureBundle {
     /// Creates a new structure
     fn new(
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
@@ -70,7 +70,7 @@ impl StructureBundle {
         StructureBundle {
             structure: data.structure_id,
             facing: data.facing,
-            tile_pos,
+            voxel_pos,
             raycast_mesh: RaycastMesh::default(),
             object_interaction: ObjectInteraction::None,
             picking_mesh,
@@ -89,7 +89,7 @@ impl StructureBundle {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Footprint {
     /// The set of tiles is taken up by this structure.
-    pub(crate) set: HashSet<TilePos>,
+    pub(crate) set: HashSet<VoxelPos>,
 }
 
 impl Default for Footprint {
@@ -102,7 +102,7 @@ impl Footprint {
     /// A footprint that occupies a single tile.
     pub fn single() -> Self {
         Self {
-            set: HashSet::from_iter(vec![TilePos::ZERO]),
+            set: HashSet::from_iter(vec![VoxelPos::ZERO]),
         }
     }
 
@@ -110,14 +110,14 @@ impl Footprint {
     pub fn hexagon(radius: u32) -> Self {
         let mut set = HashSet::new();
         for hex in hexagon(Hex::ZERO, radius) {
-            set.insert(TilePos { hex });
+            set.insert(VoxelPos { hex });
         }
 
         Footprint { set }
     }
 
     /// Computes the set of tiles that this footprint occupies in world space, when centered at `center`.
-    fn in_world_space(&self, center: TilePos) -> HashSet<TilePos> {
+    fn in_world_space(&self, center: VoxelPos) -> HashSet<VoxelPos> {
         self.set
             .iter()
             .map(|&offset| center + offset)
@@ -127,15 +127,15 @@ impl Footprint {
     /// Rotates the footprint by the provided [`Facing`].
     fn rotated(&self, facing: Facing) -> Self {
         let mut set = HashSet::new();
-        for &tile_pos in self.set.iter() {
-            set.insert(tile_pos.rotated(facing));
+        for &voxel_pos in self.set.iter() {
+            set.insert(voxel_pos.rotated(facing));
         }
 
         Footprint { set }
     }
 
     /// Returns this footprint after correcting for offset and rotation.
-    pub(crate) fn normalized(&self, facing: Facing, center: TilePos) -> HashSet<TilePos> {
+    pub(crate) fn normalized(&self, facing: Facing, center: VoxelPos) -> HashSet<VoxelPos> {
         let rotated = self.rotated(facing);
         rotated.in_world_space(center)
     }
@@ -146,12 +146,12 @@ impl Footprint {
     pub(crate) fn height(
         &self,
         facing: Facing,
-        center: TilePos,
+        center: VoxelPos,
         map_geometry: &MapGeometry,
     ) -> Option<Height> {
         self.normalized(facing, center)
             .iter()
-            .map(|&tile_pos| map_geometry.get_height(tile_pos).unwrap_or_default())
+            .map(|&voxel_pos| map_geometry.get_height(voxel_pos).unwrap_or_default())
             .reduce(|a, b| a.max(b))
     }
 
@@ -161,7 +161,7 @@ impl Footprint {
     pub(crate) fn world_pos(
         &self,
         facing: Facing,
-        center: TilePos,
+        center: VoxelPos,
         map_geometry: &MapGeometry,
     ) -> Option<Vec3> {
         let mut transform_of_center = center.into_world_pos(map_geometry);
@@ -193,8 +193,8 @@ mod tests {
     /// https://www.redblobgames.com/grids/hexagons/#coordinates
     fn two_tile_footprint() -> Footprint {
         let mut set = HashSet::new();
-        set.insert(TilePos::ZERO);
-        set.insert(TilePos::new(1, 0));
+        set.insert(VoxelPos::ZERO);
+        set.insert(VoxelPos::new(1, 0));
 
         Footprint { set }
     }
@@ -203,13 +203,13 @@ mod tests {
     fn hexagon_footprint_matches() {
         let footprint = Footprint::hexagon(1);
         let expected = HashSet::from_iter(vec![
-            TilePos::ZERO,
-            TilePos::new(0, 1),
-            TilePos::new(1, 0),
-            TilePos::new(1, -1),
-            TilePos::new(0, -1),
-            TilePos::new(-1, 0),
-            TilePos::new(-1, 1),
+            VoxelPos::ZERO,
+            VoxelPos::new(0, 1),
+            VoxelPos::new(1, 0),
+            VoxelPos::new(1, -1),
+            VoxelPos::new(0, -1),
+            VoxelPos::new(-1, 0),
+            VoxelPos::new(-1, 1),
         ]);
 
         assert_eq!(footprint.set, expected);
@@ -218,20 +218,20 @@ mod tests {
     #[test]
     fn footprint_in_world_space_is_correct_at_origin() {
         let footprint = two_tile_footprint();
-        let expected = HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(1, 0)]);
+        let expected = HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(1, 0)]);
 
-        assert_eq!(footprint.in_world_space(TilePos::ZERO), expected);
+        assert_eq!(footprint.in_world_space(VoxelPos::ZERO), expected);
     }
 
     #[test]
     fn footprint_in_world_space_is_correct_at_non_origin() {
         let footprint = two_tile_footprint();
 
-        let expected = HashSet::from_iter(vec![TilePos::new(1, 0), TilePos::new(2, 0)]);
-        assert_eq!(footprint.in_world_space(TilePos::new(1, 0)), expected);
+        let expected = HashSet::from_iter(vec![VoxelPos::new(1, 0), VoxelPos::new(2, 0)]);
+        assert_eq!(footprint.in_world_space(VoxelPos::new(1, 0)), expected);
 
-        let expected = HashSet::from_iter(vec![TilePos::new(0, 1), TilePos::new(1, 1)]);
-        assert_eq!(footprint.in_world_space(TilePos::new(0, 1)), expected);
+        let expected = HashSet::from_iter(vec![VoxelPos::new(0, 1), VoxelPos::new(1, 1)]);
+        assert_eq!(footprint.in_world_space(VoxelPos::new(0, 1)), expected);
     }
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
     fn footprint_rotated_by_60_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(0, 1)]),
+            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(0, 1)]),
         };
 
         let mut facing = Facing::default();
@@ -266,7 +266,7 @@ mod tests {
     fn footprint_rotated_by_120_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(-1, 1)]),
+            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(-1, 1)]),
         };
 
         let mut facing = Facing::default();
@@ -288,7 +288,7 @@ mod tests {
     fn footprint_rotated_by_180_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(-1, 0)]),
+            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(-1, 0)]),
         };
 
         let mut facing = Facing::default();
@@ -310,7 +310,7 @@ mod tests {
     fn footprint_rotated_by_240_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(0, -1)]),
+            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(0, -1)]),
         };
 
         let mut facing = Facing::default();
@@ -332,7 +332,7 @@ mod tests {
     fn footprint_rotated_by_300_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![TilePos::new(0, 0), TilePos::new(1, -1)]),
+            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(1, -1)]),
         };
 
         let mut facing = Facing::default();

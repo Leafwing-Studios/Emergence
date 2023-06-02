@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    geometry::{hexagonal_column, Height, MapGeometry, TilePos},
+    geometry::{hexagonal_column, Height, MapGeometry, VoxelPos},
     water::{ocean::Ocean, WaterConfig, WaterDepth},
 };
 
@@ -58,7 +58,7 @@ fn render_water(
     water_handles: Res<WaterHandles>,
     rendered_water_query: Query<Entity, With<Water>>,
     water_config: Res<WaterConfig>,
-    water_depth_query: Query<(&TilePos, &WaterDepth)>,
+    water_depth_query: Query<(&VoxelPos, &WaterDepth)>,
     map_geometry: Res<MapGeometry>,
     ocean: Res<Ocean>,
     mut commands: Commands,
@@ -68,7 +68,7 @@ fn render_water(
         commands.entity(entity).despawn();
     }
 
-    for (tile_pos, water_depth) in water_depth_query.iter() {
+    for (voxel_pos, water_depth) in water_depth_query.iter() {
         let surface_water_depth = water_depth.surface_water_depth();
 
         if surface_water_depth > Height::ZERO {
@@ -77,7 +77,7 @@ fn render_water(
                     mesh: water_handles.mesh.clone_weak(),
                     material: water_handles.material.clone_weak(),
                     transform: Transform {
-                        translation: tile_pos.top_of_tile(&map_geometry),
+                        translation: voxel_pos.top_of_tile(&map_geometry),
                         scale: Vec3::new(1.0, surface_water_depth.into_world_pos(), 1.0),
                         ..Default::default()
                     },
@@ -88,13 +88,13 @@ fn render_water(
     }
 
     if water_config.enable_oceans {
-        for tile_pos in map_geometry.ocean_tiles() {
+        for voxel_pos in map_geometry.ocean_tiles() {
             commands
                 .spawn(PbrBundle {
                     mesh: water_handles.mesh.clone_weak(),
                     material: water_handles.material.clone_weak(),
                     transform: Transform {
-                        translation: tile_pos.top_of_tile(&map_geometry),
+                        translation: voxel_pos.top_of_tile(&map_geometry),
                         scale: Vec3::new(1.0, ocean.height().into_world_pos(), 1.0),
                         ..Default::default()
                     },

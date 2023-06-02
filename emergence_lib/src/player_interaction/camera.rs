@@ -14,7 +14,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::construction::ghosts::Ghost;
 use crate::geometry::MapGeometry;
-use crate::geometry::TilePos;
+use crate::geometry::VoxelPos;
 use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
@@ -323,7 +323,7 @@ fn zoom(
 fn set_camera_focus(
     actions: Res<ActionState<PlayerAction>>,
     selection: Res<CurrentSelection>,
-    tile_pos_query: Query<&TilePos>,
+    tile_pos_query: Query<&VoxelPos>,
     map_geometry: Res<MapGeometry>,
     unit_query: Query<&Transform>,
     mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
@@ -394,7 +394,7 @@ fn pan_camera(
 
         focus.translation += oriented_translation;
 
-        let nearest_tile_pos = TilePos::from_world_pos(transform.translation, &map_geometry);
+        let nearest_tile_pos = VoxelPos::from_world_pos(transform.translation, &map_geometry);
         focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
     } else {
         settings.pan_speed.reset_speed();

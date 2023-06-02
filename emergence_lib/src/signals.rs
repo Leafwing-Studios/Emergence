@@ -21,7 +21,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::geometry::{Facing, MapGeometry, TilePos};
+use crate::geometry::{Facing, MapGeometry, VoxelPos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -61,66 +61,66 @@ pub struct Signals {
 }
 
 impl Signals {
-    /// Returns the signal strength of `signal_type` at the given `tile_pos`.
+    /// Returns the signal strength of `signal_type` at the given `voxel_pos`.
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    pub fn get(&self, signal_type: SignalType, tile_pos: TilePos) -> SignalStrength {
+    pub fn get(&self, signal_type: SignalType, voxel_pos: VoxelPos) -> SignalStrength {
         match self.maps.get(&signal_type) {
-            Some(map) => map.get(tile_pos),
+            Some(map) => map.get(voxel_pos),
             None => SignalStrength::ZERO,
         }
     }
 
-    /// Returns `true` if any of the provided `signal_types` are detectable at the given `tile_pos`.
-    pub fn detectable(&self, signal_types: Vec<SignalType>, tile_pos: TilePos) -> bool {
+    /// Returns `true` if any of the provided `signal_types` are detectable at the given `voxel_pos`.
+    pub fn detectable(&self, signal_types: Vec<SignalType>, voxel_pos: VoxelPos) -> bool {
         signal_types
             .iter()
-            .any(|signal_type| self.get(*signal_type, tile_pos) > SignalStrength::ZERO)
+            .any(|signal_type| self.get(*signal_type, voxel_pos) > SignalStrength::ZERO)
     }
 
-    /// Adds `signal_strength` of `signal_type` at `tile_pos`.
+    /// Adds `signal_strength` of `signal_type` at `voxel_pos`.
     pub fn add_signal(
         &mut self,
         signal_type: SignalType,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         signal_strength: SignalStrength,
     ) {
         match self.maps.get_mut(&signal_type) {
-            Some(map) => map.add_signal(tile_pos, signal_strength),
+            Some(map) => map.add_signal(voxel_pos, signal_strength),
             None => {
                 let mut new_map = SignalMap::default();
-                new_map.add_signal(tile_pos, signal_strength);
+                new_map.add_signal(voxel_pos, signal_strength);
                 self.maps.insert(signal_type, new_map);
             }
         }
     }
 
-    /// Returns the complete set of signals at the given `tile_pos`.
+    /// Returns the complete set of signals at the given `voxel_pos`.
     ///
     /// This is useful for decision-making.
-    pub(crate) fn all_signals_at_position(&self, tile_pos: TilePos) -> LocalSignals {
+    pub(crate) fn all_signals_at_position(&self, voxel_pos: VoxelPos) -> LocalSignals {
         let mut all_signals = HashMap::new();
         for &signal_type in self.maps.keys() {
-            let strength = self.get(signal_type, tile_pos);
+            let strength = self.get(signal_type, voxel_pos);
             all_signals.insert(signal_type, strength);
         }
 
         LocalSignals { map: all_signals }
     }
 
-    /// Returns the strongest goal related signal at the given `tile_pos`.
+    /// Returns the strongest goal related signal at the given `voxel_pos`.
     ///
     /// This is useful for visualization.
     pub(crate) fn strongest_goal_signal_at_position(
         &self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
     ) -> Option<(SignalType, SignalStrength)> {
         let mut strongest_signal = None;
         let mut strongest_strength = SignalStrength::ZERO;
 
         for &signal_type in self.maps.keys() {
             if Goal::try_from(signal_type).is_ok() {
-                let strength = self.get(signal_type, tile_pos);
+                let strength = self.get(signal_type, voxel_pos);
                 if strength > strongest_strength {
                     strongest_signal = Some(signal_type);
                     strongest_strength = strength;
@@ -136,16 +136,16 @@ impl Signals {
     /// If no suitable tile exists, [`None`] will be returned instead.
     pub(crate) fn upstream(
         &self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         goal: &Goal,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
-    ) -> Option<TilePos> {
-        let mut best_choice: Option<TilePos> = None;
+    ) -> Option<VoxelPos> {
+        let mut best_choice: Option<VoxelPos> = None;
         let mut best_score = SignalStrength::ZERO;
 
         for (possible_tile, current_score) in
-            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+            self.relevant_neighboring_signals(voxel_pos, goal, item_manifest, map_geometry)
         {
             if current_score > best_score {
                 best_score = current_score;
@@ -154,7 +154,7 @@ impl Signals {
         }
 
         if let Some(best_tile_pos) = best_choice {
-            if best_tile_pos == tile_pos {
+            if best_tile_pos == voxel_pos {
                 None
             } else {
                 best_choice
@@ -169,16 +169,16 @@ impl Signals {
     /// If no suitable tile exists, [`None`] will be returned instead.
     pub(crate) fn downstream(
         &self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         goal: &Goal,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
-    ) -> Option<TilePos> {
-        let mut best_choice: Option<TilePos> = None;
+    ) -> Option<VoxelPos> {
+        let mut best_choice: Option<VoxelPos> = None;
         let mut best_score = SignalStrength::INFINITY;
 
         for (possible_tile, current_score) in
-            self.relevant_neighboring_signals(tile_pos, goal, item_manifest, map_geometry)
+            self.relevant_neighboring_signals(voxel_pos, goal, item_manifest, map_geometry)
         {
             if current_score < best_score {
                 best_score = current_score;
@@ -187,7 +187,7 @@ impl Signals {
         }
 
         if let Some(best_tile_pos) = best_choice {
-            if best_tile_pos == tile_pos {
+            if best_tile_pos == voxel_pos {
                 None
             } else {
                 best_choice
@@ -200,11 +200,11 @@ impl Signals {
     /// Returns the strength of goal-relevant signals in neighboring tiles.
     fn relevant_neighboring_signals(
         &self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         goal: &Goal,
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
-    ) -> HashMap<TilePos, SignalStrength> {
+    ) -> HashMap<VoxelPos, SignalStrength> {
         match goal {
             // Does not follow any signal
             Goal::Wander { .. } => HashMap::new(),
@@ -224,42 +224,42 @@ impl Signals {
                 let mut total_signals = HashMap::new();
 
                 for signal_type in relevant_signal_types {
-                    let signals = self.neighboring_signals(signal_type, tile_pos, map_geometry);
-                    for (tile_pos, signal_strength) in signals {
-                        if let Some(existing_signal_strength) = total_signals.get_mut(&tile_pos) {
+                    let signals = self.neighboring_signals(signal_type, voxel_pos, map_geometry);
+                    for (voxel_pos, signal_strength) in signals {
+                        if let Some(existing_signal_strength) = total_signals.get_mut(&voxel_pos) {
                             *existing_signal_strength += signal_strength;
                         } else {
-                            total_signals.insert(tile_pos, signal_strength);
+                            total_signals.insert(voxel_pos, signal_strength);
                         }
                     }
                 }
                 total_signals
             }
             Goal::Work(structure_id) => {
-                self.neighboring_signals(SignalType::Work(*structure_id), tile_pos, map_geometry)
+                self.neighboring_signals(SignalType::Work(*structure_id), voxel_pos, map_geometry)
             }
             Goal::Avoid(unit_id) => {
-                self.neighboring_signals(SignalType::Unit(*unit_id), tile_pos, map_geometry)
+                self.neighboring_signals(SignalType::Unit(*unit_id), voxel_pos, map_geometry)
             }
             Goal::Demolish(structure_id) => self.neighboring_signals(
                 SignalType::Demolish(*structure_id),
-                tile_pos,
+                voxel_pos,
                 map_geometry,
             ),
         }
     }
 
-    /// Returns the signal strength of the type `signal_type` in `tile_pos` and its 6 surrounding neighbors.
+    /// Returns the signal strength of the type `signal_type` in `voxel_pos` and its 6 surrounding neighbors.
     fn neighboring_signals(
         &self,
         signal_type: SignalType,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         map_geometry: &MapGeometry,
-    ) -> HashMap<TilePos, SignalStrength> {
+    ) -> HashMap<VoxelPos, SignalStrength> {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
-        signal_strength_map.insert(tile_pos, self.get(signal_type, tile_pos));
-        for maybe_neighbor in map_geometry.valid_neighbors(tile_pos) {
+        signal_strength_map.insert(voxel_pos, self.get(signal_type, voxel_pos));
+        for maybe_neighbor in map_geometry.valid_neighbors(voxel_pos) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
@@ -358,44 +358,49 @@ impl LocalSignals {
     }
 }
 
-/// Stores the [`SignalStrength`] of the given [`SignalType`] at each [`TilePos`].
+/// Stores the [`SignalStrength`] of the given [`SignalType`] at each [`VoxelPos`].
 #[derive(Debug, Default)]
 struct SignalMap {
     /// The current amount of signal at each location.
-    current: HashMap<TilePos, SignalStrength>,
+    current: HashMap<VoxelPos, SignalStrength>,
     /// The amount of signal that will be added to each location at the end of the frame.
-    pending_addition: Vec<(TilePos, SignalStrength)>,
+    pending_addition: Vec<(VoxelPos, SignalStrength)>,
     /// The amount of signal that will be removed from each location at the end of the frame.
-    pending_removal: Vec<(TilePos, SignalStrength)>,
+    pending_removal: Vec<(VoxelPos, SignalStrength)>,
 }
 
 impl SignalMap {
-    /// Returns the signal strength at the given [`TilePos`].
+    /// Returns the signal strength at the given [`VoxelPos`].
     ///
     /// Missing values will be filled with [`SignalStrength::ZERO`].
-    fn get(&self, tile_pos: TilePos) -> SignalStrength {
-        *self.current.get(&tile_pos).unwrap_or(&SignalStrength::ZERO)
+    fn get(&self, voxel_pos: VoxelPos) -> SignalStrength {
+        *self
+            .current
+            .get(&voxel_pos)
+            .unwrap_or(&SignalStrength::ZERO)
     }
 
-    /// Returns a mutable reference to the signal strength at the given [`TilePos`].
+    /// Returns a mutable reference to the signal strength at the given [`VoxelPos`].
     ///
     /// Missing values will be inserted with [`SignalStrength::ZERO`].
-    fn get_mut(&mut self, tile_pos: TilePos) -> &mut SignalStrength {
-        self.current.entry(tile_pos).or_insert(SignalStrength::ZERO)
+    fn get_mut(&mut self, voxel_pos: VoxelPos) -> &mut SignalStrength {
+        self.current
+            .entry(voxel_pos)
+            .or_insert(SignalStrength::ZERO)
     }
 
-    /// Adds the `signal_strength` to the signal at `tile_pos`.
-    fn add_signal(&mut self, tile_pos: TilePos, signal_strength: SignalStrength) {
-        *self.get_mut(tile_pos) += signal_strength
+    /// Adds the `signal_strength` to the signal at `voxel_pos`.
+    fn add_signal(&mut self, voxel_pos: VoxelPos, signal_strength: SignalStrength) {
+        *self.get_mut(voxel_pos) += signal_strength
     }
 
     /// Applies all pending additions to the current signal map.
     ///
     /// This clears the pending addition map.
     fn apply_pending_additions(&mut self) {
-        for (tile_pos, signal_strength) in self.pending_addition.drain(..) {
+        for (voxel_pos, signal_strength) in self.pending_addition.drain(..) {
             self.current
-                .entry(tile_pos)
+                .entry(voxel_pos)
                 .and_modify(|current_strength| {
                     *current_strength += signal_strength;
                 })
@@ -407,12 +412,14 @@ impl SignalMap {
     ///
     /// This clears the pending removal map.
     fn apply_pending_removals(&mut self) {
-        for (tile_pos, signal_strength) in self.pending_removal.drain(..) {
+        for (voxel_pos, signal_strength) in self.pending_removal.drain(..) {
             // We deliberately do not insert a zero or negative signal strength here if the entry is missing
             // That would either be useless or a bug respectively.
-            self.current.entry(tile_pos).and_modify(|current_strength| {
-                *current_strength -= signal_strength;
-            });
+            self.current
+                .entry(voxel_pos)
+                .and_modify(|current_strength| {
+                    *current_strength -= signal_strength;
+                });
         }
     }
 }
@@ -673,16 +680,16 @@ impl Emitter {
 /// Emits signals from [`Emitter`] sources.
 fn emit_signals(
     mut signals: ResMut<Signals>,
-    emitter_query: Query<(&TilePos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
+    emitter_query: Query<(&VoxelPos, &Emitter, Option<&Id<Structure>>, Option<&Facing>)>,
     structure_manifest: Res<StructureManifest>,
     terrain_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
     /// Emits signals that correspond to a single [`Emitter`].
-    fn emit(signals: &mut Signals, tile_pos: TilePos, emitter: &Emitter, n_tiles: usize) {
+    fn emit(signals: &mut Signals, voxel_pos: VoxelPos, emitter: &Emitter, n_tiles: usize) {
         for (signal_type, signal_strength) in &emitter.signals {
             let signal_strength = *signal_strength / n_tiles as f32;
-            signals.add_signal(*signal_type, tile_pos, signal_strength);
+            signals.add_signal(*signal_type, voxel_pos, signal_strength);
         }
     }
 
@@ -707,8 +714,8 @@ fn emit_signals(
 
                 let n_tiles = footprint.set.len();
 
-                for tile_pos in footprint.normalized(facing, center) {
-                    emit(&mut signals, tile_pos, emitter, n_tiles);
+                for voxel_pos in footprint.normalized(facing, center) {
+                    emit(&mut signals, voxel_pos, emitter, n_tiles);
                 }
             }
             None => {
@@ -740,15 +747,15 @@ fn degrade_signals(mut signals: ResMut<Signals>) {
     const EPSILON_STRENGTH: SignalStrength = SignalStrength(1e-8);
 
     signals.maps.par_iter_mut().for_each(|(_, signal_map)| {
-        let mut tiles_to_clear: Vec<TilePos> = Vec::with_capacity(signal_map.current.len());
+        let mut tiles_to_clear: Vec<VoxelPos> = Vec::with_capacity(signal_map.current.len());
 
-        for (tile_pos, signal_strength) in signal_map.current.iter_mut() {
+        for (voxel_pos, signal_strength) in signal_map.current.iter_mut() {
             let new_strength = *signal_strength * (1. - DEGRADATION_FRACTION);
 
             if new_strength > EPSILON_STRENGTH {
                 *signal_strength = new_strength;
             } else {
-                tiles_to_clear.push(*tile_pos);
+                tiles_to_clear.push(*voxel_pos);
             }
         }
 
@@ -792,11 +799,11 @@ mod tests {
         let mut signal_map = SignalMap::default();
         signal_map
             .pending_addition
-            .push((TilePos::ZERO, SignalStrength(1.)));
+            .push((VoxelPos::ZERO, SignalStrength(1.)));
 
-        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength::ZERO);
+        assert_eq!(signal_map.get(VoxelPos::ZERO), SignalStrength::ZERO);
         signal_map.apply_pending_additions();
-        assert_eq!(signal_map.get(TilePos::ZERO), SignalStrength(1.));
+        assert_eq!(signal_map.get(VoxelPos::ZERO), SignalStrength(1.));
     }
 
     #[test]
@@ -804,19 +811,19 @@ mod tests {
         let mut signals = Signals::default();
         let map_geometry = MapGeometry::new(1);
 
-        let passable_neighbors = map_geometry.passable_neighbors(TilePos::ZERO);
+        let passable_neighbors = map_geometry.passable_neighbors(VoxelPos::ZERO);
         for maybe_neighbor in passable_neighbors {
             assert!(maybe_neighbor.is_some());
         }
 
         signals.add_signal(
             SignalType::Contains(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(1.),
         );
 
         assert_eq!(
-            signals.get(SignalType::Contains(test_item()), TilePos::ZERO),
+            signals.get(SignalType::Contains(test_item()), VoxelPos::ZERO),
             SignalStrength(1.)
         );
 
@@ -845,20 +852,20 @@ mod tests {
 
         signals.add_signal(
             SignalType::Contains(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(1.),
         );
 
         let neighboring_signals = signals.neighboring_signals(
             SignalType::Contains(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             &map_geometry,
         );
 
         assert_eq!(neighboring_signals.len(), 7);
 
         assert_eq!(
-            neighboring_signals.get(&TilePos::ZERO),
+            neighboring_signals.get(&VoxelPos::ZERO),
             Some(&SignalStrength(1.))
         );
     }
@@ -871,7 +878,7 @@ mod tests {
 
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -880,7 +887,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -889,7 +896,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Work(WorkplaceId::structure(test_structure())),
                 &item_manifest,
                 &map_geometry
@@ -898,7 +905,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::default(),
                 &item_manifest,
                 &map_geometry
@@ -915,13 +922,13 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(1.),
         );
 
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -938,18 +945,18 @@ mod tests {
 
         signals.add_signal(
             SignalType::Push(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -967,11 +974,11 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -979,7 +986,7 @@ mod tests {
 
         assert_eq!(
             signals.upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -994,7 +1001,7 @@ mod tests {
         let map_geometry = MapGeometry::new(1);
         let item_manifest = test_manifest();
 
-        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -1002,7 +1009,7 @@ mod tests {
 
         assert!(signals
             .upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -1018,11 +1025,11 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            TilePos::ZERO,
+            VoxelPos::ZERO,
             SignalStrength(0.5),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(TilePos::ZERO) {
+        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
@@ -1030,7 +1037,7 @@ mod tests {
 
         assert!(signals
             .upstream(
-                TilePos::ZERO,
+                VoxelPos::ZERO,
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry

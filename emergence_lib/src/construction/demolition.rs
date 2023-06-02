@@ -4,7 +4,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Height, MapGeometry, TilePos},
+    geometry::{Height, MapGeometry, VoxelPos},
     signals::{Emitter, SignalStrength, SignalType},
     structures::structure_manifest::Structure,
 };
@@ -26,8 +26,8 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
     /// If so, returns `Some(matching_structure_entity_that_needs_to_be_demolished)`.
     pub(crate) fn needs_demolition(
         &self,
-        current: TilePos,
-        target: TilePos,
+        current: VoxelPos,
+        target: VoxelPos,
         structure_id: Id<Structure>,
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {

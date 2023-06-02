@@ -7,7 +7,7 @@ mod meshes;
 pub(crate) use meshes::hexagonal_column;
 
 mod position;
-pub use position::{Height, TilePos, Volume, VoxelPos};
+pub use position::{Height, Volume, VoxelPos, VoxelPos};
 
 mod rotation;
 pub(crate) use rotation::{

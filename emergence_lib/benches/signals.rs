@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::asset_management::manifest::Id;
 use emergence_lib::crafting::item_tags::ItemKind;
-use emergence_lib::geometry::{MapGeometry, TilePos};
+use emergence_lib::geometry::{MapGeometry, VoxelPos};
 use emergence_lib::signals::{SignalStrength, SignalType, Signals, DIFFUSION_FRACTION};
 use rand::thread_rng;
 
@@ -15,9 +15,9 @@ fn setup(settings: Settings) -> (Signals, MapGeometry) {
         let signal_type = SignalType::Pull(ItemKind::Single(Id::from_name(format!("{i}"))));
 
         for _ in 0..settings.n_sources {
-            let tile_pos = TilePos::random(&map_geometry, &mut rng);
+            let voxel_pos = VoxelPos::random(&map_geometry, &mut rng);
 
-            signals.add_signal(signal_type, tile_pos, SignalStrength::new(1.));
+            signals.add_signal(signal_type, voxel_pos, SignalStrength::new(1.));
         }
     }
 

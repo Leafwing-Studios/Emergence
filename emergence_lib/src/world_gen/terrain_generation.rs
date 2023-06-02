@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, Height, MapGeometry, TilePos, Volume},
+    geometry::{Facing, Height, MapGeometry, Volume, VoxelPos},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
@@ -36,15 +36,15 @@ pub(crate) fn generate_terrain(
             })
             .unwrap();
 
-        let tile_pos = TilePos { hex };
+        let voxel_pos = VoxelPos { hex };
         // Heights are generated in f32 world coordinates to start
-        let hex_height = simplex_noise(tile_pos, &generation_config.low_frequency_noise)
-            + simplex_noise(tile_pos, &generation_config.high_frequency_noise);
+        let hex_height = simplex_noise(voxel_pos, &generation_config.low_frequency_noise)
+            + simplex_noise(voxel_pos, &generation_config.high_frequency_noise);
 
         // And then discretized to the nearest integer height before being used
         let height = Height::from_world_pos(hex_height);
 
-        commands.spawn_terrain(tile_pos, height, terrain_id);
+        commands.spawn_terrain(voxel_pos, height, terrain_id);
     }
 }
 
@@ -59,9 +59,9 @@ pub(super) fn generate_landmarks(
     info!("Generating landmarks...");
     let rng = &mut thread_rng();
 
-    for tile_pos in map_geometry
+    for voxel_pos in map_geometry
         .valid_tile_positions()
-        .collect::<Vec<TilePos>>()
+        .collect::<Vec<VoxelPos>>()
     {
         for (&structure_id, &chance) in &generation_config.landmark_chances {
             if rng.gen::<f32>() < chance {
@@ -72,13 +72,13 @@ pub(super) fn generate_landmarks(
                 let footprint = &structure_manifest.get(structure_id).footprint;
 
                 // Only try to spawn a structure if the location is valid and there is space
-                if map_geometry.is_footprint_valid(tile_pos, footprint, facing)
-                    && map_geometry.is_space_available(tile_pos, footprint, facing)
+                if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
+                    && map_geometry.is_space_available(voxel_pos, footprint, facing)
                 {
                     // Flatten the terrain under the structure before spawning it
-                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, facing);
+                    map_geometry.flatten_height(&mut height_query, voxel_pos, footprint, facing);
                     commands.spawn_structure(
-                        tile_pos,
+                        voxel_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
                         StartingEnergy::NotAnOrganism,
                     );

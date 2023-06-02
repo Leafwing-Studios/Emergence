@@ -11,7 +11,7 @@ use crate::{
         recipe::RecipeManifest,
         CraftingBundle,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::{energy::StartingEnergy, OrganismBundle},
@@ -28,69 +28,69 @@ use super::{
 
 /// An extension trait for [`Commands`] for working with structures.
 pub(crate) trait StructureCommandsExt {
-    /// Spawns a structure defined by `data` at `tile_pos`.
+    /// Spawns a structure defined by `data` at `voxel_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
     fn spawn_structure(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         starting_energy: StartingEnergy,
     );
 
-    /// Despawns any structure at the provided `tile_pos`.
+    /// Despawns any structure at the provided `voxel_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_structure(&mut self, tile_pos: TilePos);
+    fn despawn_structure(&mut self, voxel_pos: VoxelPos);
 
-    /// Spawns a ghost with data defined by `data` at `tile_pos`.
+    /// Spawns a ghost with data defined by `data` at `voxel_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_ghost_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData);
 
-    /// Despawns any ghost at the provided `tile_pos`.
+    /// Despawns any ghost at the provided `voxel_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_ghost_structure(&mut self, tile_pos: TilePos);
+    fn despawn_ghost_structure(&mut self, voxel_pos: VoxelPos);
 
-    /// Spawns a preview with data defined by `item` at `tile_pos`.
+    /// Spawns a preview with data defined by `item` at `voxel_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_preview_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         starting_energy: StartingEnergy,
     ) {
         self.add(SpawnStructureCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
             starting_energy,
         });
     }
 
-    fn despawn_structure(&mut self, tile_pos: TilePos) {
-        self.add(DespawnStructureCommand { center: tile_pos });
+    fn despawn_structure(&mut self, voxel_pos: VoxelPos) {
+        self.add(DespawnStructureCommand { center: voxel_pos });
     }
 
-    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_ghost_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData) {
         self.add(SpawnStructureGhostCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
         });
     }
 
-    fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
-        self.add(DespawnGhostCommand { tile_pos });
+    fn despawn_ghost_structure(&mut self, voxel_pos: VoxelPos) {
+        self.add(DespawnGhostCommand { voxel_pos });
     }
 
-    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_preview_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData) {
         self.add(SpawnStructurePreviewCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
         });
     }
@@ -99,7 +99,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
 /// A [`Command`] used to spawn a structure via [`StructureCommandsExt`].
 struct SpawnStructureCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
     /// The amount of energy to give the organism.
@@ -251,7 +251,7 @@ impl Command for SpawnStructureCommand {
 /// A [`Command`] used to despawn a structure via [`StructureCommandsExt`].
 struct DespawnStructureCommand {
     /// The tile position at which the structure to be despawned is found.
-    center: TilePos,
+    center: VoxelPos,
 }
 
 impl Command for DespawnStructureCommand {
@@ -285,7 +285,7 @@ impl Command for DespawnStructureCommand {
 /// A [`Command`] used to spawn a ghost via [`StructureCommandsExt`].
 struct SpawnStructureGhostCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -319,8 +319,8 @@ impl Command for SpawnStructureGhostCommand {
         let mut map_geometry = world.resource_mut::<MapGeometry>();
 
         let mut existing_ghosts: Vec<Entity> = Vec::new();
-        for tile_pos in footprint.normalized(facing, self.center) {
-            if let Some(ghost_entity) = map_geometry.remove_ghost_structure(tile_pos) {
+        for voxel_pos in footprint.normalized(facing, self.center) {
+            if let Some(ghost_entity) = map_geometry.remove_ghost_structure(voxel_pos) {
                 existing_ghosts.push(ghost_entity);
             }
         }
@@ -373,13 +373,13 @@ impl Command for SpawnStructureGhostCommand {
 /// A [`Command`] used to despawn a ghost via [`StructureCommandsExt`].
 struct DespawnGhostCommand {
     /// The tile position at which the structure to be despawned is found.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
 }
 
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost_structure(self.tile_pos);
+        let maybe_entity = geometry.remove_ghost_structure(self.voxel_pos);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -395,7 +395,7 @@ impl Command for DespawnGhostCommand {
 /// A [`Command`] used to spawn a preview via [`StructureCommandsExt`].
 struct SpawnStructurePreviewCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }

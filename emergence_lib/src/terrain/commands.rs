@@ -16,7 +16,7 @@ use crate::{
         terraform::{GhostTerrainBundle, TerraformingAction, TerrainPreviewBundle},
         zoning::Zoning,
     },
-    geometry::{Height, MapGeometry, TilePos},
+    geometry::{Height, MapGeometry, VoxelPos},
     graphics::InheritedMaterial,
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
@@ -28,39 +28,39 @@ pub(crate) trait TerrainCommandsExt {
     /// Spawns a new terrain tile.
     ///
     /// Overwrites existing terrain.
-    fn spawn_terrain(&mut self, tile_pos: TilePos, height: Height, terrain_id: Id<Terrain>);
+    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, height: Height, terrain_id: Id<Terrain>);
 
-    /// Spawns a ghost that previews the action given by `terraforming_action` at `tile_pos`.
+    /// Spawns a ghost that previews the action given by `terraforming_action` at `voxel_pos`.
     ///
     /// Replaces any existing ghost.
     fn spawn_ghost_terrain(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
     );
 
-    /// Despawns any ghost at the provided `tile_pos`.
+    /// Despawns any ghost at the provided `voxel_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_ghost_terrain(&mut self, tile_pos: TilePos);
+    fn despawn_ghost_terrain(&mut self, voxel_pos: VoxelPos);
 
-    /// Spawns a preview that previews the action given by `terraforming_action` at `tile_pos`.
+    /// Spawns a preview that previews the action given by `terraforming_action` at `voxel_pos`.
     fn spawn_preview_terrain(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
     );
 
-    /// Applies the given `terraforming_action` to the terrain at `tile_pos`.
-    fn apply_terraforming_action(&mut self, tile_pos: TilePos, action: TerraformingAction);
+    /// Applies the given `terraforming_action` to the terrain at `voxel_pos`.
+    fn apply_terraforming_action(&mut self, voxel_pos: VoxelPos, action: TerraformingAction);
 }
 
 impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
-    fn spawn_terrain(&mut self, tile_pos: TilePos, height: Height, terrain_id: Id<Terrain>) {
+    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, height: Height, terrain_id: Id<Terrain>) {
         self.add(SpawnTerrainCommand {
-            tile_pos,
+            voxel_pos,
             height,
             terrain_id,
         });
@@ -68,30 +68,30 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 
     fn spawn_ghost_terrain(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
     ) {
         self.add(SpawnTerrainGhostCommand {
-            tile_pos,
+            voxel_pos,
             terrain_id,
             terraforming_action,
             ghost_kind: GhostKind::Ghost,
         });
     }
 
-    fn despawn_ghost_terrain(&mut self, tile_pos: TilePos) {
-        self.add(DespawnGhostCommand { tile_pos });
+    fn despawn_ghost_terrain(&mut self, voxel_pos: VoxelPos) {
+        self.add(DespawnGhostCommand { voxel_pos });
     }
 
     fn spawn_preview_terrain(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terrain_id: Id<Terrain>,
         terraforming_action: TerraformingAction,
     ) {
         self.add(SpawnTerrainGhostCommand {
-            tile_pos,
+            voxel_pos,
             terrain_id,
             terraforming_action,
             ghost_kind: GhostKind::Preview,
@@ -100,11 +100,11 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 
     fn apply_terraforming_action(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         terraforming_action: TerraformingAction,
     ) {
         self.add(ApplyTerraformingCommand {
-            tile_pos,
+            voxel_pos,
             terraforming_action,
         });
     }
@@ -117,7 +117,7 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 /// 1: scene root
 pub(crate) struct SpawnTerrainCommand {
     /// The position to spawn the tile
-    pub(crate) tile_pos: TilePos,
+    pub(crate) voxel_pos: VoxelPos,
     /// The height of the tile
     pub(crate) height: Height,
     /// The type of tile
@@ -132,7 +132,7 @@ impl Command for SpawnTerrainCommand {
         let mut map_geometry = world.resource_mut::<MapGeometry>();
 
         // Store the height, so it can be used below
-        map_geometry.update_height(self.tile_pos, self.height);
+        map_geometry.update_height(self.voxel_pos, self.height);
 
         // Drop the borrow so the borrow checker is happy
         let map_geometry = world.resource::<MapGeometry>();
@@ -142,7 +142,7 @@ impl Command for SpawnTerrainCommand {
         let terrain_entity = world
             .spawn(TerrainBundle::new(
                 self.terrain_id,
-                self.tile_pos,
+                self.voxel_pos,
                 scene_handle,
                 mesh,
                 terrain_manifest,
@@ -164,14 +164,14 @@ impl Command for SpawnTerrainCommand {
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
-        map_geometry.add_terrain(self.tile_pos, terrain_entity);
+        map_geometry.add_terrain(self.voxel_pos, terrain_entity);
     }
 }
 
 /// A [`Command`] used to spawn a ghost via [`TerrainCommandsExt`].
 struct SpawnTerrainGhostCommand {
     /// The tile position at which the ghost should be spawned.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The terrain type that the ghost represents.
     terrain_id: Id<Terrain>,
     /// The action that the ghost represents.
@@ -185,16 +185,16 @@ impl Command for SpawnTerrainGhostCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.tile_pos) {
+        if !map_geometry.is_valid(self.voxel_pos) {
             return;
         }
 
         // Remove any existing ghost terrain
-        if let Some(ghost_entity) = map_geometry.get_ghost_terrain(self.tile_pos) {
+        if let Some(ghost_entity) = map_geometry.get_ghost_terrain(self.voxel_pos) {
             if world.entities().contains(ghost_entity) && self.ghost_kind == GhostKind::Ghost {
                 world.entity_mut(ghost_entity).despawn_recursive();
                 let mut map_geometry = world.resource_mut::<MapGeometry>();
-                map_geometry.remove_ghost_terrain(self.tile_pos);
+                map_geometry.remove_ghost_terrain(self.voxel_pos);
             }
         }
 
@@ -210,14 +210,14 @@ impl Command for SpawnTerrainGhostCommand {
         let ghost_material = ghost_handles.get_material(self.ghost_kind);
 
         let inherited_material = InheritedMaterial(ghost_material);
-        let current_height = map_geometry.get_height(self.tile_pos).unwrap();
+        let current_height = map_geometry.get_height(self.voxel_pos).unwrap();
         let new_height = match self.terraforming_action {
             TerraformingAction::Raise => current_height + Height(1.),
             TerraformingAction::Lower => current_height - Height(1.),
             _ => current_height,
         };
 
-        let mut world_pos = self.tile_pos.into_world_pos(map_geometry);
+        let mut world_pos = self.voxel_pos.into_world_pos(map_geometry);
         world_pos.y = new_height.into_world_pos();
 
         match self.ghost_kind {
@@ -228,7 +228,7 @@ impl Command for SpawnTerrainGhostCommand {
                 let ghost_entity = world
                     .spawn(GhostTerrainBundle::new(
                         self.terraforming_action,
-                        self.tile_pos,
+                        self.voxel_pos,
                         scene_handle,
                         inherited_material,
                         world_pos,
@@ -239,12 +239,12 @@ impl Command for SpawnTerrainGhostCommand {
 
                 // Update the index to reflect the new state
                 let mut map_geometry = world.resource_mut::<MapGeometry>();
-                map_geometry.add_ghost_terrain(ghost_entity, self.tile_pos);
+                map_geometry.add_ghost_terrain(ghost_entity, self.voxel_pos);
             }
             GhostKind::Preview => {
                 // Previews are not indexed, and are instead just spawned and despawned as needed
                 world.spawn(TerrainPreviewBundle::new(
-                    self.tile_pos,
+                    self.voxel_pos,
                     self.terraforming_action,
                     scene_handle,
                     inherited_material,
@@ -259,13 +259,13 @@ impl Command for SpawnTerrainGhostCommand {
 /// A [`Command`] used to despawn a ghost via [`TerrainCommandsExt`].
 struct DespawnGhostCommand {
     /// The tile position at which the terrain to be despawned is found.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
 }
 
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost_terrain(self.tile_pos);
+        let maybe_entity = geometry.remove_ghost_terrain(self.voxel_pos);
 
         // Check that there's something there to despawn
         let Some(ghost_entity) = maybe_entity else {
@@ -280,7 +280,7 @@ impl Command for DespawnGhostCommand {
 /// A [`Command`] used to apply [`TerraformingAction`]s to a tile.
 struct ApplyTerraformingCommand {
     /// The tile position at which the terrain to be despawned is found.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The action to apply to the tile.
     terraforming_action: TerraformingAction,
 }
@@ -301,7 +301,7 @@ impl Command for ApplyTerraformingCommand {
 
         let (mut map_geometry, terrain_handles, mut terrain_query) = system_state.get_mut(world);
 
-        let terrain_entity = map_geometry.get_terrain(self.tile_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(self.voxel_pos).unwrap();
 
         let (mut current_terrain_id, mut zoning, mut height, mut scene_handle) =
             terrain_query.get_mut(terrain_entity).unwrap();
@@ -323,7 +323,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(self.tile_pos, *height);
+        map_geometry.update_height(self.voxel_pos, *height);
         *zoning = Zoning::None;
     }
 }

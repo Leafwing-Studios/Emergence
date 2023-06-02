@@ -3,7 +3,7 @@
 use crate::{
     asset_management::manifest::Id,
     construction::ghosts::Ghost,
-    geometry::{Facing, Height, MapGeometry, TilePos},
+    geometry::{Facing, Height, MapGeometry, VoxelPos},
     simulation::time::{InGameTime, TimeOfDay},
     structures::structure_manifest::{Structure, StructureManifest},
 };
@@ -74,7 +74,7 @@ impl Display for ReceivedLight {
 pub(super) fn compute_shade(
     mut terrain_query: Query<&mut Shade>,
     // FIXME: previews cast shadows in the game, but we only want them to be previewed to the player
-    structure_query: Query<(&TilePos, &Id<Structure>, &Facing), Without<Ghost>>,
+    structure_query: Query<(&VoxelPos, &Id<Structure>, &Facing), Without<Ghost>>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
     structure_manifest: Res<StructureManifest>,
@@ -96,8 +96,8 @@ pub(super) fn compute_shade(
         let structure_data = structure_manifest.get(structure_id);
         let tiles_in_footprint = structure_data.footprint.normalized(facing, center);
 
-        for tile_pos in &tiles_in_footprint {
-            for shaded_tile_pos in shaded_area(*tile_pos, &map_geometry, structure_data.height) {
+        for voxel_pos in &tiles_in_footprint {
+            for shaded_tile_pos in shaded_area(*voxel_pos, &map_geometry, structure_data.height) {
                 // Don't shade yourself
                 if tiles_in_footprint.contains(&shaded_tile_pos) {
                     continue;
@@ -110,13 +110,13 @@ pub(super) fn compute_shade(
         }
     }
 
-    for tile_pos in map_geometry.valid_tile_positions() {
+    for voxel_pos in map_geometry.valid_tile_positions() {
         // Don't double-count shade from tiles with structures
-        if map_geometry.get_structure(tile_pos).is_some() {
+        if map_geometry.get_structure(voxel_pos).is_some() {
             continue;
         }
 
-        for shaded_tile_pos in shaded_area(tile_pos, &map_geometry, Height::ZERO) {
+        for shaded_tile_pos in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
             let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.add_shade();
@@ -126,21 +126,21 @@ pub(super) fn compute_shade(
 
 /// Computes the set of tiles that are shaded by a given object.
 fn shaded_area(
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     map_geometry: &MapGeometry,
     height_of_caster: Height,
-) -> Vec<TilePos> {
+) -> Vec<VoxelPos> {
     /// The unit vector pointing away from the sun.
-    const SHADOW_DIRECTION: TilePos = TilePos::new(0, 1);
+    const SHADOW_DIRECTION: VoxelPos = VoxelPos::new(0, 1);
 
     let mut shaded_tiles = Vec::new();
 
-    let Ok(originating_terrain_height) = map_geometry.get_height(tile_pos) else { return Vec::new() };
+    let Ok(originating_terrain_height) = map_geometry.get_height(voxel_pos) else { return Vec::new() };
     let total_height = originating_terrain_height + height_of_caster;
     let total_height = total_height.0.round() as i32;
 
     for distance_from_caster in 1..=total_height {
-        let candidate = tile_pos + SHADOW_DIRECTION * distance_from_caster;
+        let candidate = voxel_pos + SHADOW_DIRECTION * distance_from_caster;
 
         let Ok(candidate_terrain_height) = map_geometry.get_height(candidate) else {
 			continue;

@@ -5,7 +5,7 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
@@ -69,7 +69,7 @@ pub(crate) struct UnitBundle {
     /// Marker component.
     unit_id: Id<Unit>,
     /// The tile the unit is above.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The direction that the unit is facing.
     facing: Facing,
     /// What is the unit working towards.
@@ -108,7 +108,7 @@ impl UnitBundle {
     /// It will be just born, and full.
     pub(crate) fn newborn(
         unit_id: Id<Unit>,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
         map_geometry: &MapGeometry,
@@ -117,7 +117,7 @@ impl UnitBundle {
 
         UnitBundle {
             unit_id,
-            tile_pos,
+            voxel_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
             impatience: ImpatiencePool::new(unit_data.max_impatience),
@@ -138,7 +138,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
                 ..default()
             },
         }
@@ -149,7 +149,7 @@ impl UnitBundle {
     /// This is used for world generation.
     pub(crate) fn randomized(
         unit_id: Id<Unit>,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
         map_geometry: &MapGeometry,
@@ -162,7 +162,7 @@ impl UnitBundle {
 
         UnitBundle {
             unit_id,
-            tile_pos,
+            voxel_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
             impatience: ImpatiencePool::new(unit_data.max_impatience),
@@ -180,7 +180,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
                 ..default()
             },
         }

@@ -6,7 +6,7 @@ use recipe::{RawRecipeManifest, RecipeManifest};
 use crate::{
     asset_management::manifest::{plugin::ManifestPlugin, Id},
     construction::{demolition::MarkedForDemolition, ghosts::WorkplaceId},
-    geometry::{MapGeometry, TilePos},
+    geometry::{MapGeometry, VoxelPos},
     items::{
         inventory::Inventory,
         item_manifest::{ItemManifest, RawItemManifest},
@@ -135,7 +135,7 @@ struct CraftingQuery {
     /// The number of workers present
     workers_present: &'static WorkersPresent,
     /// The current position of the crafter
-    tile_pos: &'static TilePos,
+    voxel_pos: &'static VoxelPos,
     /// Is the structure an organism?
     maybe_organism: Option<&'static Organism>,
 }
@@ -183,7 +183,7 @@ fn progress_crafting(
                 let mut updated_progress = progress;
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    let terrain_entity = map_geometry.get_terrain(*crafter.tile_pos).unwrap();
+                    let terrain_entity = map_geometry.get_terrain(*crafter.voxel_pos).unwrap();
 
                     let received_light = terrain_query.get(terrain_entity).unwrap();
 
