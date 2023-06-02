@@ -476,6 +476,55 @@ impl VoxelPos {
             z: xz.y,
         }
     }
+
+    /// Returns the nearest tile position to the provided `world_pos`
+    ///
+    /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
+    #[inline]
+    #[must_use]
+    pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
+        let hex = map_geometry.layout.world_pos_to_hex(Vec2 {
+            x: world_pos.x,
+            y: world_pos.z,
+        });
+
+        let height = Height::from_world_pos(world_pos.y);
+        VoxelPos::new(hex, height)
+    }
+
+    /// Returns the [`TilePos`] in the provided `direction` from `self`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn neighbor(&self, direction: Direction) -> Self {
+        let hex = self.hex().neighbor(direction);
+
+        VoxelPos::new(hex, self.height())
+    }
+
+    /// All neighbors of `self` at the same height.
+    ///
+    /// # Warning
+    ///
+    /// This includes neighbors that are not on the map.
+    #[inline]
+    #[must_use]
+    pub(crate) fn all_neighbors(&self) -> [VoxelPos; 6] {
+        self.hex()
+            .all_neighbors()
+            .map(|hex| VoxelPos::new(hex, self.height()))
+    }
+
+    /// Returns the [`TilePos`] rotated to match the `facing` around the origin.
+    #[inline]
+    #[must_use]
+    pub(crate) fn rotated(&self, facing: Facing) -> Self {
+        let n_rotations = facing.rotation_count();
+        // This must rotate counter-clockwise,
+        // as we are rotating the tile around the origin.
+        let hex = self.hex().rotate_ccw(n_rotations);
+
+        VoxelPos::new(hex, self.height())
+    }
 }
 
 /// A volume of space, in tile units.
