@@ -300,7 +300,7 @@ impl CurrentSelection {
             CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
                 true => {
                     let mut selected_tiles = SelectedTiles::default();
-                    if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                    if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.add_tile(cursor_tile_pos);
                     }
                     selected_tiles
@@ -309,7 +309,7 @@ impl CurrentSelection {
             },
             _ => {
                 let mut selected_tiles = SelectedTiles::default();
-                if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
                     selected_tiles.add_tile(cursor_tile_pos);
                 }
                 selected_tiles
@@ -405,7 +405,7 @@ impl CurrentSelection {
                 .maybe_structure()
                 .map(CurrentSelection::Structure),
             SelectionVariant::Terrain => {
-                let hovered_tile = cursor_pos.maybe_tile_pos()?;
+                let hovered_tile = cursor_pos.maybe_voxel_pos()?;
                 let mut selected_tiles = SelectedTiles::default();
                 selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
                 Some(CurrentSelection::Terrain(selected_tiles))
@@ -604,7 +604,7 @@ fn set_selection(
     let cursor_pos = &*cursor_pos;
     let map_geometry = &*map_geometry;
 
-    let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
+    let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
     selection_state.compute(&tool, actions, hovered_tile);
@@ -631,14 +631,14 @@ fn set_selection(
         (SelectionAction::Select, SelectionShape::Single) => {
             // If we can compare them, do
             let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
-                (*last_tile_selected, cursor_pos.maybe_tile_pos())
+                (*last_tile_selected, cursor_pos.maybe_voxel_pos())
             {
                 last_pos == current_pos
             } else {
                 false
             };
             // Update the cache
-            *last_tile_selected = cursor_pos.maybe_tile_pos();
+            *last_tile_selected = cursor_pos.maybe_voxel_pos();
 
             if same_tile_as_last_time
                 && !selection_state.multiple
@@ -657,7 +657,7 @@ fn set_selection(
         (SelectionAction::Deselect, SelectionShape::Area { .. } | SelectionShape::Single) => {
             match &mut *current_selection {
                 CurrentSelection::Terrain(ref mut selected_tiles) => {
-                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
                             &selection_state,
@@ -671,7 +671,7 @@ fn set_selection(
         (SelectionAction::Deselect, SelectionShape::Line { .. }) => {
             match &mut *current_selection {
                 CurrentSelection::Terrain(ref mut selected_tiles) => {
-                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
                             &selection_state,
@@ -769,7 +769,7 @@ mod tests {
     fn relevant_tiles_returns_cursor_pos_with_empty_selection() {
         let cursor_pos = CursorPos::new(VoxelPos::from_xy(24, 7));
         let mut cursor_pos_selected = SelectedTiles::default();
-        cursor_pos_selected.add_tile(cursor_pos.maybe_tile_pos().unwrap());
+        cursor_pos_selected.add_tile(cursor_pos.maybe_voxel_pos().unwrap());
 
         assert_eq!(
             CurrentSelection::None.relevant_tiles(&cursor_pos),

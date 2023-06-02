@@ -65,7 +65,7 @@ impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
-    pub(crate) fn maybe_tile_pos(&self) -> Option<VoxelPos> {
+    pub(crate) fn maybe_voxel_pos(&self) -> Option<VoxelPos> {
         self.voxel_pos
     }
 

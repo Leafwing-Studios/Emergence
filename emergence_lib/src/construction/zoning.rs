@@ -166,7 +166,7 @@ fn set_zoning(
                     }
                 }
                 _ => {
-                    let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() else {
+                    let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() else {
                         return;
                     };
 
