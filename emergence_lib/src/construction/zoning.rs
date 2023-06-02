@@ -156,7 +156,10 @@ fn set_zoning(
                             }
                         }
                         false => {
-                            for &voxel_pos in relevant_tiles.selection().iter() {
+                            for &hex in relevant_tiles.selection().iter() {
+                                // FIXME: this prevents building on top of existing structures
+                                let height = map_geometry.get_height(hex).unwrap();
+                                let voxel_pos = VoxelPos::new(hex, height);
                                 commands.spawn_preview_structure(voxel_pos, clipboard_item.clone());
                             }
                         }

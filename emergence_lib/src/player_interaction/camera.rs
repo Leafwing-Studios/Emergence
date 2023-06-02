@@ -13,6 +13,7 @@ use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::construction::ghosts::Ghost;
+use crate::geometry::Height;
 use crate::geometry::MapGeometry;
 use crate::geometry::VoxelPos;
 use crate::structures::structure_manifest::Structure;
@@ -338,7 +339,9 @@ fn set_camera_focus(
             CurrentSelection::GhostStructure(entity)
             | CurrentSelection::Unit(entity)
             | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
-            CurrentSelection::Terrain(selected_tiles) => Some(selected_tiles.center()),
+            CurrentSelection::Terrain(selected_tiles) => {
+                Some(VoxelPos::new(selected_tiles.center(), Height::ZERO))
+            }
             CurrentSelection::None => None,
         };
 

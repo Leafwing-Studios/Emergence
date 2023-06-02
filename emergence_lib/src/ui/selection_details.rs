@@ -356,12 +356,12 @@ fn get_details(
         }
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
-            if let Some(voxel_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
+            if let Some(hex) = selected_tiles.selection().iter().next() {
+                let terrain_entity = map_geometry.get_terrain(*hex).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 let maybe_terraforming_details = if let Some(ghost_terrain_entity) =
-                    map_geometry.get_ghost_terrain(*voxel_pos)
+                    map_geometry.get_ghost_terrain(*terrain_query_item.voxel_pos)
                 {
                     let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
                     Some(TerraformingDetails {
@@ -376,12 +376,12 @@ fn get_details(
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
-                    voxel_pos: *voxel_pos,
+                    voxel_pos: *terrain_query_item.voxel_pos,
                     height: terrain_query_item.voxel_pos.height(),
                     depth_to_water_table: *terrain_query_item.water_depth,
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
-                    signals: signals.all_signals_at_position(*voxel_pos),
+                    signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
                     zoning: terrain_query_item.zoning.clone(),
                     litter: terrain_query_item.litter.clone(),
                     maybe_terraforming_details,

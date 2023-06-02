@@ -235,11 +235,11 @@ fn copy_selection(
                         }
                     }
                 } else {
-                    for &selected_tile_pos in selected_tiles.selection().iter() {
-                        if let Some(entity) = map_geometry.get_ghost_structure(selected_tile_pos) {
+                    for &hex in selected_tiles.selection().iter() {
+                        if let Some(entity) = map_geometry.get_ghost_structure(hex) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(VoxelPos::default(), clipboard_data);
-                        } else if let Some(entity) = map_geometry.get_structure(selected_tile_pos) {
+                        } else if let Some(entity) = map_geometry.get_structure(hex) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(VoxelPos::default(), clipboard_data);
                         }

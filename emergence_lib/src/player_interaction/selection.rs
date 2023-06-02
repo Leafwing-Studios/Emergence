@@ -41,48 +41,45 @@ impl Plugin for SelectionPlugin {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct SelectedTiles {
     /// Actively selected tiles
-    selected: HashSet<VoxelPos>,
+    // FIXME: this should probably store VoxelPos instead of Hex
+    selected: HashSet<Hex>,
 }
 
 impl SelectedTiles {
     /// Selects a single tile
     pub(super) fn add_tile(&mut self, voxel_pos: VoxelPos) {
-        self.selected.insert(voxel_pos);
+        self.selected.insert(voxel_pos.hex);
     }
 
     /// Deselects a single tile
     #[cfg(test)]
     fn remove_tile(&mut self, voxel_pos: VoxelPos) {
-        self.selected.remove(&voxel_pos);
+        self.selected.remove(&voxel_pos.hex);
     }
 
     /// Is the given tile in the selection?
     pub(crate) fn contains_tile(&self, voxel_pos: VoxelPos) -> bool {
-        self.selected.contains(&voxel_pos)
+        self.selected.contains(&voxel_pos.hex)
     }
 
     /// Computes the center of the selection
     pub(crate) fn center(&self) -> Hex {
-        self.selected.iter().map(|voxel_pos| voxel_pos.hex).center()
+        self.selected.iter().copied().center()
     }
 
     /// Draws a hollow hexagonal ring of tiles.
-    fn draw_ring(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
-        center.hex.ring(radius)
+    fn draw_ring(center: VoxelPos, radius: u32) -> Vec<Hex> {
+        center.hex.ring(radius).collect()
     }
 
     /// Draws a hexagon of tiles.
-    fn draw_hexagon(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
-        hexagon(center.hex, radius)
+    fn draw_hexagon(center: VoxelPos, radius: u32) -> Vec<Hex> {
+        hexagon(center.hex, radius).collect()
     }
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
-    fn draw_line(
-        start: VoxelPos,
-        end: VoxelPos,
-        radius: u32,
-    ) -> impl ExactSizeIterator<Item = Hex> {
-        start.hex.line_to(end.hex)
+    fn draw_line(start: VoxelPos, end: VoxelPos, radius: u32) -> Vec<Hex> {
+        start.hex.line_to(end.hex).collect()
     }
 
     /// Clears the set of selected tiles.
@@ -91,7 +88,7 @@ impl SelectedTiles {
     }
 
     /// The set of currently selected tiles.
-    pub(crate) fn selection(&self) -> &HashSet<VoxelPos> {
+    pub(crate) fn selection(&self) -> &HashSet<Hex> {
         &self.selected
     }
 
@@ -146,7 +143,7 @@ impl SelectedTiles {
         hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
-    ) -> HashSet<VoxelPos> {
+    ) -> HashSet<Hex> {
         match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
@@ -159,7 +156,7 @@ impl SelectedTiles {
         // PERF: we could be faster about this by only collecting once
         .into_iter()
         // Ensure we don't try to operate off of the map
-        .filter(|voxel_pos| map_geometry.is_valid(*voxel_pos))
+        .filter(|hex| map_geometry.is_valid(*hex))
         .collect()
     }
 
@@ -167,7 +164,7 @@ impl SelectedTiles {
     pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
         self.selection()
             .iter()
-            .flat_map(|voxel_pos| map_geometry.get_terrain(voxel_pos.hex))
+            .flat_map(|hex| map_geometry.get_terrain(*hex))
             .collect()
     }
 }
@@ -176,26 +173,29 @@ impl SelectedTiles {
 #[derive(Resource, Debug, Default, Deref)]
 pub(crate) struct HoveredTiles {
     /// The set of tiles that are hovered over
-    hovered: HashSet<VoxelPos>,
+    // FIXME: these should probably store a VoxelPos instead of a Hex
+    hovered: HashSet<Hex>,
 }
 
 impl HoveredTiles {
     /// Updates the set of hovered actions based on the current cursor position and player inputs.
     fn update(&mut self, hovered_tile: VoxelPos, selection_state: &SelectionState) {
-        self.hovered = match selection_state.shape {
+        let hex_vec = match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
             }
             SelectionShape::Area { center, radius } => {
-                let mut set = SelectedTiles::draw_ring(center, radius);
+                let mut vec = SelectedTiles::draw_hexagon(center, radius);
                 // Also show center of ring for clarity.
-                set.insert(hovered_tile);
-                set
+                vec.push(hovered_tile.hex);
+                vec
             }
             SelectionShape::Line { start } => {
                 SelectedTiles::draw_line(start, hovered_tile, selection_state.brush_size)
             }
         };
+
+        self.hovered = HashSet::from_iter(hex_vec.into_iter());
     }
 }
 
@@ -698,7 +698,7 @@ pub(super) fn set_tile_interactions(
 ) {
     if current_selection.is_changed() || hovered_tiles.is_changed() {
         for (&voxel_pos, mut object_interaction) in terrain_query.iter_mut() {
-            let hovered = hovered_tiles.contains(&voxel_pos);
+            let hovered = hovered_tiles.contains(&voxel_pos.hex);
             let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
                 selected_tiles.contains_tile(voxel_pos)
             } else {
