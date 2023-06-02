@@ -6,9 +6,9 @@ use bevy::prelude::*;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct VoxelObject {
     /// The entity that represents this object in the ECS.
-    entity: Entity,
+    pub(crate) entity: Entity,
     /// The kind of object stored in this voxel.
-    object_kind: VoxelKind,
+    pub(crate) object_kind: VoxelKind,
 }
 
 /// A variety of object stored in the voxel grid.

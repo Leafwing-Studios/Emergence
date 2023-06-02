@@ -140,6 +140,33 @@ impl MapGeometry {
         self.voxel_index.get(&voxel_pos)
     }
 
+    /// Can we walk through the provide `voxel_pos`?
+    #[inline]
+    #[must_use]
+    pub(crate) fn can_walk_through(&self, voxel_pos: VoxelPos) -> bool {
+        self.get_voxel_object(voxel_pos)
+            .map(|voxel_object| voxel_object.object_kind.can_walk_through())
+            // If there's nothing there, it's air and we can walk through it
+            .unwrap_or(true)
+    }
+
+    /// Can we walk on top of the provided `voxel_pos`?
+    #[inline]
+    #[must_use]
+    pub(crate) fn can_walk_on_top_of(&self, voxel_pos: VoxelPos) -> bool {
+        self.get_voxel_object(voxel_pos)
+            .map(|voxel_object| voxel_object.object_kind.can_walk_on_top_of())
+            // If there's nothing there, it's air and we can't walk on top of it
+            .unwrap_or(false)
+    }
+
+    /// Can we walk at the provided `voxel_pos`?
+    #[inline]
+    #[must_use]
+    pub(crate) fn can_walk_at(&self, voxel_pos: VoxelPos) -> bool {
+        self.can_walk_through(voxel_pos) && self.can_walk_on_top_of(voxel_pos.below())
+    }
+
     /// Are all of the tiles in the `footprint` centered around `center` valid?
     #[inline]
     #[must_use]

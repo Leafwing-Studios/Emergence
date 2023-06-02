@@ -443,6 +443,24 @@ impl VoxelPos {
     pub fn height(&self) -> Height {
         Height(self.height as f32)
     }
+
+    /// Gets the voxel position of the voxel above this one.
+    pub fn above(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y,
+            height: self.height + 1,
+        }
+    }
+
+    /// Gets the voxel position of the voxel below this one.
+    pub fn below(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y,
+            height: self.height - 1,
+        }
+    }
 }
 
 /// A volume of space, in tile units.
