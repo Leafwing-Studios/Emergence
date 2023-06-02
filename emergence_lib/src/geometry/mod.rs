@@ -13,3 +13,5 @@ mod rotation;
 pub(crate) use rotation::{
     direction_from_angle, sync_rotation_to_facing, Facing, RotationDirection,
 };
+
+mod voxels;
