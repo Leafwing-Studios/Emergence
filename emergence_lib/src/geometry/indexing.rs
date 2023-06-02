@@ -25,8 +25,6 @@ pub struct MapGeometry {
     terrain_index: HashMap<Hex, Entity>,
     /// Tracks which objects are stored in each voxel.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
-    /// The set of tiles that cannot be traversed by units due to structures.
-    impassable_structure_tiles: HashSet<VoxelPos>,
     /// The set of tiles that cannot be traversed by units due to litter.
     impassable_litter_tiles: HashSet<VoxelPos>,
     /// The height of the terrain at each tile position.
@@ -100,7 +98,6 @@ impl MapGeometry {
             radius,
             terrain_index: HashMap::default(),
             voxel_index: HashMap::default(),
-            impassable_structure_tiles: HashSet::default(),
             impassable_litter_tiles: HashSet::default(),
             valid_neighbors,
             passable_neighbors,
@@ -195,12 +192,10 @@ impl MapGeometry {
             return false;
         }
 
-        if self.impassable_structure_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
+        if let Some(voxel_data) = self.get_voxel(starting_pos) {
+            if !voxel_data.object_kind.can_walk_through() {
+                return false;
+            }
         }
 
         if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
@@ -772,12 +767,10 @@ impl MapGeometry {
             return false;
         }
 
-        if self.impassable_structure_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
+        if let Some(voxel_data) = self.get_voxel(ending_pos) {
+            if !voxel_data.object_kind.can_walk_through() {
+                return false;
+            }
         }
 
         if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
