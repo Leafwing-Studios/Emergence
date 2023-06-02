@@ -741,7 +741,7 @@ impl CurrentAction {
                 continue;
             };
 
-            for candidate in map_geometry.get_candidates(voxel_pos, delivery_mode) {
+            for candidate in map_geometry.get_candidate(voxel_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
@@ -1329,7 +1329,7 @@ impl<'w, 's> WorkplaceQuery<'w, 's> {
             return None;
         }
 
-        let entity = *map_geometry.get_workplaces(target).first()?;
+        let entity = map_geometry.get_workplace(target)?;
 
         let (found_crafting_state, ids, workers_present) = self.query.get(entity).ok()?;
 

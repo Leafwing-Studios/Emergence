@@ -242,7 +242,8 @@ impl Command for SpawnStructureCommand {
             facing,
             self.center,
             &structure_data.footprint,
-            structure_data.passable,
+            structure_data.can_walk_on_top_of,
+            structure_data.can_walk_through,
             structure_entity,
         );
     }

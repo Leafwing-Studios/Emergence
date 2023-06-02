@@ -75,8 +75,10 @@ pub struct StructureData {
     pub footprint: Footprint,
     /// The set of tiles that this structure can reach with its roots.
     pub root_zone: Option<RootZone>,
-    /// Can units pass over this structure?
-    pub passable: bool,
+    /// Can units pass through the voxels occupied by this tile?
+    pub can_walk_through: bool,
+    /// Can units walk on top of this structure?
+    pub can_walk_on_top_of: bool,
 }
 
 /// The unprocessed equivalent of [`StructureData`].
@@ -100,8 +102,10 @@ pub struct RawStructureData {
     pub footprint: Option<Footprint>,
     /// The set of tiles that this structure can reach with its roots.
     pub root_zone: Option<RootZone>,
-    /// Can units pass over this structure?
-    pub passable: bool,
+    /// Can units pass through the voxels occupied by this tile?
+    pub can_walk_through: bool,
+    /// Can units walk on top of this structure?
+    pub can_walk_on_top_of: bool,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -115,7 +119,8 @@ impl From<RawStructureData> for StructureData {
             height: Height(raw.height as f32),
             footprint: raw.footprint.unwrap_or_default(),
             root_zone: raw.root_zone,
-            passable: raw.passable,
+            can_walk_through: raw.can_walk_through,
+            can_walk_on_top_of: raw.can_walk_on_top_of,
         }
     }
 }

@@ -10,7 +10,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, VoxelObject, VoxelPos};
+use super::{voxels::VoxelKind, Facing, Height, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -25,8 +25,6 @@ pub struct MapGeometry {
     terrain_index: HashMap<Hex, Entity>,
     /// Tracks which objects are stored in each voxel.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
-    /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
-    structure_index: HashMap<VoxelPos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) structure entity is stored at each tile position
     ghost_structure_index: HashMap<VoxelPos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
@@ -106,7 +104,6 @@ impl MapGeometry {
             radius,
             terrain_index: HashMap::default(),
             voxel_index: HashMap::default(),
-            structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
             impassable_structure_tiles: HashSet::default(),
@@ -402,44 +399,31 @@ impl MapGeometry {
     /// If the `delivery_mode` is [`DeliveryMode::DropOff`], looks for ghost structures, ghost terrain or structures.
     #[inline]
     #[must_use]
-    pub(crate) fn get_candidates(
+    pub(crate) fn get_candidate(
         &self,
         voxel_pos: VoxelPos,
         delivery_mode: DeliveryMode,
-    ) -> Vec<Entity> {
-        let mut entities = Vec::new();
-
-        match delivery_mode {
-            DeliveryMode::DropOff => {
-                if let Some(&structure_entity) = self.structure_index.get(&voxel_pos) {
-                    entities.push(structure_entity)
+    ) -> Option<Entity> {
+        if let Some(voxel_data) = self.get_voxel(voxel_pos) {
+            match delivery_mode {
+                DeliveryMode::DropOff => {
+                    if voxel_data.object_kind.can_drop_off() {
+                        Some(voxel_data.entity)
+                    } else {
+                        None
+                    }
                 }
-
-                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&voxel_pos) {
-                    entities.push(ghost_terrain_entity)
-                }
-
-                if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&voxel_pos) {
-                    entities.push(ghost_structure_entity)
-                }
-            }
-            DeliveryMode::PickUp => {
-                if let Some(&structure_entity) = self.structure_index.get(&voxel_pos) {
-                    entities.push(structure_entity)
-                }
-
-                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&voxel_pos) {
-                    entities.push(ghost_terrain_entity)
-                }
-
-                if let Some(&litter_entity) = self.terrain_index.get(&voxel_pos.hex) {
-                    // FIXME: this should not be stored on terrain
-                    entities.push(litter_entity)
+                DeliveryMode::PickUp => {
+                    if voxel_data.object_kind.can_pick_up() {
+                        Some(voxel_data.entity)
+                    } else {
+                        None
+                    }
                 }
             }
+        } else {
+            None
         }
-
-        entities
     }
 
     /// Gets entities that units might work at, at the provided `voxel_pos`.
@@ -447,18 +431,16 @@ impl MapGeometry {
     /// Prioritizes ghosts over structures if both are present to allow for replacing structures.
     #[inline]
     #[must_use]
-    pub(crate) fn get_workplaces(&self, voxel_pos: VoxelPos) -> Vec<Entity> {
-        let mut entities = Vec::new();
-
-        if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&voxel_pos) {
-            entities.push(ghost_structure_entity)
+    pub(crate) fn get_workplace(&self, voxel_pos: VoxelPos) -> Option<Entity> {
+        if let Some(voxel_data) = self.get_voxel(voxel_pos) {
+            if voxel_data.object_kind.can_work_at() {
+                Some(voxel_data.entity)
+            } else {
+                None
+            }
+        } else {
+            None
         }
-
-        if let Some(&structure_entity) = self.structure_index.get(&voxel_pos) {
-            entities.push(structure_entity)
-        }
-
-        entities
     }
 
     /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
@@ -484,7 +466,11 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn get_structure(&self, voxel_pos: VoxelPos) -> Option<Entity> {
-        self.structure_index.get(&voxel_pos).copied()
+        let voxel_data = self.get_voxel(voxel_pos)?;
+        match voxel_data.object_kind {
+            VoxelKind::Structure { .. } => Some(voxel_data.entity),
+            _ => None,
+        }
     }
 
     /// Adds the provided `structure_entity` to the structure index at the provided `center`.
@@ -494,14 +480,19 @@ impl MapGeometry {
         facing: Facing,
         center: VoxelPos,
         footprint: &Footprint,
-        passable: bool,
+        can_walk_on_top_of: bool,
+        can_walk_through: bool,
         structure_entity: Entity,
     ) {
         for voxel_pos in footprint.normalized(facing, center) {
-            self.structure_index.insert(voxel_pos, structure_entity);
-            if !passable {
-                self.impassable_structure_tiles.insert(voxel_pos);
-            }
+            let voxel_data = VoxelObject {
+                entity: structure_entity,
+                object_kind: VoxelKind::Structure {
+                    can_walk_on_top_of,
+                    can_walk_through,
+                },
+            };
+            self.voxel_index.insert(voxel_pos, voxel_data);
 
             self.recompute_passable_neighbors(voxel_pos);
             self.recompute_reachable_neighbors(voxel_pos);
@@ -521,16 +512,13 @@ impl MapGeometry {
         let mut removed = None;
 
         for voxel_pos in footprint.normalized(facing, center) {
-            removed = self.structure_index.remove(&voxel_pos);
-            // We can do this even for passable structures, since we have a guarantee that only one structure can be at a tile
-            // If that occurs, this fails silently, but that's intended behavior
-            self.impassable_structure_tiles.remove(&voxel_pos);
+            removed = self.voxel_index.remove(&voxel_pos);
 
             self.recompute_passable_neighbors(voxel_pos);
             self.recompute_reachable_neighbors(voxel_pos);
         }
 
-        removed
+        removed.map(|data| data.entity)
     }
 
     /// Gets the ghost structure [`Entity`] at the provided `voxel_pos`, if any.
@@ -870,9 +858,17 @@ mod tests {
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
         let center = VoxelPos::new(Hex::ZERO, Height::ZERO);
-        let passable = false;
+        let can_walk_on_top_of = false;
+        let can_walk_through = false;
 
-        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
+        map_geometry.add_structure(
+            facing,
+            center,
+            &footprint,
+            can_walk_on_top_of,
+            can_walk_through,
+            structure_entity,
+        );
 
         // Check that the structure index was updated correctly
         for voxel_pos in footprint.normalized(facing, center) {
@@ -892,9 +888,17 @@ mod tests {
         let facing = Facing::default();
         let hex = Hex { x: 3, y: -2 };
         let center = VoxelPos::new(hex, Height::ZERO);
-        let passable = false;
+        let can_walk_on_top_of = false;
+        let can_walk_through = false;
 
-        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
+        map_geometry.add_structure(
+            facing,
+            center,
+            &footprint,
+            can_walk_on_top_of,
+            can_walk_through,
+            structure_entity,
+        );
         map_geometry.remove_structure(facing, center, &footprint);
 
         // Check that the structure index was updated correctly

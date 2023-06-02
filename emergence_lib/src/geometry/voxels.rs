@@ -65,4 +65,48 @@ impl VoxelKind {
             VoxelKind::GhostTerrain => false,
         }
     }
+
+    /// Can objects be dropped off at this voxel?
+    pub(crate) fn can_drop_off(&self) -> bool {
+        match self {
+            VoxelKind::Litter { .. } => false,
+            VoxelKind::Terrain => false,
+            VoxelKind::Structure { .. } => true,
+            VoxelKind::GhostStructure => true,
+            VoxelKind::GhostTerrain => true,
+        }
+    }
+
+    /// Can objects be picked up from this voxel?
+    pub(crate) fn can_pick_up(&self) -> bool {
+        match self {
+            VoxelKind::Litter { .. } => true,
+            VoxelKind::Terrain => false,
+            VoxelKind::Structure { .. } => true,
+            VoxelKind::GhostStructure => false,
+            VoxelKind::GhostTerrain => true,
+        }
+    }
+
+    /// Can units perform work at this voxel?
+    pub(crate) fn can_work_at(&self) -> bool {
+        match self {
+            VoxelKind::Litter { .. } => false,
+            VoxelKind::Terrain => false,
+            VoxelKind::Structure { .. } => true,
+            VoxelKind::GhostStructure => true,
+            VoxelKind::GhostTerrain => false,
+        }
+    }
+
+    /// Can units attempt to demolish this voxel?
+    pub(crate) fn can_demolish(&self) -> bool {
+        match self {
+            VoxelKind::Litter { .. } => false,
+            VoxelKind::Terrain => false,
+            VoxelKind::Structure { .. } => true,
+            VoxelKind::GhostStructure => false,
+            VoxelKind::GhostTerrain => false,
+        }
+    }
 }
