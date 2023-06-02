@@ -203,6 +203,28 @@ pub struct VoxelPos {
     pub height: i32,
 }
 
+impl Add for VoxelPos {
+    type Output = VoxelPos;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            hex: self.hex + rhs.hex,
+            height: self.height + rhs.height,
+        }
+    }
+}
+
+impl Sub for VoxelPos {
+    type Output = VoxelPos;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            hex: self.hex - rhs.hex,
+            height: self.height - rhs.height,
+        }
+    }
+}
+
 impl Display for VoxelPos {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "({}, {}, {})", self.hex.x, self.hex.y, self.height)
