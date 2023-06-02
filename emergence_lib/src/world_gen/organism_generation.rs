@@ -32,7 +32,7 @@ pub(super) fn generate_organisms(
     let rng = &mut thread_rng();
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
-    for hex in map_geometry.all_hexes() {
+    for &hex in map_geometry.all_hexes() {
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -61,9 +61,12 @@ pub(super) fn generate_organisms(
 
         for (&unit_id, &chance) in &config.unit_chances {
             if rng.gen::<f32>() < chance {
+                let height = map_geometry.get_height(hex).unwrap();
+                let voxel_pos = VoxelPos::new(hex, height);
+
                 commands.spawn(UnitBundle::randomized(
                     unit_id,
-                    hex,
+                    voxel_pos,
                     unit_manifest.get(unit_id).clone(),
                     &unit_handles,
                     &map_geometry,

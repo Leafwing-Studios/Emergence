@@ -78,7 +78,7 @@ pub(super) fn generate_landmarks(
                     // Flatten the terrain under the structure before spawning it
                     map_geometry.flatten_height(&mut height_query, voxel_pos, footprint, facing);
                     commands.spawn_structure(
-                        hex,
+                        voxel_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
                         StartingEnergy::NotAnOrganism,
                     );

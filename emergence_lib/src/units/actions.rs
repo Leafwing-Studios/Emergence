@@ -1039,7 +1039,7 @@ impl CurrentAction {
         const PATH_MULTIPLIER: f32 = 1.5;
 
         let target_tile = current_tile.neighbor(facing.direction);
-        let entity_standing_on = map_geometry.get_terrain(current_tile).unwrap();
+        let entity_standing_on = map_geometry.get_terrain(current_tile.hex).unwrap();
         let walking_speed = if map_geometry.get_structure(current_tile).is_some() {
             PATH_MULTIPLIER
         } else {
@@ -1097,7 +1097,7 @@ impl CurrentAction {
         unit_pos: VoxelPos,
         output_tile_pos: VoxelPos,
     ) -> Self {
-        let required_direction = unit_pos.main_direction_to(output_tile_pos.hex);
+        let required_direction = unit_pos.hex.main_direction_to(output_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::new(UnitAction::PickUp {
@@ -1117,7 +1117,7 @@ impl CurrentAction {
         unit_pos: VoxelPos,
         input_tile_pos: VoxelPos,
     ) -> Self {
-        let required_direction = unit_pos.main_direction_to(input_tile_pos.hex);
+        let required_direction = unit_pos.hex.main_direction_to(input_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::new(UnitAction::DropOff {
@@ -1257,7 +1257,7 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
         rng: &mut ThreadRng,
     ) -> Self {
-        let terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
+        let terrain_entity = map_geometry.get_terrain(current_tile.hex).unwrap();
         let current_depth = water_depth_query
             .get(terrain_entity)
             .unwrap()
@@ -1270,7 +1270,7 @@ impl CurrentAction {
                 continue;
             };
 
-            let adjacent_terrain_entity = map_geometry.get_terrain(current_tile).unwrap();
+            let adjacent_terrain_entity = map_geometry.get_terrain(current_tile.hex).unwrap();
             let adjacent_depth = water_depth_query
                 .get(adjacent_terrain_entity)
                 .unwrap()

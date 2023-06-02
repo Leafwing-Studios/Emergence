@@ -98,13 +98,13 @@ pub(super) fn compute_shade(
         let tiles_in_footprint = structure_data.footprint.normalized(facing, center);
 
         for voxel_pos in &tiles_in_footprint {
-            for shaded_voxel_pos in shaded_area(*voxel_pos, &map_geometry, structure_data.height) {
+            for shaded_hex in shaded_area(*voxel_pos, &map_geometry, structure_data.height) {
                 // Don't shade yourself
-                if tiles_in_footprint.contains(&shaded_voxel_pos) {
+                if tiles_in_footprint.contains(&shaded_hex) {
                     continue;
                 }
 
-                let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos).unwrap();
+                let shaded_terrain_entity = map_geometry.get_terrain(shaded_hex).unwrap();
                 let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
                 shade.add_shade();
             }
@@ -117,8 +117,8 @@ pub(super) fn compute_shade(
             continue;
         }
 
-        for shaded_voxel_pos in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
-            let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos.hex).unwrap();
+        for shaded_hex in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
+            let shaded_terrain_entity = map_geometry.get_terrain(shaded_hex).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.add_shade();
         }

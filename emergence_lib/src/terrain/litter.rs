@@ -368,7 +368,7 @@ pub(super) fn carry_floating_litter_with_current(
     }
 
     for (source_entity, new_position) in proposed_transfers.iter() {
-        let Some(target_entity) = map_geometry.get_terrain(*new_position) else {
+        let Some(target_entity) = map_geometry.get_terrain(new_position.hex) else {
             continue;
         };
         let [source_query_item, target_query_item] = terrain_query

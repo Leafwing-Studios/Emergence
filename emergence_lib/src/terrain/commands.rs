@@ -132,7 +132,7 @@ impl Command for SpawnTerrainCommand {
         let mut map_geometry = world.resource_mut::<MapGeometry>();
 
         // Store the height, so it can be used below
-        map_geometry.update_height(self.voxel_pos, self.height);
+        map_geometry.update_height(self.voxel_pos.hex, self.height);
 
         // Drop the borrow so the borrow checker is happy
         let map_geometry = world.resource::<MapGeometry>();
@@ -210,7 +210,7 @@ impl Command for SpawnTerrainGhostCommand {
         let ghost_material = ghost_handles.get_material(self.ghost_kind);
 
         let inherited_material = InheritedMaterial(ghost_material);
-        let current_height = map_geometry.get_height(self.voxel_pos).unwrap();
+        let current_height = map_geometry.get_height(self.voxel_pos.hex).unwrap();
         let new_height = match self.terraforming_action {
             TerraformingAction::Raise => current_height + Height(1.),
             TerraformingAction::Lower => current_height - Height(1.),
@@ -301,7 +301,7 @@ impl Command for ApplyTerraformingCommand {
 
         let (mut map_geometry, terrain_handles, mut terrain_query) = system_state.get_mut(world);
 
-        let terrain_entity = map_geometry.get_terrain(self.voxel_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(self.voxel_pos.hex).unwrap();
 
         let (mut current_terrain_id, mut zoning, mut height, mut scene_handle) =
             terrain_query.get_mut(terrain_entity).unwrap();

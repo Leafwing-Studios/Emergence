@@ -94,7 +94,7 @@ fn handle_selection(
             } else {
                 for (&background_hex, &background_entity) in arrangement.background_map() {
                     if let Ok(mut background_color) = background_query.get_mut(background_entity) {
-                        *background_color = if background_hex == element.hex {
+                        *background_color = if background_hex == element.hex() {
                             BackgroundColor(MENU_HIGHLIGHT_COLOR)
                         } else {
                             BackgroundColor(MENU_NEUTRAL_COLOR)
