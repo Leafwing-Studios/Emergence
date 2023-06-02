@@ -1,7 +1,7 @@
 //! Graphics and animation code for terrain.
 
 use crate::{
-    geometry::{Height, MapGeometry, VoxelPos},
+    geometry::{MapGeometry, VoxelPos},
     items::inventory::InventoryState,
     terrain::{litter::Litter, terrain_assets::TerrainHandles},
     water::WaterDepth,
@@ -15,7 +15,7 @@ pub(super) fn render_litter_piles(
     mut current_ground_litter_piles: Local<HashMap<VoxelPos, (InventoryState, Entity)>>,
     mut current_floating_litter_piles: Local<HashMap<VoxelPos, (InventoryState, Entity)>>,
     terrain_query: Query<(Entity, &VoxelPos, Ref<Litter>)>,
-    water_height_query: Query<(&WaterDepth, &Height)>,
+    water_height_query: Query<(&WaterDepth, &VoxelPos)>,
     // PERF: we could add a marker component to improve parallelism
     mut floating_litter_query: Query<&mut Transform>,
     mut commands: Commands,
@@ -113,15 +113,15 @@ pub(super) fn render_litter_piles(
 /// Computes the [`Transform`] for a floating litter entity.
 fn floating_litter_transform(
     voxel_pos: VoxelPos,
-    water_height_query: &Query<(&WaterDepth, &Height)>,
+    water_height_query: &Query<(&WaterDepth, &VoxelPos)>,
     map_geometry: &MapGeometry,
 ) -> Result<Transform, ()> {
     let mut transform = Transform::from_translation(voxel_pos.into_world_pos(map_geometry));
     let Some(terrain_entity) = map_geometry.get_terrain(voxel_pos.hex) else {
         return Err(());
     };
-    let (water_depth, &terrain_height) = water_height_query.get(terrain_entity).unwrap();
-    let desired_height = water_depth.surface_height(terrain_height);
+    let (water_depth, &terrain_pos) = water_height_query.get(terrain_entity).unwrap();
+    let desired_height = water_depth.surface_height(terrain_pos.height());
 
     transform.translation.y = desired_height.into_world_pos();
     Ok(transform)

@@ -3,7 +3,7 @@
 use crate::asset_management::manifest::Id;
 use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
 use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
-use crate::geometry::{Facing, Height, MapGeometry, VoxelPos};
+use crate::geometry::{Facing, MapGeometry, VoxelPos};
 use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::structures::commands::StructureCommandsExt;
@@ -25,7 +25,7 @@ pub(super) fn generate_organisms(
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
-    mut height_query: Query<&mut Height>,
+    mut height_query: Query<&mut VoxelPos>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     info!("Generating organisms...");

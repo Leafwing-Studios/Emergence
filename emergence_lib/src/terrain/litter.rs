@@ -251,10 +251,9 @@ pub(super) fn carry_floating_litter_with_current(
         &mut Litter,
         &mut LitterDrift,
         &WaterDepth,
-        &Height,
         &FlowVelocity,
     )>,
-    water_height_query: Query<(&Height, &WaterDepth)>,
+    water_height_query: Query<(&VoxelPos, &WaterDepth)>,
     net_query: Query<&Id<Structure>, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
     structure_manifest: Res<StructureManifest>,
@@ -288,15 +287,8 @@ pub(super) fn carry_floating_litter_with_current(
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
-    for (
-        source_entity,
-        &voxel_pos,
-        litter,
-        mut litter_drift,
-        water_depth,
-        &tile_height,
-        flow_velocity,
-    ) in terrain_query.iter_mut()
+    for (source_entity, &voxel_pos, litter, mut litter_drift, water_depth, flow_velocity) in
+        terrain_query.iter_mut()
     {
         // Don't cause items to drift out of overfull nets
         if let Some(structure_entity) = map_geometry.get_structure(voxel_pos) {
@@ -344,12 +336,13 @@ pub(super) fn carry_floating_litter_with_current(
             if litter_drift.timer.finished() {
                 if let Some(direction) = litter_drift.direction {
                     let new_position = voxel_pos.neighbor(direction);
-                    let source_height = water_depth.surface_height(tile_height);
+                    let source_height = water_depth.surface_height(voxel_pos.height());
                     let Some(target_entity) = map_geometry.get_terrain(new_position.hex) else { continue };
 
-                    let Ok((target_tile_height, target_water_depth)) =
+                    let Ok((target_tile_pos, target_water_depth)) =
                         water_height_query.get(target_entity) else { continue };
-                    let target_height = target_water_depth.surface_height(*target_tile_height);
+                    let target_height =
+                        target_water_depth.surface_height(target_tile_pos.height());
 
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
                     // Note that this is a one-way check; we don't care if the source is higher than the target

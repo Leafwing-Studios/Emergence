@@ -130,9 +130,7 @@ pub struct LateralFlowQuery {
     flow_velocity: &'static mut FlowVelocity,
     /// The depth of water in this tile.
     water_depth: &'static WaterDepth,
-    /// The height of the terrain at this tile.
-    terrain_height: &'static Height,
-    /// The position of this tile.
+    /// The position and height of this tile.
     voxel_pos: &'static VoxelPos,
     /// The rate at which water flows between soil of this type.
     soil_water_flow_rate: &'static SoilWaterFlowRate,
@@ -227,7 +225,7 @@ pub fn horizontal_water_movement(
                 let Some(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex) else { continue };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
-                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+                let neighbor_tile_height = neighbor_query_item.voxel_pos.height();
                 let neighbor_water_height = neighbor_query_item
                     .water_depth
                     .water_table_height(neighbor_tile_height);
@@ -287,7 +285,7 @@ fn proposed_lateral_flow_to_neighbors(
     let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
     let query_item = terrain_query.get(terrain_entity).unwrap();
     let soil_lateral_flow_ratio = *query_item.soil_water_flow_rate;
-    let tile_height = *query_item.terrain_height;
+    let tile_height = query_item.voxel_pos.height();
     let water_height = query_item.water_depth.water_table_height(tile_height);
 
     // Critically, this includes neighbors that are not valid tiles.
@@ -301,7 +299,7 @@ fn proposed_lateral_flow_to_neighbors(
             let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
             total_water_height += neighbor_query_item
                 .water_depth
-                .water_table_height(*neighbor_query_item.terrain_height);
+                .water_table_height(neighbor_query_item.voxel_pos.height());
         } else {
             total_water_height += ocean_height;
         }
@@ -329,7 +327,7 @@ fn proposed_lateral_flow_to_neighbors(
                 let neighbor_query_item = terrain_query.get(neigbor_entity).unwrap();
 
                 let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
-                let neighbor_tile_height = *neighbor_query_item.terrain_height;
+                let neighbor_tile_height = neighbor_query_item.voxel_pos.height();
 
                 let neighbor_water_height = neighbor_query_item
                     .water_depth
@@ -781,18 +779,18 @@ mod tests {
 
         app.update();
 
-        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &VoxelPos)>();
         let mut total_water_height = Height::ZERO;
 
-        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
-            total_water_height += water_depth.water_table_height(terrain_height);
+        for (water_depth, &terrain_pos) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_pos.height());
         }
 
         let average_water_height =
             total_water_height / water_depth_query.iter(&app.world).len() as f32;
 
-        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
-            let height = water_depth.water_table_height(terrain_height);
+        for (water_depth, &terrain_pos) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_pos.height());
 
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
@@ -827,18 +825,18 @@ mod tests {
 
         app.update();
 
-        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &VoxelPos)>();
         let mut total_water_height = Height::ZERO;
 
-        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
-            total_water_height += water_depth.water_table_height(terrain_height);
+        for (water_depth, &terrain_pos) in water_depth_query.iter(&app.world) {
+            total_water_height += water_depth.water_table_height(terrain_pos.height());
         }
 
         let average_water_height =
             total_water_height / water_depth_query.iter(&app.world).len() as f32;
 
-        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
-            let height = water_depth.water_table_height(terrain_height);
+        for (water_depth, &terrain_pos) in water_depth_query.iter(&app.world) {
+            let height = water_depth.water_table_height(terrain_pos.height());
 
             assert!(
                 height.abs_diff(average_water_height) < EPSILON_HEIGHT,
@@ -874,17 +872,17 @@ mod tests {
 
         app.update();
 
-        let mut water_depth_query = app.world.query::<(&WaterDepth, &Height)>();
+        let mut water_depth_query = app.world.query::<(&WaterDepth, &VoxelPos)>();
 
-        let (neighbor_depth, neighbor_height) = water_depth_query
+        let (neighbor_depth, neighbor_pos) = water_depth_query
             .get(&app.world, arbitrary_neighbor)
             .unwrap();
         let water_height_of_arbitrary_neighbor =
-            neighbor_depth.water_table_height(*neighbor_height);
+            neighbor_depth.water_table_height(neighbor_pos.height());
         assert!(water_height_of_arbitrary_neighbor > Height::ZERO);
 
-        for (water_depth, &terrain_height) in water_depth_query.iter(&app.world) {
-            let water_height = water_depth.water_table_height(terrain_height);
+        for (water_depth, &terrain_pos) in water_depth_query.iter(&app.world) {
+            let water_height = water_depth.water_table_height(terrain_pos.height());
 
             assert!(
                 water_height.abs_diff(water_height_of_arbitrary_neighbor) < EPSILON_HEIGHT,

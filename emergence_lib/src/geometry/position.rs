@@ -15,7 +15,7 @@ use super::{Facing, MapGeometry};
 /// The discretized height of this tile
 ///
 /// The minimum height is 0.
-#[derive(Component, Clone, Copy, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct Height(pub f32);
 
 impl Display for Height {

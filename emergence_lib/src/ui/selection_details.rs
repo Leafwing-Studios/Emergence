@@ -377,7 +377,7 @@ fn get_details(
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
                     voxel_pos: *voxel_pos,
-                    height: *terrain_query_item.height,
+                    height: terrain_query_item.voxel_pos.height(),
                     depth_to_water_table: *terrain_query_item.water_depth,
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
@@ -766,8 +766,8 @@ mod terrain_details {
     pub(super) struct TerrainDetailsQuery {
         /// The root entity
         pub(super) entity: Entity,
-        /// The height of the tile
-        pub(super) height: &'static Height,
+        /// The position and height of the tile
+        pub(super) voxel_pos: &'static VoxelPos,
         /// The shade of the tile
         pub(super) shade: &'static Shade,
         /// The recieved light of the tile

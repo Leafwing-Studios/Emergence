@@ -11,6 +11,7 @@ use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
+use crate::geometry::VoxelPos;
 use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
@@ -375,16 +376,19 @@ pub struct PreviousWaterVolume(pub(crate) WaterVolume);
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
-    mut query: Query<(&Height, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
+    mut query: Query<(&VoxelPos, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
 ) {
     // Critically, the depth of tiles *outside* of the map is not updated here.
     // Instead, they are implicitly treated as the ocean depth.
     // As a result, the ocean acts as both an infinite source and sink for water.
-    for (&soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
+    for (terrain_pos, water_volume, &relative_soil_water_capacity, mut water_depth) in
         query.iter_mut()
     {
-        *water_depth =
-            WaterDepth::compute(water_volume.0, soil_height, relative_soil_water_capacity);
+        *water_depth = WaterDepth::compute(
+            water_volume.0,
+            terrain_pos.height(),
+            relative_soil_water_capacity,
+        );
     }
 }
 

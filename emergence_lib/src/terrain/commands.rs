@@ -294,7 +294,7 @@ impl Command for ApplyTerraformingCommand {
             Query<(
                 &mut Id<Terrain>,
                 &mut Zoning,
-                &mut Height,
+                &mut VoxelPos,
                 &mut Handle<Scene>,
             )>,
         )>::new(world);
@@ -303,12 +303,12 @@ impl Command for ApplyTerraformingCommand {
 
         let terrain_entity = map_geometry.get_terrain(self.voxel_pos.hex).unwrap();
 
-        let (mut current_terrain_id, mut zoning, mut height, mut scene_handle) =
+        let (mut current_terrain_id, mut zoning, mut voxel_pos, mut scene_handle) =
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
-            TerraformingAction::Raise => height.raise(),
-            TerraformingAction::Lower => height.lower(),
+            TerraformingAction::Raise => voxel_pos.height += 1,
+            TerraformingAction::Lower => voxel_pos.height -= 1,
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;
             }
@@ -323,7 +323,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(self.voxel_pos.hex, *height);
+        map_geometry.update_height(self.voxel_pos.hex, voxel_pos.height);
         *zoning = Zoning::None;
     }
 }

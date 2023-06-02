@@ -7,7 +7,7 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
-use crate::geometry::{Height, MapGeometry, VoxelPos};
+use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::Emitter;
@@ -61,10 +61,8 @@ impl Plugin for TerrainPlugin {
 struct TerrainBundle {
     /// The type of terrain
     terrain_id: Id<Terrain>,
-    /// The location of this terrain hex
+    /// The location and height of this terrain hex
     voxel_pos: VoxelPos,
-    /// The height of this terrain hex
-    height: Height,
     /// Makes the tiles pickable
     raycast_mesh: RaycastMesh<Terrain>,
     /// The mesh used for raycasting
@@ -112,7 +110,6 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_id,
             voxel_pos,
-            height,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh,
             object_interaction: ObjectInteraction::None,
@@ -135,14 +132,14 @@ impl TerrainBundle {
 
 /// Updates the game state appropriately whenever the height of a tile is changed.
 fn respond_to_height_changes(
-    // FIXME: Height should not be a component
-    mut terrain_query: Query<(Ref<Height>, &VoxelPos, &mut Transform, &Children)>,
-    mut column_query: Query<&mut Transform, (With<Parent>, Without<Height>)>,
+    mut terrain_query: Query<(Ref<VoxelPos>, &mut Transform, &Children), With<Id<Terrain>>>,
+    mut column_query: Query<&mut Transform, (With<Parent>, Without<VoxelPos>)>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (height, &voxel_pos, mut transform, children) in terrain_query.iter_mut() {
-        if height.is_changed() {
-            map_geometry.update_height(voxel_pos.hex, voxel_pos.height());
+    for (voxel_pos, mut transform, children) in terrain_query.iter_mut() {
+        if voxel_pos.is_changed() {
+            let height = voxel_pos.height();
+            map_geometry.update_height(voxel_pos.hex, height);
             transform.translation.y = height.into_world_pos();
             // During terrain initialization we ensure that the column is always the 0th child
             let column_child = children[0];

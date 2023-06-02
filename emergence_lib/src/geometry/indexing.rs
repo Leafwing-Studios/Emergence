@@ -378,7 +378,7 @@ impl MapGeometry {
     /// This footprint is rotated by the supplied `facing`.
     pub(crate) fn flatten_height(
         &mut self,
-        height_query: &mut Query<&mut Height>,
+        voxel_pos_query: &mut Query<&mut VoxelPos>,
         center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
@@ -386,8 +386,8 @@ impl MapGeometry {
         let Ok(target_height) = self.get_height(center.hex) else { return };
         for voxel_pos in footprint.normalized(facing, center) {
             if let Some(entity) = self.get_terrain(voxel_pos.hex) {
-                if let Ok(mut height) = height_query.get_mut(entity) {
-                    *height = target_height;
+                if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(entity) {
+                    voxel_pos.height = target_height.0.round() as i32;
                     self.update_height(voxel_pos.hex, target_height);
                 }
             }

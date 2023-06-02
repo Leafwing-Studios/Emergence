@@ -473,7 +473,7 @@ fn set_overlay_material(
     terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
     water_depth_query: Query<&WaterDepth>,
     water_volume_query: Query<(&WaterVolume, &PreviousWaterVolume)>,
-    terrain_height_query: Query<&Height, With<Id<Terrain>>>,
+    terrain_pos_query: Query<&VoxelPos, With<Id<Terrain>>>,
     flow_velocity_query: Query<&FlowVelocity>,
     signals: Res<Signals>,
     map_geometry: Res<MapGeometry>,
@@ -507,7 +507,7 @@ fn set_overlay_material(
             OverlayType::HeightOfWaterTable => {
                 let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let water_depth = *water_depth_query.get(terrain_entity).unwrap();
-                let terrain_height = *terrain_height_query.get(terrain_entity).unwrap();
+                let terrain_height = terrain_pos_query.get(terrain_entity).unwrap().height();
                 let water_table_height = water_depth.water_table_height(terrain_height);
 
                 // FIXME: use a dedicated color ramp for this, rather than hacking it
@@ -801,14 +801,15 @@ fn spawn_overlay_entities(
 /// Overlays should be positioned just above the water surface when it exists, and just above the terrain when it doesn't.
 fn set_overlay_height(
     mut overlay_query: Query<(&VoxelPos, &mut Transform), With<Overlay>>,
-    terrain_query: Query<(&WaterDepth, &Height)>,
+    terrain_query: Query<(&WaterDepth, &VoxelPos)>,
     map_geometry: Res<MapGeometry>,
 ) {
     let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
 
     for (&voxel_pos, mut transform) in overlay_query.iter_mut() {
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
-        let (&water_depth, &terrain_height) = terrain_query.get(terrain_entity).unwrap();
+        let (&water_depth, &terrain_pos) = terrain_query.get(terrain_entity).unwrap();
+        let terrain_height = terrain_pos.height();
 
         let desired_height = match water_depth {
             WaterDepth::Dry | WaterDepth::Underground(_) => terrain_height + topper_thickness,
