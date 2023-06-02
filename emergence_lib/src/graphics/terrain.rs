@@ -117,7 +117,7 @@ fn floating_litter_transform(
     map_geometry: &MapGeometry,
 ) -> Result<Transform, ()> {
     let mut transform = Transform::from_translation(voxel_pos.into_world_pos(map_geometry));
-    let Some(terrain_entity) = map_geometry.get_terrain(voxel_pos) else {
+    let Some(terrain_entity) = map_geometry.get_terrain(voxel_pos.hex()) else {
         return Err(());
     };
     let (water_depth, &terrain_height) = water_height_query.get(terrain_entity).unwrap();

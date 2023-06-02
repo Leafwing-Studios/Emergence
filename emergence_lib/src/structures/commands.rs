@@ -110,7 +110,7 @@ impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
         let geometry = world.resource::<MapGeometry>();
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.center) {
+        if !geometry.is_valid(self.center.hex()) {
             return;
         }
 
@@ -296,7 +296,7 @@ impl Command for SpawnStructureGhostCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.center) {
+        if !map_geometry.is_valid(self.center.hex()) {
             return;
         }
 
@@ -406,7 +406,7 @@ impl Command for SpawnStructurePreviewCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.center) {
+        if !map_geometry.is_valid(self.center.hex()) {
             warn!("Preview position {:?} not valid.", self.center);
             return;
         }

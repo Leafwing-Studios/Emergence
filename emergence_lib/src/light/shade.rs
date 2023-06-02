@@ -8,6 +8,7 @@ use crate::{
     structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
+use hexx::Hex;
 
 use super::{Illuminance, TotalLight};
 
@@ -97,13 +98,13 @@ pub(super) fn compute_shade(
         let tiles_in_footprint = structure_data.footprint.normalized(facing, center);
 
         for voxel_pos in &tiles_in_footprint {
-            for shaded_tile_pos in shaded_area(*voxel_pos, &map_geometry, structure_data.height) {
+            for shaded_voxel_pos in shaded_area(*voxel_pos, &map_geometry, structure_data.height) {
                 // Don't shade yourself
-                if tiles_in_footprint.contains(&shaded_tile_pos) {
+                if tiles_in_footprint.contains(&shaded_voxel_pos) {
                     continue;
                 }
 
-                let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
+                let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos).unwrap();
                 let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
                 shade.add_shade();
             }
@@ -116,8 +117,8 @@ pub(super) fn compute_shade(
             continue;
         }
 
-        for shaded_tile_pos in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
-            let shaded_terrain_entity = map_geometry.get_terrain(shaded_tile_pos).unwrap();
+        for shaded_voxel_pos in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
+            let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos.hex()).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.add_shade();
         }
@@ -125,22 +126,23 @@ pub(super) fn compute_shade(
 }
 
 /// Computes the set of tiles that are shaded by a given object.
+// FIXME: this should just use voxels
 fn shaded_area(
     voxel_pos: VoxelPos,
     map_geometry: &MapGeometry,
     height_of_caster: Height,
-) -> Vec<VoxelPos> {
+) -> Vec<Hex> {
     /// The unit vector pointing away from the sun.
-    const SHADOW_DIRECTION: VoxelPos = VoxelPos::new(0, 1);
+    const SHADOW_DIRECTION: Hex = Hex { x: 0, y: 1 };
 
     let mut shaded_tiles = Vec::new();
 
-    let Ok(originating_terrain_height) = map_geometry.get_height(voxel_pos) else { return Vec::new() };
+    let Ok(originating_terrain_height) = map_geometry.get_height(voxel_pos.hex()) else { return Vec::new() };
     let total_height = originating_terrain_height + height_of_caster;
     let total_height = total_height.0.round() as i32;
 
     for distance_from_caster in 1..=total_height {
-        let candidate = voxel_pos + SHADOW_DIRECTION * distance_from_caster;
+        let candidate = voxel_pos.hex() + SHADOW_DIRECTION * distance_from_caster;
 
         let Ok(candidate_terrain_height) = map_geometry.get_height(candidate) else {
 			continue;

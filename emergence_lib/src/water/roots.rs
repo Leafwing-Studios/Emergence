@@ -2,7 +2,7 @@
 
 use std::fmt::{Display, Formatter};
 
-use hexx::shapes::hexagon;
+use hexx::{shapes::hexagon, Hex};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -34,22 +34,21 @@ impl RootZone {
         center: VoxelPos,
         water_depth_query: &Query<&WaterDepth>,
         map_geometry: &MapGeometry,
-    ) -> Vec<VoxelPos> {
-        let hexagon = hexagon(center.hex, self.radius);
+    ) -> Vec<Hex> {
+        let hexagon = hexagon(center.hex(), self.radius);
         let mut relevant_tiles = Vec::with_capacity(hexagon.len());
         for hex in hexagon {
-            let voxel_pos = VoxelPos { hex };
-            let Some(terrain_entity) = map_geometry.get_terrain(voxel_pos) else {
+            let Some(terrain_entity) = map_geometry.get_terrain(hex) else {
                 continue;
             };
             let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
             match water_depth {
-                super::WaterDepth::Flooded(..) => relevant_tiles.push(voxel_pos),
+                super::WaterDepth::Flooded(..) => relevant_tiles.push(hex),
                 super::WaterDepth::Dry => (),
                 super::WaterDepth::Underground(depth) => {
                     if *depth <= self.max_depth {
-                        relevant_tiles.push(voxel_pos);
+                        relevant_tiles.push(hex);
                     }
                 }
             }

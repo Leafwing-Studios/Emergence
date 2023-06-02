@@ -1,6 +1,6 @@
 //! Types for positioning and measuring coordinates.
 
-use bevy::{prelude::*, reflect::Map};
+use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex};
@@ -195,7 +195,7 @@ impl Div<f32> for Height {
 }
 
 /// A voxel position in the game world.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Component, Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct VoxelPos {
     /// Corresponds to the x coordinate of the [`VoxelPos`]
     x: i32,
@@ -205,7 +205,20 @@ pub struct VoxelPos {
     height: i32,
 }
 
+impl Display for VoxelPos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.height)
+    }
+}
+
 impl VoxelPos {
+    /// The [`VoxelPos`] of the origin.
+    pub const ZERO: Self = Self {
+        x: 0,
+        y: 0,
+        height: 0,
+    };
+
     /// Create a new [`VoxelPos`] from a [`Hex`] and a [`Height`].
     pub fn new(hex: Hex, height: Height) -> Self {
         Self {
@@ -213,6 +226,11 @@ impl VoxelPos {
             y: hex.y,
             height: height.0.round() as i32,
         }
+    }
+
+    /// Creates a new [`VoxelPos`] from x and y coordinates with [`Height::ZERO`].
+    pub fn from_xy(x: i32, y: i32) -> Self {
+        Self { x, y, height: 0 }
     }
 
     /// Get the [`Hex`] corresponding to this [`VoxelPos`].
@@ -250,6 +268,18 @@ impl VoxelPos {
     pub fn into_world_pos(&self, map_geometry: &MapGeometry) -> Vec3 {
         let xz = map_geometry.layout.hex_to_world_pos(self.hex());
         let y = self.height().into_world_pos();
+
+        Vec3 {
+            x: xz.x,
+            y,
+            z: xz.y,
+        }
+    }
+
+    /// Returns the transform-space position of the terrain topper on top of this voxel.
+    pub fn top_of_tile(&self, map_geometry: &MapGeometry) -> Vec3 {
+        let xz = map_geometry.layout.hex_to_world_pos(self.hex());
+        let y = self.height().into_world_pos() + Height::TOPPER_THICKNESS;
 
         Vec3 {
             x: xz.x,
@@ -445,13 +475,16 @@ mod tests {
 
         for x in -10..=10 {
             for y in -10..=10 {
-                let voxel_pos = VoxelPos::new(x, y);
-                // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(voxel_pos, Height(17.));
-                let world_pos = voxel_pos.into_world_pos(&map_geometry);
-                let remapped_tile_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
+                let hex = Hex::new(x, y);
+                let height = Height(17.);
 
-                assert_eq!(voxel_pos, remapped_tile_pos);
+                let voxel_pos = VoxelPos::new(hex, height);
+                // Height chosen arbitrarily to reduce odds of this accidentally working
+                map_geometry.update_height(hex, height);
+                let world_pos = voxel_pos.into_world_pos(&map_geometry);
+                let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
+
+                assert_eq!(voxel_pos, remapped_voxel_pos);
             }
         }
     }

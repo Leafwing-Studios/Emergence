@@ -698,7 +698,7 @@ fn emit_signals(
         // When the water is too deep, disable the flooded buildings to avoid drowning units constantly
         if let Some(structure_id) = maybe_structure_id {
             let structure_data = structure_manifest.get(*structure_id);
-            let terrain_entity = map_geometry.get_terrain(center).unwrap();
+            let terrain_entity = map_geometry.get_terrain(center.hex()).unwrap();
             let water_depth = terrain_query.get(terrain_entity).unwrap();
 
             if structure_data.height < water_depth.surface_water_depth() {

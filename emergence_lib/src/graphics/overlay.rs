@@ -499,13 +499,13 @@ fn set_overlay_material(
                     tile_overlay.get_signal_material(signal_kind, signal_strength)
                 }),
             OverlayType::DepthToWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
                 let water_depth = *water_depth_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_water_table_material(water_depth)
             }
             OverlayType::HeightOfWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
                 let water_depth = *water_depth_query.get(terrain_entity).unwrap();
                 let terrain_height = *terrain_height_query.get(terrain_entity).unwrap();
                 let water_table_height = water_depth.water_table_height(terrain_height);
@@ -519,13 +519,13 @@ fn set_overlay_material(
                 tile_overlay.get_water_table_material(inverted_height)
             }
             OverlayType::VelocityOfWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
                 let flow_velocity = flow_velocity_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_flow_velocity_material(flow_velocity)
             }
             OverlayType::NetWater => {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
                 let (current_water_volume, previous_water_volume) =
                     water_volume_query.get(terrain_entity).unwrap();
 
@@ -535,7 +535,7 @@ fn set_overlay_material(
                 Some(tile_overlay.get_water_flux_material(volume_per_second))
             }
             OverlayType::LightLevel => {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
                 let received_light = terrain_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_light_level_material(received_light)
@@ -566,7 +566,7 @@ fn display_player_selection(
     map_geometry: Res<MapGeometry>,
 ) {
     for (&voxel_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
         let object_interaction = terrain_query.get(terrain_entity).unwrap();
 
         match object_interaction {
@@ -807,7 +807,7 @@ fn set_overlay_height(
     let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
 
     for (&voxel_pos, mut transform) in overlay_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
         let (&water_depth, &terrain_height) = terrain_query.get(terrain_entity).unwrap();
 
         let desired_height = match water_depth {

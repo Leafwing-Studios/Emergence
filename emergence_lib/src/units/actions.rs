@@ -82,8 +82,7 @@ pub(super) fn choose_actions(
 ) {
     let rng = &mut thread_rng();
 
-    for (&unit_tile_pos, facing, goal, mut current_action, unit_inventory) in units_query.iter_mut()
-    {
+    for (&unit_pos, facing, goal, mut current_action, unit_inventory) in units_query.iter_mut() {
         if current_action.finished() {
             let previous_action = current_action.action.clone();
 
@@ -92,7 +91,7 @@ pub(super) fn choose_actions(
                 Goal::Wander { .. } => match unit_inventory.held_item {
                     Some(_) => CurrentAction::abandon(
                         previous_action,
-                        unit_tile_pos,
+                        unit_pos,
                         unit_inventory,
                         &map_geometry,
                         &item_manifest,
@@ -104,7 +103,7 @@ pub(super) fn choose_actions(
                     ),
                     None => CurrentAction::wander(
                         previous_action,
-                        unit_tile_pos,
+                        unit_pos,
                         facing,
                         &map_geometry,
                         &terrain_query,
@@ -122,7 +121,7 @@ pub(super) fn choose_actions(
                     {
                         CurrentAction::abandon(
                             previous_action,
-                            unit_tile_pos,
+                            unit_pos,
                             unit_inventory,
                             &map_geometry,
                             &item_manifest,
@@ -138,7 +137,7 @@ pub(super) fn choose_actions(
                             *item_kind,
                             goal.delivery_mode().unwrap(),
                             goal.purpose(),
-                            unit_tile_pos,
+                            unit_pos,
                             facing,
                             goal,
                             &input_inventory_query,
@@ -161,7 +160,7 @@ pub(super) fn choose_actions(
                         } else {
                             CurrentAction::abandon(
                                 previous_action,
-                                unit_tile_pos,
+                                unit_pos,
                                 unit_inventory,
                                 &map_geometry,
                                 &item_manifest,
@@ -178,7 +177,7 @@ pub(super) fn choose_actions(
                             *item_kind,
                             DeliveryMode::PickUp,
                             Purpose::Instrumental,
-                            unit_tile_pos,
+                            unit_pos,
                             facing,
                             goal,
                             &input_inventory_query,
@@ -196,7 +195,7 @@ pub(super) fn choose_actions(
                 }
                 Goal::Work(structure_id) => CurrentAction::find_workplace(
                     *structure_id,
-                    unit_tile_pos,
+                    unit_pos,
                     facing,
                     &workplace_query,
                     &signals,
@@ -208,7 +207,7 @@ pub(super) fn choose_actions(
                 ),
                 Goal::Demolish(structure_id) => CurrentAction::find_demolition_site(
                     *structure_id,
-                    unit_tile_pos,
+                    unit_pos,
                     facing,
                     &demolition_query,
                     &signals,
@@ -220,7 +219,7 @@ pub(super) fn choose_actions(
                 ),
                 Goal::Avoid(unit_id) => CurrentAction::avoid(
                     *unit_id,
-                    unit_tile_pos,
+                    unit_pos,
                     facing,
                     &signals,
                     &item_manifest,
@@ -229,7 +228,7 @@ pub(super) fn choose_actions(
                     &map_geometry,
                 ),
                 Goal::Breathe => CurrentAction::find_oxygen(
-                    unit_tile_pos,
+                    unit_pos,
                     facing,
                     &water_depth_query,
                     &terrain_query,
@@ -493,7 +492,8 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::Abandon => {
-                    let terrain_entity = map_geometry.get_terrain(*unit.voxel_pos).unwrap();
+                    // FIXME: litter shouldn't be stored on the terrain entity
+                    let terrain_entity = map_geometry.get_terrain(unit.voxel_pos.hex()).unwrap();
 
                     let (_input, _output, _storage, litter) =
                         inventory_query.get_mut(terrain_entity).unwrap();
@@ -714,7 +714,7 @@ impl CurrentAction {
         item_kind: ItemKind,
         delivery_mode: DeliveryMode,
         purpose: Purpose,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         facing: &Facing,
         goal: &Goal,
         input_inventory_query: &Query<&InputInventory, Without<MarkedForDemolition>>,
@@ -736,7 +736,7 @@ impl CurrentAction {
             return CurrentAction::idle();
         }
 
-        for maybe_tile_pos in map_geometry.reachable_neighbors(unit_tile_pos) {
+        for maybe_tile_pos in map_geometry.reachable_neighbors(unit_pos) {
             let &Some(voxel_pos) = maybe_tile_pos else {
                 continue;
             };
@@ -808,17 +808,16 @@ impl CurrentAction {
         if let Some((entity, voxel_pos)) = candidates.choose(rng) {
             match delivery_mode {
                 DeliveryMode::PickUp => {
-                    CurrentAction::pickup(item_kind, *entity, facing, unit_tile_pos, *voxel_pos)
+                    CurrentAction::pickup(item_kind, *entity, facing, unit_pos, *voxel_pos)
                 }
                 DeliveryMode::DropOff => {
-                    CurrentAction::dropoff(item_kind, *entity, facing, unit_tile_pos, *voxel_pos)
+                    CurrentAction::dropoff(item_kind, *entity, facing, unit_pos, *voxel_pos)
                 }
             }
-        } else if let Some(upstream) =
-            signals.upstream(unit_tile_pos, goal, item_manifest, map_geometry)
+        } else if let Some(upstream) = signals.upstream(unit_pos, goal, item_manifest, map_geometry)
         {
             CurrentAction::move_or_spin(
-                unit_tile_pos,
+                unit_pos,
                 upstream,
                 facing,
                 terrain_query,
@@ -833,7 +832,7 @@ impl CurrentAction {
     /// Attempt to find something that matches `workplace_id` to perform work
     fn find_workplace(
         workplace_id: WorkplaceId,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         facing: &Facing,
         workplace_query: &WorkplaceQuery,
         signals: &Signals,
@@ -843,27 +842,27 @@ impl CurrentAction {
         item_manifest: &ItemManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let ahead = unit_tile_pos.neighbor(facing.direction);
+        let ahead = unit_pos.neighbor(facing.direction);
         if let Some(workplace) =
-            workplace_query.needs_work(unit_tile_pos, ahead, workplace_id, map_geometry)
+            workplace_query.needs_work(unit_pos, ahead, workplace_id, map_geometry)
         {
             CurrentAction::work(workplace)
         // Let units work even if they're standing on the structure
         // This is particularly relevant in the case of ghosts, where it's easy enough to end up on top of the structure trying to work on it
         } else if let Some(workplace) =
-            workplace_query.needs_work(unit_tile_pos, unit_tile_pos, workplace_id, map_geometry)
+            workplace_query.needs_work(unit_pos, unit_pos, workplace_id, map_geometry)
         {
             CurrentAction::work(workplace)
         } else {
             let mut workplaces: Vec<(Entity, VoxelPos)> = Vec::new();
 
-            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_pos) {
                 let &Some(neighbor) = maybe_neighbor else {
                     continue;
                 };
 
                 if let Some(workplace) =
-                    workplace_query.needs_work(unit_tile_pos, neighbor, workplace_id, map_geometry)
+                    workplace_query.needs_work(unit_pos, neighbor, workplace_id, map_geometry)
                 {
                     workplaces.push((workplace, neighbor));
                 }
@@ -871,7 +870,7 @@ impl CurrentAction {
 
             if let Some(chosen_workplace) = workplaces.choose(rng) {
                 CurrentAction::move_or_spin(
-                    unit_tile_pos,
+                    unit_pos,
                     chosen_workplace.1,
                     facing,
                     terrain_query,
@@ -879,13 +878,13 @@ impl CurrentAction {
                     map_geometry,
                 )
             } else if let Some(upstream) = signals.upstream(
-                unit_tile_pos,
+                unit_pos,
                 &Goal::Work(workplace_id),
                 item_manifest,
                 map_geometry,
             ) {
                 CurrentAction::move_or_spin(
-                    unit_tile_pos,
+                    unit_pos,
                     upstream,
                     facing,
                     terrain_query,
@@ -901,7 +900,7 @@ impl CurrentAction {
     /// Attempt to find a structure of type `structure_id` to perform work
     fn find_demolition_site(
         structure_id: Id<Structure>,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         facing: &Facing,
         demolition_query: &DemolitionQuery,
         signals: &Signals,
@@ -911,28 +910,25 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> CurrentAction {
-        let ahead = unit_tile_pos.neighbor(facing.direction);
+        let ahead = unit_pos.neighbor(facing.direction);
         if let Some(workplace) =
-            demolition_query.needs_demolition(unit_tile_pos, ahead, structure_id, map_geometry)
+            demolition_query.needs_demolition(unit_pos, ahead, structure_id, map_geometry)
         {
             CurrentAction::demolish(workplace)
-        } else if let Some(workplace) = demolition_query.needs_demolition(
-            unit_tile_pos,
-            unit_tile_pos,
-            structure_id,
-            map_geometry,
-        ) {
+        } else if let Some(workplace) =
+            demolition_query.needs_demolition(unit_pos, unit_pos, structure_id, map_geometry)
+        {
             CurrentAction::demolish(workplace)
         } else {
             let mut demo_sites: Vec<(Entity, VoxelPos)> = Vec::new();
 
-            for maybe_neighbor in map_geometry.reachable_neighbors(unit_tile_pos) {
+            for maybe_neighbor in map_geometry.reachable_neighbors(unit_pos) {
                 let &Some(neighbor) = maybe_neighbor else {
                     continue;
                 };
 
                 if let Some(demo_site) = demolition_query.needs_demolition(
-                    unit_tile_pos,
+                    unit_pos,
                     neighbor,
                     structure_id,
                     map_geometry,
@@ -943,7 +939,7 @@ impl CurrentAction {
 
             if let Some(chosen_demo_site) = demo_sites.choose(rng) {
                 CurrentAction::move_or_spin(
-                    unit_tile_pos,
+                    unit_pos,
                     chosen_demo_site.1,
                     facing,
                     terrain_query,
@@ -951,13 +947,13 @@ impl CurrentAction {
                     map_geometry,
                 )
             } else if let Some(upstream) = signals.upstream(
-                unit_tile_pos,
+                unit_pos,
                 &Goal::Demolish(structure_id),
                 item_manifest,
                 map_geometry,
             ) {
                 CurrentAction::move_or_spin(
-                    unit_tile_pos,
+                    unit_pos,
                     upstream,
                     facing,
                     terrain_query,
@@ -1066,18 +1062,18 @@ impl CurrentAction {
 
     /// Attempt to move toward the `target_tile_pos`.
     pub(super) fn move_or_spin(
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         target_tile_pos: VoxelPos,
         facing: &Facing,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let required_direction = unit_tile_pos.main_direction_to(target_tile_pos.hex);
+        let required_direction = unit_pos.hex().main_direction_to(target_tile_pos.hex());
 
         if required_direction == facing.direction {
             CurrentAction::move_forward(
-                unit_tile_pos,
+                unit_pos,
                 facing,
                 map_geometry,
                 terrain_query,
@@ -1098,10 +1094,10 @@ impl CurrentAction {
         item_kind: ItemKind,
         output_entity: Entity,
         facing: &Facing,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         output_tile_pos: VoxelPos,
     ) -> Self {
-        let required_direction = unit_tile_pos.main_direction_to(output_tile_pos.hex);
+        let required_direction = unit_pos.main_direction_to(output_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::new(UnitAction::PickUp {
@@ -1118,10 +1114,10 @@ impl CurrentAction {
         item_kind: ItemKind,
         input_entity: Entity,
         facing: &Facing,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         input_tile_pos: VoxelPos,
     ) -> Self {
-        let required_direction = unit_tile_pos.main_direction_to(input_tile_pos.hex);
+        let required_direction = unit_pos.main_direction_to(input_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::new(UnitAction::DropOff {
@@ -1153,7 +1149,7 @@ impl CurrentAction {
     /// If we cannot, wander around instead.
     pub(super) fn abandon(
         previous_action: UnitAction,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         unit_inventory: &UnitInventory,
         map_geometry: &MapGeometry,
         item_manifest: &ItemManifest,
@@ -1163,7 +1159,8 @@ impl CurrentAction {
         facing: &Facing,
         rng: &mut ThreadRng,
     ) -> Self {
-        let terrain_entity = map_geometry.get_terrain(unit_tile_pos).unwrap();
+        // FIXME: litter should not be stored on the terrain entity
+        let terrain_entity = map_geometry.get_terrain(unit_pos.hex()).unwrap();
         let litter = litter_query.get(terrain_entity).unwrap();
 
         if let Some(item_id) = unit_inventory.held_item {
@@ -1175,7 +1172,7 @@ impl CurrentAction {
 
         CurrentAction::wander(
             previous_action,
-            unit_tile_pos,
+            unit_pos,
             facing,
             map_geometry,
             terrain_query,
@@ -1189,7 +1186,7 @@ impl CurrentAction {
     /// This will alternate between moving forward and spinning.
     pub(super) fn wander(
         previous_action: UnitAction,
-        unit_tile_pos: VoxelPos,
+        unit_pos: VoxelPos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -1198,7 +1195,7 @@ impl CurrentAction {
     ) -> Self {
         match previous_action {
             UnitAction::Spin { .. } => CurrentAction::move_forward(
-                unit_tile_pos,
+                unit_pos,
                 facing,
                 map_geometry,
                 terrain_query,

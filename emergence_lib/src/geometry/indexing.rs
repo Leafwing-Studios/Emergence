@@ -10,7 +10,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, VoxelKind, VoxelObject, VoxelPos, VoxelPos};
+use super::{Facing, Height, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -22,7 +22,7 @@ pub struct MapGeometry {
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
-    terrain_index: HashMap<VoxelPos, Entity>,
+    terrain_index: HashMap<Hex, Entity>,
     /// Tracks which objects are stored in each voxel.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
@@ -36,7 +36,7 @@ pub struct MapGeometry {
     /// The set of tiles that cannot be traversed by units due to litter.
     impassable_litter_tiles: HashSet<VoxelPos>,
     /// The height of the terrain at each tile position.
-    height_index: HashMap<VoxelPos, Height>,
+    height_index: HashMap<Hex, Height>,
     /// The list of all valid neighbors for each tile position.
     valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
@@ -48,8 +48,8 @@ pub struct MapGeometry {
 /// A [`MapGeometry`] index was missing an entry.
 #[derive(Debug, PartialEq)]
 pub struct IndexError {
-    /// The tile position that was missing.
-    pub voxel_pos: VoxelPos,
+    /// The hex where the data was missing.
+    pub hex: Hex,
 }
 
 impl MapGeometry {
@@ -58,25 +58,26 @@ impl MapGeometry {
     /// All indexes will be empty.
     pub fn new(radius: u32) -> Self {
         let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
-        let tiles: Vec<VoxelPos> = hexes.iter().map(|hex| VoxelPos { hex: *hex }).collect();
+        let tiles: Vec<VoxelPos> = hexes
+            .iter()
+            .map(|hex| VoxelPos::new(*hex, Height::MIN))
+            .collect();
 
         // We can start with the minimum height everywhere as no entities need to be spawned.
         let height_index = tiles
             .iter()
-            .map(|voxel_pos| (*voxel_pos, Height::MIN))
+            .map(|voxel_pos| (voxel_pos.hex(), Height::MIN))
             .collect();
 
         let reachable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]> = hexes
             .iter()
             .map(|hex| {
-                let voxel_pos = VoxelPos { hex: *hex };
+                let voxel_pos = VoxelPos::new(*hex, Height::MIN);
                 let mut neighbors = [None; 6];
 
                 for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
                     if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                        neighbors[i] = Some(VoxelPos {
-                            hex: neighboring_hex,
-                        })
+                        neighbors[i] = Some(VoxelPos::new(neighboring_hex, Height::MIN))
                     }
                 }
 
@@ -89,13 +90,11 @@ impl MapGeometry {
 
         // Define valid neighbors for ocean tiles
         for hex in Hex::ZERO.ring(radius + 1) {
-            let voxel_pos = VoxelPos { hex };
+            let voxel_pos = VoxelPos::new(hex, Height::MIN);
             let mut neighbors = [None; 6];
             for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
                 if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                    neighbors[i] = Some(VoxelPos {
-                        hex: neighboring_hex,
-                    })
+                    neighbors[i] = Some(VoxelPos::new(neighboring_hex, Height::MIN))
                 }
             }
 
@@ -119,17 +118,11 @@ impl MapGeometry {
         }
     }
 
-    /// Returns the list of valid tile positions.
-    #[inline]
-    pub fn valid_tile_positions(&self) -> impl ExactSizeIterator<Item = VoxelPos> + '_ {
-        hexagon(Hex::ZERO, self.radius).map(|hex| VoxelPos { hex })
-    }
-
-    /// Is the provided `voxel_pos` in the map?
+    /// Is the provided `hex` in the map?
     #[inline]
     #[must_use]
-    pub(crate) fn is_valid(&self, voxel_pos: VoxelPos) -> bool {
-        let distance = Hex::ZERO.distance_to(voxel_pos.hex);
+    pub(crate) fn is_valid(&self, hex: Hex) -> bool {
+        let distance = Hex::ZERO.distance_to(hex);
         distance <= self.radius as i32
     }
 
@@ -179,7 +172,7 @@ impl MapGeometry {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|voxel_pos| self.is_valid(*voxel_pos))
+            .all(|voxel_pos| self.is_valid(voxel_pos.hex()))
     }
 
     /// Is the provided `voxel_pos` passable?
@@ -191,11 +184,11 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(starting_pos) {
+        if !self.is_valid(starting_pos.hex()) {
             return false;
         }
 
-        if !self.is_valid(ending_pos) {
+        if !self.is_valid(ending_pos.hex()) {
             return false;
         }
 
@@ -254,6 +247,7 @@ impl MapGeometry {
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
+    // FIXME: this is the wrong check: we want to check that the terrain can fit the voxels, not that it's flat
     #[inline]
     #[must_use]
     pub(crate) fn is_terrain_flat(
@@ -267,7 +261,7 @@ impl MapGeometry {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|voxel_pos| self.get_height(*voxel_pos) == Ok(height))
+            .all(|voxel_pos| self.get_height(voxel_pos.hex()) == Ok(height))
     }
 
     /// Can the structure with the provided `footprint` be built at the `center` tile?
@@ -319,16 +313,19 @@ impl MapGeometry {
 
     /// Updates the height of the tile at `voxel_pos`
     #[inline]
-    pub fn update_height(&mut self, voxel_pos: VoxelPos, height: Height) {
+    pub fn update_height(&mut self, hex: Hex, height: Height) {
         assert!(
-            self.is_valid(voxel_pos),
+            self.is_valid(hex),
             "Invalid tile position: {:?} with a radius of {:?}",
-            voxel_pos,
+            hex,
             self.radius
         );
         assert!(height >= Height(0.));
-        self.height_index.insert(voxel_pos, height);
+        self.height_index.insert(hex, height);
 
+        let voxel_pos = VoxelPos::new(hex, height);
+
+        // FIXME: this should update the voxel index, which should *then* trigger a recompute of the neighbors
         self.recompute_passable_neighbors(voxel_pos);
         self.recompute_reachable_neighbors(voxel_pos);
     }
@@ -336,10 +333,10 @@ impl MapGeometry {
     /// Returns the height of the tile at `voxel_pos`, if available.
     ///
     /// This should always be [`Ok`] for all valid tiles.
-    pub(crate) fn get_height(&self, voxel_pos: VoxelPos) -> Result<Height, IndexError> {
-        match self.height_index.get(&voxel_pos) {
+    pub(crate) fn get_height(&self, hex: Hex) -> Result<Height, IndexError> {
+        match self.height_index.get(&hex) {
             Some(height) => Ok(*height),
-            None => Err(IndexError { voxel_pos }),
+            None => Err(IndexError { hex }),
         }
     }
 
@@ -347,14 +344,11 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn average_height(&self, voxel_pos: VoxelPos, radius: u32) -> f32 {
-        let hex_iter = hexagon(voxel_pos.hex, radius);
-        let heights = hex_iter
-            .map(|hex| VoxelPos { hex })
-            .filter(|voxel_pos| self.is_valid(*voxel_pos))
-            .map(|voxel_pos| {
-                let height = self.get_height(voxel_pos).unwrap();
-                height.into_world_pos()
-            });
+        let hex_iter = hexagon(voxel_pos.hex(), radius);
+        let heights = hex_iter.filter(|hex| self.is_valid(*hex)).map(|hex| {
+            let height = self.get_height(hex).unwrap();
+            height.into_world_pos()
+        });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
     }
@@ -366,8 +360,9 @@ impl MapGeometry {
         starting_pos: VoxelPos,
         ending_pos: VoxelPos,
     ) -> Result<Height, IndexError> {
-        let starting_height = self.get_height(starting_pos)?;
-        let ending_height = self.get_height(ending_pos)?;
+        // FIXME: this doesn't need self at all!
+        let starting_height = starting_pos.height();
+        let ending_height = ending_pos.height();
         Ok(starting_height.abs_diff(ending_height))
     }
 
@@ -381,12 +376,12 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) {
-        let Ok(target_height) = self.get_height(center) else { return };
+        let Ok(target_height) = self.get_height(center.hex()) else { return };
         for voxel_pos in footprint.normalized(facing, center) {
-            if let Some(entity) = self.get_terrain(voxel_pos) {
+            if let Some(entity) = self.get_terrain(voxel_pos.hex()) {
                 if let Ok(mut height) = height_query.get_mut(entity) {
                     *height = target_height;
-                    self.update_height(voxel_pos, target_height);
+                    self.update_height(voxel_pos.hex(), target_height);
                 }
             }
         }
@@ -428,7 +423,8 @@ impl MapGeometry {
                     entities.push(ghost_terrain_entity)
                 }
 
-                if let Some(&litter_entity) = self.terrain_index.get(&voxel_pos) {
+                if let Some(&litter_entity) = self.terrain_index.get(&voxel_pos.hex()) {
+                    // FIXME: this should not be stored on terrain
                     entities.push(litter_entity)
                 }
             }
@@ -459,14 +455,20 @@ impl MapGeometry {
     /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
     #[must_use]
-    pub(crate) fn get_terrain(&self, voxel_pos: VoxelPos) -> Option<Entity> {
-        self.terrain_index.get(&voxel_pos).copied()
+    pub(crate) fn get_terrain(&self, hex: Hex) -> Option<Entity> {
+        self.terrain_index.get(&hex).copied()
     }
 
     /// Adds the provided `terrain_entity` to the terrain index at the provided `voxel_pos`.
+    ///
+    /// This also updates the height map.
     #[inline]
     pub fn add_terrain(&mut self, voxel_pos: VoxelPos, terrain_entity: Entity) {
-        self.terrain_index.insert(voxel_pos, terrain_entity);
+        let hex = voxel_pos.hex();
+        let height = voxel_pos.height();
+
+        self.terrain_index.insert(hex, terrain_entity);
+        self.height_index.insert(hex, height);
     }
 
     /// Gets the structure [`Entity`] at the provided `voxel_pos`, if any.
@@ -618,13 +620,12 @@ impl MapGeometry {
         }
     }
 
-    /// Returns an iterator over all of the tiles that are ocean tiles.
+    /// Returns an iterator over all of the hex positions that are ocean tiles.
     #[inline]
     #[must_use]
-    pub(crate) fn ocean_tiles(&self) -> impl ExactSizeIterator<Item = VoxelPos> + '_ {
+    pub(crate) fn ocean_tiles(&self) -> impl ExactSizeIterator<Item = Hex> + '_ {
         // Oceans ring the entire map currently
-        let hex_ring = Hex::ZERO.ring(self.radius + 1);
-        hex_ring.map(move |hex| VoxelPos { hex })
+        Hex::ZERO.ring(self.radius + 1)
     }
 
     /// The set of adjacent tiles that are on the map.
@@ -632,6 +633,7 @@ impl MapGeometry {
     /// # Panics
     ///
     /// The provided `voxel_pos` must be a valid tile position.
+    // FIXME: this should return `Hex`
     #[inline]
     #[must_use]
     pub(crate) fn valid_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
@@ -756,7 +758,7 @@ impl MapGeometry {
 
     /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
     fn compute_passability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos) {
+        if !self.is_valid(ending_pos.hex()) {
             return false;
         }
 
@@ -776,8 +778,9 @@ impl MapGeometry {
     }
 
     /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
+    // FIXME: this should be removed
     fn compute_reachability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos) {
+        if !self.is_valid(ending_pos.hex()) {
             return false;
         }
 
@@ -810,7 +813,7 @@ mod tests {
         assert_eq!(n_reachable_neighbors, n);
 
         for hex in hexagon {
-            let voxel_pos = VoxelPos { hex };
+            let voxel_pos = VoxelPos::new(hex, Height::MIN);
             assert!(
                 map_geometry.valid_neighbors.contains_key(&voxel_pos),
                 "{}",
@@ -832,7 +835,7 @@ mod tests {
             assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
             for maybe_neighbor in valid_neighbors {
                 if let Some(neighbor) = maybe_neighbor {
-                    assert!(map_geometry.is_valid(*neighbor), "{}", neighbor);
+                    assert!(map_geometry.is_valid(neighbor.hex()), "{}", neighbor);
 
                     assert!(
                         map_geometry.valid_neighbors.contains_key(neighbor),
@@ -857,7 +860,7 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = VoxelPos::new(0, 0);
+        let center = VoxelPos::new(Hex::ZERO, Height::ZERO);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
@@ -878,7 +881,8 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = VoxelPos::new(3, -2);
+        let hex = Hex { x: 3, y: -2 };
+        let center = VoxelPos::new(hex, Height::ZERO);
         let passable = false;
 
         map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);

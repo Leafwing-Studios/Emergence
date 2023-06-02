@@ -3,6 +3,7 @@
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
+use hexx::Hex;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
@@ -61,36 +62,30 @@ impl SelectedTiles {
     }
 
     /// Computes the center of the selection
-    pub(crate) fn center(&self) -> VoxelPos {
-        VoxelPos {
-            hex: self.selected.iter().map(|voxel_pos| voxel_pos.hex).center(),
-        }
+    pub(crate) fn center(&self) -> Hex {
+        self.selected
+            .iter()
+            .map(|voxel_pos| voxel_pos.hex())
+            .center()
     }
 
     /// Draws a hollow hexagonal ring of tiles.
-    fn draw_ring(center: VoxelPos, radius: u32) -> HashSet<VoxelPos> {
-        let hex_coord = center.ring(radius);
-        HashSet::from_iter(hex_coord.into_iter().map(|hex| VoxelPos { hex }))
+    fn draw_ring(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
+        center.hex().ring(radius)
     }
 
     /// Draws a hexagon of tiles.
-    fn draw_hexagon(center: VoxelPos, radius: u32) -> HashSet<VoxelPos> {
-        let hex_coord = hexagon(center.hex, radius);
-        HashSet::from_iter(hex_coord.map(|hex| VoxelPos { hex }))
+    fn draw_hexagon(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
+        hexagon(center.hex(), radius)
     }
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
-    fn draw_line(start: VoxelPos, end: VoxelPos, radius: u32) -> HashSet<VoxelPos> {
-        let line = start.line_to(end.hex);
-        let mut tiles = HashSet::<VoxelPos>::new();
-
-        for line_hex in line {
-            let hexagon = hexagon(line_hex, radius);
-            for hex in hexagon {
-                tiles.insert(VoxelPos { hex });
-            }
-        }
-        tiles
+    fn draw_line(
+        start: VoxelPos,
+        end: VoxelPos,
+        radius: u32,
+    ) -> impl ExactSizeIterator<Item = Hex> {
+        start.hex().line_to(end.hex())
     }
 
     /// Clears the set of selected tiles.
@@ -175,7 +170,7 @@ impl SelectedTiles {
     pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
         self.selection()
             .iter()
-            .flat_map(|voxel_pos| map_geometry.get_terrain(*voxel_pos))
+            .flat_map(|voxel_pos| map_geometry.get_terrain(voxel_pos.hex()))
             .collect()
     }
 }
@@ -558,7 +553,7 @@ impl SelectionState {
             } else {
                 hovered_tile
             };
-            let radius = hovered_tile.unsigned_distance_to(center.hex);
+            let radius = hovered_tile.hex().unsigned_distance_to(center.hex());
 
             SelectionShape::Area { center, radius }
         } else {
@@ -752,11 +747,11 @@ mod tests {
     fn multi_select() {
         let mut selected_tiles = SelectedTiles::default();
 
-        selected_tiles.add_tile(VoxelPos::new(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
         // Intentionally doubled
-        selected_tiles.add_tile(VoxelPos::new(1, 1));
-        selected_tiles.add_tile(VoxelPos::new(2, 2));
-        selected_tiles.add_tile(VoxelPos::new(3, 3));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
+        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
     }
@@ -764,9 +759,9 @@ mod tests {
     #[test]
     fn clear_selection() {
         let mut selected_tiles = SelectedTiles::default();
-        selected_tiles.add_tile(VoxelPos::new(1, 1));
-        selected_tiles.add_tile(VoxelPos::new(2, 2));
-        selected_tiles.add_tile(VoxelPos::new(3, 3));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
+        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
         selected_tiles.clear_selection();
@@ -775,7 +770,7 @@ mod tests {
 
     #[test]
     fn relevant_tiles_returns_cursor_pos_with_empty_selection() {
-        let cursor_pos = CursorPos::new(VoxelPos::new(24, 7));
+        let cursor_pos = CursorPos::new(VoxelPos::from_xy(24, 7));
         let mut cursor_pos_selected = SelectedTiles::default();
         cursor_pos_selected.add_tile(cursor_pos.maybe_tile_pos().unwrap());
 

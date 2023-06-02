@@ -3,7 +3,6 @@
 //! In Emergence, this allows organisms to spread to nearby tiles without seeds.
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
-use rand::prelude::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 

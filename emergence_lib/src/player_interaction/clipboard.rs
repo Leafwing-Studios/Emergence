@@ -8,7 +8,7 @@ use crate::{
     asset_management::manifest::Id,
     construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::recipe::ActiveRecipe,
-    geometry::{Facing, MapGeometry, VoxelPos},
+    geometry::{Facing, Height, MapGeometry, VoxelPos},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 
@@ -111,9 +111,10 @@ impl Tool {
     /// Each axis is computed independently.
     fn normalize_positions(&mut self) {
         if let Tool::Structures(map) = self {
-            let center = VoxelPos {
-                hex: map.keys().map(|voxel_pos| voxel_pos.hex).center(),
-            };
+            let center_hex = map.keys().map(|voxel_pos| voxel_pos.hex()).center();
+
+            // FIXME: it's unclear if this height is correct
+            let center = VoxelPos::new(center_hex, Height::ZERO);
 
             let mut new_map = HashMap::with_capacity(map.capacity());
 
@@ -150,13 +151,13 @@ impl Tool {
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
                     item.facing.rotate_clockwise();
-                    original_pos.clockwise()
+                    original_pos.hex().clockwise()
                 } else {
                     item.facing.rotate_counterclockwise();
-                    original_pos.counter_clockwise()
+                    original_pos.hex().counter_clockwise()
                 };
 
-                new_map.insert(VoxelPos { hex: new_pos }, item.clone());
+                new_map.insert(VoxelPos::new(new_pos, Height::ZERO), item.clone());
             }
 
             *map = new_map;

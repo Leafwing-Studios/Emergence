@@ -110,7 +110,7 @@ impl Footprint {
     pub fn hexagon(radius: u32) -> Self {
         let mut set = HashSet::new();
         for hex in hexagon(Hex::ZERO, radius) {
-            set.insert(VoxelPos { hex });
+            set.insert(VoxelPos::new(hex, Height::ZERO));
         }
 
         Footprint { set }
@@ -151,7 +151,7 @@ impl Footprint {
     ) -> Option<Height> {
         self.normalized(facing, center)
             .iter()
-            .map(|&voxel_pos| map_geometry.get_height(voxel_pos).unwrap_or_default())
+            .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex()).unwrap_or_default())
             .reduce(|a, b| a.max(b))
     }
 
@@ -194,7 +194,7 @@ mod tests {
     fn two_tile_footprint() -> Footprint {
         let mut set = HashSet::new();
         set.insert(VoxelPos::ZERO);
-        set.insert(VoxelPos::new(1, 0));
+        set.insert(VoxelPos::from_xy(1, 0));
 
         Footprint { set }
     }
@@ -204,12 +204,12 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let expected = HashSet::from_iter(vec![
             VoxelPos::ZERO,
-            VoxelPos::new(0, 1),
-            VoxelPos::new(1, 0),
-            VoxelPos::new(1, -1),
-            VoxelPos::new(0, -1),
-            VoxelPos::new(-1, 0),
-            VoxelPos::new(-1, 1),
+            VoxelPos::from_xy(0, 1),
+            VoxelPos::from_xy(1, 0),
+            VoxelPos::from_xy(1, -1),
+            VoxelPos::from_xy(0, -1),
+            VoxelPos::from_xy(-1, 0),
+            VoxelPos::from_xy(-1, 1),
         ]);
 
         assert_eq!(footprint.set, expected);
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn footprint_in_world_space_is_correct_at_origin() {
         let footprint = two_tile_footprint();
-        let expected = HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(1, 0)]);
+        let expected = HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(1, 0)]);
 
         assert_eq!(footprint.in_world_space(VoxelPos::ZERO), expected);
     }
@@ -227,11 +227,11 @@ mod tests {
     fn footprint_in_world_space_is_correct_at_non_origin() {
         let footprint = two_tile_footprint();
 
-        let expected = HashSet::from_iter(vec![VoxelPos::new(1, 0), VoxelPos::new(2, 0)]);
-        assert_eq!(footprint.in_world_space(VoxelPos::new(1, 0)), expected);
+        let expected = HashSet::from_iter(vec![VoxelPos::from_xy(1, 0), VoxelPos::from_xy(2, 0)]);
+        assert_eq!(footprint.in_world_space(VoxelPos::from_xy(1, 0)), expected);
 
-        let expected = HashSet::from_iter(vec![VoxelPos::new(0, 1), VoxelPos::new(1, 1)]);
-        assert_eq!(footprint.in_world_space(VoxelPos::new(0, 1)), expected);
+        let expected = HashSet::from_iter(vec![VoxelPos::from_xy(0, 1), VoxelPos::from_xy(1, 1)]);
+        assert_eq!(footprint.in_world_space(VoxelPos::from_xy(0, 1)), expected);
     }
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
     fn footprint_rotated_by_60_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(0, 1)]),
+            set: HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(0, 1)]),
         };
 
         let mut facing = Facing::default();
@@ -266,7 +266,7 @@ mod tests {
     fn footprint_rotated_by_120_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(-1, 1)]),
+            set: HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(-1, 1)]),
         };
 
         let mut facing = Facing::default();
@@ -288,7 +288,7 @@ mod tests {
     fn footprint_rotated_by_180_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(-1, 0)]),
+            set: HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(-1, 0)]),
         };
 
         let mut facing = Facing::default();
@@ -310,7 +310,7 @@ mod tests {
     fn footprint_rotated_by_240_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(0, -1)]),
+            set: HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(0, -1)]),
         };
 
         let mut facing = Facing::default();
@@ -332,7 +332,7 @@ mod tests {
     fn footprint_rotated_by_300_is_correct() {
         let footprint = two_tile_footprint();
         let expected = Footprint {
-            set: HashSet::from_iter(vec![VoxelPos::new(0, 0), VoxelPos::new(1, -1)]),
+            set: HashSet::from_iter(vec![VoxelPos::from_xy(0, 0), VoxelPos::from_xy(1, -1)]),
         };
 
         let mut facing = Facing::default();

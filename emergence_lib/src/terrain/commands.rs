@@ -185,7 +185,7 @@ impl Command for SpawnTerrainGhostCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.voxel_pos) {
+        if !map_geometry.is_valid(self.voxel_pos.hex()) {
             return;
         }
 
@@ -323,7 +323,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(self.voxel_pos, *height);
+        map_geometry.update_height(self.voxel_pos.hex(), *height);
         *zoning = Zoning::None;
     }
 }

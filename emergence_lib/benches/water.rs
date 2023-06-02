@@ -23,7 +23,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         .collect::<Vec<VoxelPos>>()
     {
         // Make sure we cover a range of heights
-        let height = Height(voxel_pos.x.max(0) as f32);
+        let height = Height(voxel_pos.hex().x.max(0) as f32);
         let water_volume = WaterVolume::new(Volume(20.));
 
         let terrain_entity = app

@@ -88,7 +88,9 @@ fn render_water(
     }
 
     if water_config.enable_oceans {
-        for voxel_pos in map_geometry.ocean_tiles() {
+        for hex in map_geometry.ocean_tiles() {
+            let voxel_pos = VoxelPos::new(hex, Height::MIN);
+
             commands
                 .spawn(PbrBundle {
                     mesh: water_handles.mesh.clone_weak(),
