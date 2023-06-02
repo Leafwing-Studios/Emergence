@@ -321,12 +321,28 @@ impl Command for SpawnStructureGhostCommand {
 
         let mut existing_ghosts: Vec<Entity> = Vec::new();
         for voxel_pos in footprint.normalized(facing, self.center) {
-            if let Some(ghost_entity) = map_geometry.remove_ghost_structure(voxel_pos) {
+            if let Some(ghost_entity) = map_geometry.get_ghost_structure(voxel_pos) {
                 existing_ghosts.push(ghost_entity);
             }
         }
 
         for ghost_entity in existing_ghosts {
+            let facing = world.entity(ghost_entity).get::<Facing>().unwrap().clone();
+            let center = world
+                .entity(ghost_entity)
+                .get::<VoxelPos>()
+                .unwrap()
+                .clone();
+            let structure_id = world
+                .entity(ghost_entity)
+                .get::<Id<Structure>>()
+                .unwrap()
+                .clone();
+
+            let structure_manifest = world.resource::<StructureManifest>();
+            let footprint = structure_manifest.construction_footprint(structure_id);
+
+            map_geometry.remove_ghost_structure(center, &footprint, facing);
             world.entity_mut(ghost_entity).despawn_recursive();
         }
 
@@ -379,15 +395,25 @@ struct DespawnGhostCommand {
 
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost_structure(self.voxel_pos);
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        let Some(ghost_entity) = map_geometry.get_ghost_structure(self.voxel_pos) else { return; };
 
-        // Check that there's something there to despawn
-        if maybe_entity.is_none() {
-            return;
-        }
+        let facing = world.entity(ghost_entity).get::<Facing>().unwrap().clone();
+        let center = world
+            .entity(ghost_entity)
+            .get::<VoxelPos>()
+            .unwrap()
+            .clone();
+        let structure_id = world
+            .entity(ghost_entity)
+            .get::<Id<Structure>>()
+            .unwrap()
+            .clone();
 
-        let ghost_entity = maybe_entity.unwrap();
+        let structure_manifest = world.resource::<StructureManifest>();
+        let footprint = structure_manifest.construction_footprint(structure_id);
+
+        map_geometry.remove_ghost_structure(center, &footprint, facing);
         // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
         world.entity_mut(ghost_entity).despawn_recursive();
     }

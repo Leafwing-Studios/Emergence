@@ -25,8 +25,6 @@ pub struct MapGeometry {
     terrain_index: HashMap<Hex, Entity>,
     /// Tracks which objects are stored in each voxel.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
-    /// Which [`Ghost`](crate::construction::ghosts::Ghost) structure entity is stored at each tile position
-    ghost_structure_index: HashMap<VoxelPos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
     ghost_terrain_index: HashMap<VoxelPos, Entity>,
     /// The set of tiles that cannot be traversed by units due to structures.
@@ -104,7 +102,6 @@ impl MapGeometry {
             radius,
             terrain_index: HashMap::default(),
             voxel_index: HashMap::default(),
-            ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
             impassable_structure_tiles: HashSet::default(),
             impassable_litter_tiles: HashSet::default(),
@@ -525,10 +522,14 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn get_ghost_structure(&self, voxel_pos: VoxelPos) -> Option<Entity> {
-        self.ghost_structure_index.get(&voxel_pos).copied()
+        let voxel_data = self.get_voxel(voxel_pos)?;
+        match voxel_data.object_kind {
+            VoxelKind::GhostStructure => Some(voxel_data.entity),
+            _ => None,
+        }
     }
 
-    /// Adds the provided `ghost_structure_entity` to the ghost structure index at the provided `center`.
+    /// Adds the provided `ghost_structure_entity` to the voxel index at the provided `center`.
     #[inline]
     pub(crate) fn add_ghost_structure(
         &mut self,
@@ -538,26 +539,35 @@ impl MapGeometry {
         ghost_structure_entity: Entity,
     ) {
         for voxel_pos in footprint.normalized(facing, center) {
-            self.ghost_structure_index
-                .insert(voxel_pos, ghost_structure_entity);
+            let voxel_data = VoxelObject {
+                entity: ghost_structure_entity,
+                object_kind: VoxelKind::GhostStructure,
+            };
+
+            self.voxel_index.insert(voxel_pos, voxel_data);
         }
     }
 
-    /// Removes any ghost structure entity found at the provided `voxel_pos` from the ghost structure index.
+    /// Removes any ghost structure entity found at the provided `voxel_pos` from the voxel index.
     ///
     /// Returns the removed entity, if any.
     #[inline]
-    pub(crate) fn remove_ghost_structure(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let removed = self.ghost_structure_index.remove(&voxel_pos);
+    pub(crate) fn remove_ghost_structure(
+        &mut self,
+        center: VoxelPos,
+        footprint: &Footprint,
+        facing: Facing,
+    ) -> Option<Entity> {
+        let mut removed = None;
 
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.ghost_structure_index
-                .retain(|_k, v| *v != removed_entity);
-        };
+        for voxel_pos in footprint.normalized(facing, center) {
+            removed = self.voxel_index.remove(&voxel_pos);
 
-        removed
+            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_reachable_neighbors(voxel_pos);
+        }
+
+        removed.map(|data| data.entity)
     }
 
     /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `voxel_pos`.
