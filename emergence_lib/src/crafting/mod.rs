@@ -183,7 +183,7 @@ fn progress_crafting(
                 let mut updated_progress = progress;
                 if let Some(recipe_id) = crafter.active_recipe.recipe_id() {
                     let recipe = recipe_manifest.get(*recipe_id);
-                    let terrain_entity = map_geometry.get_terrain(crafter.voxel_pos.hex()).unwrap();
+                    let terrain_entity = map_geometry.get_terrain(crafter.voxel_pos.hex).unwrap();
 
                     let received_light = terrain_query.get(terrain_entity).unwrap();
 

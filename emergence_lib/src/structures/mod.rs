@@ -151,7 +151,7 @@ impl Footprint {
     ) -> Option<Height> {
         self.normalized(facing, center)
             .iter()
-            .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex()).unwrap_or_default())
+            .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex).unwrap_or_default())
             .reduce(|a, b| a.max(b))
     }
 

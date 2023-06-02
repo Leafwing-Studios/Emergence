@@ -197,47 +197,38 @@ impl Div<f32> for Height {
 /// A voxel position in the game world.
 #[derive(Component, Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct VoxelPos {
-    /// Corresponds to the x coordinate of the [`VoxelPos`]
-    x: i32,
-    /// Corresponds to the y coordinate of the [`VoxelPos`]
-    y: i32,
+    /// The discretized x and z coordinates of the voxel
+    pub hex: Hex,
     /// The discretized [`Height`] of the voxel.
-    height: i32,
+    pub height: i32,
 }
 
 impl Display for VoxelPos {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "({}, {}, {})", self.x, self.y, self.height)
+        write!(f, "({}, {}, {})", self.hex.x, self.hex.y, self.height)
     }
 }
 
 impl VoxelPos {
     /// The [`VoxelPos`] of the origin.
     pub const ZERO: Self = Self {
-        x: 0,
-        y: 0,
+        hex: Hex::ZERO,
         height: 0,
     };
 
     /// Create a new [`VoxelPos`] from a [`Hex`] and a [`Height`].
     pub fn new(hex: Hex, height: Height) -> Self {
         Self {
-            x: hex.x,
-            y: hex.y,
+            hex,
             height: height.0.round() as i32,
         }
     }
 
     /// Creates a new [`VoxelPos`] from x and y coordinates with [`Height::ZERO`].
     pub fn from_xy(x: i32, y: i32) -> Self {
-        Self { x, y, height: 0 }
-    }
-
-    /// Get the [`Hex`] corresponding to this [`VoxelPos`].
-    pub fn hex(&self) -> Hex {
-        Hex {
-            x: self.x,
-            y: self.y,
+        Self {
+            hex: Hex { x, y },
+            height: 0,
         }
     }
 
@@ -249,8 +240,7 @@ impl VoxelPos {
     /// Gets the voxel position of the voxel above this one.
     pub fn above(&self) -> Self {
         Self {
-            x: self.x,
-            y: self.y,
+            hex: self.hex,
             height: self.height + 1,
         }
     }
@@ -258,15 +248,14 @@ impl VoxelPos {
     /// Gets the voxel position of the voxel below this one.
     pub fn below(&self) -> Self {
         Self {
-            x: self.x,
-            y: self.y,
+            hex: self.hex,
             height: self.height - 1,
         }
     }
 
     /// Returns the transform-space position of the top-center of this voxel.
     pub fn into_world_pos(&self, map_geometry: &MapGeometry) -> Vec3 {
-        let xz = map_geometry.layout.hex_to_world_pos(self.hex());
+        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos();
 
         Vec3 {
@@ -278,7 +267,7 @@ impl VoxelPos {
 
     /// Returns the transform-space position of the terrain topper on top of this voxel.
     pub fn top_of_tile(&self, map_geometry: &MapGeometry) -> Vec3 {
-        let xz = map_geometry.layout.hex_to_world_pos(self.hex());
+        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos() + Height::TOPPER_THICKNESS;
 
         Vec3 {
@@ -307,7 +296,7 @@ impl VoxelPos {
     #[inline]
     #[must_use]
     pub(crate) fn neighbor(&self, direction: Direction) -> Self {
-        let hex = self.hex().neighbor(direction);
+        let hex = self.hex.neighbor(direction);
 
         VoxelPos::new(hex, self.height())
     }
@@ -320,7 +309,7 @@ impl VoxelPos {
     #[inline]
     #[must_use]
     pub(crate) fn all_neighbors(&self) -> [VoxelPos; 6] {
-        self.hex()
+        self.hex
             .all_neighbors()
             .map(|hex| VoxelPos::new(hex, self.height()))
     }
@@ -332,7 +321,7 @@ impl VoxelPos {
         let n_rotations = facing.rotation_count();
         // This must rotate counter-clockwise,
         // as we are rotating the tile around the origin.
-        let hex = self.hex().rotate_ccw(n_rotations);
+        let hex = self.hex.rotate_ccw(n_rotations);
 
         VoxelPos::new(hex, self.height())
     }

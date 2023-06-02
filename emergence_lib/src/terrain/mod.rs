@@ -106,7 +106,7 @@ impl TerrainBundle {
             ..Default::default()
         };
 
-        let height = map_geometry.get_height(voxel_pos.hex()).unwrap();
+        let height = map_geometry.get_height(voxel_pos.hex).unwrap();
         let terrain_data = terrain_manifest.get(terrain_id);
 
         TerrainBundle {
@@ -142,7 +142,7 @@ fn respond_to_height_changes(
 ) {
     for (height, &voxel_pos, mut transform, children) in terrain_query.iter_mut() {
         if height.is_changed() {
-            map_geometry.update_height(voxel_pos.hex(), voxel_pos.height());
+            map_geometry.update_height(voxel_pos.hex, voxel_pos.height());
             transform.translation.y = height.into_world_pos();
             // During terrain initialization we ensure that the column is always the 0th child
             let column_child = children[0];

@@ -63,20 +63,17 @@ impl SelectedTiles {
 
     /// Computes the center of the selection
     pub(crate) fn center(&self) -> Hex {
-        self.selected
-            .iter()
-            .map(|voxel_pos| voxel_pos.hex())
-            .center()
+        self.selected.iter().map(|voxel_pos| voxel_pos.hex).center()
     }
 
     /// Draws a hollow hexagonal ring of tiles.
     fn draw_ring(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
-        center.hex().ring(radius)
+        center.hex.ring(radius)
     }
 
     /// Draws a hexagon of tiles.
     fn draw_hexagon(center: VoxelPos, radius: u32) -> impl ExactSizeIterator<Item = Hex> {
-        hexagon(center.hex(), radius)
+        hexagon(center.hex, radius)
     }
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
@@ -85,7 +82,7 @@ impl SelectedTiles {
         end: VoxelPos,
         radius: u32,
     ) -> impl ExactSizeIterator<Item = Hex> {
-        start.hex().line_to(end.hex())
+        start.hex.line_to(end.hex)
     }
 
     /// Clears the set of selected tiles.
@@ -170,7 +167,7 @@ impl SelectedTiles {
     pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
         self.selection()
             .iter()
-            .flat_map(|voxel_pos| map_geometry.get_terrain(voxel_pos.hex()))
+            .flat_map(|voxel_pos| map_geometry.get_terrain(voxel_pos.hex))
             .collect()
     }
 }
@@ -553,7 +550,7 @@ impl SelectionState {
             } else {
                 hovered_tile
             };
-            let radius = hovered_tile.hex().unsigned_distance_to(center.hex());
+            let radius = hovered_tile.hex.unsigned_distance_to(center.hex);
 
             SelectionShape::Area { center, radius }
         } else {

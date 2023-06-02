@@ -357,7 +357,7 @@ fn get_details(
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(voxel_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 let maybe_terraforming_details = if let Some(ghost_terrain_entity) =

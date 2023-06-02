@@ -23,7 +23,7 @@ pub(super) fn produce_water_from_emitters(
     let elapsed_time = fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day();
 
     for (water_emitter, &voxel_pos) in query.iter() {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let (mut water_volume, water_depth) = terrain_query.get_mut(terrain_entity).unwrap();
 
         // Use a seperate scaling factor for the water production rate,

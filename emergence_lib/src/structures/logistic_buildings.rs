@@ -50,7 +50,7 @@ fn release_items(
     for (structure_pos, structure_facing, mut input_inventory) in structure_query.iter_mut() {
         let voxel_pos = structure_pos.neighbor(structure_facing.direction);
 
-        let litter_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
         let cloned_inventory = input_inventory.clone();
@@ -90,7 +90,7 @@ fn absorb_items(
             continue;
         }
 
-        let litter_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
         let on_ground = litter.on_ground.clone();
@@ -108,7 +108,7 @@ fn absorb_items(
 
         // Only absorb floating items if the structure is tall enough.
         let structure_data = structure_manifest.get(structure_id);
-        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
         if structure_data.height > water_depth.surface_water_depth() {

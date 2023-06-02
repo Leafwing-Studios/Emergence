@@ -66,7 +66,7 @@ impl MapGeometry {
         // We can start with the minimum height everywhere as no entities need to be spawned.
         let height_index = tiles
             .iter()
-            .map(|voxel_pos| (voxel_pos.hex(), Height::MIN))
+            .map(|voxel_pos| (voxel_pos.hex, Height::MIN))
             .collect();
 
         let reachable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]> = hexes
@@ -179,7 +179,7 @@ impl MapGeometry {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|voxel_pos| self.is_valid(voxel_pos.hex()))
+            .all(|voxel_pos| self.is_valid(voxel_pos.hex))
     }
 
     /// Is the provided `voxel_pos` passable?
@@ -191,11 +191,11 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn is_passable(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(starting_pos.hex()) {
+        if !self.is_valid(starting_pos.hex) {
             return false;
         }
 
-        if !self.is_valid(ending_pos.hex()) {
+        if !self.is_valid(ending_pos.hex) {
             return false;
         }
 
@@ -268,7 +268,7 @@ impl MapGeometry {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|voxel_pos| self.get_height(voxel_pos.hex()) == Ok(height))
+            .all(|voxel_pos| self.get_height(voxel_pos.hex) == Ok(height))
     }
 
     /// Can the structure with the provided `footprint` be built at the `center` tile?
@@ -351,7 +351,7 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn average_height(&self, voxel_pos: VoxelPos, radius: u32) -> f32 {
-        let hex_iter = hexagon(voxel_pos.hex(), radius);
+        let hex_iter = hexagon(voxel_pos.hex, radius);
         let heights = hex_iter.filter(|hex| self.is_valid(*hex)).map(|hex| {
             let height = self.get_height(hex).unwrap();
             height.into_world_pos()
@@ -383,12 +383,12 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) {
-        let Ok(target_height) = self.get_height(center.hex()) else { return };
+        let Ok(target_height) = self.get_height(center.hex) else { return };
         for voxel_pos in footprint.normalized(facing, center) {
-            if let Some(entity) = self.get_terrain(voxel_pos.hex()) {
+            if let Some(entity) = self.get_terrain(voxel_pos.hex) {
                 if let Ok(mut height) = height_query.get_mut(entity) {
                     *height = target_height;
-                    self.update_height(voxel_pos.hex(), target_height);
+                    self.update_height(voxel_pos.hex, target_height);
                 }
             }
         }
@@ -430,7 +430,7 @@ impl MapGeometry {
                     entities.push(ghost_terrain_entity)
                 }
 
-                if let Some(&litter_entity) = self.terrain_index.get(&voxel_pos.hex()) {
+                if let Some(&litter_entity) = self.terrain_index.get(&voxel_pos.hex) {
                     // FIXME: this should not be stored on terrain
                     entities.push(litter_entity)
                 }
@@ -471,7 +471,7 @@ impl MapGeometry {
     /// This also updates the height map.
     #[inline]
     pub fn add_terrain(&mut self, voxel_pos: VoxelPos, terrain_entity: Entity) {
-        let hex = voxel_pos.hex();
+        let hex = voxel_pos.hex;
         let height = voxel_pos.height();
 
         self.terrain_index.insert(hex, terrain_entity);
@@ -765,7 +765,7 @@ impl MapGeometry {
 
     /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
     fn compute_passability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos.hex()) {
+        if !self.is_valid(ending_pos.hex) {
             return false;
         }
 
@@ -787,7 +787,7 @@ impl MapGeometry {
     /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
     // FIXME: this should be removed
     fn compute_reachability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos.hex()) {
+        if !self.is_valid(ending_pos.hex) {
             return false;
         }
 
@@ -842,7 +842,7 @@ mod tests {
             assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
             for maybe_neighbor in valid_neighbors {
                 if let Some(neighbor) = maybe_neighbor {
-                    assert!(map_geometry.is_valid(neighbor.hex()), "{}", neighbor);
+                    assert!(map_geometry.is_valid(neighbor.hex), "{}", neighbor);
 
                     assert!(
                         map_geometry.valid_neighbors.contains_key(neighbor),

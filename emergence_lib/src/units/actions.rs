@@ -493,7 +493,7 @@ pub(super) fn finish_actions(
                 }
                 UnitAction::Abandon => {
                     // FIXME: litter shouldn't be stored on the terrain entity
-                    let terrain_entity = map_geometry.get_terrain(unit.voxel_pos.hex()).unwrap();
+                    let terrain_entity = map_geometry.get_terrain(unit.voxel_pos.hex).unwrap();
 
                     let (_input, _output, _storage, litter) =
                         inventory_query.get_mut(terrain_entity).unwrap();
@@ -1069,7 +1069,7 @@ impl CurrentAction {
         terrain_manifest: &TerrainManifest,
         map_geometry: &MapGeometry,
     ) -> Self {
-        let required_direction = unit_pos.hex().main_direction_to(target_tile_pos.hex());
+        let required_direction = unit_pos.hex.main_direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
             CurrentAction::move_forward(
@@ -1160,7 +1160,7 @@ impl CurrentAction {
         rng: &mut ThreadRng,
     ) -> Self {
         // FIXME: litter should not be stored on the terrain entity
-        let terrain_entity = map_geometry.get_terrain(unit_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(unit_pos.hex).unwrap();
         let litter = litter_query.get(terrain_entity).unwrap();
 
         if let Some(item_id) = unit_inventory.held_item {

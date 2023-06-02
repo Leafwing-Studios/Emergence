@@ -118,7 +118,7 @@ pub(super) fn compute_shade(
         }
 
         for shaded_voxel_pos in shaded_area(voxel_pos, &map_geometry, Height::ZERO) {
-            let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos.hex()).unwrap();
+            let shaded_terrain_entity = map_geometry.get_terrain(shaded_voxel_pos.hex).unwrap();
             let mut shade = terrain_query.get_mut(shaded_terrain_entity).unwrap();
             shade.add_shade();
         }
@@ -137,12 +137,12 @@ fn shaded_area(
 
     let mut shaded_tiles = Vec::new();
 
-    let Ok(originating_terrain_height) = map_geometry.get_height(voxel_pos.hex()) else { return Vec::new() };
+    let Ok(originating_terrain_height) = map_geometry.get_height(voxel_pos.hex) else { return Vec::new() };
     let total_height = originating_terrain_height + height_of_caster;
     let total_height = total_height.0.round() as i32;
 
     for distance_from_caster in 1..=total_height {
-        let candidate = voxel_pos.hex() + SHADOW_DIRECTION * distance_from_caster;
+        let candidate = voxel_pos.hex + SHADOW_DIRECTION * distance_from_caster;
 
         let Ok(candidate_terrain_height) = map_geometry.get_height(candidate) else {
 			continue;

@@ -111,7 +111,7 @@ impl Tool {
     /// Each axis is computed independently.
     fn normalize_positions(&mut self) {
         if let Tool::Structures(map) = self {
-            let center_hex = map.keys().map(|voxel_pos| voxel_pos.hex()).center();
+            let center_hex = map.keys().map(|voxel_pos| voxel_pos.hex).center();
 
             // FIXME: it's unclear if this height is correct
             let center = VoxelPos::new(center_hex, Height::ZERO);
@@ -151,10 +151,10 @@ impl Tool {
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
                     item.facing.rotate_clockwise();
-                    original_pos.hex().clockwise()
+                    original_pos.hex.clockwise()
                 } else {
                     item.facing.rotate_counterclockwise();
-                    original_pos.hex().counter_clockwise()
+                    original_pos.hex.counter_clockwise()
                 };
 
                 new_map.insert(VoxelPos::new(new_pos, Height::ZERO), item.clone());

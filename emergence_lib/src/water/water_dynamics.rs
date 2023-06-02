@@ -199,8 +199,7 @@ pub fn horizontal_water_movement(
                 .entry(*query_item.voxel_pos)
                 .and_modify(|v| *v += actual_water_transfer);
 
-            let direction_to_neighbor =
-                neighbor.hex().main_direction_to(query_item.voxel_pos.hex());
+            let direction_to_neighbor = neighbor.hex.main_direction_to(query_item.voxel_pos.hex);
 
             // This map only tracks outward flow, so we don't need to update the neighbor.
             flow_direction_map
@@ -225,7 +224,7 @@ pub fn horizontal_water_movement(
             for maybe_neighbor in map_geometry.valid_neighbors(voxel_pos) {
                 let &Some(valid_neighbor) = maybe_neighbor else { continue };
 
-                let Some(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex()) else { continue };
+                let Some(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex) else { continue };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
                 let neighbor_tile_height = *neighbor_query_item.terrain_height;
@@ -254,19 +253,19 @@ pub fn horizontal_water_movement(
     }
 
     for (voxel_pos, volume) in addition_map {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
         query_item.water_volume.add(volume);
     }
 
     for (voxel_pos, volume) in removal_map {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
         query_item.water_volume.remove(volume);
     }
 
     for (voxel_pos, flow_velocity) in flow_direction_map {
-        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut query_item = terrain_query.get_mut(terrain_entity).unwrap();
         *query_item.flow_velocity = flow_velocity;
     }
@@ -285,7 +284,7 @@ fn proposed_lateral_flow_to_neighbors(
     terrain_query: &Query<LateralFlowQuery>,
     ocean_height: Height,
 ) -> HashMap<VoxelPos, Volume> {
-    let terrain_entity = map_geometry.get_terrain(voxel_pos.hex()).unwrap();
+    let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
     let query_item = terrain_query.get(terrain_entity).unwrap();
     let soil_lateral_flow_ratio = *query_item.soil_water_flow_rate;
     let tile_height = *query_item.terrain_height;
@@ -298,7 +297,7 @@ fn proposed_lateral_flow_to_neighbors(
     // FIXME: doesn't account for soil shenanigans
     let mut total_water_height = query_item.water_depth.water_table_height(tile_height);
     for neighbor in neighbors {
-        if let Some(neighbor_entity) = map_geometry.get_terrain(neighbor.hex()) {
+        if let Some(neighbor_entity) = map_geometry.get_terrain(neighbor.hex) {
             let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
             total_water_height += neighbor_query_item
                 .water_depth
@@ -320,13 +319,13 @@ fn proposed_lateral_flow_to_neighbors(
     let neighbors = voxel_pos.all_neighbors();
     for neighbor in neighbors {
         // Non-valid neighbors are treated as if they are ocean tiles, and cause water to flow off the edge of the map.
-        if !water_config.enable_oceans && !map_geometry.is_valid(neighbor.hex()) {
+        if !water_config.enable_oceans && !map_geometry.is_valid(neighbor.hex) {
             continue;
         }
 
         // Neighbor is not an ocean tile
         let proposed_water_transfer =
-            if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor.hex()) {
+            if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor.hex) {
                 let neighbor_query_item = terrain_query.get(neigbor_entity).unwrap();
 
                 let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
@@ -481,7 +480,7 @@ mod tests {
 
         // Spawn terrain
         for hex in map_geometry.all_hexes() {
-            let height = map_geometry.get_height(hex.hex()).unwrap();
+            let height = map_geometry.get_height(hex.hex).unwrap();
             let water_volume = scenario
                 .water_table_strategy
                 .starting_water_volume(hex, &map_geometry);

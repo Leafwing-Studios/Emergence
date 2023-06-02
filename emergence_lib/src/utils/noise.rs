@@ -41,7 +41,7 @@ pub fn simplex_noise(voxel_pos: VoxelPos, settings: &SimplexSettings) -> f32 {
         seed,
     } = *settings;
 
-    let pos = Vec2::new(voxel_pos.hex().x as f32, voxel_pos.hex().y as f32);
+    let pos = Vec2::new(voxel_pos.hex.x as f32, voxel_pos.hex.y as f32);
 
     Height::MIN.into_world_pos()
         + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed) * amplitude)

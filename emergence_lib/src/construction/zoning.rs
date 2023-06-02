@@ -172,7 +172,7 @@ fn set_zoning(
                             true => {
                                 // Avoid trying to operate on terrain that doesn't exist
                                 if let Some(terrain_entity) =
-                                    map_geometry.get_terrain(voxel_pos.hex())
+                                    map_geometry.get_terrain(voxel_pos.hex)
                                 {
                                     let mut zoning = zoning_query.get_mut(terrain_entity).unwrap();
                                     *zoning = Zoning::Structure(clipboard_item.clone());
