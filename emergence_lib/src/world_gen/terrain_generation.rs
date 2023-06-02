@@ -59,10 +59,7 @@ pub(super) fn generate_landmarks(
     info!("Generating landmarks...");
     let rng = &mut thread_rng();
 
-    for voxel_pos in map_geometry
-        .valid_tile_positions()
-        .collect::<Vec<VoxelPos>>()
-    {
+    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         for (&structure_id, &chance) in &generation_config.landmark_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -71,6 +68,9 @@ pub(super) fn generate_landmarks(
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
 
+                let height = map_geometry.get_height(hex).unwrap();
+                let voxel_pos = VoxelPos::new(hex, height);
+
                 // Only try to spawn a structure if the location is valid and there is space
                 if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
                     && map_geometry.is_space_available(voxel_pos, footprint, facing)
@@ -78,7 +78,7 @@ pub(super) fn generate_landmarks(
                     // Flatten the terrain under the structure before spawning it
                     map_geometry.flatten_height(&mut height_query, voxel_pos, footprint, facing);
                     commands.spawn_structure(
-                        voxel_pos,
+                        hex,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
                         StartingEnergy::NotAnOrganism,
                     );

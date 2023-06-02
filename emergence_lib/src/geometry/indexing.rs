@@ -118,6 +118,13 @@ impl MapGeometry {
         }
     }
 
+    /// Returns the list of all valid [`Hex`] positions on the map.
+    #[inline]
+    #[must_use]
+    pub fn all_hexes(&self) -> impl Iterator<Item = &Hex> {
+        self.terrain_index.keys()
+    }
+
     /// Is the provided `hex` in the map?
     #[inline]
     #[must_use]

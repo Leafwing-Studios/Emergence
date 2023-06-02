@@ -111,7 +111,7 @@ pub(super) fn compute_shade(
         }
     }
 
-    for voxel_pos in map_geometry.valid_tile_positions() {
+    for hex in map_geometry.all_hexes() {
         // Don't double-count shade from tiles with structures
         if map_geometry.get_structure(voxel_pos).is_some() {
             continue;

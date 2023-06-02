@@ -18,10 +18,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let mut map_geometry = MapGeometry::new(MAP_RADIUS);
 
-    for voxel_pos in map_geometry
-        .valid_tile_positions()
-        .collect::<Vec<VoxelPos>>()
-    {
+    for voxel_pos in map_geometry.all_hexes().collect::<Vec<VoxelPos>>() {
         // Make sure we cover a range of heights
         let height = Height(voxel_pos.hex().x.max(0) as f32);
         let water_volume = WaterVolume::new(Volume(20.));

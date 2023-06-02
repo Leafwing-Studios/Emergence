@@ -4,6 +4,7 @@ use std::ops::Div;
 
 use bevy::{ecs::query::WorldQuery, prelude::*, utils::HashMap};
 use derive_more::{Add, Sub};
+use hexx::Hex;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -152,16 +153,16 @@ pub fn horizontal_water_movement(
 
     // PERF: it will probably be much faster to store scratch space on components
     // Stores the total volume to be removed from each tile
-    let mut addition_map = HashMap::<VoxelPos, Volume>::default();
+    let mut addition_map = HashMap::<Hex, Volume>::default();
     // Stores the total volume to be added to each tile
-    let mut removal_map = HashMap::<VoxelPos, Volume>::default();
+    let mut removal_map = HashMap::<Hex, Volume>::default();
     // Stores the net water flow direction for each tile
-    let mut flow_direction_map = HashMap::<VoxelPos, FlowVelocity>::default();
+    let mut flow_direction_map = HashMap::<Hex, FlowVelocity>::default();
 
-    for voxel_pos in map_geometry.valid_tile_positions() {
-        addition_map.insert(voxel_pos, Volume::ZERO);
-        removal_map.insert(voxel_pos, Volume::ZERO);
-        flow_direction_map.insert(voxel_pos, FlowVelocity::ZERO);
+    for &hex in map_geometry.all_hexes() {
+        addition_map.insert(hex, Volume::ZERO);
+        removal_map.insert(hex, Volume::ZERO);
+        flow_direction_map.insert(hex, FlowVelocity::ZERO);
     }
 
     for query_item in terrain_query.iter() {
@@ -479,19 +480,16 @@ mod tests {
         app.insert_resource(CurrentWeather::new(scenario.weather));
 
         // Spawn terrain
-        for voxel_pos in map_geometry
-            .valid_tile_positions()
-            .collect::<Vec<VoxelPos>>()
-        {
-            let height = map_geometry.get_height(voxel_pos.hex()).unwrap();
+        for hex in map_geometry.all_hexes() {
+            let height = map_geometry.get_height(hex.hex()).unwrap();
             let water_volume = scenario
                 .water_table_strategy
-                .starting_water_volume(voxel_pos, &map_geometry);
+                .starting_water_volume(hex, &map_geometry);
 
             let terrain_entity = app
                 .world
                 .spawn((
-                    voxel_pos,
+                    hex,
                     height,
                     ReceivedLight::default(),
                     WaterBundle {
@@ -500,7 +498,7 @@ mod tests {
                     },
                 ))
                 .id();
-            map_geometry.add_terrain(voxel_pos, terrain_entity)
+            map_geometry.add_terrain(hex, terrain_entity)
         }
 
         app.insert_resource(map_geometry);
@@ -532,21 +530,17 @@ mod tests {
     }
 
     impl WaterTableStrategy {
-        fn starting_water_volume(
-            &self,
-            voxel_pos: VoxelPos,
-            map_geometry: &MapGeometry,
-        ) -> WaterVolume {
+        fn starting_water_volume(&self, hex: Hex, map_geometry: &MapGeometry) -> WaterVolume {
             let volume = match self {
                 WaterTableStrategy::Dry => Volume(0.),
                 WaterTableStrategy::DepthHalf => Volume(0.5),
                 WaterTableStrategy::DepthOne => Volume(1.),
                 WaterTableStrategy::Saturated => {
-                    Volume::from_height(map_geometry.get_height(voxel_pos.hex()).unwrap())
+                    Volume::from_height(map_geometry.get_height(hex).unwrap())
                 }
-                WaterTableStrategy::Flooded => Volume::from_height(
-                    map_geometry.get_height(voxel_pos.hex()).unwrap() + Height(1.),
-                ),
+                WaterTableStrategy::Flooded => {
+                    Volume::from_height(map_geometry.get_height(hex).unwrap() + Height(1.))
+                }
             };
 
             WaterVolume::new(volume)
@@ -586,22 +580,19 @@ mod tests {
 
     impl MapShape {
         fn set_heights(&self, mut map_geometry: MapGeometry) -> MapGeometry {
-            for voxel_pos in map_geometry
-                .valid_tile_positions()
-                .collect::<Vec<VoxelPos>>()
-            {
+            for &hex in map_geometry.all_hexes() {
                 let height = match self {
                     MapShape::Bedrock => Height(0.),
                     MapShape::Flat => Height(1.),
                     // Make sure we don't end up with negative heights.
-                    MapShape::Sloped => Height(voxel_pos.x.max(0) as f32),
+                    MapShape::Sloped => Height(hex.x.max(0) as f32),
                     MapShape::Bumpy => {
                         let rng = &mut rand::thread_rng();
                         Height(rng.gen())
                     }
                 };
 
-                map_geometry.update_height(voxel_pos, height);
+                map_geometry.update_height(hex, height);
             }
 
             map_geometry
