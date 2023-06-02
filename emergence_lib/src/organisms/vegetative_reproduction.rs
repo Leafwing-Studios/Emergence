@@ -3,6 +3,7 @@
 //! In Emergence, this allows organisms to spread to nearby tiles without seeds.
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
+use rand::seq::IteratorRandom;
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 
@@ -77,7 +78,8 @@ pub(super) fn vegetative_spread(
     let mut rng = rand::thread_rng();
     let delta_time = fixed_time.period;
 
-    for (voxel_pos, &structure_id, mut vegetative_reproduction, mut energy_pool) in query.iter_mut()
+    for (&voxel_pos, &structure_id, mut vegetative_reproduction, mut energy_pool) in
+        query.iter_mut()
     {
         vegetative_reproduction.timer.tick(delta_time);
         if !vegetative_reproduction.timer.finished() {
@@ -90,10 +92,15 @@ pub(super) fn vegetative_spread(
         }
 
         // PERF: we should just be returning a Vec<VoxelPos> or an [Option<VoxelPos; 6] here and allocating once
-        let empty_neighbors = voxel_pos.empty_neighbors(&map_geometry);
+        let empty_neighbors = map_geometry
+            .valid_neighbors(voxel_pos)
+            .iter()
+            .filter(|maybe_pos| match maybe_pos {
+                Some(pos) => map_geometry.get_voxel_object(*pos).is_none(),
+                None => false,
+            });
         let Some(&tile_to_spawn_in) = empty_neighbors
-            .into_iter()
-            .collect::<Vec<VoxelPos>>()
+            .flatten()
 			// Just skip this organism if there are no empty neighbors
             .choose(&mut rng) else { continue };
 
