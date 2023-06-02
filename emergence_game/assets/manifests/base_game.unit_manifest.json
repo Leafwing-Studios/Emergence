@@ -1,9 +1,9 @@
 {
   "unit_types": {
-    "ant": {
+    "basket_crab": {
       "organism_variety": {
         "prototypical_form": {
-          "Unit": "ant"
+          "Unit": "basket_crab"
         },
         "lifecycle": {
           "life_paths": []

@@ -52,14 +52,14 @@
 			},
 			"energy": 20.0
 		},
-		"ant_egg_production": {
+		"crab_egg_production": {
 			"inputs": {
 				"Exact": {
 					"leuco_chunk": 1
 				}
 			},
 			"outputs": {
-				"ant_egg": 1
+				"crab_egg": 1
 			},
 			"craft_time": 10,
 			"conditions": {
