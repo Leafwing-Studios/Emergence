@@ -150,12 +150,12 @@ pub(crate) struct TerrainEmitters;
 
 /// Tracks how much litter is on the ground on each tile.
 pub(super) fn update_litter_index(
-    query: Query<(&VoxelPos, &Litter), Changed<Litter>>,
+    query: Query<(Entity, &VoxelPos, &Litter), Changed<Litter>>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (&voxel_pos, litter) in query.iter() {
+    for (litter_entity, &voxel_pos, litter) in query.iter() {
         // Only litter on the ground is impassable.
-        map_geometry.update_litter_state(voxel_pos, litter.on_ground.state());
+        map_geometry.update_litter_state(litter_entity, voxel_pos, litter.on_ground.state());
     }
 }
 
@@ -341,8 +341,7 @@ pub(super) fn carry_floating_litter_with_current(
 
                     let Ok((target_tile_pos, target_water_depth)) =
                         water_height_query.get(target_entity) else { continue };
-                    let target_height =
-                        target_water_depth.surface_height(target_tile_pos.height());
+                    let target_height = target_water_depth.surface_height(target_tile_pos.height());
 
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
                     // Note that this is a one-way check; we don't care if the source is higher than the target

@@ -1,9 +1,6 @@
 //! Tracks the location of key entities on the map, and caches information about the map for faster access.
 
-use bevy::{
-    prelude::*,
-    utils::{HashMap, HashSet},
-};
+use bevy::{prelude::*, utils::HashMap};
 use hexx::{shapes::hexagon, Hex, HexLayout};
 
 use crate::{
@@ -25,8 +22,6 @@ pub struct MapGeometry {
     terrain_index: HashMap<Hex, Entity>,
     /// Tracks which objects are stored in each voxel.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
-    /// The set of tiles that cannot be traversed by units due to litter.
-    impassable_litter_tiles: HashSet<VoxelPos>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<Hex, Height>,
     /// The list of all valid neighbors for each tile position.
@@ -98,7 +93,6 @@ impl MapGeometry {
             radius,
             terrain_index: HashMap::default(),
             voxel_index: HashMap::default(),
-            impassable_litter_tiles: HashSet::default(),
             valid_neighbors,
             passable_neighbors,
             reachable_neighbors,
@@ -602,26 +596,30 @@ impl MapGeometry {
     /// Updates the passability of the provided `voxel_pos` based on the state of the litter at that location.
     pub(crate) fn update_litter_state(
         &mut self,
+        litter_entity: Entity,
         voxel_pos: VoxelPos,
-        litter_state: InventoryState,
+        inventory_state: InventoryState,
     ) {
-        let current_litter_state = self.impassable_litter_tiles.contains(&voxel_pos);
+        let current_litter_state = if let Some(voxel_data) = self.get_voxel(voxel_pos) {
+            match voxel_data.object_kind {
+                VoxelKind::Litter { inventory_state } => inventory_state,
+                _ => InventoryState::Empty,
+            }
+        } else {
+            InventoryState::Empty
+        };
 
-        match current_litter_state {
-            true => {
-                if litter_state != InventoryState::Full {
-                    self.impassable_litter_tiles.remove(&voxel_pos);
-                    self.recompute_passable_neighbors(voxel_pos);
-                    self.recompute_reachable_neighbors(voxel_pos);
-                }
-            }
-            false => {
-                if litter_state == InventoryState::Full {
-                    self.impassable_litter_tiles.insert(voxel_pos);
-                    self.recompute_passable_neighbors(voxel_pos);
-                    self.recompute_reachable_neighbors(voxel_pos);
-                }
-            }
+        if current_litter_state == inventory_state {
+            return;
+        } else {
+            let voxel_data = VoxelObject {
+                entity: litter_entity,
+                object_kind: VoxelKind::Litter { inventory_state },
+            };
+
+            self.voxel_index.insert(voxel_pos, voxel_data);
+            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_reachable_neighbors(voxel_pos);
         }
     }
 

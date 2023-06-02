@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::items::inventory::InventoryState;
+
 /// A single object stored in a voxel.
 ///
 /// Each voxel can contain at most one object.
@@ -17,7 +19,7 @@ pub(crate) struct VoxelObject {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) enum VoxelKind {
     Litter {
-        full: bool,
+        inventory_state: InventoryState,
     },
     Terrain,
     Structure {
@@ -45,7 +47,11 @@ impl VoxelKind {
     /// Can units walk through the voxel occupied by this object?
     pub(super) fn can_walk_through(&self) -> bool {
         match self {
-            VoxelKind::Litter { full } => !full,
+            VoxelKind::Litter { inventory_state } => match inventory_state {
+                InventoryState::Empty => true,
+                InventoryState::Partial { .. } => true,
+                InventoryState::Full => false,
+            },
             VoxelKind::Terrain => false,
             VoxelKind::Structure {
                 can_walk_through, ..
@@ -58,7 +64,11 @@ impl VoxelKind {
     /// Does this object block light?
     pub(crate) fn blocks_light(&self) -> bool {
         match self {
-            VoxelKind::Litter { full } => *full,
+            VoxelKind::Litter { inventory_state } => match inventory_state {
+                InventoryState::Empty => false,
+                InventoryState::Partial { .. } => false,
+                InventoryState::Full => true,
+            },
             VoxelKind::Terrain => true,
             VoxelKind::Structure { .. } => true,
             VoxelKind::GhostStructure => false,
