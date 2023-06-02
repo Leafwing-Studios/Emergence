@@ -54,4 +54,15 @@ impl VoxelKind {
             VoxelKind::GhostTerrain => true,
         }
     }
+
+    /// Does this object block light?
+    pub(crate) fn blocks_light(&self) -> bool {
+        match self {
+            VoxelKind::Litter { full } => *full,
+            VoxelKind::Terrain => true,
+            VoxelKind::Structure { .. } => true,
+            VoxelKind::GhostStructure => false,
+            VoxelKind::GhostTerrain => false,
+        }
+    }
 }

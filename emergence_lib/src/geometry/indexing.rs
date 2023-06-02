@@ -125,6 +125,11 @@ impl MapGeometry {
         self.terrain_index.keys()
     }
 
+    /// Returns an iterator over all non-empty [`VoxelPos`] on the map.
+    pub fn all_voxels(&self) -> impl Iterator<Item = (&VoxelPos, &VoxelObject)> {
+        self.voxel_index.iter()
+    }
+
     /// Is the provided `hex` in the map?
     #[inline]
     #[must_use]
@@ -136,7 +141,7 @@ impl MapGeometry {
     /// Gets the voxel object at the provided `voxel_pos`.
     #[inline]
     #[must_use]
-    pub(crate) fn get_voxel_object(&self, voxel_pos: VoxelPos) -> Option<&VoxelObject> {
+    pub(crate) fn get_voxel(&self, voxel_pos: VoxelPos) -> Option<&VoxelObject> {
         self.voxel_index.get(&voxel_pos)
     }
 
@@ -144,7 +149,7 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn can_walk_through(&self, voxel_pos: VoxelPos) -> bool {
-        self.get_voxel_object(voxel_pos)
+        self.get_voxel(voxel_pos)
             .map(|voxel_object| voxel_object.object_kind.can_walk_through())
             // If there's nothing there, it's air and we can walk through it
             .unwrap_or(true)
@@ -154,7 +159,7 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn can_walk_on_top_of(&self, voxel_pos: VoxelPos) -> bool {
-        self.get_voxel_object(voxel_pos)
+        self.get_voxel(voxel_pos)
             .map(|voxel_object| voxel_object.object_kind.can_walk_on_top_of())
             // If there's nothing there, it's air and we can't walk on top of it
             .unwrap_or(false)

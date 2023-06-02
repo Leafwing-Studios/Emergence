@@ -96,7 +96,7 @@ pub(super) fn vegetative_spread(
             .valid_neighbors(voxel_pos)
             .iter()
             .filter(|maybe_pos| match maybe_pos {
-                Some(pos) => map_geometry.get_voxel_object(*pos).is_none(),
+                Some(pos) => map_geometry.get_voxel(*pos).is_none(),
                 None => false,
             });
         let Some(&tile_to_spawn_in) = empty_neighbors
