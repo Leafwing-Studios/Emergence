@@ -36,15 +36,15 @@ pub(crate) fn generate_terrain(
             })
             .unwrap();
 
-        let voxel_pos = VoxelPos::new(hex, Height::MIN);
         // Heights are generated in f32 world coordinates to start
         let hex_height = simplex_noise(voxel_pos, &generation_config.low_frequency_noise)
             + simplex_noise(voxel_pos, &generation_config.high_frequency_noise);
 
         // And then discretized to the nearest integer height before being used
         let height = Height::from_world_pos(hex_height);
+        let voxel_pos = VoxelPos::new(hex, height);
 
-        commands.spawn_terrain(voxel_pos, height, terrain_id);
+        commands.spawn_terrain(voxel_pos, terrain_id);
     }
 }
 

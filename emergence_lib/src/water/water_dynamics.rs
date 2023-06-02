@@ -589,7 +589,8 @@ mod tests {
                     }
                 };
 
-                map_geometry.update_height(hex, height);
+                let voxel_pos = VoxelPos::new(hex, height);
+                map_geometry.update_height(voxel_pos);
             }
 
             map_geometry

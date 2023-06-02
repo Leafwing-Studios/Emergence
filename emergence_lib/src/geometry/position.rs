@@ -469,7 +469,7 @@ mod tests {
 
                 let voxel_pos = VoxelPos::new(hex, height);
                 // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(hex, height);
+                map_geometry.update_height(voxel_pos);
                 let world_pos = voxel_pos.into_world_pos(&map_geometry);
                 let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
 

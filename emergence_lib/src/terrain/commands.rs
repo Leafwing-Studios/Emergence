@@ -27,8 +27,8 @@ use super::{terrain_manifest::TerrainManifest, TerrainBundle};
 pub(crate) trait TerrainCommandsExt {
     /// Spawns a new terrain tile.
     ///
-    /// Overwrites existing terrain.
-    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, height: Height, terrain_id: Id<Terrain>);
+    /// Overwrites existing terrain at the same `hex`.
+    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, terrain_id: Id<Terrain>);
 
     /// Spawns a ghost that previews the action given by `terraforming_action` at `voxel_pos`.
     ///
@@ -58,10 +58,9 @@ pub(crate) trait TerrainCommandsExt {
 }
 
 impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
-    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, height: Height, terrain_id: Id<Terrain>) {
+    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, terrain_id: Id<Terrain>) {
         self.add(SpawnTerrainCommand {
             voxel_pos,
-            height,
             terrain_id,
         });
     }
@@ -116,10 +115,8 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
 /// 0: column
 /// 1: scene root
 pub(crate) struct SpawnTerrainCommand {
-    /// The position to spawn the tile
+    /// The position and height to spawn the tile
     pub(crate) voxel_pos: VoxelPos,
-    /// The height of the tile
-    pub(crate) height: Height,
     /// The type of tile
     pub(crate) terrain_id: Id<Terrain>,
 }
@@ -131,8 +128,7 @@ impl Command for SpawnTerrainCommand {
         let mesh = handles.topper_mesh.clone_weak();
         let mut map_geometry = world.resource_mut::<MapGeometry>();
 
-        // Store the height, so it can be used below
-        map_geometry.update_height(self.voxel_pos.hex, self.height);
+        map_geometry.update_height(self.voxel_pos);
 
         // Drop the borrow so the borrow checker is happy
         let map_geometry = world.resource::<MapGeometry>();
@@ -307,8 +303,12 @@ impl Command for ApplyTerraformingCommand {
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
-            TerraformingAction::Raise => voxel_pos.height += 1,
-            TerraformingAction::Lower => voxel_pos.height -= 1,
+            TerraformingAction::Raise => {
+                voxel_pos.height = (voxel_pos.height + 1).min(Height::MAX.0 as i32)
+            }
+            TerraformingAction::Lower => {
+                voxel_pos.height = (voxel_pos.height - 1).max(Height::MIN.0 as i32)
+            }
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;
             }
@@ -323,7 +323,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(self.voxel_pos.hex, voxel_pos.height);
+        map_geometry.update_height(*voxel_pos);
         *zoning = Zoning::None;
     }
 }

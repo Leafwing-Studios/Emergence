@@ -318,19 +318,16 @@ impl MapGeometry {
             && self.is_space_available_to_transform(existing_entity, center, footprint, facing)
     }
 
-    /// Updates the height of the tile at `voxel_pos`
+    /// Updates the height index to match `voxel_pos`
     #[inline]
-    pub fn update_height(&mut self, hex: Hex, height: Height) {
+    pub fn update_height(&mut self, voxel_pos: VoxelPos) {
         assert!(
-            self.is_valid(hex),
+            self.is_valid(voxel_pos.hex),
             "Invalid tile position: {:?} with a radius of {:?}",
-            hex,
+            voxel_pos.hex,
             self.radius
         );
-        assert!(height >= Height(0.));
-        self.height_index.insert(hex, height);
-
-        let voxel_pos = VoxelPos::new(hex, height);
+        self.height_index.insert(voxel_pos.hex, voxel_pos.height());
 
         // FIXME: this should update the voxel index, which should *then* trigger a recompute of the neighbors
         self.recompute_passable_neighbors(voxel_pos);
@@ -388,7 +385,7 @@ impl MapGeometry {
             if let Some(entity) = self.get_terrain(voxel_pos.hex) {
                 if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(entity) {
                     voxel_pos.height = target_height.0.round() as i32;
-                    self.update_height(voxel_pos.hex, target_height);
+                    self.update_height(*voxel_pos);
                 }
             }
         }
