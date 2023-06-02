@@ -124,6 +124,13 @@ impl MapGeometry {
         self.voxel_index.get(&voxel_pos)
     }
 
+    /// Returns the voxel position directly above the terrain at `hex`
+    #[inline]
+    #[must_use]
+    pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
+        VoxelPos::new(hex, self.get_height(hex).unwrap_or_default())
+    }
+
     /// Can we walk through the provide `voxel_pos`?
     #[inline]
     #[must_use]

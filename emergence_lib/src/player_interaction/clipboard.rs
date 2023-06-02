@@ -236,10 +236,12 @@ fn copy_selection(
                     }
                 } else {
                     for &hex in selected_tiles.selection().iter() {
-                        if let Some(entity) = map_geometry.get_ghost_structure(hex) {
+                        // TODO: this doesn't let us select multiple layers of structures effectively
+                        let voxel_pos = map_geometry.on_top_of_terrain(hex);
+                        if let Some(entity) = map_geometry.get_ghost_structure(voxel_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(VoxelPos::default(), clipboard_data);
-                        } else if let Some(entity) = map_geometry.get_structure(hex) {
+                        } else if let Some(entity) = map_geometry.get_structure(voxel_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(VoxelPos::default(), clipboard_data);
                         }
