@@ -6,18 +6,18 @@ use crate::items::inventory::InventoryState;
 ///
 /// Each voxel can contain at most one object.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub(crate) struct VoxelObject {
+pub struct VoxelObject {
     /// The entity that represents this object in the ECS.
-    pub(crate) entity: Entity,
+    pub entity: Entity,
     /// The kind of object stored in this voxel.
-    pub(crate) object_kind: VoxelKind,
+    pub object_kind: VoxelKind,
 }
 
 /// A variety of object stored in the voxel grid.
 ///
 /// Each voxel can contain at most one object.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub(crate) enum VoxelKind {
+pub enum VoxelKind {
     Litter {
         inventory_state: InventoryState,
     },
