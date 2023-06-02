@@ -10,7 +10,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, TilePos, VoxelObject, VoxelPos};
+use super::{Facing, Height, TilePos, VoxelKind, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -131,6 +131,13 @@ impl MapGeometry {
     pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
         let distance = Hex::ZERO.distance_to(tile_pos.hex);
         distance <= self.radius as i32
+    }
+
+    /// Gets the voxel object at the provided `voxel_pos`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn get_voxel_object(&self, voxel_pos: VoxelPos) -> Option<&VoxelObject> {
+        self.voxel_index.get(&voxel_pos)
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
