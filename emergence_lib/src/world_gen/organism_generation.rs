@@ -13,6 +13,7 @@ use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
 
 use bevy::prelude::*;
+use hexx::Hex;
 use rand::{thread_rng, Rng};
 
 use super::GenerationConfig;
@@ -32,7 +33,7 @@ pub(super) fn generate_organisms(
     let rng = &mut thread_rng();
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
-    for &hex in map_geometry.all_hexes() {
+    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =

@@ -477,7 +477,7 @@ mod tests {
         app.insert_resource(CurrentWeather::new(scenario.weather));
 
         // Spawn terrain
-        for &hex in map_geometry.all_hexes() {
+        for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
             let height = map_geometry.get_height(hex).unwrap();
             let water_volume = scenario
                 .water_table_strategy
@@ -577,7 +577,7 @@ mod tests {
 
     impl MapShape {
         fn set_heights(&self, mut map_geometry: MapGeometry) -> MapGeometry {
-            for &hex in map_geometry.all_hexes() {
+            for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
                 let height = match self {
                     MapShape::Bedrock => Height(0.),
                     MapShape::Flat => Height(1.),

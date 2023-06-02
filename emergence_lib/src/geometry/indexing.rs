@@ -572,7 +572,7 @@ impl MapGeometry {
     /// Returns the removed entity, if any.
     #[inline]
     pub(crate) fn remove_ghost_terrain(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let voxel_data = self.voxel_index.get(&voxel_pos)?;
+        let voxel_data = self.voxel_index.get(&voxel_pos)?.clone();
         match voxel_data.object_kind {
             VoxelKind::GhostTerrain => {
                 self.voxel_index.remove(&voxel_pos);
