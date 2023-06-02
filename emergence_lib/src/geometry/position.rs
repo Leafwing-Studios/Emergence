@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
-use hexx::{Direction, Hex};
+use hexx::{shapes::hexagon, Direction, Hex};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Formatter,
@@ -273,6 +273,29 @@ impl VoxelPos {
             hex: self.hex,
             height: self.height - 1,
         }
+    }
+
+    /// The set of all voxels that can be reached by a basket crab from this voxel.
+    ///
+    /// This is a 3-high column of a one-radius hexagon extending above and below `tile_pos`, with the center voxel being `self`.
+    pub(crate) fn reachable_neighbors(&self) -> [VoxelPos; 21] {
+        let hexagon: Vec<Hex> = hexagon(self.hex, 1).collect();
+
+        let mut reachable_neighbors = [Self::ZERO; 21];
+
+        for layer in 0..=2 {
+            let height_offset = layer as i32 - 1;
+            for i in 0..=6 {
+                let index = layer * 7 + i;
+
+                reachable_neighbors[index] = VoxelPos {
+                    hex: hexagon[i],
+                    height: self.height + height_offset,
+                };
+            }
+        }
+
+        reachable_neighbors
     }
 
     /// Returns the transform-space position of the top-center of this voxel.

@@ -736,11 +736,7 @@ impl CurrentAction {
             return CurrentAction::idle();
         }
 
-        for maybe_tile_pos in map_geometry.reachable_neighbors(unit_pos) {
-            let &Some(voxel_pos) = maybe_tile_pos else {
-                continue;
-            };
-
+        for voxel_pos in unit_pos.reachable_neighbors() {
             for candidate in map_geometry.get_candidate(voxel_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
@@ -856,11 +852,7 @@ impl CurrentAction {
         } else {
             let mut workplaces: Vec<(Entity, VoxelPos)> = Vec::new();
 
-            for maybe_neighbor in map_geometry.reachable_neighbors(unit_pos) {
-                let &Some(neighbor) = maybe_neighbor else {
-                    continue;
-                };
-
+            for neighbor in unit_pos.reachable_neighbors() {
                 if let Some(workplace) =
                     workplace_query.needs_work(unit_pos, neighbor, workplace_id, map_geometry)
                 {
@@ -922,11 +914,7 @@ impl CurrentAction {
         } else {
             let mut demo_sites: Vec<(Entity, VoxelPos)> = Vec::new();
 
-            for maybe_neighbor in map_geometry.reachable_neighbors(unit_pos) {
-                let &Some(neighbor) = maybe_neighbor else {
-                    continue;
-                };
-
+            for neighbor in unit_pos.reachable_neighbors() {
                 if let Some(demo_site) = demolition_query.needs_demolition(
                     unit_pos,
                     neighbor,

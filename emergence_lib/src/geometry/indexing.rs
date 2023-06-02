@@ -28,8 +28,6 @@ pub struct MapGeometry {
     valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
     passable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
-    /// The list of all reachable neighbors for each tile position.
-    reachable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -95,7 +93,6 @@ impl MapGeometry {
             voxel_index: HashMap::default(),
             valid_neighbors,
             passable_neighbors,
-            reachable_neighbors,
             height_index,
         }
     }
@@ -316,7 +313,6 @@ impl MapGeometry {
 
         // FIXME: this should update the voxel index, which should *then* trigger a recompute of the neighbors
         self.recompute_passable_neighbors(voxel_pos);
-        self.recompute_reachable_neighbors(voxel_pos);
     }
 
     /// Returns the height of the tile at `voxel_pos`, if available.
@@ -478,7 +474,6 @@ impl MapGeometry {
             self.voxel_index.insert(voxel_pos, voxel_data);
 
             self.recompute_passable_neighbors(voxel_pos);
-            self.recompute_reachable_neighbors(voxel_pos);
         }
     }
 
@@ -498,7 +493,6 @@ impl MapGeometry {
             removed = self.voxel_index.remove(&voxel_pos);
 
             self.recompute_passable_neighbors(voxel_pos);
-            self.recompute_reachable_neighbors(voxel_pos);
         }
 
         removed.map(|data| data.entity)
@@ -550,7 +544,6 @@ impl MapGeometry {
             removed = self.voxel_index.remove(&voxel_pos);
 
             self.recompute_passable_neighbors(voxel_pos);
-            self.recompute_reachable_neighbors(voxel_pos);
         }
 
         removed.map(|data| data.entity)
@@ -619,7 +612,6 @@ impl MapGeometry {
 
             self.voxel_index.insert(voxel_pos, voxel_data);
             self.recompute_passable_neighbors(voxel_pos);
-            self.recompute_reachable_neighbors(voxel_pos);
         }
     }
 
@@ -656,19 +648,6 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn passable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
         self.passable_neighbors
-            .get(&voxel_pos)
-            .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
-    }
-
-    /// The set of tiles that can be reached by a basket crab from `voxel_pos`.
-    ///
-    /// # Panics
-    ///
-    /// The provided `voxel_pos` must be a valid tile position.
-    #[inline]
-    #[must_use]
-    pub(crate) fn reachable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.reachable_neighbors
             .get(&voxel_pos)
             .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
     }
@@ -714,49 +693,6 @@ impl MapGeometry {
 
         self.passable_neighbors
             .insert(voxel_pos, passable_neighbors);
-    }
-
-    /// Recomputes the set of reachable neighbors for the provided `voxel_pos`.
-    ///
-    /// This will update the provided tile and all of its neighbors.
-    fn recompute_reachable_neighbors(&mut self, voxel_pos: VoxelPos) {
-        let neighbors = *self.valid_neighbors(voxel_pos);
-        let mut reachable_neighbors: [Option<VoxelPos>; 6] = [None; 6];
-
-        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
-            let &Some(neighbor) = maybe_neighbor else { continue };
-
-            let can_reach_from_tile_to_neighbor = self.compute_reachability(voxel_pos, neighbor);
-            let can_reach_from_neighbor_to_tile = self.compute_reachability(neighbor, voxel_pos);
-
-            match can_reach_from_tile_to_neighbor {
-                true => {
-                    reachable_neighbors[i] = Some(neighbor);
-                }
-                // This edge was already initialized as None
-                false => (),
-            }
-
-            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
-            // PERF: we could compute this faster by relying on
-            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
-                .iter()
-                .position(|&maybe_self| maybe_self == Some(voxel_pos))
-                .unwrap();
-            let neigbors_of_neighbor = self.reachable_neighbors.get_mut(&neighbor).unwrap();
-
-            match can_reach_from_neighbor_to_tile {
-                true => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(voxel_pos);
-                }
-                false => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
-                }
-            }
-        }
-
-        self.reachable_neighbors
-            .insert(voxel_pos, reachable_neighbors);
     }
 
     /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
@@ -810,8 +746,6 @@ mod tests {
         // Valid neighbors is larger, as this information is needed for ocean tiles
         let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
         assert_eq!(n_passable_neighbors, n);
-        let n_reachable_neighbors = map_geometry.reachable_neighbors.iter().count();
-        assert_eq!(n_reachable_neighbors, n);
 
         for hex in hexagon {
             let voxel_pos = VoxelPos::new(hex, Height::MIN);
@@ -822,11 +756,6 @@ mod tests {
             );
             assert!(
                 map_geometry.passable_neighbors.contains_key(&voxel_pos),
-                "{}",
-                voxel_pos
-            );
-            assert!(
-                map_geometry.reachable_neighbors.contains_key(&voxel_pos),
                 "{}",
                 voxel_pos
             );
@@ -846,12 +775,6 @@ mod tests {
                 }
             }
         }
-
-        // All of the neighbors should be the same for a newly initialized map
-        assert_eq!(
-            map_geometry.passable_neighbors,
-            map_geometry.reachable_neighbors
-        );
     }
 
     #[test]
