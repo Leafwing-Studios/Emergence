@@ -3,6 +3,7 @@ use bevy::prelude::*;
 /// A single object stored in a voxel.
 ///
 /// Each voxel can contain at most one object.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct VoxelObject {
     /// The entity that represents this object in the ECS.
     entity: Entity,
@@ -13,7 +14,10 @@ pub(crate) struct VoxelObject {
 /// A variety of object stored in the voxel grid.
 ///
 /// Each voxel can contain at most one object.
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub(crate) enum VoxelKind {
+    #[default]
+    Empty,
     Litter {
         full: bool,
     },
@@ -30,6 +34,7 @@ impl VoxelKind {
     /// Can units walk over over the voxel on top of this object?
     pub(super) fn can_walk_on_top_of(&self) -> bool {
         match self {
+            VoxelKind::Empty => false,
             VoxelKind::Litter { .. } => false,
             VoxelKind::Terrain => true,
             VoxelKind::Structure {
@@ -43,6 +48,7 @@ impl VoxelKind {
     /// Can units walk through the voxel occupied by this object?
     pub(super) fn can_walk_through(&self) -> bool {
         match self {
+            VoxelKind::Empty => true,
             VoxelKind::Litter { full } => !full,
             VoxelKind::Terrain => false,
             VoxelKind::Structure {

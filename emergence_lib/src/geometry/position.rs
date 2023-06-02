@@ -413,6 +413,38 @@ impl Div<f32> for Height {
     }
 }
 
+/// A voxel position in the game world.
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
+pub struct VoxelPos {
+    /// Corresponds to the x coordinate of the [`TilePos`]
+    x: i32,
+    /// Corresponds to the y coordinate of the [`TilePos`]
+    y: i32,
+    /// The discretized [`Height`] of the voxel.
+    height: i32,
+}
+
+impl VoxelPos {
+    /// Create a new [`VoxelPos`] from a [`TilePos`] and a [`Height`].
+    pub fn new(tile_pos: TilePos, height: Height) -> Self {
+        Self {
+            x: tile_pos.x,
+            y: tile_pos.y,
+            height: height.0.round() as i32,
+        }
+    }
+
+    /// Get the [`TilePos`] corresponding to this [`VoxelPos`].
+    pub fn tile_pos(&self) -> TilePos {
+        TilePos::new(self.x, self.y)
+    }
+
+    /// Get the [`Height`] of this [`VoxelPos`].
+    pub fn height(&self) -> Height {
+        Height(self.height as f32)
+    }
+}
+
 /// A volume of space, in tile units.
 ///
 /// A value of 1.0 represents the volume of a single tile.

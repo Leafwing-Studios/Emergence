@@ -10,7 +10,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, TilePos};
+use super::{Facing, Height, TilePos, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -23,6 +23,8 @@ pub struct MapGeometry {
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
     terrain_index: HashMap<TilePos, Entity>,
+    /// Tracks which objects are stored in each voxel.
+    voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
     structure_index: HashMap<TilePos, Entity>,
     /// Which [`Ghost`](crate::construction::ghosts::Ghost) structure entity is stored at each tile position
@@ -104,6 +106,7 @@ impl MapGeometry {
             layout: HexLayout::default(),
             radius,
             terrain_index: HashMap::default(),
+            voxel_index: HashMap::default(),
             structure_index: HashMap::default(),
             ghost_structure_index: HashMap::default(),
             ghost_terrain_index: HashMap::default(),
