@@ -1,6 +1,6 @@
 //! Types for positioning and measuring coordinates.
 
-use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy::{math::Vec3Swizzles, prelude::*, reflect::Map};
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use hexx::{Direction, Hex};
@@ -425,18 +425,21 @@ pub struct VoxelPos {
 }
 
 impl VoxelPos {
-    /// Create a new [`VoxelPos`] from a [`TilePos`] and a [`Height`].
-    pub fn new(tile_pos: TilePos, height: Height) -> Self {
+    /// Create a new [`VoxelPos`] from a [`Hex`] and a [`Height`].
+    pub fn new(hex: Hex, height: Height) -> Self {
         Self {
-            x: tile_pos.x,
-            y: tile_pos.y,
+            x: hex.x,
+            y: hex.y,
             height: height.0.round() as i32,
         }
     }
 
-    /// Get the [`TilePos`] corresponding to this [`VoxelPos`].
-    pub fn tile_pos(&self) -> TilePos {
-        TilePos::new(self.x, self.y)
+    /// Get the [`Hex`] corresponding to this [`VoxelPos`].
+    pub fn hex(&self) -> Hex {
+        Hex {
+            x: self.x,
+            y: self.y,
+        }
     }
 
     /// Get the [`Height`] of this [`VoxelPos`].
@@ -459,6 +462,18 @@ impl VoxelPos {
             x: self.x,
             y: self.y,
             height: self.height - 1,
+        }
+    }
+
+    /// Returns the transform-space position of the top-center of this voxel.
+    pub fn into_world_pos(&self, map_geometry: &MapGeometry) -> Vec3 {
+        let xz = map_geometry.layout.hex_to_world_pos(self.hex());
+        let y = self.height().into_world_pos();
+
+        Vec3 {
+            x: xz.x,
+            y,
+            z: xz.y,
         }
     }
 }
