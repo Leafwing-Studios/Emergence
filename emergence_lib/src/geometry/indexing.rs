@@ -196,11 +196,7 @@ impl MapGeometry {
             }
         }
 
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
-        }
+        starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
@@ -343,19 +339,6 @@ impl MapGeometry {
         });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
-    }
-
-    /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
-    #[inline]
-    pub(crate) fn height_difference(
-        &self,
-        starting_pos: VoxelPos,
-        ending_pos: VoxelPos,
-    ) -> Result<Height, IndexError> {
-        // FIXME: this doesn't need self at all!
-        let starting_height = starting_pos.height();
-        let ending_height = ending_pos.height();
-        Ok(starting_height.abs_diff(ending_height))
     }
 
     /// Flattens the terrain in the `footprint` around `voxel_pos` to the height at that location.
@@ -714,26 +697,7 @@ impl MapGeometry {
             }
         }
 
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
-        }
-    }
-
-    /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
-    // FIXME: this should be removed
-    fn compute_reachability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos.hex) {
-            return false;
-        }
-
-        // TODO: does not take into account height of structures
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
-        }
+        starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
     }
 }
 

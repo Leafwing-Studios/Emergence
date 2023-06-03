@@ -32,8 +32,7 @@ impl<'w, 's> DemolitionQuery<'w, 's> {
         map_geometry: &MapGeometry,
     ) -> Option<Entity> {
         // This is only a viable target if the unit can reach it!
-        let height_difference = map_geometry.height_difference(current, target).ok()?;
-        if height_difference > Height::MAX_STEP {
+        if current.abs_height_diff(target) > Height::MAX_STEP {
             return None;
         }
 

@@ -239,6 +239,11 @@ impl VoxelPos {
         Height(self.height as f32)
     }
 
+    /// Returns the absolute height difference between this [`VoxelPos`] and the provided [`VoxelPos`].
+    pub fn abs_height_diff(&self, other: Self) -> Height {
+        self.height().abs_diff(other.height())
+    }
+
     /// Gets the voxel position of the voxel above this one.
     pub fn above(&self) -> Self {
         Self {
