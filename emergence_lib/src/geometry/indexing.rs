@@ -687,17 +687,7 @@ impl MapGeometry {
 
     /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
     fn compute_passability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(ending_pos.hex) {
-            return false;
-        }
-
-        if let Some(voxel_data) = self.get_voxel(ending_pos) {
-            if !voxel_data.object_kind.can_walk_through() {
-                return false;
-            }
-        }
-
-        starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
+        self.can_walk_at(ending_pos) && starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
     }
 }
 
