@@ -79,7 +79,15 @@ impl SelectedTiles {
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
     fn draw_line(start: VoxelPos, end: VoxelPos, radius: u32) -> Vec<Hex> {
-        start.hex.line_to(end.hex).collect()
+        if radius == 0 {
+            start.hex.line_to(end.hex).collect()
+        } else {
+            let mut hex_vec = Vec::new();
+            for central_hex in start.hex.line_to(end.hex) {
+                hex_vec.extend(hexagon(central_hex, radius));
+            }
+            hex_vec
+        }
     }
 
     /// Clears the set of selected tiles.
