@@ -618,7 +618,6 @@ impl MapGeometry {
     /// # Panics
     ///
     /// The provided `voxel_pos` must be a valid tile position.
-    // FIXME: this should return `Hex`
     #[inline]
     #[must_use]
     pub(crate) fn valid_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
