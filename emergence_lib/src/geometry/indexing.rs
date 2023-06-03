@@ -144,9 +144,9 @@ impl MapGeometry {
     /// Can we walk on top of the provided `voxel_pos`?
     #[inline]
     #[must_use]
-    pub(crate) fn can_walk_on_top_of(&self, voxel_pos: VoxelPos) -> bool {
+    pub(crate) fn can_walk_on_roof(&self, voxel_pos: VoxelPos) -> bool {
         self.get_voxel(voxel_pos)
-            .map(|voxel_object| voxel_object.object_kind.can_walk_on_top_of())
+            .map(|voxel_object| voxel_object.object_kind.can_walk_on_roof())
             // If there's nothing there, it's air and we can't walk on top of it
             .unwrap_or(false)
     }
@@ -155,7 +155,7 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn can_walk_at(&self, voxel_pos: VoxelPos) -> bool {
-        self.can_walk_through(voxel_pos) && self.can_walk_on_top_of(voxel_pos.below())
+        self.can_walk_through(voxel_pos) && self.can_walk_on_roof(voxel_pos.below())
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
@@ -449,7 +449,7 @@ impl MapGeometry {
         facing: Facing,
         center: VoxelPos,
         footprint: &Footprint,
-        can_walk_on_top_of: bool,
+        can_walk_on_roof: bool,
         can_walk_through: bool,
         structure_entity: Entity,
     ) {
@@ -457,7 +457,7 @@ impl MapGeometry {
             let voxel_data = VoxelObject {
                 entity: structure_entity,
                 object_kind: VoxelKind::Structure {
-                    can_walk_on_top_of,
+                    can_walk_on_roof,
                     can_walk_through,
                 },
             };
@@ -746,14 +746,14 @@ mod tests {
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
         let center = VoxelPos::new(Hex::ZERO, Height::ZERO);
-        let can_walk_on_top_of = false;
+        let can_walk_on_roof = false;
         let can_walk_through = false;
 
         map_geometry.add_structure(
             facing,
             center,
             &footprint,
-            can_walk_on_top_of,
+            can_walk_on_roof,
             can_walk_through,
             structure_entity,
         );
@@ -776,14 +776,14 @@ mod tests {
         let facing = Facing::default();
         let hex = Hex { x: 3, y: -2 };
         let center = VoxelPos::new(hex, Height::ZERO);
-        let can_walk_on_top_of = false;
+        let can_walk_on_roof = false;
         let can_walk_through = false;
 
         map_geometry.add_structure(
             facing,
             center,
             &footprint,
-            can_walk_on_top_of,
+            can_walk_on_roof,
             can_walk_through,
             structure_entity,
         );

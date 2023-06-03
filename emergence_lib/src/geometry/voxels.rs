@@ -23,7 +23,7 @@ pub enum VoxelKind {
     },
     Terrain,
     Structure {
-        can_walk_on_top_of: bool,
+        can_walk_on_roof: bool,
         can_walk_through: bool,
     },
     GhostStructure,
@@ -32,13 +32,13 @@ pub enum VoxelKind {
 
 impl VoxelKind {
     /// Can units walk over over the voxel on top of this object?
-    pub(super) fn can_walk_on_top_of(&self) -> bool {
+    pub(super) fn can_walk_on_roof(&self) -> bool {
         match self {
             VoxelKind::Litter { .. } => false,
             VoxelKind::Terrain => true,
             VoxelKind::Structure {
-                can_walk_on_top_of, ..
-            } => *can_walk_on_top_of,
+                can_walk_on_roof, ..
+            } => *can_walk_on_roof,
             VoxelKind::GhostStructure => false,
             VoxelKind::GhostTerrain => false,
         }

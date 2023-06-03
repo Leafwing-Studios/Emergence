@@ -78,7 +78,7 @@ pub struct StructureData {
     /// Can units pass through the voxels occupied by this tile?
     pub can_walk_through: bool,
     /// Can units walk on top of this structure?
-    pub can_walk_on_top_of: bool,
+    pub can_walk_on_roof: bool,
 }
 
 /// The unprocessed equivalent of [`StructureData`].
@@ -105,7 +105,7 @@ pub struct RawStructureData {
     /// Can units pass through the voxels occupied by this tile?
     pub can_walk_through: bool,
     /// Can units walk on top of this structure?
-    pub can_walk_on_top_of: bool,
+    pub can_walk_on_roof: bool,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -120,7 +120,7 @@ impl From<RawStructureData> for StructureData {
             footprint: raw.footprint.unwrap_or_default(),
             root_zone: raw.root_zone,
             can_walk_through: raw.can_walk_through,
-            can_walk_on_top_of: raw.can_walk_on_top_of,
+            can_walk_on_roof: raw.can_walk_on_roof,
         }
     }
 }
