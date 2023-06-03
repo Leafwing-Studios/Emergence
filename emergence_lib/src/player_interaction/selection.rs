@@ -185,7 +185,7 @@ impl HoveredTiles {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
             }
             SelectionShape::Area { center, radius } => {
-                let mut vec = SelectedTiles::draw_hexagon(center, radius);
+                let mut vec = SelectedTiles::draw_ring(center, radius);
                 // Also show center of ring for clarity.
                 vec.push(hovered_tile.hex);
                 vec
