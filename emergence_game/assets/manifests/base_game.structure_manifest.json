@@ -15,7 +15,6 @@
 				}
 			},
 			"max_workers": 6,
-			"height": 1,
 			"can_walk_on_roof": false,
 			"can_walk_through": false
 		},
@@ -30,7 +29,6 @@
 				}
 			},
 			"max_workers": 6,
-			"height": 2,
 			"can_walk_on_roof": false,
 			"can_walk_through": false
 		},
@@ -45,7 +43,6 @@
 				}
 			},
 			"max_workers": 6,
-			"height": 2,
 			"can_walk_on_roof": true,
 			"can_walk_through": false
 		},
@@ -58,7 +55,6 @@
 				}
 			},
 			"max_workers": 1,
-			"height": 0,
 			"can_walk_on_roof": false,
 			"can_walk_through": true
 		},
@@ -75,7 +71,6 @@
 			"max_workers": 3,
 			"can_walk_on_roof": true,
 			"can_walk_through": true,
-			"height": 0,
 			"footprint": {
 				"set": [
 					{
@@ -129,7 +124,6 @@
 					}
 				}
 			},
-			"height": 0,
 			"max_workers": 1,
 			"can_walk_on_roof": false,
 			"can_walk_through": true
@@ -162,7 +156,6 @@
 					}
 				}
 			},
-			"height": 1,
 			"max_workers": 6,
 			"can_walk_on_roof": false,
 			"can_walk_through": false
@@ -202,7 +195,6 @@
 			"construction_strategy": {
 				"Seedling": "acacia_seedling"
 			},
-			"height": 1,
 			"max_workers": 1,
 			"can_walk_on_roof": false,
 			"can_walk_through": false
@@ -235,7 +227,6 @@
 				"max_depth": 3,
 				"radius": 2
 			},
-			"height": 3,
 			"max_workers": 6,
 			"can_walk_on_roof": false,
 			"can_walk_through": false
@@ -276,7 +267,6 @@
 				"max_depth": 1,
 				"radius": 0
 			},
-			"height": 0,
 			"max_workers": 6,
 			"can_walk_on_roof": false,
 			"can_walk_through": true
@@ -296,7 +286,6 @@
 			"max_workers": 3,
 			"can_walk_on_roof": false,
 			"can_walk_through": false,
-			"height": 2,
 			"footprint": {
 				"set": [
 					{
@@ -357,7 +346,6 @@
 			"max_workers": 0,
 			"can_walk_on_roof": false,
 			"can_walk_through": false,
-			"height": 1,
 			"footprint": {
 				"set": [
 					{
