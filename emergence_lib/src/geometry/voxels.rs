@@ -108,15 +108,4 @@ impl VoxelKind {
             VoxelKind::GhostTerrain => false,
         }
     }
-
-    /// Can units attempt to demolish this voxel?
-    pub(crate) fn can_demolish(&self) -> bool {
-        match self {
-            VoxelKind::Litter { .. } => false,
-            VoxelKind::Terrain => false,
-            VoxelKind::Structure { .. } => true,
-            VoxelKind::GhostStructure => false,
-            VoxelKind::GhostTerrain => false,
-        }
-    }
 }
