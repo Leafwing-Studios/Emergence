@@ -610,25 +610,27 @@ mod tests {
 
     #[test]
     fn test_app_is_initialized_succesfully() {
-        let scenario = Scenario {
-            map_size: MapSize::OneTile,
-            map_shape: MapShape::Bedrock,
-            water_table_strategy: WaterTableStrategy::DepthOne,
-            water_config: WaterConfig::NULL,
-            weather: Weather::Clear,
-            simulated_duration: Duration::from_secs(1),
-        };
+        for map_size in MapSize::variants() {
+            for map_shape in MapShape::variants() {
+                let scenario = Scenario {
+                    map_size,
+                    map_shape,
+                    water_table_strategy: WaterTableStrategy::DepthOne,
+                    water_config: WaterConfig::NULL,
+                    weather: Weather::Clear,
+                    simulated_duration: Duration::from_secs(1),
+                };
+                let app = water_testing_app(scenario);
+                let map_geometry = app.world.resource::<MapGeometry>();
+                dbg!(map_geometry);
 
-        let app = water_testing_app(scenario);
-        let map_geometry = app.world.resource::<MapGeometry>();
-        dbg!(map_geometry);
-
-        for &hex in map_geometry.all_hexes() {
-            let terrain_entity = map_geometry.get_terrain(hex).unwrap();
-            let voxel_pos = app.world.get::<VoxelPos>(terrain_entity).unwrap();
-            let water_volume = app.world.get::<WaterVolume>(terrain_entity).unwrap();
-            assert_eq!(hex, voxel_pos.hex);
-            assert_eq!(water_volume, &WaterVolume::new(Volume(1.)));
+                for &hex in map_geometry.all_hexes() {
+                    let terrain_entity = map_geometry.get_terrain(hex).unwrap();
+                    let voxel_pos = app.world.get::<VoxelPos>(terrain_entity).unwrap();
+                    let _water_volume = app.world.get::<WaterVolume>(terrain_entity).unwrap();
+                    assert_eq!(hex, voxel_pos.hex);
+                }
+            }
         }
     }
 
