@@ -331,7 +331,7 @@ pub(super) fn carry_floating_litter_with_current(
                 if let Some(direction) = litter_drift.direction {
                     let new_position = voxel_pos.neighbor(direction);
                     let source_height = water_depth.surface_height(voxel_pos.height());
-                    let Some(target_entity) = map_geometry.get_terrain(new_position.hex) else { continue };
+                    let Ok(target_entity) = map_geometry.get_terrain(new_position.hex) else { continue };
 
                     let Ok((target_tile_pos, target_water_depth)) =
                         water_height_query.get(target_entity) else { continue };
@@ -354,7 +354,7 @@ pub(super) fn carry_floating_litter_with_current(
     }
 
     for (source_entity, new_position) in proposed_transfers.iter() {
-        let Some(target_entity) = map_geometry.get_terrain(new_position.hex) else {
+        let Ok(target_entity) = map_geometry.get_terrain(new_position.hex) else {
             continue;
         };
         let [source_query_item, target_query_item] = terrain_query

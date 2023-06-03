@@ -338,7 +338,7 @@ impl MapGeometry {
     ) {
         let Ok(target_height) = self.get_height(center.hex) else { return };
         for voxel_pos in footprint.normalized(facing, center) {
-            if let Some(terrain_entity) = self.get_terrain(voxel_pos.hex) {
+            if let Ok(terrain_entity) = self.get_terrain(voxel_pos.hex) {
                 if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(terrain_entity) {
                     voxel_pos.height = target_height.0.round() as i32;
                     self.add_terrain(*voxel_pos, terrain_entity);
@@ -400,8 +400,11 @@ impl MapGeometry {
     /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
     #[must_use]
-    pub(crate) fn get_terrain(&self, hex: Hex) -> Option<Entity> {
-        self.terrain_index.get(&hex).copied()
+    pub(crate) fn get_terrain(&self, hex: Hex) -> Result<Entity, IndexError> {
+        match self.terrain_index.get(&hex).copied() {
+            Some(entity) => Ok(entity),
+            None => Err(IndexError { hex }),
+        }
     }
 
     /// Adds the provided `terrain_entity` to the terrain index at the provided `voxel_pos`.

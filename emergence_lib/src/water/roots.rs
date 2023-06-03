@@ -38,7 +38,7 @@ impl RootZone {
         let hexagon = hexagon(center.hex, self.radius);
         let mut relevant_tiles = Vec::with_capacity(hexagon.len());
         for hex in hexagon {
-            let Some(terrain_entity) = map_geometry.get_terrain(hex) else {
+            let Ok(terrain_entity) = map_geometry.get_terrain(hex) else {
                 continue;
             };
             let water_depth = water_depth_query.get(terrain_entity).unwrap();

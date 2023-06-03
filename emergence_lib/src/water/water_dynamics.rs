@@ -222,7 +222,7 @@ pub fn horizontal_water_movement(
             for maybe_neighbor in map_geometry.valid_neighbors(voxel_pos) {
                 let &Some(valid_neighbor) = maybe_neighbor else { continue };
 
-                let Some(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex) else { continue };
+                let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex) else { continue };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
                 let neighbor_tile_height = neighbor_query_item.voxel_pos.height();
@@ -295,7 +295,7 @@ fn proposed_lateral_flow_to_neighbors(
     // FIXME: doesn't account for soil shenanigans
     let mut total_water_height = query_item.water_depth.water_table_height(tile_height);
     for neighbor in neighbors {
-        if let Some(neighbor_entity) = map_geometry.get_terrain(neighbor.hex) {
+        if let Ok(neighbor_entity) = map_geometry.get_terrain(neighbor.hex) {
             let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
             total_water_height += neighbor_query_item
                 .water_depth
@@ -323,7 +323,7 @@ fn proposed_lateral_flow_to_neighbors(
 
         // Neighbor is not an ocean tile
         let proposed_water_transfer =
-            if let Some(neigbor_entity) = map_geometry.get_terrain(neighbor.hex) {
+            if let Ok(neigbor_entity) = map_geometry.get_terrain(neighbor.hex) {
                 let neighbor_query_item = terrain_query.get(neigbor_entity).unwrap();
 
                 let neighbor_soil_lateral_flow_ratio = *neighbor_query_item.soil_water_flow_rate;
