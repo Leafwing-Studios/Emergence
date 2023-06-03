@@ -111,6 +111,7 @@ pub(super) fn compute_shade(
                     shade.add_shade();
                 }
             }
+            i += 1;
         }
     }
 }
