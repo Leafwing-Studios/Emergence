@@ -104,7 +104,6 @@ impl TerrainBundle {
             ..Default::default()
         };
 
-        let height = map_geometry.get_height(voxel_pos.hex).unwrap();
         let terrain_data = terrain_manifest.get(terrain_id);
 
         TerrainBundle {

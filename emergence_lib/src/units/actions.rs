@@ -737,7 +737,7 @@ impl CurrentAction {
         }
 
         for voxel_pos in unit_pos.reachable_neighbors() {
-            for candidate in map_geometry.get_candidate(voxel_pos, delivery_mode) {
+            if let Some(candidate) = map_geometry.get_candidate(voxel_pos, delivery_mode) {
                 match (delivery_mode, purpose) {
                     (DeliveryMode::PickUp, Purpose::Intrinsic) => {
                         if let Ok(output_inventory) = output_inventory_query.get(candidate) {
