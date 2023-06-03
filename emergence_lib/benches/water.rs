@@ -10,6 +10,7 @@ use emergence_lib::{
         WaterConfig, WaterVolume,
     },
 };
+use hexx::Hex;
 
 fn criterion_benchmark(c: &mut Criterion) {
     const MAP_RADIUS: u32 = 100;
@@ -18,9 +19,9 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let mut map_geometry = MapGeometry::new(MAP_RADIUS);
 
-    for hex in map_geometry.all_hexes().collect::<Vec<Hex>>() {
+    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         // Make sure we cover a range of heights
-        let height = Height(hex.hex.x.max(0) as f32);
+        let height = Height(hex.x.max(0) as f32);
         let voxel_pos = VoxelPos::new(hex, height);
 
         let water_volume = WaterVolume::new(Volume(20.));
@@ -29,7 +30,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             .world
             .spawn((
                 voxel_pos,
-                height,
                 WaterBundle {
                     water_volume,
                     ..Default::default()
@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             .id();
 
         map_geometry.update_height(voxel_pos);
-        map_geometry.add_terrain(hex, terrain_entity);
+        map_geometry.add_terrain(voxel_pos, terrain_entity);
     }
 
     app.insert_resource(map_geometry);
