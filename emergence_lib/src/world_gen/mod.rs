@@ -79,7 +79,9 @@ impl WorldGenState {
         match world_gen_state.0 {
             WorldGenState::Waiting => {
                 // Don't limit the tick rate while generating the world
-                frame_pace_settings.limiter = Limiter::Off;
+                if !matches!(frame_pace_settings.limiter, Limiter::Off) {
+                    frame_pace_settings.limiter = Limiter::Off;
+                }
 
                 if asset_state.0 == AssetState::FullyLoaded {
                     next_world_gen_state.set(WorldGenState::Generating);
