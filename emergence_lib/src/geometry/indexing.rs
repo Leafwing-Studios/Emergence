@@ -20,10 +20,10 @@ pub struct MapGeometry {
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
     terrain_index: HashMap<Hex, Entity>,
-    /// Tracks which objects are stored in each voxel.
-    voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// The height of the terrain at each tile position.
     height_index: HashMap<Hex, Height>,
+    /// Tracks which objects are stored in each voxel.
+    voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// The list of all valid neighbors for each tile position.
     valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
@@ -90,10 +90,10 @@ impl MapGeometry {
             layout: HexLayout::default(),
             radius,
             terrain_index: HashMap::default(),
+            height_index,
             voxel_index: HashMap::default(),
             valid_neighbors,
             passable_neighbors,
-            height_index,
         }
     }
 
