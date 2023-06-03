@@ -590,7 +590,9 @@ mod tests {
                 };
 
                 let voxel_pos = VoxelPos::new(hex, height);
-                map_geometry.update_height(voxel_pos);
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
+
+                map_geometry.add_terrain(voxel_pos, terrain_entity);
             }
 
             map_geometry

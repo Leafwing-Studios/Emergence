@@ -490,7 +490,7 @@ mod tests {
 
     #[test]
     fn world_to_tile_pos_conversions_are_invertable() {
-        let mut map_geometry = MapGeometry::new(20);
+        let map_geometry = MapGeometry::new(20);
 
         for x in -10..=10 {
             for y in -10..=10 {
@@ -498,8 +498,6 @@ mod tests {
                 let height = Height(17.);
 
                 let voxel_pos = VoxelPos::new(hex, height);
-                // Height chosen arbitrarily to reduce odds of this accidentally working
-                map_geometry.update_height(voxel_pos);
                 let world_pos = voxel_pos.into_world_pos(&map_geometry);
                 let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
 

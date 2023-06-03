@@ -131,13 +131,14 @@ impl TerrainBundle {
 
 /// Updates the game state appropriately whenever the height of a tile is changed.
 fn respond_to_height_changes(
-    mut terrain_query: Query<(Ref<VoxelPos>, &mut Transform, &Children), With<Id<Terrain>>>,
+    mut terrain_query: Query<(Entity, Ref<VoxelPos>, &mut Transform, &Children), With<Id<Terrain>>>,
     mut column_query: Query<&mut Transform, (With<Parent>, Without<VoxelPos>)>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (voxel_pos, mut transform, children) in terrain_query.iter_mut() {
+    for (terrain_entity, voxel_pos, mut transform, children) in terrain_query.iter_mut() {
         if voxel_pos.is_changed() {
-            map_geometry.update_height(*voxel_pos);
+            // PERF: this is probably redundant, as long as we're careful about how the voxel pos of terrain can be mutated
+            map_geometry.add_terrain(*voxel_pos, terrain_entity);
             let height = voxel_pos.height();
             transform.translation.y = height.into_world_pos();
             // During terrain initialization we ensure that the column is always the 0th child

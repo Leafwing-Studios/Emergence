@@ -37,7 +37,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             ))
             .id();
 
-        map_geometry.update_height(voxel_pos);
         map_geometry.add_terrain(voxel_pos, terrain_entity);
     }
 

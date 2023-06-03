@@ -303,21 +303,6 @@ impl MapGeometry {
             && self.is_space_available_to_transform(existing_entity, center, footprint, facing)
     }
 
-    /// Updates the height index to match `voxel_pos`
-    #[inline]
-    pub fn update_height(&mut self, voxel_pos: VoxelPos) {
-        assert!(
-            self.is_valid(voxel_pos.hex),
-            "Invalid tile position: {:?} with a radius of {:?}",
-            voxel_pos.hex,
-            self.radius
-        );
-        self.height_index.insert(voxel_pos.hex, voxel_pos.height());
-
-        // FIXME: this should update the voxel index, which should *then* trigger a recompute of the neighbors
-        self.recompute_passable_neighbors(voxel_pos);
-    }
-
     /// Returns the height of the tile at `voxel_pos`, if available.
     ///
     /// This should always be [`Ok`] for all valid tiles.
@@ -353,10 +338,10 @@ impl MapGeometry {
     ) {
         let Ok(target_height) = self.get_height(center.hex) else { return };
         for voxel_pos in footprint.normalized(facing, center) {
-            if let Some(entity) = self.get_terrain(voxel_pos.hex) {
-                if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(entity) {
+            if let Some(terrain_entity) = self.get_terrain(voxel_pos.hex) {
+                if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(terrain_entity) {
                     voxel_pos.height = target_height.0.round() as i32;
-                    self.update_height(*voxel_pos);
+                    self.add_terrain(*voxel_pos, terrain_entity);
                 }
             }
         }
@@ -428,7 +413,23 @@ impl MapGeometry {
         let height = voxel_pos.height();
 
         self.terrain_index.insert(hex, terrain_entity);
-        self.height_index.insert(hex, height);
+        let maybe_previous_height = self.height_index.insert(hex, height);
+
+        self.voxel_index.insert(
+            voxel_pos,
+            VoxelObject {
+                entity: terrain_entity,
+                object_kind: VoxelKind::Terrain,
+            },
+        );
+        self.recompute_passable_neighbors(voxel_pos);
+
+        // We only store the voxel entry for the highest terrain at each hex
+        if let Some(previous_height) = maybe_previous_height {
+            let old_voxel_pos = VoxelPos::new(hex, previous_height);
+            self.voxel_index.remove(&old_voxel_pos);
+            self.recompute_passable_neighbors(old_voxel_pos);
+        }
     }
 
     /// Gets the structure [`Entity`] at the provided `voxel_pos`, if any.

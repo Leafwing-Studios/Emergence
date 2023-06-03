@@ -126,9 +126,6 @@ impl Command for SpawnTerrainCommand {
         let handles = world.resource::<TerrainHandles>();
         let scene_handle = handles.scenes.get(&self.terrain_id).unwrap().clone_weak();
         let mesh = handles.topper_mesh.clone_weak();
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
-
-        map_geometry.update_height(self.voxel_pos);
 
         // Drop the borrow so the borrow checker is happy
         let map_geometry = world.resource::<MapGeometry>();
@@ -323,7 +320,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(*voxel_pos);
+        map_geometry.add_terrain(*voxel_pos, terrain_entity);
         *zoning = Zoning::None;
     }
 }
