@@ -1,11 +1,8 @@
 //! Shade is cast by structures and terrain based on their height and the position of the sun.
 
 use crate::{
-    asset_management::manifest::Id,
-    construction::ghosts::Ghost,
-    geometry::{Facing, MapGeometry, VoxelPos},
+    geometry::{MapGeometry, VoxelPos},
     simulation::time::{InGameTime, TimeOfDay},
-    structures::structure_manifest::{Structure, StructureManifest},
 };
 use bevy::prelude::*;
 use hexx::Hex;
@@ -74,11 +71,8 @@ impl Display for ReceivedLight {
 /// Computes the amount of shade on each tile.
 pub(super) fn compute_shade(
     mut shade_query: Query<&mut Shade>,
-    // FIXME: previews cast shadows in the game, but we only want them to be previewed to the player
-    structure_query: Query<(&VoxelPos, &Id<Structure>, &Facing), Without<Ghost>>,
     map_geometry: Res<MapGeometry>,
     in_game_time: Res<InGameTime>,
-    structure_manifest: Res<StructureManifest>,
 ) {
     // PERF: we can be much less aggressive about computing these values
     // They only need to be recomputed when the map geometry changes, or when the time of day changes
