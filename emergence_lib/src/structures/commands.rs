@@ -146,6 +146,7 @@ impl Command for SpawnStructureCommand {
         let structure_entity = world
             .spawn(StructureBundle::new(
                 self.center,
+                structure_data.footprint.clone(),
                 self.data,
                 picking_mesh,
                 scene_handle,
@@ -302,7 +303,7 @@ impl Command for SpawnStructureGhostCommand {
         }
 
         let manifest = world.resource::<StructureManifest>();
-        let footprint = manifest.construction_footprint(structure_id).clone();
+        let footprint = manifest.footprint(structure_id).clone();
         let structure_data = manifest.get(structure_id);
         let facing = self.data.facing;
 
@@ -340,9 +341,7 @@ impl Command for SpawnStructureGhostCommand {
                 .clone();
 
             let structure_manifest = world.resource::<StructureManifest>();
-            let footprint = structure_manifest
-                .construction_footprint(structure_id)
-                .clone();
+            let footprint = structure_manifest.footprint(structure_id).clone();
 
             world.entity_mut(ghost_entity).despawn_recursive();
             let mut map_geometry = world.resource_mut::<MapGeometry>();
@@ -414,9 +413,7 @@ impl Command for DespawnGhostCommand {
             .clone();
 
         let structure_manifest = world.resource::<StructureManifest>();
-        let footprint = structure_manifest
-            .construction_footprint(structure_id)
-            .clone();
+        let footprint = structure_manifest.footprint(structure_id).clone();
 
         let mut map_geometry = world.resource_mut::<MapGeometry>();
         map_geometry.remove_ghost_structure(center, &footprint, facing);

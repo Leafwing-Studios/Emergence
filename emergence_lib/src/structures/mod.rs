@@ -44,6 +44,8 @@ impl Plugin for StructuresPlugin {
 struct StructureBundle {
     /// Unique identifier of structure variety
     structure: Id<Structure>,
+    /// The footprint of this structure
+    footprint: Footprint,
     /// The direction this structure is facing
     facing: Facing,
     /// The location of this structure
@@ -62,6 +64,7 @@ impl StructureBundle {
     /// Creates a new structure
     fn new(
         voxel_pos: VoxelPos,
+        footprint: Footprint,
         data: ClipboardData,
         picking_mesh: Handle<Mesh>,
         scene_handle: Handle<Scene>,
@@ -69,6 +72,7 @@ impl StructureBundle {
     ) -> Self {
         StructureBundle {
             structure: data.structure_id,
+            footprint,
             facing: data.facing,
             voxel_pos,
             raycast_mesh: RaycastMesh::default(),
@@ -86,7 +90,7 @@ impl StructureBundle {
 /// The set of tiles taken up by a structure.
 ///
 /// Structures are always "centered" on 0, 0, so these coordinates are relative to that.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Footprint {
     /// The set of tiles is taken up by this structure.
     pub(crate) set: HashSet<VoxelPos>,
@@ -153,6 +157,18 @@ impl Footprint {
             .iter()
             .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex).unwrap_or_default())
             .reduce(|a, b| a.max(b))
+    }
+
+    /// Returns the highest normalized height of tiles in this footprint.
+    pub(crate) fn max_height(&self) -> Height {
+        let integer_height = self
+            .set
+            .iter()
+            .map(|&voxel_pos| voxel_pos.height)
+            .reduce(|a, b| a.max(b))
+            .unwrap_or_default();
+
+        Height(integer_height as f32)
     }
 
     /// Computes the translation (in world space) of the center of this footprint.

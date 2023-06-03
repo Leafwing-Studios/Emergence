@@ -672,8 +672,11 @@ mod structure_details {
         ) -> String {
             let entity = self.entity;
             let structure_type = structure_manifest.name(self.structure_id);
+            let height = structure_manifest
+                .get(self.structure_id)
+                .footprint
+                .max_height();
             let voxel_pos = &self.voxel_pos;
-            let height = structure_manifest.get(self.structure_id).height;
             let emitter = self.emitter.clone().unwrap_or_default().display(
                 item_manifest,
                 unit_manifest,

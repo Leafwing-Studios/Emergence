@@ -4,7 +4,6 @@ use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     construction::{ConstructionData, ConstructionStrategy, RawConstructionStrategy},
     crafting::recipe::{ActiveRecipe, RawActiveRecipe},
-    geometry::Height,
     items::item_manifest::Item,
     organisms::{
         vegetative_reproduction::{RawVegetativeReproduction, VegetativeReproduction},
@@ -41,12 +40,10 @@ impl StructureManifest {
     }
 
     /// Fetches the [`Footprint`] for the initial form of a given structure type.
-    pub fn construction_footprint(&self, structure_id: Id<Structure>) -> &Footprint {
+    pub fn footprint(&self, structure_id: Id<Structure>) -> &Footprint {
         let strategy = &self.get(structure_id).construction_strategy;
         match strategy {
-            ConstructionStrategy::Seedling(seedling_id) => {
-                self.construction_footprint(*seedling_id)
-            }
+            ConstructionStrategy::Seedling(seedling_id) => self.footprint(*seedling_id),
             ConstructionStrategy::Direct(..) | ConstructionStrategy::Landmark => {
                 &self.get(structure_id).footprint
             }
@@ -69,8 +66,6 @@ pub struct StructureData {
     pub vegetative_reproduction: Option<VegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
-    /// The height of the structure, which controls the shadows it casts.
-    pub height: Height,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
     /// The set of tiles that this structure can reach with its roots.
@@ -96,8 +91,6 @@ pub struct RawStructureData {
     pub vegetative_reproduction: Option<RawVegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
-    /// The height of the structure, which controls the shadows it casts.
-    pub height: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
     /// The set of tiles that this structure can reach with its roots.
@@ -116,7 +109,6 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             vegetative_reproduction: raw.vegetative_reproduction.map(Into::into),
             max_workers: raw.max_workers,
-            height: Height(raw.height as f32),
             footprint: raw.footprint.unwrap_or_default(),
             root_zone: raw.root_zone,
             can_walk_through: raw.can_walk_through,

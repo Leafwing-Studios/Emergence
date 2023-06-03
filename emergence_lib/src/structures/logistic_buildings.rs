@@ -3,7 +3,6 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::Id,
     crafting::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
@@ -17,7 +16,7 @@ use crate::{
     water::WaterDepth,
 };
 
-use super::structure_manifest::{Structure, StructureManifest};
+use super::Footprint;
 
 /// A building that spits out items.
 #[derive(Component)]
@@ -73,17 +72,13 @@ fn release_items(
 
 /// Absorb litter into the inventory of buildings that absorb items.
 fn absorb_items(
-    mut structure_query: Query<
-        (&VoxelPos, &mut OutputInventory, &Id<Structure>),
-        With<AbsorbsItems>,
-    >,
+    mut structure_query: Query<(&VoxelPos, &Footprint, &mut OutputInventory), With<AbsorbsItems>>,
     mut litter_query: Query<&mut Litter>,
-    structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     water_depth_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (&voxel_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
+    for (&voxel_pos, footprint, mut output_inventory) in structure_query.iter_mut() {
         output_inventory.clear_empty_slots();
 
         if output_inventory.is_full() {
@@ -107,11 +102,10 @@ fn absorb_items(
         }
 
         // Only absorb floating items if the structure is tall enough.
-        let structure_data = structure_manifest.get(structure_id);
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
-        if structure_data.height > water_depth.surface_water_depth() {
+        if footprint.max_height() > water_depth.surface_water_depth() {
             let floating = litter.floating.clone();
             for item_slot in floating.iter() {
                 let item_count = item_slot.item_count();

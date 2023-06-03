@@ -700,8 +700,9 @@ fn emit_signals(
             let structure_data = structure_manifest.get(*structure_id);
             let terrain_entity = map_geometry.get_terrain(center.hex).unwrap();
             let water_depth = terrain_query.get(terrain_entity).unwrap();
+            let structure_height = structure_data.footprint.max_height();
 
-            if structure_data.height < water_depth.surface_water_depth() {
+            if structure_height < water_depth.surface_water_depth() {
                 continue;
             }
         }

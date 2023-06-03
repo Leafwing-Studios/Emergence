@@ -225,8 +225,7 @@ fn mark_based_on_zoning(
         // Reborrowing here would trigger change detection, causing this system to constantly check
         match zoning.bypass_change_detection() {
             Zoning::Structure(clipboard_data) => {
-                let footprint =
-                    structure_manifest.construction_footprint(clipboard_data.structure_id);
+                let footprint = structure_manifest.footprint(clipboard_data.structure_id);
 
                 if map_geometry.can_build(voxel_pos, footprint, clipboard_data.facing) {
                     commands.spawn_ghost_structure(voxel_pos, clipboard_data.clone())

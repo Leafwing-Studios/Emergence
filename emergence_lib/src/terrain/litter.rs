@@ -21,10 +21,7 @@ use crate::{
         ItemCount,
     },
     signals::{Emitter, SignalStrength, SignalType},
-    structures::{
-        logistic_buildings::AbsorbsItems,
-        structure_manifest::{Structure, StructureManifest},
-    },
+    structures::{logistic_buildings::AbsorbsItems, Footprint},
     water::{FlowVelocity, WaterDepth},
 };
 
@@ -254,9 +251,8 @@ pub(super) fn carry_floating_litter_with_current(
         &FlowVelocity,
     )>,
     water_height_query: Query<(&VoxelPos, &WaterDepth)>,
-    net_query: Query<&Id<Structure>, With<AbsorbsItems>>,
+    net_query: Query<&Footprint, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
-    structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
@@ -292,10 +288,8 @@ pub(super) fn carry_floating_litter_with_current(
     {
         // Don't cause items to drift out of overfull nets
         if let Some(structure_entity) = map_geometry.get_structure(voxel_pos) {
-            if let Ok(structure_id) = net_query.get(structure_entity) {
-                let structure_height = structure_manifest.get(*structure_id).height;
-
-                if structure_height >= water_depth.surface_water_depth() {
+            if let Ok(footprint) = net_query.get(structure_entity) {
+                if footprint.max_height() >= water_depth.surface_water_depth() {
                     // If a net exists, and isn't overtopped, then don't drift items out of it
                     continue;
                 }
