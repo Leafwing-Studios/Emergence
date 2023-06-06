@@ -15,4 +15,4 @@ pub(crate) use rotation::{
 };
 
 mod voxels;
-pub(crate) use voxels::VoxelObject;
+pub(crate) use voxels::{VoxelKind, VoxelObject};

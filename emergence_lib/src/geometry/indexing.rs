@@ -7,7 +7,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{voxels::VoxelKind, Facing, Height, VoxelObject, VoxelPos};
+use super::{Facing, Height, VoxelKind, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -695,6 +695,98 @@ impl MapGeometry {
 }
 
 #[cfg(test)]
+impl MapGeometry {
+    /// Runs all of the validation checks on the map.
+    fn validate(&self) {
+        self.validate_heights();
+        self.validate_entity_mapping();
+        self.ensure_voxel_keys_match();
+        self.ensure_hex_keys_match();
+        self.ensure_height_and_voxel_indexes_match();
+    }
+
+    /// Asserts that all of the heights in the map are between `Height::MIN` and `Height::MAX`.
+    fn validate_heights(&self) {
+        for voxel_pos in self.voxel_index.keys() {
+            let height = voxel_pos.height();
+            assert!(
+                height >= Height::MIN && height <= Height::MAX,
+                "Height {} is out of range",
+                height
+            );
+        }
+
+        for &hex in self.all_hexes() {
+            let height = self.get_height(hex).unwrap();
+            assert!(
+                height >= Height::MIN && height <= Height::MAX,
+                "Height {} is out of range",
+                height
+            );
+        }
+    }
+
+    /// Asserts that the heights recorded for terrain in the voxel index match the height map.
+    fn ensure_height_and_voxel_indexes_match(&self) {
+        for (voxel_pos, voxel_object) in self.voxel_index.iter() {
+            if !matches!(&voxel_object.object_kind, &VoxelKind::Terrain) {
+                continue;
+            }
+
+            let voxel_height = voxel_pos.height();
+            let hex = voxel_pos.hex;
+            let stored_height = self.get_height(hex).unwrap();
+
+            assert_eq!(
+                voxel_height, stored_height,
+                "Height mismatch at {}",
+                voxel_pos
+            );
+        }
+    }
+
+    /// Asserts that the keys in the voxel index and the valid neighbors map match.
+    fn ensure_voxel_keys_match(&self) {
+        use bevy::utils::HashSet;
+
+        assert_eq!(
+            self.voxel_index.keys().collect::<HashSet<_>>(),
+            self.valid_neighbors.keys().collect::<HashSet<_>>(),
+            "Keys mismatch"
+        );
+    }
+
+    /// Asserts that the keys in the height index and the terrain index match.
+    fn ensure_hex_keys_match(&self) {
+        use bevy::utils::HashSet;
+
+        assert_eq!(
+            self.height_index.keys().collect::<HashSet<_>>(),
+            self.terrain_index.keys().collect::<HashSet<_>>(),
+            "Keys mismatch"
+        );
+    }
+
+    /// Asserts that the entities recorded in the voxel index match the entities recorded in the terrain map.
+    fn validate_entity_mapping(&self) {
+        for (voxel_pos, voxel_object) in self.voxel_index.iter() {
+            if !matches!(&voxel_object.object_kind, &VoxelKind::Terrain) {
+                continue;
+            }
+
+            let voxel_entity = voxel_object.entity;
+            let terrain_entity = self.get_terrain(voxel_pos.hex).unwrap();
+
+            assert_eq!(
+                voxel_entity, terrain_entity,
+                "Entity mismatch at {}",
+                voxel_pos
+            );
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -739,6 +831,8 @@ mod tests {
                 }
             }
         }
+
+        map_geometry.validate();
     }
 
     #[test]
