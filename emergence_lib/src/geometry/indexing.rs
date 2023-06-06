@@ -54,7 +54,7 @@ impl MapGeometry {
             .map(|voxel_pos| (voxel_pos.hex, Height::MIN))
             .collect();
 
-        let reachable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]> = hexes
+        let valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]> = hexes
             .iter()
             .map(|hex| {
                 let voxel_pos = VoxelPos::new(*hex, Height::MIN);
@@ -70,21 +70,7 @@ impl MapGeometry {
             })
             .collect();
 
-        let passable_neighbors = reachable_neighbors.clone();
-        let mut valid_neighbors = reachable_neighbors.clone();
-
-        // Define valid neighbors for ocean tiles
-        for hex in Hex::ZERO.ring(radius + 1) {
-            let voxel_pos = VoxelPos::new(hex, Height::MIN);
-            let mut neighbors = [None; 6];
-            for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
-                if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                    neighbors[i] = Some(VoxelPos::new(neighboring_hex, Height::MIN))
-                }
-            }
-
-            valid_neighbors.insert(voxel_pos, neighbors);
-        }
+        let passable_neighbors = valid_neighbors.clone();
 
         MapGeometry {
             layout: HexLayout::default(),
