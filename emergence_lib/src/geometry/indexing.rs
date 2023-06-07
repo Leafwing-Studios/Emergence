@@ -19,12 +19,20 @@ pub struct MapGeometry {
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
+    ///
+    /// The set of keys is the set of all valid [`Hex`] positions on the map.
     terrain_index: HashMap<Hex, Entity>,
     /// The height of the terrain at each tile position.
+    ///
+    /// The set of keys is the set of all valid [`Hex`] positions on the map.
     height_index: HashMap<Hex, Height>,
     /// Tracks which objects are stored in each voxel.
+    ///
+    /// The set of keys is the set of all non-empty [`VoxelPos`] positions on the map.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// The list of all valid neighbors for each tile position.
+    ///
+    /// The set of keys is the set of all [`VoxelPos`] that units could be found.
     valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
     passable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
@@ -737,7 +745,6 @@ impl MapGeometry {
     fn validate(&self) {
         self.validate_heights();
         self.validate_entity_mapping();
-        self.ensure_voxel_keys_match();
         self.ensure_hex_keys_match();
         self.ensure_height_and_voxel_indexes_match();
     }
@@ -780,17 +787,6 @@ impl MapGeometry {
                 voxel_pos
             );
         }
-    }
-
-    /// Asserts that the keys in the voxel index and the valid neighbors map match.
-    fn ensure_voxel_keys_match(&self) {
-        use bevy::utils::HashSet;
-
-        assert_eq!(
-            self.voxel_index.keys().collect::<HashSet<_>>(),
-            self.valid_neighbors.keys().collect::<HashSet<_>>(),
-            "Voxel index keys do not match valid neighbors keys"
-        );
     }
 
     /// Asserts that the keys in the height index and the terrain index match.
