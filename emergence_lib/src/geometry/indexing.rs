@@ -876,7 +876,7 @@ mod tests {
     #[test]
     fn can_add_and_remove_structures() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
         let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
         let facing = Facing::default();
         let footprint = Footprint::default();
@@ -903,7 +903,7 @@ mod tests {
     #[test]
     fn can_add_and_remove_ghost_structures() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
         let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
         let facing = Facing::default();
         let footprint = Footprint::default();
@@ -923,7 +923,7 @@ mod tests {
     #[test]
     fn can_add_and_remove_ghost_terrain() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
         let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
 
         map_geometry.add_ghost_terrain(Entity::from_bits(42), voxel_pos);
@@ -939,7 +939,7 @@ mod tests {
     #[test]
     fn can_change_height_of_terrain() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
         assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ZERO);
 
         map_geometry.update_height(Hex::ZERO, Height(1.));
@@ -951,7 +951,7 @@ mod tests {
     #[test]
     fn adding_multi_tile_structure_adds_to_index() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
@@ -981,7 +981,7 @@ mod tests {
     #[test]
     fn removing_multi_tile_structure_clears_indexes() {
         let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
