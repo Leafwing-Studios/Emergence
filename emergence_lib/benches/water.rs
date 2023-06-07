@@ -16,8 +16,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     const MAP_RADIUS: u32 = 100;
 
     let mut app = App::new();
-
-    let mut map_geometry = MapGeometry::new(MAP_RADIUS);
+    let mut map_geometry = MapGeometry::new(&mut app.world, MAP_RADIUS);
 
     for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         // Make sure we cover a range of heights

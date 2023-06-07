@@ -490,7 +490,8 @@ mod tests {
 
     #[test]
     fn world_to_tile_pos_conversions_are_invertable() {
-        let map_geometry = MapGeometry::new(20);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 20);
 
         for x in -10..=10 {
             for y in -10..=10 {

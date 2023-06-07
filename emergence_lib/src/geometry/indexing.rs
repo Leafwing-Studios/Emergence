@@ -41,7 +41,7 @@ impl MapGeometry {
     /// Creates a new [`MapGeometry`] of the provided raidus.
     ///
     /// All indexes will be empty.
-    pub fn new(radius: u32) -> Self {
+    pub fn new(world: &mut World, radius: u32) -> Self {
         let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
         let tiles: Vec<VoxelPos> = hexes
             .iter()
@@ -780,7 +780,8 @@ mod tests {
     fn map_geometry_is_initialized_successfully() {
         let radius = 10;
 
-        let map_geometry = MapGeometry::new(radius);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, radius);
         let hexagon = hexagon(Hex::ZERO, radius);
         let n = hexagon.len();
 
@@ -823,7 +824,8 @@ mod tests {
 
     #[test]
     fn adding_multi_tile_structure_adds_to_index() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
@@ -852,7 +854,8 @@ mod tests {
 
     #[test]
     fn removing_multi_tile_structure_clears_indexes() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);

@@ -470,7 +470,7 @@ mod tests {
 
         let mut map_geometry = scenario
             .map_shape
-            .set_heights(scenario.map_size.map_geometry());
+            .set_heights(scenario.map_size.map_geometry(&mut app.world));
 
         // Override the default water config with one appropriate for testing.
         app.insert_resource(scenario.water_config);
@@ -554,10 +554,10 @@ mod tests {
     }
 
     impl MapSize {
-        fn map_geometry(&self) -> MapGeometry {
+        fn map_geometry(&self, world: &mut World) -> MapGeometry {
             match self {
-                MapSize::OneTile => MapGeometry::new(0),
-                MapSize::Tiny => MapGeometry::new(3),
+                MapSize::OneTile => MapGeometry::new(world, 0),
+                MapSize::Tiny => MapGeometry::new(world, 3),
             }
         }
     }

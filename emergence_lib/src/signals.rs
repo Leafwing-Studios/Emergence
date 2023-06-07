@@ -810,7 +810,8 @@ mod tests {
     #[test]
     fn signals_diffuse() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 1);
 
         let passable_neighbors = map_geometry.passable_neighbors(VoxelPos::ZERO);
         for maybe_neighbor in passable_neighbors {
@@ -849,7 +850,8 @@ mod tests {
     #[test]
     fn neighboring_signals_checks_origin_tile() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 1);
 
         signals.add_signal(
             SignalType::Contains(test_item()),
@@ -874,7 +876,8 @@ mod tests {
     #[test]
     fn upstream_returns_none_with_no_signals() {
         let signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 10);
         let item_manifest = test_manifest();
 
         assert_eq!(
@@ -918,7 +921,8 @@ mod tests {
     #[test]
     fn upstream_returns_none_at_trivial_peak() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 10);
         let item_manifest = test_manifest();
 
         signals.add_signal(
@@ -941,7 +945,8 @@ mod tests {
     #[test]
     fn upstream_returns_none_at_peak() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 10);
         let item_manifest = test_manifest();
 
         signals.add_signal(
@@ -970,7 +975,8 @@ mod tests {
     // The logic for Goal::DropOff is significantly more complex and worth testing separately
     fn upstream_returns_none_at_peak_dropoff() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 1);
         let item_manifest = test_manifest();
 
         signals.add_signal(
@@ -999,7 +1005,8 @@ mod tests {
     #[test]
     fn upstream_returns_some_at_trivial_valley() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 1);
         let item_manifest = test_manifest();
 
         for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
@@ -1021,7 +1028,8 @@ mod tests {
     #[test]
     fn upstream_returns_some_at_valley() {
         let mut signals = Signals::default();
-        let map_geometry = MapGeometry::new(1);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, 1);
         let item_manifest = test_manifest();
 
         signals.add_signal(

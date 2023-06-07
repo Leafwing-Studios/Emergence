@@ -1,3 +1,4 @@
+use bevy::prelude::World;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::asset_management::manifest::Id;
 use emergence_lib::crafting::item_tags::ItemKind;
@@ -7,7 +8,8 @@ use emergence_lib::signals::{SignalStrength, SignalType, Signals, DIFFUSION_FRAC
 /// Setup function
 fn setup(settings: Settings) -> (Signals, MapGeometry) {
     let mut signals = Signals::default();
-    let map_geometry = MapGeometry::new(settings.map_radius);
+    let mut world = World::new();
+    let map_geometry = MapGeometry::new(&mut world, settings.map_radius);
 
     for i in 0..settings.n_signals {
         let signal_type = SignalType::Pull(ItemKind::Single(Id::from_name(format!("{i}"))));

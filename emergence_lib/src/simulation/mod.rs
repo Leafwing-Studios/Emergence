@@ -31,7 +31,9 @@ pub struct GeometryPlugin {
 
 impl Plugin for GeometryPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(MapGeometry::new(self.gen_config.map_radius));
+        let map_geometry = MapGeometry::new(&mut app.world, self.gen_config.map_radius);
+
+        app.insert_resource(map_geometry);
     }
 }
 
