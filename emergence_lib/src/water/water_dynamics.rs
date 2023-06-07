@@ -468,7 +468,7 @@ mod tests {
                     .in_schedule(CoreSchedule::FixedUpdate),
             );
 
-        let mut map_geometry = scenario
+        let map_geometry = scenario
             .map_shape
             .set_heights(scenario.map_size.map_geometry(&mut app.world));
 
@@ -483,19 +483,15 @@ mod tests {
                 .water_table_strategy
                 .starting_water_volume(hex, &map_geometry);
             let voxel_pos = VoxelPos::new(hex, height);
-
-            let terrain_entity = app
-                .world
-                .spawn((
-                    voxel_pos,
-                    ReceivedLight::default(),
-                    WaterBundle {
-                        water_volume,
-                        ..Default::default()
-                    },
-                ))
-                .id();
-            map_geometry.add_terrain(voxel_pos, terrain_entity)
+            let terrain_entity = map_geometry.get_terrain(hex).unwrap();
+            app.world.entity_mut(terrain_entity).insert((
+                voxel_pos,
+                ReceivedLight::default(),
+                WaterBundle {
+                    water_volume,
+                    ..Default::default()
+                },
+            ));
         }
 
         app.insert_resource(map_geometry);
@@ -589,10 +585,7 @@ mod tests {
                     }
                 };
 
-                let voxel_pos = VoxelPos::new(hex, height);
-                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
-
-                map_geometry.add_terrain(voxel_pos, terrain_entity);
+                map_geometry.update_height(hex, height);
             }
 
             map_geometry

@@ -349,7 +349,7 @@ impl MapGeometry {
             if let Ok(terrain_entity) = self.get_terrain(voxel_pos.hex) {
                 if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(terrain_entity) {
                     voxel_pos.height = target_height.0.round() as i32;
-                    self.add_terrain(*voxel_pos, terrain_entity);
+                    self.update_height(voxel_pos.hex, voxel_pos.height());
                 }
             }
         }
@@ -411,39 +411,37 @@ impl MapGeometry {
     /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
     #[must_use]
-    pub(crate) fn get_terrain(&self, hex: Hex) -> Result<Entity, IndexError> {
+    pub fn get_terrain(&self, hex: Hex) -> Result<Entity, IndexError> {
         match self.terrain_index.get(&hex).copied() {
             Some(entity) => Ok(entity),
             None => Err(IndexError { hex }),
         }
     }
 
-    /// Adds the provided `terrain_entity` to the terrain index at the provided `voxel_pos`.
-    ///
-    /// This also updates the height map.
+    /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
     #[inline]
-    pub fn add_terrain(&mut self, voxel_pos: VoxelPos, terrain_entity: Entity) {
-        let hex = voxel_pos.hex;
-        let height = voxel_pos.height();
+    pub fn update_height(&mut self, hex: Hex, height: Height) {
+        let old_height = self.get_height(hex).unwrap();
+        if old_height == height {
+            return;
+        }
 
-        self.terrain_index.insert(hex, terrain_entity);
-        let maybe_previous_height = self.height_index.insert(hex, height);
+        let old_voxel_pos = VoxelPos::new(hex, old_height);
+        let new_voxel_pos = VoxelPos::new(hex, height);
 
+        // This overwrites the existing entry
+        self.height_index.insert(hex, height);
+        // The old voxel needs to be removed, rather than overwritten, as it may be at a different height.
+        self.voxel_index.remove(&old_voxel_pos);
         self.voxel_index.insert(
-            voxel_pos,
+            new_voxel_pos,
             VoxelObject {
-                entity: terrain_entity,
+                entity: self.get_terrain(hex).unwrap(),
                 object_kind: VoxelKind::Terrain,
             },
         );
-        self.recompute_passable_neighbors(voxel_pos);
 
-        // We only store the voxel entry for the highest terrain at each hex
-        if let Some(previous_height) = maybe_previous_height {
-            let old_voxel_pos = VoxelPos::new(hex, previous_height);
-            self.voxel_index.remove(&old_voxel_pos);
-            self.recompute_passable_neighbors(old_voxel_pos);
-        }
+        self.recompute_passable_neighbors(new_voxel_pos);
 
         #[cfg(test)]
         self.validate();
@@ -944,9 +942,7 @@ mod tests {
         let mut map_geometry = MapGeometry::new(&mut world, 10);
         assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ZERO);
 
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
-
-        map_geometry.add_terrain(voxel_pos, Entity::from_bits(13));
+        map_geometry.update_height(Hex::ZERO, Height(1.));
         assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height(1.));
     }
 

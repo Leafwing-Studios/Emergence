@@ -129,7 +129,7 @@ impl Command for HydrateTerrainCommand {
         let map_geometry = world.resource::<MapGeometry>();
         let terrain_manifest = world.resource::<TerrainManifest>();
 
-        let existing_voxel_pos: &VoxelPos = world.get(self.entity).unwrap();
+        let existing_voxel_pos: VoxelPos = *world.get(self.entity).unwrap();
         let new_voxel_pos = VoxelPos::new(existing_voxel_pos.hex, self.height);
 
         // Insert the TerrainBundle
@@ -159,7 +159,7 @@ impl Command for HydrateTerrainCommand {
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
-        map_geometry.add_terrain(new_voxel_pos, self.entity);
+        map_geometry.update_height(existing_voxel_pos.hex, self.height);
     }
 }
 
@@ -322,7 +322,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.add_terrain(*voxel_pos, terrain_entity);
+        map_geometry.update_height(voxel_pos.hex, voxel_pos.height());
         *zoning = Zoning::None;
     }
 }

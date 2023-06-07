@@ -24,19 +24,17 @@ fn criterion_benchmark(c: &mut Criterion) {
         let voxel_pos = VoxelPos::new(hex, height);
 
         let water_volume = WaterVolume::new(Volume(20.));
+        let terrain_entity = map_geometry.get_terrain(hex).unwrap();
 
-        let terrain_entity = app
-            .world
-            .spawn((
-                voxel_pos,
-                WaterBundle {
-                    water_volume,
-                    ..Default::default()
-                },
-            ))
-            .id();
+        app.world.entity_mut(terrain_entity).insert((
+            voxel_pos,
+            WaterBundle {
+                water_volume,
+                ..Default::default()
+            },
+        ));
 
-        map_geometry.add_terrain(voxel_pos, terrain_entity);
+        map_geometry.update_height(hex, height);
     }
 
     app.insert_resource(map_geometry);
