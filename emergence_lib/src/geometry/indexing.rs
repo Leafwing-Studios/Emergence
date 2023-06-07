@@ -876,6 +876,83 @@ mod tests {
     }
 
     #[test]
+    fn can_add_and_remove_structures() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        map_geometry.add_structure(
+            facing,
+            voxel_pos,
+            &footprint,
+            false,
+            false,
+            Entity::from_bits(42),
+        );
+
+        assert_eq!(
+            map_geometry.get_structure(voxel_pos),
+            Some(Entity::from_bits(42))
+        );
+
+        map_geometry.remove_structure(facing, voxel_pos, &footprint);
+
+        assert_eq!(map_geometry.get_structure(voxel_pos), None);
+    }
+
+    #[test]
+    fn can_add_and_remove_ghost_structures() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        map_geometry.add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42));
+
+        assert_eq!(
+            map_geometry.get_ghost_structure(voxel_pos),
+            Some(Entity::from_bits(42))
+        );
+
+        map_geometry.remove_ghost_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(map_geometry.get_ghost_structure(voxel_pos), None);
+    }
+
+    #[test]
+    fn can_add_and_remove_ghost_terrain() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+
+        map_geometry.add_ghost_terrain(Entity::from_bits(42), voxel_pos);
+        assert_eq!(
+            map_geometry.get_ghost_terrain(voxel_pos),
+            Some(Entity::from_bits(42))
+        );
+
+        map_geometry.remove_ghost_terrain(voxel_pos);
+        assert_eq!(map_geometry.get_ghost_terrain(voxel_pos), None);
+    }
+
+    #[test]
+    fn can_change_height_of_terrain() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 10);
+        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ZERO);
+
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
+
+        map_geometry.add_terrain(voxel_pos, Entity::from_bits(13));
+        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height(1.));
+    }
+
+    // TODO: add tests for litter
+
+    #[test]
     fn adding_multi_tile_structure_adds_to_index() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 10);
