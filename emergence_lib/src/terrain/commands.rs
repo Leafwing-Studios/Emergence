@@ -2,10 +2,7 @@
 
 use bevy::{
     ecs::system::{Command, SystemState},
-    prelude::{
-        BuildWorldChildren, Commands, DespawnRecursiveExt, Handle, PbrBundle, Query, Res, ResMut,
-        World,
-    },
+    prelude::*,
     scene::Scene,
 };
 
@@ -25,10 +22,8 @@ use super::{terrain_manifest::TerrainManifest, TerrainBundle};
 
 /// An extension trait for [`Commands`] for working with terrain.
 pub(crate) trait TerrainCommandsExt {
-    /// Spawns a new terrain tile.
-    ///
-    /// Overwrites existing terrain at the same `hex`.
-    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, terrain_id: Id<Terrain>);
+    /// Adds the appropriate terrain bundle and children to an entity with a [`TerrainPrototype`].
+    fn hydrate_terrain(&mut self, entity: Entity, height: Height, terrain_id: Id<Terrain>);
 
     /// Spawns a ghost that previews the action given by `terraforming_action` at `voxel_pos`.
     ///
@@ -58,9 +53,10 @@ pub(crate) trait TerrainCommandsExt {
 }
 
 impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
-    fn spawn_terrain(&mut self, voxel_pos: VoxelPos, terrain_id: Id<Terrain>) {
-        self.add(SpawnTerrainCommand {
-            voxel_pos,
+    fn hydrate_terrain(&mut self, entity: Entity, height: Height, terrain_id: Id<Terrain>) {
+        self.add(HydrateTerrainCommand {
+            entity,
+            height,
             terrain_id,
         });
     }
@@ -109,19 +105,21 @@ impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
     }
 }
 
-/// Constructs a new [`Terrain`] entity.
+/// Hydrates a new terrain tile initialized by the [`MapGeometry`].
 ///
 /// The order of the chidlren *must* be:
 /// 0: column
 /// 1: scene root
-pub(crate) struct SpawnTerrainCommand {
-    /// The position and height to spawn the tile
-    pub(crate) voxel_pos: VoxelPos,
-    /// The type of tile
+pub(crate) struct HydrateTerrainCommand {
+    /// The entity to modify
+    pub(crate) entity: Entity,
+    /// The new height of the tile
+    pub(crate) height: Height,
+    /// The type of terrain
     pub(crate) terrain_id: Id<Terrain>,
 }
 
-impl Command for SpawnTerrainCommand {
+impl Command for HydrateTerrainCommand {
     fn write(self, world: &mut World) {
         let handles = world.resource::<TerrainHandles>();
         let scene_handle = handles.scenes.get(&self.terrain_id).unwrap().clone_weak();
@@ -131,17 +129,21 @@ impl Command for SpawnTerrainCommand {
         let map_geometry = world.resource::<MapGeometry>();
         let terrain_manifest = world.resource::<TerrainManifest>();
 
-        // Spawn the terrain entity
-        let terrain_entity = world
-            .spawn(TerrainBundle::new(
-                self.terrain_id,
-                self.voxel_pos,
-                scene_handle,
-                mesh,
-                terrain_manifest,
-                map_geometry,
-            ))
-            .id();
+        let existing_voxel_pos: &VoxelPos = world.get(self.entity).unwrap();
+        let new_voxel_pos = VoxelPos::new(existing_voxel_pos.hex, self.height);
+
+        // Insert the TerrainBundle
+        let terrain_bundle = TerrainBundle::new(
+            self.terrain_id,
+            new_voxel_pos,
+            scene_handle,
+            mesh,
+            terrain_manifest,
+            map_geometry,
+        );
+
+        // This overwrites the existing VoxelPos component
+        world.entity_mut(self.entity).insert(terrain_bundle);
 
         // Spawn the column as the 0th child of the tile entity
         // The scene bundle will be added as the first child
@@ -153,11 +155,11 @@ impl Command for SpawnTerrainCommand {
         };
 
         let hex_column = world.spawn(column_bundle).id();
-        world.entity_mut(terrain_entity).add_child(hex_column);
+        world.entity_mut(self.entity).add_child(hex_column);
 
         // Update the index of what terrain is where
         let mut map_geometry = world.resource_mut::<MapGeometry>();
-        map_geometry.add_terrain(self.voxel_pos, terrain_entity);
+        map_geometry.add_terrain(new_voxel_pos, self.entity);
     }
 }
 

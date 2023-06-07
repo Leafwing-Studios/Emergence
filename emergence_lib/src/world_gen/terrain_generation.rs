@@ -42,9 +42,9 @@ pub(crate) fn generate_terrain(
 
         // And then discretized to the nearest integer height before being used
         let height = Height::from_world_pos(hex_height);
-        let voxel_pos = VoxelPos::new(hex, height);
+        let entity = map_geometry.get_terrain(hex).unwrap();
 
-        commands.spawn_terrain(voxel_pos, terrain_id);
+        commands.hydrate_terrain(entity, height, terrain_id);
     }
 }
 

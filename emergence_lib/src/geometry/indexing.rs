@@ -72,15 +72,34 @@ impl MapGeometry {
 
         let passable_neighbors = valid_neighbors.clone();
 
-        MapGeometry {
+        let mut terrain_index = HashMap::default();
+        let mut voxel_index = HashMap::default();
+
+        for hex in hexes {
+            let voxel_pos = VoxelPos::new(hex, Height::MIN);
+            // The TerrainPrototype component is used to track the terrain entities that need to be replaced with a full TerrainBundle
+            let entity = world.spawn(voxel_pos).id();
+            terrain_index.insert(hex, entity);
+            voxel_index.insert(
+                voxel_pos,
+                VoxelObject {
+                    entity,
+                    object_kind: VoxelKind::Terrain,
+                },
+            );
+        }
+
+        let map_geometry = MapGeometry {
             layout: HexLayout::default(),
             radius,
-            terrain_index: HashMap::default(),
+            terrain_index,
             height_index,
-            voxel_index: HashMap::default(),
+            voxel_index,
             valid_neighbors,
             passable_neighbors,
-        }
+        };
+
+        map_geometry
     }
 
     /// Returns the list of all valid [`Hex`] positions on the map.
