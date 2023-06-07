@@ -99,6 +99,9 @@ impl MapGeometry {
             passable_neighbors,
         };
 
+        #[cfg(test)]
+        map_geometry.validate();
+
         map_geometry
     }
 
@@ -350,6 +353,9 @@ impl MapGeometry {
                 }
             }
         }
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Gets the [`Entity`] at the provided `voxel_pos` that might have or want an item.
@@ -438,6 +444,9 @@ impl MapGeometry {
             self.voxel_index.remove(&old_voxel_pos);
             self.recompute_passable_neighbors(old_voxel_pos);
         }
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Gets the structure [`Entity`] at the provided `voxel_pos`, if any.
@@ -474,6 +483,9 @@ impl MapGeometry {
 
             self.recompute_passable_neighbors(voxel_pos);
         }
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Removes any structure entity found at the provided `voxel_pos` from the structure index.
@@ -493,6 +505,9 @@ impl MapGeometry {
 
             self.recompute_passable_neighbors(voxel_pos);
         }
+
+        #[cfg(test)]
+        self.validate();
 
         removed.map(|data| data.entity)
     }
@@ -525,6 +540,9 @@ impl MapGeometry {
 
             self.voxel_index.insert(voxel_pos, voxel_data);
         }
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Removes any ghost structure entity found at the provided `voxel_pos` from the voxel index.
@@ -545,6 +563,9 @@ impl MapGeometry {
             self.recompute_passable_neighbors(voxel_pos);
         }
 
+        #[cfg(test)]
+        self.validate();
+
         removed.map(|data| data.entity)
     }
 
@@ -555,6 +576,9 @@ impl MapGeometry {
             entity: ghost_terrain_entity,
             object_kind: VoxelKind::GhostTerrain,
         };
+
+        #[cfg(test)]
+        self.validate();
 
         self.voxel_index.insert(voxel_pos, voxel_data);
     }
@@ -568,6 +592,10 @@ impl MapGeometry {
         match voxel_data.object_kind {
             VoxelKind::GhostTerrain => {
                 self.voxel_index.remove(&voxel_pos);
+
+                #[cfg(test)]
+                self.validate();
+
                 Some(voxel_data.entity)
             }
             _ => None,
@@ -612,6 +640,9 @@ impl MapGeometry {
             self.voxel_index.insert(voxel_pos, voxel_data);
             self.recompute_passable_neighbors(voxel_pos);
         }
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Returns an iterator over all of the hex positions that are ocean tiles.
@@ -691,6 +722,9 @@ impl MapGeometry {
 
         self.passable_neighbors
             .insert(voxel_pos, passable_neighbors);
+
+        #[cfg(test)]
+        self.validate();
     }
 
     /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
