@@ -789,7 +789,7 @@ impl MapGeometry {
         assert_eq!(
             self.voxel_index.keys().collect::<HashSet<_>>(),
             self.valid_neighbors.keys().collect::<HashSet<_>>(),
-            "Keys mismatch"
+            "Voxel index keys do not match valid neighbors keys"
         );
     }
 
@@ -800,7 +800,7 @@ impl MapGeometry {
         assert_eq!(
             self.height_index.keys().collect::<HashSet<_>>(),
             self.terrain_index.keys().collect::<HashSet<_>>(),
-            "Keys mismatch"
+            "Height index keys do not match terrain index keys"
         );
     }
 
