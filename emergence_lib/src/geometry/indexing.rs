@@ -35,6 +35,8 @@ pub struct MapGeometry {
     /// The set of keys is the set of all [`VoxelPos`] that units could be found.
     valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
+    ///
+    /// The set of keys is the set of all [`VoxelPos`] that units could be found.
     passable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
 }
 
