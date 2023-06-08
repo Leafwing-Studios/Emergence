@@ -669,9 +669,9 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn valid_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.valid_neighbors
-            .get(&voxel_pos)
-            .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
+        self.valid_neighbors.get(&voxel_pos).unwrap_or_else(|| {
+            panic!("Tile position {voxel_pos:?} is not found in the valid neighbors index.")
+        })
     }
 
     /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
