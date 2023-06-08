@@ -1,9 +1,10 @@
 //! Tracks the location of key entities on the map, and caches information about the map for faster access.
 
-use bevy::{
-    prelude::*,
-    utils::{HashMap, HashSet},
-};
+use bevy::{prelude::*, utils::HashMap};
+
+#[cfg(test)]
+use bevy::utils::HashSet;
+
 use hexx::{shapes::hexagon, Hex, HexLayout};
 
 use crate::{
@@ -778,7 +779,7 @@ impl MapGeometry {
 
     /// Asserts that the set of keys and values in the walkable neighbors index line up with the freshly computed set of walkable voxels.
     fn validate_walkable_voxels(&self) {
-        let walkable_voxels = self.walkable_voxels().collect::<HashSet<_>>();
+        let walkable_voxels = self.walkable_voxels().into_iter().collect::<HashSet<_>>();
         let walkable_neighbors_keys = self
             .walkable_neighbors
             .keys()
@@ -787,7 +788,7 @@ impl MapGeometry {
 
         assert_eq!(walkable_voxels, walkable_neighbors_keys);
 
-        for (voxel_pos, neighbors) in self.walkable_neighbors.iter() {
+        for neighbors in self.walkable_neighbors.values() {
             for maybe_neighbor in neighbors.iter().flatten() {
                 assert!(walkable_voxels.contains(maybe_neighbor));
             }
