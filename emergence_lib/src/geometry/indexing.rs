@@ -33,7 +33,7 @@ pub struct MapGeometry {
     /// The list of all passable neighbors for each tile position.
     ///
     /// The set of keys is the set of all [`VoxelPos`] that units could be found.
-    passable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
+    walkable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -76,7 +76,7 @@ impl MapGeometry {
             })
             .collect();
 
-        let passable_neighbors = valid_neighbors.clone();
+        let walkable_neighbors = valid_neighbors.clone();
 
         let mut terrain_index = HashMap::default();
         let mut voxel_index = HashMap::default();
@@ -101,7 +101,7 @@ impl MapGeometry {
             terrain_index,
             height_index,
             voxel_index,
-            passable_neighbors,
+            walkable_neighbors,
         };
 
         #[cfg(test)]
@@ -446,7 +446,7 @@ impl MapGeometry {
             },
         );
 
-        self.recompute_passable_neighbors(new_voxel_pos);
+        self.recompute_walkable_neighbors(new_voxel_pos);
 
         #[cfg(test)]
         self.validate();
@@ -484,7 +484,7 @@ impl MapGeometry {
             };
             self.voxel_index.insert(voxel_pos, voxel_data);
 
-            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors(voxel_pos);
         }
 
         #[cfg(test)]
@@ -506,7 +506,7 @@ impl MapGeometry {
         for voxel_pos in footprint.normalized(facing, center) {
             removed = self.voxel_index.remove(&voxel_pos);
 
-            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors(voxel_pos);
         }
 
         #[cfg(test)]
@@ -563,7 +563,7 @@ impl MapGeometry {
         for voxel_pos in footprint.normalized(facing, center) {
             removed = self.voxel_index.remove(&voxel_pos);
 
-            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors(voxel_pos);
         }
 
         #[cfg(test)]
@@ -641,7 +641,7 @@ impl MapGeometry {
             };
 
             self.voxel_index.insert(voxel_pos, voxel_data);
-            self.recompute_passable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors(voxel_pos);
         }
 
         #[cfg(test)]
@@ -680,8 +680,8 @@ impl MapGeometry {
     /// The provided `voxel_pos` must be a valid tile position.
     #[inline]
     #[must_use]
-    pub(crate) fn passable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.passable_neighbors
+    pub(crate) fn walkable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
+        self.walkable_neighbors
             .get(&voxel_pos)
             .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
     }
@@ -689,7 +689,7 @@ impl MapGeometry {
     /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
     /// This will update the provided tile and all of its neighbors.
-    fn recompute_passable_neighbors(&mut self, voxel_pos: VoxelPos) {
+    fn recompute_walkable_neighbors(&mut self, voxel_pos: VoxelPos) {
         todo!();
 
         #[cfg(test)]
@@ -797,26 +797,26 @@ mod tests {
 
         assert_eq!(map_geometry.radius, radius);
         // Valid neighbors is larger, as this information is needed for ocean tiles
-        let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
-        assert_eq!(n_passable_neighbors, n);
+        let n_walkable_neighbors = map_geometry.walkable_neighbors.iter().count();
+        assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
             let voxel_pos = VoxelPos::new(hex, Height::MIN);
             assert!(
-                map_geometry.passable_neighbors.contains_key(&voxel_pos),
+                map_geometry.walkable_neighbors.contains_key(&voxel_pos),
                 "{}",
                 voxel_pos
             );
         }
 
-        for (voxel_pos, valid_neighbors) in &map_geometry.passable_neighbors {
+        for (voxel_pos, valid_neighbors) in &map_geometry.walkable_neighbors {
             assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
             for maybe_neighbor in valid_neighbors {
                 if let Some(neighbor) = maybe_neighbor {
                     assert!(map_geometry.is_valid(neighbor.hex), "{}", neighbor);
 
                     assert!(
-                        map_geometry.passable_neighbors.contains_key(neighbor),
+                        map_geometry.walkable_neighbors.contains_key(neighbor),
                         "{}",
                         neighbor
                     );

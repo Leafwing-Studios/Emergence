@@ -1253,7 +1253,7 @@ impl CurrentAction {
         let mut candidates = Vec::new();
 
         // Find all adjacent tiles that are shallower than the current tile.
-        for maybe_adjacent_tile in map_geometry.passable_neighbors(current_tile) {
+        for maybe_adjacent_tile in map_geometry.walkable_neighbors(current_tile) {
             let &Some(adjacent_tile) = maybe_adjacent_tile else {
                 continue;
             };
