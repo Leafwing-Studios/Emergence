@@ -1,9 +1,9 @@
 //! Tracks the location of key entities on the map, and caches information about the map for faster access.
 
-use bevy::{prelude::*, utils::HashMap};
-
-#[cfg(test)]
-use bevy::utils::HashSet;
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
 
 use hexx::{shapes::hexagon, Hex, HexLayout};
 
@@ -146,33 +146,6 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
         VoxelPos::new(hex, self.get_height(hex).unwrap_or_default())
-    }
-
-    /// Can we walk through the provide `voxel_pos`?
-    #[inline]
-    #[must_use]
-    pub(crate) fn can_walk_through(&self, voxel_pos: VoxelPos) -> bool {
-        self.get_voxel(voxel_pos)
-            .map(|voxel_object| voxel_object.object_kind.can_walk_through())
-            // If there's nothing there, it's air and we can walk through it
-            .unwrap_or(true)
-    }
-
-    /// Can we walk on top of the provided `voxel_pos`?
-    #[inline]
-    #[must_use]
-    pub(crate) fn can_walk_on_roof(&self, voxel_pos: VoxelPos) -> bool {
-        self.get_voxel(voxel_pos)
-            .map(|voxel_object| voxel_object.object_kind.can_walk_on_roof())
-            // If there's nothing there, it's air and we can't walk on top of it
-            .unwrap_or(false)
-    }
-
-    /// Can we walk at the provided `voxel_pos`?
-    #[inline]
-    #[must_use]
-    pub(crate) fn can_walk_at(&self, voxel_pos: VoxelPos) -> bool {
-        self.can_walk_through(voxel_pos) && self.can_walk_on_roof(voxel_pos.below())
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
@@ -450,7 +423,7 @@ impl MapGeometry {
             },
         );
 
-        self.recompute_walkable_neighbors(new_voxel_pos);
+        self.recompute_walkable_neighbors();
 
         #[cfg(test)]
         self.validate();
@@ -488,7 +461,7 @@ impl MapGeometry {
             };
             self.voxel_index.insert(voxel_pos, voxel_data);
 
-            self.recompute_walkable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors();
         }
 
         #[cfg(test)]
@@ -510,7 +483,7 @@ impl MapGeometry {
         for voxel_pos in footprint.normalized(facing, center) {
             removed = self.voxel_index.remove(&voxel_pos);
 
-            self.recompute_walkable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors();
         }
 
         #[cfg(test)]
@@ -567,7 +540,7 @@ impl MapGeometry {
         for voxel_pos in footprint.normalized(facing, center) {
             removed = self.voxel_index.remove(&voxel_pos);
 
-            self.recompute_walkable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors();
         }
 
         #[cfg(test)]
@@ -645,7 +618,7 @@ impl MapGeometry {
             };
 
             self.voxel_index.insert(voxel_pos, voxel_data);
-            self.recompute_walkable_neighbors(voxel_pos);
+            self.recompute_walkable_neighbors();
         }
 
         #[cfg(test)]
@@ -691,8 +664,8 @@ impl MapGeometry {
     }
 
     /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
-    fn walkable_voxels(&self) -> impl IntoIterator<Item = VoxelPos> + '_ {
-        let mut walkable_voxels = Vec::new();
+    fn walkable_voxels(&self) -> HashSet<VoxelPos> {
+        let mut walkable_voxels = HashSet::new();
 
         for (voxel_pos, voxel_data) in self.voxel_index.iter() {
             if voxel_data.object_kind.can_walk_on_roof() {
@@ -702,7 +675,7 @@ impl MapGeometry {
                 };
 
                 if can_walk_through {
-                    walkable_voxels.push(voxel_pos.above());
+                    walkable_voxels.insert(voxel_pos.above());
                 }
             }
         }
@@ -712,17 +685,43 @@ impl MapGeometry {
 
     /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
-    /// This will update the provided tile and all of its neighbors.
-    fn recompute_walkable_neighbors(&mut self, voxel_pos: VoxelPos) {
-        todo!();
+    /// This will update the entire map at once.
+    // PERF: only update the neighborhood of the provided `voxel_pos`
+    fn recompute_walkable_neighbors(&mut self) {
+        let walkable_voxels = self.walkable_voxels();
+        self.walkable_neighbors.clear();
+
+        for walkable_voxel in &walkable_voxels {
+            let mut local_neighbors = [None; 6];
+
+            for (i, &direction) in hexx::Direction::ALL_DIRECTIONS.iter().enumerate() {
+                let neighbor_hex = walkable_voxel.hex.neighbor(direction);
+                let neighbor_flat = VoxelPos {
+                    hex: neighbor_hex,
+                    height: walkable_voxel.height,
+                };
+                let neighbor_above = neighbor_flat.above();
+                let neighbor_below = neighbor_flat.below();
+
+                // Preferentially walk up, then level, then down
+                // So far, this is an arbitrary priority system
+                local_neighbors[i] = if walkable_voxels.contains(&neighbor_above) {
+                    Some(neighbor_above)
+                } else if walkable_voxels.contains(&neighbor_flat) {
+                    Some(neighbor_flat)
+                } else if walkable_voxels.contains(&neighbor_below) {
+                    Some(neighbor_below)
+                } else {
+                    None
+                }
+            }
+
+            self.walkable_neighbors
+                .insert(*walkable_voxel, local_neighbors);
+        }
 
         #[cfg(test)]
         self.validate();
-    }
-
-    /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
-    fn compute_passability(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        self.can_walk_at(ending_pos) && starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
     }
 }
 
