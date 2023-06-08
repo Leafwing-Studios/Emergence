@@ -64,24 +64,6 @@ impl MapGeometry {
             .map(|voxel_pos| (voxel_pos.hex, Height::MIN))
             .collect();
 
-        let valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]> = hexes
-            .iter()
-            .map(|hex| {
-                let voxel_pos = VoxelPos::new(*hex, Height::MIN);
-                let mut neighbors = [None; 6];
-
-                for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
-                    if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                        neighbors[i] = Some(VoxelPos::new(neighboring_hex, Height::MIN))
-                    }
-                }
-
-                (voxel_pos, neighbors)
-            })
-            .collect();
-
-        let walkable_neighbors = valid_neighbors.clone();
-
         let mut terrain_index = HashMap::default();
         let mut voxel_index = HashMap::default();
 
@@ -99,14 +81,16 @@ impl MapGeometry {
             );
         }
 
-        let map_geometry = MapGeometry {
+        let mut map_geometry = MapGeometry {
             layout: HexLayout::default(),
             radius,
             terrain_index,
             height_index,
             voxel_index,
-            walkable_neighbors,
+            walkable_neighbors: HashMap::default(),
         };
+
+        map_geometry.recompute_walkable_neighbors();
 
         #[cfg(test)]
         map_geometry.validate();
@@ -785,7 +769,10 @@ impl MapGeometry {
             .copied()
             .collect::<HashSet<_>>();
 
-        assert_eq!(walkable_voxels, walkable_neighbors_keys);
+        assert_eq!(
+            walkable_voxels, walkable_neighbors_keys,
+            "Walkable voxels and walkable neighbors keys do not match"
+        );
 
         for neighbors in self.walkable_neighbors.values() {
             for maybe_neighbor in neighbors.iter().flatten() {
