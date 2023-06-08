@@ -1,6 +1,9 @@
 //! Tracks the location of key entities on the map, and caches information about the map for faster access.
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    prelude::*,
+    utils::{HashMap, HashSet},
+};
 use hexx::{shapes::hexagon, Hex, HexLayout};
 
 use crate::{
@@ -686,6 +689,26 @@ impl MapGeometry {
             .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
     }
 
+    /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
+    fn walkable_voxels(&self) -> impl IntoIterator<Item = VoxelPos> + '_ {
+        let mut walkable_voxels = Vec::new();
+
+        for (voxel_pos, voxel_data) in self.voxel_index.iter() {
+            if voxel_data.object_kind.can_walk_on_roof() {
+                let can_walk_through = match self.get_voxel(voxel_pos.above()) {
+                    Some(voxel_data) => voxel_data.object_kind.can_walk_through(),
+                    None => true,
+                };
+
+                if can_walk_through {
+                    walkable_voxels.push(voxel_pos.above());
+                }
+            }
+        }
+
+        walkable_voxels
+    }
+
     /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
     /// This will update the provided tile and all of its neighbors.
@@ -710,6 +733,7 @@ impl MapGeometry {
         self.validate_entity_mapping();
         self.ensure_hex_keys_match();
         self.ensure_height_and_voxel_indexes_match();
+        self.validate_walkable_voxels();
     }
 
     /// Asserts that all of the heights in the map are between `Height::MIN` and `Height::MAX`.
@@ -752,10 +776,26 @@ impl MapGeometry {
         }
     }
 
+    /// Asserts that the set of keys and values in the walkable neighbors index line up with the freshly computed set of walkable voxels.
+    fn validate_walkable_voxels(&self) {
+        let walkable_voxels = self.walkable_voxels().collect::<HashSet<_>>();
+        let walkable_neighbors_keys = self
+            .walkable_neighbors
+            .keys()
+            .copied()
+            .collect::<HashSet<_>>();
+
+        assert_eq!(walkable_voxels, walkable_neighbors_keys);
+
+        for (voxel_pos, neighbors) in self.walkable_neighbors.iter() {
+            for maybe_neighbor in neighbors.iter().flatten() {
+                assert!(walkable_voxels.contains(maybe_neighbor));
+            }
+        }
+    }
+
     /// Asserts that the keys in the height index and the terrain index match.
     fn ensure_hex_keys_match(&self) {
-        use bevy::utils::HashSet;
-
         assert_eq!(
             self.height_index.keys().collect::<HashSet<_>>(),
             self.terrain_index.keys().collect::<HashSet<_>>(),
