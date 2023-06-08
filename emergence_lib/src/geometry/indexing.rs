@@ -30,10 +30,6 @@ pub struct MapGeometry {
     ///
     /// The set of keys is the set of all non-empty [`VoxelPos`] positions on the map.
     voxel_index: HashMap<VoxelPos, VoxelObject>,
-    /// The list of all valid neighbors for each tile position.
-    ///
-    /// The set of keys is the set of all [`VoxelPos`] that units could be found.
-    valid_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
     /// The list of all passable neighbors for each tile position.
     ///
     /// The set of keys is the set of all [`VoxelPos`] that units could be found.
@@ -105,7 +101,6 @@ impl MapGeometry {
             terrain_index,
             height_index,
             voxel_index,
-            valid_neighbors,
             passable_neighbors,
         };
 
@@ -661,17 +656,19 @@ impl MapGeometry {
         Hex::ZERO.ring(self.radius + 1)
     }
 
-    /// The set of adjacent tiles that are on the map.
-    ///
-    /// # Panics
-    ///
-    /// The provided `voxel_pos` must be a valid tile position.
+    /// The set of tiles adjacent to `hex` that are on the map.
     #[inline]
     #[must_use]
-    pub(crate) fn valid_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.valid_neighbors.get(&voxel_pos).unwrap_or_else(|| {
-            panic!("Tile position {voxel_pos:?} is not found in the valid neighbors index.")
-        })
+    pub(crate) fn adjacent_hexes(&self, hex: Hex) -> [Option<Hex>; 6] {
+        let mut adjacent_hexes = [None; 6];
+
+        for (i, neighbor) in hex.ring(1).enumerate() {
+            if self.is_valid(neighbor) {
+                adjacent_hexes[i] = Some(neighbor);
+            }
+        }
+
+        adjacent_hexes
     }
 
     /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
@@ -693,43 +690,7 @@ impl MapGeometry {
     ///
     /// This will update the provided tile and all of its neighbors.
     fn recompute_passable_neighbors(&mut self, voxel_pos: VoxelPos) {
-        let neighbors = *self.valid_neighbors(voxel_pos);
-        let mut passable_neighbors: [Option<VoxelPos>; 6] = [None; 6];
-
-        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
-            let &Some(neighbor) = maybe_neighbor else { continue };
-
-            let can_pass_from_tile_to_neighbor = self.compute_passability(voxel_pos, neighbor);
-            let can_pass_from_neighbor_to_tile = self.compute_passability(neighbor, voxel_pos);
-
-            match can_pass_from_tile_to_neighbor {
-                true => {
-                    passable_neighbors[i] = Some(neighbor);
-                }
-                // This edge was already initialized as None
-                false => (),
-            }
-
-            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
-            // PERF: we could compute this faster by relying on
-            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
-                .iter()
-                .position(|&maybe_self| maybe_self == Some(voxel_pos))
-                .unwrap();
-            let neigbors_of_neighbor = self.passable_neighbors.get_mut(&neighbor).unwrap();
-
-            match can_pass_from_neighbor_to_tile {
-                true => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(voxel_pos);
-                }
-                false => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
-                }
-            }
-        }
-
-        self.passable_neighbors
-            .insert(voxel_pos, passable_neighbors);
+        todo!();
 
         #[cfg(test)]
         self.validate();
@@ -842,25 +803,20 @@ mod tests {
         for hex in hexagon {
             let voxel_pos = VoxelPos::new(hex, Height::MIN);
             assert!(
-                map_geometry.valid_neighbors.contains_key(&voxel_pos),
-                "{}",
-                voxel_pos
-            );
-            assert!(
                 map_geometry.passable_neighbors.contains_key(&voxel_pos),
                 "{}",
                 voxel_pos
             );
         }
 
-        for (voxel_pos, valid_neighbors) in &map_geometry.valid_neighbors {
+        for (voxel_pos, valid_neighbors) in &map_geometry.passable_neighbors {
             assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
             for maybe_neighbor in valid_neighbors {
                 if let Some(neighbor) = maybe_neighbor {
                     assert!(map_geometry.is_valid(neighbor.hex), "{}", neighbor);
 
                     assert!(
-                        map_geometry.valid_neighbors.contains_key(neighbor),
+                        map_geometry.passable_neighbors.contains_key(neighbor),
                         "{}",
                         neighbor
                     );

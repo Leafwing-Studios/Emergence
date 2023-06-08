@@ -216,16 +216,13 @@ pub fn horizontal_water_movement(
     // Flowing out to ocean tiles is implicitly handled by the above code: missing values are treated as if they are ocean tiles
     if water_config.enable_oceans {
         for hex in map_geometry.ocean_tiles() {
-            // Don't bother flowing to and from ocean tiles
-            let voxel_pos = VoxelPos::new(hex, Height::ZERO);
+            for maybe_neighbor in map_geometry.adjacent_hexes(hex) {
+                let Some(valid_neighbor) = maybe_neighbor else { continue };
 
-            for maybe_neighbor in map_geometry.valid_neighbors(voxel_pos) {
-                let &Some(valid_neighbor) = maybe_neighbor else { continue };
-
-                let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor.hex) else { continue };
+                let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor) else { continue };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
-                let neighbor_tile_height = neighbor_query_item.voxel_pos.height();
+                let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap();
                 let neighbor_water_height = neighbor_query_item
                     .water_depth
                     .water_table_height(neighbor_tile_height);
@@ -242,7 +239,7 @@ pub fn horizontal_water_movement(
                 );
 
                 if proposed_water_transfer > Volume::ZERO {
-                    addition_map.entry(valid_neighbor.hex).and_modify(|v| {
+                    addition_map.entry(valid_neighbor).and_modify(|v| {
                         *v += proposed_water_transfer;
                     });
                 }

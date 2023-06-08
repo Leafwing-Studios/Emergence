@@ -92,13 +92,14 @@ pub(super) fn vegetative_spread(
         }
 
         // PERF: we should just be returning a Vec<VoxelPos> or an [Option<VoxelPos; 6] here and allocating once
-        let empty_neighbors = map_geometry
-            .valid_neighbors(voxel_pos)
-            .iter()
-            .filter(|maybe_pos| match maybe_pos {
-                Some(pos) => map_geometry.get_voxel(*pos).is_none(),
-                None => false,
-            });
+        let empty_neighbors =
+            map_geometry
+                .passable_neighbors(voxel_pos)
+                .iter()
+                .filter(|maybe_pos| match maybe_pos {
+                    Some(pos) => map_geometry.get_voxel(*pos).is_none(),
+                    None => false,
+                });
         let Some(&tile_to_spawn_in) = empty_neighbors
             .flatten()
 			// Just skip this organism if there are no empty neighbors
