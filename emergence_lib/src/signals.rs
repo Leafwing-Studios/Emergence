@@ -800,11 +800,11 @@ mod tests {
         let mut signal_map = SignalMap::default();
         signal_map
             .pending_addition
-            .push((VoxelPos::ZERO, SignalStrength(1.)));
+            .push((VoxelPos::ZERO.above(), SignalStrength(1.)));
 
-        assert_eq!(signal_map.get(VoxelPos::ZERO), SignalStrength::ZERO);
+        assert_eq!(signal_map.get(VoxelPos::ZERO.above()), SignalStrength::ZERO);
         signal_map.apply_pending_additions();
-        assert_eq!(signal_map.get(VoxelPos::ZERO), SignalStrength(1.));
+        assert_eq!(signal_map.get(VoxelPos::ZERO.above()), SignalStrength(1.));
     }
 
     #[test]
@@ -813,19 +813,19 @@ mod tests {
         let mut world = World::new();
         let map_geometry = MapGeometry::new(&mut world, 1);
 
-        let walkable_neighbors = map_geometry.walkable_neighbors(VoxelPos::ZERO);
+        let walkable_neighbors = map_geometry.walkable_neighbors(VoxelPos::ZERO.above());
         for maybe_neighbor in walkable_neighbors {
             assert!(maybe_neighbor.is_some());
         }
 
         signals.add_signal(
             SignalType::Contains(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(1.),
         );
 
         assert_eq!(
-            signals.get(SignalType::Contains(test_item()), VoxelPos::ZERO),
+            signals.get(SignalType::Contains(test_item()), VoxelPos::ZERO.above()),
             SignalStrength(1.)
         );
 
@@ -855,20 +855,20 @@ mod tests {
 
         signals.add_signal(
             SignalType::Contains(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(1.),
         );
 
         let neighboring_signals = signals.neighboring_signals(
             SignalType::Contains(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             &map_geometry,
         );
 
         assert_eq!(neighboring_signals.len(), 7);
 
         assert_eq!(
-            neighboring_signals.get(&VoxelPos::ZERO),
+            neighboring_signals.get(&VoxelPos::ZERO.above()),
             Some(&SignalStrength(1.))
         );
     }
@@ -882,7 +882,7 @@ mod tests {
 
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -891,7 +891,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -900,7 +900,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Work(WorkplaceId::structure(test_structure())),
                 &item_manifest,
                 &map_geometry
@@ -909,7 +909,7 @@ mod tests {
         );
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::default(),
                 &item_manifest,
                 &map_geometry
@@ -927,13 +927,13 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(1.),
         );
 
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -951,18 +951,18 @@ mod tests {
 
         signals.add_signal(
             SignalType::Push(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO.above()) {
             let &Some(neighbor) = maybe_neighbor else { continue };
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
 
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Fetch(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -981,11 +981,11 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO.above()) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -993,7 +993,7 @@ mod tests {
 
         assert_eq!(
             signals.upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -1009,7 +1009,7 @@ mod tests {
         let map_geometry = MapGeometry::new(&mut world, 1);
         let item_manifest = test_manifest();
 
-        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO.above()) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -1017,7 +1017,7 @@ mod tests {
 
         assert!(signals
             .upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
@@ -1034,11 +1034,11 @@ mod tests {
 
         signals.add_signal(
             SignalType::Pull(test_item()),
-            VoxelPos::ZERO,
+            VoxelPos::ZERO.above(),
             SignalStrength(0.5),
         );
 
-        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.walkable_neighbors(VoxelPos::ZERO.above()) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
@@ -1046,7 +1046,7 @@ mod tests {
 
         assert!(signals
             .upstream(
-                VoxelPos::ZERO,
+                VoxelPos::ZERO.above(),
                 &Goal::Store(test_item()),
                 &item_manifest,
                 &map_geometry
