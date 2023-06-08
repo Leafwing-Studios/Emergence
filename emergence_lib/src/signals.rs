@@ -259,7 +259,7 @@ impl Signals {
         let mut signal_strength_map = HashMap::with_capacity(7);
 
         signal_strength_map.insert(voxel_pos, self.get(signal_type, voxel_pos));
-        for maybe_neighbor in map_geometry.valid_neighbors(voxel_pos) {
+        for maybe_neighbor in map_geometry.passable_neighbors(voxel_pos) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signal_strength_map.insert(neighbor, self.get(signal_type, neighbor));
@@ -955,7 +955,7 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.passable_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
             signals.add_signal(SignalType::Push(test_item()), neighbor, SignalStrength(0.5));
         }
@@ -985,7 +985,7 @@ mod tests {
             SignalStrength(1.),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.passable_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -1009,7 +1009,7 @@ mod tests {
         let map_geometry = MapGeometry::new(&mut world, 1);
         let item_manifest = test_manifest();
 
-        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.passable_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(0.5));
@@ -1038,7 +1038,7 @@ mod tests {
             SignalStrength(0.5),
         );
 
-        for maybe_neighbor in map_geometry.valid_neighbors(VoxelPos::ZERO) {
+        for maybe_neighbor in map_geometry.passable_neighbors(VoxelPos::ZERO) {
             let &Some(neighbor) = maybe_neighbor else { continue };
 
             signals.add_signal(SignalType::Pull(test_item()), neighbor, SignalStrength(1.));
