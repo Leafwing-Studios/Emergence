@@ -1,9 +1,10 @@
-//! Graphics and animation code for terrain.
+//! Graphics and animation code for piles of junk, floating or otherwise.
 
 use crate::{
     geometry::{MapGeometry, VoxelPos},
     items::inventory::InventoryState,
-    terrain::{litter::Litter, terrain_assets::TerrainHandles},
+    litter::Litter,
+    terrain::terrain_assets::TerrainHandles,
     water::WaterDepth,
 };
 use bevy::{prelude::*, utils::HashMap};

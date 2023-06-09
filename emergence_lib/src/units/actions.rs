@@ -24,13 +24,11 @@ use crate::{
     },
     geometry::{Facing, Height, MapGeometry, RotationDirection, VoxelPos},
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
+    litter::Litter,
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
-    terrain::{
-        litter::Litter,
-        terrain_manifest::{Terrain, TerrainManifest},
-    },
+    terrain::terrain_manifest::{Terrain, TerrainManifest},
     water::WaterDepth,
 };
 

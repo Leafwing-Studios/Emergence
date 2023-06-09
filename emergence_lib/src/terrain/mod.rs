@@ -14,15 +14,14 @@ use crate::signals::Emitter;
 use crate::simulation::SimulationSet;
 use crate::water::{WaterBundle, WaterSet};
 
-use self::litter::{
+use self::terrain_assets::TerrainHandles;
+use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
+use crate::litter::{
     carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
     set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
 };
-use self::terrain_assets::TerrainHandles;
-use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
 
 pub(crate) mod commands;
-pub(crate) mod litter;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 

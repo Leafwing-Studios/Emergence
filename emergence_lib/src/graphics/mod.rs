@@ -5,16 +5,16 @@ use bevy::prelude::*;
 use crate::asset_management::AssetState;
 
 use self::{
-    atmosphere::AtmospherePlugin, lighting::LightingPlugin, overlay::OverlayPlugin,
-    structures::remove_ghostly_shadows, terrain::render_litter_piles, water::WaterRenderingPlugin,
+    atmosphere::AtmospherePlugin, lighting::LightingPlugin, litter::render_litter_piles,
+    overlay::OverlayPlugin, structures::remove_ghostly_shadows, water::WaterRenderingPlugin,
 };
 
 mod atmosphere;
 pub(crate) mod lighting;
+mod litter;
 pub(crate) mod overlay;
 pub(crate) mod palette;
 mod structures;
-mod terrain;
 mod units;
 mod water;
 

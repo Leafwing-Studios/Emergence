@@ -10,9 +10,9 @@ use crate::{
     },
     geometry::{Facing, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
+    litter::Litter,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
-    terrain::litter::Litter,
     water::WaterDepth,
 };
 

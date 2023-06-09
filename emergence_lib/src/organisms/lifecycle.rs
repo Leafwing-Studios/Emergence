@@ -9,10 +9,10 @@ use crate::{
     asset_management::manifest::Id,
     geometry::{Facing, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
+    litter::Litter,
     player_interaction::clipboard::ClipboardData,
     simulation::time::{Days, TimePool},
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
-    terrain::litter::Litter,
     units::{
         unit_assets::UnitHandles,
         unit_manifest::{Unit, UnitManifest},

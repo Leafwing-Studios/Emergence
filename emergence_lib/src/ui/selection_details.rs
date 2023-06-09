@@ -744,12 +744,10 @@ mod terrain_details {
         geometry::{Height, VoxelPos},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
+        litter::Litter,
         signals::LocalSignals,
         structures::structure_manifest::StructureManifest,
-        terrain::{
-            litter::Litter,
-            terrain_manifest::{Terrain, TerrainManifest},
-        },
+        terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
         water::WaterDepth,
     };
