@@ -533,50 +533,6 @@ impl MapGeometry {
         removed.map(|data| data.entity)
     }
 
-    /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `voxel_pos`.
-    #[inline]
-    pub(crate) fn add_ghost_terrain(&mut self, ghost_terrain_entity: Entity, voxel_pos: VoxelPos) {
-        let voxel_data = VoxelObject {
-            entity: ghost_terrain_entity,
-            object_kind: VoxelKind::GhostTerrain,
-        };
-
-        #[cfg(test)]
-        self.validate();
-
-        self.voxel_index.insert(voxel_pos, voxel_data);
-    }
-
-    /// Removes any ghost terrain entity found at the provided `voxel_pos` from the ghost terrain index.
-    ///
-    /// Returns the removed entity, if any.
-    #[inline]
-    pub(crate) fn remove_ghost_terrain(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let voxel_data = self.voxel_index.get(&voxel_pos)?.clone();
-        match voxel_data.object_kind {
-            VoxelKind::GhostTerrain => {
-                self.voxel_index.remove(&voxel_pos);
-
-                #[cfg(test)]
-                self.validate();
-
-                Some(voxel_data.entity)
-            }
-            _ => None,
-        }
-    }
-
-    /// Gets the ghost terrain [`Entity`] at the provided `voxel_pos`, if any.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_ghost_terrain(&self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let voxel_data = self.get_voxel(voxel_pos)?;
-        match voxel_data.object_kind {
-            VoxelKind::GhostTerrain => Some(voxel_data.entity),
-            _ => None,
-        }
-    }
-
     /// Updates the passability of the provided `voxel_pos` based on the state of the litter at that location.
     pub(crate) fn update_litter_state(
         &mut self,
@@ -899,22 +855,6 @@ mod tests {
         map_geometry.remove_ghost_structure(voxel_pos, &footprint, facing);
 
         assert_eq!(map_geometry.get_ghost_structure(voxel_pos), None);
-    }
-
-    #[test]
-    fn can_add_and_remove_ghost_terrain() {
-        let mut world = World::new();
-        let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
-
-        map_geometry.add_ghost_terrain(Entity::from_bits(42), voxel_pos);
-        assert_eq!(
-            map_geometry.get_ghost_terrain(voxel_pos),
-            Some(Entity::from_bits(42))
-        );
-
-        map_geometry.remove_ghost_terrain(voxel_pos);
-        assert_eq!(map_geometry.get_ghost_terrain(voxel_pos), None);
     }
 
     #[test]

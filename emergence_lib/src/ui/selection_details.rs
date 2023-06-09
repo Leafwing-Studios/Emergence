@@ -22,9 +22,7 @@ use self::{
     ghost_structure_details::{GhostStructureDetails, GhostStructureDetailsQuery},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
     structure_details::{StructureDetails, StructureDetailsQuery},
-    terrain_details::{
-        GhostTerrainDetailsQuery, TerraformingDetails, TerrainDetails, TerrainDetailsQuery,
-    },
+    terrain_details::{TerrainDetails, TerrainDetailsQuery},
     unit_details::{UnitDetails, UnitDetailsQuery},
 };
 
@@ -297,7 +295,6 @@ fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
     ghost_structure_query: Query<GhostStructureDetailsQuery>,
-    ghost_terrain_query: Query<GhostTerrainDetailsQuery>,
     organism_query: Query<OrganismDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
@@ -360,19 +357,6 @@ fn get_details(
                 let terrain_entity = map_geometry.get_terrain(*hex).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
-                let maybe_terraforming_details = if let Some(ghost_terrain_entity) =
-                    map_geometry.get_ghost_terrain(*terrain_query_item.voxel_pos)
-                {
-                    let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
-                    Some(TerraformingDetails {
-                        terraforming_action: *ghost_terrain_query_item.terraforming_action,
-                        input_inventory: ghost_terrain_query_item.input_inventory.clone(),
-                        output_inventory: ghost_terrain_query_item.output_inventory.clone(),
-                    })
-                } else {
-                    None
-                };
-
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
@@ -384,7 +368,13 @@ fn get_details(
                     signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
                     zoning: terrain_query_item.zoning.clone(),
                     litter: terrain_query_item.litter.clone(),
-                    maybe_terraforming_details,
+                    maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
+                        |q| terrain_details::TerraformingDetails {
+                            terraforming_action: q.0.clone(),
+                            input_inventory: q.1.clone(),
+                            output_inventory: q.2.clone(),
+                        },
+                    ),
                 })
             } else {
                 SelectionDetails::None
@@ -783,17 +773,12 @@ mod terrain_details {
         pub(super) litter: &'static Litter,
         /// The depth of water on this tile
         pub(super) water_depth: &'static WaterDepth,
-    }
-
-    /// Data needed to populate [`TerraformingDetails`].
-    #[derive(WorldQuery)]
-    pub(super) struct GhostTerrainDetailsQuery {
-        /// The terraforming action being performed
-        pub(super) terraforming_action: &'static TerraformingAction,
-        /// The inputs that must be added to complete this terraforming action
-        pub(super) input_inventory: &'static InputInventory,
-        /// The outputs that must be removed to complete this terraforming action
-        pub(super) output_inventory: &'static OutputInventory,
+        /// Any applied terraforming action
+        pub(super) maybe_terraforming_details: Option<(
+            &'static TerraformingAction,
+            &'static InputInventory,
+            &'static OutputInventory,
+        )>,
     }
 
     /// Detailed info about a given terraforming ghost.

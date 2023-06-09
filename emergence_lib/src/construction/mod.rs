@@ -11,7 +11,7 @@ use crate::simulation::SimulationSet;
 use crate::{asset_management::manifest::Id, structures::structure_manifest::Structure};
 
 use self::demolition::set_emitter_for_structures_to_be_demolished;
-use self::terraform::{ghost_terrain_signals, terraforming_lifecycle};
+use self::terraform::{terraforming_lifecycle, terraforming_signals};
 
 pub(crate) mod demolition;
 pub(crate) mod ghosts;
@@ -33,7 +33,7 @@ impl Plugin for ConstructionPlugin {
                     .in_schedule(CoreSchedule::FixedUpdate),
             )
             .add_systems(
-                (terraforming_lifecycle, ghost_terrain_signals)
+                (terraforming_lifecycle, terraforming_signals)
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             );

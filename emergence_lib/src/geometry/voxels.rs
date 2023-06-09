@@ -27,7 +27,6 @@ pub enum VoxelKind {
         can_walk_through: bool,
     },
     GhostStructure,
-    GhostTerrain,
 }
 
 impl VoxelKind {
@@ -40,7 +39,6 @@ impl VoxelKind {
                 can_walk_on_roof, ..
             } => *can_walk_on_roof,
             VoxelKind::GhostStructure => false,
-            VoxelKind::GhostTerrain => false,
         }
     }
 
@@ -57,7 +55,6 @@ impl VoxelKind {
                 can_walk_through, ..
             } => *can_walk_through,
             VoxelKind::GhostStructure => true,
-            VoxelKind::GhostTerrain => true,
         }
     }
 
@@ -72,7 +69,6 @@ impl VoxelKind {
             VoxelKind::Terrain => true,
             VoxelKind::Structure { .. } => true,
             VoxelKind::GhostStructure => false,
-            VoxelKind::GhostTerrain => false,
         }
     }
 
@@ -83,7 +79,6 @@ impl VoxelKind {
             VoxelKind::Terrain => false,
             VoxelKind::Structure { .. } => true,
             VoxelKind::GhostStructure => true,
-            VoxelKind::GhostTerrain => true,
         }
     }
 
@@ -94,7 +89,6 @@ impl VoxelKind {
             VoxelKind::Terrain => false,
             VoxelKind::Structure { .. } => true,
             VoxelKind::GhostStructure => false,
-            VoxelKind::GhostTerrain => true,
         }
     }
 
@@ -105,7 +99,6 @@ impl VoxelKind {
             VoxelKind::Terrain => false,
             VoxelKind::Structure { .. } => true,
             VoxelKind::GhostStructure => true,
-            VoxelKind::GhostTerrain => false,
         }
     }
 }

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::{manifest::Id, AssetState},
+    asset_management::AssetState,
     construction::{demolition::MarkedForDemolition, ghosts::Preview},
     geometry::{MapGeometry, VoxelPos},
     player_interaction::{
@@ -14,10 +14,7 @@ use crate::{
         InteractionSystem, PlayerAction, PlayerModifiesWorld,
     },
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest, Landmark},
-    terrain::{
-        commands::TerrainCommandsExt,
-        terrain_manifest::{Terrain, TerrainManifest},
-    },
+    terrain::terrain_manifest::TerrainManifest,
 };
 
 use super::terraform::TerraformingAction;
@@ -101,7 +98,6 @@ fn set_zoning(
     actions: Res<ActionState<PlayerAction>>,
     tool: Res<Tool>,
     mut zoning_query: Query<&mut Zoning>,
-    terrain_preview_query: Query<(&Id<Terrain>, &VoxelPos)>,
     current_selection: Res<CurrentSelection>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
@@ -133,13 +129,7 @@ fn set_zoning(
                 }
             }
             false => {
-                for terrain_entity in relevant_terrain_entities {
-                    let (&terrain_id, &voxel_pos) =
-                        terrain_preview_query.get(terrain_entity).unwrap();
-                    let terraforming_action = TerraformingAction::from(*terraform_tool);
-
-                    commands.spawn_preview_terrain(voxel_pos, terrain_id, terraforming_action);
-                }
+                // TODO: preview effects of terraforming
             }
         },
         Tool::Structures(map) => {
@@ -215,12 +205,12 @@ fn mark_for_demolition(
 
 /// Spawn and despawn ghosts and apply other markings based on zoning.
 fn mark_based_on_zoning(
-    mut terrain_query: Query<(Entity, &mut Zoning, &VoxelPos, &Id<Terrain>), Changed<Zoning>>,
+    mut terrain_query: Query<(Entity, &mut Zoning, &VoxelPos), Changed<Zoning>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (terrain_entity, mut zoning, &voxel_pos, current_terrain_id) in terrain_query.iter_mut() {
+    for (terrain_entity, mut zoning, &voxel_pos) in terrain_query.iter_mut() {
         // Reborrowing here would trigger change detection, causing this system to constantly check
         match zoning.bypass_change_detection() {
             Zoning::Structure(clipboard_data) => {
@@ -235,15 +225,13 @@ fn mark_based_on_zoning(
                 }
             }
             Zoning::Terraform(terraforming_action) => {
-                commands.entity(terrain_entity).insert(*terraforming_action);
+                commands
+                    .entity(terrain_entity)
+                    .insert(*terraforming_action)
+                    .insert(terraforming_action.input_inventory())
+                    .insert(terraforming_action.output_inventory());
 
-                // We neeed to use the model for the terrain we're changing to, not the current one
-                let terrain_id = match terraforming_action {
-                    TerraformingAction::Change(terrain_id) => *terrain_id,
-                    _ => *current_terrain_id,
-                };
-
-                commands.spawn_ghost_terrain(voxel_pos, terrain_id, *terraforming_action);
+                // TODO: preview effects of terraforming with a ghost
 
                 // Mark any structures that are here as needing to be demolished
                 // Terraforming can't be done with roots growing into stuff!
@@ -254,7 +242,7 @@ fn mark_based_on_zoning(
                 }
             }
             Zoning::None => {
-                commands.despawn_ghost_terrain(voxel_pos);
+                // TODO: make sure to remove any terraforming previews
                 commands.despawn_ghost_structure(voxel_pos);
             }
         };
