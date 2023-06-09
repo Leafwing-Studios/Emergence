@@ -598,9 +598,9 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn walkable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.walkable_neighbors
-            .get(&voxel_pos)
-            .unwrap_or_else(|| panic!("Tile position {voxel_pos:?} is not a valid tile position"))
+        self.walkable_neighbors.get(&voxel_pos).unwrap_or_else(|| {
+            panic!("Tile position {voxel_pos:?} was not found in walkable neighbors map.")
+        })
     }
 
     /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
