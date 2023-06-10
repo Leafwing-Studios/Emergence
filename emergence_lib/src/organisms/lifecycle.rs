@@ -297,7 +297,7 @@ pub(super) fn sprout_seeds(
             continue;
         }
 
-        for item_slot in litter.on_ground.iter_mut() {
+        for item_slot in litter.contents.iter_mut() {
             let item_id = item_slot.item_id();
             let Some(organism_id) = item_manifest.get(item_id).seed else { continue };
 

@@ -57,7 +57,7 @@ fn release_items(
             let item_count = item_slot.item_count();
 
             if litter
-                .on_ground
+                .contents
                 .add_item_all_or_nothing(&item_count, &item_manifest)
                 .is_ok()
             {
@@ -88,7 +88,7 @@ fn absorb_items(
         let litter_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
-        let on_ground = litter.on_ground.clone();
+        let on_ground = litter.contents.clone();
 
         for item_slot in on_ground.iter() {
             let item_count = item_slot.item_count();
@@ -97,7 +97,7 @@ fn absorb_items(
                 .add_item_all_or_nothing(&item_count, &item_manifest)
                 .is_ok()
             {
-                litter.on_ground.try_remove_item(&item_count).unwrap();
+                litter.contents.try_remove_item(&item_count).unwrap();
             }
         }
 
@@ -106,7 +106,7 @@ fn absorb_items(
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
         if footprint.max_height() > water_depth.surface_water_depth() {
-            let floating = litter.floating.clone();
+            let floating = litter.contents.clone();
             for item_slot in floating.iter() {
                 let item_count = item_slot.item_count();
 
@@ -114,7 +114,7 @@ fn absorb_items(
                     .add_item_all_or_nothing(&item_count, &item_manifest)
                     .is_ok()
                 {
-                    litter.floating.try_remove_item(&item_count).unwrap();
+                    litter.contents.try_remove_item(&item_count).unwrap();
                 }
             }
         }

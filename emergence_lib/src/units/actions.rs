@@ -502,7 +502,7 @@ pub(super) fn finish_actions(
                         let item_count = ItemCount::new(held_item, 1);
                         // Try to transfer the item to the terrain storage
                         if litter_inventory
-                            .on_ground
+                            .contents
                             .add_item_all_or_nothing(&item_count, item_manifest)
                             .is_ok()
                         {

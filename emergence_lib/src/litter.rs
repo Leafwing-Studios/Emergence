@@ -9,92 +9,48 @@ use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
 
 use crate::{
-    asset_management::manifest::Id,
-    crafting::{
-        inventories::StorageInventory,
-        item_tags::{ItemKind, ItemTag},
-    },
+    crafting::{inventories::StorageInventory, item_tags::ItemKind},
     geometry::{direction_from_angle, Height, MapGeometry, VoxelPos},
-    items::{
-        errors::RemoveOneItemError,
-        item_manifest::{Item, ItemManifest},
-        ItemCount,
-    },
+    items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     structures::{logistic_buildings::AbsorbsItems, Footprint},
     water::{FlowVelocity, WaterDepth},
 };
 
+/// The components needed to track littered items in a single [`VoxelPos`].
+#[derive(Bundle)]
+struct LitterBundle {
+    /// The items that are littered.
+    litter: Litter,
+    /// The position of the litter.
+    voxel_pos: VoxelPos,
+    /// The scene used to display the litter.
+    scene_bundle: SceneBundle,
+    /// Is this litter currently floating?
+    floating: Floating,
+}
+
 /// Items that are littered without a container.
 ///
 /// This component is tracked on a per-tile basis.
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Deref, DerefMut)]
 pub(crate) struct Litter {
     /// The items that are littered on the ground.
-    pub(crate) on_ground: StorageInventory,
-    /// The items that are floating on the water.
-    pub(crate) floating: StorageInventory,
+    pub(crate) contents: StorageInventory,
 }
 
+/// Is this litter currently floating?
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Floating(bool);
+
 impl Litter {
-    /// Does this inventory contain at least one matching item?
-    pub(crate) fn contains_kind(&self, item_kind: ItemKind, item_manifest: &ItemManifest) -> bool {
-        self.on_ground.contains_kind(item_kind, item_manifest)
-            || self.floating.contains_kind(item_kind, item_manifest)
-    }
-
-    /// Does this litter currently have space for an item of this type?
-    pub(crate) fn currently_accepts(
-        &self,
-        item_id: Id<Item>,
-        item_manifest: &ItemManifest,
-    ) -> bool {
-        self.on_ground.currently_accepts(item_id, item_manifest)
-    }
-
-    /// Returns the first [`Id<Item>`] that matches the given [`ItemKind`], if any.
-    ///
-    /// Items on the ground will be checked first, then floating items.
-    pub(crate) fn matching_item_id(
-        &self,
-        item_kind: ItemKind,
-        item_manifest: &ItemManifest,
-    ) -> Option<Id<Item>> {
-        match self.on_ground.matching_item_id(item_kind, item_manifest) {
-            Some(item_id) => Some(item_id),
-            None => self.floating.matching_item_id(item_kind, item_manifest),
-        }
-    }
-
-    /// Try to remove the given count of items from the inventory, together.
-    ///
-    /// Items on the ground will be checked first, then floating items.
-    /// Items will never be drawn from both inventories simultaneously.
-    pub(crate) fn remove_item_all_or_nothing(
-        &mut self,
-        item_count: &ItemCount,
-    ) -> Result<(), RemoveOneItemError> {
-        match self.on_ground.remove_item_all_or_nothing(item_count) {
-            Ok(()) => Ok(()),
-            Err(_) => self.floating.remove_item_all_or_nothing(item_count),
-        }
-    }
-
     /// The pretty formatting for the litter stored here.
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let mut display = String::new();
 
-        display.push_str("On Ground: ");
-        for item_slot in self.on_ground.iter() {
-            display.push_str(&item_slot.display(item_manifest));
-            display.push_str(", ");
-        }
+        let item_slot = self.contents.iter().next().unwrap();
 
-        display.push_str("\nFloating: ");
-        for item_slot in self.floating.iter() {
-            display.push_str(&item_slot.display(item_manifest));
-            display.push_str(", ");
-        }
+        display.push_str(&item_slot.display(item_manifest));
 
         display
     }
@@ -103,33 +59,20 @@ impl Litter {
 impl Default for Litter {
     fn default() -> Self {
         Litter {
-            on_ground: StorageInventory::new(1, None),
-            floating: StorageInventory::new(1, None),
+            contents: StorageInventory::new(1, None),
         }
     }
 }
 
-/// Updates the signals produced by terrain tiles.
-pub(super) fn set_terrain_emitters(mut query: Query<(&mut Emitter, Ref<Litter>)>) {
+/// Updates the signals produced by litter.
+pub(super) fn set_litter_emitters(mut query: Query<(&mut Emitter, Ref<Litter>)>) {
     for (mut emitter, litter) in query.iter_mut() {
         if litter.is_changed() {
             emitter.signals.clear();
-            for item_slot in litter.on_ground.iter() {
+            for item_slot in litter.contents.iter() {
                 let item_kind = ItemKind::Single(item_slot.item_id());
 
-                let signal_type = match litter.on_ground.is_full() {
-                    true => SignalType::Push(item_kind),
-                    false => SignalType::Contains(item_kind),
-                };
-                let signal_strength = SignalStrength::new(10.);
-
-                emitter.signals.push((signal_type, signal_strength));
-            }
-
-            for item_slot in litter.floating.iter() {
-                let item_kind = ItemKind::Single(item_slot.item_id());
-
-                let signal_type = match litter.floating.is_full() {
+                let signal_type = match litter.contents.is_full() {
                     true => SignalType::Push(item_kind),
                     false => SignalType::Contains(item_kind),
                 };
@@ -143,74 +86,38 @@ pub(super) fn set_terrain_emitters(mut query: Query<(&mut Emitter, Ref<Litter>)>
 
 /// The set of systems that update terrain emitters.
 #[derive(SystemSet, Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TerrainEmitters;
+pub(crate) struct LitterEmitters;
 
-/// Tracks how much litter is on the ground on each tile.
-pub(super) fn update_litter_index(
-    query: Query<(Entity, &VoxelPos, &Litter), Changed<Litter>>,
-    mut map_geometry: ResMut<MapGeometry>,
-) {
-    for (litter_entity, &voxel_pos, litter) in query.iter() {
-        // Only litter on the ground is impassable.
-        map_geometry.update_litter_state(litter_entity, voxel_pos, litter.on_ground.state());
-    }
-}
-
-/// The space in litter storage inventories is not reserved, so should be cleared
-pub(super) fn clear_empty_litter(mut query: Query<&mut Litter>) {
-    for mut litter in query.iter_mut() {
-        litter.on_ground.clear_empty_slots();
-        litter.floating.clear_empty_slots();
+/// Litter entities with empty content should be despawned.
+pub(super) fn clear_empty_litter(query: Query<(Entity, &Litter)>, mut commands: Commands) {
+    for (entity, litter) in query.iter() {
+        if litter.contents.is_empty() {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }
 
 /// Make litter in tiles submerged by water float (and stop it from floating when there's no water).
 pub(super) fn make_litter_float(
-    mut query: Query<(&mut Litter, &WaterDepth)>,
-    item_manifest: Res<ItemManifest>,
+    mut query: Query<(&mut Floating, &mut VoxelPos), With<Litter>>,
+    terrain_query: Query<(&VoxelPos, &WaterDepth)>,
+    map_geometry: Res<MapGeometry>,
 ) {
-    for (mut litter, water_depth) in query.iter_mut() {
+    for (mut floating, mut voxel_pos) in query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
+        let (terrain_pos, water_depth) = terrain_query.get(terrain_entity).unwrap();
+
         if let WaterDepth::Flooded(..) = water_depth {
-            // PERF: this clone is probably not needed, but it helps deal with the borrow checker
-            // It's fine to iterate over a cloned list of items, because we're only moving them out of the list one at a time
-            for item_on_ground in litter.on_ground.clone().iter() {
-                let item_id = item_on_ground.item_id();
-
-                // Check that the item floats
-                if !item_manifest.has_tag(item_id, ItemTag::Buoyant) {
-                    continue;
-                }
-
-                // Try to transfer as many items as possible to the floating inventory
-                let item_count = ItemCount {
-                    item_id: item_on_ground.item_id(),
-                    count: item_on_ground.count(),
-                };
-
-                // PERF: we could use mem::swap plus a local to avoid the clone
-                // Do the hokey-pokey to get around the borrow checker
-                let mut on_ground = litter.on_ground.clone();
-
-                // We don't care how much was transferred; failing to transfer is fine
-                let _ = on_ground.transfer_item(&item_count, &mut litter.floating, &item_manifest);
-                litter.on_ground = on_ground;
-            }
+            // TODO: branch based on the item's density
+            floating.set_if_neq(Floating(true));
+            // We need to go one tile higher, otherwise we'd share a tile with the terrain when the water depth approaches zero
+            let top_of_water = water_depth.water_table_height(terrain_pos.above().height());
+            let proposed = VoxelPos::new(voxel_pos.hex, top_of_water);
+            voxel_pos.set_if_neq(proposed);
         } else {
-            for floating_item in litter.floating.clone().iter() {
-                // Try to transfer as many items as possible to the ground inventory
-                let item_count = ItemCount {
-                    item_id: floating_item.item_id(),
-                    count: floating_item.count(),
-                };
-
-                // PERF: we could use mem::swap plus a local to avoid the clone
-                // Do the hokey-pokey to get around the borrow checker
-                let mut floating = litter.floating.clone();
-
-                // We don't care how much was transferred; failing to transfer is fine
-                let _ = floating.transfer_item(&item_count, &mut litter.on_ground, &item_manifest);
-                litter.floating = floating;
-            }
+            floating.set_if_neq(Floating(false));
+            let proposed = VoxelPos::new(voxel_pos.hex, terrain_pos.above().height());
+            voxel_pos.set_if_neq(proposed);
         }
     }
 }
@@ -243,17 +150,15 @@ impl LitterDrift {
 /// Carries floating litter along with the surface water current.
 pub(super) fn carry_floating_litter_with_current(
     mut terrain_query: Query<(
-        Entity,
-        &VoxelPos,
-        &mut Litter,
+        &mut VoxelPos,
         &mut LitterDrift,
         &WaterDepth,
         &FlowVelocity,
+        &Floating,
     )>,
     water_height_query: Query<(&VoxelPos, &WaterDepth)>,
     net_query: Query<&Footprint, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
-    item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     /// Controls how fast litter drifts with the current
@@ -275,34 +180,26 @@ pub(super) fn carry_floating_litter_with_current(
     const MAX_DRIFT_TIME: f32 = 10.0;
 
     let delta_time = fixed_time.period;
-    // By collecting a list of (source, destination) pairs, we avoid borrowing the litter query twice,
-    // sparing us from the wrath of the borrow checker
-    // FIXME: These should store Hex
-    let mut proposed_transfers: Vec<(Entity, VoxelPos)> = Vec::new();
-
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
-    for (source_entity, &voxel_pos, litter, mut litter_drift, water_depth, flow_velocity) in
+    for (mut voxel_pos, mut litter_drift, water_depth, flow_velocity, floating) in
         terrain_query.iter_mut()
     {
+        // Don't both computing drift if it's not floating
+        if !floating.0 {
+            continue;
+        }
+
         // Don't cause items to drift out of overfull nets
-        if let Some(structure_entity) = map_geometry.get_structure(voxel_pos) {
-            if let Ok(footprint) = net_query.get(structure_entity) {
-                if footprint.max_height() >= water_depth.surface_water_depth() {
-                    // If a net exists, and isn't overtopped, then don't drift items out of it
-                    continue;
-                }
+        if let Some(structure_entity) = map_geometry.get_structure(*voxel_pos) {
+            if net_query.get(structure_entity).is_ok() {
+                continue;
             }
         }
 
         if let WaterDepth::Flooded(surface_water_depth) = water_depth {
             litter_drift.timer.tick(delta_time);
-
-            // Don't both computing drift if there's nothing floating
-            if litter.floating.is_empty() {
-                continue;
-            }
 
             let flow_direction = flow_velocity.direction()
                 // Truncate the noise so it never makes the litter drift more than 90 degrees off-course
@@ -340,8 +237,7 @@ pub(super) fn carry_floating_litter_with_current(
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
                     // Note that this is a one-way check; we don't care if the source is higher than the target
                     if target_height - source_height <= Height::MAX_STEP {
-                        // Record that this change needs to be tried
-                        proposed_transfers.push((source_entity, new_position));
+                        *voxel_pos = new_position;
                     }
                 }
 
@@ -350,30 +246,6 @@ pub(super) fn carry_floating_litter_with_current(
         } else {
             // PERF: we could probably avoid doing any work in this branch by more carefully tracking when things start floating
             litter_drift.finish();
-        }
-    }
-
-    for (source_entity, new_position) in proposed_transfers.iter() {
-        let Ok(target_entity) = map_geometry.get_terrain(new_position.hex) else {
-            continue;
-        };
-        let [source_query_item, target_query_item] = terrain_query
-            .get_many_mut([*source_entity, target_entity])
-            .unwrap();
-
-        let mut source_litter: Mut<Litter> = source_query_item.2;
-        let mut target_litter: Mut<Litter> = target_query_item.2;
-
-        // Do the hokey-pokey to get around the borrow checker
-        let mut source_floating = source_litter.floating.clone();
-        let mut target_floating = target_litter.floating.clone();
-
-        let result = source_floating.transfer_all(&mut target_floating, &item_manifest);
-
-        // If the transfer was successful, update the litter
-        if result.is_ok() {
-            source_litter.floating = source_floating;
-            target_litter.floating = target_floating;
         }
     }
 }

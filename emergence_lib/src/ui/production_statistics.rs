@@ -176,11 +176,7 @@ fn update_item_count(
     }
 
     for litter in litter_query.iter() {
-        for item_slot in litter.on_ground.iter() {
-            *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
-        }
-
-        for item_slot in litter.floating.iter() {
+        for item_slot in litter.contents.iter() {
             *item_count.map.entry(item_slot.item_id()).or_default() += item_slot.count();
         }
     }

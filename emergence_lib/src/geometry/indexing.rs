@@ -424,7 +424,7 @@ impl MapGeometry {
         }
     }
 
-    /// Adds the provided `structure_entity` to the structure index at the provided `center`.
+    /// Adds the provided `structure_entity` to the voxel index at the provided `center`.
     #[inline]
     pub(crate) fn add_structure(
         &mut self,
@@ -452,7 +452,7 @@ impl MapGeometry {
         self.validate();
     }
 
-    /// Removes any structure entity found at the provided `voxel_pos` from the structure index.
+    /// Removes any structure entity found at the provided `voxel_pos` from the voxel index.
     ///
     /// Returns the removed entity, if any.
     #[inline]
@@ -469,6 +469,43 @@ impl MapGeometry {
 
             self.recompute_walkable_neighbors();
         }
+
+        #[cfg(test)]
+        self.validate();
+
+        removed.map(|data| data.entity)
+    }
+
+    /// Adds the provided `litter_entity` to the voxel index at the provided `center`.
+    #[inline]
+    pub(crate) fn add_litter(
+        &mut self,
+        voxel_pos: VoxelPos,
+        inventory_state: InventoryState,
+        litter_entity: Entity,
+    ) {
+        let voxel_data = VoxelObject {
+            entity: litter_entity,
+            object_kind: VoxelKind::Litter { inventory_state },
+        };
+
+        // FIXME: This overwrites the existing entry
+        // Instead, litter should be placed in the nearest empty voxel on the ground
+        self.voxel_index.insert(voxel_pos, voxel_data);
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+    }
+
+    /// Removes any litter entity found at the provided `voxel_pos` from the voxel index.
+    ///
+    /// Returns the removed entity, if any.
+    #[inline]
+    pub(crate) fn remove_litter(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
+        let mut removed = None;
+
+        removed = self.voxel_index.remove(&voxel_pos);
 
         #[cfg(test)]
         self.validate();
@@ -531,38 +568,6 @@ impl MapGeometry {
         self.validate();
 
         removed.map(|data| data.entity)
-    }
-
-    /// Updates the passability of the provided `voxel_pos` based on the state of the litter at that location.
-    pub(crate) fn update_litter_state(
-        &mut self,
-        litter_entity: Entity,
-        voxel_pos: VoxelPos,
-        inventory_state: InventoryState,
-    ) {
-        let current_litter_state = if let Some(voxel_data) = self.get_voxel(voxel_pos) {
-            match voxel_data.object_kind {
-                VoxelKind::Litter { inventory_state } => inventory_state,
-                _ => InventoryState::Empty,
-            }
-        } else {
-            InventoryState::Empty
-        };
-
-        if current_litter_state == inventory_state {
-            return;
-        } else {
-            let voxel_data = VoxelObject {
-                entity: litter_entity,
-                object_kind: VoxelKind::Litter { inventory_state },
-            };
-
-            self.voxel_index.insert(voxel_pos, voxel_data);
-            self.recompute_walkable_neighbors();
-        }
-
-        #[cfg(test)]
-        self.validate();
     }
 
     /// Returns an iterator over all of the hex positions that are ocean tiles.

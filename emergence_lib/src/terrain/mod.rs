@@ -17,8 +17,8 @@ use crate::water::{WaterBundle, WaterSet};
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
 use crate::litter::{
-    carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
-    set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
+    carry_floating_litter_with_current, clear_empty_litter, make_litter_float, set_litter_emitters,
+    Litter, LitterDrift, LitterEmitters,
 };
 
 pub(crate) mod commands;
@@ -44,10 +44,9 @@ impl Plugin for TerrainPlugin {
                     // but we also want to clean up after because we may have condensed litter inventories by drifting
                     clear_empty_litter.before(carry_floating_litter_with_current),
                     clear_empty_litter.after(carry_floating_litter_with_current),
-                    set_terrain_emitters
+                    set_litter_emitters
                         .after(carry_floating_litter_with_current)
-                        .in_set(TerrainEmitters),
-                    update_litter_index.after(carry_floating_litter_with_current),
+                        .in_set(LitterEmitters),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
