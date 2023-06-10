@@ -513,6 +513,22 @@ impl MapGeometry {
         removed.map(|data| data.entity)
     }
 
+    /// Moves the litter entity found at the provided `voxel_pos` to the provided `new_voxel_pos`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there is no litter entity at `voxel_pos`.
+    #[inline]
+    pub(crate) fn move_litter(&mut self, mut voxel_pos: Mut<VoxelPos>, new_voxel_pos: VoxelPos) {
+        if *voxel_pos == new_voxel_pos {
+            return;
+        }
+
+        let litter_entity = self.remove_litter(*voxel_pos).unwrap();
+        self.add_litter(new_voxel_pos, InventoryState::Full, litter_entity);
+        *voxel_pos = new_voxel_pos;
+    }
+
     /// Gets the ghost structure [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
     #[must_use]

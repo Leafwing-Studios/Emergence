@@ -101,9 +101,9 @@ pub(super) fn clear_empty_litter(query: Query<(Entity, &Litter)>, mut commands: 
 pub(super) fn make_litter_float(
     mut query: Query<(&mut Floating, &mut VoxelPos), With<Litter>>,
     terrain_query: Query<(&VoxelPos, &WaterDepth)>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (mut floating, mut voxel_pos) in query.iter_mut() {
+    for (mut floating, voxel_pos) in query.iter_mut() {
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let (terrain_pos, water_depth) = terrain_query.get(terrain_entity).unwrap();
 
@@ -113,11 +113,11 @@ pub(super) fn make_litter_float(
             // We need to go one tile higher, otherwise we'd share a tile with the terrain when the water depth approaches zero
             let top_of_water = water_depth.water_table_height(terrain_pos.above().height());
             let proposed = VoxelPos::new(voxel_pos.hex, top_of_water);
-            voxel_pos.set_if_neq(proposed);
+            map_geometry.move_litter(voxel_pos, proposed);
         } else {
             floating.set_if_neq(Floating(false));
             let proposed = VoxelPos::new(voxel_pos.hex, terrain_pos.above().height());
-            voxel_pos.set_if_neq(proposed);
+            map_geometry.move_litter(voxel_pos, proposed);
         }
     }
 }
@@ -159,7 +159,7 @@ pub(super) fn carry_floating_litter_with_current(
     water_height_query: Query<(&VoxelPos, &WaterDepth)>,
     net_query: Query<&Footprint, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
-    map_geometry: Res<MapGeometry>,
+    mut map_geometry: ResMut<MapGeometry>,
 ) {
     /// Controls how fast litter drifts with the current
     ///
@@ -183,7 +183,7 @@ pub(super) fn carry_floating_litter_with_current(
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 
-    for (mut voxel_pos, mut litter_drift, water_depth, flow_velocity, floating) in
+    for (voxel_pos, mut litter_drift, water_depth, flow_velocity, floating) in
         terrain_query.iter_mut()
     {
         // Don't both computing drift if it's not floating
@@ -226,9 +226,9 @@ pub(super) fn carry_floating_litter_with_current(
             // If the litter has finished drifting, stop it drifting and move it
             if litter_drift.timer.finished() {
                 if let Some(direction) = litter_drift.direction {
-                    let new_position = voxel_pos.neighbor(direction);
+                    let new_voxel_pos = voxel_pos.neighbor(direction);
                     let source_height = water_depth.surface_height(voxel_pos.height());
-                    let Ok(target_entity) = map_geometry.get_terrain(new_position.hex) else { continue };
+                    let Ok(target_entity) = map_geometry.get_terrain(new_voxel_pos.hex) else { continue };
 
                     let Ok((target_tile_pos, target_water_depth)) =
                         water_height_query.get(target_entity) else { continue };
@@ -237,7 +237,7 @@ pub(super) fn carry_floating_litter_with_current(
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
                     // Note that this is a one-way check; we don't care if the source is higher than the target
                     if target_height - source_height <= Height::MAX_STEP {
-                        *voxel_pos = new_position;
+                        map_geometry.move_litter(voxel_pos, new_voxel_pos);
                     }
                 }
 
