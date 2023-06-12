@@ -2,23 +2,13 @@
 
 use crate::{
     geometry::{MapGeometry, VoxelPos},
-    litter::{Floating, Litter},
-    terrain::terrain_assets::TerrainHandles,
     water::WaterDepth,
 };
 use bevy::prelude::*;
 
 /// Spawn and despawn litter scenes based on the items stored as litter on each tile.
-pub(super) fn render_litter_piles(
-    terrain_handles: Res<TerrainHandles>,
-    litter_query: Query<(Entity, &VoxelPos, Ref<Litter>, &mut Transform, &Floating)>,
-    water_height_query: Query<(&WaterDepth, &VoxelPos)>,
-    mut commands: Commands,
-    map_geometry: Res<MapGeometry>,
-) {
-    // TODO: set the model based on inventory contents.
-
-    // TODO: adjust the transform based on the water height.
+pub(super) fn render_litter_piles() {
+    todo!();
 }
 
 /// Computes the [`Transform`] for a floating litter entity.
