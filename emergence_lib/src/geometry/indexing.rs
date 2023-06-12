@@ -556,6 +556,8 @@ impl MapGeometry {
             self.voxel_index.insert(voxel_pos, voxel_data);
         }
 
+        // We do not need to update the passable neighbors, as ghost structures never block movement
+
         #[cfg(test)]
         self.validate();
     }
@@ -574,9 +576,9 @@ impl MapGeometry {
 
         for voxel_pos in footprint.normalized(facing, center) {
             removed = self.voxel_index.remove(&voxel_pos);
-
-            self.recompute_walkable_neighbors();
         }
+
+        // We do not need to update the passable neighbors, as ghost structures never block movement
 
         #[cfg(test)]
         self.validate();
