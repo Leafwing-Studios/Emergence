@@ -458,9 +458,9 @@ impl MapGeometry {
     #[inline]
     pub(crate) fn remove_structure(
         &mut self,
-        facing: Facing,
         center: VoxelPos,
         footprint: &Footprint,
+        facing: Facing,
     ) -> Option<Entity> {
         let mut removed = None;
 
@@ -832,6 +832,77 @@ mod tests {
     }
 
     #[test]
+    fn adding_ghost_structures_does_not_change_walkable_neighbors() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 1);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
+
+        map_geometry.add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42));
+        let initial_walkable_voxels = map_geometry.walkable_voxels();
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Adding a ghost structure should not change walkable neighbors"
+        );
+
+        assert_eq!(
+            initial_walkable_voxels,
+            map_geometry.walkable_voxels(),
+            "Adding a ghost structure should not change walkable voxels"
+        );
+
+        map_geometry.remove_ghost_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Removing a ghost structure should not change walkable neighbors"
+        );
+    }
+
+    #[test]
+    fn adding_passable_structures_does_not_change_walkable_neighbors() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 1);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
+
+        map_geometry.add_structure(
+            facing,
+            voxel_pos,
+            &footprint,
+            false,
+            true,
+            Entity::from_bits(42),
+        );
+        let initial_walkable_voxels = map_geometry.walkable_voxels();
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Adding a passable structure should not change walkable neighbors"
+        );
+
+        assert_eq!(
+            initial_walkable_voxels,
+            map_geometry.walkable_voxels(),
+            "Adding a passable structure should not change walkable voxels"
+        );
+
+        map_geometry.remove_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Removing a ghost structure should not change walkable neighbors"
+        );
+    }
+
+    #[test]
     fn can_add_and_remove_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
@@ -853,7 +924,7 @@ mod tests {
             Some(Entity::from_bits(42))
         );
 
-        map_geometry.remove_structure(facing, voxel_pos, &footprint);
+        map_geometry.remove_structure(voxel_pos, &footprint, facing);
 
         assert_eq!(map_geometry.get_structure(voxel_pos), None);
     }
@@ -941,7 +1012,7 @@ mod tests {
             can_walk_through,
             structure_entity,
         );
-        map_geometry.remove_structure(facing, center, &footprint);
+        map_geometry.remove_structure(center, &footprint, facing);
 
         // Check that the structure index was updated correctly
         for voxel_pos in footprint.normalized(facing, center) {

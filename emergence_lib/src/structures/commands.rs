@@ -271,7 +271,7 @@ impl Command for DespawnStructureCommand {
         let footprint = structure_data.footprint.clone();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_structure(facing, self.center, &footprint);
+        let maybe_entity = geometry.remove_structure(self.center, &footprint, facing);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
