@@ -503,9 +503,7 @@ impl MapGeometry {
     /// Returns the removed entity, if any.
     #[inline]
     pub(crate) fn remove_litter(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let mut removed = None;
-
-        removed = self.voxel_index.remove(&voxel_pos);
+        let removed = self.voxel_index.remove(&voxel_pos);
 
         #[cfg(test)]
         self.validate();
