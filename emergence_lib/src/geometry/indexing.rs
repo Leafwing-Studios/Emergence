@@ -803,10 +803,10 @@ mod tests {
         assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
-            let voxel_pos = VoxelPos::new(hex, Height::MIN);
+            let voxel_pos = VoxelPos::new(hex, Height::MIN).above();
             assert!(
                 map_geometry.walkable_neighbors.contains_key(&voxel_pos),
-                "{}",
+                "Walkable neighbors should contain {}",
                 voxel_pos
             );
         }
