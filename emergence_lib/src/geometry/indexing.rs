@@ -298,30 +298,6 @@ impl MapGeometry {
         heights.sum::<f32>() / n as f32
     }
 
-    /// Flattens the terrain in the `footprint` around `voxel_pos` to the height at that location.
-    ///
-    /// This footprint is rotated by the supplied `facing`.
-    pub(crate) fn flatten_height(
-        &mut self,
-        voxel_pos_query: &mut Query<&mut VoxelPos>,
-        center: VoxelPos,
-        footprint: &Footprint,
-        facing: Facing,
-    ) {
-        let Ok(target_height) = self.get_height(center.hex) else { return };
-        for voxel_pos in footprint.normalized(facing, center) {
-            if let Ok(terrain_entity) = self.get_terrain(voxel_pos.hex) {
-                if let Ok(mut voxel_pos) = voxel_pos_query.get_mut(terrain_entity) {
-                    voxel_pos.height = target_height.0.round() as i32;
-                    self.update_height(voxel_pos.hex, voxel_pos.height());
-                }
-            }
-        }
-
-        #[cfg(test)]
-        self.validate();
-    }
-
     /// Gets the [`Entity`] at the provided `voxel_pos` that might have or want an item.
     ///
     /// If the `delivery_mode` is [`DeliveryMode::PickUp`], looks for litter, ghost terrain, or structures.

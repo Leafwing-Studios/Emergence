@@ -26,8 +26,7 @@ pub(super) fn generate_organisms(
     unit_handles: Res<UnitHandles>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
-    mut height_query: Query<&mut VoxelPos>,
-    mut map_geometry: ResMut<MapGeometry>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
     let rng = &mut thread_rng();
@@ -51,8 +50,6 @@ pub(super) fn generate_organisms(
                         .is_space_available(voxel_pos, footprint, facing)
                         .is_ok()
                 {
-                    // Flatten the terrain under the structure before spawning it
-                    map_geometry.flatten_height(&mut height_query, voxel_pos, footprint, facing);
                     commands.spawn_structure(
                         voxel_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
