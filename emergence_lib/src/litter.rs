@@ -10,7 +10,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::{
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
-    geometry::{direction_from_angle, Height, MapGeometry, VoxelPos},
+    geometry::{direction_from_angle, DiscreteHeight, Height, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     structures::{logistic_buildings::AbsorbsItems, Footprint},
@@ -110,13 +110,23 @@ pub(super) fn make_litter_float(
         if let WaterDepth::Flooded(..) = water_depth {
             // TODO: branch based on the item's density
             floating.set_if_neq(Floating(true));
+            let water_table_height = water_depth.water_table_height(terrain_pos.height());
+
             // We need to go one tile higher, otherwise we'd share a tile with the terrain when the water depth approaches zero
-            let top_of_water = water_depth.water_table_height(terrain_pos.above().height());
-            let proposed = VoxelPos::new(voxel_pos.hex, top_of_water);
+            let top_of_water = DiscreteHeight::from(water_table_height).above();
+
+            let proposed = VoxelPos {
+                hex: voxel_pos.hex,
+                height: top_of_water,
+            };
             map_geometry.move_litter(voxel_pos, proposed);
         } else {
             floating.set_if_neq(Floating(false));
-            let proposed = VoxelPos::new(voxel_pos.hex, terrain_pos.above().height());
+            let proposed = VoxelPos {
+                hex: voxel_pos.hex,
+                // Place litter on top of the terrain, not inside of it
+                height: terrain_pos.above().height,
+            };
             map_geometry.move_litter(voxel_pos, proposed);
         }
     }

@@ -20,8 +20,8 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         // Make sure we cover a range of heights
-        let height = Height(hex.x.max(0) as f32);
-        let voxel_pos = VoxelPos::new(hex, height);
+        let height = Height(hex.x.max(0) as f32).into();
+        let voxel_pos = VoxelPos { hex, height };
 
         let water_volume = WaterVolume::new(Volume(20.));
         let terrain_entity = map_geometry.get_terrain(hex).unwrap();

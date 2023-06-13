@@ -210,7 +210,7 @@ pub(super) fn manage_oxygen(
             .unwrap()
             .surface_water_depth();
 
-        if surface_water_depth > footprint.max_height() {
+        if surface_water_depth > footprint.max_height().into() {
             let proposed = oxygen_pool.current - Oxygen::CONSUMPTION_RATE * delta_time;
             oxygen_pool.set_current(proposed);
 

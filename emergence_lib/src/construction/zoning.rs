@@ -148,8 +148,7 @@ fn set_zoning(
                         false => {
                             for &hex in relevant_tiles.selection().iter() {
                                 // FIXME: this prevents building on top of existing structures
-                                let height = map_geometry.get_height(hex).unwrap();
-                                let voxel_pos = VoxelPos::new(hex, height);
+                                let voxel_pos = map_geometry.on_top_of_terrain(hex);
                                 commands.spawn_preview_structure(voxel_pos, clipboard_item.clone());
                             }
                         }

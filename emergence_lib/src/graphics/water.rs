@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    geometry::{hexagonal_column, Height, MapGeometry, VoxelPos},
+    geometry::{hexagonal_column, DiscreteHeight, Height, MapGeometry, VoxelPos},
     water::{ocean::Ocean, WaterConfig, WaterDepth},
 };
 
@@ -89,7 +89,10 @@ fn render_water(
 
     if water_config.enable_oceans {
         for hex in map_geometry.ocean_tiles() {
-            let voxel_pos = VoxelPos::new(hex, Height::ZERO);
+            let voxel_pos = VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            };
 
             commands
                 .spawn(PbrBundle {

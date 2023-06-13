@@ -9,7 +9,7 @@ use bevy::{
 use crate::{
     asset_management::manifest::Id,
     construction::{terraform::TerraformingAction, zoning::Zoning},
-    geometry::{Height, MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, MapGeometry, VoxelPos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
 
@@ -18,14 +18,14 @@ use super::{terrain_manifest::TerrainManifest, TerrainBundle};
 /// An extension trait for [`Commands`] for working with terrain.
 pub(crate) trait TerrainCommandsExt {
     /// Adds the appropriate terrain bundle and children to an entity with a [`TerrainPrototype`].
-    fn hydrate_terrain(&mut self, entity: Entity, height: Height, terrain_id: Id<Terrain>);
+    fn hydrate_terrain(&mut self, entity: Entity, height: DiscreteHeight, terrain_id: Id<Terrain>);
 
     /// Applies the given `terraforming_action` to the terrain at `voxel_pos`.
     fn apply_terraforming_action(&mut self, voxel_pos: VoxelPos, action: TerraformingAction);
 }
 
 impl<'w, 's> TerrainCommandsExt for Commands<'w, 's> {
-    fn hydrate_terrain(&mut self, entity: Entity, height: Height, terrain_id: Id<Terrain>) {
+    fn hydrate_terrain(&mut self, entity: Entity, height: DiscreteHeight, terrain_id: Id<Terrain>) {
         self.add(HydrateTerrainCommand {
             entity,
             height,
@@ -54,7 +54,7 @@ pub(crate) struct HydrateTerrainCommand {
     /// The entity to modify
     pub(crate) entity: Entity,
     /// The new height of the tile
-    pub(crate) height: Height,
+    pub(crate) height: DiscreteHeight,
     /// The type of terrain
     pub(crate) terrain_id: Id<Terrain>,
 }
@@ -70,7 +70,10 @@ impl Command for HydrateTerrainCommand {
         let terrain_manifest = world.resource::<TerrainManifest>();
 
         let existing_voxel_pos: VoxelPos = *world.get(self.entity).unwrap();
-        let new_voxel_pos = VoxelPos::new(existing_voxel_pos.hex, self.height);
+        let new_voxel_pos = VoxelPos {
+            hex: existing_voxel_pos.hex,
+            height: self.height,
+        };
 
         // Insert the TerrainBundle
         let terrain_bundle = TerrainBundle::new(
@@ -133,11 +136,9 @@ impl Command for ApplyTerraformingCommand {
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
-            TerraformingAction::Raise => {
-                voxel_pos.height = (voxel_pos.height + 1).min(Height::MAX.0 as i32)
-            }
+            TerraformingAction::Raise => voxel_pos.height = voxel_pos.height.above(),
             TerraformingAction::Lower => {
-                voxel_pos.height = (voxel_pos.height - 1).max(Height::ZERO.0 as i32)
+                voxel_pos.height = voxel_pos.height.below();
             }
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;
@@ -153,7 +154,7 @@ impl Command for ApplyTerraformingCommand {
                 .clone_weak();
         }
 
-        map_geometry.update_height(voxel_pos.hex, voxel_pos.height());
+        map_geometry.update_height(voxel_pos.hex, voxel_pos.height);
         *zoning = Zoning::None;
     }
 }

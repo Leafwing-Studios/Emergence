@@ -21,7 +21,7 @@ use rayon::prelude::*;
 use std::ops::{Div, DivAssign, MulAssign};
 
 use crate::asset_management::manifest::Id;
-use crate::geometry::{Facing, MapGeometry, VoxelPos};
+use crate::geometry::{Facing, Height, MapGeometry, VoxelPos};
 use crate::simulation::SimulationSet;
 use crate::units::goals::Goal;
 
@@ -702,7 +702,7 @@ fn emit_signals(
             let water_depth = terrain_query.get(terrain_entity).unwrap();
             let structure_height = structure_data.footprint.max_height();
 
-            if structure_height < water_depth.surface_water_depth() {
+            if Height::from(structure_height) < water_depth.surface_water_depth() {
                 continue;
             }
         }

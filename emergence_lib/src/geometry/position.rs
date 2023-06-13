@@ -174,13 +174,87 @@ impl Div<f32> for Height {
     }
 }
 
+/// The discretized height of a tile.
+///
+/// Used to construct a [`VoxelPos`].
+/// When converting from a [`Height`], all values will be clamped to the range 0..=255.
+#[derive(
+    PartialEq, Eq, Clone, Copy, Debug, Hash, Serialize, Deserialize, Default, PartialOrd, Ord,
+)]
+pub struct DiscreteHeight(pub u8);
+
+impl DiscreteHeight {
+    /// The minimum height.
+    pub const ZERO: DiscreteHeight = DiscreteHeight(0);
+
+    /// Exactly one unit of height.
+    pub const ONE: DiscreteHeight = DiscreteHeight(1);
+
+    /// The maximum height.
+    pub const MAX: DiscreteHeight = DiscreteHeight(u8::MAX);
+
+    /// Up one step.
+    pub const fn above(self) -> DiscreteHeight {
+        DiscreteHeight(self.0.saturating_add(1))
+    }
+
+    /// Down one step.
+    pub const fn below(self) -> DiscreteHeight {
+        DiscreteHeight(self.0.saturating_sub(1))
+    }
+
+    /// Converts this height into a y coordinate in world coordinates.
+    pub fn into_world_pos(self) -> f32 {
+        self.0 as f32 * Height::STEP_HEIGHT
+    }
+
+    /// Converts a y coordinate in world coordinates into a discrete height.
+    pub fn from_world_pos(y: f32) -> DiscreteHeight {
+        DiscreteHeight((y / Height::STEP_HEIGHT).round() as u8)
+    }
+}
+
+impl Add for DiscreteHeight {
+    type Output = DiscreteHeight;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        DiscreteHeight(self.0.saturating_add(rhs.0))
+    }
+}
+
+impl Sub for DiscreteHeight {
+    type Output = DiscreteHeight;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        DiscreteHeight(self.0.saturating_sub(rhs.0))
+    }
+}
+
+impl From<Height> for DiscreteHeight {
+    fn from(height: Height) -> Self {
+        DiscreteHeight(height.0.clamp(0., 255.) as u8)
+    }
+}
+
+impl From<DiscreteHeight> for Height {
+    fn from(height: DiscreteHeight) -> Self {
+        Height(height.0 as f32)
+    }
+}
+
+impl Display for DiscreteHeight {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// A voxel position in the game world.
 #[derive(Component, Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct VoxelPos {
     /// The discretized x and z coordinates of the voxel
     pub hex: Hex,
     /// The discretized [`Height`] of the voxel.
-    pub height: i32,
+    pub height: DiscreteHeight,
 }
 
 impl Add for VoxelPos {
@@ -207,7 +281,7 @@ impl Sub for VoxelPos {
 
 impl Display for VoxelPos {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "({}, {}, {})", self.hex.x, self.hex.y, self.height)
+        write!(f, "({}, {}, {})", self.hex.x, self.hex.y, self.height.0)
     }
 }
 
@@ -215,28 +289,20 @@ impl VoxelPos {
     /// The [`VoxelPos`] of the origin.
     pub const ZERO: Self = Self {
         hex: Hex::ZERO,
-        height: 0,
+        height: DiscreteHeight::ZERO,
     };
 
-    /// Create a new [`VoxelPos`] from a [`Hex`] and a [`Height`].
-    pub fn new(hex: Hex, height: Height) -> Self {
-        Self {
-            hex,
-            height: height.0.round() as i32,
-        }
-    }
-
-    /// Creates a new [`VoxelPos`] from x and y coordinates with [`Height::ZERO`].
+    /// Creates a new [`VoxelPos`] from x and y coordinates with [`DiscreteHeight::ZERO`].
     pub fn from_xy(x: i32, y: i32) -> Self {
         Self {
             hex: Hex { x, y },
-            height: 0,
+            height: DiscreteHeight::ZERO,
         }
     }
 
     /// Get the [`Height`] of this [`VoxelPos`].
     pub fn height(&self) -> Height {
-        Height(self.height as f32)
+        self.height.into()
     }
 
     /// Returns the absolute height difference between this [`VoxelPos`] and the provided [`VoxelPos`].
@@ -248,7 +314,7 @@ impl VoxelPos {
     pub fn above(&self) -> Self {
         Self {
             hex: self.hex,
-            height: self.height + 1,
+            height: self.height.above(),
         }
     }
 
@@ -256,7 +322,7 @@ impl VoxelPos {
     pub fn below(&self) -> Self {
         Self {
             hex: self.hex,
-            height: self.height - 1,
+            height: self.height.below(),
         }
     }
 
@@ -269,7 +335,7 @@ impl VoxelPos {
         let mut reachable_neighbors = [Self::ZERO; 21];
 
         for layer in 0..=2 {
-            let height_offset = layer as i32 - 1;
+            let height_offset = DiscreteHeight(layer as u8 - 1);
             for i in 0..=6 {
                 let index = layer * 7 + i;
 
@@ -318,8 +384,8 @@ impl VoxelPos {
             y: world_pos.z,
         });
 
-        let height = Height::from_world_pos(world_pos.y);
-        VoxelPos::new(hex, height)
+        let height = DiscreteHeight::from_world_pos(world_pos.y);
+        VoxelPos { hex, height }
     }
 
     /// Returns the [`VoxelPos`] in the provided `direction` from `self`.
@@ -328,7 +394,10 @@ impl VoxelPos {
     pub(crate) fn neighbor(&self, direction: Direction) -> Self {
         let hex = self.hex.neighbor(direction);
 
-        VoxelPos::new(hex, self.height())
+        VoxelPos {
+            hex,
+            height: self.height,
+        }
     }
 
     /// All neighbors of `self` at the same height.
@@ -339,9 +408,10 @@ impl VoxelPos {
     #[inline]
     #[must_use]
     pub(crate) fn all_neighbors(&self) -> [VoxelPos; 6] {
-        self.hex
-            .all_neighbors()
-            .map(|hex| VoxelPos::new(hex, self.height()))
+        self.hex.all_neighbors().map(|hex| VoxelPos {
+            hex,
+            height: self.height,
+        })
     }
 
     /// Returns the [`VoxelPos`] rotated to match the `facing` around the origin.
@@ -353,7 +423,10 @@ impl VoxelPos {
         // as we are rotating the tile around the origin.
         let hex = self.hex.rotate_ccw(n_rotations);
 
-        VoxelPos::new(hex, self.height())
+        VoxelPos {
+            hex,
+            height: self.height,
+        }
     }
 }
 
@@ -496,9 +569,9 @@ mod tests {
         for x in -10..=10 {
             for y in -10..=10 {
                 let hex = Hex::new(x, y);
-                let height = Height(17.);
+                let height = DiscreteHeight(17);
 
-                let voxel_pos = VoxelPos::new(hex, height);
+                let voxel_pos = VoxelPos { hex, height };
                 let world_pos = voxel_pos.into_world_pos(&map_geometry);
                 let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
 

@@ -1,7 +1,7 @@
 //! Shade is cast by structures and terrain based on their height and the position of the sun.
 
 use crate::{
-    geometry::{MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, MapGeometry, VoxelPos},
     simulation::time::{InGameTime, TimeOfDay},
 };
 use bevy::prelude::*;
@@ -96,9 +96,9 @@ pub(super) fn compute_shade(
 
         let mut i = 0;
 
-        while i < voxel_pos.height {
-            let current_height = voxel_pos.height - i;
-            let current_hex = SHADOW_DIRECTION * i;
+        while DiscreteHeight(i) < voxel_pos.height {
+            let current_height = voxel_pos.height - DiscreteHeight(i);
+            let current_hex = SHADOW_DIRECTION * i as i32;
 
             let shaded_voxel = VoxelPos {
                 hex: current_hex,

@@ -8,7 +8,7 @@ use crate::{
     asset_management::manifest::Id,
     construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::recipe::ActiveRecipe,
-    geometry::{Facing, Height, MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, Facing, MapGeometry, VoxelPos},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 
@@ -160,7 +160,13 @@ impl Tool {
                     original_pos.hex.counter_clockwise()
                 };
 
-                new_map.insert(VoxelPos::new(new_pos, Height::ZERO), item.clone());
+                new_map.insert(
+                    VoxelPos {
+                        hex: new_pos,
+                        height: DiscreteHeight::ZERO,
+                    },
+                    item.clone(),
+                );
             }
 
             *map = new_map;

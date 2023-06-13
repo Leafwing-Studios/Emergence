@@ -11,7 +11,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, VoxelKind, VoxelObject, VoxelPos};
+use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource)]
@@ -29,7 +29,7 @@ pub struct MapGeometry {
     /// The height of the terrain at each tile position.
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
-    height_index: HashMap<Hex, Height>,
+    height_index: HashMap<Hex, DiscreteHeight>,
     /// Tracks which objects are stored in each voxel.
     ///
     /// The set of keys is the set of all non-empty [`VoxelPos`] positions on the map.
@@ -62,20 +62,26 @@ impl MapGeometry {
         let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
         let tiles: Vec<VoxelPos> = hexes
             .iter()
-            .map(|hex| VoxelPos::new(*hex, Height::ZERO))
+            .map(|hex| VoxelPos {
+                hex: *hex,
+                height: DiscreteHeight::ZERO,
+            })
             .collect();
 
         // We can start with the minimum height everywhere as no entities need to be spawned.
         let height_index = tiles
             .iter()
-            .map(|voxel_pos| (voxel_pos.hex, Height::ZERO))
+            .map(|voxel_pos| (voxel_pos.hex, DiscreteHeight::ZERO))
             .collect();
 
         let mut terrain_index = HashMap::default();
         let mut voxel_index = HashMap::default();
 
         for hex in hexes {
-            let voxel_pos = VoxelPos::new(hex, Height::ZERO);
+            let voxel_pos = VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            };
             // The TerrainPrototype component is used to track the terrain entities that need to be replaced with a full TerrainBundle
             let entity = world.spawn(voxel_pos).id();
             terrain_index.insert(hex, entity);
@@ -136,7 +142,11 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
-        VoxelPos::new(hex, self.get_height(hex).unwrap_or_default())
+        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default().into();
+        VoxelPos {
+            hex,
+            height: terrain_height.above(),
+        }
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
@@ -278,7 +288,7 @@ impl MapGeometry {
     /// Returns the height of the tile at `voxel_pos`, if available.
     ///
     /// This should always be [`Ok`] for all valid tiles.
-    pub(crate) fn get_height(&self, hex: Hex) -> Result<Height, IndexError> {
+    pub(crate) fn get_height(&self, hex: Hex) -> Result<DiscreteHeight, IndexError> {
         match self.height_index.get(&hex) {
             Some(height) => Ok(*height),
             None => Err(IndexError { hex }),
@@ -360,17 +370,20 @@ impl MapGeometry {
 
     /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
     #[inline]
-    pub fn update_height(&mut self, hex: Hex, height: Height) {
-        let old_height = self.get_height(hex).unwrap();
+    pub fn update_height(&mut self, hex: Hex, height: DiscreteHeight) {
+        let old_height = self.get_height(hex).unwrap().into();
         if old_height == height {
             return;
         }
 
-        let old_voxel_pos = VoxelPos::new(hex, old_height);
-        let new_voxel_pos = VoxelPos::new(hex, height);
+        let old_voxel_pos = VoxelPos {
+            hex,
+            height: old_height,
+        };
+        let new_voxel_pos = VoxelPos { hex, height };
 
         // This overwrites the existing entry
-        self.height_index.insert(hex, height);
+        self.height_index.insert(hex, height.into());
         // The old voxel needs to be removed, rather than overwritten, as it may be at a different height.
         self.voxel_index.remove(&old_voxel_pos);
         self.voxel_index.insert(
@@ -718,7 +731,7 @@ impl MapGeometry {
         for &hex in self.all_hexes() {
             let height = self.get_height(hex).unwrap();
             assert!(
-                height >= Height::ZERO && height <= Height::MAX,
+                height >= DiscreteHeight::ZERO && height <= DiscreteHeight::MAX,
                 "Height {} is out of range",
                 height
             );
@@ -732,7 +745,7 @@ impl MapGeometry {
                 continue;
             }
 
-            let voxel_height = voxel_pos.height();
+            let voxel_height = voxel_pos.height;
             let hex = voxel_pos.hex;
             let stored_height = self.get_height(hex).unwrap();
 
@@ -799,6 +812,8 @@ impl MapGeometry {
 
 #[cfg(test)]
 mod tests {
+    use crate::geometry::position::DiscreteHeight;
+
     use super::*;
 
     #[test]
@@ -816,8 +831,14 @@ mod tests {
         assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
-            let voxel_pos_zero = VoxelPos::new(hex, Height::ZERO);
-            let voxel_pos_one = VoxelPos::new(hex, Height::ONE);
+            let voxel_pos_zero = VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            };
+            let voxel_pos_one = VoxelPos {
+                hex,
+                height: DiscreteHeight::ONE,
+            };
 
             assert!(
                 map_geometry.is_valid(hex),
@@ -860,7 +881,7 @@ mod tests {
 
             assert_eq!(
                 map_geometry.get_height(hex),
-                Ok(Height::ZERO),
+                Ok(DiscreteHeight::ZERO),
                 "All hexes should be at height 0"
             );
         }
@@ -894,17 +915,17 @@ mod tests {
         let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
         let can_walk_at_height_one = HashSet::from_iter([VoxelPos {
             hex: Hex::ZERO,
-            height: 1,
+            height: DiscreteHeight(1),
         }]);
         let can_walk_at_height_two = HashSet::from_iter([VoxelPos {
             hex: Hex::ZERO,
-            height: 2,
+            height: DiscreteHeight(2),
         }]);
         let cannot_walk = HashSet::new();
 
         let center = VoxelPos {
             hex: Hex::ZERO,
-            height: 1,
+            height: DiscreteHeight(1),
         };
         let footprint = Footprint::default();
         let facing = Facing::default();
@@ -954,7 +975,7 @@ mod tests {
         map_geometry.remove_structure(center, &footprint, facing);
 
         // Raising the terrain
-        map_geometry.update_height(Hex::ZERO, Height::ONE);
+        map_geometry.update_height(Hex::ZERO, DiscreteHeight::ONE);
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
     }
@@ -963,7 +984,10 @@ mod tests {
     fn adding_ghost_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -997,7 +1021,10 @@ mod tests {
     fn adding_passable_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1038,7 +1065,10 @@ mod tests {
     fn can_add_and_remove_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1067,7 +1097,10 @@ mod tests {
     fn can_add_and_remove_ghost_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1089,10 +1122,16 @@ mod tests {
     fn can_change_height_of_terrain() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ZERO);
+        assert_eq!(
+            map_geometry.get_height(Hex::ZERO).unwrap(),
+            DiscreteHeight::ZERO
+        );
 
-        map_geometry.update_height(Hex::ZERO, Height::ONE);
-        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ONE);
+        map_geometry.update_height(Hex::ZERO, DiscreteHeight::ONE);
+        assert_eq!(
+            map_geometry.get_height(Hex::ZERO).unwrap(),
+            DiscreteHeight::ONE
+        );
     }
 
     // TODO: add tests for litter
@@ -1105,7 +1144,10 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let center = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
         let can_walk_on_roof = false;
         let can_walk_through = false;
 
@@ -1138,7 +1180,10 @@ mod tests {
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
         let hex = Hex { x: 3, y: -2 };
-        let center = VoxelPos::new(hex, Height::ZERO);
+        let center = VoxelPos {
+            hex,
+            height: DiscreteHeight::ZERO,
+        };
         let can_walk_on_roof = false;
         let can_walk_through = false;
 

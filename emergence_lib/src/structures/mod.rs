@@ -13,7 +13,7 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id},
         AssetCollectionExt,
     },
-    geometry::{Facing, Height, MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, Facing, Height, MapGeometry, VoxelPos},
     player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
 };
 
@@ -114,7 +114,10 @@ impl Footprint {
     pub fn hexagon(radius: u32) -> Self {
         let mut set = HashSet::new();
         for hex in hexagon(Hex::ZERO, radius) {
-            set.insert(VoxelPos::new(hex, Height::ZERO));
+            set.insert(VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            });
         }
 
         Footprint { set }
@@ -152,7 +155,7 @@ impl Footprint {
         facing: Facing,
         center: VoxelPos,
         map_geometry: &MapGeometry,
-    ) -> Option<Height> {
+    ) -> Option<DiscreteHeight> {
         self.normalized(facing, center)
             .iter()
             .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex).unwrap_or_default())
@@ -160,15 +163,12 @@ impl Footprint {
     }
 
     /// Returns the highest normalized height of tiles in this footprint.
-    pub(crate) fn max_height(&self) -> Height {
-        let integer_height = self
-            .set
+    pub(crate) fn max_height(&self) -> DiscreteHeight {
+        self.set
             .iter()
             .map(|&voxel_pos| voxel_pos.height)
             .reduce(|a, b| a.max(b))
-            .unwrap_or_default();
-
-        Height(integer_height as f32)
+            .unwrap_or_default()
     }
 
     /// Computes the translation (in world space) of the center of this footprint.

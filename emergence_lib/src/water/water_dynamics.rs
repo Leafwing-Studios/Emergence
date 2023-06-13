@@ -222,7 +222,7 @@ pub fn horizontal_water_movement(
                 let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor) else { continue };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
-                let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap();
+                let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap().into();
                 let neighbor_water_height = neighbor_query_item
                     .water_depth
                     .water_table_height(neighbor_tile_height);
@@ -425,7 +425,7 @@ mod tests {
 
     use crate as emergence_lib;
     use crate::enum_iter::IterableEnum;
-    use crate::geometry::VoxelPos;
+    use crate::geometry::{DiscreteHeight, VoxelPos};
     use crate::simulation::time::advance_in_game_time;
     use crate::simulation::weather::{Weather, WeatherPlugin};
     use crate::simulation::SimulationSet;
@@ -479,7 +479,7 @@ mod tests {
             let water_volume = scenario
                 .water_table_strategy
                 .starting_water_volume(hex, &map_geometry);
-            let voxel_pos = VoxelPos::new(hex, height);
+            let voxel_pos = VoxelPos { hex, height };
             let terrain_entity = map_geometry.get_terrain(hex).unwrap();
             app.world.entity_mut(terrain_entity).insert((
                 voxel_pos,
@@ -526,11 +526,11 @@ mod tests {
                 WaterTableStrategy::DepthHalf => Volume(0.5),
                 WaterTableStrategy::DepthOne => Volume(1.),
                 WaterTableStrategy::Saturated => {
-                    Volume::from_height(map_geometry.get_height(hex).unwrap())
+                    Volume::from_height(map_geometry.get_height(hex).unwrap().into())
                 }
-                WaterTableStrategy::Flooded => {
-                    Volume::from_height(map_geometry.get_height(hex).unwrap() + Height::ONE)
-                }
+                WaterTableStrategy::Flooded => Volume::from_height(
+                    Height::from(map_geometry.get_height(hex).unwrap()) + Height::ONE,
+                ),
             };
 
             WaterVolume::new(volume)
@@ -572,13 +572,13 @@ mod tests {
         fn set_heights(&self, mut map_geometry: MapGeometry) -> MapGeometry {
             for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
                 let height = match self {
-                    MapShape::Bedrock => Height(0.),
-                    MapShape::Flat => Height::ONE,
+                    MapShape::Bedrock => DiscreteHeight::ZERO,
+                    MapShape::Flat => DiscreteHeight::ONE,
                     // Make sure we don't end up with negative heights.
-                    MapShape::Sloped => Height(hex.x.max(0) as f32),
+                    MapShape::Sloped => Height(hex.x.max(0) as f32).into(),
                     MapShape::Bumpy => {
                         let rng = &mut rand::thread_rng();
-                        Height(rng.gen())
+                        Height(rng.gen()).into()
                     }
                 };
 
@@ -599,7 +599,7 @@ mod tests {
     }
 
     #[test]
-    fn test_app_is_initialized_succesfully() {
+    fn water_test_app_is_initialized_succesfully() {
         for map_size in MapSize::variants() {
             for map_shape in MapShape::variants() {
                 let scenario = Scenario {

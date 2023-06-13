@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, Height, MapGeometry, Volume},
+    geometry::{DiscreteHeight, Facing, MapGeometry, Volume},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
@@ -41,7 +41,7 @@ pub(crate) fn generate_terrain(
             + simplex_noise(hex, &generation_config.high_frequency_noise);
 
         // And then discretized to the nearest integer height before being used
-        let height = Height::from_world_pos(hex_height);
+        let height = DiscreteHeight::from_world_pos(hex_height);
         let entity = map_geometry.get_terrain(hex).unwrap();
 
         commands.hydrate_terrain(entity, height, terrain_id);

@@ -8,7 +8,7 @@ use crate::{
         item_tags::ItemKind,
         recipe::RecipeInput,
     },
-    geometry::{Facing, MapGeometry, VoxelPos},
+    geometry::{Facing, Height, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
     litter::Litter,
     signals::{Emitter, SignalStrength, SignalType},
@@ -105,7 +105,7 @@ fn absorb_items(
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
-        if footprint.max_height() > water_depth.surface_water_depth() {
+        if Height::from(footprint.max_height()) > water_depth.surface_water_depth() {
             let floating = litter.contents.clone();
             for item_slot in floating.iter() {
                 let item_count = item_slot.item_count();
