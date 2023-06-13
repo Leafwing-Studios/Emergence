@@ -89,7 +89,7 @@ fn render_water(
 
     if water_config.enable_oceans {
         for hex in map_geometry.ocean_tiles() {
-            let voxel_pos = VoxelPos::new(hex, Height::MIN);
+            let voxel_pos = VoxelPos::new(hex, Height::ZERO);
 
             commands
                 .spawn(PbrBundle {

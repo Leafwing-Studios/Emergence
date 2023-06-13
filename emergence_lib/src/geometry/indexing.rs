@@ -62,20 +62,20 @@ impl MapGeometry {
         let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
         let tiles: Vec<VoxelPos> = hexes
             .iter()
-            .map(|hex| VoxelPos::new(*hex, Height::MIN))
+            .map(|hex| VoxelPos::new(*hex, Height::ZERO))
             .collect();
 
         // We can start with the minimum height everywhere as no entities need to be spawned.
         let height_index = tiles
             .iter()
-            .map(|voxel_pos| (voxel_pos.hex, Height::MIN))
+            .map(|voxel_pos| (voxel_pos.hex, Height::ZERO))
             .collect();
 
         let mut terrain_index = HashMap::default();
         let mut voxel_index = HashMap::default();
 
         for hex in hexes {
-            let voxel_pos = VoxelPos::new(hex, Height::MIN);
+            let voxel_pos = VoxelPos::new(hex, Height::ZERO);
             // The TerrainPrototype component is used to track the terrain entities that need to be replaced with a full TerrainBundle
             let entity = world.spawn(voxel_pos).id();
             terrain_index.insert(hex, entity);
@@ -704,12 +704,12 @@ impl MapGeometry {
         self.validate_walkable_voxels();
     }
 
-    /// Asserts that all of the heights in the map are between `Height::MIN` and `Height::MAX`.
+    /// Asserts that all of the heights in the map are between `Height::ZERO` and `Height::MAX`.
     fn validate_heights(&self) {
         for voxel_pos in self.voxel_index.keys() {
             let height = voxel_pos.height();
             assert!(
-                height >= Height::MIN && height <= Height::MAX,
+                height >= Height::ZERO && height <= Height::MAX,
                 "Height {} is out of range",
                 height
             );
@@ -718,7 +718,7 @@ impl MapGeometry {
         for &hex in self.all_hexes() {
             let height = self.get_height(hex).unwrap();
             assert!(
-                height >= Height::MIN && height <= Height::MAX,
+                height >= Height::ZERO && height <= Height::MAX,
                 "Height {} is out of range",
                 height
             );
@@ -816,12 +816,16 @@ mod tests {
         assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
-            let voxel_pos = VoxelPos::new(hex, Height::MIN).above();
+            let voxel_pos = VoxelPos::new(hex, Height::ZERO).above();
             assert!(
                 map_geometry.walkable_neighbors.contains_key(&voxel_pos),
                 "Walkable neighbors should contain {}",
                 voxel_pos
             );
+        }
+
+        for &hex in map_geometry.all_hexes() {
+            assert_eq!(map_geometry.get_height(hex), Ok(Height::ZERO));
         }
 
         for (voxel_pos, valid_neighbors) in &map_geometry.walkable_neighbors {
@@ -843,7 +847,7 @@ mod tests {
     }
 
     #[test]
-    fn walkable_voxels() {
+    fn walkable_voxels_respond_to_changes_correctly() {
         let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
         let can_walk_at_height_one = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height::ONE)]);
         let can_walk_at_height_two = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(2.))]);

@@ -137,7 +137,7 @@ impl Command for ApplyTerraformingCommand {
                 voxel_pos.height = (voxel_pos.height + 1).min(Height::MAX.0 as i32)
             }
             TerraformingAction::Lower => {
-                voxel_pos.height = (voxel_pos.height - 1).max(Height::MIN.0 as i32)
+                voxel_pos.height = (voxel_pos.height - 1).max(Height::ZERO.0 as i32)
             }
             TerraformingAction::Change(changed_terrain_id) => {
                 *current_terrain_id = changed_terrain_id;

@@ -31,9 +31,6 @@ impl Height {
     /// Exactly one unit of height.
     pub(crate) const ONE: Height = Height(1.);
 
-    /// The minimum allowed height
-    pub(crate) const MIN: Height = Height(0.);
-
     /// The maximum allowable height
     pub(crate) const MAX: Height = Height(255.);
 
@@ -59,13 +56,13 @@ impl Height {
 
     /// Constructs a new height from the `y` coordinate of a `Transform`.
     ///
-    /// Any values outside of the allowable range will be clamped to [`Height::MIN`] and [`Height::MAX`] appropriately.
+    /// Any values outside of the allowable range will be clamped to [`Height::ZERO`] and [`Height::MAX`] appropriately.
     #[inline]
     #[must_use]
     pub(crate) fn from_world_pos(world_y: f32) -> Self {
         let height = (world_y / Self::STEP_HEIGHT).round();
         if height < 0. {
-            Height::MIN
+            Height::ZERO
         } else if height > u8::MAX as f32 {
             Height::MAX
         } else if height.is_nan() {
@@ -485,8 +482,8 @@ mod tests {
 
     #[test]
     fn height_clamps() {
-        assert_eq!(Height::MIN, Height::from_world_pos(0.));
-        assert_eq!(Height::MIN, Height::from_world_pos(-1.));
+        assert_eq!(Height::ZERO, Height::from_world_pos(0.));
+        assert_eq!(Height::ZERO, Height::from_world_pos(-1.));
         assert_eq!(Height::MAX, Height::from_world_pos(9000.));
         assert_eq!(Height::MAX, Height::from_world_pos(f32::MAX));
     }
