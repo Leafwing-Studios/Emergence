@@ -22,7 +22,7 @@ use super::GenerationConfig;
 pub(super) fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    unit_handles: Res<UnitHandles>,
+    maybe_unit_handles: Option<Res<UnitHandles>>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
@@ -57,14 +57,26 @@ pub(super) fn generate_organisms(
 
         for (&unit_id, &chance) in &config.unit_chances {
             if rng.gen::<f32>() < chance {
-                commands.spawn(UnitBundle::randomized(
-                    unit_id,
-                    voxel_pos,
-                    unit_manifest.get(unit_id).clone(),
-                    &unit_handles,
-                    &map_geometry,
-                    rng,
-                ));
+                let unit_bundle = if let Some(ref unit_handles) = maybe_unit_handles {
+                    UnitBundle::randomized(
+                        unit_id,
+                        voxel_pos,
+                        unit_manifest.get(unit_id).clone(),
+                        &unit_handles,
+                        &map_geometry,
+                        rng,
+                    )
+                } else {
+                    UnitBundle::testing(
+                        unit_id,
+                        voxel_pos,
+                        unit_manifest.get(unit_id).clone(),
+                        &map_geometry,
+                        rng,
+                    )
+                };
+
+                commands.spawn(unit_bundle);
             }
         }
     }

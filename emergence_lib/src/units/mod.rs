@@ -185,6 +185,45 @@ impl UnitBundle {
             },
         }
     }
+
+    /// Generates a unit for testing.
+    pub(crate) fn testing(
+        unit_id: Id<Unit>,
+        voxel_pos: VoxelPos,
+        unit_data: UnitData,
+        map_geometry: &MapGeometry,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        let scene_handle = Handle::default();
+        let mut energy_pool = unit_data.organism_variety.energy_pool;
+        energy_pool.randomize(rng);
+        let age = Age::randomized(rng, unit_data.max_age);
+
+        UnitBundle {
+            unit_id,
+            voxel_pos,
+            facing: Facing::default(),
+            current_goal: Goal::default(),
+            impatience: ImpatiencePool::new(unit_data.max_impatience),
+            current_action: CurrentAction::default(),
+            held_item: UnitInventory::default(),
+            emitter: Emitter {
+                signals: vec![(
+                    SignalType::Unit(unit_id),
+                    SignalStrength::new(Self::UNIT_EMITTER_STRENGTH),
+                )],
+            },
+            age,
+            organism_bundle: OrganismBundle::new(energy_pool, unit_data.organism_variety.lifecycle),
+            raycast_mesh: RaycastMesh::default(),
+            mesh: Handle::default(),
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
+                ..default()
+            },
+        }
+    }
 }
 
 /// System sets for unit behavior

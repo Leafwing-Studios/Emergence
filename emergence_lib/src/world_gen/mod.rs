@@ -231,7 +231,27 @@ impl GenerationConfig {
 
 #[cfg(test)]
 mod tests {
+    use crate::{
+        structures::structure_manifest::StructureManifest,
+        terrain::terrain_manifest::TerrainManifest, units::unit_manifest::UnitManifest,
+    };
+
     use super::*;
+
+    struct DummyManifestPlugin;
+
+    impl Plugin for DummyManifestPlugin {
+        fn build(&self, app: &mut App) {
+            let terrain_manifest = TerrainManifest::default();
+            app.insert_resource(terrain_manifest);
+
+            let unit_manifest = UnitManifest::default();
+            app.insert_resource(unit_manifest);
+
+            let structure_manifest = StructureManifest::default();
+            app.insert_resource(structure_manifest);
+        }
+    }
 
     #[test]
     fn can_generate_terrain() {
@@ -245,6 +265,7 @@ mod tests {
     #[test]
     fn can_generate_organisms() {
         let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
@@ -254,8 +275,9 @@ mod tests {
     #[test]
     fn can_generate_landmarks() {
         let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
-        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+        app.add_startup_systems((generate_terrain, generate_landmarks).chain());
 
         app.update();
     }
@@ -274,7 +296,8 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(GenerationPlugin {
             config: GenerationConfig::testing(),
-        });
+        })
+        .add_plugin(DummyManifestPlugin);
         app.update();
     }
 }
