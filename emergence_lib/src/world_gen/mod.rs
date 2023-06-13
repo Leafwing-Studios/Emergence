@@ -234,6 +234,42 @@ mod tests {
     use super::*;
 
     #[test]
+    fn can_generate_terrain() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_system(generate_terrain);
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_organisms() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_landmarks() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_water() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, initialize_water_table).chain());
+
+        app.update();
+    }
+
+    #[test]
     fn can_generate_world() {
         let mut app = App::new();
         app.add_plugin(GenerationPlugin {
