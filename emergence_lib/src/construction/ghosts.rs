@@ -489,7 +489,10 @@ pub(super) fn validate_ghost_structures(
     for (&voxel_pos, &structure_id, &facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
 
-        if !map_geometry.can_build(voxel_pos, &structure_details.footprint, facing) {
+        if map_geometry
+            .is_space_available(voxel_pos, &structure_details.footprint, facing)
+            .is_ok()
+        {
             commands.despawn_ghost_structure(voxel_pos);
         }
     }

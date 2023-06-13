@@ -216,7 +216,10 @@ fn mark_based_on_zoning(
             Zoning::Structure(clipboard_data) => {
                 let footprint = structure_manifest.footprint(clipboard_data.structure_id);
 
-                if map_geometry.can_build(voxel_pos, footprint, clipboard_data.facing) {
+                if map_geometry
+                    .is_space_available(voxel_pos, footprint, clipboard_data.facing)
+                    .is_ok()
+                {
                     commands.spawn_ghost_structure(voxel_pos, clipboard_data.clone())
                 } else {
                     *zoning = Zoning::None;

@@ -47,6 +47,13 @@ pub struct IndexError {
     pub hex: Hex,
 }
 
+/// An object could not be added to the [`MapGeometry`].
+#[derive(Debug, PartialEq)]
+pub enum AdditionError {
+    /// An incompatible object was already present.
+    AlreadyOccupied,
+}
+
 impl MapGeometry {
     /// Creates a new [`MapGeometry`] of the provided raidus.
     ///
@@ -181,11 +188,25 @@ impl MapGeometry {
         center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
-    ) -> bool {
-        footprint
+    ) -> Result<(), AdditionError> {
+        match footprint
             .normalized(facing, center)
             .iter()
-            .all(|voxel_pos| self.get_structure(*voxel_pos).is_none())
+            .all(|voxel_pos| self.is_voxel_clear(*voxel_pos).is_ok())
+        {
+            true => Ok(()),
+            false => Err(AdditionError::AlreadyOccupied),
+        }
+    }
+
+    /// Is there space in a single voxel?
+    #[inline]
+    #[must_use]
+    fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
+        match self.voxel_index.contains_key(&voxel_pos) {
+            true => Ok(()),
+            false => Err(AdditionError::AlreadyOccupied),
+        }
     }
 
     /// Is there enough space for `existing_entity` to transform into a structure with the provided `footprint` located at the `center` tile?
@@ -228,29 +249,6 @@ impl MapGeometry {
             .normalized(facing, center)
             .iter()
             .all(|voxel_pos| self.get_height(voxel_pos.hex) == Ok(height))
-    }
-
-    /// Can the structure with the provided `footprint` be built at the `center` tile?
-    ///
-    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
-    /// matching the [`Facing`] of the structure.
-    ///
-    /// This checks that:
-    /// - the area is in the map
-    /// - the area is flat
-    /// - the area is free of structures
-    /// - there is no surface water present
-    #[inline]
-    #[must_use]
-    pub(crate) fn can_build(
-        &self,
-        center: VoxelPos,
-        footprint: &Footprint,
-        facing: Facing,
-    ) -> bool {
-        self.is_footprint_valid(center, footprint, facing)
-            && self.is_terrain_flat(center, footprint, facing)
-            && self.is_space_available(center, footprint, facing)
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -428,13 +426,15 @@ impl MapGeometry {
     #[inline]
     pub(crate) fn add_structure(
         &mut self,
-        facing: Facing,
         center: VoxelPos,
+        facing: Facing,
         footprint: &Footprint,
         can_walk_on_roof: bool,
         can_walk_through: bool,
         structure_entity: Entity,
-    ) {
+    ) -> Result<(), AdditionError> {
+        self.is_space_available(center, footprint, facing)?;
+
         for voxel_pos in footprint.normalized(facing, center) {
             let voxel_data = VoxelObject {
                 entity: structure_entity,
@@ -450,6 +450,8 @@ impl MapGeometry {
 
         #[cfg(test)]
         self.validate();
+
+        Ok(())
     }
 
     /// Removes any structure entity found at the provided `voxel_pos` from the voxel index.
@@ -477,13 +479,18 @@ impl MapGeometry {
     }
 
     /// Adds the provided `litter_entity` to the voxel index at the provided `center`.
+    ///
+    /// If the voxel is not clear, the litter will be placed in the nearest empty voxel on the ground.
     #[inline]
     pub(crate) fn add_litter(
         &mut self,
         voxel_pos: VoxelPos,
         inventory_state: InventoryState,
         litter_entity: Entity,
-    ) {
+        // FIXME: this should not return a result
+    ) -> Result<(), AdditionError> {
+        self.is_voxel_clear(voxel_pos)?;
+
         let voxel_data = VoxelObject {
             entity: litter_entity,
             object_kind: VoxelKind::Litter { inventory_state },
@@ -496,6 +503,8 @@ impl MapGeometry {
 
         #[cfg(test)]
         self.validate();
+
+        Ok(())
     }
 
     /// Removes any litter entity found at the provided `voxel_pos` from the voxel index.
@@ -513,17 +522,17 @@ impl MapGeometry {
 
     /// Moves the litter entity found at the provided `voxel_pos` to the provided `new_voxel_pos`.
     ///
-    /// # Panics
-    ///
-    /// Panics if there is no litter entity at `voxel_pos`.
+    /// This operation is infallible: if the litter cannot be moved to the desired position,
+    /// it will instead be droppped in the nearest empty voxel.
     #[inline]
     pub(crate) fn move_litter(&mut self, mut voxel_pos: Mut<VoxelPos>, new_voxel_pos: VoxelPos) {
         if *voxel_pos == new_voxel_pos {
             return;
         }
 
-        let litter_entity = self.remove_litter(*voxel_pos).unwrap();
-        self.add_litter(new_voxel_pos, InventoryState::Full, litter_entity);
+        let Some(litter_entity) = self.remove_litter(*voxel_pos) else { return; };
+        self.add_litter(new_voxel_pos, InventoryState::Full, litter_entity)
+            .unwrap();
         *voxel_pos = new_voxel_pos;
     }
 
@@ -546,7 +555,9 @@ impl MapGeometry {
         center: VoxelPos,
         footprint: &Footprint,
         ghost_structure_entity: Entity,
-    ) {
+    ) -> Result<(), AdditionError> {
+        self.is_space_available(center, footprint, facing)?;
+
         for voxel_pos in footprint.normalized(facing, center) {
             let voxel_data = VoxelObject {
                 entity: ghost_structure_entity,
@@ -560,6 +571,8 @@ impl MapGeometry {
 
         #[cfg(test)]
         self.validate();
+
+        Ok(())
     }
 
     /// Removes any ghost structure entity found at the provided `voxel_pos` from the voxel index.
@@ -850,7 +863,9 @@ mod tests {
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
 
         // Ordinary structure
-        map_geometry.add_structure(facing, center, &footprint, false, false, entity);
+        map_geometry
+            .add_structure(center, facing, &footprint, false, false, entity)
+            .unwrap();
 
         assert_eq!(map_geometry.walkable_voxels(), cannot_walk);
         map_geometry
@@ -858,13 +873,17 @@ mod tests {
             .unwrap();
 
         // Ghost structure
-        map_geometry.add_ghost_structure(facing, center, &footprint, entity);
+        map_geometry
+            .add_ghost_structure(facing, center, &footprint, entity)
+            .unwrap();
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
         map_geometry.remove_ghost_structure(center, &footprint, facing);
 
         // Passable structure
-        map_geometry.add_structure(facing, center, &footprint, false, true, entity);
+        map_geometry
+            .add_structure(center, facing, &footprint, false, true, entity)
+            .unwrap();
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
         map_geometry
@@ -872,7 +891,9 @@ mod tests {
             .unwrap();
 
         // Structure with roof
-        map_geometry.add_structure(facing, center, &footprint, true, false, entity);
+        map_geometry
+            .add_structure(center, facing, &footprint, true, false, entity)
+            .unwrap();
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
 
@@ -894,7 +915,9 @@ mod tests {
 
         let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
 
-        map_geometry.add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42));
+        map_geometry
+            .add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42))
+            .unwrap();
         let initial_walkable_voxels = map_geometry.walkable_voxels();
 
         assert_eq!(
@@ -926,14 +949,16 @@ mod tests {
 
         let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
 
-        map_geometry.add_structure(
-            facing,
-            voxel_pos,
-            &footprint,
-            false,
-            true,
-            Entity::from_bits(42),
-        );
+        map_geometry
+            .add_structure(
+                voxel_pos,
+                facing,
+                &footprint,
+                false,
+                true,
+                Entity::from_bits(42),
+            )
+            .unwrap();
         let initial_walkable_voxels = map_geometry.walkable_voxels();
 
         assert_eq!(
@@ -963,14 +988,16 @@ mod tests {
         let facing = Facing::default();
         let footprint = Footprint::default();
 
-        map_geometry.add_structure(
-            facing,
-            voxel_pos,
-            &footprint,
-            false,
-            false,
-            Entity::from_bits(42),
-        );
+        map_geometry
+            .add_structure(
+                voxel_pos,
+                facing,
+                &footprint,
+                false,
+                false,
+                Entity::from_bits(42),
+            )
+            .unwrap();
 
         assert_eq!(
             map_geometry.get_structure(voxel_pos),
@@ -990,7 +1017,9 @@ mod tests {
         let facing = Facing::default();
         let footprint = Footprint::default();
 
-        map_geometry.add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42));
+        map_geometry
+            .add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42))
+            .unwrap();
 
         assert_eq!(
             map_geometry.get_ghost_structure(voxel_pos),
@@ -1026,14 +1055,16 @@ mod tests {
         let can_walk_on_roof = false;
         let can_walk_through = false;
 
-        map_geometry.add_structure(
-            facing,
-            center,
-            &footprint,
-            can_walk_on_roof,
-            can_walk_through,
-            structure_entity,
-        );
+        map_geometry
+            .add_structure(
+                center,
+                facing,
+                &footprint,
+                can_walk_on_roof,
+                can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
 
         // Check that the structure index was updated correctly
         for voxel_pos in footprint.normalized(facing, center) {
@@ -1057,14 +1088,16 @@ mod tests {
         let can_walk_on_roof = false;
         let can_walk_through = false;
 
-        map_geometry.add_structure(
-            facing,
-            center,
-            &footprint,
-            can_walk_on_roof,
-            can_walk_through,
-            structure_entity,
-        );
+        map_geometry
+            .add_structure(
+                center,
+                facing,
+                &footprint,
+                can_walk_on_roof,
+                can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
         map_geometry.remove_structure(center, &footprint, facing);
 
         // Check that the structure index was updated correctly

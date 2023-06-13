@@ -47,7 +47,9 @@ pub(super) fn generate_organisms(
 
                 // Only try to spawn a structure if the location is valid and there is space
                 if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
-                    && map_geometry.is_space_available(voxel_pos, footprint, facing)
+                    && map_geometry
+                        .is_space_available(voxel_pos, footprint, facing)
+                        .is_ok()
                 {
                     // Flatten the terrain under the structure before spawning it
                     map_geometry.flatten_height(&mut height_query, voxel_pos, footprint, facing);

@@ -120,7 +120,11 @@ impl Command for SpawnStructureCommand {
         let structure_data = manifest.get(structure_id).clone();
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(self.center, &structure_data.footprint, self.data.facing) {
+        let geometry = world.resource_mut::<MapGeometry>();
+        if !geometry
+            .is_space_available(self.center, &structure_data.footprint, self.data.facing)
+            .is_ok()
+        {
             // Just give up if the terrain is wrong.
             return;
         }
@@ -238,15 +242,17 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-
-        geometry.add_structure(
-            facing,
-            self.center,
-            &structure_data.footprint,
-            structure_data.can_walk_on_roof,
-            structure_data.can_walk_through,
-            structure_entity,
-        );
+        // We've already verified that we can build here, so we can safely unwrap at this point
+        geometry
+            .add_structure(
+                self.center,
+                facing,
+                &structure_data.footprint,
+                structure_data.can_walk_on_roof,
+                structure_data.can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
     }
 }
 
@@ -313,7 +319,10 @@ impl Command for SpawnStructureGhostCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        if !map_geometry.can_build(self.center, &footprint, facing) {
+        if map_geometry
+            .is_space_available(self.center, &footprint, facing)
+            .is_ok()
+        {
             return;
         }
 
@@ -384,7 +393,9 @@ impl Command for SpawnStructureGhostCommand {
             let structure_variety = structure_manifest.get(structure_id);
             let footprint = &structure_variety.footprint;
 
-            map_geometry.add_ghost_structure(facing, self.center, footprint, ghost_entity);
+            map_geometry
+                .add_ghost_structure(facing, self.center, footprint, ghost_entity)
+                .unwrap();
         });
     }
 }
@@ -453,8 +464,9 @@ impl Command for SpawnStructurePreviewCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        let forbidden =
-            !geometry.can_build(self.center, &structure_data.footprint, self.data.facing);
+        let forbidden = geometry
+            .is_space_available(self.center, &structure_data.footprint, self.data.facing)
+            .is_err();
 
         // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();

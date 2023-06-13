@@ -308,7 +308,10 @@ pub(super) fn sprout_seeds(
             if let OrganismId::Structure(structure_id) = organism_id {
                 let structure_data = structure_manifest.get(structure_id);
 
-                if !map_geometry.can_build(voxel_pos, &structure_data.footprint, facing) {
+                if map_geometry
+                    .is_space_available(voxel_pos, &structure_data.footprint, facing)
+                    .is_ok()
+                {
                     // We can't germinate here
                     continue;
                 }
