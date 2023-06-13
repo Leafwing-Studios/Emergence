@@ -529,7 +529,7 @@ mod tests {
                     Volume::from_height(map_geometry.get_height(hex).unwrap())
                 }
                 WaterTableStrategy::Flooded => {
-                    Volume::from_height(map_geometry.get_height(hex).unwrap() + Height(1.))
+                    Volume::from_height(map_geometry.get_height(hex).unwrap() + Height::ONE)
                 }
             };
 
@@ -573,7 +573,7 @@ mod tests {
             for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
                 let height = match self {
                     MapShape::Bedrock => Height(0.),
-                    MapShape::Flat => Height(1.),
+                    MapShape::Flat => Height::ONE,
                     // Make sure we don't end up with negative heights.
                     MapShape::Sloped => Height(hex.x.max(0) as f32),
                     MapShape::Bumpy => {

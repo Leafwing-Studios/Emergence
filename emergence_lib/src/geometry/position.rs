@@ -28,6 +28,9 @@ impl Height {
     /// The absolute minimum height.
     pub(crate) const ZERO: Height = Height(0.);
 
+    /// Exactly one unit of height.
+    pub(crate) const ONE: Height = Height(1.);
+
     /// The minimum allowed height
     pub(crate) const MIN: Height = Height(0.);
 
@@ -35,7 +38,7 @@ impl Height {
     pub(crate) const MAX: Height = Height(255.);
 
     /// The maximum height difference that units can traverse in a single step.
-    pub(crate) const MAX_STEP: Height = Height(1.);
+    pub(crate) const MAX_STEP: Height = Height::ONE;
 
     /// The thickness of all terrain topper models in world coordinates.
     /// Note that the diameter of a tile is 1.0 transform units.
@@ -45,7 +48,7 @@ impl Height {
     pub(crate) const STEP_HEIGHT: f32 = 1.0;
 
     /// The maximum height of water that units can walk through.
-    pub(crate) const WADING_DEPTH: Height = Height(1.);
+    pub(crate) const WADING_DEPTH: Height = Height::ONE;
 
     /// Computes the `y` coordinate of a `Transform` that corresponds to this height.
     #[inline]

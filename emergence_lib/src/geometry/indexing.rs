@@ -851,11 +851,11 @@ mod tests {
     #[test]
     fn walkable_voxels() {
         let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
-        let can_walk_at_height_one = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(1.))]);
+        let can_walk_at_height_one = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height::ONE)]);
         let can_walk_at_height_two = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(2.))]);
         let cannot_walk = HashSet::new();
 
-        let center = VoxelPos::new(Hex::ZERO, Height(1.));
+        let center = VoxelPos::new(Hex::ZERO, Height::ONE);
         let footprint = Footprint::default();
         let facing = Facing::default();
         let entity = Entity::from_bits(42);
@@ -900,7 +900,7 @@ mod tests {
         map_geometry.remove_structure(center, &footprint, facing);
 
         // Raising the terrain
-        map_geometry.update_height(Hex::ZERO, Height(1.));
+        map_geometry.update_height(Hex::ZERO, Height::ONE);
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
     }
@@ -909,7 +909,7 @@ mod tests {
     fn adding_ghost_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -943,7 +943,7 @@ mod tests {
     fn adding_passable_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1013,7 +1013,7 @@ mod tests {
     fn can_add_and_remove_ghost_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1037,8 +1037,8 @@ mod tests {
         let mut map_geometry = MapGeometry::new(&mut world, 0);
         assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ZERO);
 
-        map_geometry.update_height(Hex::ZERO, Height(1.));
-        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height(1.));
+        map_geometry.update_height(Hex::ZERO, Height::ONE);
+        assert_eq!(map_geometry.get_height(Hex::ZERO).unwrap(), Height::ONE);
     }
 
     // TODO: add tests for litter
