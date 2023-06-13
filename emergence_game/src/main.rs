@@ -18,7 +18,7 @@ fn main() {
         .add_plugin(FramepacePlugin)
         .add_plugin(emergence_lib::asset_management::AssetManagementPlugin)
         .add_plugin(emergence_lib::simulation::SimulationPlugin {
-            gen_config: GenerationConfig::default(),
+            gen_config: GenerationConfig::standard(),
         })
         .add_plugin(emergence_lib::player_interaction::InteractionPlugin)
         .add_plugin(emergence_lib::graphics::GraphicsPlugin)

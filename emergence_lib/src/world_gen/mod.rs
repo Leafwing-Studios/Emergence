@@ -141,8 +141,9 @@ pub struct GenerationConfig {
     high_frequency_noise: SimplexSettings,
 }
 
-impl Default for GenerationConfig {
-    fn default() -> GenerationConfig {
+impl GenerationConfig {
+    /// The default world generation configuration.
+    pub fn standard() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
         terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
@@ -186,6 +187,46 @@ impl Default for GenerationConfig {
             },
         }
     }
+
+    /// A tiny world gen config for testing.
+    pub fn testing() -> Self {
+        let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
+        // FIXME: load from file somehow
+        terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
+        terrain_weights.insert(Id::from_name("swampy".to_string()), 0.3);
+        terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
+
+        let landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+
+        let unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+
+        let structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+
+        GenerationConfig {
+            map_radius: 3,
+            number_of_burn_in_ticks: 0,
+            unit_chances,
+            landmark_chances,
+            structure_chances,
+            terrain_weights,
+            low_frequency_noise: SimplexSettings {
+                frequency: 1e-2,
+                amplitude: 8.0,
+                octaves: 4,
+                lacunarity: 1.,
+                gain: 0.5,
+                seed: 315.0,
+            },
+            high_frequency_noise: SimplexSettings {
+                frequency: 0.1,
+                amplitude: 1.0,
+                octaves: 2,
+                lacunarity: 2.3,
+                gain: 0.5,
+                seed: 100.0,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -196,7 +237,7 @@ mod tests {
     fn can_generate_world() {
         let mut app = App::new();
         app.add_plugin(GenerationPlugin {
-            config: GenerationConfig::default(),
+            config: GenerationConfig::testing(),
         });
         app.update();
     }
