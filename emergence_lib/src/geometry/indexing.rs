@@ -38,6 +38,8 @@ pub struct MapGeometry {
     ///
     /// The set of keys is the set of all [`VoxelPos`] that units could be found.
     walkable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
+    /// An empty list of walkable neighbors.
+    empty_neighbors: [Option<VoxelPos>; 6],
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -101,6 +103,7 @@ impl MapGeometry {
             height_index,
             voxel_index,
             walkable_neighbors: HashMap::default(),
+            empty_neighbors: [None; 6],
         };
 
         map_geometry.recompute_walkable_neighbors();
@@ -632,16 +635,13 @@ impl MapGeometry {
     /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
     ///
     /// The function signature is unfortunate, but this is meaningfully faster in a hot loop than returning a vec of tile positions.
-    ///
-    /// # Panics
-    ///
-    /// The provided `voxel_pos` must be a valid tile position.
     #[inline]
     #[must_use]
     pub(crate) fn walkable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.walkable_neighbors.get(&voxel_pos).unwrap_or_else(|| {
-            panic!("Tile position {voxel_pos:?} was not found in walkable neighbors map.")
-        })
+        self.walkable_neighbors
+            .get(&voxel_pos)
+            // Avoiding panics here is much more robust and makes debugging easier
+            .unwrap_or(&self.empty_neighbors)
     }
 
     /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
