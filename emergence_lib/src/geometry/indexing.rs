@@ -746,9 +746,13 @@ impl MapGeometry {
             .copied()
             .collect::<HashSet<_>>();
 
-        assert_eq!(
-            walkable_voxels, walkable_neighbors_keys,
-            "Walkable voxels and walkable neighbors keys do not match"
+        let a_minus_b = walkable_voxels.difference(&walkable_neighbors_keys);
+        let b_minus_a = walkable_neighbors_keys.difference(&walkable_voxels);
+
+        assert!(
+            walkable_voxels == walkable_neighbors_keys,
+            "Walkable voxels and walkable neighbors keys do not match. Found {:?} in walkable voxels but not in walkable neighbors keys. Found {:?} in walkable neighbors keys but not in walkable voxels.",
+            a_minus_b, b_minus_a
         );
 
         for neighbors in self.walkable_neighbors.values() {
@@ -884,7 +888,7 @@ mod tests {
     fn adding_ghost_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -916,7 +920,7 @@ mod tests {
     fn adding_passable_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -982,7 +986,7 @@ mod tests {
     fn can_add_and_remove_ghost_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height(1.));
         let facing = Facing::default();
         let footprint = Footprint::default();
 
