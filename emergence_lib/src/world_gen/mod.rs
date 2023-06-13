@@ -232,7 +232,7 @@ impl GenerationConfig {
 #[cfg(test)]
 mod tests {
     use crate::{
-        structures::structure_manifest::StructureManifest,
+        crafting::recipe::RecipeManifest, structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::TerrainManifest, units::unit_manifest::UnitManifest,
     };
 
@@ -250,6 +250,9 @@ mod tests {
 
             let structure_manifest = StructureManifest::default();
             app.insert_resource(structure_manifest);
+
+            let recipe_manifest = RecipeManifest::default();
+            app.insert_resource(recipe_manifest);
         }
     }
 
