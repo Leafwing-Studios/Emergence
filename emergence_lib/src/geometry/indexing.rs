@@ -440,18 +440,23 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> Option<Entity> {
-        let mut removed = None;
+        let tentative_entry = self.voxel_index.get(&center)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::Structure { .. }) {
+            return None;
+        }
+
+        let entity = tentative_entry.entity;
 
         for voxel_pos in footprint.normalized(facing, center) {
-            removed = self.voxel_index.remove(&voxel_pos);
-
-            self.recompute_walkable_neighbors();
+            self.voxel_index.remove(&voxel_pos);
         }
+
+        self.recompute_walkable_neighbors();
 
         #[cfg(test)]
         self.validate();
 
-        removed.map(|data| data.entity)
+        Some(entity)
     }
 
     /// Adds the provided `litter_entity` to the voxel index at the provided `center`.
@@ -488,12 +493,20 @@ impl MapGeometry {
     /// Returns the removed entity, if any.
     #[inline]
     pub(crate) fn remove_litter(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
-        let removed = self.voxel_index.remove(&voxel_pos);
+        let tentative_entry = self.voxel_index.get(&voxel_pos)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::Litter { .. }) {
+            return None;
+        }
+
+        let entity = tentative_entry.entity;
+        self.voxel_index.remove(&voxel_pos);
+
+        self.recompute_walkable_neighbors();
 
         #[cfg(test)]
         self.validate();
 
-        removed.map(|data| data.entity)
+        Some(entity)
     }
 
     /// Moves the litter entity found at the provided `voxel_pos` to the provided `new_voxel_pos`.
@@ -561,18 +574,23 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> Option<Entity> {
-        let mut removed = None;
-
-        for voxel_pos in footprint.normalized(facing, center) {
-            removed = self.voxel_index.remove(&voxel_pos);
+        let tentative_entry = self.voxel_index.get(&center)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::GhostStructure) {
+            return None;
         }
 
-        // We do not need to update the passable neighbors, as ghost structures never block movement
+        let entity = tentative_entry.entity;
+
+        for voxel_pos in footprint.normalized(facing, center) {
+            self.voxel_index.remove(&voxel_pos);
+        }
+
+        self.recompute_walkable_neighbors();
 
         #[cfg(test)]
         self.validate();
 
-        removed.map(|data| data.entity)
+        Some(entity)
     }
 
     /// Returns an iterator over all of the hex positions that are ocean tiles.
