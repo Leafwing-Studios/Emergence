@@ -832,6 +832,55 @@ mod tests {
     }
 
     #[test]
+    fn walkable_voxels() {
+        let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
+        let can_walk_at_height_one = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(1.))]);
+        let can_walk_at_height_two = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(2.))]);
+        let cannot_walk = HashSet::new();
+
+        let center = VoxelPos::new(Hex::ZERO, Height(1.));
+        let footprint = Footprint::default();
+        let facing = Facing::default();
+        let entity = Entity::from_bits(42);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+
+        // Ordinary structure
+        map_geometry.add_structure(facing, center, &footprint, false, false, entity);
+
+        assert_eq!(map_geometry.walkable_voxels(), cannot_walk);
+        map_geometry
+            .remove_structure(center, &footprint, facing)
+            .unwrap();
+
+        // Ghost structure
+        map_geometry.add_ghost_structure(facing, center, &footprint, entity);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry.remove_ghost_structure(center, &footprint, facing);
+
+        // Passable structure
+        map_geometry.add_structure(facing, center, &footprint, false, true, entity);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry
+            .remove_structure(center, &footprint, facing)
+            .unwrap();
+
+        // Structure with roof
+        map_geometry.add_structure(facing, center, &footprint, true, false, entity);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
+
+        map_geometry.remove_structure(center, &footprint, facing);
+
+        // Raising the terrain
+        map_geometry.update_height(Hex::ZERO, Height(1.));
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
+    }
+
+    #[test]
     fn adding_ghost_structures_does_not_change_walkable_neighbors() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 1);
