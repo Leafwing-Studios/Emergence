@@ -56,7 +56,7 @@ impl Plugin for TerrainPlugin {
 
 /// All of the components needed to define a piece of terrain.
 #[derive(Bundle)]
-struct TerrainBundle {
+pub(crate) struct TerrainBundle {
     /// The type of terrain
     terrain_id: Id<Terrain>,
     /// The location and height of this terrain hex
@@ -87,7 +87,7 @@ struct TerrainBundle {
 
 impl TerrainBundle {
     /// Creates a new Terrain entity.
-    fn new(
+    pub(crate) fn new(
         terrain_id: Id<Terrain>,
         voxel_pos: VoxelPos,
         scene: Handle<Scene>,
@@ -123,6 +123,25 @@ impl TerrainBundle {
                 soil_water_flow_rate: terrain_data.soil_water_flow_rate,
                 ..Default::default()
             },
+        }
+    }
+
+    /// Creates a new Terrain entity without access to asset data.
+    pub(crate) fn minimal(terrain_id: Id<Terrain>, voxel_pos: VoxelPos) -> TerrainBundle {
+        TerrainBundle {
+            terrain_id,
+            voxel_pos,
+            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            mesh: Handle::default(),
+            object_interaction: ObjectInteraction::None,
+            zoning: Zoning::None,
+            scene_bundle: SceneBundle::default(),
+            emitter: Emitter::default(),
+            litter: Litter::default(),
+            litter_drift: LitterDrift::default(),
+            shade: Shade::default(),
+            received_light: ReceivedLight::default(),
+            water_bundle: WaterBundle::default(),
         }
     }
 }

@@ -16,9 +16,6 @@ fn main() {
         }))
         // This is turned on and off in the world gen state management code.
         .add_plugin(FramepacePlugin)
-        .add_plugin(emergence_lib::simulation::GeometryPlugin {
-            gen_config: GenerationConfig::default(),
-        })
         .add_plugin(emergence_lib::asset_management::AssetManagementPlugin)
         .add_plugin(emergence_lib::simulation::SimulationPlugin {
             gen_config: GenerationConfig::default(),

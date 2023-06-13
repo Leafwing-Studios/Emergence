@@ -5,7 +5,7 @@
 use crate::asset_management::AssetState;
 use crate::construction::ConstructionPlugin;
 use crate::crafting::CraftingPlugin;
-use crate::geometry::{sync_rotation_to_facing, MapGeometry};
+use crate::geometry::sync_rotation_to_facing;
 use crate::light::LightPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
@@ -22,20 +22,6 @@ use bevy::prelude::*;
 
 pub mod time;
 pub mod weather;
-
-/// Sets up world geometry
-pub struct GeometryPlugin {
-    /// Configuration settings for world generation
-    pub gen_config: GenerationConfig,
-}
-
-impl Plugin for GeometryPlugin {
-    fn build(&self, app: &mut App) {
-        let map_geometry = MapGeometry::new(&mut app.world, self.gen_config.map_radius);
-
-        app.insert_resource(map_geometry);
-    }
-}
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {

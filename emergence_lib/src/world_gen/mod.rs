@@ -73,17 +73,23 @@ impl WorldGenState {
         generation_config: Res<GenerationConfig>,
         world_gen_state: Res<State<WorldGenState>>,
         mut next_world_gen_state: ResMut<NextState<WorldGenState>>,
-        mut frame_pace_settings: ResMut<FramepaceSettings>,
-        asset_state: Res<State<AssetState>>,
+        mut maybe_frame_pace_settings: Option<ResMut<FramepaceSettings>>,
+        maybe_asset_state: Option<Res<State<AssetState>>>,
     ) {
         match world_gen_state.0 {
             WorldGenState::Waiting => {
-                // Don't limit the tick rate while generating the world
-                if !matches!(frame_pace_settings.limiter, Limiter::Off) {
-                    frame_pace_settings.limiter = Limiter::Off;
+                if let Some(frame_pace_settings) = maybe_frame_pace_settings.as_mut() {
+                    // Don't limit the tick rate while generating the world
+                    if !matches!(frame_pace_settings.limiter, Limiter::Off) {
+                        frame_pace_settings.limiter = Limiter::Off;
+                    }
                 }
 
-                if asset_state.0 == AssetState::FullyLoaded {
+                if let Some(asset_state) = maybe_asset_state {
+                    if asset_state.0 == AssetState::FullyLoaded {
+                        next_world_gen_state.set(WorldGenState::Generating);
+                    }
+                } else {
                     next_world_gen_state.set(WorldGenState::Generating);
                 }
             }
@@ -97,7 +103,10 @@ impl WorldGenState {
                     info!("Burn in complete.");
 
                     // Resume limiting the tick rate
-                    frame_pace_settings.limiter = Limiter::Auto;
+                    if let Some(mut frame_pace_settings) = maybe_frame_pace_settings {
+                        frame_pace_settings.limiter = Limiter::Auto;
+                    }
+
                     next_world_gen_state.set(WorldGenState::Complete);
                 } else {
                     info!(
@@ -176,5 +185,19 @@ impl Default for GenerationConfig {
                 seed: 100.0,
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_generate_world() {
+        let mut app = App::new();
+        app.add_plugin(GenerationPlugin {
+            config: GenerationConfig::default(),
+        });
+        app.update();
     }
 }
