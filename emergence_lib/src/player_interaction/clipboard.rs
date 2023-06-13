@@ -112,9 +112,12 @@ impl Tool {
     fn normalize_positions(&mut self) {
         if let Tool::Structures(map) = self {
             let center_hex = map.keys().map(|voxel_pos| voxel_pos.hex).center();
+            let min_height = map.keys().map(|voxel_pos| voxel_pos.height).min().unwrap();
 
-            // FIXME: it's unclear if this height is correct
-            let center = VoxelPos::new(center_hex, Height::ZERO);
+            let center = VoxelPos {
+                hex: center_hex,
+                height: min_height,
+            };
 
             let mut new_map = HashMap::with_capacity(map.capacity());
 
