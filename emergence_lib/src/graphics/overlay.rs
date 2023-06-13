@@ -767,7 +767,6 @@ fn spawn_overlay_entities(
     new_terrain_query: Query<&VoxelPos, Added<Id<Terrain>>>,
     mut commands: Commands,
     terrain_handles: Res<TerrainHandles>,
-    map_geometry: Res<MapGeometry>,
 ) {
     /// Controls how much larger the overlay is relative to the terrain tiles.
     ///
@@ -781,7 +780,7 @@ fn spawn_overlay_entities(
             material: Handle::default(),
             // The height of this is fixed in `set_overlay_height`.
             transform: Transform {
-                translation: voxel_pos.into_world_pos(&map_geometry),
+                translation: voxel_pos.into_world_pos(),
                 scale: Vec3::splat(1. + EPSILON),
                 ..Default::default()
             },

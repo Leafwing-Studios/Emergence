@@ -5,7 +5,7 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use hexx::{shapes::hexagon, Hex, HexLayout};
+use hexx::{shapes::hexagon, Hex, HexLayout, HexOrientation};
 
 use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
@@ -13,11 +13,16 @@ use crate::{
 
 use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
 
+/// The layout of the hexagonal grid.
+pub static HEX_LAYOUT: HexLayout = HexLayout {
+    orientation: HexOrientation::flat(),
+    origin: Vec2::ZERO,
+    hex_size: Vec2::ONE,
+};
+
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource, Clone)]
 pub struct MapGeometry {
-    /// The size and orientation of the map.
-    pub(crate) layout: HexLayout,
     /// The number of tiles from the center to the edge of the map.
     ///
     /// Note that the central tile is not counted.
@@ -97,7 +102,6 @@ impl MapGeometry {
         }
 
         let mut map_geometry = MapGeometry {
-            layout: HexLayout::default(),
             radius,
             terrain_index,
             height_index,

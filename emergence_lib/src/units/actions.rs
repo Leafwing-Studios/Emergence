@@ -447,7 +447,7 @@ pub(super) fn finish_actions(
                     let target_tile = unit.voxel_pos.neighbor(direction);
 
                     *unit.voxel_pos = target_tile;
-                    unit.transform.translation = target_tile.top_of_tile(&map_geometry);
+                    unit.transform.translation = target_tile.top_of_tile();
                 }
                 UnitAction::Work { structure_entity } => {
                     let mut success = false;

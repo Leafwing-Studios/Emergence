@@ -11,11 +11,11 @@ use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
-use crate::geometry::VoxelPos;
+use crate::geometry::{VoxelPos, HEX_LAYOUT};
 use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Height, MapGeometry, Volume},
+    geometry::{Height, Volume},
     items::item_manifest::{Item, ItemManifest},
     simulation::SimulationSet,
     structures::structure_manifest::StructureManifest,
@@ -423,13 +423,9 @@ impl FlowVelocity {
     }
 
     /// Converts a [`hexx::Direction`] and magnitude into a [`FlowVelocity`].
-    fn from_hex_direction(
-        direction: hexx::Direction,
-        magnitude: Volume,
-        map_geometry: &MapGeometry,
-    ) -> Self {
+    fn from_hex_direction(direction: hexx::Direction, magnitude: Volume) -> Self {
         // Empirically this seems to be the correct angle.
-        let angle = direction.angle(&map_geometry.layout.orientation) + PI;
+        let angle = direction.angle(&HEX_LAYOUT.orientation) + PI;
         let x = magnitude * angle.cos();
         let z = magnitude * angle.sin();
 

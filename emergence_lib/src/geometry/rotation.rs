@@ -8,7 +8,7 @@ use derive_more::Display;
 use hexx::{Direction, HexOrientation};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 
-use super::MapGeometry;
+use super::indexing::HEX_LAYOUT;
 
 /// The hex direction that this entity is facing.
 ///
@@ -161,12 +161,11 @@ pub(crate) fn sync_rotation_to_facing(
     // PERF: re-enable change detection. For some reason this wasn't working on structures,
     // but was on ghosts.
     mut query: Query<(&mut Transform, &Facing), Without<Camera3d>>,
-    map_geometry: Res<MapGeometry>,
 ) {
     for (mut transform, &facing) in query.iter_mut() {
         // Rotate the object in the correct direction
         // We want to be aligned with the faces of the hexes, not their points
-        let angle = facing.direction.angle(&map_geometry.layout.orientation) + PI / 6.;
+        let angle = facing.direction.angle(&HEX_LAYOUT.orientation) + PI / 6.;
         let target = Quat::from_axis_angle(Vec3::Y, angle);
         transform.rotation = target;
     }

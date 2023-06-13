@@ -10,7 +10,7 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use super::{Facing, MapGeometry};
+use super::{indexing::HEX_LAYOUT, Facing};
 
 /// The discretized height of this tile
 ///
@@ -350,8 +350,8 @@ impl VoxelPos {
     }
 
     /// Returns the transform-space position of the top-center of this voxel.
-    pub fn into_world_pos(&self, map_geometry: &MapGeometry) -> Vec3 {
-        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
+    pub fn into_world_pos(&self) -> Vec3 {
+        let xz = HEX_LAYOUT.hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos();
 
         Vec3 {
@@ -362,8 +362,8 @@ impl VoxelPos {
     }
 
     /// Returns the transform-space position of the terrain topper on top of this voxel.
-    pub fn top_of_tile(&self, map_geometry: &MapGeometry) -> Vec3 {
-        let xz = map_geometry.layout.hex_to_world_pos(self.hex);
+    pub fn top_of_tile(&self) -> Vec3 {
+        let xz = HEX_LAYOUT.hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos() + Height::TOPPER_THICKNESS;
 
         Vec3 {
@@ -378,8 +378,8 @@ impl VoxelPos {
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].
     #[inline]
     #[must_use]
-    pub(crate) fn from_world_pos(world_pos: Vec3, map_geometry: &MapGeometry) -> Self {
-        let hex = map_geometry.layout.world_pos_to_hex(Vec2 {
+    pub(crate) fn from_world_pos(world_pos: Vec3) -> Self {
+        let hex = HEX_LAYOUT.world_pos_to_hex(Vec2 {
             x: world_pos.x,
             y: world_pos.z,
         });
@@ -563,17 +563,14 @@ mod tests {
 
     #[test]
     fn world_to_tile_pos_conversions_are_invertable() {
-        let mut world = World::new();
-        let map_geometry = MapGeometry::new(&mut world, 20);
-
         for x in -10..=10 {
             for y in -10..=10 {
                 let hex = Hex::new(x, y);
                 let height = DiscreteHeight(17);
 
                 let voxel_pos = VoxelPos { hex, height };
-                let world_pos = voxel_pos.into_world_pos(&map_geometry);
-                let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos, &map_geometry);
+                let world_pos = voxel_pos.into_world_pos();
+                let remapped_voxel_pos = VoxelPos::from_world_pos(world_pos);
 
                 assert_eq!(voxel_pos, remapped_voxel_pos);
             }

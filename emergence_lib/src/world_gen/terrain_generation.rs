@@ -56,14 +56,7 @@ pub(crate) fn generate_terrain(world: &mut World) {
             let scene_handle = handles.scenes.get(&terrain_id).unwrap().clone_weak();
             let mesh = handles.topper_mesh.clone_weak();
 
-            TerrainBundle::new(
-                terrain_id,
-                voxel_pos,
-                scene_handle,
-                mesh,
-                terrain_manifest,
-                &map_geometry,
-            )
+            TerrainBundle::new(terrain_id, voxel_pos, scene_handle, mesh, terrain_manifest)
         } else {
             TerrainBundle::minimal(terrain_id, voxel_pos)
         };

@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
-    geometry::{hexagonal_column, MapGeometry},
+    geometry::hexagonal_column,
     units::unit_manifest::{Unit, UnitManifest},
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
@@ -25,8 +25,7 @@ impl Loadable for UnitHandles {
         /// Hex tiles always have a diameter of 1.0.
         const PICKING_HEIGHT: f32 = 1.0;
 
-        let map_geometry = world.resource::<MapGeometry>();
-        let picking_mesh_object = hexagonal_column(&map_geometry.layout, PICKING_HEIGHT);
+        let picking_mesh_object = hexagonal_column(PICKING_HEIGHT);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let picking_mesh = mesh_assets.add(picking_mesh_object);
 

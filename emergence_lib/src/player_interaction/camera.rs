@@ -325,7 +325,6 @@ fn set_camera_focus(
     actions: Res<ActionState<PlayerAction>>,
     selection: Res<CurrentSelection>,
     tile_pos_query: Query<&VoxelPos>,
-    map_geometry: Res<MapGeometry>,
     unit_query: Query<&Transform>,
     mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
 ) {
@@ -347,7 +346,7 @@ fn set_camera_focus(
         };
 
         if let Some(target) = tile_to_snap_to {
-            focus.translation = target.top_of_tile(&map_geometry);
+            focus.translation = target.top_of_tile();
         }
     }
 
@@ -398,7 +397,7 @@ fn pan_camera(
 
         focus.translation += oriented_translation;
 
-        let nearest_tile_pos = VoxelPos::from_world_pos(transform.translation, &map_geometry);
+        let nearest_tile_pos = VoxelPos::from_world_pos(transform.translation);
         focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
     } else {
         settings.pan_speed.reset_speed();

@@ -93,9 +93,8 @@ impl TerrainBundle {
         scene: Handle<Scene>,
         mesh: Handle<Mesh>,
         terrain_manifest: &TerrainManifest,
-        map_geometry: &MapGeometry,
     ) -> Self {
-        let world_pos = voxel_pos.into_world_pos(map_geometry);
+        let world_pos = voxel_pos.into_world_pos();
         let scene_bundle = SceneBundle {
             scene,
             transform: Transform::from_translation(world_pos),

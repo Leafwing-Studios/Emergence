@@ -63,17 +63,10 @@ pub(super) fn generate_organisms(
                         voxel_pos,
                         unit_manifest.get(unit_id).clone(),
                         &unit_handles,
-                        &map_geometry,
                         rng,
                     )
                 } else {
-                    UnitBundle::testing(
-                        unit_id,
-                        voxel_pos,
-                        unit_manifest.get(unit_id).clone(),
-                        &map_geometry,
-                        rng,
-                    )
+                    UnitBundle::testing(unit_id, voxel_pos, unit_manifest.get(unit_id).clone(), rng)
                 };
 
                 commands.spawn(unit_bundle);

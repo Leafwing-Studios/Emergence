@@ -5,7 +5,7 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
-    geometry::{Facing, MapGeometry, VoxelPos},
+    geometry::{Facing, VoxelPos},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
@@ -119,7 +119,6 @@ impl UnitBundle {
         voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
-        map_geometry: &MapGeometry,
     ) -> Self {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
 
@@ -146,7 +145,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.into_world_pos()),
                 ..default()
             },
         }
@@ -160,7 +159,6 @@ impl UnitBundle {
         voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
-        map_geometry: &MapGeometry,
         rng: &mut ThreadRng,
     ) -> Self {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
@@ -188,7 +186,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.into_world_pos()),
                 ..default()
             },
         }
@@ -199,7 +197,6 @@ impl UnitBundle {
         unit_id: Id<Unit>,
         voxel_pos: VoxelPos,
         unit_data: UnitData,
-        map_geometry: &MapGeometry,
         rng: &mut ThreadRng,
     ) -> Self {
         let scene_handle = Handle::default();
@@ -227,7 +224,7 @@ impl UnitBundle {
             mesh: Handle::default(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.into_world_pos()),
                 ..default()
             },
         }

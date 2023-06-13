@@ -15,7 +15,7 @@ fn floating_litter_transform(
     water_height_query: &Query<(&WaterDepth, &VoxelPos)>,
     map_geometry: &MapGeometry,
 ) -> Result<Transform, ()> {
-    let mut transform = Transform::from_translation(voxel_pos.into_world_pos(map_geometry));
+    let mut transform = Transform::from_translation(voxel_pos.into_world_pos());
     let Ok(terrain_entity) = map_geometry.get_terrain(voxel_pos.hex) else {
         return Err(());
     };

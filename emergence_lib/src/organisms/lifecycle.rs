@@ -264,7 +264,6 @@ pub(super) fn transform_when_lifecycle_complete(
                         voxel_pos,
                         unit_data,
                         &unit_handles,
-                        &map_geometry,
                     ));
                 }
             }
@@ -345,7 +344,6 @@ pub(super) fn sprout_seeds(
                         voxel_pos,
                         unit_data,
                         &unit_handles,
-                        &map_geometry,
                     ));
                 }
             }

@@ -206,7 +206,6 @@ pub fn horizontal_water_movement(
                     *v += FlowVelocity::from_hex_direction(
                         direction_to_neighbor,
                         actual_water_transfer,
-                        &map_geometry,
                     )
                 });
         }

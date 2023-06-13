@@ -180,7 +180,7 @@ impl Footprint {
         center: VoxelPos,
         map_geometry: &MapGeometry,
     ) -> Option<Vec3> {
-        let mut transform_of_center = center.into_world_pos(map_geometry);
+        let mut transform_of_center = center.into_world_pos();
 
         let structure_height = self.height(facing, center, map_geometry)?;
 
