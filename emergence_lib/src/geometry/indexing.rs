@@ -204,8 +204,8 @@ impl MapGeometry {
     #[must_use]
     fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
         match self.voxel_index.contains_key(&voxel_pos) {
-            true => Ok(()),
-            false => Err(AdditionError::AlreadyOccupied),
+            true => Err(AdditionError::AlreadyOccupied),
+            false => Ok(()),
         }
     }
 
@@ -844,7 +844,13 @@ mod tests {
                     .object_kind,
                 VoxelKind::Terrain
             );
+            assert_eq!(
+                map_geometry.is_voxel_clear(voxel_pos_zero),
+                Err(AdditionError::AlreadyOccupied)
+            );
+
             assert_eq!(map_geometry.voxel_index.get(&voxel_pos_one), None);
+            assert_eq!(map_geometry.is_voxel_clear(voxel_pos_one), Ok(()));
 
             assert!(
                 map_geometry.walkable_neighbors.contains_key(&voxel_pos_one),
@@ -886,16 +892,26 @@ mod tests {
     #[test]
     fn walkable_voxels_respond_to_changes_correctly() {
         let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
-        let can_walk_at_height_one = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height::ONE)]);
-        let can_walk_at_height_two = HashSet::from_iter([VoxelPos::new(Hex::ZERO, Height(2.))]);
+        let can_walk_at_height_one = HashSet::from_iter([VoxelPos {
+            hex: Hex::ZERO,
+            height: 1,
+        }]);
+        let can_walk_at_height_two = HashSet::from_iter([VoxelPos {
+            hex: Hex::ZERO,
+            height: 2,
+        }]);
         let cannot_walk = HashSet::new();
 
-        let center = VoxelPos::new(Hex::ZERO, Height::ONE);
+        let center = VoxelPos {
+            hex: Hex::ZERO,
+            height: 1,
+        };
         let footprint = Footprint::default();
         let facing = Facing::default();
         let entity = Entity::from_bits(42);
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry.is_voxel_clear(center).unwrap();
         map_geometry
             .is_space_available(center, &footprint, facing)
             .unwrap();
