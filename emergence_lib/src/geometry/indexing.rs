@@ -1038,7 +1038,7 @@ mod tests {
     fn can_add_and_remove_structures() {
         let mut world = World::new();
         let mut map_geometry = MapGeometry::new(&mut world, 0);
-        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let voxel_pos = VoxelPos::new(Hex::ZERO, Height::ONE);
         let facing = Facing::default();
         let footprint = Footprint::default();
 
@@ -1105,7 +1105,7 @@ mod tests {
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = VoxelPos::new(Hex::ZERO, Height::ZERO);
+        let center = VoxelPos::new(Hex::ZERO, Height::ONE);
         let can_walk_on_roof = false;
         let can_walk_through = false;
 
