@@ -166,7 +166,7 @@ pub(super) fn carry_floating_litter_with_current(
         &FlowVelocity,
         &Floating,
     )>,
-    water_height_query: Query<(&VoxelPos, &WaterDepth)>,
+    water_height_query: Query<(&VoxelPos, &WaterDepth), Without<LitterDrift>>,
     net_query: Query<&Footprint, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
     mut map_geometry: ResMut<MapGeometry>,
