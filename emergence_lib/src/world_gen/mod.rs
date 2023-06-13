@@ -237,6 +237,7 @@ impl GenerationConfig {
 #[cfg(test)]
 mod tests {
     use crate::asset_management::manifest::DummyManifestPlugin;
+    use crate::geometry::{MapGeometry, VoxelPos};
 
     use super::*;
 
@@ -257,6 +258,93 @@ mod tests {
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
         app.update();
+    }
+
+    #[test]
+    fn units_are_on_top_of_empty_ground() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let walkable_voxels = map_geometry.walkable_voxels();
+
+        let mut unit_query = app.world.query_filtered::<&VoxelPos, With<Id<Unit>>>();
+
+        for &voxel_pos in unit_query.iter(&app.world) {
+            let terrain_height = map_geometry.get_height(voxel_pos.hex).unwrap();
+            assert_eq!(voxel_pos.height, terrain_height.above());
+            assert!(map_geometry.is_voxel_clear(voxel_pos).is_ok());
+            assert!(walkable_voxels.contains(&voxel_pos));
+        }
+    }
+
+    #[test]
+    fn structures_are_above_ground() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut structure_query = app.world.query_filtered::<&VoxelPos, With<Id<Structure>>>();
+
+        for &voxel_pos in structure_query.iter(&app.world) {
+            let terrain_height = map_geometry.get_height(voxel_pos.hex).unwrap();
+            assert!(voxel_pos.height > terrain_height);
+        }
+    }
+
+    #[test]
+    fn structures_exist() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut structure_query = app
+            .world
+            .query_filtered::<(Entity, &VoxelPos), With<Id<Structure>>>();
+
+        for (queried_entity, &voxel_pos) in structure_query.iter(&app.world) {
+            let cached_structure_entity = map_geometry.get_structure(voxel_pos).unwrap();
+            assert_eq!(queried_entity, cached_structure_entity);
+        }
+    }
+
+    #[test]
+    fn terrain_exists() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_system(generate_terrain);
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut terrain_query = app.world.query::<&Id<Terrain>>();
+
+        for &hex in map_geometry.all_hexes() {
+            let cached_terrain_entity = map_geometry.get_terrain(hex).unwrap();
+            terrain_query
+                .get(&app.world, cached_terrain_entity)
+                .unwrap();
+        }
     }
 
     #[test]
@@ -286,5 +374,17 @@ mod tests {
         })
         .add_plugin(DummyManifestPlugin);
         app.update();
+
+        let mut unit_query = app.world.query::<&Id<Unit>>();
+        assert!(
+            unit_query.iter(&app.world).next().is_some(),
+            "No units generated"
+        );
+
+        let mut structure_query = app.world.query::<&Id<Structure>>();
+        assert!(
+            structure_query.iter(&app.world).next().is_some(),
+            "No structures generated"
+        );
     }
 }

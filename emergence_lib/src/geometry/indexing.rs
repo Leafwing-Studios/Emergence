@@ -14,7 +14,7 @@ use crate::{
 use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
-#[derive(Debug, Resource)]
+#[derive(Debug, Resource, Clone)]
 pub struct MapGeometry {
     /// The size and orientation of the map.
     pub(crate) layout: HexLayout,
@@ -215,7 +215,7 @@ impl MapGeometry {
     /// Is there space in a single voxel?
     #[inline]
     #[must_use]
-    fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
+    pub fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
         match self.voxel_index.contains_key(&voxel_pos) {
             true => Err(AdditionError::AlreadyOccupied),
             false => Ok(()),
