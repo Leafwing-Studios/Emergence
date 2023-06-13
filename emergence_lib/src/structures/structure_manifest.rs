@@ -76,6 +76,54 @@ pub struct StructureData {
     pub can_walk_on_roof: bool,
 }
 
+#[cfg(test)]
+impl StructureData {
+    /// A simple organism.
+    pub fn organism(name: &str) -> Self {
+        StructureData {
+            organism_variety: Some(OrganismVariety::simple(name)),
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: true,
+            can_walk_on_roof: false,
+        }
+    }
+
+    /// A structure that can be walked through.
+    pub fn passable() -> Self {
+        StructureData {
+            organism_variety: None,
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: true,
+            can_walk_on_roof: false,
+        }
+    }
+
+    /// A structure that cannot be walked through.
+    pub fn impassable() -> Self {
+        StructureData {
+            organism_variety: None,
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: false,
+            can_walk_on_roof: false,
+        }
+    }
+}
+
 /// The unprocessed equivalent of [`StructureData`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RawStructureData {

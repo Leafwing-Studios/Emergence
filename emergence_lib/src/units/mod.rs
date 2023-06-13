@@ -45,6 +45,14 @@ pub struct WanderingBehavior {
     wander_durations: Vec<(u16, f32)>,
 }
 
+impl Default for WanderingBehavior {
+    fn default() -> Self {
+        Self {
+            wander_durations: vec![(3, 1.0)],
+        }
+    }
+}
+
 impl WanderingBehavior {
     /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {

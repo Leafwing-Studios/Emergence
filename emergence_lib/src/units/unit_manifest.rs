@@ -38,6 +38,20 @@ pub struct UnitData {
     pub wandering_behavior: WanderingBehavior,
 }
 
+impl UnitData {
+    /// Constructs a new [`UnitData`] from the given [`OrganismVariety`] and [`Diet`].
+    #[cfg(test)]
+    pub fn simple(name: &str, diet: Diet) -> Self {
+        Self {
+            organism_variety: OrganismVariety::simple(name),
+            diet,
+            max_impatience: 10,
+            max_age: Days(10.0),
+            wandering_behavior: WanderingBehavior::default(),
+        }
+    }
+}
+
 /// The unprocessed equivalent of [`UnitData`].
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RawUnitData {

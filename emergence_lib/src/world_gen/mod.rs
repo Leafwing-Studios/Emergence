@@ -190,19 +190,22 @@ impl GenerationConfig {
 
     /// A tiny world gen config for testing.
     ///
-    /// Designed to be used with `DummyManifestPlugin`.
+    /// Designed to be used with [`DummyManifestPlugin`](crate::asset_management::manifest::DummyManifestPlugin).
     pub fn testing() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
         terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
-        terrain_weights.insert(Id::from_name("swampy".to_string()), 0.3);
         terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
 
-        let landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        landmark_chances.insert(Id::from_name("simple_landmark".to_string()), 1e-1);
 
-        let unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        unit_chances.insert(Id::from_name("simple_unit".to_string()), 1e-1);
 
-        let structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        structure_chances.insert(Id::from_name("simple_structure".to_string()), 1e-1);
+        structure_chances.insert(Id::from_name("passable_structure".to_string()), 1e-1);
 
         GenerationConfig {
             map_radius: 3,

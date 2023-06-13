@@ -69,6 +69,12 @@ impl Display for EnergyPool {
     }
 }
 
+impl Default for EnergyPool {
+    fn default() -> Self {
+        EnergyPool::simple(100.)
+    }
+}
+
 /// A quantity of energy, used to modify a [`EnergyPool`].
 ///
 /// Organisms produce energy by crafting recipes.
