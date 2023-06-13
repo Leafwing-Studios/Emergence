@@ -15,7 +15,7 @@ use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
 use crate::water::WaterPlugin;
-use crate::world_gen::{GenerationConfig, GenerationPlugin};
+use crate::world_gen::{GenerationConfig, GenerationPlugin, WorldGenState};
 use bevy::core::FrameCount;
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
@@ -52,6 +52,7 @@ impl Plugin for SimulationPlugin {
                     SimulationSet
                         .run_if(in_state(PauseState::Playing))
                         .run_if(in_state(AssetState::FullyLoaded))
+                        .run_if(world_gen_ready)
                         .run_if(max_ticks_not_reached),
                 );
                 schedule.add_system(update_ticks_this_frame.run_if(max_ticks_not_reached));
@@ -118,11 +119,16 @@ fn update_ticks_this_frame(mut ticks: ResMut<TicksThisFrame>, frame_count: Res<F
     ticks.current += 1;
 }
 
-/// Stops
+/// Stops the simulation from trying to simulate an ever-increasing number of ticks per frame if it falls behind.
 fn max_ticks_not_reached(frame_count: Res<FrameCount>, ticks: Res<TicksThisFrame>) -> bool {
     if frame_count.is_changed() {
         return true;
     }
 
     ticks.current < ticks.max
+}
+
+/// Ensures that simulation systems do not run until world gen is ready for them.
+fn world_gen_ready(world_gen_state: Res<State<WorldGenState>>) -> bool {
+    world_gen_state.0 == WorldGenState::Complete || world_gen_state.0 == WorldGenState::BurningIn
 }
