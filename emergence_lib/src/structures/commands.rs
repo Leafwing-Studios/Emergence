@@ -129,16 +129,6 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        let structure_handles = world.resource::<StructureHandles>();
-
-        // TODO: vary this with the footprint and height of the structure
-        let picking_mesh = structure_handles.picking_mesh.clone_weak();
-        let scene_handle = structure_handles
-            .scenes
-            .get(&structure_id)
-            .unwrap()
-            .clone_weak();
-
         let map_geometry = world.resource::<MapGeometry>();
         let world_pos = structure_data
             .footprint
@@ -147,16 +137,36 @@ impl Command for SpawnStructureCommand {
 
         let facing = self.data.facing;
 
-        let structure_entity = world
-            .spawn(StructureBundle::new(
-                self.center,
-                structure_data.footprint.clone(),
-                self.data,
-                picking_mesh,
-                scene_handle,
-                world_pos,
-            ))
-            .id();
+        let structure_bundle =
+            if let Some(structure_handles) = world.get_resource::<StructureHandles>() {
+                // TODO: vary this with the footprint of the structure
+                let picking_mesh = structure_handles.picking_mesh.clone_weak();
+                let scene_handle = structure_handles
+                    .scenes
+                    .get(&structure_id)
+                    .unwrap()
+                    .clone_weak();
+
+                StructureBundle::new(
+                    self.center,
+                    structure_data.footprint.clone(),
+                    self.data,
+                    picking_mesh,
+                    scene_handle,
+                    world_pos,
+                )
+            } else {
+                StructureBundle::new(
+                    self.center,
+                    structure_data.footprint.clone(),
+                    self.data,
+                    Handle::default(),
+                    Handle::default(),
+                    world_pos,
+                )
+            };
+
+        let structure_entity = world.spawn(structure_bundle).id();
 
         // PERF: these operations could be done in a single archetype move with more branching
         if let Some(organism_details) = &structure_data.organism_variety {
