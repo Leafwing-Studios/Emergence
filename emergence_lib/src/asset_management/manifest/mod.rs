@@ -110,3 +110,29 @@ where
         self.data_map.keys().copied()
     }
 }
+
+/// A plugin that adds the default manifests to the app.
+#[cfg(test)]
+pub struct DummyManifestPlugin;
+
+#[cfg(test)]
+impl Plugin for DummyManifestPlugin {
+    fn build(&self, app: &mut App) {
+        use crate::{
+            crafting::recipe::RecipeManifest, structures::structure_manifest::StructureManifest,
+            terrain::terrain_manifest::TerrainManifest, units::unit_manifest::UnitManifest,
+        };
+
+        let terrain_manifest = TerrainManifest::default();
+        app.insert_resource(terrain_manifest);
+
+        let unit_manifest = UnitManifest::default();
+        app.insert_resource(unit_manifest);
+
+        let structure_manifest = StructureManifest::default();
+        app.insert_resource(structure_manifest);
+
+        let recipe_manifest = RecipeManifest::default();
+        app.insert_resource(recipe_manifest);
+    }
+}

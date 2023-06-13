@@ -189,6 +189,8 @@ impl GenerationConfig {
     }
 
     /// A tiny world gen config for testing.
+    ///
+    /// Designed to be used with `DummyManifestPlugin`.
     pub fn testing() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
@@ -231,30 +233,9 @@ impl GenerationConfig {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        crafting::recipe::RecipeManifest, structures::structure_manifest::StructureManifest,
-        terrain::terrain_manifest::TerrainManifest, units::unit_manifest::UnitManifest,
-    };
+    use crate::asset_management::manifest::DummyManifestPlugin;
 
     use super::*;
-
-    struct DummyManifestPlugin;
-
-    impl Plugin for DummyManifestPlugin {
-        fn build(&self, app: &mut App) {
-            let terrain_manifest = TerrainManifest::default();
-            app.insert_resource(terrain_manifest);
-
-            let unit_manifest = UnitManifest::default();
-            app.insert_resource(unit_manifest);
-
-            let structure_manifest = StructureManifest::default();
-            app.insert_resource(structure_manifest);
-
-            let recipe_manifest = RecipeManifest::default();
-            app.insert_resource(recipe_manifest);
-        }
-    }
 
     #[test]
     fn can_generate_terrain() {
