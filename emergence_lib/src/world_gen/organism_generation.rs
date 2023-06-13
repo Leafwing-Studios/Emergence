@@ -3,7 +3,7 @@
 use crate::asset_management::manifest::Id;
 use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
 use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
-use crate::geometry::{Facing, MapGeometry, VoxelPos};
+use crate::geometry::{Facing, MapGeometry};
 use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::structures::commands::StructureCommandsExt;
@@ -13,7 +13,6 @@ use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
 
 use bevy::prelude::*;
-use hexx::Hex;
 use rand::{thread_rng, Rng};
 
 use super::GenerationConfig;
@@ -32,7 +31,7 @@ pub(super) fn generate_organisms(
     let rng = &mut thread_rng();
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
-    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
+    for voxel_pos in map_geometry.walkable_voxels() {
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -40,9 +39,6 @@ pub(super) fn generate_organisms(
                 let facing = Facing::random(rng);
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
-
-                let height = map_geometry.get_height(hex).unwrap();
-                let voxel_pos = VoxelPos::new(hex, height);
 
                 // Only try to spawn a structure if the location is valid and there is space
                 if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
@@ -61,9 +57,6 @@ pub(super) fn generate_organisms(
 
         for (&unit_id, &chance) in &config.unit_chances {
             if rng.gen::<f32>() < chance {
-                let height = map_geometry.get_height(hex).unwrap();
-                let voxel_pos = VoxelPos::new(hex, height);
-
                 commands.spawn(UnitBundle::randomized(
                     unit_id,
                     voxel_pos,

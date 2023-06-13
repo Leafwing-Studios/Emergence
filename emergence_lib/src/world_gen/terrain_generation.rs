@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, Height, MapGeometry, Volume, VoxelPos},
+    geometry::{Facing, Height, MapGeometry, Volume},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
@@ -58,7 +58,7 @@ pub(super) fn generate_landmarks(
     info!("Generating landmarks...");
     let rng = &mut thread_rng();
 
-    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
+    for voxel_pos in map_geometry.walkable_voxels() {
         for (&structure_id, &chance) in &generation_config.landmark_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -66,9 +66,6 @@ pub(super) fn generate_landmarks(
                 let facing = Facing::random(rng);
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
-
-                let height = map_geometry.get_height(hex).unwrap();
-                let voxel_pos = VoxelPos::new(hex, height);
 
                 // Only try to spawn a structure if the location is valid and there is space
                 if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)

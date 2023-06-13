@@ -632,7 +632,7 @@ impl MapGeometry {
     }
 
     /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
-    fn walkable_voxels(&self) -> HashSet<VoxelPos> {
+    pub(crate) fn walkable_voxels(&self) -> HashSet<VoxelPos> {
         let mut walkable_voxels = HashSet::new();
 
         for (voxel_pos, voxel_data) in self.voxel_index.iter() {
