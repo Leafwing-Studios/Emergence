@@ -268,10 +268,9 @@ impl Command for DespawnStructureCommand {
         let Some(structure_entity) = map_geometry.get_structure(self.center) else { return; };
 
         let facing = *world.entity(structure_entity).get::<Facing>().unwrap();
-        let structure_id = *world
+        let Some(&structure_id) = world
             .entity(structure_entity)
-            .get::<Id<Structure>>()
-            .unwrap();
+            .get::<Id<Structure>>() else { return; };
         let structure_manifest = world.resource::<StructureManifest>();
         let structure_data = structure_manifest.get(structure_id);
         let footprint = structure_data.footprint.clone();
