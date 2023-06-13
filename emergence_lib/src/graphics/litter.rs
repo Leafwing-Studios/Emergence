@@ -7,9 +7,7 @@ use crate::{
 use bevy::prelude::*;
 
 /// Spawn and despawn litter scenes based on the items stored as litter on each tile.
-pub(super) fn render_litter_piles() {
-    todo!();
-}
+pub(super) fn render_litter_piles() {}
 
 /// Computes the [`Transform`] for a floating litter entity.
 fn floating_litter_transform(
