@@ -816,17 +816,54 @@ mod tests {
         assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
-            let voxel_pos = VoxelPos::new(hex, Height::ZERO).above();
+            let voxel_pos_zero = VoxelPos::new(hex, Height::ZERO);
+            let voxel_pos_one = VoxelPos::new(hex, Height::ONE);
+
             assert!(
-                map_geometry.walkable_neighbors.contains_key(&voxel_pos),
+                map_geometry.is_valid(hex),
+                "All hexes in the hexagon should be valid"
+            );
+
+            assert!(
+                map_geometry.terrain_index.contains_key(&hex),
+                "Terrain index should contain {:?}",
+                hex
+            );
+
+            assert!(
+                map_geometry.height_index.contains_key(&hex),
+                "Height index should contain {:?}",
+                hex
+            );
+
+            assert_eq!(
+                map_geometry
+                    .voxel_index
+                    .get(&voxel_pos_zero)
+                    .unwrap()
+                    .object_kind,
+                VoxelKind::Terrain
+            );
+            assert_eq!(map_geometry.voxel_index.get(&voxel_pos_one), None);
+
+            assert!(
+                map_geometry.walkable_neighbors.contains_key(&voxel_pos_one),
                 "Walkable neighbors should contain {}",
-                voxel_pos
+                voxel_pos_one
+            );
+
+            assert_eq!(
+                map_geometry.get_height(hex),
+                Ok(Height::ZERO),
+                "All hexes should be at height 0"
             );
         }
 
-        for &hex in map_geometry.all_hexes() {
-            assert_eq!(map_geometry.get_height(hex), Ok(Height::ZERO));
-        }
+        assert_eq!(
+            map_geometry.walkable_voxels().len(),
+            n,
+            "All hexes should correspond to one walkable position"
+        );
 
         for (voxel_pos, valid_neighbors) in &map_geometry.walkable_neighbors {
             assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
