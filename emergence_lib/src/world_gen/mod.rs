@@ -92,15 +92,18 @@ impl WorldGenState {
             }
             WorldGenState::BurningIn => {
                 *number_of_burn_in_ticks += 1;
-                info!(
-                    "Simulating the generated world to let it stabilize: {}/{}",
-                    *number_of_burn_in_ticks, generation_config.number_of_burn_in_ticks
-                );
 
                 if *number_of_burn_in_ticks > generation_config.number_of_burn_in_ticks {
+                    info!("Burn in complete.");
+
                     // Resume limiting the tick rate
                     frame_pace_settings.limiter = Limiter::Auto;
                     next_world_gen_state.set(WorldGenState::Complete);
+                } else {
+                    info!(
+                        "Simulating the generated world to let it stabilize: {}/{}",
+                        *number_of_burn_in_ticks, generation_config.number_of_burn_in_ticks
+                    );
                 }
             }
             WorldGenState::Complete => (),
