@@ -100,7 +100,7 @@ pub(super) fn clear_empty_litter(query: Query<(Entity, &Litter)>, mut commands: 
 /// Make litter in tiles submerged by water float (and stop it from floating when there's no water).
 pub(super) fn make_litter_float(
     mut query: Query<(&mut Floating, &mut VoxelPos), With<Litter>>,
-    terrain_query: Query<(&VoxelPos, &WaterDepth)>,
+    terrain_query: Query<(&VoxelPos, &WaterDepth), Without<Litter>>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     for (mut floating, voxel_pos) in query.iter_mut() {
