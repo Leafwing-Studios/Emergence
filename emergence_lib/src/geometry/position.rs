@@ -3,14 +3,14 @@
 use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
-use hexx::{shapes::hexagon, Direction, Hex};
+use hexx::{shapes::hexagon, Direction, Hex, HexLayout};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Formatter,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use super::{indexing::HEX_LAYOUT, Facing};
+use super::Facing;
 
 /// The discretized height of this tile
 ///
@@ -351,7 +351,7 @@ impl VoxelPos {
 
     /// Returns the transform-space position of the top-center of this voxel.
     pub fn into_world_pos(&self) -> Vec3 {
-        let xz = HEX_LAYOUT.hex_to_world_pos(self.hex);
+        let xz = HexLayout::default().hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos();
 
         Vec3 {
@@ -363,7 +363,7 @@ impl VoxelPos {
 
     /// Returns the transform-space position of the terrain topper on top of this voxel.
     pub fn top_of_tile(&self) -> Vec3 {
-        let xz = HEX_LAYOUT.hex_to_world_pos(self.hex);
+        let xz = HexLayout::default().hex_to_world_pos(self.hex);
         let y = self.height().into_world_pos() + Height::TOPPER_THICKNESS;
 
         Vec3 {
@@ -379,7 +379,7 @@ impl VoxelPos {
     #[inline]
     #[must_use]
     pub(crate) fn from_world_pos(world_pos: Vec3) -> Self {
-        let hex = HEX_LAYOUT.world_pos_to_hex(Vec2 {
+        let hex = HexLayout::default().world_pos_to_hex(Vec2 {
             x: world_pos.x,
             y: world_pos.z,
         });

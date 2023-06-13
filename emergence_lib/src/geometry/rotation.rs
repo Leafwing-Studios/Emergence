@@ -5,10 +5,8 @@ use std::f32::consts::{PI, TAU};
 use bevy::prelude::*;
 use core::fmt::Display;
 use derive_more::Display;
-use hexx::{Direction, HexOrientation};
+use hexx::{Direction, HexLayout, HexOrientation};
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
-
-use super::indexing::HEX_LAYOUT;
 
 /// The hex direction that this entity is facing.
 ///
@@ -165,7 +163,7 @@ pub(crate) fn sync_rotation_to_facing(
     for (mut transform, &facing) in query.iter_mut() {
         // Rotate the object in the correct direction
         // We want to be aligned with the faces of the hexes, not their points
-        let angle = facing.direction.angle(&HEX_LAYOUT.orientation) + PI / 6.;
+        let angle = facing.direction.angle(&HexLayout::default().orientation) + PI / 6.;
         let target = Quat::from_axis_angle(Vec3::Y, angle);
         transform.rotation = target;
     }

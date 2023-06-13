@@ -1,7 +1,7 @@
 //! Manages the game world's grid and data tied to that grid
 
 mod indexing;
-pub use indexing::{MapGeometry, HEX_LAYOUT};
+pub use indexing::MapGeometry;
 
 mod meshes;
 pub(crate) use meshes::hexagonal_column;

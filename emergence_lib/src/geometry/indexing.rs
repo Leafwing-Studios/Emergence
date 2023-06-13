@@ -5,20 +5,13 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use hexx::{shapes::hexagon, Hex, HexLayout, HexOrientation};
+use hexx::{shapes::hexagon, Hex};
 
 use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
 use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
-
-/// The layout of the hexagonal grid.
-pub static HEX_LAYOUT: HexLayout = HexLayout {
-    orientation: HexOrientation::flat(),
-    origin: Vec2::ZERO,
-    hex_size: Vec2::ONE,
-};
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource, Clone)]
