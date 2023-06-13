@@ -855,6 +855,9 @@ mod tests {
         let entity = Entity::from_bits(42);
 
         assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry
+            .is_space_available(center, &footprint, facing)
+            .unwrap();
 
         // Ordinary structure
         map_geometry
