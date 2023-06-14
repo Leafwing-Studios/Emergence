@@ -24,7 +24,7 @@ use crate::{
     },
     geometry::{Facing, Height, MapGeometry, RotationDirection, VoxelPos},
     items::{errors::AddOneItemError, item_manifest::ItemManifest, ItemCount},
-    litter::Litter,
+    litter::{Litter, LitterCommandsExt},
     organisms::{energy::EnergyPool, lifecycle::Lifecycle},
     signals::{SignalType, Signals},
     structures::{commands::StructureCommandsExt, structure_manifest::Structure},
@@ -92,8 +92,6 @@ pub(super) fn choose_actions(
                         unit_pos,
                         unit_inventory,
                         &map_geometry,
-                        &item_manifest,
-                        &litter_query,
                         &terrain_manifest,
                         &terrain_query,
                         facing,
@@ -122,8 +120,6 @@ pub(super) fn choose_actions(
                             unit_pos,
                             unit_inventory,
                             &map_geometry,
-                            &item_manifest,
-                            &litter_query,
                             &terrain_manifest,
                             &terrain_query,
                             facing,
@@ -161,8 +157,6 @@ pub(super) fn choose_actions(
                                 unit_pos,
                                 unit_inventory,
                                 &map_geometry,
-                                &item_manifest,
-                                &litter_query,
                                 &terrain_manifest,
                                 &terrain_query,
                                 facing,
@@ -275,7 +269,6 @@ pub(super) fn finish_actions(
     mut workplace_query: Query<(&CraftingState, &mut WorkersPresent)>,
     // This must be compatible with unit_query
     structure_query: Query<&VoxelPos, (With<Id<Structure>>, Without<Goal>)>,
-    map_geometry: Res<MapGeometry>,
     item_manifest: Res<ItemManifest>,
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
@@ -490,24 +483,11 @@ pub(super) fn finish_actions(
                     }
                 }
                 UnitAction::Abandon => {
-                    // FIXME: litter shouldn't be stored on the terrain entity
-                    let terrain_entity = map_geometry.get_terrain(unit.voxel_pos.hex).unwrap();
-
-                    let (_input, _output, _storage, litter) =
-                        inventory_query.get_mut(terrain_entity).unwrap();
-
-                    let mut litter_inventory = litter.unwrap();
-
                     if let Some(held_item) = unit.unit_inventory.held_item {
-                        let item_count = ItemCount::new(held_item, 1);
-                        // Try to transfer the item to the terrain storage
-                        if litter_inventory
-                            .contents
-                            .add_item_all_or_nothing(&item_count, item_manifest)
-                            .is_ok()
-                        {
-                            unit.unit_inventory.held_item = None;
-                        }
+                        commands.spawn_litter(*unit.voxel_pos, held_item);
+                        unit.unit_inventory.held_item = None;
+                    } else {
+                        unit.impatience.increment();
                     }
                 }
             }
@@ -1138,33 +1118,24 @@ impl CurrentAction {
         unit_pos: VoxelPos,
         unit_inventory: &UnitInventory,
         map_geometry: &MapGeometry,
-        item_manifest: &ItemManifest,
-        litter_query: &Query<&Litter>,
         terrain_manifest: &TerrainManifest,
         terrain_query: &Query<&Id<Terrain>>,
         facing: &Facing,
         rng: &mut ThreadRng,
     ) -> Self {
-        // FIXME: litter should not be stored on the terrain entity
-        let terrain_entity = map_geometry.get_terrain(unit_pos.hex).unwrap();
-        let litter = litter_query.get(terrain_entity).unwrap();
-
-        if let Some(item_id) = unit_inventory.held_item {
-            // TODO: scatter items around if we can't drop them
-            if litter.currently_accepts(item_id, item_manifest) {
-                return CurrentAction::new(UnitAction::Abandon);
-            }
+        if unit_inventory.held_item.is_some() {
+            CurrentAction::new(UnitAction::Abandon)
+        } else {
+            CurrentAction::wander(
+                previous_action,
+                unit_pos,
+                facing,
+                map_geometry,
+                terrain_query,
+                terrain_manifest,
+                rng,
+            )
         }
-
-        CurrentAction::wander(
-            previous_action,
-            unit_pos,
-            facing,
-            map_geometry,
-            terrain_query,
-            terrain_manifest,
-            rng,
-        )
     }
 
     /// Wander around randomly.

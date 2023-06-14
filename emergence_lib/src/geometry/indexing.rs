@@ -474,9 +474,10 @@ impl MapGeometry {
 
     /// Adds the provided `litter_entity` to the voxel index at the provided `center`.
     ///
-    /// If the voxel is not clear, the litter will be placed in the nearest empty voxel on the ground.
+    /// If the voxel is not clear, an [`AdditionError`] will be returned instead.
+    /// To avoid this, call [`find_litter_location`](MapGeometry::find_litter_location) first.
     #[inline]
-    pub(crate) fn add_litter(
+    fn add_litter(
         &mut self,
         voxel_pos: VoxelPos,
         inventory_state: InventoryState,
@@ -501,6 +502,26 @@ impl MapGeometry {
         Ok(())
     }
 
+    /// Returns the nearest empty voxel in which litter can be placed, starting at the provided `proposed_voxel_pos`.
+    fn find_litter_location(&self, proposed_voxel_pos: VoxelPos) -> VoxelPos {
+        let mut voxel_pos = proposed_voxel_pos;
+        while !self.is_voxel_clear(voxel_pos).is_ok() {
+            for maybe_neighbor in self.walkable_neighbors(voxel_pos) {
+                if let &Some(neighbor) = maybe_neighbor {
+                    if self.is_voxel_clear(neighbor).is_ok() {
+                        voxel_pos = neighbor;
+                        break;
+                    }
+                }
+            }
+
+            // Otherwise, stack the litter on top of the current voxel
+            // FIXME: even this could fail if we reach the max height. Should have a failsafe.
+            voxel_pos = voxel_pos.above();
+        }
+        voxel_pos
+    }
+
     /// Removes any litter entity found at the provided `voxel_pos` from the voxel index.
     ///
     /// Returns the removed entity, if any.
@@ -522,20 +543,39 @@ impl MapGeometry {
         Some(entity)
     }
 
+    /// Drop the litter at the provided `voxel_pos` into the nearest empty voxel.
+    ///
+    /// Returns the voxel position where the litter was dropped.
+    #[must_use]
+    pub(crate) fn drop_litter(&mut self, voxel_pos: VoxelPos, litter_entity: Entity) -> VoxelPos {
+        let final_voxel_pos = self.find_litter_location(voxel_pos);
+
+        self.add_litter(final_voxel_pos, InventoryState::Full, litter_entity)
+            .unwrap();
+
+        final_voxel_pos
+    }
+
     /// Moves the litter entity found at the provided `voxel_pos` to the provided `new_voxel_pos`.
     ///
     /// This operation is infallible: if the litter cannot be moved to the desired position,
     /// it will instead be droppped in the nearest empty voxel.
     #[inline]
-    pub(crate) fn move_litter(&mut self, mut voxel_pos: Mut<VoxelPos>, new_voxel_pos: VoxelPos) {
-        if *voxel_pos == new_voxel_pos {
+    pub(crate) fn move_litter(
+        &mut self,
+        mut original_voxel_pos: Mut<VoxelPos>,
+        proposed_voxel_pos: VoxelPos,
+    ) {
+        if *original_voxel_pos == proposed_voxel_pos {
             return;
         }
 
-        let Some(litter_entity) = self.remove_litter(*voxel_pos) else { return; };
-        self.add_litter(new_voxel_pos, InventoryState::Full, litter_entity)
+        let Some(litter_entity) = self.remove_litter(*original_voxel_pos) else { return; };
+        let final_voxel_pos = self.find_litter_location(proposed_voxel_pos);
+
+        self.add_litter(final_voxel_pos, InventoryState::Full, litter_entity)
             .unwrap();
-        *voxel_pos = new_voxel_pos;
+        *original_voxel_pos = final_voxel_pos;
     }
 
     /// Gets the ghost structure [`Entity`] at the provided `voxel_pos`, if any.

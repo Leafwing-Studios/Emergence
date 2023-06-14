@@ -26,6 +26,7 @@ pub(crate) struct TerrainHandles {
     /// The materials used to display player interaction with terrain tiles
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
     /// Models used to depict litter on tiles.
+    // FIXME: move out of terrain handles
     pub(crate) litter_models: HashMap<InventoryState, Handle<Scene>>,
 }
 

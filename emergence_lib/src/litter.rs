@@ -2,12 +2,17 @@
 
 use std::f32::consts::TAU;
 
-use bevy::prelude::*;
 use bevy::utils::Duration;
+use bevy::{ecs::system::Command, prelude::*};
 use hexx::{Direction, HexLayout};
 use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
 
+use crate::asset_management::manifest::Id;
+use crate::items::inventory::InventoryState;
+use crate::items::item_manifest::Item;
+use crate::items::ItemCount;
+use crate::terrain::terrain_assets::TerrainHandles;
 use crate::{
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
     geometry::{direction_from_angle, DiscreteHeight, Height, MapGeometry, VoxelPos},
@@ -39,6 +44,22 @@ struct LitterBundle {
 pub(crate) struct Litter {
     /// The items that are littered on the ground.
     pub(crate) contents: StorageInventory,
+}
+
+impl Litter {
+    /// Creates a new litter inventory with a single item.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the stack size is 0 or the item is not found in the manifest.
+    fn new(item_id: Id<Item>, item_manifest: &ItemManifest) -> Self {
+        let mut contents = StorageInventory::new(1, None);
+        contents
+            .add_item_all_or_nothing(&ItemCount { item_id, count: 1 }, item_manifest)
+            .unwrap();
+
+        Litter { contents }
+    }
 }
 
 /// Is this litter currently floating?
@@ -258,6 +279,69 @@ pub(super) fn carry_floating_litter_with_current(
         } else {
             // PERF: we could probably avoid doing any work in this branch by more carefully tracking when things start floating
             litter_drift.finish();
+        }
+    }
+}
+
+/// Extension methods for [`Commands`] for manipulating litter.
+pub(crate) trait LitterCommandsExt {
+    /// Spawns a piece of litter at the given position out of the provided `item`.
+    /// This should be called once for each item to be turned into litter.
+    ///
+    /// This will never fail; if the position is invalid, the litter will be spawned at the nearest valid position.
+    fn spawn_litter(&mut self, position: VoxelPos, item: Id<Item>);
+}
+
+impl LitterCommandsExt for Commands<'_, '_> {
+    fn spawn_litter(&mut self, position: VoxelPos, item: Id<Item>) {
+        self.add(SpawnLitterCommand {
+            voxel_pos: position,
+            item,
+        })
+    }
+}
+
+struct SpawnLitterCommand {
+    /// The position to try spawn the litter at
+    voxel_pos: VoxelPos,
+    /// The type of item that is being turned into litter.
+    item: Id<Item>,
+}
+
+impl Command for SpawnLitterCommand {
+    fn write(self, world: &mut World) {
+        let item_manifest = world.resource::<ItemManifest>();
+
+        let litter = Litter::new(self.item, item_manifest);
+
+        let terrain_handles = world.resource::<TerrainHandles>();
+        let litter_models = &terrain_handles.litter_models;
+        let scene = litter_models
+            .get(&InventoryState::Partial)
+            .unwrap()
+            .clone_weak();
+
+        let scene_bundle = SceneBundle {
+            scene,
+            ..Default::default()
+        };
+
+        let litter_entity = world
+            .spawn(LitterBundle {
+                litter: litter,
+                drift: Drift::default(),
+                voxel_pos: self.voxel_pos,
+                scene_bundle,
+                floating: Floating(false),
+            })
+            .id();
+
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+
+        let actual_pos = map_geometry.drop_litter(self.voxel_pos, litter_entity);
+
+        if actual_pos != self.voxel_pos {
+            *world.get_mut(litter_entity).unwrap() = actual_pos;
         }
     }
 }
