@@ -370,7 +370,7 @@ fn pan_camera(
     mut camera_query: Query<(&Transform, &mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
     time: Res<Time>,
     actions: Res<ActionState<PlayerAction>>,
-    map_geometry: Res<MapGeometry>,
+    maybe_map_geometry: Option<Res<MapGeometry>>,
 ) {
     let Ok((transform, mut focus, mut settings)) = camera_query.get_single_mut() else { return; };
 
@@ -398,7 +398,11 @@ fn pan_camera(
         focus.translation += oriented_translation;
 
         let nearest_tile_pos = VoxelPos::from_world_pos(transform.translation);
-        focus.translation.y = map_geometry.average_height(nearest_tile_pos, settings.float_radius);
+        focus.translation.y = if let Some(map_geometry) = maybe_map_geometry {
+            map_geometry.average_height(nearest_tile_pos, settings.float_radius)
+        } else {
+            0.0
+        };
     } else {
         settings.pan_speed.reset_speed();
     }
