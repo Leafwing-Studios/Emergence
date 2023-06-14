@@ -33,7 +33,11 @@ impl VoxelKind {
     /// Can units walk over over the voxel on top of this object?
     pub(super) fn can_walk_on_roof(&self) -> bool {
         match self {
-            VoxelKind::Litter { .. } => false,
+            VoxelKind::Litter { inventory_state } => match inventory_state {
+                InventoryState::Empty => false,
+                InventoryState::Partial { .. } => false,
+                InventoryState::Full => true,
+            },
             VoxelKind::Terrain => true,
             VoxelKind::Structure {
                 can_walk_on_roof, ..
