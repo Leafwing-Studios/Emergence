@@ -7,7 +7,7 @@ use crate::{
     water::{ocean::Ocean, WaterConfig, WaterDepth},
 };
 
-use super::palette::environment::WATER;
+use super::{palette::environment::WATER, GraphicsSet};
 
 /// A plugin that controls how water is displayed.
 pub(super) struct WaterRenderingPlugin;
@@ -15,7 +15,7 @@ pub(super) struct WaterRenderingPlugin;
 impl Plugin for WaterRenderingPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(init_water_handles)
-            .add_system(render_water);
+            .add_system(render_water.in_set(GraphicsSet));
     }
 }
 

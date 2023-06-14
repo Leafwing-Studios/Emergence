@@ -17,7 +17,7 @@ use bevy::{
 use emergence_macros::IterableEnum;
 
 use crate::{
-    asset_management::{manifest::Id, AssetState},
+    asset_management::manifest::Id,
     enum_iter::IterableEnum,
     geometry::{Height, MapGeometry, VoxelPos},
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
@@ -26,6 +26,8 @@ use crate::{
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     water::{PreviousWaterVolume, WaterDepth, WaterVolume},
 };
+
+use super::GraphicsSet;
 
 /// Systems and reources for communicating the state of the world to the player.
 pub(super) struct OverlayPlugin;
@@ -36,18 +38,18 @@ impl Plugin for OverlayPlugin {
             .add_systems(
                 (
                     set_overlay_material,
+                    set_overlay_height,
                     display_player_selection
                         .after(InteractionSystem::SelectTiles)
                         .after(set_overlay_material),
                 )
-                    .distributive_run_if(in_state(AssetState::FullyLoaded)),
+                    .in_set(GraphicsSet),
             )
             .add_system(
                 spawn_overlay_entities
                     .in_base_set(CoreSet::PreUpdate)
-                    .run_if(in_state(AssetState::FullyLoaded)),
-            )
-            .add_system(set_overlay_height);
+                    .in_set(GraphicsSet),
+            );
     }
 }
 
