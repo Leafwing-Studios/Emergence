@@ -1,6 +1,10 @@
 //! Tools for the player to interact with the world
 
+use crate::enum_iter::IterableEnum;
+use crate::{self as emergence_lib};
 use bevy::prelude::*;
+use emergence_macros::IterableEnum;
+
 use leafwing_input_manager::{
     prelude::{ActionState, DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
     user_input::{Modifier, UserInput},
@@ -30,11 +34,14 @@ impl Plugin for InteractionPlugin {
 
         #[cfg(feature = "debug_tools")]
         app.add_plugin(debug_tools::DebugToolsPlugin);
+        for variant in InteractionSystem::variants() {
+            app.configure_set(variant.run_if(in_state(WorldGenState::Complete)));
+        }
     }
 }
 
 /// Public system sets for player interaction, used for system ordering and config
-#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(SystemSet, Clone, PartialEq, Eq, Hash, Debug, IterableEnum)]
 pub(crate) enum InteractionSystem {
     /// Moves the camera
     MoveCamera,
