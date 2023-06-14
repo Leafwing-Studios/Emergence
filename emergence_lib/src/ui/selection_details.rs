@@ -16,6 +16,7 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
+    world_gen::WorldGenState,
 };
 
 use self::{
@@ -40,7 +41,8 @@ impl Plugin for SelectionDetailsPlugin {
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
                     .before(update_selection_details)
-                    .run_if(in_state(AssetState::FullyLoaded)),
+                    .run_if(in_state(AssetState::FullyLoaded))
+                    .run_if(in_state(WorldGenState::Complete)),
             )
             .add_system(change_camera_mode.after(update_selection_details))
             .add_system(update_selection_details.run_if(in_state(AssetState::FullyLoaded)));
