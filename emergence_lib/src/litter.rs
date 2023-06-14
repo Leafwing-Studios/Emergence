@@ -22,6 +22,8 @@ use crate::{
 struct LitterBundle {
     /// The items that are littered.
     litter: Litter,
+    /// Tracks the drift of the litter in the water.
+    drift: Drift,
     /// The position of the litter.
     voxel_pos: VoxelPos,
     /// The scene used to display the litter.
@@ -134,14 +136,14 @@ pub(super) fn make_litter_float(
 
 /// The direction and time remaining for a piece of litter to drift with the current.
 #[derive(Component, Default)]
-pub(super) struct LitterDrift {
+pub(super) struct Drift {
     /// The direction the litter is drifting.
     pub(super) direction: Option<Direction>,
     /// The time remaining for the litter to drift.
     pub(super) timer: Timer,
 }
 
-impl LitterDrift {
+impl Drift {
     /// Starts the timer for the litter to drift with the current.
     pub(super) fn start(&mut self, direction: Direction, required_time: Duration) {
         // This attempts to avoid allocations by reusing the timer
@@ -161,12 +163,12 @@ impl LitterDrift {
 pub(super) fn carry_floating_litter_with_current(
     mut terrain_query: Query<(
         &mut VoxelPos,
-        &mut LitterDrift,
+        &mut Drift,
         &WaterDepth,
         &FlowVelocity,
         &Floating,
     )>,
-    water_height_query: Query<(&VoxelPos, &WaterDepth), Without<LitterDrift>>,
+    water_height_query: Query<(&VoxelPos, &WaterDepth), Without<Drift>>,
     net_query: Query<&Footprint, With<AbsorbsItems>>,
     fixed_time: Res<FixedTime>,
     mut map_geometry: ResMut<MapGeometry>,
