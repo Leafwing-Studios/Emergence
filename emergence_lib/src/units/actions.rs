@@ -437,10 +437,10 @@ pub(super) fn finish_actions(
                 },
                 UnitAction::MoveForward => {
                     let direction = unit.facing.direction;
-                    let target_tile = unit.voxel_pos.neighbor(direction);
+                    let target_voxel = unit.voxel_pos.neighbor(direction);
 
-                    *unit.voxel_pos = target_tile;
-                    unit.transform.translation = target_tile.top_of_tile();
+                    *unit.voxel_pos = target_voxel;
+                    unit.transform.translation = target_voxel.inside_voxel();
                 }
                 UnitAction::Work { structure_entity } => {
                     let mut success = false;

@@ -373,6 +373,18 @@ impl VoxelPos {
         }
     }
 
+    /// Returns the transform-space position of the terrain topper below this voxel.
+    pub fn inside_voxel(&self) -> Vec3 {
+        let xz = HexLayout::default().hex_to_world_pos(self.hex);
+        let y = self.height.below().into_world_pos() + Height::TOPPER_THICKNESS;
+
+        Vec3 {
+            x: xz.x,
+            y,
+            z: xz.y,
+        }
+    }
+
     /// Returns the nearest tile position to the provided `world_pos`
     ///
     /// `world_pos` generally corresponds to the `translation` of a [`Transform`].

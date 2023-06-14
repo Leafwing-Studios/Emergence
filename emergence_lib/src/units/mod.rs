@@ -145,7 +145,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos()),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
                 ..default()
             },
         }
@@ -186,7 +186,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos()),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
                 ..default()
             },
         }
@@ -224,7 +224,7 @@ impl UnitBundle {
             mesh: Handle::default(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(voxel_pos.into_world_pos()),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
                 ..default()
             },
         }
