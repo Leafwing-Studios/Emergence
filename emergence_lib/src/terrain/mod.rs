@@ -18,7 +18,7 @@ use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
 use crate::litter::{
     carry_floating_litter_with_current, clear_empty_litter, make_litter_float, set_litter_emitters,
-    Litter, LitterDrift, LitterEmitters,
+    LitterEmitters,
 };
 
 pub(crate) mod commands;
@@ -73,10 +73,6 @@ pub(crate) struct TerrainBundle {
     scene_bundle: SceneBundle,
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
-    /// Stores littered items
-    litter: Litter,
-    /// Tracks how long until litter drifts away
-    litter_drift: LitterDrift,
     /// The amount of shade cast on this tile.
     shade: Shade,
     /// The amount of light currently being received by this tile.
@@ -112,8 +108,6 @@ impl TerrainBundle {
             zoning: Zoning::None,
             scene_bundle,
             emitter: Emitter::default(),
-            litter: Litter::default(),
-            litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle {
@@ -136,8 +130,6 @@ impl TerrainBundle {
             zoning: Zoning::None,
             scene_bundle: SceneBundle::default(),
             emitter: Emitter::default(),
-            litter: Litter::default(),
-            litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle::default(),
