@@ -163,7 +163,7 @@ impl GenerationConfig {
         structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
 
         GenerationConfig {
-            map_radius: 10,
+            map_radius: 30,
             number_of_burn_in_ticks: 0,
             unit_chances,
             landmark_chances,
