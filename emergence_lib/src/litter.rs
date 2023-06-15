@@ -329,7 +329,7 @@ impl Command for SpawnLitterCommand {
 
         let litter_entity = world
             .spawn(LitterBundle {
-                litter: litter,
+                litter,
                 drift: Drift::default(),
                 voxel_pos: self.voxel_pos,
                 scene_bundle,

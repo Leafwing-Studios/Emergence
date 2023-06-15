@@ -121,9 +121,8 @@ impl Command for SpawnStructureCommand {
 
         // Check that the tiles needed are appropriate.
         let geometry = world.resource_mut::<MapGeometry>();
-        if !geometry
-            .is_space_available(self.center, &structure_data.footprint, self.data.facing)
-            .is_ok()
+        if geometry
+            .is_space_available(self.center, &structure_data.footprint, self.data.facing).is_err()
         {
             // Just give up if the terrain is wrong.
             return;
@@ -346,17 +345,15 @@ impl Command for SpawnStructureGhostCommand {
         }
 
         for ghost_entity in existing_ghosts {
-            let facing = world.entity(ghost_entity).get::<Facing>().unwrap().clone();
-            let center = world
+            let facing = *world.entity(ghost_entity).get::<Facing>().unwrap();
+            let center = *world
                 .entity(ghost_entity)
                 .get::<VoxelPos>()
-                .unwrap()
-                .clone();
-            let structure_id = world
+                .unwrap();
+            let structure_id = *world
                 .entity(ghost_entity)
                 .get::<Id<Structure>>()
-                .unwrap()
-                .clone();
+                .unwrap();
 
             let structure_manifest = world.resource::<StructureManifest>();
             let footprint = structure_manifest.footprint(structure_id).clone();
@@ -420,17 +417,15 @@ impl Command for DespawnGhostCommand {
         let map_geometry = world.resource::<MapGeometry>();
         let Some(ghost_entity) = map_geometry.get_ghost_structure(self.voxel_pos) else { return; };
 
-        let facing = world.entity(ghost_entity).get::<Facing>().unwrap().clone();
-        let center = world
+        let facing = *world.entity(ghost_entity).get::<Facing>().unwrap();
+        let center = *world
             .entity(ghost_entity)
             .get::<VoxelPos>()
-            .unwrap()
-            .clone();
-        let structure_id = world
+            .unwrap();
+        let structure_id = *world
             .entity(ghost_entity)
             .get::<Id<Structure>>()
-            .unwrap()
-            .clone();
+            .unwrap();
 
         let structure_manifest = world.resource::<StructureManifest>();
         let footprint = structure_manifest.footprint(structure_id).clone();

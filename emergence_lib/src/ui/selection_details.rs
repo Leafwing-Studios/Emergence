@@ -371,7 +371,7 @@ fn get_details(
                     zoning: terrain_query_item.zoning.clone(),
                     maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
                         |q| terrain_details::TerraformingDetails {
-                            terraforming_action: q.0.clone(),
+                            terraforming_action: *q.0,
                             input_inventory: q.1.clone(),
                             output_inventory: q.2.clone(),
                         },

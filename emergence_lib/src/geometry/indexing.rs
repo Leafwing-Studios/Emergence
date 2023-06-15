@@ -191,7 +191,7 @@ impl MapGeometry {
     #[inline]
     #[must_use]
     pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
-        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default().into();
+        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default();
         VoxelPos {
             hex,
             height: terrain_height.above(),
@@ -420,7 +420,7 @@ impl MapGeometry {
     /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
     #[inline]
     pub fn update_height(&mut self, hex: Hex, height: DiscreteHeight) {
-        let old_height = self.get_height(hex).unwrap().into();
+        let old_height = self.get_height(hex).unwrap();
         if old_height == height {
             return;
         }
@@ -432,7 +432,7 @@ impl MapGeometry {
         let new_voxel_pos = VoxelPos { hex, height };
 
         // This overwrites the existing entry
-        self.height_index.insert(hex, height.into());
+        self.height_index.insert(hex, height);
         // The old voxel needs to be removed, rather than overwritten, as it may be at a different height.
         self.voxel_index.remove(&old_voxel_pos);
         self.voxel_index.insert(
@@ -554,7 +554,7 @@ impl MapGeometry {
     /// Returns the nearest empty voxel in which litter can be placed, starting at the provided `proposed_voxel_pos`.
     fn find_litter_location(&self, proposed_voxel_pos: VoxelPos) -> VoxelPos {
         let mut voxel_pos = proposed_voxel_pos;
-        while !self.is_voxel_clear(voxel_pos).is_ok() {
+        while self.is_voxel_clear(voxel_pos).is_err() {
             for neighbor in self.walkable_neighbors(voxel_pos) {
                 if self.is_voxel_clear(neighbor).is_ok() {
                     voxel_pos = neighbor;

@@ -62,7 +62,7 @@ pub(super) fn generate_organisms(
                         unit_id,
                         voxel_pos,
                         unit_manifest.get(unit_id).clone(),
-                        &unit_handles,
+                        unit_handles,
                         rng,
                     )
                 } else {
