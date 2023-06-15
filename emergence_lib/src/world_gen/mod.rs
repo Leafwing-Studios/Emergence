@@ -189,8 +189,6 @@ impl GenerationConfig {
     }
 
     /// A tiny world gen config for testing.
-    ///
-    /// Designed to be used with [`DummyManifestPlugin`](crate::asset_management::manifest::DummyManifestPlugin).
     pub fn testing() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
