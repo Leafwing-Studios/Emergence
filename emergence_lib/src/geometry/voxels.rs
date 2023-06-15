@@ -1,3 +1,5 @@
+//! Data types and logic for working with hexagonal voxels (hexels).
+
 use bevy::prelude::*;
 
 use crate::items::inventory::InventoryState;
@@ -18,14 +20,23 @@ pub struct VoxelObject {
 /// Each voxel can contain at most one object.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum VoxelKind {
+    /// A pile of litter.
     Litter {
+        /// How full is this litter?
         inventory_state: InventoryState,
     },
+    /// A hexel of dirt, rock, sand or so on.
+    ///
+    /// Only the top hexel of the terrain column is stored.
     Terrain,
+    /// A structure, living or inorganic.
     Structure {
+        /// Can units walk over the top of this structure?
         can_walk_on_roof: bool,
+        /// Can units walk through this structure's voxel?
         can_walk_through: bool,
     },
+    /// A structure that is slated to be built.
     GhostStructure,
 }
 

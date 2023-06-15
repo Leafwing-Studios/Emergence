@@ -162,7 +162,6 @@ impl MapGeometry {
 
     /// Returns the list of all valid [`Hex`] positions on the map.
     #[inline]
-    #[must_use]
     pub fn all_hexes(&self) -> impl Iterator<Item = &Hex> {
         self.terrain_index.keys()
     }
@@ -241,7 +240,6 @@ impl MapGeometry {
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
     #[inline]
-    #[must_use]
     pub(crate) fn is_space_available(
         &self,
         center: VoxelPos,
@@ -260,7 +258,6 @@ impl MapGeometry {
 
     /// Is there space in a single voxel?
     #[inline]
-    #[must_use]
     pub fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
         match self.voxel_index.contains_key(&voxel_pos) {
             true => Err(AdditionError::AlreadyOccupied),
@@ -409,7 +406,6 @@ impl MapGeometry {
 
     /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
-    #[must_use]
     pub fn get_terrain(&self, hex: Hex) -> Result<Entity, IndexError> {
         match self.terrain_index.get(&hex).copied() {
             Some(entity) => Ok(entity),
@@ -718,7 +714,6 @@ impl MapGeometry {
 
     /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
     #[inline]
-    #[must_use]
     pub(crate) fn walkable_neighbors(
         &self,
         voxel_pos: VoxelPos,

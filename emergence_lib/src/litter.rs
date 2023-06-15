@@ -302,6 +302,7 @@ impl LitterCommandsExt for Commands<'_, '_> {
     }
 }
 
+/// A custom [`Command`] that spawns a litter entity.
 struct SpawnLitterCommand {
     /// The position to try spawn the litter at
     voxel_pos: VoxelPos,

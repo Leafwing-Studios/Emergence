@@ -336,11 +336,11 @@ impl VoxelPos {
 
         for layer in 0..=2 {
             let height_offset = DiscreteHeight(layer as u8 - 1);
-            for i in 0..=6 {
+            for (i, &hex) in hexagon.iter().enumerate() {
                 let index = layer * 7 + i;
 
                 reachable_neighbors[index] = VoxelPos {
-                    hex: hexagon[i],
+                    hex,
                     height: self.height + height_offset,
                 };
             }

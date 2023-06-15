@@ -10,6 +10,7 @@ use bevy::prelude::*;
 pub(super) fn render_litter_piles() {}
 
 /// Computes the [`Transform`] for a floating litter entity.
+#[allow(dead_code)]
 fn floating_litter_transform(
     voxel_pos: VoxelPos,
     water_height_query: &Query<(&WaterDepth, &VoxelPos)>,
