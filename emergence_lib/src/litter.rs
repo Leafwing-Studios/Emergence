@@ -68,6 +68,7 @@ pub(crate) struct Floating(bool);
 
 impl Litter {
     /// The pretty formatting for the litter stored here.
+    #[allow(dead_code)]
     pub(crate) fn display(&self, item_manifest: &ItemManifest) -> String {
         let mut display = String::new();
 

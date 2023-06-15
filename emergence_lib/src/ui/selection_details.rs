@@ -369,7 +369,6 @@ fn get_details(
                     recieved_light: terrain_query_item.recieved_light.clone(),
                     signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
                     zoning: terrain_query_item.zoning.clone(),
-                    litter: terrain_query_item.litter.clone(),
                     maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
                         |q| terrain_details::TerraformingDetails {
                             terraforming_action: q.0.clone(),
@@ -746,7 +745,6 @@ mod terrain_details {
         geometry::{Height, VoxelPos},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
-        litter::Litter,
         signals::LocalSignals,
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::{Terrain, TerrainManifest},
@@ -769,8 +767,6 @@ mod terrain_details {
         pub(super) terrain_id: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
-        /// Any littered items on this tile
-        pub(super) litter: &'static Litter,
         /// The depth of water on this tile
         pub(super) water_depth: &'static WaterDepth,
         /// Any applied terraforming action
@@ -833,8 +829,6 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
-        /// Any littered items on this tile
-        pub(super) litter: Litter,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
@@ -862,7 +856,6 @@ Output: {output}"
                 unit_manifest,
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
-            let litter = self.litter.display(item_manifest);
 
             let base_string = format!(
                 "Entity: {entity:?}
@@ -872,9 +865,7 @@ Height: {height}
 Water Table: {depth_to_water_table}
 Shade: {shade}
 Current Light: {recieved_light}
-Zoning: {zoning}
-Litter:
-{litter}"
+Zoning: {zoning}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {
