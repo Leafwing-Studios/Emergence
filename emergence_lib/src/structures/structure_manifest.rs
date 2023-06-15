@@ -4,7 +4,6 @@ use crate::{
     asset_management::manifest::{loader::IsRawManifest, Id, Manifest},
     construction::{ConstructionData, ConstructionStrategy, RawConstructionStrategy},
     crafting::recipe::{ActiveRecipe, RawActiveRecipe},
-    geometry::Height,
     items::item_manifest::Item,
     organisms::{
         vegetative_reproduction::{RawVegetativeReproduction, VegetativeReproduction},
@@ -41,12 +40,10 @@ impl StructureManifest {
     }
 
     /// Fetches the [`Footprint`] for the initial form of a given structure type.
-    pub fn construction_footprint(&self, structure_id: Id<Structure>) -> &Footprint {
+    pub fn footprint(&self, structure_id: Id<Structure>) -> &Footprint {
         let strategy = &self.get(structure_id).construction_strategy;
         match strategy {
-            ConstructionStrategy::Seedling(seedling_id) => {
-                self.construction_footprint(*seedling_id)
-            }
+            ConstructionStrategy::Seedling(seedling_id) => self.footprint(*seedling_id),
             ConstructionStrategy::Direct(..) | ConstructionStrategy::Landmark => {
                 &self.get(structure_id).footprint
             }
@@ -69,14 +66,62 @@ pub struct StructureData {
     pub vegetative_reproduction: Option<VegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
-    /// The height of the structure, which controls the shadows it casts.
-    pub height: Height,
     /// The tiles taken up by this building.
     pub footprint: Footprint,
     /// The set of tiles that this structure can reach with its roots.
     pub root_zone: Option<RootZone>,
-    /// Can units pass over this structure?
-    pub passable: bool,
+    /// Can units pass through the voxels occupied by this tile?
+    pub can_walk_through: bool,
+    /// Can units walk on top of this structure?
+    pub can_walk_on_roof: bool,
+}
+
+#[cfg(test)]
+impl StructureData {
+    /// A simple organism.
+    pub fn organism(name: &str) -> Self {
+        StructureData {
+            organism_variety: Some(OrganismVariety::simple(name)),
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: true,
+            can_walk_on_roof: false,
+        }
+    }
+
+    /// A structure that can be walked through.
+    pub fn passable() -> Self {
+        StructureData {
+            organism_variety: None,
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: true,
+            can_walk_on_roof: false,
+        }
+    }
+
+    /// A structure that cannot be walked through.
+    pub fn impassable() -> Self {
+        StructureData {
+            organism_variety: None,
+            kind: StructureKind::Path,
+            construction_strategy: ConstructionStrategy::Direct(ConstructionData::default()),
+            vegetative_reproduction: None,
+            max_workers: 6,
+            footprint: Footprint::single(),
+            root_zone: None,
+            can_walk_through: false,
+            can_walk_on_roof: false,
+        }
+    }
 }
 
 /// The unprocessed equivalent of [`StructureData`].
@@ -94,14 +139,14 @@ pub struct RawStructureData {
     pub vegetative_reproduction: Option<RawVegetativeReproduction>,
     /// The maximum number of workers that can work at this structure at once.
     pub max_workers: u8,
-    /// The height of the structure, which controls the shadows it casts.
-    pub height: u8,
     /// The tiles taken up by this building.
     pub footprint: Option<Footprint>,
     /// The set of tiles that this structure can reach with its roots.
     pub root_zone: Option<RootZone>,
-    /// Can units pass over this structure?
-    pub passable: bool,
+    /// Can units pass through the voxels occupied by this tile?
+    pub can_walk_through: bool,
+    /// Can units walk on top of this structure?
+    pub can_walk_on_roof: bool,
 }
 
 impl From<RawStructureData> for StructureData {
@@ -112,10 +157,10 @@ impl From<RawStructureData> for StructureData {
             construction_strategy: raw.construction_strategy.into(),
             vegetative_reproduction: raw.vegetative_reproduction.map(Into::into),
             max_workers: raw.max_workers,
-            height: Height(raw.height as f32),
             footprint: raw.footprint.unwrap_or_default(),
             root_zone: raw.root_zone,
-            passable: raw.passable,
+            can_walk_through: raw.can_walk_through,
+            can_walk_on_roof: raw.can_walk_on_roof,
         }
     }
 }

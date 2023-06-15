@@ -13,7 +13,7 @@ fn minimal_app_can_update() {
 #[test]
 #[ignore = "Cannot end-to-end test game without a GPU."]
 fn simulation_app_can_update() {
-    let mut app = simulation_app(GenerationConfig::default());
+    let mut app = simulation_app(GenerationConfig::testing());
 
     app.update()
 }
@@ -22,7 +22,7 @@ fn simulation_app_can_update() {
 #[ignore = "Cannot test interaction without a virtual window."]
 // Blocked on https://github.com/bevyengine/bevy/pull/6256
 fn interaction_app_can_update() {
-    let mut app = interaction_app(GenerationConfig::default());
+    let mut app = interaction_app(GenerationConfig::testing());
 
     app.update()
 }

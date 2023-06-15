@@ -2,13 +2,13 @@
 
 use std::fmt::{Display, Formatter};
 
-use hexx::shapes::hexagon;
+use hexx::{shapes::hexagon, Hex};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     asset_management::manifest::Id,
     crafting::inventories::{CraftingState, InputInventory},
-    geometry::{Height, MapGeometry, TilePos, Volume},
+    geometry::{Height, MapGeometry, Volume, VoxelPos},
     items::{item_manifest::ItemManifest, ItemCount},
     structures::structure_manifest::{Structure, StructureManifest},
 };
@@ -31,25 +31,24 @@ impl RootZone {
     /// Returns the set of tiles that this root zone can reach, with water above the max depth.
     fn relevant_tiles(
         &self,
-        center: TilePos,
+        center: VoxelPos,
         water_depth_query: &Query<&WaterDepth>,
         map_geometry: &MapGeometry,
-    ) -> Vec<TilePos> {
+    ) -> Vec<Hex> {
         let hexagon = hexagon(center.hex, self.radius);
         let mut relevant_tiles = Vec::with_capacity(hexagon.len());
         for hex in hexagon {
-            let tile_pos = TilePos { hex };
-            let Some(terrain_entity) = map_geometry.get_terrain(tile_pos) else {
+            let Ok(terrain_entity) = map_geometry.get_terrain(hex) else {
                 continue;
             };
             let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
             match water_depth {
-                super::WaterDepth::Flooded(..) => relevant_tiles.push(tile_pos),
+                super::WaterDepth::Flooded(..) => relevant_tiles.push(hex),
                 super::WaterDepth::Dry => (),
                 super::WaterDepth::Underground(depth) => {
                     if *depth <= self.max_depth {
-                        relevant_tiles.push(tile_pos);
+                        relevant_tiles.push(hex);
                     }
                 }
             }
@@ -75,7 +74,7 @@ impl Display for RootZone {
 pub(super) fn draw_water_from_roots(
     water_config: Res<WaterConfig>,
     mut structure_query: Query<(
-        &TilePos,
+        &VoxelPos,
         &Id<Structure>,
         &CraftingState,
         &mut InputInventory,
@@ -114,8 +113,8 @@ pub(super) fn draw_water_from_roots(
 
         let mut total_water = Volume::ZERO;
 
-        for tile_pos in relevant_tiles {
-            let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        for voxel_pos in relevant_tiles {
+            let terrain_entity = map_geometry.get_terrain(voxel_pos).unwrap();
 
             let mut water_volume = water_volume_query.get_mut(terrain_entity).unwrap();
 

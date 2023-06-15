@@ -17,15 +17,17 @@ use bevy::{
 use emergence_macros::IterableEnum;
 
 use crate::{
-    asset_management::{manifest::Id, AssetState},
+    asset_management::manifest::Id,
     enum_iter::IterableEnum,
-    geometry::{Height, MapGeometry, TilePos},
+    geometry::{Height, MapGeometry, VoxelPos},
     graphics::palette::infovis::{WATER_TABLE_COLOR_HIGH, WATER_TABLE_COLOR_LOW},
     player_interaction::{selection::ObjectInteraction, InteractionSystem},
     signals::{SignalKind, SignalStrength, SignalType, Signals},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
     water::{PreviousWaterVolume, WaterDepth, WaterVolume},
 };
+
+use super::GraphicsSet;
 
 /// Systems and reources for communicating the state of the world to the player.
 pub(super) struct OverlayPlugin;
@@ -36,18 +38,18 @@ impl Plugin for OverlayPlugin {
             .add_systems(
                 (
                     set_overlay_material,
+                    set_overlay_height,
                     display_player_selection
                         .after(InteractionSystem::SelectTiles)
                         .after(set_overlay_material),
                 )
-                    .distributive_run_if(in_state(AssetState::FullyLoaded)),
+                    .in_set(GraphicsSet),
             )
             .add_system(
                 spawn_overlay_entities
                     .in_base_set(CoreSet::PreUpdate)
-                    .run_if(in_state(AssetState::FullyLoaded)),
-            )
-            .add_system(set_overlay_height);
+                    .in_set(GraphicsSet),
+            );
     }
 }
 
@@ -467,13 +469,13 @@ impl TileOverlay {
 /// Sets the material for the currently visualized map overlay.
 fn set_overlay_material(
     mut overlay_query: Query<
-        (&TilePos, &mut Handle<StandardMaterial>, &mut Visibility),
+        (&VoxelPos, &mut Handle<StandardMaterial>, &mut Visibility),
         With<Overlay>,
     >,
     terrain_query: Query<&ReceivedLight, With<Id<Terrain>>>,
     water_depth_query: Query<&WaterDepth>,
     water_volume_query: Query<(&WaterVolume, &PreviousWaterVolume)>,
-    terrain_height_query: Query<&Height, With<Id<Terrain>>>,
+    terrain_pos_query: Query<&VoxelPos, With<Id<Terrain>>>,
     flow_velocity_query: Query<&FlowVelocity>,
     signals: Res<Signals>,
     map_geometry: Res<MapGeometry>,
@@ -484,30 +486,30 @@ fn set_overlay_material(
         return;
     }
 
-    for (&tile_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
+    for (&voxel_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
         let maybe_material = match tile_overlay.overlay_type {
             OverlayType::None => None,
             OverlayType::Single(signal_type) => {
-                let signal_strength = signals.get(signal_type, tile_pos);
+                let signal_strength = signals.get(signal_type, voxel_pos);
                 let signal_kind = signal_type.into();
                 tile_overlay.get_signal_material(signal_kind, signal_strength)
             }
             OverlayType::StrongestSignal => signals
-                .strongest_goal_signal_at_position(tile_pos)
+                .strongest_goal_signal_at_position(voxel_pos)
                 .and_then(|(signal_type, signal_strength)| {
                     let signal_kind = signal_type.into();
                     tile_overlay.get_signal_material(signal_kind, signal_strength)
                 }),
             OverlayType::DepthToWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let water_depth = *water_depth_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_water_table_material(water_depth)
             }
             OverlayType::HeightOfWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let water_depth = *water_depth_query.get(terrain_entity).unwrap();
-                let terrain_height = *terrain_height_query.get(terrain_entity).unwrap();
+                let terrain_height = terrain_pos_query.get(terrain_entity).unwrap().height();
                 let water_table_height = water_depth.water_table_height(terrain_height);
 
                 // FIXME: use a dedicated color ramp for this, rather than hacking it
@@ -519,13 +521,13 @@ fn set_overlay_material(
                 tile_overlay.get_water_table_material(inverted_height)
             }
             OverlayType::VelocityOfWaterTable => {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let flow_velocity = flow_velocity_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_flow_velocity_material(flow_velocity)
             }
             OverlayType::NetWater => {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let (current_water_volume, previous_water_volume) =
                     water_volume_query.get(terrain_entity).unwrap();
 
@@ -535,7 +537,7 @@ fn set_overlay_material(
                 Some(tile_overlay.get_water_flux_material(volume_per_second))
             }
             OverlayType::LightLevel => {
-                let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let received_light = terrain_query.get(terrain_entity).unwrap();
 
                 tile_overlay.get_light_level_material(received_light)
@@ -558,15 +560,15 @@ fn set_overlay_material(
 fn display_player_selection(
     terrain_query: Query<&ObjectInteraction, With<Id<Terrain>>>,
     mut overlay_query: Query<
-        (&TilePos, &mut Handle<StandardMaterial>, &mut Visibility),
+        (&VoxelPos, &mut Handle<StandardMaterial>, &mut Visibility),
         With<Overlay>,
     >,
     terrain_handles: Res<TerrainHandles>,
     tile_overlay: Res<TileOverlay>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (&tile_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+    for (&voxel_pos, mut overlay_material, mut overlay_visibility) in overlay_query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let object_interaction = terrain_query.get(terrain_entity).unwrap();
 
         match object_interaction {
@@ -757,31 +759,30 @@ struct OverlayBundle {
     /// The marker component for overlay entities.
     overlay: Overlay,
     /// The tile position of the overlay.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The components needed to render the overlay.
     pbr_bundle: PbrBundle,
 }
 
 /// Generates one overlay entity for each valid tile position.
 fn spawn_overlay_entities(
-    new_terrain_query: Query<&TilePos, Added<Id<Terrain>>>,
+    new_terrain_query: Query<&VoxelPos, Added<Id<Terrain>>>,
     mut commands: Commands,
     terrain_handles: Res<TerrainHandles>,
-    map_geometry: Res<MapGeometry>,
 ) {
     /// Controls how much larger the overlay is relative to the terrain tiles.
     ///
     /// This must be greater than 0 to avoid z-fighting.
     const EPSILON: f32 = 0.01;
 
-    for &tile_pos in new_terrain_query.iter() {
+    for &voxel_pos in new_terrain_query.iter() {
         let pbr_bundle = PbrBundle {
             mesh: terrain_handles.topper_mesh.clone_weak(),
             // The material is set in `set_overlay_material`.
             material: Handle::default(),
             // The height of this is fixed in `set_overlay_height`.
             transform: Transform {
-                translation: tile_pos.into_world_pos(&map_geometry),
+                translation: voxel_pos.into_world_pos(),
                 scale: Vec3::splat(1. + EPSILON),
                 ..Default::default()
             },
@@ -790,7 +791,7 @@ fn spawn_overlay_entities(
 
         commands.spawn(OverlayBundle {
             overlay: Overlay,
-            tile_pos,
+            voxel_pos,
             pbr_bundle,
         });
     }
@@ -800,15 +801,16 @@ fn spawn_overlay_entities(
 ///
 /// Overlays should be positioned just above the water surface when it exists, and just above the terrain when it doesn't.
 fn set_overlay_height(
-    mut overlay_query: Query<(&TilePos, &mut Transform), With<Overlay>>,
-    terrain_query: Query<(&WaterDepth, &Height)>,
+    mut overlay_query: Query<(&VoxelPos, &mut Transform), With<Overlay>>,
+    terrain_query: Query<(&WaterDepth, &VoxelPos)>,
     map_geometry: Res<MapGeometry>,
 ) {
     let topper_thickness = Height::from_world_pos(Height::TOPPER_THICKNESS);
 
-    for (&tile_pos, mut transform) in overlay_query.iter_mut() {
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
-        let (&water_depth, &terrain_height) = terrain_query.get(terrain_entity).unwrap();
+    for (&voxel_pos, mut transform) in overlay_query.iter_mut() {
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
+        let (&water_depth, &terrain_pos) = terrain_query.get(terrain_entity).unwrap();
+        let terrain_height = terrain_pos.height();
 
         let desired_height = match water_depth {
             WaterDepth::Dry | WaterDepth::Underground(_) => terrain_height + topper_thickness,

@@ -116,6 +116,20 @@ pub struct OrganismVariety {
     pub energy_pool: EnergyPool,
 }
 
+impl OrganismVariety {
+    /// Constructs a simple organism variety with the given name.
+    ///
+    /// This is a convenience method for testing.
+    #[cfg(test)]
+    pub fn simple(name: &str) -> Self {
+        OrganismVariety {
+            prototypical_form: OrganismId::Unit(Id::from_name(name.to_string())),
+            lifecycle: Lifecycle::default(),
+            energy_pool: EnergyPool::default(),
+        }
+    }
+}
+
 /// The unprocessed form of an [`OrganismVariety`].
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RawOrganismVariety {

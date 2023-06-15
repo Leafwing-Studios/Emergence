@@ -17,6 +17,7 @@ pub mod geometry;
 pub mod graphics;
 pub mod items;
 pub mod light;
+pub mod litter;
 pub mod organisms;
 pub mod player_interaction;
 pub mod signals;

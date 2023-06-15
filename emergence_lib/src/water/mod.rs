@@ -9,12 +9,14 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
+use hexx::HexLayout;
 use serde::{Deserialize, Serialize};
 
+use crate::geometry::VoxelPos;
 use crate::simulation::time::Days;
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Height, MapGeometry, Volume},
+    geometry::{Height, Volume},
     items::item_manifest::{Item, ItemManifest},
     simulation::SimulationSet,
     structures::structure_manifest::StructureManifest,
@@ -183,7 +185,7 @@ impl Id<Item> {
 /// The components needed to track the water table.
 ///
 /// These are stored on terrain tile entities.
-/// To fully compute basic water dynamics, you also need the [`TilePos`](crate::geometry::TilePos) and [`Height`] components.
+/// To fully compute basic water dynamics, you also need the [`VoxelPos`](crate::geometry::VoxelPos) and [`Height`] components.
 #[derive(Bundle, Debug, Default)]
 pub struct WaterBundle {
     /// The volume of water stored at this tile.
@@ -375,16 +377,19 @@ pub struct PreviousWaterVolume(pub(crate) WaterVolume);
 
 /// Updates the depth of water at each tile based on the volume of water and soil properties.
 pub fn update_water_depth(
-    mut query: Query<(&Height, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
+    mut query: Query<(&VoxelPos, &WaterVolume, &SoilWaterCapacity, &mut WaterDepth)>,
 ) {
     // Critically, the depth of tiles *outside* of the map is not updated here.
     // Instead, they are implicitly treated as the ocean depth.
     // As a result, the ocean acts as both an infinite source and sink for water.
-    for (&soil_height, water_volume, &relative_soil_water_capacity, mut water_depth) in
+    for (terrain_pos, water_volume, &relative_soil_water_capacity, mut water_depth) in
         query.iter_mut()
     {
-        *water_depth =
-            WaterDepth::compute(water_volume.0, soil_height, relative_soil_water_capacity);
+        *water_depth = WaterDepth::compute(
+            water_volume.0,
+            terrain_pos.height(),
+            relative_soil_water_capacity,
+        );
     }
 }
 
@@ -419,13 +424,9 @@ impl FlowVelocity {
     }
 
     /// Converts a [`hexx::Direction`] and magnitude into a [`FlowVelocity`].
-    fn from_hex_direction(
-        direction: hexx::Direction,
-        magnitude: Volume,
-        map_geometry: &MapGeometry,
-    ) -> Self {
+    fn from_hex_direction(direction: hexx::Direction, magnitude: Volume) -> Self {
         // Empirically this seems to be the correct angle.
-        let angle = direction.angle(&map_geometry.layout.orientation) + PI;
+        let angle = direction.angle(&HexLayout::default().orientation) + PI;
         let x = magnitude * angle.cos();
         let z = magnitude * angle.sin();
 

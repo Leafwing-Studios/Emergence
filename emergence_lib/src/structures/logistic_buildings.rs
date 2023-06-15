@@ -3,21 +3,20 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_management::manifest::Id,
     crafting::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
         recipe::RecipeInput,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, Height, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
+    litter::Litter,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
-    terrain::litter::Litter,
     water::WaterDepth,
 };
 
-use super::structure_manifest::{Structure, StructureManifest};
+use super::Footprint;
 
 /// A building that spits out items.
 #[derive(Component)]
@@ -42,15 +41,15 @@ impl Plugin for LogisticsPlugin {
 
 /// Causes buildings that emit items to place them in the litter in front of them.
 fn release_items(
-    mut structure_query: Query<(&TilePos, &Facing, &mut InputInventory), With<ReleasesItems>>,
+    mut structure_query: Query<(&VoxelPos, &Facing, &mut InputInventory), With<ReleasesItems>>,
     mut litter_query: Query<&mut Litter>,
     item_manifest: Res<ItemManifest>,
     map_geometry: Res<MapGeometry>,
 ) {
     for (structure_pos, structure_facing, mut input_inventory) in structure_query.iter_mut() {
-        let tile_pos = structure_pos.neighbor(structure_facing.direction);
+        let voxel_pos = structure_pos.neighbor(structure_facing.direction);
 
-        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
         let cloned_inventory = input_inventory.clone();
@@ -58,7 +57,7 @@ fn release_items(
             let item_count = item_slot.item_count();
 
             if litter
-                .on_ground
+                .contents
                 .add_item_all_or_nothing(&item_count, &item_manifest)
                 .is_ok()
             {
@@ -73,27 +72,23 @@ fn release_items(
 
 /// Absorb litter into the inventory of buildings that absorb items.
 fn absorb_items(
-    mut structure_query: Query<
-        (&TilePos, &mut OutputInventory, &Id<Structure>),
-        With<AbsorbsItems>,
-    >,
+    mut structure_query: Query<(&VoxelPos, &Footprint, &mut OutputInventory), With<AbsorbsItems>>,
     mut litter_query: Query<&mut Litter>,
-    structure_manifest: Res<StructureManifest>,
     item_manifest: Res<ItemManifest>,
     water_depth_query: Query<&WaterDepth>,
     map_geometry: Res<MapGeometry>,
 ) {
-    for (&tile_pos, mut output_inventory, &structure_id) in structure_query.iter_mut() {
+    for (&voxel_pos, footprint, mut output_inventory) in structure_query.iter_mut() {
         output_inventory.clear_empty_slots();
 
         if output_inventory.is_full() {
             continue;
         }
 
-        let litter_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let litter_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let mut litter = litter_query.get_mut(litter_entity).unwrap();
 
-        let on_ground = litter.on_ground.clone();
+        let on_ground = litter.contents.clone();
 
         for item_slot in on_ground.iter() {
             let item_count = item_slot.item_count();
@@ -102,17 +97,16 @@ fn absorb_items(
                 .add_item_all_or_nothing(&item_count, &item_manifest)
                 .is_ok()
             {
-                litter.on_ground.try_remove_item(&item_count).unwrap();
+                litter.contents.try_remove_item(&item_count).unwrap();
             }
         }
 
         // Only absorb floating items if the structure is tall enough.
-        let structure_data = structure_manifest.get(structure_id);
-        let terrain_entity = map_geometry.get_terrain(tile_pos).unwrap();
+        let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
         let water_depth = water_depth_query.get(terrain_entity).unwrap();
 
-        if structure_data.height > water_depth.surface_water_depth() {
-            let floating = litter.floating.clone();
+        if Height::from(footprint.max_height()) > water_depth.surface_water_depth() {
+            let floating = litter.contents.clone();
             for item_slot in floating.iter() {
                 let item_count = item_slot.item_count();
 
@@ -120,7 +114,7 @@ fn absorb_items(
                     .add_item_all_or_nothing(&item_count, &item_manifest)
                     .is_ok()
                 {
-                    litter.floating.try_remove_item(&item_count).unwrap();
+                    litter.contents.try_remove_item(&item_count).unwrap();
                 }
             }
         }

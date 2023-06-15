@@ -11,7 +11,7 @@ use crate::{
         recipe::RecipeManifest,
         CraftingBundle,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::ItemManifest},
     organisms::{energy::StartingEnergy, OrganismBundle},
@@ -28,69 +28,69 @@ use super::{
 
 /// An extension trait for [`Commands`] for working with structures.
 pub(crate) trait StructureCommandsExt {
-    /// Spawns a structure defined by `data` at `tile_pos`.
+    /// Spawns a structure defined by `data` at `voxel_pos`.
     ///
     /// Has no effect if the tile position is already occupied by an existing structure.
     fn spawn_structure(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         starting_energy: StartingEnergy,
     );
 
-    /// Despawns any structure at the provided `tile_pos`.
+    /// Despawns any structure at the provided `voxel_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_structure(&mut self, tile_pos: TilePos);
+    fn despawn_structure(&mut self, voxel_pos: VoxelPos);
 
-    /// Spawns a ghost with data defined by `data` at `tile_pos`.
+    /// Spawns a ghost with data defined by `data` at `voxel_pos`.
     ///
     /// Replaces any existing ghost.
-    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_ghost_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData);
 
-    /// Despawns any ghost at the provided `tile_pos`.
+    /// Despawns any ghost at the provided `voxel_pos`.
     ///
     /// Has no effect if the tile position is already empty.
-    fn despawn_ghost_structure(&mut self, tile_pos: TilePos);
+    fn despawn_ghost_structure(&mut self, voxel_pos: VoxelPos);
 
-    /// Spawns a preview with data defined by `item` at `tile_pos`.
+    /// Spawns a preview with data defined by `item` at `voxel_pos`.
     ///
     /// Replaces any existing preview.
-    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData);
+    fn spawn_preview_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData);
 }
 
 impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
     fn spawn_structure(
         &mut self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         starting_energy: StartingEnergy,
     ) {
         self.add(SpawnStructureCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
             starting_energy,
         });
     }
 
-    fn despawn_structure(&mut self, tile_pos: TilePos) {
-        self.add(DespawnStructureCommand { center: tile_pos });
+    fn despawn_structure(&mut self, voxel_pos: VoxelPos) {
+        self.add(DespawnStructureCommand { center: voxel_pos });
     }
 
-    fn spawn_ghost_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_ghost_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData) {
         self.add(SpawnStructureGhostCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
         });
     }
 
-    fn despawn_ghost_structure(&mut self, tile_pos: TilePos) {
-        self.add(DespawnGhostCommand { tile_pos });
+    fn despawn_ghost_structure(&mut self, voxel_pos: VoxelPos) {
+        self.add(DespawnGhostCommand { voxel_pos });
     }
 
-    fn spawn_preview_structure(&mut self, tile_pos: TilePos, data: ClipboardData) {
+    fn spawn_preview_structure(&mut self, voxel_pos: VoxelPos, data: ClipboardData) {
         self.add(SpawnStructurePreviewCommand {
-            center: tile_pos,
+            center: voxel_pos,
             data,
         });
     }
@@ -99,7 +99,7 @@ impl<'w, 's> StructureCommandsExt for Commands<'w, 's> {
 /// A [`Command`] used to spawn a structure via [`StructureCommandsExt`].
 struct SpawnStructureCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
     /// The amount of energy to give the organism.
@@ -110,7 +110,7 @@ impl Command for SpawnStructureCommand {
     fn write(self, world: &mut World) {
         let geometry = world.resource::<MapGeometry>();
         // Check that the tile is within the bounds of the map
-        if !geometry.is_valid(self.center) {
+        if !geometry.is_valid(self.center.hex) {
             return;
         }
 
@@ -120,20 +120,14 @@ impl Command for SpawnStructureCommand {
         let structure_data = manifest.get(structure_id).clone();
 
         // Check that the tiles needed are appropriate.
-        if !geometry.can_build(self.center, &structure_data.footprint, self.data.facing) {
+        let geometry = world.resource_mut::<MapGeometry>();
+        if geometry
+            .is_space_available(self.center, &structure_data.footprint, self.data.facing)
+            .is_err()
+        {
             // Just give up if the terrain is wrong.
             return;
         }
-
-        let structure_handles = world.resource::<StructureHandles>();
-
-        // TODO: vary this with the footprint and height of the structure
-        let picking_mesh = structure_handles.picking_mesh.clone_weak();
-        let scene_handle = structure_handles
-            .scenes
-            .get(&structure_id)
-            .unwrap()
-            .clone_weak();
 
         let map_geometry = world.resource::<MapGeometry>();
         let world_pos = structure_data
@@ -143,15 +137,36 @@ impl Command for SpawnStructureCommand {
 
         let facing = self.data.facing;
 
-        let structure_entity = world
-            .spawn(StructureBundle::new(
-                self.center,
-                self.data,
-                picking_mesh,
-                scene_handle,
-                world_pos,
-            ))
-            .id();
+        let structure_bundle =
+            if let Some(structure_handles) = world.get_resource::<StructureHandles>() {
+                // TODO: vary this with the footprint of the structure
+                let picking_mesh = structure_handles.picking_mesh.clone_weak();
+                let scene_handle = structure_handles
+                    .scenes
+                    .get(&structure_id)
+                    .unwrap()
+                    .clone_weak();
+
+                StructureBundle::new(
+                    self.center,
+                    structure_data.footprint.clone(),
+                    self.data,
+                    picking_mesh,
+                    scene_handle,
+                    world_pos,
+                )
+            } else {
+                StructureBundle::new(
+                    self.center,
+                    structure_data.footprint.clone(),
+                    self.data,
+                    Handle::default(),
+                    Handle::default(),
+                    world_pos,
+                )
+            };
+
+        let structure_entity = world.spawn(structure_bundle).id();
 
         // PERF: these operations could be done in a single archetype move with more branching
         if let Some(organism_details) = &structure_data.organism_variety {
@@ -237,21 +252,24 @@ impl Command for SpawnStructureCommand {
         }
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-
-        geometry.add_structure(
-            facing,
-            self.center,
-            &structure_data.footprint,
-            structure_data.passable,
-            structure_entity,
-        );
+        // We've already verified that we can build here, so we can safely unwrap at this point
+        geometry
+            .add_structure(
+                self.center,
+                facing,
+                &structure_data.footprint,
+                structure_data.can_walk_on_roof,
+                structure_data.can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
     }
 }
 
 /// A [`Command`] used to despawn a structure via [`StructureCommandsExt`].
 struct DespawnStructureCommand {
     /// The tile position at which the structure to be despawned is found.
-    center: TilePos,
+    center: VoxelPos,
 }
 
 impl Command for DespawnStructureCommand {
@@ -260,16 +278,15 @@ impl Command for DespawnStructureCommand {
         let Some(structure_entity) = map_geometry.get_structure(self.center) else { return; };
 
         let facing = *world.entity(structure_entity).get::<Facing>().unwrap();
-        let structure_id = *world
+        let Some(&structure_id) = world
             .entity(structure_entity)
-            .get::<Id<Structure>>()
-            .unwrap();
+            .get::<Id<Structure>>() else { return; };
         let structure_manifest = world.resource::<StructureManifest>();
         let structure_data = structure_manifest.get(structure_id);
         let footprint = structure_data.footprint.clone();
 
         let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_structure(facing, self.center, &footprint);
+        let maybe_entity = geometry.remove_structure(self.center, &footprint, facing);
 
         // Check that there's something there to despawn
         if maybe_entity.is_none() {
@@ -285,7 +302,7 @@ impl Command for DespawnStructureCommand {
 /// A [`Command`] used to spawn a ghost via [`StructureCommandsExt`].
 struct SpawnStructureGhostCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -296,12 +313,12 @@ impl Command for SpawnStructureGhostCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.center) {
+        if !map_geometry.is_valid(self.center.hex) {
             return;
         }
 
         let manifest = world.resource::<StructureManifest>();
-        let footprint = manifest.construction_footprint(structure_id).clone();
+        let footprint = manifest.footprint(structure_id).clone();
         let structure_data = manifest.get(structure_id);
         let facing = self.data.facing;
 
@@ -311,22 +328,34 @@ impl Command for SpawnStructureGhostCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        if !map_geometry.can_build(self.center, &footprint, facing) {
+        if map_geometry
+            .is_space_available(self.center, &footprint, facing)
+            .is_ok()
+        {
             return;
         }
 
         // Remove any existing ghosts
-        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        let map_geometry = world.resource::<MapGeometry>();
 
         let mut existing_ghosts: Vec<Entity> = Vec::new();
-        for tile_pos in footprint.normalized(facing, self.center) {
-            if let Some(ghost_entity) = map_geometry.remove_ghost_structure(tile_pos) {
+        for voxel_pos in footprint.normalized(facing, self.center) {
+            if let Some(ghost_entity) = map_geometry.get_ghost_structure(voxel_pos) {
                 existing_ghosts.push(ghost_entity);
             }
         }
 
         for ghost_entity in existing_ghosts {
+            let facing = *world.entity(ghost_entity).get::<Facing>().unwrap();
+            let center = *world.entity(ghost_entity).get::<VoxelPos>().unwrap();
+            let structure_id = *world.entity(ghost_entity).get::<Id<Structure>>().unwrap();
+
+            let structure_manifest = world.resource::<StructureManifest>();
+            let footprint = structure_manifest.footprint(structure_id).clone();
+
             world.entity_mut(ghost_entity).despawn_recursive();
+            let mut map_geometry = world.resource_mut::<MapGeometry>();
+            map_geometry.remove_ghost_structure(center, &footprint, facing);
         }
 
         let structure_manifest = world.resource::<StructureManifest>();
@@ -365,7 +394,9 @@ impl Command for SpawnStructureGhostCommand {
             let structure_variety = structure_manifest.get(structure_id);
             let footprint = &structure_variety.footprint;
 
-            map_geometry.add_ghost_structure(facing, self.center, footprint, ghost_entity);
+            map_geometry
+                .add_ghost_structure(facing, self.center, footprint, ghost_entity)
+                .unwrap();
         });
     }
 }
@@ -373,20 +404,23 @@ impl Command for SpawnStructureGhostCommand {
 /// A [`Command`] used to despawn a ghost via [`StructureCommandsExt`].
 struct DespawnGhostCommand {
     /// The tile position at which the structure to be despawned is found.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
 }
 
 impl Command for DespawnGhostCommand {
     fn write(self, world: &mut World) {
-        let mut geometry = world.resource_mut::<MapGeometry>();
-        let maybe_entity = geometry.remove_ghost_structure(self.tile_pos);
+        let map_geometry = world.resource::<MapGeometry>();
+        let Some(ghost_entity) = map_geometry.get_ghost_structure(self.voxel_pos) else { return; };
 
-        // Check that there's something there to despawn
-        if maybe_entity.is_none() {
-            return;
-        }
+        let facing = *world.entity(ghost_entity).get::<Facing>().unwrap();
+        let center = *world.entity(ghost_entity).get::<VoxelPos>().unwrap();
+        let structure_id = *world.entity(ghost_entity).get::<Id<Structure>>().unwrap();
 
-        let ghost_entity = maybe_entity.unwrap();
+        let structure_manifest = world.resource::<StructureManifest>();
+        let footprint = structure_manifest.footprint(structure_id).clone();
+
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        map_geometry.remove_ghost_structure(center, &footprint, facing);
         // Make sure to despawn all children, which represent the meshes stored in the loaded gltf scene.
         world.entity_mut(ghost_entity).despawn_recursive();
     }
@@ -395,7 +429,7 @@ impl Command for DespawnGhostCommand {
 /// A [`Command`] used to spawn a preview via [`StructureCommandsExt`].
 struct SpawnStructurePreviewCommand {
     /// The tile position at which to spawn the structure.
-    center: TilePos,
+    center: VoxelPos,
     /// Data about the structure to spawn.
     data: ClipboardData,
 }
@@ -406,7 +440,7 @@ impl Command for SpawnStructurePreviewCommand {
         let map_geometry = world.resource::<MapGeometry>();
 
         // Check that the tile is within the bounds of the map
-        if !map_geometry.is_valid(self.center) {
+        if !map_geometry.is_valid(self.center.hex) {
             warn!("Preview position {:?} not valid.", self.center);
             return;
         }
@@ -423,8 +457,9 @@ impl Command for SpawnStructurePreviewCommand {
             .unwrap_or_default();
 
         // Check that the tiles needed are appropriate.
-        let forbidden =
-            !geometry.can_build(self.center, &structure_data.footprint, self.data.facing);
+        let forbidden = geometry
+            .is_space_available(self.center, &structure_data.footprint, self.data.facing)
+            .is_err();
 
         // Fetch the scene and material to use
         let structure_handles = world.resource::<StructureHandles>();

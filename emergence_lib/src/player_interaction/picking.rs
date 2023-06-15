@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
 use crate::{
-    asset_management::manifest::Id, construction::ghosts::Ghost, geometry::TilePos,
+    asset_management::manifest::Id, construction::ghosts::Ghost, geometry::VoxelPos,
     structures::structure_manifest::Structure, terrain::terrain_manifest::Terrain,
     units::unit_manifest::Unit,
 };
@@ -39,7 +39,7 @@ impl Plugin for PickingPlugin {
 #[derive(Resource, Default, Debug, Clone, Copy)]
 pub(crate) struct CursorPos {
     /// The tile position that the cursor is over top of.
-    tile_pos: Option<TilePos>,
+    voxel_pos: Option<VoxelPos>,
     /// The screen position of the cursor.
     ///
     /// Measured from the top-left corner in logical units.
@@ -55,9 +55,9 @@ pub(crate) struct CursorPos {
 impl CursorPos {
     /// Creates a new [`CursorPos`] with the given tile position.
     #[cfg(test)]
-    pub(crate) fn new(tile_pos: TilePos) -> Self {
+    pub(crate) fn new(voxel_pos: VoxelPos) -> Self {
         Self {
-            tile_pos: Some(tile_pos),
+            voxel_pos: Some(voxel_pos),
             ..Default::default()
         }
     }
@@ -65,8 +65,8 @@ impl CursorPos {
     /// The position of the cursor in hex coordinates, if it is on the hex map.
     ///
     /// If the cursor is outside the map, this will return `None`.
-    pub(crate) fn maybe_tile_pos(&self) -> Option<TilePos> {
-        self.tile_pos
+    pub(crate) fn maybe_voxel_pos(&self) -> Option<VoxelPos> {
+        self.voxel_pos
     }
 
     /// The position of the cursor on the screen, if available.
@@ -134,7 +134,7 @@ fn update_cursor_pos(
         ),
         With<Camera>,
     >,
-    terrain_query: Query<&TilePos, With<Id<Terrain>>>,
+    terrain_query: Query<&VoxelPos, With<Id<Terrain>>>,
     structure_query: Query<Entity, With<Id<Structure>>>,
     unit_query: Query<Entity, With<Id<Unit>>>,
     ghost_query: Query<Entity, With<Ghost>>,
@@ -143,7 +143,7 @@ fn update_cursor_pos(
     let Ok((terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast)) =
         camera_query.get_single() else { return; };
 
-    cursor_pos.tile_pos = if let Some((terrain_entity, _intersection_data)) =
+    cursor_pos.voxel_pos = if let Some((terrain_entity, _intersection_data)) =
         terrain_raycast.get_nearest_intersection()
     {
         terrain_query.get(terrain_entity).ok().copied()

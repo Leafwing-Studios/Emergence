@@ -8,7 +8,7 @@ use crate::{
     asset_management::manifest::Id,
     construction::{ghosts::Preview, terraform::TerraformingTool},
     crafting::recipe::ActiveRecipe,
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{DiscreteHeight, Facing, MapGeometry, VoxelPos},
     structures::structure_manifest::{Structure, StructureManifest},
 };
 
@@ -43,7 +43,7 @@ pub(crate) enum Tool {
     /// Terraform terrain.
     Terraform(TerraformingTool),
     /// A structure / structure to place
-    Structures(HashMap<TilePos, ClipboardData>),
+    Structures(HashMap<VoxelPos, ClipboardData>),
     /// No tool is selected.
     #[default]
     None,
@@ -64,7 +64,7 @@ impl Tool {
         *self = match maybe_structure {
             Some(clipboard_data) => Tool::Structures({
                 let mut map = HashMap::new();
-                map.insert(TilePos::default(), clipboard_data);
+                map.insert(VoxelPos::default(), clipboard_data);
                 map
             }),
             None => Tool::None,
@@ -111,14 +111,18 @@ impl Tool {
     /// Each axis is computed independently.
     fn normalize_positions(&mut self) {
         if let Tool::Structures(map) = self {
-            let center = TilePos {
-                hex: map.keys().map(|tile_pos| tile_pos.hex).center(),
+            let center_hex = map.keys().map(|voxel_pos| voxel_pos.hex).center();
+            let min_height = map.keys().map(|voxel_pos| voxel_pos.height).min().unwrap();
+
+            let center = VoxelPos {
+                hex: center_hex,
+                height: min_height,
             };
 
             let mut new_map = HashMap::with_capacity(map.capacity());
 
-            for (tile_pos, id) in map.iter() {
-                let new_tile_pos = *tile_pos - center;
+            for (voxel_pos, id) in map.iter() {
+                let new_tile_pos = *voxel_pos - center;
                 // PERF: eh maybe we can safe a clone by using remove?
                 new_map.insert(new_tile_pos, id.clone());
             }
@@ -130,7 +134,7 @@ impl Tool {
     /// Apply a tile-position shift to the items on the clipboard.
     ///
     /// Used to place items in the correct location relative to the cursor.
-    pub(crate) fn offset_positions(&self, origin: TilePos) -> Vec<(TilePos, ClipboardData)> {
+    pub(crate) fn offset_positions(&self, origin: VoxelPos) -> Vec<(VoxelPos, ClipboardData)> {
         if let Tool::Structures(map) = self {
             map.iter()
                 .map(|(k, v)| ((*k + origin), v.clone()))
@@ -150,13 +154,19 @@ impl Tool {
             for (&original_pos, item) in map.iter_mut() {
                 let new_pos = if clockwise {
                     item.facing.rotate_clockwise();
-                    original_pos.clockwise()
+                    original_pos.hex.clockwise()
                 } else {
                     item.facing.rotate_counterclockwise();
-                    original_pos.counter_clockwise()
+                    original_pos.hex.counter_clockwise()
                 };
 
-                new_map.insert(TilePos { hex: new_pos }, item.clone());
+                new_map.insert(
+                    VoxelPos {
+                        hex: new_pos,
+                        height: DiscreteHeight::ZERO,
+                    },
+                    item.clone(),
+                );
             }
 
             *map = new_map;
@@ -175,7 +185,7 @@ fn clear_clipboard(mut tool: ResMut<Tool>, actions: Res<ActionState<PlayerAction
 #[derive(WorldQuery)]
 struct ClipboardQuery {
     /// The position of the structure
-    tile_pos: &'static TilePos,
+    voxel_pos: &'static VoxelPos,
     /// The type of the structure
     structure_id: &'static Id<Structure>,
     /// The direction the structure is facing
@@ -215,32 +225,34 @@ fn copy_selection(
         match &*current_selection {
             CurrentSelection::Structure(entity) | CurrentSelection::GhostStructure(entity) => {
                 let query_item = structure_query.get(*entity).unwrap();
-                let tile_pos = query_item.tile_pos;
+                let voxel_pos = query_item.voxel_pos;
                 let clipboard_data = query_item.into();
-                map.insert(*tile_pos, clipboard_data);
+                map.insert(*voxel_pos, clipboard_data);
                 *tool = Tool::Structures(map);
                 tool.normalize_positions();
             }
             CurrentSelection::Terrain(selected_tiles) => {
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_tiles.is_empty() {
-                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         if let Some(entity) = map_geometry.get_ghost_structure(hovered_tile) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
-                            map.insert(TilePos::default(), clipboard_data);
+                            map.insert(VoxelPos::default(), clipboard_data);
                         } else if let Some(entity) = map_geometry.get_structure(hovered_tile) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
-                            map.insert(TilePos::default(), clipboard_data);
+                            map.insert(VoxelPos::default(), clipboard_data);
                         }
                     }
                 } else {
-                    for &selected_tile_pos in selected_tiles.selection().iter() {
-                        if let Some(entity) = map_geometry.get_ghost_structure(selected_tile_pos) {
+                    for &hex in selected_tiles.selection().iter() {
+                        // TODO: this doesn't let us select multiple layers of structures effectively
+                        let voxel_pos = map_geometry.on_top_of_terrain(hex);
+                        if let Some(entity) = map_geometry.get_ghost_structure(voxel_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
-                            map.insert(TilePos::default(), clipboard_data);
-                        } else if let Some(entity) = map_geometry.get_structure(selected_tile_pos) {
+                            map.insert(VoxelPos::default(), clipboard_data);
+                        } else if let Some(entity) = map_geometry.get_structure(voxel_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
-                            map.insert(TilePos::default(), clipboard_data);
+                            map.insert(VoxelPos::default(), clipboard_data);
                         }
                     }
                     *tool = Tool::Structures(map);
@@ -249,10 +261,10 @@ fn copy_selection(
             }
             // Otherwise, just grab whatever's under the cursor
             CurrentSelection::None | CurrentSelection::Unit(_) => {
-                if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
                     if let Some(structure_entity) = map_geometry.get_structure(cursor_tile_pos) {
                         let clipboard_data = structure_query.get(structure_entity).unwrap().into();
-                        map.insert(TilePos::default(), clipboard_data);
+                        map.insert(VoxelPos::default(), clipboard_data);
                         *tool = Tool::Structures(map);
                     }
                 }

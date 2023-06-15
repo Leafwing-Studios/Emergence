@@ -3,11 +3,12 @@
 use bevy::{prelude::*, utils::HashSet};
 use emergence_macros::IterableEnum;
 use hexx::shapes::hexagon;
+use hexx::Hex;
 use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::geometry::MapGeometry;
-use crate::geometry::TilePos;
+use crate::geometry::VoxelPos;
 
 use crate as emergence_lib;
 
@@ -40,57 +41,53 @@ impl Plugin for SelectionPlugin {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct SelectedTiles {
     /// Actively selected tiles
-    selected: HashSet<TilePos>,
+    // FIXME: this should probably store VoxelPos instead of Hex
+    selected: HashSet<Hex>,
 }
 
 impl SelectedTiles {
     /// Selects a single tile
-    pub(super) fn add_tile(&mut self, tile_pos: TilePos) {
-        self.selected.insert(tile_pos);
+    pub(super) fn add_tile(&mut self, voxel_pos: VoxelPos) {
+        self.selected.insert(voxel_pos.hex);
     }
 
     /// Deselects a single tile
     #[cfg(test)]
-    fn remove_tile(&mut self, tile_pos: TilePos) {
-        self.selected.remove(&tile_pos);
+    fn remove_tile(&mut self, voxel_pos: VoxelPos) {
+        self.selected.remove(&voxel_pos.hex);
     }
 
     /// Is the given tile in the selection?
-    pub(crate) fn contains_tile(&self, tile_pos: TilePos) -> bool {
-        self.selected.contains(&tile_pos)
+    pub(crate) fn contains_tile(&self, voxel_pos: VoxelPos) -> bool {
+        self.selected.contains(&voxel_pos.hex)
     }
 
     /// Computes the center of the selection
-    pub(crate) fn center(&self) -> TilePos {
-        TilePos {
-            hex: self.selected.iter().map(|tile_pos| tile_pos.hex).center(),
-        }
+    pub(crate) fn center(&self) -> Hex {
+        self.selected.iter().copied().center()
     }
 
     /// Draws a hollow hexagonal ring of tiles.
-    fn draw_ring(center: TilePos, radius: u32) -> HashSet<TilePos> {
-        let hex_coord = center.ring(radius);
-        HashSet::from_iter(hex_coord.into_iter().map(|hex| TilePos { hex }))
+    fn draw_ring(center: VoxelPos, radius: u32) -> Vec<Hex> {
+        center.hex.ring(radius).collect()
     }
 
     /// Draws a hexagon of tiles.
-    fn draw_hexagon(center: TilePos, radius: u32) -> HashSet<TilePos> {
-        let hex_coord = hexagon(center.hex, radius);
-        HashSet::from_iter(hex_coord.map(|hex| TilePos { hex }))
+    fn draw_hexagon(center: VoxelPos, radius: u32) -> Vec<Hex> {
+        hexagon(center.hex, radius).collect()
     }
 
     /// Computes the set of hexagons between `start` and `end`, with a thickness determnind by `radius`.
-    fn draw_line(start: TilePos, end: TilePos, radius: u32) -> HashSet<TilePos> {
-        let line = start.line_to(end.hex);
-        let mut tiles = HashSet::<TilePos>::new();
-
-        for line_hex in line {
-            let hexagon = hexagon(line_hex, radius);
-            for hex in hexagon {
-                tiles.insert(TilePos { hex });
+    fn draw_line(start: VoxelPos, end: VoxelPos, radius: u32) -> Vec<Hex> {
+        if radius == 0 {
+            start.hex.line_to(end.hex).collect()
+        } else {
+            let mut hex_vec = Vec::new();
+            for central_hex in start.hex.line_to(end.hex) {
+                hex_vec.extend(hexagon(central_hex, radius));
             }
+            hex_vec
         }
-        tiles
     }
 
     /// Clears the set of selected tiles.
@@ -99,7 +96,7 @@ impl SelectedTiles {
     }
 
     /// The set of currently selected tiles.
-    pub(crate) fn selection(&self) -> &HashSet<TilePos> {
+    pub(crate) fn selection(&self) -> &HashSet<Hex> {
         &self.selected
     }
 
@@ -117,7 +114,7 @@ impl SelectedTiles {
     /// Handles all of the logic needed to add tiles to the selection.
     fn add_to_selection(
         &mut self,
-        hovered_tile: TilePos,
+        hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
@@ -133,7 +130,7 @@ impl SelectedTiles {
     /// Handles all of the logic needed to remove tiles from the selection.
     fn remove_from_selection(
         &mut self,
-        hovered_tile: TilePos,
+        hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
@@ -151,10 +148,10 @@ impl SelectedTiles {
     /// Returns the set of tiles that should be modified by any selection action.
     fn compute_selection_region(
         &self,
-        hovered_tile: TilePos,
+        hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
-    ) -> HashSet<TilePos> {
+    ) -> HashSet<Hex> {
         match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
@@ -167,7 +164,7 @@ impl SelectedTiles {
         // PERF: we could be faster about this by only collecting once
         .into_iter()
         // Ensure we don't try to operate off of the map
-        .filter(|tile_pos| map_geometry.is_valid(*tile_pos))
+        .filter(|hex| map_geometry.is_valid(*hex))
         .collect()
     }
 
@@ -175,7 +172,7 @@ impl SelectedTiles {
     pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
         self.selection()
             .iter()
-            .flat_map(|tile_pos| map_geometry.get_terrain(*tile_pos))
+            .flat_map(|hex| map_geometry.get_terrain(*hex))
             .collect()
     }
 }
@@ -184,26 +181,29 @@ impl SelectedTiles {
 #[derive(Resource, Debug, Default, Deref)]
 pub(crate) struct HoveredTiles {
     /// The set of tiles that are hovered over
-    hovered: HashSet<TilePos>,
+    // FIXME: these should probably store a VoxelPos instead of a Hex
+    hovered: HashSet<Hex>,
 }
 
 impl HoveredTiles {
     /// Updates the set of hovered actions based on the current cursor position and player inputs.
-    fn update(&mut self, hovered_tile: TilePos, selection_state: &SelectionState) {
-        self.hovered = match selection_state.shape {
+    fn update(&mut self, hovered_tile: VoxelPos, selection_state: &SelectionState) {
+        let hex_vec = match selection_state.shape {
             SelectionShape::Single => {
                 SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
             }
             SelectionShape::Area { center, radius } => {
-                let mut set = SelectedTiles::draw_ring(center, radius);
+                let mut vec = SelectedTiles::draw_ring(center, radius);
                 // Also show center of ring for clarity.
-                set.insert(hovered_tile);
-                set
+                vec.push(hovered_tile.hex);
+                vec
             }
             SelectionShape::Line { start } => {
                 SelectedTiles::draw_line(start, hovered_tile, selection_state.brush_size)
             }
         };
+
+        self.hovered = HashSet::from_iter(hex_vec.into_iter());
     }
 }
 
@@ -308,7 +308,7 @@ impl CurrentSelection {
             CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
                 true => {
                     let mut selected_tiles = SelectedTiles::default();
-                    if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                    if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.add_tile(cursor_tile_pos);
                     }
                     selected_tiles
@@ -317,7 +317,7 @@ impl CurrentSelection {
             },
             _ => {
                 let mut selected_tiles = SelectedTiles::default();
-                if let Some(cursor_tile_pos) = cursor_pos.maybe_tile_pos() {
+                if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
                     selected_tiles.add_tile(cursor_tile_pos);
                 }
                 selected_tiles
@@ -329,7 +329,7 @@ impl CurrentSelection {
     #[must_use]
     fn select_terrain(
         &self,
-        hovered_tile: TilePos,
+        hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) -> Self {
@@ -351,7 +351,7 @@ impl CurrentSelection {
     fn update_from_cursor_pos(
         &mut self,
         cursor_pos: &CursorPos,
-        hovered_tile: TilePos,
+        hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) {
@@ -413,7 +413,7 @@ impl CurrentSelection {
                 .maybe_structure()
                 .map(CurrentSelection::Structure),
             SelectionVariant::Terrain => {
-                let hovered_tile = cursor_pos.maybe_tile_pos()?;
+                let hovered_tile = cursor_pos.maybe_voxel_pos()?;
                 let mut selected_tiles = SelectedTiles::default();
                 selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
                 Some(CurrentSelection::Terrain(selected_tiles))
@@ -521,20 +521,25 @@ enum SelectionShape {
     /// A regular hexagon
     Area {
         /// The center of the hexagon
-        center: TilePos,
+        center: VoxelPos,
         /// The distance to each corner of the hexagon, in tiles
         radius: u32,
     },
     /// A discretized line
     Line {
         /// The start of the line
-        start: TilePos,
+        start: VoxelPos,
     },
 }
 
 impl SelectionState {
     /// Determine what selection state should be used this frame based on player actions
-    fn compute(&mut self, tool: &Tool, actions: &ActionState<PlayerAction>, hovered_tile: TilePos) {
+    fn compute(
+        &mut self,
+        tool: &Tool,
+        actions: &ActionState<PlayerAction>,
+        hovered_tile: VoxelPos,
+    ) {
         use PlayerAction::*;
 
         self.multiple = actions.pressed(PlayerAction::Multiple);
@@ -553,7 +558,7 @@ impl SelectionState {
             } else {
                 hovered_tile
             };
-            let radius = hovered_tile.unsigned_distance_to(center.hex);
+            let radius = hovered_tile.hex.unsigned_distance_to(center.hex);
 
             SelectionShape::Area { center, radius }
         } else {
@@ -599,7 +604,7 @@ fn set_selection(
     actions: Res<ActionState<PlayerAction>>,
     mut hovered_tiles: ResMut<HoveredTiles>,
     mut selection_state: ResMut<SelectionState>,
-    mut last_tile_selected: Local<Option<TilePos>>,
+    mut last_tile_selected: Local<Option<VoxelPos>>,
     map_geometry: Res<MapGeometry>,
 ) {
     // Cast to ordinary references for ease of use
@@ -607,7 +612,7 @@ fn set_selection(
     let cursor_pos = &*cursor_pos;
     let map_geometry = &*map_geometry;
 
-    let Some(hovered_tile) = cursor_pos.maybe_tile_pos() else {return};
+    let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() else {return};
 
     // Compute how we should handle the selection based on the actions of the player
     selection_state.compute(&tool, actions, hovered_tile);
@@ -634,14 +639,14 @@ fn set_selection(
         (SelectionAction::Select, SelectionShape::Single) => {
             // If we can compare them, do
             let same_tile_as_last_time = if let (Some(last_pos), Some(current_pos)) =
-                (*last_tile_selected, cursor_pos.maybe_tile_pos())
+                (*last_tile_selected, cursor_pos.maybe_voxel_pos())
             {
                 last_pos == current_pos
             } else {
                 false
             };
             // Update the cache
-            *last_tile_selected = cursor_pos.maybe_tile_pos();
+            *last_tile_selected = cursor_pos.maybe_voxel_pos();
 
             if same_tile_as_last_time
                 && !selection_state.multiple
@@ -660,7 +665,7 @@ fn set_selection(
         (SelectionAction::Deselect, SelectionShape::Area { .. } | SelectionShape::Single) => {
             match &mut *current_selection {
                 CurrentSelection::Terrain(ref mut selected_tiles) => {
-                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
                             &selection_state,
@@ -674,7 +679,7 @@ fn set_selection(
         (SelectionAction::Deselect, SelectionShape::Line { .. }) => {
             match &mut *current_selection {
                 CurrentSelection::Terrain(ref mut selected_tiles) => {
-                    if let Some(hovered_tile) = cursor_pos.maybe_tile_pos() {
+                    if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         selected_tiles.remove_from_selection(
                             hovered_tile,
                             &selection_state,
@@ -697,13 +702,13 @@ fn set_selection(
 pub(super) fn set_tile_interactions(
     current_selection: Res<CurrentSelection>,
     hovered_tiles: Res<HoveredTiles>,
-    mut terrain_query: Query<(&TilePos, &mut ObjectInteraction)>,
+    mut terrain_query: Query<(&VoxelPos, &mut ObjectInteraction)>,
 ) {
     if current_selection.is_changed() || hovered_tiles.is_changed() {
-        for (&tile_pos, mut object_interaction) in terrain_query.iter_mut() {
-            let hovered = hovered_tiles.contains(&tile_pos);
+        for (&voxel_pos, mut object_interaction) in terrain_query.iter_mut() {
+            let hovered = hovered_tiles.contains(&voxel_pos.hex);
             let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-                selected_tiles.contains_tile(tile_pos)
+                selected_tiles.contains_tile(voxel_pos)
             } else {
                 false
             };
@@ -720,7 +725,7 @@ mod tests {
     use super::SelectedTiles;
     use crate::{
         enum_iter::IterableEnum,
-        geometry::TilePos,
+        geometry::VoxelPos,
         player_interaction::{
             picking::CursorPos,
             selection::{CurrentSelection, SelectionVariant},
@@ -730,15 +735,15 @@ mod tests {
     #[test]
     fn simple_selection() {
         let mut selected_tiles = SelectedTiles::default();
-        let tile_pos = TilePos::default();
+        let voxel_pos = VoxelPos::default();
 
-        selected_tiles.add_tile(tile_pos);
-        assert!(selected_tiles.contains_tile(tile_pos));
+        selected_tiles.add_tile(voxel_pos);
+        assert!(selected_tiles.contains_tile(voxel_pos));
         assert!(!selected_tiles.is_empty());
         assert_eq!(selected_tiles.selected.len(), 1);
 
-        selected_tiles.remove_tile(tile_pos);
-        assert!(!selected_tiles.contains_tile(tile_pos));
+        selected_tiles.remove_tile(voxel_pos);
+        assert!(!selected_tiles.contains_tile(voxel_pos));
         assert!(selected_tiles.is_empty());
         assert_eq!(selected_tiles.selected.len(), 0);
     }
@@ -747,11 +752,11 @@ mod tests {
     fn multi_select() {
         let mut selected_tiles = SelectedTiles::default();
 
-        selected_tiles.add_tile(TilePos::new(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
         // Intentionally doubled
-        selected_tiles.add_tile(TilePos::new(1, 1));
-        selected_tiles.add_tile(TilePos::new(2, 2));
-        selected_tiles.add_tile(TilePos::new(3, 3));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
+        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
     }
@@ -759,9 +764,9 @@ mod tests {
     #[test]
     fn clear_selection() {
         let mut selected_tiles = SelectedTiles::default();
-        selected_tiles.add_tile(TilePos::new(1, 1));
-        selected_tiles.add_tile(TilePos::new(2, 2));
-        selected_tiles.add_tile(TilePos::new(3, 3));
+        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
+        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
+        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
 
         assert_eq!(selected_tiles.selected.len(), 3);
         selected_tiles.clear_selection();
@@ -770,9 +775,9 @@ mod tests {
 
     #[test]
     fn relevant_tiles_returns_cursor_pos_with_empty_selection() {
-        let cursor_pos = CursorPos::new(TilePos::new(24, 7));
+        let cursor_pos = CursorPos::new(VoxelPos::from_xy(24, 7));
         let mut cursor_pos_selected = SelectedTiles::default();
-        cursor_pos_selected.add_tile(cursor_pos.maybe_tile_pos().unwrap());
+        cursor_pos_selected.add_tile(cursor_pos.maybe_voxel_pos().unwrap());
 
         assert_eq!(
             CurrentSelection::None.relevant_tiles(&cursor_pos),

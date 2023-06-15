@@ -73,15 +73,23 @@ impl WorldGenState {
         generation_config: Res<GenerationConfig>,
         world_gen_state: Res<State<WorldGenState>>,
         mut next_world_gen_state: ResMut<NextState<WorldGenState>>,
-        mut frame_pace_settings: ResMut<FramepaceSettings>,
-        asset_state: Res<State<AssetState>>,
+        mut maybe_frame_pace_settings: Option<ResMut<FramepaceSettings>>,
+        maybe_asset_state: Option<Res<State<AssetState>>>,
     ) {
         match world_gen_state.0 {
             WorldGenState::Waiting => {
-                // Don't limit the tick rate while generating the world
-                frame_pace_settings.limiter = Limiter::Off;
+                if let Some(frame_pace_settings) = maybe_frame_pace_settings.as_mut() {
+                    // Don't limit the tick rate while generating the world
+                    if !matches!(frame_pace_settings.limiter, Limiter::Off) {
+                        frame_pace_settings.limiter = Limiter::Off;
+                    }
+                }
 
-                if asset_state.0 == AssetState::FullyLoaded {
+                if let Some(asset_state) = maybe_asset_state {
+                    if asset_state.0 == AssetState::FullyLoaded {
+                        next_world_gen_state.set(WorldGenState::Generating);
+                    }
+                } else {
                     next_world_gen_state.set(WorldGenState::Generating);
                 }
             }
@@ -90,15 +98,21 @@ impl WorldGenState {
             }
             WorldGenState::BurningIn => {
                 *number_of_burn_in_ticks += 1;
-                info!(
-                    "Simulating the generated world to let it stabilize: {}/{}",
-                    *number_of_burn_in_ticks, generation_config.number_of_burn_in_ticks
-                );
 
                 if *number_of_burn_in_ticks > generation_config.number_of_burn_in_ticks {
+                    info!("Burn in complete.");
+
                     // Resume limiting the tick rate
-                    frame_pace_settings.limiter = Limiter::Auto;
+                    if let Some(mut frame_pace_settings) = maybe_frame_pace_settings {
+                        frame_pace_settings.limiter = Limiter::Auto;
+                    }
+
                     next_world_gen_state.set(WorldGenState::Complete);
+                } else {
+                    info!(
+                        "Simulating the generated world to let it stabilize: {}/{}",
+                        *number_of_burn_in_ticks, generation_config.number_of_burn_in_ticks
+                    );
                 }
             }
             WorldGenState::Complete => (),
@@ -127,8 +141,9 @@ pub struct GenerationConfig {
     high_frequency_noise: SimplexSettings,
 }
 
-impl Default for GenerationConfig {
-    fn default() -> GenerationConfig {
+impl GenerationConfig {
+    /// The default world generation configuration.
+    pub fn standard() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
         // FIXME: load from file somehow
         terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
@@ -148,7 +163,7 @@ impl Default for GenerationConfig {
         structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
 
         GenerationConfig {
-            map_radius: 80,
+            map_radius: 30,
             number_of_burn_in_ticks: 0,
             unit_chances,
             landmark_chances,
@@ -171,5 +186,203 @@ impl Default for GenerationConfig {
                 seed: 100.0,
             },
         }
+    }
+
+    /// A tiny world gen config for testing.
+    pub fn testing() -> Self {
+        let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
+        // FIXME: load from file somehow
+        terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
+        terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
+
+        let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        landmark_chances.insert(Id::from_name("simple_landmark".to_string()), 1e-1);
+
+        let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        unit_chances.insert(Id::from_name("simple_unit".to_string()), 1e-1);
+
+        let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        structure_chances.insert(Id::from_name("simple_structure".to_string()), 1e-1);
+        structure_chances.insert(Id::from_name("passable_structure".to_string()), 1e-1);
+
+        GenerationConfig {
+            map_radius: 3,
+            number_of_burn_in_ticks: 0,
+            unit_chances,
+            landmark_chances,
+            structure_chances,
+            terrain_weights,
+            low_frequency_noise: SimplexSettings {
+                frequency: 1e-2,
+                amplitude: 8.0,
+                octaves: 4,
+                lacunarity: 1.,
+                gain: 0.5,
+                seed: 315.0,
+            },
+            high_frequency_noise: SimplexSettings {
+                frequency: 0.1,
+                amplitude: 1.0,
+                octaves: 2,
+                lacunarity: 2.3,
+                gain: 0.5,
+                seed: 100.0,
+            },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::asset_management::manifest::DummyManifestPlugin;
+    use crate::geometry::{MapGeometry, VoxelPos};
+
+    use super::*;
+
+    #[test]
+    fn can_generate_terrain() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_system(generate_terrain);
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_organisms() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+    }
+
+    #[test]
+    fn units_are_on_top_of_empty_ground() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let walkable_voxels = map_geometry.walkable_voxels();
+
+        let mut unit_query = app.world.query_filtered::<&VoxelPos, With<Id<Unit>>>();
+
+        for &voxel_pos in unit_query.iter(&app.world) {
+            let terrain_height = map_geometry.get_height(voxel_pos.hex).unwrap();
+            assert_eq!(voxel_pos.height, terrain_height.above());
+            assert!(map_geometry.is_voxel_clear(voxel_pos).is_ok());
+            assert!(walkable_voxels.contains(&voxel_pos));
+        }
+    }
+
+    #[test]
+    fn structures_are_above_ground() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut structure_query = app.world.query_filtered::<&VoxelPos, With<Id<Structure>>>();
+
+        for &voxel_pos in structure_query.iter(&app.world) {
+            let terrain_height = map_geometry.get_height(voxel_pos.hex).unwrap();
+            assert!(voxel_pos.height > terrain_height);
+        }
+    }
+
+    #[test]
+    fn structures_exist() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut structure_query = app
+            .world
+            .query_filtered::<(Entity, &VoxelPos), With<Id<Structure>>>();
+
+        for (queried_entity, &voxel_pos) in structure_query.iter(&app.world) {
+            let cached_structure_entity = map_geometry.get_structure(voxel_pos).unwrap();
+            assert_eq!(queried_entity, cached_structure_entity);
+        }
+    }
+
+    #[test]
+    fn terrain_exists() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_system(generate_terrain);
+
+        app.update();
+
+        let map_geometry = app.world.resource::<MapGeometry>().clone();
+        let mut terrain_query = app.world.query::<&Id<Terrain>>();
+
+        for &hex in map_geometry.all_hexes() {
+            let cached_terrain_entity = map_geometry.get_terrain(hex).unwrap();
+            terrain_query
+                .get(&app.world, cached_terrain_entity)
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn can_generate_landmarks() {
+        let mut app = App::new();
+        app.add_plugin(DummyManifestPlugin);
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, generate_landmarks).chain());
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_water() {
+        let mut app = App::new();
+        app.insert_resource(GenerationConfig::testing());
+        app.add_startup_systems((generate_terrain, initialize_water_table).chain());
+
+        app.update();
+    }
+
+    #[test]
+    fn can_generate_world() {
+        let mut app = App::new();
+        app.add_plugin(GenerationPlugin {
+            config: GenerationConfig::testing(),
+        })
+        .add_plugin(DummyManifestPlugin);
+        app.update();
+
+        let mut unit_query = app.world.query::<&Id<Unit>>();
+        assert!(
+            unit_query.iter(&app.world).next().is_some(),
+            "No units generated"
+        );
+
+        let mut structure_query = app.world.query::<&Id<Structure>>();
+        assert!(
+            structure_query.iter(&app.world).next().is_some(),
+            "No structures generated"
+        );
     }
 }

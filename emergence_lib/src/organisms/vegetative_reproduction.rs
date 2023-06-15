@@ -3,13 +3,13 @@
 //! In Emergence, this allows organisms to spread to nearby tiles without seeds.
 use bevy::prelude::*;
 use leafwing_abilities::prelude::Pool;
-use rand::prelude::SliceRandom;
+use rand::seq::IteratorRandom;
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, MapGeometry, VoxelPos},
     player_interaction::clipboard::ClipboardData,
     structures::{
         commands::StructureCommandsExt,
@@ -65,7 +65,7 @@ impl From<RawVegetativeReproduction> for VegetativeReproduction {
 /// Spreads organisms to nearby tiles.
 pub(super) fn vegetative_spread(
     mut query: Query<(
-        &TilePos,
+        &VoxelPos,
         &Id<Structure>,
         &mut VegetativeReproduction,
         &mut EnergyPool,
@@ -78,7 +78,8 @@ pub(super) fn vegetative_spread(
     let mut rng = rand::thread_rng();
     let delta_time = fixed_time.period;
 
-    for (tile_pos, &structure_id, mut vegetative_reproduction, mut energy_pool) in query.iter_mut()
+    for (&voxel_pos, &structure_id, mut vegetative_reproduction, mut energy_pool) in
+        query.iter_mut()
     {
         vegetative_reproduction.timer.tick(delta_time);
         if !vegetative_reproduction.timer.finished() {
@@ -90,11 +91,9 @@ pub(super) fn vegetative_spread(
             continue;
         }
 
-        // PERF: we should just be returning a Vec<TilePos> or an [Option<TilePos; 6] here and allocating once
-        let empty_neighbors = tile_pos.empty_neighbors(&map_geometry);
-        let Some(&tile_to_spawn_in) = empty_neighbors
-            .into_iter()
-            .collect::<Vec<TilePos>>()
+        // PERF: we should just be returning a Vec<VoxelPos> or an [Option<VoxelPos; 6] here and allocating once
+        let empty_neighbors = map_geometry.empty_neighbors(voxel_pos);
+        let Some(tile_to_spawn_in) = empty_neighbors
 			// Just skip this organism if there are no empty neighbors
             .choose(&mut rng) else { continue };
 

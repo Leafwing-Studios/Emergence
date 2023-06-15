@@ -16,15 +16,14 @@ use crate::{
     structures::structure_manifest::StructureManifest,
     terrain::terrain_manifest::TerrainManifest,
     units::unit_manifest::UnitManifest,
+    world_gen::WorldGenState,
 };
 
 use self::{
     ghost_structure_details::{GhostStructureDetails, GhostStructureDetailsQuery},
     organism_details::{OrganismDetails, OrganismDetailsQuery},
     structure_details::{StructureDetails, StructureDetailsQuery},
-    terrain_details::{
-        GhostTerrainDetailsQuery, TerraformingDetails, TerrainDetails, TerrainDetailsQuery,
-    },
+    terrain_details::{TerrainDetails, TerrainDetailsQuery},
     unit_details::{UnitDetails, UnitDetailsQuery},
 };
 
@@ -42,7 +41,8 @@ impl Plugin for SelectionDetailsPlugin {
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
                     .before(update_selection_details)
-                    .run_if(in_state(AssetState::FullyLoaded)),
+                    .run_if(in_state(AssetState::FullyLoaded))
+                    .run_if(in_state(WorldGenState::Complete)),
             )
             .add_system(change_camera_mode.after(update_selection_details))
             .add_system(update_selection_details.run_if(in_state(AssetState::FullyLoaded)));
@@ -297,7 +297,6 @@ fn get_details(
     selection_type: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
     ghost_structure_query: Query<GhostStructureDetailsQuery>,
-    ghost_terrain_query: Query<GhostTerrainDetailsQuery>,
     organism_query: Query<OrganismDetailsQuery>,
     structure_query: Query<StructureDetailsQuery>,
     terrain_query: Query<TerrainDetailsQuery>,
@@ -312,7 +311,7 @@ fn get_details(
             let ghost_query_item = ghost_structure_query.get(*ghost_structure_entity)?;
             SelectionDetails::GhostStructure(GhostStructureDetails {
                 entity: *ghost_structure_entity,
-                tile_pos: *ghost_query_item.tile_pos,
+                voxel_pos: *ghost_query_item.voxel_pos,
                 structure_id: *ghost_query_item.structure_id,
                 input_inventory: ghost_query_item.input_inventory.clone(),
                 crafting_state: ghost_query_item.crafting_state.clone(),
@@ -340,7 +339,7 @@ fn get_details(
 
             SelectionDetails::Structure(StructureDetails {
                 entity: structure_query_item.entity,
-                tile_pos: *structure_query_item.tile_pos,
+                voxel_pos: *structure_query_item.voxel_pos,
                 structure_id: *structure_query_item.structure_id,
                 maybe_organism_details,
                 marked_for_removal: structure_query_item.marked_for_removal.is_some(),
@@ -356,35 +355,27 @@ fn get_details(
         }
         CurrentSelection::Terrain(selected_tiles) => {
             // FIXME: display info about multiple tiles correctly
-            if let Some(tile_pos) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.get_terrain(*tile_pos).unwrap();
+            if let Some(hex) = selected_tiles.selection().iter().next() {
+                let terrain_entity = map_geometry.get_terrain(*hex).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
-
-                let maybe_terraforming_details = if let Some(ghost_terrain_entity) =
-                    map_geometry.get_ghost_terrain(*tile_pos)
-                {
-                    let ghost_terrain_query_item = ghost_terrain_query.get(ghost_terrain_entity)?;
-                    Some(TerraformingDetails {
-                        terraforming_action: *ghost_terrain_query_item.terraforming_action,
-                        input_inventory: ghost_terrain_query_item.input_inventory.clone(),
-                        output_inventory: ghost_terrain_query_item.output_inventory.clone(),
-                    })
-                } else {
-                    None
-                };
 
                 SelectionDetails::Terrain(TerrainDetails {
                     entity: terrain_entity,
                     terrain_id: *terrain_query_item.terrain_id,
-                    tile_pos: *tile_pos,
-                    height: *terrain_query_item.height,
+                    voxel_pos: *terrain_query_item.voxel_pos,
+                    height: terrain_query_item.voxel_pos.height(),
                     depth_to_water_table: *terrain_query_item.water_depth,
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
-                    signals: signals.all_signals_at_position(*tile_pos),
+                    signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
                     zoning: terrain_query_item.zoning.clone(),
-                    litter: terrain_query_item.litter.clone(),
-                    maybe_terraforming_details,
+                    maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
+                        |q| terrain_details::TerraformingDetails {
+                            terraforming_action: *q.0,
+                            input_inventory: q.1.clone(),
+                            output_inventory: q.2.clone(),
+                        },
+                    ),
                 })
             } else {
                 SelectionDetails::None
@@ -410,7 +401,7 @@ fn get_details(
                 entity: unit_query_item.entity,
                 unit_id: *unit_query_item.unit_id,
                 diet: unit_data.diet.clone(),
-                tile_pos: *unit_query_item.tile_pos,
+                voxel_pos: *unit_query_item.voxel_pos,
                 held_item: unit_query_item.held_item.clone(),
                 goal: unit_query_item.goal.clone(),
                 action: unit_query_item.action.clone(),
@@ -447,7 +438,7 @@ mod ghost_structure_details {
             inventories::{CraftingState, InputInventory},
             recipe::{ActiveRecipe, RecipeManifest},
         },
-        geometry::TilePos,
+        geometry::VoxelPos,
         items::item_manifest::ItemManifest,
         signals::Emitter,
         structures::structure_manifest::{Structure, StructureManifest},
@@ -461,7 +452,7 @@ mod ghost_structure_details {
         /// The type of structure
         pub(super) structure_id: &'static Id<Structure>,
         /// The tile position of this ghost
-        pub(crate) tile_pos: &'static TilePos,
+        pub(crate) voxel_pos: &'static VoxelPos,
         /// The inputs that must be added to construct this ghost
         pub(super) input_inventory: &'static InputInventory,
         /// The ghost's progress through construction
@@ -478,7 +469,7 @@ mod ghost_structure_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The tile position of this structure
-        pub(crate) tile_pos: TilePos,
+        pub(crate) voxel_pos: VoxelPos,
         /// The type of structure, e.g. plant or fungus.
         pub(crate) structure_id: Id<Structure>,
         /// The inputs that must be added to construct this ghost
@@ -499,14 +490,14 @@ mod ghost_structure_details {
         ) -> String {
             let entity = self.entity;
             let structure_id = structure_manifest.name(self.structure_id);
-            let tile_pos = &self.tile_pos;
+            let voxel_pos = &self.voxel_pos;
             let crafting_state = &self.crafting_state;
             let recipe = self.active_recipe.display(recipe_manifest);
             let construction_materials = self.input_inventory.display(item_manifest);
 
             format!(
                 "Entity: {entity:?}
-Tile: {tile_pos}
+Tile: {voxel_pos}
 Ghost structure type: {structure_id}
 Recipe: {recipe}
 Construction materials: {construction_materials}
@@ -588,7 +579,7 @@ mod structure_details {
             recipe::{ActiveRecipe, RecipeManifest},
             workers::WorkersPresent,
         },
-        geometry::TilePos,
+        geometry::VoxelPos,
         items::item_manifest::ItemManifest,
         organisms::vegetative_reproduction::VegetativeReproduction,
         signals::Emitter,
@@ -606,7 +597,7 @@ mod structure_details {
         /// The type of structure
         pub(super) structure_id: &'static Id<Structure>,
         /// The tile position of this structure
-        pub(crate) tile_pos: &'static TilePos,
+        pub(crate) voxel_pos: &'static VoxelPos,
         /// The inventory for the input items.
         pub(crate) input_inventory: Option<&'static InputInventory>,
         /// The inventory for the output items.
@@ -635,7 +626,7 @@ mod structure_details {
         /// The root entity
         pub(super) entity: Entity,
         /// The tile position of this structure
-        pub(crate) tile_pos: TilePos,
+        pub(crate) voxel_pos: VoxelPos,
         /// The type of structure, e.g. plant or fungus.
         pub(crate) structure_id: Id<Structure>,
         /// Details about this organism, if it is one.
@@ -672,8 +663,11 @@ mod structure_details {
         ) -> String {
             let entity = self.entity;
             let structure_type = structure_manifest.name(self.structure_id);
-            let tile_pos = &self.tile_pos;
-            let height = structure_manifest.get(self.structure_id).height;
+            let height = structure_manifest
+                .get(self.structure_id)
+                .footprint
+                .max_height();
+            let voxel_pos = &self.voxel_pos;
             let emitter = self.emitter.clone().unwrap_or_default().display(
                 item_manifest,
                 unit_manifest,
@@ -685,7 +679,7 @@ mod structure_details {
                 "Entity: {entity:?}
 Structure type: {structure_type}
 Emitting: {emitter}
-Tile: {tile_pos}
+Tile: {voxel_pos}
 Height: {height}"
             );
 
@@ -748,15 +742,12 @@ mod terrain_details {
         asset_management::manifest::Id,
         construction::{terraform::TerraformingAction, zoning::Zoning},
         crafting::inventories::{InputInventory, OutputInventory},
-        geometry::{Height, TilePos},
+        geometry::{Height, VoxelPos},
         items::item_manifest::ItemManifest,
         light::shade::{ReceivedLight, Shade},
         signals::LocalSignals,
         structures::structure_manifest::StructureManifest,
-        terrain::{
-            litter::Litter,
-            terrain_manifest::{Terrain, TerrainManifest},
-        },
+        terrain::terrain_manifest::{Terrain, TerrainManifest},
         units::unit_manifest::UnitManifest,
         water::WaterDepth,
     };
@@ -766,8 +757,8 @@ mod terrain_details {
     pub(super) struct TerrainDetailsQuery {
         /// The root entity
         pub(super) entity: Entity,
-        /// The height of the tile
-        pub(super) height: &'static Height,
+        /// The position and height of the tile
+        pub(super) voxel_pos: &'static VoxelPos,
         /// The shade of the tile
         pub(super) shade: &'static Shade,
         /// The recieved light of the tile
@@ -776,21 +767,14 @@ mod terrain_details {
         pub(super) terrain_id: &'static Id<Terrain>,
         /// The zoning applied to this terrain
         pub(super) zoning: &'static Zoning,
-        /// Any littered items on this tile
-        pub(super) litter: &'static Litter,
         /// The depth of water on this tile
         pub(super) water_depth: &'static WaterDepth,
-    }
-
-    /// Data needed to populate [`TerraformingDetails`].
-    #[derive(WorldQuery)]
-    pub(super) struct GhostTerrainDetailsQuery {
-        /// The terraforming action being performed
-        pub(super) terraforming_action: &'static TerraformingAction,
-        /// The inputs that must be added to complete this terraforming action
-        pub(super) input_inventory: &'static InputInventory,
-        /// The outputs that must be removed to complete this terraforming action
-        pub(super) output_inventory: &'static OutputInventory,
+        /// Any applied terraforming action
+        pub(super) maybe_terraforming_details: Option<(
+            &'static TerraformingAction,
+            &'static InputInventory,
+            &'static OutputInventory,
+        )>,
     }
 
     /// Detailed info about a given terraforming ghost.
@@ -831,7 +815,7 @@ Output: {output}"
         /// The type of terrain
         pub(super) terrain_id: Id<Terrain>,
         /// The location of the tile
-        pub(super) tile_pos: TilePos,
+        pub(super) voxel_pos: VoxelPos,
 
         /// The height of the tile
         pub(super) height: Height,
@@ -845,8 +829,6 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The zoning of this tile
         pub(super) zoning: Zoning,
-        /// Any littered items on this tile
-        pub(super) litter: Litter,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
@@ -862,7 +844,7 @@ Output: {output}"
         ) -> String {
             let entity = self.entity;
             let terrain_type = terrain_manifest.name(self.terrain_id);
-            let tile_pos = &self.tile_pos;
+            let voxel_pos = &self.voxel_pos;
             let height = &self.height;
             let depth_to_water_table = &self.depth_to_water_table;
             let shade = &self.shade;
@@ -874,19 +856,16 @@ Output: {output}"
                 unit_manifest,
             );
             let zoning = self.zoning.display(structure_manifest, terrain_manifest);
-            let litter = self.litter.display(item_manifest);
 
             let base_string = format!(
                 "Entity: {entity:?}
 Terrain type: {terrain_type}
-Tile: {tile_pos}
+Tile: {voxel_pos}
 Height: {height}
 Water Table: {depth_to_water_table}
 Shade: {shade}
 Current Light: {recieved_light}
-Zoning: {zoning}
-Litter:
-{litter}"
+Zoning: {zoning}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {
@@ -906,7 +885,7 @@ mod unit_details {
 
     use crate::{
         asset_management::manifest::Id,
-        geometry::TilePos,
+        geometry::VoxelPos,
         items::item_manifest::ItemManifest,
         structures::structure_manifest::StructureManifest,
         terrain::terrain_manifest::TerrainManifest,
@@ -931,7 +910,7 @@ mod unit_details {
         /// The type of unit
         pub(super) unit_id: &'static Id<Unit>,
         /// The current location
-        pub(super) tile_pos: &'static TilePos,
+        pub(super) voxel_pos: &'static VoxelPos,
         /// What's being carried
         pub(super) held_item: &'static UnitInventory,
         /// What this unit is trying to achieve
@@ -954,7 +933,7 @@ mod unit_details {
         /// What does this unit eat?
         pub(super) diet: Diet,
         /// The current location
-        pub(super) tile_pos: TilePos,
+        pub(super) voxel_pos: VoxelPos,
         /// What's being carried
         pub(super) held_item: UnitInventory,
         /// What this unit is trying to achieve
@@ -981,7 +960,7 @@ mod unit_details {
             let entity = self.entity;
             let unit_name = unit_manifest.name(self.unit_id);
             let diet = self.diet.display(item_manifest);
-            let tile_pos = &self.tile_pos;
+            let voxel_pos = &self.voxel_pos;
             let held_item = self.held_item.display(item_manifest);
             let goal = self.goal.display(
                 item_manifest,
@@ -999,7 +978,7 @@ mod unit_details {
             format!(
                 "Entity: {entity:?}
 Unit type: {unit_name}
-Tile: {tile_pos}
+Tile: {voxel_pos}
 Diet: {diet}
 Holding: {held_item}
 Goal: {goal}

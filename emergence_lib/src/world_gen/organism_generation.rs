@@ -3,7 +3,7 @@
 use crate::asset_management::manifest::Id;
 use crate::crafting::inventories::{CraftingState, InputInventory, OutputInventory};
 use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
-use crate::geometry::{Facing, Height, MapGeometry};
+use crate::geometry::{Facing, MapGeometry};
 use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
 use crate::structures::commands::StructureCommandsExt;
@@ -22,17 +22,16 @@ use super::GenerationConfig;
 pub(super) fn generate_organisms(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    unit_handles: Res<UnitHandles>,
+    maybe_unit_handles: Option<Res<UnitHandles>>,
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
-    mut height_query: Query<&mut Height>,
-    mut map_geometry: ResMut<MapGeometry>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating organisms...");
     let rng = &mut thread_rng();
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
-    for tile_pos in map_geometry.valid_tile_positions().collect::<Vec<_>>() {
+    for voxel_pos in map_geometry.walkable_voxels() {
         for (&structure_id, &chance) in &config.structure_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -42,13 +41,13 @@ pub(super) fn generate_organisms(
                 let footprint = &structure_manifest.get(structure_id).footprint;
 
                 // Only try to spawn a structure if the location is valid and there is space
-                if map_geometry.is_footprint_valid(tile_pos, footprint, facing)
-                    && map_geometry.is_space_available(tile_pos, footprint, facing)
+                if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
+                    && map_geometry
+                        .is_space_available(voxel_pos, footprint, facing)
+                        .is_ok()
                 {
-                    // Flatten the terrain under the structure before spawning it
-                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, facing);
                     commands.spawn_structure(
-                        tile_pos,
+                        voxel_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
                         StartingEnergy::Random,
                     );
@@ -58,14 +57,19 @@ pub(super) fn generate_organisms(
 
         for (&unit_id, &chance) in &config.unit_chances {
             if rng.gen::<f32>() < chance {
-                commands.spawn(UnitBundle::randomized(
-                    unit_id,
-                    tile_pos,
-                    unit_manifest.get(unit_id).clone(),
-                    &unit_handles,
-                    &map_geometry,
-                    rng,
-                ));
+                let unit_bundle = if let Some(ref unit_handles) = maybe_unit_handles {
+                    UnitBundle::randomized(
+                        unit_id,
+                        voxel_pos,
+                        unit_manifest.get(unit_id).clone(),
+                        unit_handles,
+                        rng,
+                    )
+                } else {
+                    UnitBundle::testing(unit_id, voxel_pos, unit_manifest.get(unit_id).clone(), rng)
+                };
+
+                commands.spawn(unit_bundle);
             }
         }
     }

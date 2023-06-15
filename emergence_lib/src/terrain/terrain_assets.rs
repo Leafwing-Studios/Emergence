@@ -5,7 +5,7 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use crate::{
     asset_management::{manifest::Id, AssetState, Loadable},
     enum_iter::IterableEnum,
-    geometry::{hexagonal_column, Height, MapGeometry},
+    geometry::{hexagonal_column, Height},
     graphics::palette::environment::COLUMN_COLOR,
     items::inventory::InventoryState,
     player_interaction::selection::ObjectInteraction,
@@ -26,6 +26,7 @@ pub(crate) struct TerrainHandles {
     /// The materials used to display player interaction with terrain tiles
     pub(crate) interaction_materials: HashMap<ObjectInteraction, Handle<StandardMaterial>>,
     /// Models used to depict litter on tiles.
+    // FIXME: move out of terrain handles
     pub(crate) litter_models: HashMap<InventoryState, Handle<Scene>>,
 }
 
@@ -55,9 +56,8 @@ impl Loadable for TerrainHandles {
             asset_server.load("litter/pile.gltf#Scene0"),
         );
 
-        let map_geometry = world.resource::<MapGeometry>();
-        let column_mesh_object = hexagonal_column(&map_geometry.layout, 1.0);
-        let topper_mesh_object = hexagonal_column(&map_geometry.layout, Height::TOPPER_THICKNESS);
+        let column_mesh_object = hexagonal_column(1.0);
+        let topper_mesh_object = hexagonal_column(Height::TOPPER_THICKNESS);
         let mut mesh_assets = world.resource_mut::<Assets<Mesh>>();
         let column_mesh = mesh_assets.add(column_mesh_object);
         let topper_mesh = mesh_assets.add(topper_mesh_object);

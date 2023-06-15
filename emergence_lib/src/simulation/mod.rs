@@ -5,7 +5,7 @@
 use crate::asset_management::AssetState;
 use crate::construction::ConstructionPlugin;
 use crate::crafting::CraftingPlugin;
-use crate::geometry::{sync_rotation_to_facing, MapGeometry};
+use crate::geometry::sync_rotation_to_facing;
 use crate::light::LightPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
@@ -15,25 +15,13 @@ use crate::structures::StructuresPlugin;
 use crate::terrain::TerrainPlugin;
 use crate::units::UnitsPlugin;
 use crate::water::WaterPlugin;
-use crate::world_gen::{GenerationConfig, GenerationPlugin};
+use crate::world_gen::{GenerationConfig, GenerationPlugin, WorldGenState};
 use bevy::core::FrameCount;
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
 pub mod time;
 pub mod weather;
-
-/// Sets up world geometry
-pub struct GeometryPlugin {
-    /// Configuration settings for world generation
-    pub gen_config: GenerationConfig,
-}
-
-impl Plugin for GeometryPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(MapGeometry::new(self.gen_config.map_radius));
-    }
-}
 
 /// All of the code needed to make the simulation run
 pub struct SimulationPlugin {
@@ -50,6 +38,7 @@ impl Plugin for SimulationPlugin {
                     SimulationSet
                         .run_if(in_state(PauseState::Playing))
                         .run_if(in_state(AssetState::FullyLoaded))
+                        .run_if(world_gen_ready)
                         .run_if(max_ticks_not_reached),
                 );
                 schedule.add_system(update_ticks_this_frame.run_if(max_ticks_not_reached));
@@ -116,11 +105,16 @@ fn update_ticks_this_frame(mut ticks: ResMut<TicksThisFrame>, frame_count: Res<F
     ticks.current += 1;
 }
 
-/// Stops
+/// Stops the simulation from trying to simulate an ever-increasing number of ticks per frame if it falls behind.
 fn max_ticks_not_reached(frame_count: Res<FrameCount>, ticks: Res<TicksThisFrame>) -> bool {
     if frame_count.is_changed() {
         return true;
     }
 
     ticks.current < ticks.max
+}
+
+/// Ensures that simulation systems do not run until world gen is ready for them.
+fn world_gen_ready(world_gen_state: Res<State<WorldGenState>>) -> bool {
+    world_gen_state.0 == WorldGenState::Complete || world_gen_state.0 == WorldGenState::BurningIn
 }

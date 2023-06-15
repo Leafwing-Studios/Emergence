@@ -110,3 +110,48 @@ where
         self.data_map.keys().copied()
     }
 }
+
+/// A plugin that adds the default manifests to the app.
+#[cfg(test)]
+pub struct DummyManifestPlugin;
+
+#[cfg(test)]
+impl Plugin for DummyManifestPlugin {
+    fn build(&self, app: &mut App) {
+        use crate::{
+            crafting::recipe::RecipeManifest,
+            items::item_manifest::ItemManifest,
+            structures::structure_manifest::{StructureData, StructureManifest},
+            terrain::terrain_manifest::{TerrainData, TerrainManifest},
+            units::basic_needs::Diet,
+            units::unit_manifest::{UnitData, UnitManifest},
+        };
+
+        let mut terrain_manifest = TerrainManifest::default();
+        terrain_manifest.insert("grassy".to_string(), TerrainData::default());
+        terrain_manifest.insert("rocky".to_string(), TerrainData::default());
+        app.insert_resource(terrain_manifest);
+
+        let mut unit_manifest = UnitManifest::default();
+        unit_manifest.insert(
+            "simple_unit".to_string(),
+            UnitData::simple("simple_unit", Diet::simple("food")),
+        );
+        app.insert_resource(unit_manifest);
+
+        let mut structure_manifest = StructureManifest::default();
+        structure_manifest.insert(
+            "simple_structure".to_string(),
+            StructureData::organism("simple_structure"),
+        );
+        structure_manifest.insert("passable_structure".to_string(), StructureData::passable());
+        structure_manifest.insert("simple_landmark".to_string(), StructureData::impassable());
+        app.insert_resource(structure_manifest);
+
+        let item_manifest = ItemManifest::default();
+        app.insert_resource(item_manifest);
+
+        let recipe_manifest = RecipeManifest::default();
+        app.insert_resource(recipe_manifest);
+    }
+}

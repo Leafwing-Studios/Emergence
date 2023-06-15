@@ -28,6 +28,17 @@ pub struct Diet {
     energy: Energy,
 }
 
+impl Diet {
+    #[cfg(test)]
+    /// A diet that consumes an item with the given name.
+    pub fn simple(item_name: &str) -> Self {
+        Diet {
+            item_kind: ItemKind::Single(Id::from_name(item_name.to_string())),
+            energy: Energy(10.),
+        }
+    }
+}
+
 /// The unprocessed equivalent of [`Diet`].
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RawDiet {

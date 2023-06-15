@@ -2,19 +2,19 @@
 
 use bevy::prelude::*;
 
-use crate::asset_management::AssetState;
+use crate::{asset_management::AssetState, world_gen::WorldGenState};
 
 use self::{
-    atmosphere::AtmospherePlugin, lighting::LightingPlugin, overlay::OverlayPlugin,
-    structures::remove_ghostly_shadows, terrain::render_litter_piles, water::WaterRenderingPlugin,
+    atmosphere::AtmospherePlugin, lighting::LightingPlugin, litter::render_litter_piles,
+    overlay::OverlayPlugin, structures::remove_ghostly_shadows, water::WaterRenderingPlugin,
 };
 
 mod atmosphere;
 pub(crate) mod lighting;
+mod litter;
 pub(crate) mod overlay;
 pub(crate) mod palette;
 mod structures;
-mod terrain;
 mod units;
 mod water;
 
@@ -23,16 +23,25 @@ mod water;
 /// The game should be able to run and function without this plugin: no gameplay logic allowed!
 pub struct GraphicsPlugin;
 
+/// Systems that are used for rendering.
+#[derive(SystemSet, Debug, Default, Clone, PartialEq, Eq, Hash)]
+struct GraphicsSet;
+
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LightingPlugin)
             .add_plugin(AtmospherePlugin)
             .add_plugin(WaterRenderingPlugin)
             .add_plugin(OverlayPlugin)
-            .add_system(render_litter_piles.run_if(in_state(AssetState::FullyLoaded)))
+            .add_system(render_litter_piles.in_set(GraphicsSet))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(
                 (inherit_materials, remove_ghostly_shadows).in_base_set(CoreSet::PostUpdate),
+            )
+            .configure_set(
+                GraphicsSet
+                    .run_if(in_state(AssetState::FullyLoaded))
+                    .run_if(in_state(WorldGenState::Complete)),
             );
     }
 }

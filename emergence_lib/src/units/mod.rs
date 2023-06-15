@@ -5,7 +5,7 @@ use crate::{
         manifest::{plugin::ManifestPlugin, Id, Manifest},
         AssetCollectionExt,
     },
-    geometry::{Facing, MapGeometry, TilePos},
+    geometry::{Facing, VoxelPos},
     player_interaction::InteractionSystem,
     signals::{Emitter, SignalStrength, SignalType},
     simulation::SimulationSet,
@@ -45,6 +45,14 @@ pub struct WanderingBehavior {
     wander_durations: Vec<(u16, f32)>,
 }
 
+impl Default for WanderingBehavior {
+    fn default() -> Self {
+        Self {
+            wander_durations: vec![(3, 1.0)],
+        }
+    }
+}
+
 impl WanderingBehavior {
     /// Randomly choose the number of actions to take while wandering.
     fn sample(&self, rng: &mut ThreadRng) -> u16 {
@@ -69,7 +77,7 @@ pub(crate) struct UnitBundle {
     /// Marker component.
     unit_id: Id<Unit>,
     /// The tile the unit is above.
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The direction that the unit is facing.
     facing: Facing,
     /// What is the unit working towards.
@@ -108,16 +116,15 @@ impl UnitBundle {
     /// It will be just born, and full.
     pub(crate) fn newborn(
         unit_id: Id<Unit>,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
-        map_geometry: &MapGeometry,
     ) -> Self {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
 
         UnitBundle {
             unit_id,
-            tile_pos,
+            voxel_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
             impatience: ImpatiencePool::new(unit_data.max_impatience),
@@ -138,7 +145,7 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
                 ..default()
             },
         }
@@ -149,10 +156,9 @@ impl UnitBundle {
     /// This is used for world generation.
     pub(crate) fn randomized(
         unit_id: Id<Unit>,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
-        map_geometry: &MapGeometry,
         rng: &mut ThreadRng,
     ) -> Self {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
@@ -162,7 +168,7 @@ impl UnitBundle {
 
         UnitBundle {
             unit_id,
-            tile_pos,
+            voxel_pos,
             facing: Facing::default(),
             current_goal: Goal::default(),
             impatience: ImpatiencePool::new(unit_data.max_impatience),
@@ -180,7 +186,45 @@ impl UnitBundle {
             mesh: unit_handles.picking_mesh.clone_weak(),
             scene_bundle: SceneBundle {
                 scene: scene_handle.clone_weak(),
-                transform: Transform::from_translation(tile_pos.into_world_pos(map_geometry)),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
+                ..default()
+            },
+        }
+    }
+
+    /// Generates a unit for testing.
+    pub(crate) fn testing(
+        unit_id: Id<Unit>,
+        voxel_pos: VoxelPos,
+        unit_data: UnitData,
+        rng: &mut ThreadRng,
+    ) -> Self {
+        let scene_handle = Handle::default();
+        let mut energy_pool = unit_data.organism_variety.energy_pool;
+        energy_pool.randomize(rng);
+        let age = Age::randomized(rng, unit_data.max_age);
+
+        UnitBundle {
+            unit_id,
+            voxel_pos,
+            facing: Facing::default(),
+            current_goal: Goal::default(),
+            impatience: ImpatiencePool::new(unit_data.max_impatience),
+            current_action: CurrentAction::default(),
+            held_item: UnitInventory::default(),
+            emitter: Emitter {
+                signals: vec![(
+                    SignalType::Unit(unit_id),
+                    SignalStrength::new(Self::UNIT_EMITTER_STRENGTH),
+                )],
+            },
+            age,
+            organism_bundle: OrganismBundle::new(energy_pool, unit_data.organism_variety.lifecycle),
+            raycast_mesh: RaycastMesh::default(),
+            mesh: Handle::default(),
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(voxel_pos.inside_voxel()),
                 ..default()
             },
         }

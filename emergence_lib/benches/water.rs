@@ -3,43 +3,38 @@ use std::time::Duration;
 use bevy::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::{
-    geometry::{Height, MapGeometry, TilePos, Volume},
+    geometry::{Height, MapGeometry, Volume, VoxelPos},
     simulation::time::InGameTime,
     water::{
         ocean::Ocean, update_water_depth, water_dynamics::horizontal_water_movement, WaterBundle,
         WaterConfig, WaterVolume,
     },
 };
+use hexx::Hex;
 
 fn criterion_benchmark(c: &mut Criterion) {
     const MAP_RADIUS: u32 = 100;
 
     let mut app = App::new();
+    let mut map_geometry = MapGeometry::new(&mut app.world, MAP_RADIUS);
 
-    let mut map_geometry = MapGeometry::new(MAP_RADIUS);
-
-    for tile_pos in map_geometry
-        .valid_tile_positions()
-        .collect::<Vec<TilePos>>()
-    {
+    for hex in map_geometry.all_hexes().copied().collect::<Vec<Hex>>() {
         // Make sure we cover a range of heights
-        let height = Height(tile_pos.x.max(0) as f32);
+        let height = Height(hex.x.max(0) as f32).into();
+        let voxel_pos = VoxelPos { hex, height };
+
         let water_volume = WaterVolume::new(Volume(20.));
+        let terrain_entity = map_geometry.get_terrain(hex).unwrap();
 
-        let terrain_entity = app
-            .world
-            .spawn((
-                tile_pos,
-                height,
-                WaterBundle {
-                    water_volume,
-                    ..Default::default()
-                },
-            ))
-            .id();
+        app.world.entity_mut(terrain_entity).insert((
+            voxel_pos,
+            WaterBundle {
+                water_volume,
+                ..Default::default()
+            },
+        ));
 
-        map_geometry.update_height(tile_pos, height);
-        map_geometry.add_terrain(tile_pos, terrain_entity);
+        map_geometry.update_height(hex, height);
     }
 
     app.insert_resource(map_geometry);

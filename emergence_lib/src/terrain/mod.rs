@@ -7,22 +7,21 @@ use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
 use crate::construction::zoning::Zoning;
-use crate::geometry::{Height, MapGeometry, TilePos};
+use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::Emitter;
 use crate::simulation::SimulationSet;
 use crate::water::{WaterBundle, WaterSet};
 
-use self::litter::{
-    carry_floating_litter_with_current, clear_empty_litter, make_litter_float,
-    set_terrain_emitters, update_litter_index, Litter, LitterDrift, TerrainEmitters,
-};
 use self::terrain_assets::TerrainHandles;
 use self::terrain_manifest::{RawTerrainManifest, Terrain, TerrainManifest};
+use crate::litter::{
+    carry_floating_litter_with_current, clear_empty_litter, make_litter_float, set_litter_emitters,
+    LitterEmitters,
+};
 
 pub(crate) mod commands;
-pub(crate) mod litter;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 
@@ -45,10 +44,9 @@ impl Plugin for TerrainPlugin {
                     // but we also want to clean up after because we may have condensed litter inventories by drifting
                     clear_empty_litter.before(carry_floating_litter_with_current),
                     clear_empty_litter.after(carry_floating_litter_with_current),
-                    set_terrain_emitters
+                    set_litter_emitters
                         .after(carry_floating_litter_with_current)
-                        .in_set(TerrainEmitters),
-                    update_litter_index.after(carry_floating_litter_with_current),
+                        .in_set(LitterEmitters),
                 )
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
@@ -58,13 +56,11 @@ impl Plugin for TerrainPlugin {
 
 /// All of the components needed to define a piece of terrain.
 #[derive(Bundle)]
-struct TerrainBundle {
+pub(crate) struct TerrainBundle {
     /// The type of terrain
     terrain_id: Id<Terrain>,
-    /// The location of this terrain hex
-    tile_pos: TilePos,
-    /// The height of this terrain hex
-    height: Height,
+    /// The location and height of this terrain hex
+    voxel_pos: VoxelPos,
     /// Makes the tiles pickable
     raycast_mesh: RaycastMesh<Terrain>,
     /// The mesh used for raycasting
@@ -77,10 +73,6 @@ struct TerrainBundle {
     scene_bundle: SceneBundle,
     /// Controls the signals produced by this terrain tile.
     emitter: Emitter,
-    /// Stores littered items
-    litter: Litter,
-    /// Tracks how long until litter drifts away
-    litter_drift: LitterDrift,
     /// The amount of shade cast on this tile.
     shade: Shade,
     /// The amount of light currently being received by this tile.
@@ -91,36 +83,31 @@ struct TerrainBundle {
 
 impl TerrainBundle {
     /// Creates a new Terrain entity.
-    fn new(
+    pub(crate) fn new(
         terrain_id: Id<Terrain>,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         scene: Handle<Scene>,
         mesh: Handle<Mesh>,
         terrain_manifest: &TerrainManifest,
-        map_geometry: &MapGeometry,
     ) -> Self {
-        let world_pos = tile_pos.into_world_pos(map_geometry);
+        let world_pos = voxel_pos.into_world_pos();
         let scene_bundle = SceneBundle {
             scene,
             transform: Transform::from_translation(world_pos),
             ..Default::default()
         };
 
-        let height = map_geometry.get_height(tile_pos).unwrap();
         let terrain_data = terrain_manifest.get(terrain_id);
 
         TerrainBundle {
             terrain_id,
-            tile_pos,
-            height,
+            voxel_pos,
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh,
             object_interaction: ObjectInteraction::None,
             zoning: Zoning::None,
             scene_bundle,
             emitter: Emitter::default(),
-            litter: Litter::default(),
-            litter_drift: LitterDrift::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle {
@@ -131,17 +118,36 @@ impl TerrainBundle {
             },
         }
     }
+
+    /// Creates a new Terrain entity without access to asset data.
+    pub(crate) fn minimal(terrain_id: Id<Terrain>, voxel_pos: VoxelPos) -> TerrainBundle {
+        TerrainBundle {
+            terrain_id,
+            voxel_pos,
+            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            mesh: Handle::default(),
+            object_interaction: ObjectInteraction::None,
+            zoning: Zoning::None,
+            scene_bundle: SceneBundle::default(),
+            emitter: Emitter::default(),
+            shade: Shade::default(),
+            received_light: ReceivedLight::default(),
+            water_bundle: WaterBundle::default(),
+        }
+    }
 }
 
 /// Updates the game state appropriately whenever the height of a tile is changed.
 fn respond_to_height_changes(
-    mut terrain_query: Query<(Ref<Height>, &TilePos, &mut Transform, &Children)>,
-    mut column_query: Query<&mut Transform, (With<Parent>, Without<Height>)>,
+    mut terrain_query: Query<(Ref<VoxelPos>, &mut Transform, &Children), With<Id<Terrain>>>,
+    mut column_query: Query<&mut Transform, (With<Parent>, Without<VoxelPos>)>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
-    for (height, &tile_pos, mut transform, children) in terrain_query.iter_mut() {
-        if height.is_changed() {
-            map_geometry.update_height(tile_pos, *height);
+    for (voxel_pos, mut transform, children) in terrain_query.iter_mut() {
+        if voxel_pos.is_changed() {
+            // PERF: this is probably redundant, as long as we're careful about how the voxel pos of terrain can be mutated
+            map_geometry.update_height(voxel_pos.hex, voxel_pos.height);
+            let height = voxel_pos.height();
             transform.translation.y = height.into_world_pos();
             // During terrain initialization we ensure that the column is always the 0th child
             let column_child = children[0];

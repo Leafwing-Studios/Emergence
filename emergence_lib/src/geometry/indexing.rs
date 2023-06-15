@@ -4,130 +4,197 @@ use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
-use hexx::{shapes::hexagon, Hex, HexLayout};
+
+use hexx::{shapes::hexagon, Hex};
 
 use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{Facing, Height, TilePos};
+use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
 
 /// The overall size and arrangement of the map.
-#[derive(Debug, Resource)]
+#[derive(Debug, Resource, Clone)]
 pub struct MapGeometry {
-    /// The size and orientation of the map.
-    pub(crate) layout: HexLayout,
     /// The number of tiles from the center to the edge of the map.
     ///
     /// Note that the central tile is not counted.
     pub(crate) radius: u32,
     /// Which [`Terrain`](crate::terrain::terrain_manifest::Terrain) entity is stored at each tile position
-    terrain_index: HashMap<TilePos, Entity>,
-    /// Which [`Id<Structure>`](crate::asset_management::manifest::Id) entity is stored at each tile position
-    structure_index: HashMap<TilePos, Entity>,
-    /// Which [`Ghost`](crate::construction::ghosts::Ghost) structure entity is stored at each tile position
-    ghost_structure_index: HashMap<TilePos, Entity>,
-    /// Which [`Ghost`](crate::construction::ghosts::Ghost) terrain entity is stored at each tile position
-    ghost_terrain_index: HashMap<TilePos, Entity>,
-    /// The set of tiles that cannot be traversed by units due to structures.
-    impassable_structure_tiles: HashSet<TilePos>,
-    /// The set of tiles that cannot be traversed by units due to litter.
-    impassable_litter_tiles: HashSet<TilePos>,
+    ///
+    /// The set of keys is the set of all valid [`Hex`] positions on the map.
+    terrain_index: HashMap<Hex, Entity>,
     /// The height of the terrain at each tile position.
-    height_index: HashMap<TilePos, Height>,
-    /// The list of all valid neighbors for each tile position.
-    valid_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    ///
+    /// The set of keys is the set of all valid [`Hex`] positions on the map.
+    height_index: HashMap<Hex, DiscreteHeight>,
+    /// Tracks which objects are stored in each voxel.
+    ///
+    /// The set of keys is the set of all non-empty [`VoxelPos`] positions on the map.
+    voxel_index: HashMap<VoxelPos, VoxelObject>,
     /// The list of all passable neighbors for each tile position.
-    passable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
-    /// The list of all reachable neighbors for each tile position.
-    reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]>,
+    ///
+    /// The set of keys is the set of all [`VoxelPos`] that units could be found.
+    walkable_neighbors: HashMap<VoxelPos, Neighbors>,
+}
+
+/// The six neighbors of a voxel position.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Neighbors {
+    /// The internal array
+    maybe_neighbors: [Option<VoxelPos>; 6],
+}
+
+impl Neighbors {
+    /// No neighbors exist.
+    const NONE: Neighbors = Neighbors {
+        maybe_neighbors: [None; 6],
+    };
+
+    /// Returns the neighbor in the given direction, if it exists.
+    fn in_direction(&self, direction: hexx::Direction) -> Option<VoxelPos> {
+        use hexx::Direction::*;
+
+        match direction {
+            TopRight => self.maybe_neighbors[0],
+            Top => self.maybe_neighbors[1],
+            TopLeft => self.maybe_neighbors[2],
+            BottomLeft => self.maybe_neighbors[3],
+            Bottom => self.maybe_neighbors[4],
+            BottomRight => self.maybe_neighbors[5],
+        }
+    }
+}
+
+/// An iterator over the neighbors of a voxel position.
+struct NeighborIter<'a> {
+    /// A reference to the data
+    neighbors: &'a Neighbors,
+    /// Tracks how far we've iterated
+    index: usize,
+}
+
+impl<'a> Iterator for NeighborIter<'a> {
+    type Item = VoxelPos;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < 6 {
+            let result = self.neighbors.maybe_neighbors[self.index];
+            self.index += 1;
+            if result.is_some() {
+                return result;
+            }
+        }
+
+        None
+    }
 }
 
 /// A [`MapGeometry`] index was missing an entry.
 #[derive(Debug, PartialEq)]
 pub struct IndexError {
-    /// The tile position that was missing.
-    pub tile_pos: TilePos,
+    /// The hex where the data was missing.
+    pub hex: Hex,
+}
+
+/// An object could not be added to the [`MapGeometry`].
+#[derive(Debug, PartialEq)]
+pub enum AdditionError {
+    /// An incompatible object was already present.
+    AlreadyOccupied,
 }
 
 impl MapGeometry {
     /// Creates a new [`MapGeometry`] of the provided raidus.
     ///
     /// All indexes will be empty.
-    pub fn new(radius: u32) -> Self {
+    pub fn new(world: &mut World, radius: u32) -> Self {
         let hexes: Vec<Hex> = hexagon(Hex::ZERO, radius).collect();
-        let tiles: Vec<TilePos> = hexes.iter().map(|hex| TilePos { hex: *hex }).collect();
+        let tiles: Vec<VoxelPos> = hexes
+            .iter()
+            .map(|hex| VoxelPos {
+                hex: *hex,
+                height: DiscreteHeight::ZERO,
+            })
+            .collect();
 
         // We can start with the minimum height everywhere as no entities need to be spawned.
         let height_index = tiles
             .iter()
-            .map(|tile_pos| (*tile_pos, Height::MIN))
+            .map(|voxel_pos| (voxel_pos.hex, DiscreteHeight::ZERO))
             .collect();
 
-        let reachable_neighbors: HashMap<TilePos, [Option<TilePos>; 6]> = hexes
-            .iter()
-            .map(|hex| {
-                let tile_pos = TilePos { hex: *hex };
-                let mut neighbors = [None; 6];
+        let mut terrain_index = HashMap::default();
+        let mut voxel_index = HashMap::default();
 
-                for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
-                    if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                        neighbors[i] = Some(TilePos {
-                            hex: neighboring_hex,
-                        })
-                    }
-                }
-
-                (tile_pos, neighbors)
-            })
-            .collect();
-
-        let passable_neighbors = reachable_neighbors.clone();
-        let mut valid_neighbors = reachable_neighbors.clone();
-
-        // Define valid neighbors for ocean tiles
-        for hex in Hex::ZERO.ring(radius + 1) {
-            let tile_pos = TilePos { hex };
-            let mut neighbors = [None; 6];
-            for (i, neighboring_hex) in hex.all_neighbors().into_iter().enumerate() {
-                if Hex::ZERO.distance_to(neighboring_hex) <= radius as i32 {
-                    neighbors[i] = Some(TilePos {
-                        hex: neighboring_hex,
-                    })
-                }
-            }
-
-            valid_neighbors.insert(tile_pos, neighbors);
+        for hex in hexes {
+            let voxel_pos = VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            };
+            // The TerrainPrototype component is used to track the terrain entities that need to be replaced with a full TerrainBundle
+            let entity = world.spawn(voxel_pos).id();
+            terrain_index.insert(hex, entity);
+            voxel_index.insert(
+                voxel_pos,
+                VoxelObject {
+                    entity,
+                    object_kind: VoxelKind::Terrain,
+                },
+            );
         }
 
-        MapGeometry {
-            layout: HexLayout::default(),
+        let mut map_geometry = MapGeometry {
             radius,
-            terrain_index: HashMap::default(),
-            structure_index: HashMap::default(),
-            ghost_structure_index: HashMap::default(),
-            ghost_terrain_index: HashMap::default(),
-            impassable_structure_tiles: HashSet::default(),
-            impassable_litter_tiles: HashSet::default(),
-            valid_neighbors,
-            passable_neighbors,
-            reachable_neighbors,
+            terrain_index,
             height_index,
-        }
+            voxel_index,
+            walkable_neighbors: HashMap::default(),
+        };
+
+        map_geometry.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        map_geometry.validate();
+
+        map_geometry
     }
 
-    /// Returns the list of valid tile positions.
+    /// Returns the list of all valid [`Hex`] positions on the map.
     #[inline]
-    pub fn valid_tile_positions(&self) -> impl ExactSizeIterator<Item = TilePos> + '_ {
-        hexagon(Hex::ZERO, self.radius).map(|hex| TilePos { hex })
+    pub fn all_hexes(&self) -> impl Iterator<Item = &Hex> {
+        self.terrain_index.keys()
     }
 
-    /// Is the provided `tile_pos` in the map?
+    /// Returns an iterator over all non-empty [`VoxelPos`] on the map.
+    pub fn all_voxels(&self) -> impl Iterator<Item = (&VoxelPos, &VoxelObject)> {
+        self.voxel_index.iter()
+    }
+
+    /// Is the provided `hex` in the map?
     #[inline]
     #[must_use]
-    pub(crate) fn is_valid(&self, tile_pos: TilePos) -> bool {
-        let distance = Hex::ZERO.distance_to(tile_pos.hex);
+    pub(crate) fn is_valid(&self, hex: Hex) -> bool {
+        let distance = Hex::ZERO.distance_to(hex);
         distance <= self.radius as i32
+    }
+
+    /// Gets the voxel object at the provided `voxel_pos`.
+    #[inline]
+    #[must_use]
+    pub(crate) fn get_voxel(&self, voxel_pos: VoxelPos) -> Option<&VoxelObject> {
+        self.voxel_index.get(&voxel_pos)
+    }
+
+    /// Returns the voxel position directly above the terrain at `hex`
+    #[inline]
+    #[must_use]
+    pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
+        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default();
+        VoxelPos {
+            hex,
+            height: terrain_height.above(),
+        }
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
@@ -135,17 +202,17 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn is_footprint_valid(
         &self,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|tile_pos| self.is_valid(*tile_pos))
+            .all(|voxel_pos| self.is_valid(voxel_pos.hex))
     }
 
-    /// Is the provided `tile_pos` passable?
+    /// Is the provided `voxel_pos` passable?
     ///
     /// Tiles that are not part of the map will return `false`.
     /// Tiles that have a structure will return `false`.
@@ -153,43 +220,49 @@ impl MapGeometry {
     /// Tiles that are completely full of litter will return `false`.
     #[inline]
     #[must_use]
-    pub(crate) fn is_passable(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
-        if !self.is_valid(starting_pos) {
+    pub(crate) fn is_passable(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
+        if !self.is_valid(starting_pos.hex) {
             return false;
         }
 
-        if !self.is_valid(ending_pos) {
+        if !self.is_valid(ending_pos.hex) {
             return false;
         }
 
-        if self.impassable_structure_tiles.contains(&ending_pos) {
-            return false;
+        if let Some(voxel_data) = self.get_voxel(starting_pos) {
+            if !voxel_data.object_kind.can_walk_through() {
+                return false;
+            }
         }
 
-        if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
-        }
+        starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
     }
 
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
     #[inline]
-    #[must_use]
     pub(crate) fn is_space_available(
         &self,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
-    ) -> bool {
-        footprint
+    ) -> Result<(), AdditionError> {
+        match footprint
             .normalized(facing, center)
             .iter()
-            .all(|tile_pos| self.get_structure(*tile_pos).is_none())
+            .all(|voxel_pos| self.is_voxel_clear(*voxel_pos).is_ok())
+        {
+            true => Ok(()),
+            false => Err(AdditionError::AlreadyOccupied),
+        }
+    }
+
+    /// Is there space in a single voxel?
+    #[inline]
+    pub fn is_voxel_clear(&self, voxel_pos: VoxelPos) -> Result<(), AdditionError> {
+        match self.voxel_index.contains_key(&voxel_pos) {
+            true => Err(AdditionError::AlreadyOccupied),
+            false => Ok(()),
+        }
     }
 
     /// Is there enough space for `existing_entity` to transform into a structure with the provided `footprint` located at the `center` tile?
@@ -200,25 +273,29 @@ impl MapGeometry {
     fn is_space_available_to_transform(
         &self,
         existing_entity: Entity,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        footprint.normalized(facing, center).iter().all(|tile_pos| {
-            let structure_entity = self.get_structure(*tile_pos);
-            let ghost_structure_entity = self.get_ghost_structure(*tile_pos);
+        footprint
+            .normalized(facing, center)
+            .iter()
+            .all(|voxel_pos| {
+                let structure_entity = self.get_structure(*voxel_pos);
+                let ghost_structure_entity = self.get_ghost_structure(*voxel_pos);
 
-            (structure_entity.is_none() || structure_entity == Some(existing_entity))
-                && ghost_structure_entity.is_none()
-        })
+                (structure_entity.is_none() || structure_entity == Some(existing_entity))
+                    && ghost_structure_entity.is_none()
+            })
     }
 
     /// Are all of the terrain tiles in the provided `footprint` flat?
+    // FIXME: this is the wrong check: we want to check that the terrain can fit the voxels, not that it's flat
     #[inline]
     #[must_use]
     pub(crate) fn is_terrain_flat(
         &self,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
@@ -227,25 +304,7 @@ impl MapGeometry {
         footprint
             .normalized(facing, center)
             .iter()
-            .all(|tile_pos| self.get_height(*tile_pos) == Ok(height))
-    }
-
-    /// Can the structure with the provided `footprint` be built at the `center` tile?
-    ///
-    /// The provided [`Footprint`] *must* be rotated to the correct orientation,
-    /// matching the [`Facing`] of the structure.
-    ///
-    /// This checks that:
-    /// - the area is in the map
-    /// - the area is flat
-    /// - the area is free of structures
-    /// - there is no surface water present
-    #[inline]
-    #[must_use]
-    pub(crate) fn can_build(&self, center: TilePos, footprint: &Footprint, facing: Facing) -> bool {
-        self.is_footprint_valid(center, footprint, facing)
-            && self.is_terrain_flat(center, footprint, facing)
-            && self.is_space_available(center, footprint, facing)
+            .all(|voxel_pos| self.get_height(voxel_pos.hex) == Ok(height))
     }
 
     /// Can the `existing_entity` transform into a structure with the provided `footprint` at the `center` tile?
@@ -263,7 +322,7 @@ impl MapGeometry {
     pub(crate) fn can_transform(
         &self,
         existing_entity: Entity,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
@@ -272,569 +331,973 @@ impl MapGeometry {
             && self.is_space_available_to_transform(existing_entity, center, footprint, facing)
     }
 
-    /// Updates the height of the tile at `tile_pos`
-    #[inline]
-    pub fn update_height(&mut self, tile_pos: TilePos, height: Height) {
-        assert!(
-            self.is_valid(tile_pos),
-            "Invalid tile position: {:?} with a radius of {:?}",
-            tile_pos,
-            self.radius
-        );
-        assert!(height >= Height(0.));
-        self.height_index.insert(tile_pos, height);
-
-        self.recompute_passable_neighbors(tile_pos);
-        self.recompute_reachable_neighbors(tile_pos);
-    }
-
-    /// Returns the height of the tile at `tile_pos`, if available.
+    /// Returns the height of the tile at `voxel_pos`, if available.
     ///
     /// This should always be [`Ok`] for all valid tiles.
-    pub(crate) fn get_height(&self, tile_pos: TilePos) -> Result<Height, IndexError> {
-        match self.height_index.get(&tile_pos) {
+    pub(crate) fn get_height(&self, hex: Hex) -> Result<DiscreteHeight, IndexError> {
+        match self.height_index.get(&hex) {
             Some(height) => Ok(*height),
-            None => Err(IndexError { tile_pos }),
+            None => Err(IndexError { hex }),
         }
     }
 
-    /// Returns the average height (in world units) of tiles around `tile_pos` within `radius`
+    /// Returns the average height (in world units) of tiles around `voxel_pos` within `radius`
     #[inline]
     #[must_use]
-    pub(crate) fn average_height(&self, tile_pos: TilePos, radius: u32) -> f32 {
-        let hex_iter = hexagon(tile_pos.hex, radius);
-        let heights = hex_iter
-            .map(|hex| TilePos { hex })
-            .filter(|tile_pos| self.is_valid(*tile_pos))
-            .map(|tile_pos| {
-                let height = self.get_height(tile_pos).unwrap();
-                height.into_world_pos()
-            });
+    pub(crate) fn average_height(&self, voxel_pos: VoxelPos, radius: u32) -> f32 {
+        let hex_iter = hexagon(voxel_pos.hex, radius);
+        let heights = hex_iter.filter(|hex| self.is_valid(*hex)).map(|hex| {
+            let height = self.get_height(hex).unwrap();
+            height.into_world_pos()
+        });
         let n = Hex::range_count(radius);
         heights.sum::<f32>() / n as f32
     }
 
-    /// Returns the absolute difference in height between the tile at `starting_pos` and the tile at `ending_pos`.
-    #[inline]
-    pub(crate) fn height_difference(
-        &self,
-        starting_pos: TilePos,
-        ending_pos: TilePos,
-    ) -> Result<Height, IndexError> {
-        let starting_height = self.get_height(starting_pos)?;
-        let ending_height = self.get_height(ending_pos)?;
-        Ok(starting_height.abs_diff(ending_height))
-    }
-
-    /// Flattens the terrain in the `footprint` around `tile_pos` to the height at that location.
-    ///
-    /// This footprint is rotated by the supplied `facing`.
-    pub(crate) fn flatten_height(
-        &mut self,
-        height_query: &mut Query<&mut Height>,
-        center: TilePos,
-        footprint: &Footprint,
-        facing: Facing,
-    ) {
-        let Ok(target_height) = self.get_height(center) else { return };
-        for tile_pos in footprint.normalized(facing, center) {
-            if let Some(entity) = self.get_terrain(tile_pos) {
-                if let Ok(mut height) = height_query.get_mut(entity) {
-                    *height = target_height;
-                    self.update_height(tile_pos, target_height);
-                }
-            }
-        }
-    }
-
-    /// Gets the [`Entity`] at the provided `tile_pos` that might have or want an item.
+    /// Gets the [`Entity`] at the provided `voxel_pos` that might have or want an item.
     ///
     /// If the `delivery_mode` is [`DeliveryMode::PickUp`], looks for litter, ghost terrain, or structures.
     /// If the `delivery_mode` is [`DeliveryMode::DropOff`], looks for ghost structures, ghost terrain or structures.
     #[inline]
     #[must_use]
-    pub(crate) fn get_candidates(
+    pub(crate) fn get_candidate(
         &self,
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         delivery_mode: DeliveryMode,
-    ) -> Vec<Entity> {
-        let mut entities = Vec::new();
-
-        match delivery_mode {
-            DeliveryMode::DropOff => {
-                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
-                    entities.push(structure_entity)
+    ) -> Option<Entity> {
+        if let Some(voxel_data) = self.get_voxel(voxel_pos) {
+            match delivery_mode {
+                DeliveryMode::DropOff => {
+                    if voxel_data.object_kind.can_drop_off() {
+                        Some(voxel_data.entity)
+                    } else {
+                        None
+                    }
                 }
-
-                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-                    entities.push(ghost_terrain_entity)
-                }
-
-                if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
-                    entities.push(ghost_structure_entity)
-                }
-            }
-            DeliveryMode::PickUp => {
-                if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
-                    entities.push(structure_entity)
-                }
-
-                if let Some(&ghost_terrain_entity) = self.ghost_terrain_index.get(&tile_pos) {
-                    entities.push(ghost_terrain_entity)
-                }
-
-                if let Some(&litter_entity) = self.terrain_index.get(&tile_pos) {
-                    entities.push(litter_entity)
+                DeliveryMode::PickUp => {
+                    if voxel_data.object_kind.can_pick_up() {
+                        Some(voxel_data.entity)
+                    } else {
+                        None
+                    }
                 }
             }
+        } else {
+            None
         }
-
-        entities
     }
 
-    /// Gets entities that units might work at, at the provided `tile_pos`.
+    /// Gets entities that units might work at, at the provided `voxel_pos`.
     ///
     /// Prioritizes ghosts over structures if both are present to allow for replacing structures.
     #[inline]
     #[must_use]
-    pub(crate) fn get_workplaces(&self, tile_pos: TilePos) -> Vec<Entity> {
-        let mut entities = Vec::new();
+    pub(crate) fn get_workplace(&self, voxel_pos: VoxelPos) -> Option<Entity> {
+        if let Some(voxel_data) = self.get_voxel(voxel_pos) {
+            if voxel_data.object_kind.can_work_at() {
+                Some(voxel_data.entity)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 
-        if let Some(&ghost_structure_entity) = self.ghost_structure_index.get(&tile_pos) {
-            entities.push(ghost_structure_entity)
+    /// Gets the terrain [`Entity`] at the provided `voxel_pos`, if any.
+    #[inline]
+    pub fn get_terrain(&self, hex: Hex) -> Result<Entity, IndexError> {
+        match self.terrain_index.get(&hex).copied() {
+            Some(entity) => Ok(entity),
+            None => Err(IndexError { hex }),
+        }
+    }
+
+    /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
+    #[inline]
+    pub fn update_height(&mut self, hex: Hex, height: DiscreteHeight) {
+        let old_height = self.get_height(hex).unwrap();
+        if old_height == height {
+            return;
         }
 
-        if let Some(&structure_entity) = self.structure_index.get(&tile_pos) {
-            entities.push(structure_entity)
+        let old_voxel_pos = VoxelPos {
+            hex,
+            height: old_height,
+        };
+        let new_voxel_pos = VoxelPos { hex, height };
+
+        // This overwrites the existing entry
+        self.height_index.insert(hex, height);
+        // The old voxel needs to be removed, rather than overwritten, as it may be at a different height.
+        self.voxel_index.remove(&old_voxel_pos);
+        self.voxel_index.insert(
+            new_voxel_pos,
+            VoxelObject {
+                entity: self.get_terrain(hex).unwrap(),
+                object_kind: VoxelKind::Terrain,
+            },
+        );
+
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+    }
+
+    /// Gets the structure [`Entity`] at the provided `voxel_pos`, if any.
+    #[inline]
+    #[must_use]
+    pub(crate) fn get_structure(&self, voxel_pos: VoxelPos) -> Option<Entity> {
+        let voxel_data = self.get_voxel(voxel_pos)?;
+        match voxel_data.object_kind {
+            VoxelKind::Structure { .. } => Some(voxel_data.entity),
+            _ => None,
         }
-
-        entities
     }
 
-    /// Gets the terrain [`Entity`] at the provided `tile_pos`, if any.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.terrain_index.get(&tile_pos).copied()
-    }
-
-    /// Adds the provided `terrain_entity` to the terrain index at the provided `tile_pos`.
-    #[inline]
-    pub fn add_terrain(&mut self, tile_pos: TilePos, terrain_entity: Entity) {
-        self.terrain_index.insert(tile_pos, terrain_entity);
-    }
-
-    /// Gets the structure [`Entity`] at the provided `tile_pos`, if any.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_structure(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.structure_index.get(&tile_pos).copied()
-    }
-
-    /// Adds the provided `structure_entity` to the structure index at the provided `center`.
+    /// Adds the provided `structure_entity` to the voxel index at the provided `center`.
     #[inline]
     pub(crate) fn add_structure(
         &mut self,
+        center: VoxelPos,
         facing: Facing,
-        center: TilePos,
         footprint: &Footprint,
-        passable: bool,
+        can_walk_on_roof: bool,
+        can_walk_through: bool,
         structure_entity: Entity,
-    ) {
-        for tile_pos in footprint.normalized(facing, center) {
-            self.structure_index.insert(tile_pos, structure_entity);
-            if !passable {
-                self.impassable_structure_tiles.insert(tile_pos);
-            }
+    ) -> Result<(), AdditionError> {
+        self.is_space_available(center, footprint, facing)?;
 
-            self.recompute_passable_neighbors(tile_pos);
-            self.recompute_reachable_neighbors(tile_pos);
+        for voxel_pos in footprint.normalized(facing, center) {
+            let voxel_data = VoxelObject {
+                entity: structure_entity,
+                object_kind: VoxelKind::Structure {
+                    can_walk_on_roof,
+                    can_walk_through,
+                },
+            };
+            self.voxel_index.insert(voxel_pos, voxel_data);
+
+            self.recompute_walkable_neighbors();
         }
+
+        #[cfg(test)]
+        self.validate();
+
+        Ok(())
     }
 
-    /// Removes any structure entity found at the provided `tile_pos` from the structure index.
+    /// Removes any structure entity found at the provided `voxel_pos` from the voxel index.
     ///
     /// Returns the removed entity, if any.
     #[inline]
     pub(crate) fn remove_structure(
         &mut self,
-        facing: Facing,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
+        facing: Facing,
     ) -> Option<Entity> {
-        let mut removed = None;
-
-        for tile_pos in footprint.normalized(facing, center) {
-            removed = self.structure_index.remove(&tile_pos);
-            // We can do this even for passable structures, since we have a guarantee that only one structure can be at a tile
-            // If that occurs, this fails silently, but that's intended behavior
-            self.impassable_structure_tiles.remove(&tile_pos);
-
-            self.recompute_passable_neighbors(tile_pos);
-            self.recompute_reachable_neighbors(tile_pos);
+        let tentative_entry = self.voxel_index.get(&center)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::Structure { .. }) {
+            return None;
         }
 
-        removed
+        let entity = tentative_entry.entity;
+
+        for voxel_pos in footprint.normalized(facing, center) {
+            self.voxel_index.remove(&voxel_pos);
+        }
+
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+
+        Some(entity)
     }
 
-    /// Gets the ghost structure [`Entity`] at the provided `tile_pos`, if any.
+    /// Adds the provided `litter_entity` to the voxel index at the provided `center`.
+    ///
+    /// If the voxel is not clear, an [`AdditionError`] will be returned instead.
+    /// To avoid this, call [`find_litter_location`](MapGeometry::find_litter_location) first.
+    #[inline]
+    fn add_litter(
+        &mut self,
+        voxel_pos: VoxelPos,
+        inventory_state: InventoryState,
+        litter_entity: Entity,
+        // FIXME: this should not return a result
+    ) -> Result<(), AdditionError> {
+        self.is_voxel_clear(voxel_pos)?;
+
+        let voxel_data = VoxelObject {
+            entity: litter_entity,
+            object_kind: VoxelKind::Litter { inventory_state },
+        };
+
+        // FIXME: This overwrites the existing entry
+        // Instead, litter should be placed in the nearest empty voxel on the ground
+        self.voxel_index.insert(voxel_pos, voxel_data);
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+
+        Ok(())
+    }
+
+    /// Returns the nearest empty voxel in which litter can be placed, starting at the provided `proposed_voxel_pos`.
+    fn find_litter_location(&self, proposed_voxel_pos: VoxelPos) -> VoxelPos {
+        let mut voxel_pos = proposed_voxel_pos;
+        while self.is_voxel_clear(voxel_pos).is_err() {
+            for neighbor in self.walkable_neighbors(voxel_pos) {
+                if self.is_voxel_clear(neighbor).is_ok() {
+                    voxel_pos = neighbor;
+                    break;
+                }
+            }
+
+            // Otherwise, stack the litter on top of the current voxel
+            // FIXME: even this could fail if we reach the max height. Should have a failsafe.
+            voxel_pos = voxel_pos.above();
+        }
+        voxel_pos
+    }
+
+    /// Removes any litter entity found at the provided `voxel_pos` from the voxel index.
+    ///
+    /// Returns the removed entity, if any.
+    #[inline]
+    pub(crate) fn remove_litter(&mut self, voxel_pos: VoxelPos) -> Option<Entity> {
+        let tentative_entry = self.voxel_index.get(&voxel_pos)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::Litter { .. }) {
+            return None;
+        }
+
+        let entity = tentative_entry.entity;
+        self.voxel_index.remove(&voxel_pos);
+
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+
+        Some(entity)
+    }
+
+    /// Drop the litter at the provided `voxel_pos` into the nearest empty voxel.
+    ///
+    /// Returns the voxel position where the litter was dropped.
+    #[must_use]
+    pub(crate) fn drop_litter(&mut self, voxel_pos: VoxelPos, litter_entity: Entity) -> VoxelPos {
+        let final_voxel_pos = self.find_litter_location(voxel_pos);
+
+        self.add_litter(final_voxel_pos, InventoryState::Full, litter_entity)
+            .unwrap();
+
+        final_voxel_pos
+    }
+
+    /// Moves the litter entity found at the provided `voxel_pos` to the provided `new_voxel_pos`.
+    ///
+    /// This operation is infallible: if the litter cannot be moved to the desired position,
+    /// it will instead be droppped in the nearest empty voxel.
+    #[inline]
+    pub(crate) fn move_litter(
+        &mut self,
+        mut original_voxel_pos: Mut<VoxelPos>,
+        proposed_voxel_pos: VoxelPos,
+    ) {
+        if *original_voxel_pos == proposed_voxel_pos {
+            return;
+        }
+
+        let Some(litter_entity) = self.remove_litter(*original_voxel_pos) else { return; };
+        let final_voxel_pos = self.find_litter_location(proposed_voxel_pos);
+
+        self.add_litter(final_voxel_pos, InventoryState::Full, litter_entity)
+            .unwrap();
+        *original_voxel_pos = final_voxel_pos;
+    }
+
+    /// Gets the ghost structure [`Entity`] at the provided `voxel_pos`, if any.
     #[inline]
     #[must_use]
-    pub(crate) fn get_ghost_structure(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.ghost_structure_index.get(&tile_pos).copied()
+    pub(crate) fn get_ghost_structure(&self, voxel_pos: VoxelPos) -> Option<Entity> {
+        let voxel_data = self.get_voxel(voxel_pos)?;
+        match voxel_data.object_kind {
+            VoxelKind::GhostStructure => Some(voxel_data.entity),
+            _ => None,
+        }
     }
 
-    /// Adds the provided `ghost_structure_entity` to the ghost structure index at the provided `center`.
+    /// Adds the provided `ghost_structure_entity` to the voxel index at the provided `center`.
     #[inline]
     pub(crate) fn add_ghost_structure(
         &mut self,
         facing: Facing,
-        center: TilePos,
+        center: VoxelPos,
         footprint: &Footprint,
         ghost_structure_entity: Entity,
-    ) {
-        for tile_pos in footprint.normalized(facing, center) {
-            self.ghost_structure_index
-                .insert(tile_pos, ghost_structure_entity);
+    ) -> Result<(), AdditionError> {
+        self.is_space_available(center, footprint, facing)?;
+
+        for voxel_pos in footprint.normalized(facing, center) {
+            let voxel_data = VoxelObject {
+                entity: ghost_structure_entity,
+                object_kind: VoxelKind::GhostStructure,
+            };
+
+            self.voxel_index.insert(voxel_pos, voxel_data);
         }
+
+        // We do not need to update the passable neighbors, as ghost structures never block movement
+
+        #[cfg(test)]
+        self.validate();
+
+        Ok(())
     }
 
-    /// Removes any ghost structure entity found at the provided `tile_pos` from the ghost structure index.
+    /// Removes any ghost structure entity found at the provided `voxel_pos` from the voxel index.
     ///
     /// Returns the removed entity, if any.
     #[inline]
-    pub(crate) fn remove_ghost_structure(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.ghost_structure_index.remove(&tile_pos);
-
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.ghost_structure_index
-                .retain(|_k, v| *v != removed_entity);
-        };
-
-        removed
-    }
-
-    /// Adds the provided `ghost_terrain_entity` to the ghost terrain index at the provided `tile_pos`.
-    #[inline]
-    pub(crate) fn add_ghost_terrain(&mut self, ghost_terrain_entity: Entity, tile_pos: TilePos) {
-        self.ghost_terrain_index
-            .insert(tile_pos, ghost_terrain_entity);
-    }
-
-    /// Removes any ghost terrain entity found at the provided `tile_pos` from the ghost terrain index.
-    ///
-    /// Returns the removed entity, if any.
-    #[inline]
-    pub(crate) fn remove_ghost_terrain(&mut self, tile_pos: TilePos) -> Option<Entity> {
-        let removed = self.ghost_terrain_index.remove(&tile_pos);
-
-        // Iterate through all of the entries, removing any other entries that point to the same entity
-        // PERF: this could be faster, but would require a different data structure.
-        if let Some(removed_entity) = removed {
-            self.ghost_terrain_index
-                .retain(|_k, v| *v != removed_entity);
-        };
-
-        removed
-    }
-
-    /// Gets the ghost terrain [`Entity`] at the provided `tile_pos`, if any.
-    #[inline]
-    #[must_use]
-    pub(crate) fn get_ghost_terrain(&self, tile_pos: TilePos) -> Option<Entity> {
-        self.ghost_terrain_index.get(&tile_pos).copied()
-    }
-
-    /// Updates the passability of the provided `tile_pos` based on the state of the litter at that location.
-    pub(crate) fn update_litter_state(&mut self, tile_pos: TilePos, litter_state: InventoryState) {
-        let current_litter_state = self.impassable_litter_tiles.contains(&tile_pos);
-
-        match current_litter_state {
-            true => {
-                if litter_state != InventoryState::Full {
-                    self.impassable_litter_tiles.remove(&tile_pos);
-                    self.recompute_passable_neighbors(tile_pos);
-                    self.recompute_reachable_neighbors(tile_pos);
-                }
-            }
-            false => {
-                if litter_state == InventoryState::Full {
-                    self.impassable_litter_tiles.insert(tile_pos);
-                    self.recompute_passable_neighbors(tile_pos);
-                    self.recompute_reachable_neighbors(tile_pos);
-                }
-            }
+    pub(crate) fn remove_ghost_structure(
+        &mut self,
+        center: VoxelPos,
+        footprint: &Footprint,
+        facing: Facing,
+    ) -> Option<Entity> {
+        let tentative_entry = self.voxel_index.get(&center)?;
+        if !matches!(tentative_entry.object_kind, VoxelKind::GhostStructure) {
+            return None;
         }
+
+        let entity = tentative_entry.entity;
+
+        for voxel_pos in footprint.normalized(facing, center) {
+            self.voxel_index.remove(&voxel_pos);
+        }
+
+        self.recompute_walkable_neighbors();
+
+        #[cfg(test)]
+        self.validate();
+
+        Some(entity)
     }
 
-    /// Returns an iterator over all of the tiles that are ocean tiles.
+    /// Returns an iterator over all of the hex positions that are ocean tiles.
     #[inline]
     #[must_use]
-    pub(crate) fn ocean_tiles(&self) -> impl ExactSizeIterator<Item = TilePos> + '_ {
+    pub(crate) fn ocean_tiles(&self) -> impl ExactSizeIterator<Item = Hex> + '_ {
         // Oceans ring the entire map currently
-        let hex_ring = Hex::ZERO.ring(self.radius + 1);
-        hex_ring.map(move |hex| TilePos { hex })
+        Hex::ZERO.ring(self.radius + 1)
     }
 
-    /// The set of adjacent tiles that are on the map.
-    ///
-    /// # Panics
-    ///
-    /// The provided `tile_pos` must be a valid tile position.
+    /// The set of tiles adjacent to `hex` that are on the map.
     #[inline]
     #[must_use]
-    pub(crate) fn valid_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
-        self.valid_neighbors
-            .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    pub(crate) fn adjacent_hexes(&self, hex: Hex) -> [Option<Hex>; 6] {
+        let mut adjacent_hexes = [None; 6];
+
+        for (i, neighbor) in hex.ring(1).enumerate() {
+            if self.is_valid(neighbor) {
+                adjacent_hexes[i] = Some(neighbor);
+            }
+        }
+
+        adjacent_hexes
     }
 
-    /// The set of tiles that can be walked to by a basket crab from `tile_pos`.
-    ///
-    /// The function signature is unfortunate, but this is meaningfully faster in a hot loop than returning a vec of tile positions.
-    ///
-    /// # Panics
-    ///
-    /// The provided `tile_pos` must be a valid tile position.
+    /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
+    #[inline]
+    pub(crate) fn walkable_neighbors(
+        &self,
+        voxel_pos: VoxelPos,
+    ) -> impl Iterator<Item = VoxelPos> + '_ {
+        let neighbors = self
+            .walkable_neighbors
+            .get(&voxel_pos)
+            // Avoiding panics here is much more robust and makes debugging easier
+            .unwrap_or(&Neighbors::NONE);
+
+        NeighborIter {
+            neighbors,
+            index: 0,
+        }
+    }
+
+    /// Returns the walkable neighbor in the provided direction from `voxel_pos`, if any.
     #[inline]
     #[must_use]
-    pub(crate) fn passable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
-        self.passable_neighbors
-            .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    pub(crate) fn walkable_neighbor_in_direction(
+        &self,
+        voxel_pos: VoxelPos,
+        direction: hexx::Direction,
+    ) -> Option<VoxelPos> {
+        let neighbors = self
+            .walkable_neighbors
+            .get(&voxel_pos)
+            .unwrap_or(&Neighbors::NONE);
+        neighbors.in_direction(direction)
     }
 
-    /// The set of tiles that can be reached by a basket crab from `tile_pos`.
-    ///
-    /// # Panics
-    ///
-    /// The provided `tile_pos` must be a valid tile position.
-    #[inline]
-    #[must_use]
-    pub(crate) fn reachable_neighbors(&self, tile_pos: TilePos) -> &[Option<TilePos>; 6] {
-        self.reachable_neighbors
-            .get(&tile_pos)
-            .unwrap_or_else(|| panic!("Tile position {tile_pos:?} is not a valid tile position"))
+    /// Returns an iterator over the set of empty voxels that are walkalbe from `voxel_pos`.
+    pub(crate) fn empty_neighbors(
+        &self,
+        voxel_pos: VoxelPos,
+    ) -> impl Iterator<Item = VoxelPos> + '_ {
+        self.walkable_neighbors(voxel_pos)
+            .filter(|neighbor| self.is_voxel_clear(*neighbor).is_ok())
     }
 
-    /// Recomputes the set of passable neighbors for the provided `tile_pos`.
-    ///
-    /// This will update the provided tile and all of its neighbors.
-    fn recompute_passable_neighbors(&mut self, tile_pos: TilePos) {
-        let neighbors = *self.valid_neighbors(tile_pos);
-        let mut passable_neighbors: [Option<TilePos>; 6] = [None; 6];
+    /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
+    pub(crate) fn walkable_voxels(&self) -> HashSet<VoxelPos> {
+        let mut walkable_voxels = HashSet::new();
 
-        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
-            let &Some(neighbor) = maybe_neighbor else { continue };
+        for (voxel_pos, voxel_data) in self.voxel_index.iter() {
+            if voxel_data.object_kind.can_walk_on_roof() {
+                let can_walk_through = match self.get_voxel(voxel_pos.above()) {
+                    Some(voxel_data) => voxel_data.object_kind.can_walk_through(),
+                    None => true,
+                };
 
-            let can_pass_from_tile_to_neighbor = self.compute_passability(tile_pos, neighbor);
-            let can_pass_from_neighbor_to_tile = self.compute_passability(neighbor, tile_pos);
-
-            match can_pass_from_tile_to_neighbor {
-                true => {
-                    passable_neighbors[i] = Some(neighbor);
-                }
-                // This edge was already initialized as None
-                false => (),
-            }
-
-            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
-            // PERF: we could compute this faster by relying on
-            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
-                .iter()
-                .position(|&maybe_self| maybe_self == Some(tile_pos))
-                .unwrap();
-            let neigbors_of_neighbor = self.passable_neighbors.get_mut(&neighbor).unwrap();
-
-            match can_pass_from_neighbor_to_tile {
-                true => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
-                }
-                false => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                if can_walk_through {
+                    walkable_voxels.insert(voxel_pos.above());
                 }
             }
         }
 
-        self.passable_neighbors.insert(tile_pos, passable_neighbors);
+        walkable_voxels
     }
 
-    /// Recomputes the set of reachable neighbors for the provided `tile_pos`.
+    /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
-    /// This will update the provided tile and all of its neighbors.
-    fn recompute_reachable_neighbors(&mut self, tile_pos: TilePos) {
-        let neighbors = *self.valid_neighbors(tile_pos);
-        let mut reachable_neighbors: [Option<TilePos>; 6] = [None; 6];
+    /// This will update the entire map at once.
+    // PERF: only update the neighborhood of the provided `voxel_pos`
+    fn recompute_walkable_neighbors(&mut self) {
+        let walkable_voxels = self.walkable_voxels();
+        self.walkable_neighbors.clear();
 
-        for (i, maybe_neighbor) in neighbors.iter().enumerate() {
-            let &Some(neighbor) = maybe_neighbor else { continue };
+        for walkable_voxel in &walkable_voxels {
+            let mut local_neighbors = Neighbors::NONE;
 
-            let can_reach_from_tile_to_neighbor = self.compute_reachability(tile_pos, neighbor);
-            let can_reach_from_neighbor_to_tile = self.compute_reachability(neighbor, tile_pos);
+            for (i, &direction) in hexx::Direction::ALL_DIRECTIONS.iter().enumerate() {
+                let neighbor_hex = walkable_voxel.hex.neighbor(direction);
+                let neighbor_flat = VoxelPos {
+                    hex: neighbor_hex,
+                    height: walkable_voxel.height,
+                };
+                let neighbor_above = neighbor_flat.above();
+                let neighbor_below = neighbor_flat.below();
 
-            match can_reach_from_tile_to_neighbor {
-                true => {
-                    reachable_neighbors[i] = Some(neighbor);
-                }
-                // This edge was already initialized as None
-                false => (),
-            }
-
-            let valid_neighbors_of_neighbor = self.valid_neighbors(neighbor);
-            // PERF: we could compute this faster by relying on
-            let index_of_self_in_neighbor = valid_neighbors_of_neighbor
-                .iter()
-                .position(|&maybe_self| maybe_self == Some(tile_pos))
-                .unwrap();
-            let neigbors_of_neighbor = self.reachable_neighbors.get_mut(&neighbor).unwrap();
-
-            match can_reach_from_neighbor_to_tile {
-                true => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = Some(tile_pos);
-                }
-                false => {
-                    neigbors_of_neighbor[index_of_self_in_neighbor] = None;
+                // Preferentially walk up, then level, then down
+                // So far, this is an arbitrary priority system
+                local_neighbors.maybe_neighbors[i] = if walkable_voxels.contains(&neighbor_above) {
+                    Some(neighbor_above)
+                } else if walkable_voxels.contains(&neighbor_flat) {
+                    Some(neighbor_flat)
+                } else if walkable_voxels.contains(&neighbor_below) {
+                    Some(neighbor_below)
+                } else {
+                    None
                 }
             }
+
+            self.walkable_neighbors
+                .insert(*walkable_voxel, local_neighbors);
         }
 
-        self.reachable_neighbors
-            .insert(tile_pos, reachable_neighbors);
+        #[cfg(test)]
+        self.validate();
+    }
+}
+
+#[cfg(test)]
+impl MapGeometry {
+    /// Runs all of the validation checks on the map.
+    fn validate(&self) {
+        self.validate_heights();
+        self.validate_entity_mapping();
+        self.ensure_hex_keys_match();
+        self.ensure_height_and_voxel_indexes_match();
+        self.validate_walkable_voxels();
     }
 
-    /// Can the tile at `ending_pos` be moved to from the tile at `starting_pos`?
-    fn compute_passability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
-        if !self.is_valid(ending_pos) {
-            return false;
+    /// Asserts that all of the heights in the map are between `Height::ZERO` and `Height::MAX`.
+    fn validate_heights(&self) {
+        for voxel_pos in self.voxel_index.keys() {
+            let height = voxel_pos.height();
+            assert!(
+                height >= Height::ZERO && height <= Height::MAX,
+                "Height {} is out of range",
+                height
+            );
         }
 
-        if self.impassable_structure_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if self.impassable_litter_tiles.contains(&ending_pos) {
-            return false;
-        }
-
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
+        for &hex in self.all_hexes() {
+            let height = self.get_height(hex).unwrap();
+            assert!(
+                height >= DiscreteHeight::ZERO && height <= DiscreteHeight::MAX,
+                "Height {} is out of range",
+                height
+            );
         }
     }
 
-    /// Can the tile at `ending_pos` be reached from the tile at `starting_pos`?
-    fn compute_reachability(&self, starting_pos: TilePos, ending_pos: TilePos) -> bool {
-        if !self.is_valid(ending_pos) {
-            return false;
-        }
+    /// Asserts that the heights recorded for terrain in the voxel index match the height map.
+    fn ensure_height_and_voxel_indexes_match(&self) {
+        for (voxel_pos, voxel_object) in self.voxel_index.iter() {
+            if !matches!(&voxel_object.object_kind, &VoxelKind::Terrain) {
+                continue;
+            }
 
-        // TODO: does not take into account height of structures
-        if let Ok(height_difference) = self.height_difference(starting_pos, ending_pos) {
-            height_difference <= Height::MAX_STEP
-        } else {
-            false
+            let voxel_height = voxel_pos.height;
+            let hex = voxel_pos.hex;
+            let stored_height = self.get_height(hex).unwrap();
+
+            assert_eq!(
+                voxel_height, stored_height,
+                "Height mismatch at {}",
+                voxel_pos
+            );
+        }
+    }
+
+    /// Asserts that the set of keys and values in the walkable neighbors index line up with the freshly computed set of walkable voxels.
+    fn validate_walkable_voxels(&self) {
+        let walkable_voxels = self.walkable_voxels().into_iter().collect::<HashSet<_>>();
+        let walkable_neighbors_keys = self
+            .walkable_neighbors
+            .keys()
+            .copied()
+            .collect::<HashSet<_>>();
+
+        let a_minus_b = walkable_voxels.difference(&walkable_neighbors_keys);
+        let b_minus_a = walkable_neighbors_keys.difference(&walkable_voxels);
+
+        assert!(
+            walkable_voxels == walkable_neighbors_keys,
+            "Walkable voxels and walkable neighbors keys do not match. Found {:?} in walkable voxels but not in walkable neighbors keys. Found {:?} in walkable neighbors keys but not in walkable voxels.",
+            a_minus_b, b_minus_a
+        );
+
+        for neighbors in self.walkable_neighbors.values() {
+            for maybe_neighbor in neighbors.maybe_neighbors.iter().flatten() {
+                assert!(walkable_voxels.contains(maybe_neighbor));
+            }
+        }
+    }
+
+    /// Asserts that the keys in the height index and the terrain index match.
+    fn ensure_hex_keys_match(&self) {
+        assert_eq!(
+            self.height_index.keys().collect::<HashSet<_>>(),
+            self.terrain_index.keys().collect::<HashSet<_>>(),
+            "Height index keys do not match terrain index keys"
+        );
+    }
+
+    /// Asserts that the entities recorded in the voxel index match the entities recorded in the terrain map.
+    fn validate_entity_mapping(&self) {
+        for (voxel_pos, voxel_object) in self.voxel_index.iter() {
+            if !matches!(&voxel_object.object_kind, &VoxelKind::Terrain) {
+                continue;
+            }
+
+            let voxel_entity = voxel_object.entity;
+            let terrain_entity = self.get_terrain(voxel_pos.hex).unwrap();
+
+            assert_eq!(
+                voxel_entity, terrain_entity,
+                "Entity mismatch at {}",
+                voxel_pos
+            );
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::geometry::position::DiscreteHeight;
+
     use super::*;
 
     #[test]
     fn map_geometry_is_initialized_successfully() {
         let radius = 10;
 
-        let map_geometry = MapGeometry::new(radius);
+        let mut world = World::new();
+        let map_geometry = MapGeometry::new(&mut world, radius);
         let hexagon = hexagon(Hex::ZERO, radius);
         let n = hexagon.len();
 
         assert_eq!(map_geometry.radius, radius);
         // Valid neighbors is larger, as this information is needed for ocean tiles
-        let n_passable_neighbors = map_geometry.passable_neighbors.iter().count();
-        assert_eq!(n_passable_neighbors, n);
-        let n_reachable_neighbors = map_geometry.reachable_neighbors.iter().count();
-        assert_eq!(n_reachable_neighbors, n);
+        let n_walkable_neighbors = map_geometry.walkable_neighbors.iter().count();
+        assert_eq!(n_walkable_neighbors, n);
 
         for hex in hexagon {
-            let tile_pos = TilePos { hex };
+            let voxel_pos_zero = VoxelPos {
+                hex,
+                height: DiscreteHeight::ZERO,
+            };
+            let voxel_pos_one = VoxelPos {
+                hex,
+                height: DiscreteHeight::ONE,
+            };
+
             assert!(
-                map_geometry.valid_neighbors.contains_key(&tile_pos),
-                "{}",
-                tile_pos
+                map_geometry.is_valid(hex),
+                "All hexes in the hexagon should be valid"
             );
+
             assert!(
-                map_geometry.passable_neighbors.contains_key(&tile_pos),
-                "{}",
-                tile_pos
+                map_geometry.terrain_index.contains_key(&hex),
+                "Terrain index should contain {:?}",
+                hex
             );
+
             assert!(
-                map_geometry.reachable_neighbors.contains_key(&tile_pos),
-                "{}",
-                tile_pos
+                map_geometry.height_index.contains_key(&hex),
+                "Height index should contain {:?}",
+                hex
+            );
+
+            assert_eq!(
+                map_geometry
+                    .voxel_index
+                    .get(&voxel_pos_zero)
+                    .unwrap()
+                    .object_kind,
+                VoxelKind::Terrain
+            );
+            assert_eq!(
+                map_geometry.is_voxel_clear(voxel_pos_zero),
+                Err(AdditionError::AlreadyOccupied)
+            );
+
+            assert_eq!(map_geometry.voxel_index.get(&voxel_pos_one), None);
+            assert_eq!(map_geometry.is_voxel_clear(voxel_pos_one), Ok(()));
+
+            assert!(
+                map_geometry.walkable_neighbors.contains_key(&voxel_pos_one),
+                "Walkable neighbors should contain {}",
+                voxel_pos_one
+            );
+
+            assert_eq!(
+                map_geometry.get_height(hex),
+                Ok(DiscreteHeight::ZERO),
+                "All hexes should be at height 0"
             );
         }
 
-        for (tile_pos, valid_neighbors) in &map_geometry.valid_neighbors {
-            assert!(valid_neighbors.len() <= 6, "{}", tile_pos);
-            for maybe_neighbor in valid_neighbors {
-                if let Some(neighbor) = maybe_neighbor {
-                    assert!(map_geometry.is_valid(*neighbor), "{}", neighbor);
-
-                    assert!(
-                        map_geometry.valid_neighbors.contains_key(neighbor),
-                        "{}",
-                        neighbor
-                    );
-                }
-            }
-        }
-
-        // All of the neighbors should be the same for a newly initialized map
         assert_eq!(
-            map_geometry.passable_neighbors,
-            map_geometry.reachable_neighbors
+            map_geometry.walkable_voxels().len(),
+            n,
+            "All hexes should correspond to one walkable position"
+        );
+
+        map_geometry.validate();
+    }
+
+    #[test]
+    fn walkable_voxels_respond_to_changes_correctly() {
+        let mut map_geometry = MapGeometry::new(&mut World::new(), 0);
+        let can_walk_at_height_one = HashSet::from_iter([VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight(1),
+        }]);
+        let can_walk_at_height_two = HashSet::from_iter([VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight(2),
+        }]);
+        let cannot_walk = HashSet::new();
+
+        let center = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight(1),
+        };
+        let footprint = Footprint::default();
+        let facing = Facing::default();
+        let entity = Entity::from_bits(42);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry.is_voxel_clear(center).unwrap();
+        map_geometry
+            .is_space_available(center, &footprint, facing)
+            .unwrap();
+
+        // Ordinary structure
+        map_geometry
+            .add_structure(center, facing, &footprint, false, false, entity)
+            .unwrap();
+
+        assert_eq!(map_geometry.walkable_voxels(), cannot_walk);
+        map_geometry
+            .remove_structure(center, &footprint, facing)
+            .unwrap();
+
+        // Ghost structure
+        map_geometry
+            .add_ghost_structure(facing, center, &footprint, entity)
+            .unwrap();
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry.remove_ghost_structure(center, &footprint, facing);
+
+        // Passable structure
+        map_geometry
+            .add_structure(center, facing, &footprint, false, true, entity)
+            .unwrap();
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_one);
+        map_geometry
+            .remove_structure(center, &footprint, facing)
+            .unwrap();
+
+        // Structure with roof
+        map_geometry
+            .add_structure(center, facing, &footprint, true, false, entity)
+            .unwrap();
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
+
+        map_geometry.remove_structure(center, &footprint, facing);
+
+        // Raising the terrain
+        map_geometry.update_height(Hex::ZERO, DiscreteHeight::ONE);
+
+        assert_eq!(map_geometry.walkable_voxels(), can_walk_at_height_two);
+    }
+
+    #[test]
+    fn adding_ghost_structures_does_not_change_walkable_neighbors() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 1);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
+
+        map_geometry
+            .add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42))
+            .unwrap();
+        let initial_walkable_voxels = map_geometry.walkable_voxels();
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Adding a ghost structure should not change walkable neighbors"
+        );
+
+        assert_eq!(
+            initial_walkable_voxels,
+            map_geometry.walkable_voxels(),
+            "Adding a ghost structure should not change walkable voxels"
+        );
+
+        map_geometry.remove_ghost_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Removing a ghost structure should not change walkable neighbors"
         );
     }
 
     #[test]
+    fn adding_passable_structures_does_not_change_walkable_neighbors() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 1);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        let initial_walkable_neighbors = map_geometry.walkable_neighbors.clone();
+
+        map_geometry
+            .add_structure(
+                voxel_pos,
+                facing,
+                &footprint,
+                false,
+                true,
+                Entity::from_bits(42),
+            )
+            .unwrap();
+        let initial_walkable_voxels = map_geometry.walkable_voxels();
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Adding a passable structure should not change walkable neighbors"
+        );
+
+        assert_eq!(
+            initial_walkable_voxels,
+            map_geometry.walkable_voxels(),
+            "Adding a passable structure should not change walkable voxels"
+        );
+
+        map_geometry.remove_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(
+            map_geometry.walkable_neighbors, initial_walkable_neighbors,
+            "Removing a ghost structure should not change walkable neighbors"
+        );
+    }
+
+    #[test]
+    fn can_add_and_remove_structures() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        map_geometry
+            .add_structure(
+                voxel_pos,
+                facing,
+                &footprint,
+                false,
+                false,
+                Entity::from_bits(42),
+            )
+            .unwrap();
+
+        assert_eq!(
+            map_geometry.get_structure(voxel_pos),
+            Some(Entity::from_bits(42))
+        );
+
+        map_geometry.remove_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(map_geometry.get_structure(voxel_pos), None);
+    }
+
+    #[test]
+    fn can_add_and_remove_ghost_structures() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
+        let voxel_pos = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
+        let facing = Facing::default();
+        let footprint = Footprint::default();
+
+        map_geometry
+            .add_ghost_structure(facing, voxel_pos, &footprint, Entity::from_bits(42))
+            .unwrap();
+
+        assert_eq!(
+            map_geometry.get_ghost_structure(voxel_pos),
+            Some(Entity::from_bits(42))
+        );
+
+        map_geometry.remove_ghost_structure(voxel_pos, &footprint, facing);
+
+        assert_eq!(map_geometry.get_ghost_structure(voxel_pos), None);
+    }
+
+    #[test]
+    fn can_change_height_of_terrain() {
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
+        assert_eq!(
+            map_geometry.get_height(Hex::ZERO).unwrap(),
+            DiscreteHeight::ZERO
+        );
+
+        map_geometry.update_height(Hex::ZERO, DiscreteHeight::ONE);
+        assert_eq!(
+            map_geometry.get_height(Hex::ZERO).unwrap(),
+            DiscreteHeight::ONE
+        );
+    }
+
+    // TODO: add tests for litter
+
+    #[test]
     fn adding_multi_tile_structure_adds_to_index() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(0, 0);
-        let passable = false;
+        let center = VoxelPos {
+            hex: Hex::ZERO,
+            height: DiscreteHeight::ONE,
+        };
+        let can_walk_on_roof = false;
+        let can_walk_through = false;
 
-        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
+        map_geometry
+            .add_structure(
+                center,
+                facing,
+                &footprint,
+                can_walk_on_roof,
+                can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
 
         // Check that the structure index was updated correctly
-        for tile_pos in footprint.normalized(facing, center) {
-            assert_eq!(Some(structure_entity), map_geometry.get_structure(tile_pos));
+        for voxel_pos in footprint.normalized(facing, center) {
+            assert_eq!(
+                Some(structure_entity),
+                map_geometry.get_structure(voxel_pos)
+            );
         }
     }
 
     #[test]
     fn removing_multi_tile_structure_clears_indexes() {
-        let mut map_geometry = MapGeometry::new(10);
+        let mut world = World::new();
+        let mut map_geometry = MapGeometry::new(&mut world, 0);
 
         let footprint = Footprint::hexagon(1);
         let structure_entity = Entity::from_bits(42);
         let facing = Facing::default();
-        let center = TilePos::new(3, -2);
-        let passable = false;
+        let hex = Hex { x: 3, y: -2 };
+        let center = VoxelPos {
+            hex,
+            height: DiscreteHeight::ZERO,
+        };
+        let can_walk_on_roof = false;
+        let can_walk_through = false;
 
-        map_geometry.add_structure(facing, center, &footprint, passable, structure_entity);
-        map_geometry.remove_structure(facing, center, &footprint);
+        map_geometry
+            .add_structure(
+                center,
+                facing,
+                &footprint,
+                can_walk_on_roof,
+                can_walk_through,
+                structure_entity,
+            )
+            .unwrap();
+        map_geometry.remove_structure(center, &footprint, facing);
 
         // Check that the structure index was updated correctly
-        for tile_pos in footprint.normalized(facing, center) {
-            dbg!(tile_pos);
-            assert_eq!(None, map_geometry.get_structure(tile_pos));
+        for voxel_pos in footprint.normalized(facing, center) {
+            dbg!(voxel_pos);
+            assert_eq!(None, map_geometry.get_structure(voxel_pos));
         }
     }
 }

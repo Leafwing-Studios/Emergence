@@ -81,6 +81,12 @@ impl AssetsToLoad {
         self.remaining.insert(type_id, short_name);
     }
 
+    /// Does `T` still need to be loaded?
+    pub fn contains<T: Loadable>(&self) -> bool {
+        let type_id = TypeId::of::<T>();
+        self.remaining.contains_key(&type_id)
+    }
+
     /// Registers that `T` is done loading.
     pub fn remove<T: Loadable>(&mut self) {
         let type_id = TypeId::of::<T>();
@@ -97,7 +103,7 @@ fn check_manifests_loaded(
         info!("All manifests loaded: transitioning to AssetState::LoadAssets");
 
         next_state.set(AssetState::LoadAssets);
-    } else {
+    } else if assets_to_load.is_changed() {
         info!("Waiting for manifests to load:\n{}", *assets_to_load);
     }
 }
@@ -143,7 +149,7 @@ pub trait Loadable: Resource + Sized {
         mut assets_to_load: ResMut<AssetsToLoad>,
     ) {
         let load_state = asset_collection.load_state(&asset_server);
-        if load_state == LoadState::Loaded {
+        if load_state == LoadState::Loaded && assets_to_load.contains::<Self>() {
             assets_to_load.remove::<Self>();
         }
     }

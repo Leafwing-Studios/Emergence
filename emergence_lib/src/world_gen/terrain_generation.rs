@@ -2,11 +2,15 @@
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{Facing, Height, MapGeometry, TilePos, Volume},
+    geometry::{DiscreteHeight, Facing, MapGeometry, Volume, VoxelPos},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
-    terrain::{commands::TerrainCommandsExt, terrain_manifest::Terrain},
+    terrain::{
+        terrain_assets::TerrainHandles,
+        terrain_manifest::{Terrain, TerrainManifest},
+        TerrainBundle,
+    },
     utils::noise::simplex_noise,
     water::WaterVolume,
 };
@@ -17,18 +21,19 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use super::GenerationConfig;
 
 /// Creates the world according to [`GenerationConfig`].
-pub(crate) fn generate_terrain(
-    mut commands: Commands,
-    generation_config: Res<GenerationConfig>,
-    map_geometry: Res<MapGeometry>,
-) {
+pub(crate) fn generate_terrain(world: &mut World) {
     info!("Generating terrain...");
-    let mut rng = thread_rng();
-
-    let terrain_weights = &generation_config.terrain_weights;
+    let generation_config = world.resource::<GenerationConfig>().clone();
+    let map_radius = generation_config.map_radius;
+    let terrain_weights = generation_config.terrain_weights;
     let terrain_variants: Vec<Id<Terrain>> = terrain_weights.keys().copied().collect();
 
-    for hex in hexagon(Hex::ZERO, map_geometry.radius) {
+    let map_geometry = MapGeometry::new(world, map_radius);
+    world.insert_resource(map_geometry);
+
+    let mut rng = thread_rng();
+
+    for hex in hexagon(Hex::ZERO, map_radius) {
         // FIXME: can we not just sample from our terrain_weights directly?
         let &terrain_id = terrain_variants
             .choose_weighted(&mut rng, |terrain_type| {
@@ -36,15 +41,46 @@ pub(crate) fn generate_terrain(
             })
             .unwrap();
 
-        let tile_pos = TilePos { hex };
         // Heights are generated in f32 world coordinates to start
-        let hex_height = simplex_noise(tile_pos, &generation_config.low_frequency_noise)
-            + simplex_noise(tile_pos, &generation_config.high_frequency_noise);
+        let hex_height = simplex_noise(hex, &generation_config.low_frequency_noise)
+            + simplex_noise(hex, &generation_config.high_frequency_noise);
 
         // And then discretized to the nearest integer height before being used
-        let height = Height::from_world_pos(hex_height);
+        let height = DiscreteHeight::from_world_pos(hex_height);
+        let map_geometry = world.resource::<MapGeometry>();
+        let entity = map_geometry.get_terrain(hex).unwrap();
+        let voxel_pos = VoxelPos { hex, height };
 
-        commands.spawn_terrain(tile_pos, height, terrain_id);
+        let terrain_bundle = if let Some(handles) = world.get_resource::<TerrainHandles>() {
+            let terrain_manifest = world.resource::<TerrainManifest>();
+            let scene_handle = handles.scenes.get(&terrain_id).unwrap().clone_weak();
+            let mesh = handles.topper_mesh.clone_weak();
+
+            TerrainBundle::new(terrain_id, voxel_pos, scene_handle, mesh, terrain_manifest)
+        } else {
+            TerrainBundle::minimal(terrain_id, voxel_pos)
+        };
+
+        // Insert the TerrainBundle
+        // This overwrites the existing VoxelPos component
+        world.entity_mut(entity).insert(terrain_bundle);
+
+        // Spawn the column as the 0th child of the tile entity
+        // The scene bundle will be added as the first child
+        if let Some(handles) = world.get_resource::<TerrainHandles>() {
+            let column_bundle = PbrBundle {
+                mesh: handles.column_mesh.clone_weak(),
+                material: handles.column_material.clone_weak(),
+                ..Default::default()
+            };
+
+            let hex_column = world.spawn(column_bundle).id();
+            world.entity_mut(entity).add_child(hex_column);
+        }
+
+        // Update the index of what terrain is where
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        map_geometry.update_height(hex, height);
     }
 }
 
@@ -53,16 +89,12 @@ pub(super) fn generate_landmarks(
     mut commands: Commands,
     generation_config: Res<GenerationConfig>,
     structure_manifest: Res<StructureManifest>,
-    mut height_query: Query<&mut Height>,
-    mut map_geometry: ResMut<MapGeometry>,
+    map_geometry: Res<MapGeometry>,
 ) {
     info!("Generating landmarks...");
     let rng = &mut thread_rng();
 
-    for tile_pos in map_geometry
-        .valid_tile_positions()
-        .collect::<Vec<TilePos>>()
-    {
+    for voxel_pos in map_geometry.walkable_voxels() {
         for (&structure_id, &chance) in &generation_config.landmark_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
@@ -72,13 +104,13 @@ pub(super) fn generate_landmarks(
                 let footprint = &structure_manifest.get(structure_id).footprint;
 
                 // Only try to spawn a structure if the location is valid and there is space
-                if map_geometry.is_footprint_valid(tile_pos, footprint, facing)
-                    && map_geometry.is_space_available(tile_pos, footprint, facing)
+                if map_geometry.is_footprint_valid(voxel_pos, footprint, facing)
+                    && map_geometry
+                        .is_space_available(voxel_pos, footprint, facing)
+                        .is_ok()
                 {
-                    // Flatten the terrain under the structure before spawning it
-                    map_geometry.flatten_height(&mut height_query, tile_pos, footprint, facing);
                     commands.spawn_structure(
-                        tile_pos,
+                        voxel_pos,
                         ClipboardData::generate_from_id(structure_id, &structure_manifest),
                         StartingEnergy::NotAnOrganism,
                     );

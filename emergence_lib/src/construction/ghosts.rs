@@ -23,7 +23,7 @@ use emergence_macros::IterableEnum;
 use crate::{
     asset_management::manifest::Id,
     crafting::inventories::{CraftingState, InputInventory},
-    geometry::{Facing, TilePos},
+    geometry::{Facing, VoxelPos},
     player_interaction::clipboard::ClipboardData,
     signals::{Emitter, SignalStrength, SignalType},
 };
@@ -88,7 +88,7 @@ pub(super) struct GhostBundle {
     /// Marker component
     ghost: Ghost,
     /// The location of the ghost
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     /// The items required to actually seed this item
     construction_materials: InputInventory,
     /// The material to be used by all children in the scene
@@ -102,7 +102,7 @@ pub(super) struct GhostBundle {
 impl GhostBundle {
     /// Creates a new [`GhostBundle`].
     pub(super) fn new(
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         construction_materials: InputInventory,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
@@ -110,7 +110,7 @@ impl GhostBundle {
     ) -> Self {
         GhostBundle {
             ghost: Ghost,
-            tile_pos,
+            voxel_pos,
             construction_materials,
             inherited_material,
             scene_bundle: SceneBundle {
@@ -147,7 +147,7 @@ pub(crate) struct GhostStructureBundle {
 impl GhostStructureBundle {
     /// Creates a new [`GhostStructureBundle`].
     pub(crate) fn new(
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         clipboard_data: ClipboardData,
         structure_manifest: &StructureManifest,
         picking_mesh: Handle<Mesh>,
@@ -161,7 +161,7 @@ impl GhostStructureBundle {
 
         GhostStructureBundle {
             ghost_bundle: GhostBundle::new(
-                tile_pos,
+                voxel_pos,
                 construction_materials,
                 scene_handle,
                 inherited_material,
@@ -223,7 +223,7 @@ pub(crate) struct PreviewBundle {
     /// Marker component
     pub(super) preview: Preview,
     /// The location of the preview
-    pub(super) tile_pos: TilePos,
+    pub(super) voxel_pos: VoxelPos,
     /// The material to be used by all children in the scene
     pub(super) inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
@@ -244,7 +244,7 @@ pub(crate) struct StructurePreviewBundle {
 impl StructurePreviewBundle {
     /// Creates a new [`StructurePreviewBundle`].
     pub(crate) fn new(
-        tile_pos: TilePos,
+        voxel_pos: VoxelPos,
         data: ClipboardData,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
@@ -253,7 +253,7 @@ impl StructurePreviewBundle {
         StructurePreviewBundle {
             preview_bundle: PreviewBundle {
                 preview: Preview,
-                tile_pos,
+                voxel_pos,
                 inherited_material,
                 scene_bundle: SceneBundle {
                     scene: scene_handle.clone_weak(),
@@ -388,7 +388,7 @@ pub(super) fn ghost_structure_lifecycle(
         (
             &mut CraftingState,
             &InputInventory,
-            &TilePos,
+            &VoxelPos,
             &Id<Structure>,
             &Facing,
             &ActiveRecipe,
@@ -440,8 +440,8 @@ pub(super) fn ghost_structure_lifecycle(
             CraftingState::RecipeComplete => {
                 let structure_data = structure_manifest.get(structure_id);
 
-                for &tile_pos in structure_data.footprint.normalized(facing, center).iter() {
-                    commands.despawn_ghost_structure(tile_pos);
+                for &voxel_pos in structure_data.footprint.normalized(facing, center).iter() {
+                    commands.despawn_ghost_structure(voxel_pos);
                 }
 
                 // Spawn the seedling form of a structure if any
@@ -477,7 +477,7 @@ pub(super) fn ghost_structure_lifecycle(
 /// Ensures that all ghosts can be built.
 pub(super) fn validate_ghost_structures(
     map_geometry: Res<MapGeometry>,
-    ghost_query: Query<(&TilePos, &Id<Structure>, &Facing), With<Ghost>>,
+    ghost_query: Query<(&VoxelPos, &Id<Structure>, &Facing), With<Ghost>>,
     structure_manifest: Res<StructureManifest>,
     mut commands: Commands,
 ) {
@@ -486,11 +486,14 @@ pub(super) fn validate_ghost_structures(
         return;
     }
 
-    for (&tile_pos, &structure_id, &facing) in ghost_query.iter() {
+    for (&voxel_pos, &structure_id, &facing) in ghost_query.iter() {
         let structure_details = structure_manifest.get(structure_id);
 
-        if !map_geometry.can_build(tile_pos, &structure_details.footprint, facing) {
-            commands.despawn_ghost_structure(tile_pos);
+        if map_geometry
+            .is_space_available(voxel_pos, &structure_details.footprint, facing)
+            .is_ok()
+        {
+            commands.despawn_ghost_structure(voxel_pos);
         }
     }
 }

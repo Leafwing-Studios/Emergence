@@ -9,7 +9,7 @@ use rand::thread_rng;
 use crate::asset_management::manifest::Id;
 use crate::construction::ghosts::WorkplaceId;
 use crate::crafting::item_tags::ItemKind;
-use crate::geometry::TilePos;
+use crate::geometry::VoxelPos;
 use crate::items::item_manifest::ItemManifest;
 use crate::signals::{SignalType, Signals};
 use crate::structures::structure_manifest::{Structure, StructureManifest};
@@ -202,7 +202,7 @@ impl Goal {
 /// Choose this unit's new goal if needed
 pub(super) fn choose_goal(
     mut units_query: Query<(
-        &TilePos,
+        &VoxelPos,
         &mut Goal,
         &mut ImpatiencePool,
         &UnitInventory,
@@ -214,7 +214,7 @@ pub(super) fn choose_goal(
 ) {
     let rng = &mut thread_rng();
 
-    for (&tile_pos, mut goal, mut impatience_pool, unit_inventory, &unit_id) in
+    for (&voxel_pos, mut goal, mut impatience_pool, unit_inventory, &unit_id) in
         units_query.iter_mut()
     {
         // If we're out of patience, give up and choose a new goal
@@ -250,7 +250,7 @@ pub(super) fn choose_goal(
             *goal = compute_new_goal(
                 unit_id,
                 remaining_actions,
-                tile_pos,
+                voxel_pos,
                 wandering_behavior,
                 rng,
                 &signals,
@@ -269,7 +269,7 @@ pub(super) fn choose_goal(
 fn compute_new_goal(
     unit_id: Id<Unit>,
     mut remaining_actions: Option<u16>,
-    tile_pos: TilePos,
+    voxel_pos: VoxelPos,
     wandering_behavior: &WanderingBehavior,
     rng: &mut ThreadRng,
     signals: &Signals,
@@ -290,7 +290,7 @@ fn compute_new_goal(
     }
 
     // Pick a new goal based on the signals at this tile
-    let current_signals = signals.all_signals_at_position(tile_pos);
+    let current_signals = signals.all_signals_at_position(voxel_pos);
     let mut goal_relevant_signals = current_signals.goal_relevant_signals();
 
     // Only try to avoid units of the same type
