@@ -35,9 +35,45 @@ pub struct MapGeometry {
     /// The list of all passable neighbors for each tile position.
     ///
     /// The set of keys is the set of all [`VoxelPos`] that units could be found.
-    walkable_neighbors: HashMap<VoxelPos, [Option<VoxelPos>; 6]>,
-    /// An empty list of walkable neighbors.
-    empty_neighbors: [Option<VoxelPos>; 6],
+    walkable_neighbors: HashMap<VoxelPos, Neighbors>,
+}
+
+/// The six neighbors of a voxel position.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Neighbors {
+    /// The internal array
+    maybe_neighbors: [Option<VoxelPos>; 6],
+}
+
+impl Neighbors {
+    /// No neighbors exist.
+    const NONE: Neighbors = Neighbors {
+        maybe_neighbors: [None; 6],
+    };
+}
+
+/// An iterator over the neighbors of a voxel position.
+struct NeighborIter<'a> {
+    /// A reference to the data
+    neighbors: &'a Neighbors,
+    /// Tracks how far we've iterated
+    index: usize,
+}
+
+impl<'a> Iterator for NeighborIter<'a> {
+    type Item = VoxelPos;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < 6 {
+            let result = self.neighbors.maybe_neighbors[self.index];
+            self.index += 1;
+            if result.is_some() {
+                return result;
+            }
+        }
+
+        None
+    }
 }
 
 /// A [`MapGeometry`] index was missing an entry.
@@ -100,7 +136,6 @@ impl MapGeometry {
             height_index,
             voxel_index,
             walkable_neighbors: HashMap::default(),
-            empty_neighbors: [None; 6],
         };
 
         map_geometry.recompute_walkable_neighbors();
@@ -506,12 +541,10 @@ impl MapGeometry {
     fn find_litter_location(&self, proposed_voxel_pos: VoxelPos) -> VoxelPos {
         let mut voxel_pos = proposed_voxel_pos;
         while !self.is_voxel_clear(voxel_pos).is_ok() {
-            for maybe_neighbor in self.walkable_neighbors(voxel_pos) {
-                if let &Some(neighbor) = maybe_neighbor {
-                    if self.is_voxel_clear(neighbor).is_ok() {
-                        voxel_pos = neighbor;
-                        break;
-                    }
+            for neighbor in self.walkable_neighbors(voxel_pos) {
+                if self.is_voxel_clear(neighbor).is_ok() {
+                    voxel_pos = neighbor;
+                    break;
                 }
             }
 
@@ -670,15 +703,31 @@ impl MapGeometry {
     }
 
     /// The set of tiles that can be walked to by a basket crab from `voxel_pos`.
-    ///
-    /// The function signature is unfortunate, but this is meaningfully faster in a hot loop than returning a vec of tile positions.
     #[inline]
     #[must_use]
-    pub(crate) fn walkable_neighbors(&self, voxel_pos: VoxelPos) -> &[Option<VoxelPos>; 6] {
-        self.walkable_neighbors
+    pub(crate) fn walkable_neighbors(
+        &self,
+        voxel_pos: VoxelPos,
+    ) -> impl Iterator<Item = VoxelPos> + '_ {
+        let neighbors = self
+            .walkable_neighbors
             .get(&voxel_pos)
             // Avoiding panics here is much more robust and makes debugging easier
-            .unwrap_or(&self.empty_neighbors)
+            .unwrap_or(&Neighbors::NONE);
+
+        NeighborIter {
+            neighbors,
+            index: 0,
+        }
+    }
+
+    /// Returns an iterator over the set of empty voxels that are walkalbe from `voxel_pos`.
+    pub(crate) fn empty_neighbors(
+        &self,
+        voxel_pos: VoxelPos,
+    ) -> impl Iterator<Item = VoxelPos> + '_ {
+        self.walkable_neighbors(voxel_pos)
+            .filter(|neighbor| self.is_voxel_clear(*neighbor).is_ok())
     }
 
     /// Computes the set of tiles across the entire map that can be walked on by a basket crab.
@@ -710,7 +759,7 @@ impl MapGeometry {
         self.walkable_neighbors.clear();
 
         for walkable_voxel in &walkable_voxels {
-            let mut local_neighbors = [None; 6];
+            let mut local_neighbors = Neighbors::NONE;
 
             for (i, &direction) in hexx::Direction::ALL_DIRECTIONS.iter().enumerate() {
                 let neighbor_hex = walkable_voxel.hex.neighbor(direction);
@@ -723,7 +772,7 @@ impl MapGeometry {
 
                 // Preferentially walk up, then level, then down
                 // So far, this is an arbitrary priority system
-                local_neighbors[i] = if walkable_voxels.contains(&neighbor_above) {
+                local_neighbors.maybe_neighbors[i] = if walkable_voxels.contains(&neighbor_above) {
                     Some(neighbor_above)
                 } else if walkable_voxels.contains(&neighbor_flat) {
                     Some(neighbor_flat)
@@ -813,7 +862,7 @@ impl MapGeometry {
         );
 
         for neighbors in self.walkable_neighbors.values() {
-            for maybe_neighbor in neighbors.iter().flatten() {
+            for maybe_neighbor in neighbors.maybe_neighbors.iter().flatten() {
                 assert!(walkable_voxels.contains(maybe_neighbor));
             }
         }
@@ -928,21 +977,6 @@ mod tests {
             n,
             "All hexes should correspond to one walkable position"
         );
-
-        for (voxel_pos, valid_neighbors) in &map_geometry.walkable_neighbors {
-            assert!(valid_neighbors.len() <= 6, "{}", voxel_pos);
-            for maybe_neighbor in valid_neighbors {
-                if let Some(neighbor) = maybe_neighbor {
-                    assert!(map_geometry.is_valid(neighbor.hex), "{}", neighbor);
-
-                    assert!(
-                        map_geometry.walkable_neighbors.contains_key(neighbor),
-                        "{}",
-                        neighbor
-                    );
-                }
-            }
-        }
 
         map_geometry.validate();
     }
