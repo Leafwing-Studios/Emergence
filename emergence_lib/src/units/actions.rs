@@ -272,6 +272,7 @@ pub(super) fn finish_actions(
     item_manifest: Res<ItemManifest>,
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
+    map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
     let item_manifest = &*item_manifest;
@@ -436,13 +437,13 @@ pub(super) fn finish_actions(
                     RotationDirection::Right => unit.facing.rotate_clockwise(),
                 },
                 UnitAction::MoveForward => {
-                    // FIXME: this lets units walk into the air.
-                    // Instead, they need to use the walkable neighbors of their current voxel
                     let direction = unit.facing.direction;
-                    let target_voxel = unit.voxel_pos.neighbor(direction);
-
-                    *unit.voxel_pos = target_voxel;
-                    unit.transform.translation = target_voxel.inside_voxel();
+                    if let Some(target_voxel) =
+                        map_geometry.walkable_neighbor_in_direction(*unit.voxel_pos, direction)
+                    {
+                        *unit.voxel_pos = target_voxel;
+                        unit.transform.translation = target_voxel.inside_voxel();
+                    }
                 }
                 UnitAction::Work { structure_entity } => {
                     let mut success = false;

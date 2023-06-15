@@ -50,6 +50,20 @@ impl Neighbors {
     const NONE: Neighbors = Neighbors {
         maybe_neighbors: [None; 6],
     };
+
+    /// Returns the neighbor in the given direction, if it exists.
+    fn in_direction(&self, direction: hexx::Direction) -> Option<VoxelPos> {
+        use hexx::Direction::*;
+
+        match direction {
+            TopRight => self.maybe_neighbors[0],
+            Top => self.maybe_neighbors[1],
+            TopLeft => self.maybe_neighbors[2],
+            BottomLeft => self.maybe_neighbors[3],
+            Bottom => self.maybe_neighbors[4],
+            BottomRight => self.maybe_neighbors[5],
+        }
+    }
 }
 
 /// An iterator over the neighbors of a voxel position.
@@ -719,6 +733,21 @@ impl MapGeometry {
             neighbors,
             index: 0,
         }
+    }
+
+    /// Returns the walkable neighbor in the provided direction from `voxel_pos`, if any.
+    #[inline]
+    #[must_use]
+    pub(crate) fn walkable_neighbor_in_direction(
+        &self,
+        voxel_pos: VoxelPos,
+        direction: hexx::Direction,
+    ) -> Option<VoxelPos> {
+        let neighbors = self
+            .walkable_neighbors
+            .get(&voxel_pos)
+            .unwrap_or(&Neighbors::NONE);
+        neighbors.in_direction(direction)
     }
 
     /// Returns an iterator over the set of empty voxels that are walkalbe from `voxel_pos`.
