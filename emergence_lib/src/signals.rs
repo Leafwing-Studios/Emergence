@@ -690,7 +690,6 @@ fn emit_signals(
         }
     }
 
-    // PERF: this could be parallelized, but requires some thought due to the intent pool.
     for (&center, emitter, maybe_structure_id, maybe_facing) in emitter_query.iter() {
         // When the water is too deep, disable the flooded buildings to avoid drowning units constantly
         if let Some(structure_id) = maybe_structure_id {
