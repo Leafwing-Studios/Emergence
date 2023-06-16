@@ -123,6 +123,8 @@ impl WorldGenState {
 /// Controls world generation strategy
 #[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
+    /// The seed used to generate the world.
+    pub seed: u64,
     /// Radius of the map.
     pub(super) map_radius: u32,
     /// How long to simulate the world before starting the game.
@@ -163,6 +165,7 @@ impl GenerationConfig {
         structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
 
         GenerationConfig {
+            seed: 0,
             map_radius: 30,
             number_of_burn_in_ticks: 0,
             unit_chances,
@@ -206,6 +209,7 @@ impl GenerationConfig {
         structure_chances.insert(Id::from_name("passable_structure".to_string()), 1e-1);
 
         GenerationConfig {
+            seed: 0,
             map_radius: 3,
             number_of_burn_in_ticks: 0,
             unit_chances,
