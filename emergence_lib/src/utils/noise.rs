@@ -25,26 +25,24 @@ pub struct SimplexSettings {
     pub lacunarity: f32,
     /// Scale the output of the fbm function
     pub gain: f32,
-    /// Arbitary seed that determines the noise function output
-    pub seed: f32,
 }
 
 /// Computes the value of the noise function at a given position.
 ///
 /// This can then be used to determine the height of a tile.
-pub fn simplex_noise(hex: Hex, settings: &SimplexSettings) -> f32 {
+pub fn simplex_noise(hex: Hex, settings: &SimplexSettings, seed: u64) -> f32 {
     let SimplexSettings {
         frequency,
         amplitude,
         octaves,
         lacunarity,
         gain,
-        seed,
     } = *settings;
 
     let pos = Vec2::new(hex.x as f32, hex.y as f32);
 
     Height::ZERO.into_world_pos()
-        + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed) * amplitude)
+        + (fbm_simplex_2d_seeded(pos * frequency, octaves, lacunarity, gain, seed as f32)
+            * amplitude)
             .abs()
 }

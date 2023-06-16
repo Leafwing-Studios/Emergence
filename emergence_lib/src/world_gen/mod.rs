@@ -178,7 +178,6 @@ impl GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
@@ -186,7 +185,6 @@ impl GenerationConfig {
                 octaves: 2,
                 lacunarity: 2.3,
                 gain: 0.5,
-                seed: 100.0,
             },
         }
     }
@@ -222,7 +220,6 @@ impl GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
@@ -230,7 +227,6 @@ impl GenerationConfig {
                 octaves: 2,
                 lacunarity: 2.3,
                 gain: 0.5,
-                seed: 100.0,
             },
         }
     }

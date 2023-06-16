@@ -43,8 +43,15 @@ pub(crate) fn generate_terrain(world: &mut World) {
             .unwrap();
 
         // Heights are generated in f32 world coordinates to start
-        let hex_height = simplex_noise(hex, &generation_config.low_frequency_noise)
-            + simplex_noise(hex, &generation_config.high_frequency_noise);
+        let hex_height = simplex_noise(
+            hex,
+            &generation_config.low_frequency_noise,
+            generation_config.seed,
+        ) + simplex_noise(
+            hex,
+            &generation_config.high_frequency_noise,
+            generation_config.seed,
+        );
 
         // And then discretized to the nearest integer height before being used
         let height = DiscreteHeight::from_world_pos(hex_height);
