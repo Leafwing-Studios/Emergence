@@ -16,6 +16,7 @@ pub(crate) use rotation::{sync_rotation_to_facing, Facing, RotationDirection};
 mod voxels;
 pub(crate) use voxels::{VoxelKind, VoxelObject};
 
+/// The layout of the hexagonal grid used to define the world map.
 pub(crate) const MAP_LAYOUT: HexLayout = HexLayout {
     orientation: hexx::HexOrientation::Flat,
     origin: hexx::Vec2::ZERO,
