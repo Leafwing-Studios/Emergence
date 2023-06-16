@@ -5,6 +5,7 @@ use crate::{
     geometry::{DiscreteHeight, Facing, MapGeometry, Volume, VoxelPos},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
+    simulation::rng::GlobalRng,
     structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest},
     terrain::{
         terrain_assets::TerrainHandles,
@@ -16,7 +17,7 @@ use crate::{
 };
 use bevy::prelude::*;
 use hexx::{shapes::hexagon, Hex};
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{seq::SliceRandom, Rng};
 
 use super::GenerationConfig;
 
@@ -31,19 +32,26 @@ pub(crate) fn generate_terrain(world: &mut World) {
     let map_geometry = MapGeometry::new(world, map_radius);
     world.insert_resource(map_geometry);
 
-    let mut rng = thread_rng();
-
     for hex in hexagon(Hex::ZERO, map_radius) {
+        let mut rng = world.resource_mut::<GlobalRng>();
+
         // FIXME: can we not just sample from our terrain_weights directly?
         let &terrain_id = terrain_variants
-            .choose_weighted(&mut rng, |terrain_type| {
+            .choose_weighted(rng.get_mut(), |terrain_type| {
                 terrain_weights.get(terrain_type).unwrap()
             })
             .unwrap();
 
         // Heights are generated in f32 world coordinates to start
-        let hex_height = simplex_noise(hex, &generation_config.low_frequency_noise)
-            + simplex_noise(hex, &generation_config.high_frequency_noise);
+        let hex_height = simplex_noise(
+            hex,
+            &generation_config.low_frequency_noise,
+            generation_config.seed,
+        ) + simplex_noise(
+            hex,
+            &generation_config.high_frequency_noise,
+            generation_config.seed,
+        );
 
         // And then discretized to the nearest integer height before being used
         let height = DiscreteHeight::from_world_pos(hex_height);
@@ -90,16 +98,16 @@ pub(super) fn generate_landmarks(
     generation_config: Res<GenerationConfig>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     info!("Generating landmarks...");
-    let rng = &mut thread_rng();
 
     for voxel_pos in map_geometry.walkable_voxels() {
         for (&structure_id, &chance) in &generation_config.landmark_chances {
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
                     ClipboardData::generate_from_id(structure_id, &structure_manifest);
-                let facing = Facing::random(rng);
+                let facing = Facing::random(rng.get_mut());
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
 

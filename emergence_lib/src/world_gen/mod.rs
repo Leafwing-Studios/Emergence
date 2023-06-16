@@ -123,6 +123,8 @@ impl WorldGenState {
 /// Controls world generation strategy
 #[derive(Resource, Debug, Clone)]
 pub struct GenerationConfig {
+    /// The seed used to generate the world.
+    pub seed: u64,
     /// Radius of the map.
     pub(super) map_radius: u32,
     /// How long to simulate the world before starting the game.
@@ -163,6 +165,7 @@ impl GenerationConfig {
         structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
 
         GenerationConfig {
+            seed: 0,
             map_radius: 30,
             number_of_burn_in_ticks: 0,
             unit_chances,
@@ -175,7 +178,6 @@ impl GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
@@ -183,7 +185,6 @@ impl GenerationConfig {
                 octaves: 2,
                 lacunarity: 2.3,
                 gain: 0.5,
-                seed: 100.0,
             },
         }
     }
@@ -206,6 +207,7 @@ impl GenerationConfig {
         structure_chances.insert(Id::from_name("passable_structure".to_string()), 1e-1);
 
         GenerationConfig {
+            seed: 0,
             map_radius: 3,
             number_of_burn_in_ticks: 0,
             unit_chances,
@@ -218,7 +220,6 @@ impl GenerationConfig {
                 octaves: 4,
                 lacunarity: 1.,
                 gain: 0.5,
-                seed: 315.0,
             },
             high_frequency_noise: SimplexSettings {
                 frequency: 0.1,
@@ -226,7 +227,6 @@ impl GenerationConfig {
                 octaves: 2,
                 lacunarity: 2.3,
                 gain: 0.5,
-                seed: 100.0,
             },
         }
     }
@@ -236,6 +236,7 @@ impl GenerationConfig {
 mod tests {
     use crate::asset_management::manifest::DummyManifestPlugin;
     use crate::geometry::{MapGeometry, VoxelPos};
+    use crate::simulation::rng::GlobalRng;
 
     use super::*;
 
@@ -243,6 +244,7 @@ mod tests {
     fn can_generate_terrain() {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_system(generate_terrain);
 
         app.update();
@@ -253,6 +255,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
         app.update();
@@ -263,6 +266,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
 
         app.update();
@@ -285,6 +289,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
 
         app.update();
@@ -303,13 +308,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
-        app.add_startup_systems((generate_terrain, generate_organisms).chain());
-
-        app.update();
-
-        let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
-        app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
         app.update();
@@ -331,6 +330,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.add_startup_system(generate_terrain);
+        app.insert_resource(GlobalRng::new(0));
 
         app.update();
 
@@ -350,6 +350,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_landmarks).chain());
 
         app.update();
@@ -359,6 +360,7 @@ mod tests {
     fn can_generate_water() {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, initialize_water_table).chain());
 
         app.update();
@@ -371,6 +373,7 @@ mod tests {
             config: GenerationConfig::testing(),
         })
         .add_plugin(DummyManifestPlugin);
+        app.insert_resource(GlobalRng::new(0));
         app.update();
 
         let mut unit_query = app.world.query::<&Id<Unit>>();

@@ -9,6 +9,7 @@ use crate::geometry::sync_rotation_to_facing;
 use crate::light::LightPlugin;
 use crate::organisms::OrganismPlugin;
 use crate::signals::SignalsPlugin;
+use crate::simulation::rng::GlobalRng;
 use crate::simulation::time::TemporalPlugin;
 use crate::simulation::weather::WeatherPlugin;
 use crate::structures::StructuresPlugin;
@@ -20,6 +21,7 @@ use bevy::core::FrameCount;
 use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
+pub mod rng;
 pub mod time;
 pub mod weather;
 
@@ -32,7 +34,8 @@ pub struct SimulationPlugin {
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
-        app.add_system(sync_rotation_to_facing)
+        app.insert_resource(GlobalRng::new(self.gen_config.seed))
+            .add_system(sync_rotation_to_facing)
             .edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
                 schedule.configure_set(
                     SimulationSet

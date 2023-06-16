@@ -12,7 +12,7 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_mod_raycast::RaycastMesh;
-use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng};
+use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 
 use self::{
@@ -159,7 +159,7 @@ impl UnitBundle {
         voxel_pos: VoxelPos,
         unit_data: UnitData,
         unit_handles: &UnitHandles,
-        rng: &mut ThreadRng,
+        rng: &mut impl Rng,
     ) -> Self {
         let scene_handle = unit_handles.scenes.get(&unit_id).unwrap();
         let mut energy_pool = unit_data.organism_variety.energy_pool;
@@ -197,7 +197,7 @@ impl UnitBundle {
         unit_id: Id<Unit>,
         voxel_pos: VoxelPos,
         unit_data: UnitData,
-        rng: &mut ThreadRng,
+        rng: &mut impl Rng,
     ) -> Self {
         let scene_handle = Handle::default();
         let mut energy_pool = unit_data.organism_variety.energy_pool;

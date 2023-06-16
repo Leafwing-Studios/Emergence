@@ -5,7 +5,6 @@ use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
 use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
-use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -36,7 +35,7 @@ impl EnergyPool {
     }
 
     /// Randomizes the energy pool's current energy between `warning_threshold` and `max`.
-    pub fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub fn randomize(&mut self, rng: &mut impl Rng) {
         let range = self.max.0 - self.warning_threshold.0;
         let current = rng.gen::<f32>() * range + self.warning_threshold.0;
         self.current = Energy(current);
