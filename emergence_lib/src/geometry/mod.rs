@@ -10,9 +10,7 @@ mod position;
 pub use position::{DiscreteHeight, Height, Volume, VoxelPos};
 
 mod rotation;
-pub(crate) use rotation::{
-    direction_from_angle, sync_rotation_to_facing, Facing, RotationDirection,
-};
+pub(crate) use rotation::{sync_rotation_to_facing, Facing, RotationDirection};
 
 mod voxels;
 pub(crate) use voxels::{VoxelKind, VoxelObject};

@@ -15,7 +15,7 @@ use crate::items::ItemCount;
 use crate::terrain::terrain_assets::TerrainHandles;
 use crate::{
     crafting::{inventories::StorageInventory, item_tags::ItemKind},
-    geometry::{direction_from_angle, DiscreteHeight, Height, MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, Height, MapGeometry, VoxelPos},
     items::item_manifest::ItemManifest,
     signals::{Emitter, SignalStrength, SignalType},
     structures::{logistic_buildings::AbsorbsItems, Footprint},
@@ -251,7 +251,7 @@ pub(super) fn carry_floating_litter_with_current(
             // If the litter is not already drifting, start it drifting
             if litter_drift.direction.is_none() {
                 let direction =
-                    direction_from_angle(flow_direction, HexLayout::default().orientation);
+                    Direction::from_angle(flow_direction, HexLayout::default().orientation);
                 let time_to_drift = (1. / (ITEM_DRIFT_RATE * water_speed)).min(MAX_DRIFT_TIME);
 
                 litter_drift.start(direction, Duration::from_secs_f32(time_to_drift));

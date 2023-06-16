@@ -426,7 +426,7 @@ impl FlowVelocity {
     /// Converts a [`hexx::Direction`] and magnitude into a [`FlowVelocity`].
     fn from_hex_direction(direction: hexx::Direction, magnitude: Volume) -> Self {
         // Empirically this seems to be the correct angle.
-        let angle = direction.angle(&HexLayout::default().orientation) + PI;
+        let angle = direction.angle(HexLayout::default().orientation) + PI;
         let x = magnitude * angle.cos();
         let z = magnitude * angle.sin();
 
