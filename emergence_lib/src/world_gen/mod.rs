@@ -236,6 +236,7 @@ impl GenerationConfig {
 mod tests {
     use crate::asset_management::manifest::DummyManifestPlugin;
     use crate::geometry::{MapGeometry, VoxelPos};
+    use crate::simulation::rng::GlobalRng;
 
     use super::*;
 
@@ -243,6 +244,7 @@ mod tests {
     fn can_generate_terrain() {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_system(generate_terrain);
 
         app.update();
@@ -253,6 +255,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
         app.update();
@@ -263,6 +266,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
 
         app.update();
@@ -285,6 +289,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
 
         app.update();
@@ -303,13 +308,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
-        app.add_startup_systems((generate_terrain, generate_organisms).chain());
-
-        app.update();
-
-        let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
-        app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_organisms).chain());
 
         app.update();
@@ -331,6 +330,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.add_startup_system(generate_terrain);
+        app.insert_resource(GlobalRng::new(0));
 
         app.update();
 
@@ -350,6 +350,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, generate_landmarks).chain());
 
         app.update();
@@ -359,6 +360,7 @@ mod tests {
     fn can_generate_water() {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, initialize_water_table).chain());
 
         app.update();
@@ -371,6 +373,7 @@ mod tests {
             config: GenerationConfig::testing(),
         })
         .add_plugin(DummyManifestPlugin);
+        app.insert_resource(GlobalRng::new(0));
         app.update();
 
         let mut unit_query = app.world.query::<&Id<Unit>>();
