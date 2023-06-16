@@ -158,7 +158,7 @@ pub(super) fn spawn_hex_menu<D: Choice>(
                 icon_map: HashMap::default(),
                 background_map: HashMap::default(),
                 layout: HexLayout {
-                    orientation: HexOrientation::pointy(),
+                    orientation: HexOrientation::Pointy,
                     origin: cursor_pos,
                     hex_size: Vec2 {
                         x: CHOICE_ICON_SIZE,
