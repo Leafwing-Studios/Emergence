@@ -353,10 +353,10 @@ fn get_details(
                 vegetative_reproduction: structure_query_item.vegetative_reproduction.cloned(),
             })
         }
-        CurrentSelection::Terrain(selected_tiles) => {
+        CurrentSelection::Terrain(selected_voxels) => {
             // FIXME: display info about multiple tiles correctly
-            if let Some(hex) = selected_tiles.selection().iter().next() {
-                let terrain_entity = map_geometry.get_terrain(*hex).unwrap();
+            if let Some(voxel_pos) = selected_voxels.iter().next() {
+                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
                 let terrain_query_item = terrain_query.get(terrain_entity)?;
 
                 SelectionDetails::Terrain(TerrainDetails {

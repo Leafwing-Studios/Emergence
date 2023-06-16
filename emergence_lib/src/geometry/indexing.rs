@@ -186,17 +186,6 @@ impl MapGeometry {
         self.voxel_index.get(&voxel_pos)
     }
 
-    /// Returns the voxel position directly above the terrain at `hex`
-    #[inline]
-    #[must_use]
-    pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
-        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default();
-        VoxelPos {
-            hex,
-            height: terrain_height.above(),
-        }
-    }
-
     /// Are all of the tiles in the `footprint` centered around `center` valid?
     #[inline]
     #[must_use]

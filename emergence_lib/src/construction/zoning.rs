@@ -103,7 +103,10 @@ fn set_zoning(
     mut commands: Commands,
 ) {
     let relevant_tiles = current_selection.relevant_tiles(&cursor_pos);
-    let relevant_terrain_entities = relevant_tiles.entities(&map_geometry);
+    // FIXME: Zoning should not be stored on terrain entities
+    let relevant_terrain_entities = relevant_tiles
+        .iter()
+        .map(|voxel_pos| map_geometry.get_terrain(voxel_pos.hex).unwrap());
 
     // Explicitly clear the selection
     if actions.pressed(PlayerAction::ClearZoning) {
@@ -146,10 +149,10 @@ fn set_zoning(
                             }
                         }
                         false => {
-                            for &hex in relevant_tiles.selection().iter() {
+                            for voxel_pos in relevant_tiles.iter() {
                                 // FIXME: this prevents building on top of existing structures
-                                let voxel_pos = map_geometry.on_top_of_terrain(hex);
-                                commands.spawn_preview_structure(voxel_pos, clipboard_item.clone());
+                                commands
+                                    .spawn_preview_structure(*voxel_pos, clipboard_item.clone());
                             }
                         }
                     }
