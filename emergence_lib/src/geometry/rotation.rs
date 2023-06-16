@@ -23,7 +23,7 @@ impl Facing {
     /// Generates a random facing.
     #[inline]
     #[must_use]
-    pub(crate) fn random(rng: &mut ThreadRng) -> Self {
+    pub(crate) fn random(rng: &mut impl Rng) -> Self {
         let direction = *Direction::ALL_DIRECTIONS.choose(rng).unwrap();
 
         Self { direction }

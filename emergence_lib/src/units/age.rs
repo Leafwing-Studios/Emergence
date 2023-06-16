@@ -6,7 +6,7 @@
 use std::fmt::{Display, Formatter};
 
 use bevy::prelude::*;
-use rand::{rngs::ThreadRng, Rng};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::simulation::time::{Days, InGameTime};
@@ -30,7 +30,7 @@ impl Age {
     }
 
     /// Creates a new [`Age`] with the given maximum age and a random current age.
-    pub fn randomized(rng: &mut ThreadRng, max: Days) -> Self {
+    pub fn randomized(rng: &mut impl Rng, max: Days) -> Self {
         Self {
             current: Days(rng.gen::<f32>() * max.0),
             max,

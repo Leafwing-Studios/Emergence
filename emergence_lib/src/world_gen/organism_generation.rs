@@ -6,6 +6,7 @@ use crate::crafting::recipe::{ActiveRecipe, RecipeManifest};
 use crate::geometry::{Facing, MapGeometry};
 use crate::organisms::energy::{EnergyPool, StartingEnergy};
 use crate::player_interaction::clipboard::ClipboardData;
+use crate::simulation::rng::GlobalRng;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
 use crate::units::unit_assets::UnitHandles;
@@ -26,9 +27,9 @@ pub(super) fn generate_organisms(
     unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     info!("Generating organisms...");
-    let rng = &mut thread_rng();
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
     for voxel_pos in map_geometry.walkable_voxels() {
@@ -36,7 +37,7 @@ pub(super) fn generate_organisms(
             if rng.gen::<f32>() < chance {
                 let mut clipboard_data =
                     ClipboardData::generate_from_id(structure_id, &structure_manifest);
-                let facing = Facing::random(rng);
+                let facing = Facing::random(rng.get_mut());
                 clipboard_data.facing = facing;
                 let footprint = &structure_manifest.get(structure_id).footprint;
 
@@ -63,10 +64,15 @@ pub(super) fn generate_organisms(
                         voxel_pos,
                         unit_manifest.get(unit_id).clone(),
                         unit_handles,
-                        rng,
+                        rng.get_mut(),
                     )
                 } else {
-                    UnitBundle::testing(unit_id, voxel_pos, unit_manifest.get(unit_id).clone(), rng)
+                    UnitBundle::testing(
+                        unit_id,
+                        voxel_pos,
+                        unit_manifest.get(unit_id).clone(),
+                        rng.get_mut(),
+                    )
                 };
 
                 commands.spawn(unit_bundle);
