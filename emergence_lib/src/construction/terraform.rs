@@ -1,6 +1,7 @@
 //! Tools to alter the terrain type and height.
 
-use bevy::prelude::*;
+use bevy::{ecs::system::Command, prelude::*};
+use hexx::Hex;
 
 use crate::{
     asset_management::manifest::Id,
@@ -169,5 +170,60 @@ pub(super) fn terraforming_signals(
             let signal_strength = SignalStrength::new(TERRAFORMING_SIGNAL_STRENGTH);
             emitter.signals.push((signal_type, signal_strength))
         }
+    }
+}
+
+/// An extension trait for working with terraforming actions for [`Commands`].
+pub trait TerraformingCommandsExt {
+    /// Starts a [`TerraformingAction`] at the given hex.
+    fn start_terraform(&mut self, hex: Hex, action: TerraformingAction);
+
+    /// Previews a [`TerraformingAction`] at the given hex.
+    fn preview_terraform(&mut self, hex: Hex, action: TerraformingAction);
+
+    /// Removes any [`TerraformingAction`] at the given hex.
+    fn remove_terraform(&mut self, hex: Hex);
+
+    /// Completes the provided [`TerraformingAction`] at the given hex.
+    fn complete_terraform(&mut self, hex: Hex, action: TerraformingAction);
+}
+
+impl TerraformingCommandsExt for Commands<'_, '_> {
+    fn start_terraform(&mut self, hex: Hex, action: TerraformingAction) {
+        todo!()
+    }
+
+    fn preview_terraform(&mut self, hex: Hex, action: TerraformingAction) {
+        todo!()
+    }
+
+    fn remove_terraform(&mut self, hex: Hex) {
+        todo!()
+    }
+
+    fn complete_terraform(&mut self, hex: Hex, action: TerraformingAction) {
+        todo!()
+    }
+}
+
+struct TerraformCommand {
+    hex: Hex,
+    action: TerraformingAction,
+    preview: bool,
+}
+
+impl Command for TerraformCommand {
+    fn write(self, world: &mut World) {
+        todo!()
+    }
+}
+
+struct DespawnTerraformCommand {
+    hex: Hex,
+}
+
+impl Command for DespawnTerraformCommand {
+    fn write(self, world: &mut World) {
+        todo!()
     }
 }

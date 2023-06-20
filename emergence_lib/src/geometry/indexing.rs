@@ -24,6 +24,8 @@ pub struct MapGeometry {
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
     terrain_index: HashMap<Hex, Entity>,
+    /// The [`TerraformingAction`] entity at each hex, if any.
+    terraforming_index: HashMap<Hex, Entity>,
     /// The height of the terrain at each tile position.
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
@@ -147,6 +149,7 @@ impl MapGeometry {
         let mut map_geometry = MapGeometry {
             radius,
             terrain_index,
+            terraforming_index: HashMap::default(),
             height_index,
             voxel_index,
             walkable_neighbors: HashMap::default(),

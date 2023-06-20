@@ -14,6 +14,8 @@ use crate::{
     structures::{commands::StructureCommandsExt, structure_manifest::Structure, Landmark},
 };
 
+use super::terraform::TerraformingCommandsExt;
+
 /// Code and data for setting zoning of areas for construction.
 pub(super) struct ZoningPlugin;
 
@@ -68,7 +70,7 @@ fn set_zoning(
     if actions.pressed(PlayerAction::ClearZoning) {
         for &voxel_pos in relevant_tiles.iter() {
             commands.despawn_ghost_structure(voxel_pos);
-            // commands.despawn_terraform(voxel_pos);
+            commands.remove_terraform(voxel_pos.hex);
         }
 
         // Don't try to clear and zone in the same frame
@@ -82,13 +84,13 @@ fn set_zoning(
     match &*tool {
         Tool::Terraform(terraform_tool) => match apply_zoning {
             true => {
-                for &voxel_pos in relevant_tiles.iter() {
-                    // commands.spawn_terraform(voxel_pos, terraform_tool.clone());
+                for voxel_pos in relevant_tiles.iter() {
+                    commands.start_terraform(voxel_pos.hex, terraform_tool.clone().into());
                 }
             }
             false => {
                 for &voxel_pos in relevant_tiles.iter() {
-                    //commands.spawn_terraform_preview(voxel_pos, terraform_tool.clone());
+                    commands.preview_terraform(voxel_pos.hex, terraform_tool.clone().into());
                 }
             }
         },
