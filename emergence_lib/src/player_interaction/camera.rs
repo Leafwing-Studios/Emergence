@@ -324,7 +324,6 @@ fn zoom(
 fn set_camera_focus(
     actions: Res<ActionState<PlayerAction>>,
     selection: Res<CurrentSelection>,
-    tile_pos_query: Query<&VoxelPos>,
     unit_query: Query<&Transform>,
     mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
 ) {
@@ -335,13 +334,14 @@ fn set_camera_focus(
         || settings.camera_mode == CameraMode::FollowUnit
     {
         let tile_to_snap_to = match &*selection {
-            CurrentSelection::GhostStructure(entity)
-            | CurrentSelection::Unit(entity)
-            | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
-            CurrentSelection::Terrain(selected_tiles) => Some(VoxelPos {
-                hex: selected_tiles.center(),
+            CurrentSelection::Voxels(selected_voxels) => Some(VoxelPos {
+                hex: selected_voxels.center(),
                 height: DiscreteHeight::ZERO,
             }),
+            CurrentSelection::Unit(entity) => {
+                let unit_transform = unit_query.get(*entity).unwrap();
+                Some(VoxelPos::from_world_pos(unit_transform.translation))
+            }
             CurrentSelection::None => None,
         };
 

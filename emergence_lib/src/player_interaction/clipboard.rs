@@ -223,15 +223,7 @@ fn copy_selection(
         let mut map = HashMap::new();
 
         match &*current_selection {
-            CurrentSelection::Structure(entity) | CurrentSelection::GhostStructure(entity) => {
-                let query_item = structure_query.get(*entity).unwrap();
-                let voxel_pos = query_item.voxel_pos;
-                let clipboard_data = query_item.into();
-                map.insert(*voxel_pos, clipboard_data);
-                *tool = Tool::Structures(map);
-                tool.normalize_positions();
-            }
-            CurrentSelection::Terrain(selected_voxels) => {
+            CurrentSelection::Voxels(selected_voxels) => {
                 // If there is no selection, just grab whatever's under the cursor
                 if selected_voxels.is_empty() {
                     if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {

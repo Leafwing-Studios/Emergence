@@ -7,7 +7,7 @@ use crate::items::inventory::InventoryState;
 /// A single object stored in a voxel.
 ///
 /// Each voxel can contain at most one object.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct VoxelObject {
     /// The entity that represents this object in the ECS.
     pub entity: Entity,
@@ -18,7 +18,7 @@ pub struct VoxelObject {
 /// A variety of object stored in the voxel grid.
 ///
 /// Each voxel can contain at most one object.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum VoxelKind {
     /// A pile of litter.
     Litter {

@@ -5,7 +5,7 @@ use bevy::{ecs::query::QueryEntityError, prelude::*};
 use crate::{
     asset_management::AssetState,
     crafting::recipe::RecipeManifest,
-    geometry::MapGeometry,
+    geometry::{MapGeometry, VoxelKind},
     items::item_manifest::ItemManifest,
     player_interaction::{
         camera::{CameraMode, CameraSettings},
@@ -307,24 +307,42 @@ fn get_details(
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
     *selection_details = match &*selection_type {
-        CurrentSelection::GhostStructure(ghost_structure_entity) => {
-            let ghost_query_item = ghost_structure_query.get(*ghost_structure_entity)?;
-            SelectionDetails::GhostStructure(GhostStructureDetails {
-                entity: *ghost_structure_entity,
-                voxel_pos: *ghost_query_item.voxel_pos,
-                structure_id: *ghost_query_item.structure_id,
-                input_inventory: ghost_query_item.input_inventory.clone(),
-                crafting_state: ghost_query_item.crafting_state.clone(),
-                active_recipe: ghost_query_item.active_recipe.clone(),
-            })
-        }
-        CurrentSelection::Structure(structure_entity) => {
-            let structure_query_item = structure_query.get(*structure_entity)?;
+        CurrentSelection::Voxels(selected_voxels) => {
+            // FIXME: display info about multiple tiles correctly
+            if let Some(voxel_pos) = selected_voxels.iter().next() {
+                let voxel_object = map_geometry.get_voxel(*voxel_pos).unwrap();
 
-            // Not all structures are organisms
-            let maybe_organism_details =
+                match voxel_object.object_kind {
+                    VoxelKind::Litter { .. } => todo!(),
+                    VoxelKind::Terrain => {
+                        let terrain_query_item = terrain_query.get(voxel_object.entity)?;
+
+                        SelectionDetails::Terrain(TerrainDetails {
+                            entity: voxel_object.entity,
+                            terrain_id: *terrain_query_item.terrain_id,
+                            voxel_pos: *terrain_query_item.voxel_pos,
+                            height: terrain_query_item.voxel_pos.height(),
+                            depth_to_water_table: *terrain_query_item.water_depth,
+                            shade: terrain_query_item.shade.clone(),
+                            recieved_light: terrain_query_item.recieved_light.clone(),
+                            signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
+                            zoning: terrain_query_item.zoning.clone(),
+                            maybe_terraforming_details: terrain_query_item
+                                .maybe_terraforming_details
+                                .map(|q| terrain_details::TerraformingDetails {
+                                    terraforming_action: *q.0,
+                                    input_inventory: q.1.clone(),
+                                    output_inventory: q.2.clone(),
+                                }),
+                        })
+                    }
+                    VoxelKind::Structure { .. } => {
+                        let structure_query_item = structure_query.get(voxel_object.entity)?;
+
+                        // Not all structures are organisms
+                        let maybe_organism_details =
                 organism_query
-                    .get(*structure_entity)
+                    .get(voxel_object.entity)
                     .ok()
                     .map(|query_item| OrganismDetails {
                         prototypical_form: structure_manifest
@@ -337,46 +355,36 @@ fn get_details(
                         oxygen_pool: query_item.oxygen_pool.clone(),
                     });
 
-            SelectionDetails::Structure(StructureDetails {
-                entity: structure_query_item.entity,
-                voxel_pos: *structure_query_item.voxel_pos,
-                structure_id: *structure_query_item.structure_id,
-                maybe_organism_details,
-                marked_for_removal: structure_query_item.marked_for_removal.is_some(),
-                emitter: structure_query_item.emitter.cloned(),
-                storage_inventory: structure_query_item.storage_inventory.cloned(),
-                input_inventory: structure_query_item.input_inventory.cloned(),
-                output_inventory: structure_query_item.output_inventory.cloned(),
-                crafting_state: structure_query_item.crafting_state.cloned(),
-                active_recipe: structure_query_item.active_recipe.cloned(),
-                workers_present: structure_query_item.workers_present.cloned(),
-                vegetative_reproduction: structure_query_item.vegetative_reproduction.cloned(),
-            })
-        }
-        CurrentSelection::Terrain(selected_voxels) => {
-            // FIXME: display info about multiple tiles correctly
-            if let Some(voxel_pos) = selected_voxels.iter().next() {
-                let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();
-                let terrain_query_item = terrain_query.get(terrain_entity)?;
-
-                SelectionDetails::Terrain(TerrainDetails {
-                    entity: terrain_entity,
-                    terrain_id: *terrain_query_item.terrain_id,
-                    voxel_pos: *terrain_query_item.voxel_pos,
-                    height: terrain_query_item.voxel_pos.height(),
-                    depth_to_water_table: *terrain_query_item.water_depth,
-                    shade: terrain_query_item.shade.clone(),
-                    recieved_light: terrain_query_item.recieved_light.clone(),
-                    signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
-                    zoning: terrain_query_item.zoning.clone(),
-                    maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
-                        |q| terrain_details::TerraformingDetails {
-                            terraforming_action: *q.0,
-                            input_inventory: q.1.clone(),
-                            output_inventory: q.2.clone(),
-                        },
-                    ),
-                })
+                        SelectionDetails::Structure(StructureDetails {
+                            entity: structure_query_item.entity,
+                            voxel_pos: *structure_query_item.voxel_pos,
+                            structure_id: *structure_query_item.structure_id,
+                            maybe_organism_details,
+                            marked_for_removal: structure_query_item.marked_for_removal.is_some(),
+                            emitter: structure_query_item.emitter.cloned(),
+                            storage_inventory: structure_query_item.storage_inventory.cloned(),
+                            input_inventory: structure_query_item.input_inventory.cloned(),
+                            output_inventory: structure_query_item.output_inventory.cloned(),
+                            crafting_state: structure_query_item.crafting_state.cloned(),
+                            active_recipe: structure_query_item.active_recipe.cloned(),
+                            workers_present: structure_query_item.workers_present.cloned(),
+                            vegetative_reproduction: structure_query_item
+                                .vegetative_reproduction
+                                .cloned(),
+                        })
+                    }
+                    VoxelKind::GhostStructure => {
+                        let ghost_query_item = ghost_structure_query.get(voxel_object.entity)?;
+                        SelectionDetails::GhostStructure(GhostStructureDetails {
+                            entity: voxel_object.entity,
+                            voxel_pos: *ghost_query_item.voxel_pos,
+                            structure_id: *ghost_query_item.structure_id,
+                            input_inventory: ghost_query_item.input_inventory.clone(),
+                            crafting_state: ghost_query_item.crafting_state.clone(),
+                            active_recipe: ghost_query_item.active_recipe.clone(),
+                        })
+                    }
+                }
             } else {
                 SelectionDetails::None
             }

@@ -78,16 +78,6 @@ impl CursorPos {
     pub(crate) fn maybe_unit(&self) -> Option<Entity> {
         self.hovered_unit
     }
-
-    /// The hovered structure, if available.
-    pub(crate) fn maybe_structure(&self) -> Option<Entity> {
-        self.hovered_structure
-    }
-
-    /// The hovered ghost structure, if available.
-    pub(crate) fn maybe_ghost_structure(&self) -> Option<Entity> {
-        self.hovered_ghost_structure
-    }
 }
 
 /// Updates the raycast with the cursor position

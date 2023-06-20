@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
-    asset_management::AssetState,
+    asset_management::{manifest::Id, AssetState},
     construction::{demolition::MarkedForDemolition, ghosts::Preview},
     geometry::{MapGeometry, VoxelPos},
     player_interaction::{
@@ -13,7 +13,11 @@ use crate::{
         selection::CurrentSelection,
         InteractionSystem, PlayerAction, PlayerModifiesWorld,
     },
-    structures::{commands::StructureCommandsExt, structure_manifest::StructureManifest, Landmark},
+    structures::{
+        commands::StructureCommandsExt,
+        structure_manifest::{Structure, StructureManifest},
+        Landmark,
+    },
     terrain::terrain_manifest::TerrainManifest,
 };
 
@@ -188,19 +192,20 @@ fn set_zoning(
 fn mark_for_demolition(
     player_actions: Res<ActionState<PlayerAction>>,
     current_selection: Res<CurrentSelection>,
-    landmark_query: Query<&Landmark>,
+    // Landmarks can't be demolished
+    structure_query: Query<&Id<Structure>, Without<Landmark>>,
+    map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
     if player_actions.just_pressed(PlayerAction::ClearZoning) {
-        if let CurrentSelection::Structure(structure_entity) = *current_selection {
-            // Landmarks can't be demolished
-            if landmark_query.contains(structure_entity) {
-                return;
+        if let CurrentSelection::Voxels(ref selected_voxels) = *current_selection {
+            for voxel_object in selected_voxels.voxel_objects(&map_geometry) {
+                if structure_query.contains(voxel_object.entity) {
+                    commands
+                        .entity(voxel_object.entity)
+                        .insert(MarkedForDemolition);
+                }
             }
-
-            commands
-                .entity(structure_entity)
-                .insert(MarkedForDemolition);
         }
     }
 }
