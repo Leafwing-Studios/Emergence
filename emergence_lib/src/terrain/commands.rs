@@ -8,7 +8,7 @@ use bevy::{
 
 use crate::{
     asset_management::manifest::Id,
-    construction::{terraform::TerraformingAction, zoning::Zoning},
+    construction::terraform::TerraformingAction,
     geometry::{MapGeometry, VoxelPos},
     terrain::{terrain_assets::TerrainHandles, terrain_manifest::Terrain},
 };
@@ -46,19 +46,14 @@ impl Command for ApplyTerraformingCommand {
         let mut system_state = SystemState::<(
             ResMut<MapGeometry>,
             Res<TerrainHandles>,
-            Query<(
-                &mut Id<Terrain>,
-                &mut Zoning,
-                &mut VoxelPos,
-                &mut Handle<Scene>,
-            )>,
+            Query<(&mut Id<Terrain>, &mut VoxelPos, &mut Handle<Scene>)>,
         )>::new(world);
 
         let (mut map_geometry, terrain_handles, mut terrain_query) = system_state.get_mut(world);
 
         let terrain_entity = map_geometry.get_terrain(self.voxel_pos.hex).unwrap();
 
-        let (mut current_terrain_id, mut zoning, mut voxel_pos, mut scene_handle) =
+        let (mut current_terrain_id, mut voxel_pos, mut scene_handle) =
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
@@ -81,6 +76,5 @@ impl Command for ApplyTerraformingCommand {
         }
 
         map_geometry.update_height(voxel_pos.hex, voxel_pos.height);
-        *zoning = Zoning::None;
     }
 }

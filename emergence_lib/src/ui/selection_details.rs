@@ -326,7 +326,6 @@ fn get_details(
                             shade: terrain_query_item.shade.clone(),
                             recieved_light: terrain_query_item.recieved_light.clone(),
                             signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
-                            zoning: terrain_query_item.zoning.clone(),
                             maybe_terraforming_details: terrain_query_item
                                 .maybe_terraforming_details
                                 .map(|q| terrain_details::TerraformingDetails {
@@ -748,7 +747,7 @@ mod terrain_details {
 
     use crate::{
         asset_management::manifest::Id,
-        construction::{terraform::TerraformingAction, zoning::Zoning},
+        construction::terraform::TerraformingAction,
         crafting::inventories::{InputInventory, OutputInventory},
         geometry::{Height, VoxelPos},
         items::item_manifest::ItemManifest,
@@ -773,8 +772,6 @@ mod terrain_details {
         pub(super) recieved_light: &'static ReceivedLight,
         /// The type of terrain
         pub(super) terrain_id: &'static Id<Terrain>,
-        /// The zoning applied to this terrain
-        pub(super) zoning: &'static Zoning,
         /// The depth of water on this tile
         pub(super) water_depth: &'static WaterDepth,
         /// Any applied terraforming action
@@ -835,8 +832,6 @@ Output: {output}"
         pub(super) recieved_light: ReceivedLight,
         /// The signals on this tile
         pub(super) signals: LocalSignals,
-        /// The zoning of this tile
-        pub(super) zoning: Zoning,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
     }
@@ -863,7 +858,6 @@ Output: {output}"
                 terrain_manifest,
                 unit_manifest,
             );
-            let zoning = self.zoning.display(structure_manifest, terrain_manifest);
 
             let base_string = format!(
                 "Entity: {entity:?}
@@ -872,8 +866,7 @@ Tile: {voxel_pos}
 Height: {height}
 Water Table: {depth_to_water_table}
 Shade: {shade}
-Current Light: {recieved_light}
-Zoning: {zoning}"
+Current Light: {recieved_light}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {

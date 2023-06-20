@@ -6,7 +6,6 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
-use crate::construction::zoning::Zoning;
 use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::player_interaction::selection::ObjectInteraction;
@@ -67,8 +66,6 @@ pub(crate) struct TerrainBundle {
     mesh: Handle<Mesh>,
     /// How is the terrain being interacted with?
     object_interaction: ObjectInteraction,
-    /// The structure that should be built here.
-    zoning: Zoning,
     /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
     /// Controls the signals produced by this terrain tile.
@@ -105,7 +102,6 @@ impl TerrainBundle {
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh,
             object_interaction: ObjectInteraction::None,
-            zoning: Zoning::None,
             scene_bundle,
             emitter: Emitter::default(),
             shade: Shade::default(),
@@ -127,7 +123,6 @@ impl TerrainBundle {
             raycast_mesh: RaycastMesh::<Terrain>::default(),
             mesh: Handle::default(),
             object_interaction: ObjectInteraction::None,
-            zoning: Zoning::None,
             scene_bundle: SceneBundle::default(),
             emitter: Emitter::default(),
             shade: Shade::default(),
