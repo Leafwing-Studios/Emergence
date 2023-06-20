@@ -4,7 +4,6 @@
 //! Ghosts are buildings that are genuinely planned to be built.
 //! Previews are simply hovered, and used as a visual aid to show placement.
 
-use crate::crafting::inventories::OutputInventory;
 use crate::crafting::item_tags::ItemKind;
 use crate::crafting::recipe::ActiveRecipe;
 use crate::crafting::workers::WorkersPresent;
@@ -187,10 +186,12 @@ impl GhostStructureBundle {
 pub(crate) struct GhostTerraformBundle {
     /// The type of terraforming action being performed
     terraforming_action: TerraformingAction,
-    /// Shared components across all ghosts
-    ghost_bundle: GhostBundle,
-    /// The items that need to be removed from this terraforming action
-    output_inventory: OutputInventory,
+    /// Marks this entity as a ghost
+    ghost: Ghost,
+    /// The material to be used by all children in the scene
+    pub(super) inherited_material: InheritedMaterial,
+    /// The child scene that contains the gltF model used
+    pub(super) scene_bundle: SceneBundle,
     /// The number of workers that are present / allowed to build this structure.
     workers_present: WorkersPresent,
     /// Tracks work that needs to be done on this building
@@ -200,25 +201,20 @@ pub(crate) struct GhostTerraformBundle {
 impl GhostTerraformBundle {
     /// Creates a new [`GhostTerraformBundle`].
     pub(crate) fn new(
-        voxel_pos: VoxelPos,
         terraforming_action: TerraformingAction,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
         world_pos: Vec3,
     ) -> Self {
-        let construction_materials = terraforming_action.input_inventory();
-        let output_inventory = terraforming_action.output_inventory();
-
         GhostTerraformBundle {
             terraforming_action,
-            ghost_bundle: GhostBundle::new(
-                voxel_pos,
-                construction_materials,
-                scene_handle,
-                inherited_material,
-                world_pos,
-            ),
-            output_inventory,
+            ghost: Ghost,
+            inherited_material,
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
             workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
         }

@@ -32,9 +32,14 @@ pub(crate) enum TerraformingTool {
     Change(Id<Terrain>),
 }
 
-/// When `Zoning` is set, this is added  as a component added to terrain ghosts, causing them to be manipulated by units.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+/// Added as a component to terrain tiles, tracking the work needed to terraform them.
+///
+/// When set to a non-null value, units will take action to manipulate them.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub enum TerraformingAction {
+    /// No terraforming action is being performed.
+    #[default]
+    None,
     /// Raise the height of this tile once
     Raise,
     /// Lower the height of this tile once
@@ -53,6 +58,7 @@ impl TerraformingAction {
         let soil_id = Id::<Item>::from_name("soil".to_string());
 
         match self {
+            Self::None => InputInventory::NULL,
             Self::Raise => InputInventory::Exact {
                 inventory: Inventory::new_from_item(soil_id, Self::N_ITEMS),
             },
@@ -69,6 +75,7 @@ impl TerraformingAction {
         let soil_id = Id::<Item>::from_name("soil".to_string());
 
         match self {
+            Self::None => OutputInventory::NULL,
             Self::Raise => OutputInventory::NULL,
             Self::Lower => OutputInventory {
                 inventory: Inventory::full_from_item(soil_id, Self::N_ITEMS),
@@ -82,10 +89,12 @@ impl TerraformingAction {
     /// The pretty formatted name of this action.
     pub(crate) fn display(&self, terrain_manifest: &TerrainManifest) -> String {
         match self {
-            Self::Raise => "Raise".to_string(),
-            Self::Lower => "Lower".to_string(),
-            Self::Change(terrain_id) => terrain_manifest.name(*terrain_id).to_string(),
+            Self::None => "No terraforming",
+            Self::Raise => "Raise",
+            Self::Lower => "Lower",
+            Self::Change(terrain_id) => terrain_manifest.name(*terrain_id),
         }
+        .to_string()
     }
 }
 
@@ -95,16 +104,6 @@ impl From<TerraformingTool> for TerraformingAction {
             TerraformingTool::Raise => Self::Raise,
             TerraformingTool::Lower => Self::Lower,
             TerraformingTool::Change(terrain) => Self::Change(terrain),
-        }
-    }
-}
-
-impl From<TerraformingAction> for TerraformingTool {
-    fn from(action: TerraformingAction) -> Self {
-        match action {
-            TerraformingAction::Raise => Self::Raise,
-            TerraformingAction::Lower => Self::Lower,
-            TerraformingAction::Change(terrain) => Self::Change(terrain),
         }
     }
 }

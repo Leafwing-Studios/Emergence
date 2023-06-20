@@ -57,6 +57,7 @@ impl Command for ApplyTerraformingCommand {
             terrain_query.get_mut(terrain_entity).unwrap();
 
         match self.terraforming_action {
+            TerraformingAction::None => (),
             TerraformingAction::Raise => voxel_pos.height = voxel_pos.height.above(),
             TerraformingAction::Lower => {
                 voxel_pos.height = voxel_pos.height.below();

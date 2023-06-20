@@ -6,6 +6,8 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
+use crate::construction::terraform::TerraformingAction;
+use crate::crafting::inventories::{InputInventory, OutputInventory};
 use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
 use crate::player_interaction::selection::ObjectInteraction;
@@ -76,6 +78,12 @@ pub(crate) struct TerrainBundle {
     received_light: ReceivedLight,
     /// The components used to track the water table at this tile.
     water_bundle: WaterBundle,
+    /// Any inputs needed to terraform this tile.
+    input_inventory: InputInventory,
+    /// Any outputs produced by terraforming this tile.
+    output_inventory: OutputInventory,
+    /// Any active terraforming processes.
+    terraforming_action: TerraformingAction,
 }
 
 impl TerrainBundle {
@@ -112,6 +120,9 @@ impl TerrainBundle {
                 soil_water_flow_rate: terrain_data.soil_water_flow_rate,
                 ..Default::default()
             },
+            input_inventory: InputInventory::NULL,
+            output_inventory: OutputInventory::NULL,
+            terraforming_action: TerraformingAction::None,
         }
     }
 
@@ -128,6 +139,9 @@ impl TerrainBundle {
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle::default(),
+            input_inventory: InputInventory::NULL,
+            output_inventory: OutputInventory::NULL,
+            terraforming_action: TerraformingAction::None,
         }
     }
 }
