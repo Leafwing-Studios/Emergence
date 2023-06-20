@@ -113,19 +113,12 @@ impl From<TerraformingTool> for TerraformingAction {
 
 /// Manages the progression of terraforming actions, cleaning them up when they are complete.
 pub(super) fn terraforming_lifecycle(
-    mut terrain_query: Query<(
-        &InputInventory,
-        &OutputInventory,
-        &VoxelPos,
-        &TerraformingAction,
-    )>,
+    mut terrain_query: Query<(&InputInventory, &OutputInventory, &VoxelPos)>,
     mut commands: Commands,
 ) {
-    for (input_inventory, output_inventory, &voxel_pos, &terraforming_action) in
-        terrain_query.iter_mut()
-    {
+    for (input_inventory, output_inventory, &voxel_pos) in terrain_query.iter_mut() {
         if input_inventory.inventory().is_full() && output_inventory.is_empty() {
-            commands.complete_terraform(voxel_pos.hex, terraforming_action);
+            commands.complete_terraform(voxel_pos.hex);
         }
     }
 }
@@ -177,27 +170,35 @@ pub trait TerraformingCommandsExt {
     fn preview_terraform(&mut self, hex: Hex, action: TerraformingAction);
 
     /// Removes any [`TerraformingAction`] at the given hex.
-    fn remove_terraform(&mut self, hex: Hex);
+    fn cancel_terraform(&mut self, hex: Hex);
 
     /// Completes the provided [`TerraformingAction`] at the given hex.
-    fn complete_terraform(&mut self, hex: Hex, action: TerraformingAction);
+    fn complete_terraform(&mut self, hex: Hex);
 }
 
 impl TerraformingCommandsExt for Commands<'_, '_> {
     fn start_terraform(&mut self, hex: Hex, action: TerraformingAction) {
-        todo!()
+        self.add(TerraformCommand {
+            hex,
+            action,
+            preview: false,
+        })
     }
 
     fn preview_terraform(&mut self, hex: Hex, action: TerraformingAction) {
-        todo!()
+        self.add(TerraformCommand {
+            hex,
+            action,
+            preview: true,
+        })
     }
 
-    fn remove_terraform(&mut self, hex: Hex) {
-        todo!()
+    fn cancel_terraform(&mut self, hex: Hex) {
+        self.add(CancelTerraformCommand { hex })
     }
 
-    fn complete_terraform(&mut self, hex: Hex, action: TerraformingAction) {
-        todo!()
+    fn complete_terraform(&mut self, hex: Hex) {
+        self.add(CancelTerraformCommand { hex });
     }
 }
 
@@ -213,13 +214,23 @@ impl Command for TerraformCommand {
     }
 }
 
-struct DespawnTerraformCommand {
+struct CancelTerraformCommand {
     hex: Hex,
 }
 
-impl Command for DespawnTerraformCommand {
+impl Command for CancelTerraformCommand {
     fn write(self, world: &mut World) {
-        todo!()
+        let map_geometry = world.resource::<MapGeometry>();
+        let terrain_entity = map_geometry.get_terrain(self.hex).unwrap();
+        let mut terraforming_action = world.get_mut::<TerraformingAction>(terrain_entity).unwrap();
+        *terraforming_action = TerraformingAction::None;
+
+        // FIXME: input and output inventories should be handled here
+
+        let map_geometry = world.resource::<MapGeometry>();
+        if let Some(ghost_entity) = map_geometry.remove_terrain_ghost(self.hex) {
+            world.entity_mut(ghost_entity).despawn_recursive();
+        }
     }
 }
 

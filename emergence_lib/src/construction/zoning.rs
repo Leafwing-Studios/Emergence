@@ -56,7 +56,6 @@ struct CleanMeUp;
 /// Applies zoning to an area, causing structures to be created (or removed) there.
 ///
 /// This system also displays previews in order to ensure perfect consistency.
-// FIXME: terraforming is broken
 fn set_zoning(
     cursor_pos: Res<CursorPos>,
     actions: Res<ActionState<PlayerAction>>,
@@ -70,7 +69,7 @@ fn set_zoning(
     if actions.pressed(PlayerAction::ClearZoning) {
         for &voxel_pos in relevant_tiles.iter() {
             commands.despawn_ghost_structure(voxel_pos);
-            commands.remove_terraform(voxel_pos.hex);
+            commands.cancel_terraform(voxel_pos.hex);
         }
 
         // Don't try to clear and zone in the same frame
@@ -122,18 +121,10 @@ fn set_zoning(
                     for (voxel_pos, clipboard_item) in tool.offset_positions(cursor_tile_pos) {
                         match apply_zoning {
                             true => {
-                                for voxel_pos in relevant_tiles.iter() {
-                                    commands
-                                        .spawn_ghost_structure(*voxel_pos, clipboard_item.clone());
-                                }
+                                commands.spawn_ghost_structure(voxel_pos, clipboard_item.clone());
                             }
                             false => {
-                                for voxel_pos in relevant_tiles.iter() {
-                                    commands.spawn_preview_structure(
-                                        *voxel_pos,
-                                        clipboard_item.clone(),
-                                    );
-                                }
+                                commands.spawn_preview_structure(voxel_pos, clipboard_item.clone());
                             }
                         }
                     }
