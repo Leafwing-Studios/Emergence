@@ -22,7 +22,6 @@ use crate::litter::{
     LitterEmitters,
 };
 
-pub(crate) mod commands;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 

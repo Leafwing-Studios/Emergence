@@ -1,6 +1,9 @@
 //! Tools to alter the terrain type and height.
 
-use bevy::{ecs::system::Command, prelude::*};
+use bevy::{
+    ecs::system::{Command, SystemState},
+    prelude::*,
+};
 use hexx::Hex;
 
 use crate::{
@@ -9,11 +12,11 @@ use crate::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
     },
-    geometry::VoxelPos,
+    geometry::{MapGeometry, VoxelPos},
     items::{inventory::Inventory, item_manifest::Item},
     signals::{Emitter, SignalStrength, SignalType},
     terrain::{
-        commands::TerrainCommandsExt,
+        terrain_assets::TerrainHandles,
         terrain_manifest::{Terrain, TerrainManifest},
     },
 };
@@ -111,7 +114,6 @@ impl From<TerraformingTool> for TerraformingAction {
 /// Manages the progression of terraforming actions, cleaning them up when they are complete.
 pub(super) fn terraforming_lifecycle(
     mut terrain_query: Query<(
-        Entity,
         &InputInventory,
         &OutputInventory,
         &VoxelPos,
@@ -119,17 +121,11 @@ pub(super) fn terraforming_lifecycle(
     )>,
     mut commands: Commands,
 ) {
-    for (terrain_entity, input_inventory, output_inventory, &voxel_pos, &terraforming_action) in
+    for (input_inventory, output_inventory, &voxel_pos, &terraforming_action) in
         terrain_query.iter_mut()
     {
         if input_inventory.inventory().is_full() && output_inventory.is_empty() {
-            commands
-                .entity(terrain_entity)
-                .remove::<(TerraformingAction, InputInventory, OutputInventory)>();
-
-            // TODO: remove any visual effects
-            // commands.despawn_ghost_terrain(voxel_pos);
-            commands.apply_terraforming_action(voxel_pos, terraforming_action);
+            commands.complete_terraform(voxel_pos.hex, terraforming_action);
         }
     }
 }
@@ -224,5 +220,58 @@ struct DespawnTerraformCommand {
 impl Command for DespawnTerraformCommand {
     fn write(self, world: &mut World) {
         todo!()
+    }
+}
+
+/// A [`Command`] used to apply [`TerraformingAction`]s to a tile.
+struct ApplyTerraformingCommand {
+    /// The tile position at which the terrain to be despawned is found.
+    hex: Hex,
+}
+
+impl Command for ApplyTerraformingCommand {
+    fn write(self, world: &mut World) {
+        // Just using system state makes satisfying the borrow checker a lot easier
+        let mut system_state = SystemState::<(
+            ResMut<MapGeometry>,
+            Res<TerrainHandles>,
+            Query<(
+                &mut Id<Terrain>,
+                &mut VoxelPos,
+                &mut TerraformingAction,
+                &mut Handle<Scene>,
+            )>,
+        )>::new(world);
+
+        let (mut map_geometry, terrain_handles, mut terrain_query) = system_state.get_mut(world);
+
+        let terrain_entity = map_geometry.get_terrain(self.hex).unwrap();
+
+        let (mut current_terrain_id, mut voxel_pos, mut terraforming_action, mut scene_handle) =
+            terrain_query.get_mut(terrain_entity).unwrap();
+
+        match *terraforming_action {
+            TerraformingAction::None => (),
+            TerraformingAction::Raise => voxel_pos.height = voxel_pos.height.above(),
+            TerraformingAction::Lower => {
+                voxel_pos.height = voxel_pos.height.below();
+            }
+            TerraformingAction::Change(changed_terrain_id) => {
+                *current_terrain_id = changed_terrain_id;
+            }
+        };
+
+        // We can't do this above, as we need to drop the previous query before borrowing from the world again
+        if let TerraformingAction::Change(changed_terrain_id) = *terraforming_action {
+            *scene_handle = terrain_handles
+                .scenes
+                .get(&changed_terrain_id)
+                .unwrap()
+                .clone_weak();
+        }
+
+        *terraforming_action = TerraformingAction::None;
+
+        map_geometry.update_height(voxel_pos.hex, voxel_pos.height);
     }
 }
