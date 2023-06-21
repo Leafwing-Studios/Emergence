@@ -12,14 +12,18 @@ use crate::{
         inventories::{InputInventory, OutputInventory},
         item_tags::ItemKind,
     },
-    geometry::{MapGeometry, VoxelPos},
+    geometry::{DiscreteHeight, MapGeometry, VoxelPos},
+    graphics::InheritedMaterial,
     items::{inventory::Inventory, item_manifest::Item},
+    player_interaction::selection::ObjectInteraction,
     signals::{Emitter, SignalStrength, SignalType},
     terrain::{
         terrain_assets::TerrainHandles,
         terrain_manifest::{Terrain, TerrainManifest},
     },
 };
+
+use super::ghosts::{GhostTerraformBundle, TerraformPreviewBundle};
 
 /// An option presented to players for how to terraform the world.
 ///
@@ -86,6 +90,16 @@ impl TerraformingAction {
             Self::Change(_terrain) => OutputInventory {
                 inventory: Inventory::full_from_item(soil_id, Self::N_ITEMS),
             },
+        }
+    }
+
+    /// Computes the final height of the terrain after this action is performed.
+    pub(crate) fn final_height(&self, current_height: DiscreteHeight) -> DiscreteHeight {
+        match self {
+            Self::None => current_height,
+            Self::Raise => current_height.above(),
+            Self::Lower => current_height.below(),
+            Self::Change(_) => current_height,
         }
     }
 
@@ -210,7 +224,67 @@ struct TerraformCommand {
 
 impl Command for TerraformCommand {
     fn write(self, world: &mut World) {
-        todo!()
+        let map_geometry = world.resource::<MapGeometry>();
+        let starting_height = map_geometry.get_height(self.hex).unwrap();
+        let final_height = self.action.final_height(starting_height);
+        let voxel_pos = VoxelPos {
+            hex: self.hex,
+            height: final_height,
+        };
+        let world_pos = voxel_pos.into_world_pos();
+        let terrain_entity = map_geometry.get_terrain(self.hex).unwrap();
+
+        let terrain_id = world.get::<Id<Terrain>>(terrain_entity).unwrap();
+
+        let terrain_handles = world.resource::<TerrainHandles>();
+        let scene_handle = terrain_handles.scenes.get(terrain_id).unwrap().clone_weak();
+        let material_handle = if self.preview {
+            terrain_handles
+                .interaction_materials
+                .get(&ObjectInteraction::Hovered)
+                .unwrap()
+                .clone_weak()
+        } else {
+            todo!();
+        };
+
+        let inherited_material = InheritedMaterial(material_handle);
+
+        if self.preview {
+            // Spawn the preview entity for visualization
+            world.spawn(TerraformPreviewBundle::new(
+                self.action,
+                scene_handle,
+                inherited_material,
+                world_pos,
+            ));
+        } else {
+            // Update the terraforming action
+            let mut terraforming_action =
+                world.get_mut::<TerraformingAction>(terrain_entity).unwrap();
+            *terraforming_action = self.action;
+
+            // Update input and output inventories
+            let mut input_inventory = world.get_mut::<InputInventory>(terrain_entity).unwrap();
+            *input_inventory = self.action.input_inventory();
+            let mut output_inventory = world.get_mut::<OutputInventory>(terrain_entity).unwrap();
+            *output_inventory = self.action.output_inventory();
+
+            // Spawn the ghost entity for visualization
+            let ghost_entity = world
+                .spawn(GhostTerraformBundle::new(
+                    self.action,
+                    scene_handle,
+                    inherited_material,
+                    world_pos,
+                ))
+                .id();
+
+            // Remember to update the index so we can despawn the right one later
+            // Relations plz
+            let mut map_geometry = world.resource_mut::<MapGeometry>();
+            map_geometry.add_terraforming_ghost(self.hex, ghost_entity)
+        }
     }
 }
 
@@ -225,10 +299,15 @@ impl Command for CancelTerraformCommand {
         let mut terraforming_action = world.get_mut::<TerraformingAction>(terrain_entity).unwrap();
         *terraforming_action = TerraformingAction::None;
 
-        // FIXME: input and output inventories should be handled here
+        // TODO: these should probably be handled more thoughtfully to ensure conservation of items
+        let mut input_inventory = world.get_mut::<InputInventory>(terrain_entity).unwrap();
+        *input_inventory = InputInventory::NULL;
 
-        let map_geometry = world.resource::<MapGeometry>();
-        if let Some(ghost_entity) = map_geometry.remove_terrain_ghost(self.hex) {
+        let mut output_inventory = world.get_mut::<OutputInventory>(terrain_entity).unwrap();
+        *output_inventory = OutputInventory::NULL;
+
+        let mut map_geometry = world.resource_mut::<MapGeometry>();
+        if let Some(ghost_entity) = map_geometry.remove_terraforming_ghost(self.hex) {
             world.entity_mut(ghost_entity).despawn_recursive();
         }
     }

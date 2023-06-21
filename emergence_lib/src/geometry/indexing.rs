@@ -24,7 +24,7 @@ pub struct MapGeometry {
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
     terrain_index: HashMap<Hex, Entity>,
-    /// The [`TerraformingAction`] entity at each hex, if any.
+    /// The terraforming ghost entity at each hex, if any.
     terraforming_index: HashMap<Hex, Entity>,
     /// The height of the terrain at each tile position.
     ///
@@ -679,6 +679,18 @@ impl MapGeometry {
         self.validate();
 
         Some(entity)
+    }
+
+    /// Records that a terraforming ghost entity can be found at the provided `hex`.
+    pub(crate) fn add_terraforming_ghost(&mut self, hex: Hex, entity: Entity) {
+        self.terraforming_index.insert(hex, entity);
+    }
+
+    /// Removes any terraforming ghost entity found at the provided `hex`.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_terraforming_ghost(&mut self, hex: Hex) -> Option<Entity> {
+        self.terraforming_index.remove(&hex)
     }
 
     /// Returns an iterator over all of the hex positions that are ocean tiles.
