@@ -10,6 +10,7 @@ use crate::construction::terraform::TerraformingAction;
 use crate::crafting::inventories::{InputInventory, OutputInventory};
 use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
+use crate::player_interaction::picking::PickableVoxel;
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::Emitter;
 use crate::simulation::SimulationSet;
@@ -62,7 +63,7 @@ pub(crate) struct TerrainBundle {
     /// The location and height of this terrain hex
     voxel_pos: VoxelPos,
     /// Makes the tiles pickable
-    raycast_mesh: RaycastMesh<Terrain>,
+    raycast_mesh: RaycastMesh<PickableVoxel>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
     /// How is the terrain being interacted with?
@@ -106,7 +107,7 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_id,
             voxel_pos,
-            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            raycast_mesh: RaycastMesh::<PickableVoxel>::default(),
             mesh,
             object_interaction: ObjectInteraction::None,
             scene_bundle,
@@ -130,7 +131,7 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_id,
             voxel_pos,
-            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            raycast_mesh: RaycastMesh::<PickableVoxel>::default(),
             mesh: Handle::default(),
             object_interaction: ObjectInteraction::None,
             scene_bundle: SceneBundle::default(),

@@ -179,7 +179,18 @@ impl Div<f32> for Height {
 /// Used to construct a [`VoxelPos`].
 /// When converting from a [`Height`], all values will be clamped to the range 0..=255.
 #[derive(
-    PartialEq, Eq, Clone, Copy, Debug, Hash, Serialize, Deserialize, Default, PartialOrd, Ord,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    Debug,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    PartialOrd,
+    Ord,
+    Reflect,
 )]
 pub struct DiscreteHeight(pub u8);
 

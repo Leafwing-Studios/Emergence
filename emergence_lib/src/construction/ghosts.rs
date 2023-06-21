@@ -10,6 +10,7 @@ use crate::crafting::workers::WorkersPresent;
 use crate::enum_iter::IterableEnum;
 use crate::geometry::MapGeometry;
 use crate::organisms::energy::StartingEnergy;
+use crate::player_interaction::picking::PickableVoxel;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
@@ -135,7 +136,7 @@ pub(crate) struct GhostStructureBundle {
     /// The direction the ghost is facing
     facing: Facing,
     /// Makes ghost structures pickable
-    raycast_mesh: RaycastMesh<(Ghost, Structure)>,
+    raycast_mesh: RaycastMesh<PickableVoxel>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
     /// The number of workers that are present / allowed to build this structure.

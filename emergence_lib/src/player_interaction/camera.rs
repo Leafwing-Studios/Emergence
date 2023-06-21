@@ -12,17 +12,15 @@ use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::construction::ghosts::Ghost;
 use crate::geometry::DiscreteHeight;
 use crate::geometry::MapGeometry;
 use crate::geometry::VoxelPos;
-use crate::structures::structure_manifest::Structure;
-use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
 use crate::world_gen::WorldGenState;
 
 use self::speed::Speed;
 
+use super::picking::PickableVoxel;
 use super::selection::CurrentSelection;
 use super::InteractionSystem;
 use super::PlayerAction;
@@ -85,10 +83,8 @@ fn setup_camera(mut commands: Commands) {
         })
         .insert(settings)
         .insert(focus)
-        .insert(RaycastSource::<Terrain>::new())
-        .insert(RaycastSource::<Structure>::new())
-        .insert(RaycastSource::<Unit>::new())
-        .insert(RaycastSource::<(Ghost, Structure)>::new());
+        .insert(RaycastSource::<PickableVoxel>::new())
+        .insert(RaycastSource::<Unit>::new());
 }
 
 /// The position that the camera is looking at.
