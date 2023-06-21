@@ -335,13 +335,13 @@ impl VoxelPos {
         let mut reachable_neighbors = [Self::ZERO; 21];
 
         for layer in 0..=2 {
-            let height_offset = layer as i16 - 1;
+            let height_offset = layer as i8 - 1;
             for (i, &hex) in hexagon.iter().enumerate() {
                 let index = layer * 7 + i;
 
                 reachable_neighbors[index] = VoxelPos {
                     hex,
-                    height: DiscreteHeight((self.height.0 as i16 + height_offset).clamp(0, 255) as u8),
+                    height: DiscreteHeight(self.height.0.saturating_add_signed(height_offset)),
                 };
             }
         }
