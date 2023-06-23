@@ -216,9 +216,13 @@ impl TerraformingCommandsExt for Commands<'_, '_> {
     }
 }
 
+/// A command to initialize a terraforming action.
 struct TerraformCommand {
+    /// The hex where the terraforming action is taking place.
     hex: Hex,
+    /// The terraforming action to perform.
     action: TerraformingAction,
+    /// Is this a preview of the terraforming action?
     preview: bool,
 }
 
@@ -288,7 +292,9 @@ impl Command for TerraformCommand {
     }
 }
 
+/// A command to cancel a terraforming action.
 struct CancelTerraformCommand {
+    /// The hex where the terraforming action is taking place.
     hex: Hex,
 }
 
