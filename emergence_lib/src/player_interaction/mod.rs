@@ -97,10 +97,8 @@ pub(crate) enum PlayerAction {
     /// If there is no structure there, the player's selection is cleared.
     Copy,
     /// Sets the zoning of all currently selected tiles to the currently selected structure.
-    ///
-    /// If no structure is selected to build, zoning will be set to [`Zoning::None`](crate::construction::zoning::Zoning::None).
     Paste,
-    /// Sets the zoning of all currently selected tiles to [`Zoning::None`](crate::construction::zoning::Zoning::None).
+    /// Cancels any planned actions (ghosts) selected.
     ClearZoning,
     /// Rotates the contents of the clipboard counterclockwise.
     RotateClipboardLeft,
