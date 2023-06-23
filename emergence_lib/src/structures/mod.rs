@@ -208,7 +208,7 @@ mod tests {
     /// beginning at the origin and moving right one.
     ///
     /// This is a horizontal line, in the axial coordinate diagram shown here:
-    /// https://www.redblobgames.com/grids/hexagons/#coordinates
+    /// <https://www.redblobgames.com/grids/hexagons/#coordinates>
     fn two_tile_footprint() -> Footprint {
         let mut set = HashSet::new();
         set.insert(VoxelPos::ZERO);

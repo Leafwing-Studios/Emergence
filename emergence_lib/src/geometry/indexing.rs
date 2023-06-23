@@ -914,7 +914,7 @@ impl MapGeometry {
         assert!(
             // The set of keys should be larger, because it accounts for all possible origins
             // Units and signals must be able to *leave* any voxel
-            walkable_voxels.difference(&walkable_neighbors_keys).into_iter().count() == 0,
+            walkable_voxels.difference(&walkable_neighbors_keys).count() == 0,
             "Walkable voxels and walkable neighbors keys have desynced. Found {:?} in walkable voxels but not in walkable neighbors keys.",
             walkable_voxels.difference(&walkable_neighbors_keys)
         );
