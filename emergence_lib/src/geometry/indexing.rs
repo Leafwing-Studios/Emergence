@@ -891,13 +891,12 @@ impl MapGeometry {
             .copied()
             .collect::<HashSet<_>>();
 
-        let a_minus_b = walkable_voxels.difference(&walkable_neighbors_keys);
-        let b_minus_a = walkable_neighbors_keys.difference(&walkable_voxels);
-
         assert!(
-            walkable_voxels == walkable_neighbors_keys,
-            "Walkable voxels and walkable neighbors keys do not match. Found {:?} in walkable voxels but not in walkable neighbors keys. Found {:?} in walkable neighbors keys but not in walkable voxels.",
-            a_minus_b, b_minus_a
+            // The set of keys should be larger, because it accounts for all possible origins
+            // Units and signals must be able to *leave* any voxel
+            walkable_voxels.difference(&walkable_neighbors_keys).into_iter().count() == 0,
+            "Walkable voxels and walkable neighbors keys have desynced. Found {:?} in walkable voxels but not in walkable neighbors keys.",
+            walkable_voxels.difference(&walkable_neighbors_keys)
         );
 
         for neighbors in self.walkable_neighbors.values() {
