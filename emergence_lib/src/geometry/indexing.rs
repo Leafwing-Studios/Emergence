@@ -12,6 +12,7 @@ use crate::{
 };
 
 use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
+use core::fmt::Display;
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource, Clone)]
@@ -65,6 +66,21 @@ impl Neighbors {
             Bottom => self.maybe_neighbors[4],
             BottomRight => self.maybe_neighbors[5],
         }
+    }
+}
+
+impl Display for Neighbors {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let iter = NeighborIter {
+            neighbors: self,
+            index: 0,
+        };
+        let string = iter
+            .map(|neighbor| format!("{}", neighbor))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        write!(f, "[{}]", string)
     }
 }
 
@@ -764,7 +780,7 @@ impl MapGeometry {
 
         for (voxel_pos, voxel_data) in self.voxel_index.iter() {
             if voxel_data.object_kind.can_walk_on_roof() {
-                let can_walk_through = match self.get_voxel(voxel_pos.above()) {
+                let can_walk_through: bool = match self.get_voxel(voxel_pos.above()) {
                     Some(voxel_data) => voxel_data.object_kind.can_walk_through(),
                     None => true,
                 };
@@ -778,6 +794,19 @@ impl MapGeometry {
         walkable_voxels
     }
 
+    /// The set of voxels that units and signals can originate from.
+    fn origin_voxels(&self) -> HashSet<VoxelPos> {
+        let mut origin_voxels = HashSet::new();
+
+        for (voxel_pos, voxel_data) in self.voxel_index.iter() {
+            if voxel_data.object_kind.can_walk_on_roof() {
+                origin_voxels.insert(voxel_pos.above());
+            }
+        }
+
+        origin_voxels
+    }
+
     /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
     /// This will update the entire map at once.
@@ -786,14 +815,16 @@ impl MapGeometry {
         let walkable_voxels = self.walkable_voxels();
         self.walkable_neighbors.clear();
 
-        for walkable_voxel in &walkable_voxels {
+        // We need to compute paths *from* (but not *to*) any place where signals or units could possibly originate
+        // This includes solid structures, in addition to empty or walkable voxels
+        for origin_voxel in &self.origin_voxels() {
             let mut local_neighbors = Neighbors::NONE;
 
             for (i, &direction) in hexx::Direction::ALL_DIRECTIONS.iter().enumerate() {
-                let neighbor_hex = walkable_voxel.hex.neighbor(direction);
+                let neighbor_hex = origin_voxel.hex.neighbor(direction);
                 let neighbor_flat = VoxelPos {
                     hex: neighbor_hex,
-                    height: walkable_voxel.height,
+                    height: origin_voxel.height,
                 };
                 let neighbor_above = neighbor_flat.above();
                 let neighbor_below = neighbor_flat.below();
@@ -812,7 +843,7 @@ impl MapGeometry {
             }
 
             self.walkable_neighbors
-                .insert(*walkable_voxel, local_neighbors);
+                .insert(*origin_voxel, local_neighbors);
         }
 
         #[cfg(test)]
@@ -880,13 +911,12 @@ impl MapGeometry {
             .copied()
             .collect::<HashSet<_>>();
 
-        let a_minus_b = walkable_voxels.difference(&walkable_neighbors_keys);
-        let b_minus_a = walkable_neighbors_keys.difference(&walkable_voxels);
-
         assert!(
-            walkable_voxels == walkable_neighbors_keys,
-            "Walkable voxels and walkable neighbors keys do not match. Found {:?} in walkable voxels but not in walkable neighbors keys. Found {:?} in walkable neighbors keys but not in walkable voxels.",
-            a_minus_b, b_minus_a
+            // The set of keys should be larger, because it accounts for all possible origins
+            // Units and signals must be able to *leave* any voxel
+            walkable_voxels.difference(&walkable_neighbors_keys).into_iter().count() == 0,
+            "Walkable voxels and walkable neighbors keys have desynced. Found {:?} in walkable voxels but not in walkable neighbors keys.",
+            walkable_voxels.difference(&walkable_neighbors_keys)
         );
 
         for neighbors in self.walkable_neighbors.values() {

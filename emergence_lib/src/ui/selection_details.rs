@@ -333,6 +333,9 @@ fn get_details(
                                     input_inventory: q.1.clone(),
                                     output_inventory: q.2.clone(),
                                 }),
+                            walkable_neighbors: map_geometry
+                                .walkable_neighbors(terrain_query_item.voxel_pos.above())
+                                .collect(),
                         })
                     }
                     VoxelKind::Structure { .. } => {
@@ -415,6 +418,9 @@ fn get_details(
                 impatience_pool: unit_query_item.impatience_pool.clone(),
                 age: unit_query_item.age.clone(),
                 organism_details,
+                walkable_neighbors: map_geometry
+                    .walkable_neighbors(*unit_query_item.voxel_pos)
+                    .collect(),
             })
         }
         CurrentSelection::None => SelectionDetails::None,
@@ -834,6 +840,8 @@ Output: {output}"
         pub(super) signals: LocalSignals,
         /// The details about the terraforming process, if any
         pub(super) maybe_terraforming_details: Option<TerraformingDetails>,
+        /// The neighbors connected to the tile above this terrain
+        pub(super) walkable_neighbors: Vec<VoxelPos>,
     }
 
     impl TerrainDetails {
@@ -858,6 +866,12 @@ Output: {output}"
                 terrain_manifest,
                 unit_manifest,
             );
+            let walkable_neighbors = self
+                .walkable_neighbors
+                .iter()
+                .map(|neighbor| format!("{}", neighbor))
+                .collect::<Vec<_>>()
+                .join("\n ");
 
             let base_string = format!(
                 "Entity: {entity:?}
@@ -866,7 +880,8 @@ Tile: {voxel_pos}
 Height: {height}
 Water Table: {depth_to_water_table}
 Shade: {shade}
-Current Light: {recieved_light}"
+Current Light: {recieved_light}
+Walkable Neighbors: {walkable_neighbors}"
             );
 
             if let Some(terraforming_details) = &self.maybe_terraforming_details {
@@ -947,6 +962,8 @@ mod unit_details {
         pub(super) impatience_pool: ImpatiencePool,
         /// The current and max age of this unit.
         pub(super) age: Age,
+        /// The set of voxels that this unit can walk to
+        pub(super) walkable_neighbors: Vec<VoxelPos>,
     }
 
     impl UnitDetails {
@@ -975,11 +992,18 @@ mod unit_details {
                 .organism_details
                 .display(structure_manifest, unit_manifest);
             let age = &self.age;
+            let walkable_neighbors = self
+                .walkable_neighbors
+                .iter()
+                .map(|neighbor| format!("{}", neighbor))
+                .collect::<Vec<_>>()
+                .join("\n ");
 
             format!(
                 "Entity: {entity:?}
 Unit type: {unit_name}
 Tile: {voxel_pos}
+Walkable Neighbors: {walkable_neighbors}
 Diet: {diet}
 Holding: {held_item}
 Goal: {goal}

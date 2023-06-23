@@ -20,7 +20,7 @@ jobs:
           toolchain: nightly
           override: true
       - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@v1.0.0
+        uses: Leafwing-Studios/cargo-cache@v1
       # We don't --force install to reduce CI times (drastically)
       # We fix the version so that it overwrites when we specify a new one
       # We need to remember to update the version from time to time
