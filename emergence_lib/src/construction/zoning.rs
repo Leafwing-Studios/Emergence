@@ -84,12 +84,12 @@ fn set_zoning(
         Tool::Terraform(terraform_tool) => match apply_zoning {
             true => {
                 for voxel_pos in relevant_tiles.iter() {
-                    commands.start_terraform(voxel_pos.hex, terraform_tool.clone().into());
+                    commands.start_terraform(voxel_pos.hex, (*terraform_tool).into());
                 }
             }
             false => {
                 for &voxel_pos in relevant_tiles.iter() {
-                    commands.preview_terraform(voxel_pos.hex, terraform_tool.clone().into());
+                    commands.preview_terraform(voxel_pos.hex, (*terraform_tool).into());
                 }
             }
         },
