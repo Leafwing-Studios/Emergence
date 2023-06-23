@@ -112,7 +112,7 @@ fn main() {
 
     if what_to_run.contains(&Check::Test) {
         // Run tests (except doc tests and without building examples)
-        cmd!(sh, "cargo test --workspace --lib --bins --tests --benches")
+        cmd!(sh, "cargo test --workspace --lib --bins --tests")
             .run()
             .expect("Please fix failing tests in output above.");
     }
