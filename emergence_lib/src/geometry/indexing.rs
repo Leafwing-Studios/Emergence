@@ -760,7 +760,7 @@ impl MapGeometry {
 
         for (voxel_pos, voxel_data) in self.voxel_index.iter() {
             if voxel_data.object_kind.can_walk_on_roof() {
-                let can_walk_through = match self.get_voxel(voxel_pos.above()) {
+                let can_walk_through: bool = match self.get_voxel(voxel_pos.above()) {
                     Some(voxel_data) => voxel_data.object_kind.can_walk_through(),
                     None => true,
                 };
@@ -774,6 +774,19 @@ impl MapGeometry {
         walkable_voxels
     }
 
+    /// The set of voxels that units and signals can originate from.
+    fn origin_voxels(&self) -> HashSet<VoxelPos> {
+        let mut origin_voxels = HashSet::new();
+
+        for (voxel_pos, voxel_data) in self.voxel_index.iter() {
+            if voxel_data.object_kind.can_walk_on_roof() {
+                origin_voxels.insert(voxel_pos.above());
+            }
+        }
+
+        origin_voxels
+    }
+
     /// Recomputes the set of passable neighbors for the provided `voxel_pos`.
     ///
     /// This will update the entire map at once.
@@ -782,14 +795,16 @@ impl MapGeometry {
         let walkable_voxels = self.walkable_voxels();
         self.walkable_neighbors.clear();
 
-        for walkable_voxel in &walkable_voxels {
+        // We need to compute paths *from* (but not *to*) any place where signals or units could possibly originate
+        // This includes solid structures, in addition to empty or walkable voxels
+        for origin_voxel in &self.origin_voxels() {
             let mut local_neighbors = Neighbors::NONE;
 
             for (i, &direction) in hexx::Direction::ALL_DIRECTIONS.iter().enumerate() {
-                let neighbor_hex = walkable_voxel.hex.neighbor(direction);
+                let neighbor_hex = origin_voxel.hex.neighbor(direction);
                 let neighbor_flat = VoxelPos {
                     hex: neighbor_hex,
-                    height: walkable_voxel.height,
+                    height: origin_voxel.height,
                 };
                 let neighbor_above = neighbor_flat.above();
                 let neighbor_below = neighbor_flat.below();
@@ -808,7 +823,7 @@ impl MapGeometry {
             }
 
             self.walkable_neighbors
-                .insert(*walkable_voxel, local_neighbors);
+                .insert(*origin_voxel, local_neighbors);
         }
 
         #[cfg(test)]
