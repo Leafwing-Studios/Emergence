@@ -367,7 +367,9 @@ fn get_details(
                     depth_to_water_table: *terrain_query_item.water_depth,
                     shade: terrain_query_item.shade.clone(),
                     recieved_light: terrain_query_item.recieved_light.clone(),
-                    signals: signals.all_signals_at_position(*terrain_query_item.voxel_pos),
+                    // We must display the signals at the position above the terrain, because
+                    // the terrain itself is opaque to signals.
+                    signals: signals.all_signals_at_position(terrain_query_item.voxel_pos.above()),
                     zoning: terrain_query_item.zoning.clone(),
                     maybe_terraforming_details: terrain_query_item.maybe_terraforming_details.map(
                         |q| terrain_details::TerraformingDetails {
