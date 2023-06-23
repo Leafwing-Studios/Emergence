@@ -490,12 +490,14 @@ fn set_overlay_material(
         let maybe_material = match tile_overlay.overlay_type {
             OverlayType::None => None,
             OverlayType::Single(signal_type) => {
-                let signal_strength = signals.get(signal_type, voxel_pos);
+                // We must look at the voxel above the terrain to get the signal strength, as those are the voxels that units can walk in
+                let signal_strength = signals.get(signal_type, voxel_pos.above());
                 let signal_kind = signal_type.into();
                 tile_overlay.get_signal_material(signal_kind, signal_strength)
             }
             OverlayType::StrongestSignal => signals
-                .strongest_goal_signal_at_position(voxel_pos)
+                // We must look at the voxel above the terrain to get the signal strength, as those are the voxels that units can walk in
+                .strongest_goal_signal_at_position(voxel_pos.above())
                 .and_then(|(signal_type, signal_strength)| {
                     let signal_kind = signal_type.into();
                     tile_overlay.get_signal_material(signal_kind, signal_strength)
