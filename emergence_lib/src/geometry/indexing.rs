@@ -12,6 +12,7 @@ use crate::{
 };
 
 use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
+use core::fmt::Display;
 
 /// The overall size and arrangement of the map.
 #[derive(Debug, Resource, Clone)]
@@ -63,6 +64,21 @@ impl Neighbors {
             Bottom => self.maybe_neighbors[4],
             BottomRight => self.maybe_neighbors[5],
         }
+    }
+}
+
+impl Display for Neighbors {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let iter = NeighborIter {
+            neighbors: self,
+            index: 0,
+        };
+        let string = iter
+            .map(|neighbor| format!("{}", neighbor))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        write!(f, "[{}]", string)
     }
 }
 
