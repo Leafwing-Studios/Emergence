@@ -8,6 +8,7 @@ use hexx::HexIterExt;
 use leafwing_input_manager::prelude::ActionState;
 
 use crate::geometry::MapGeometry;
+use crate::geometry::VoxelObject;
 use crate::geometry::VoxelPos;
 
 use crate as emergence_lib;
@@ -37,34 +38,26 @@ impl Plugin for SelectionPlugin {
     }
 }
 
-/// The set of tiles that is currently selected
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub(crate) struct SelectedTiles {
-    /// Actively selected tiles
-    // FIXME: this should probably store VoxelPos instead of Hex
-    selected: HashSet<Hex>,
+/// The set of voxels that are currently selected
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deref, DerefMut)]
+pub(crate) struct SelectedVoxels {
+    /// The underlying set of voxels
+    selected: HashSet<VoxelPos>,
 }
 
-impl SelectedTiles {
-    /// Selects a single tile
-    pub(super) fn add_tile(&mut self, voxel_pos: VoxelPos) {
-        self.selected.insert(voxel_pos.hex);
-    }
-
-    /// Deselects a single tile
-    #[cfg(test)]
-    fn remove_tile(&mut self, voxel_pos: VoxelPos) {
-        self.selected.remove(&voxel_pos.hex);
-    }
-
-    /// Is the given tile in the selection?
-    pub(crate) fn contains_tile(&self, voxel_pos: VoxelPos) -> bool {
-        self.selected.contains(&voxel_pos.hex)
+impl SelectedVoxels {
+    /// Gets the entities stored in the selected set of voxel positions.
+    pub(crate) fn voxel_objects(&self, map_geometry: &MapGeometry) -> HashSet<VoxelObject> {
+        self.selected
+            .iter()
+            .flat_map(|voxel| map_geometry.get_voxel(*voxel))
+            .cloned()
+            .collect()
     }
 
     /// Computes the center of the selection
     pub(crate) fn center(&self) -> Hex {
-        self.selected.iter().copied().center()
+        self.selected.iter().map(|voxel| voxel.hex).center()
     }
 
     /// Draws a hollow hexagonal ring of tiles.
@@ -88,27 +81,6 @@ impl SelectedTiles {
             }
             hex_vec
         }
-    }
-
-    /// Clears the set of selected tiles.
-    pub(super) fn clear_selection(&mut self) {
-        self.selected.clear();
-    }
-
-    /// The set of currently selected tiles.
-    pub(crate) fn selection(&self) -> &HashSet<Hex> {
-        &self.selected
-    }
-
-    /// How many tiles are selected?
-    #[allow(dead_code)]
-    pub(crate) fn len(&self) -> usize {
-        self.selected.len()
-    }
-
-    /// Are any tiles selected?
-    pub(crate) fn is_empty(&self) -> bool {
-        self.selected.is_empty()
     }
 
     /// Handles all of the logic needed to add tiles to the selection.
@@ -141,7 +113,7 @@ impl SelectedTiles {
             self.selected =
                 HashSet::from_iter(self.selected.difference(&selection_region).copied());
         } else {
-            self.clear_selection()
+            self.clear()
         }
     }
 
@@ -151,29 +123,25 @@ impl SelectedTiles {
         hovered_tile: VoxelPos,
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
-    ) -> HashSet<Hex> {
+    ) -> HashSet<VoxelPos> {
         match selection_state.shape {
             SelectionShape::Single => {
-                SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
+                SelectedVoxels::draw_hexagon(hovered_tile, selection_state.brush_size)
             }
-            SelectionShape::Area { center, radius } => SelectedTiles::draw_hexagon(center, radius),
+            SelectionShape::Area { center, radius } => SelectedVoxels::draw_hexagon(center, radius),
             SelectionShape::Line { start } => {
-                SelectedTiles::draw_line(start, hovered_tile, selection_state.brush_size)
+                SelectedVoxels::draw_line(start, hovered_tile, selection_state.brush_size)
             }
         }
         // PERF: we could be faster about this by only collecting once
         .into_iter()
         // Ensure we don't try to operate off of the map
         .filter(|hex| map_geometry.is_valid(*hex))
+        .map(|hex| VoxelPos {
+            hex,
+            height: map_geometry.get_height(hex).unwrap(),
+        })
         .collect()
-    }
-
-    /// Fetches the entities that correspond to these tiles
-    pub(crate) fn entities(&self, map_geometry: &MapGeometry) -> Vec<Entity> {
-        self.selection()
-            .iter()
-            .flat_map(|hex| map_geometry.get_terrain(*hex))
-            .collect()
     }
 }
 
@@ -190,16 +158,16 @@ impl HoveredTiles {
     fn update(&mut self, hovered_tile: VoxelPos, selection_state: &SelectionState) {
         let hex_vec = match selection_state.shape {
             SelectionShape::Single => {
-                SelectedTiles::draw_hexagon(hovered_tile, selection_state.brush_size)
+                SelectedVoxels::draw_hexagon(hovered_tile, selection_state.brush_size)
             }
             SelectionShape::Area { center, radius } => {
-                let mut vec = SelectedTiles::draw_ring(center, radius);
+                let mut vec = SelectedVoxels::draw_ring(center, radius);
                 // Also show center of ring for clarity.
                 vec.push(hovered_tile.hex);
                 vec
             }
             SelectionShape::Line { start } => {
-                SelectedTiles::draw_line(start, hovered_tile, selection_state.brush_size)
+                SelectedVoxels::draw_line(start, hovered_tile, selection_state.brush_size)
             }
         };
 
@@ -286,14 +254,10 @@ fn update_selection_radius(
 /// The game object(s) currently selected for inspection.
 #[derive(Resource, Debug, Default)]
 pub(crate) enum CurrentSelection {
-    /// A ghost structure is selected
-    GhostStructure(Entity),
-    /// A structure is selected
-    Structure(Entity),
     /// One or more tile is selected.
     ///
     /// Note that terraforming details are also displayed on the basis of the selected terrain.
-    Terrain(SelectedTiles),
+    Voxels(SelectedVoxels),
     /// A unit is selected
     Unit(Entity),
     /// Nothing is selected
@@ -303,24 +267,24 @@ pub(crate) enum CurrentSelection {
 
 impl CurrentSelection {
     /// Returns the set of terrain tiles that should be affected by actions.
-    pub(crate) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedTiles {
+    pub(crate) fn relevant_tiles(&self, cursor_pos: &CursorPos) -> SelectedVoxels {
         match self {
-            CurrentSelection::Terrain(selected_tiles) => match selected_tiles.is_empty() {
+            CurrentSelection::Voxels(selected_voxels) => match selected_voxels.is_empty() {
                 true => {
-                    let mut selected_tiles = SelectedTiles::default();
+                    let mut selected_voxels = SelectedVoxels::default();
                     if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
-                        selected_tiles.add_tile(cursor_tile_pos);
+                        selected_voxels.insert(cursor_tile_pos);
                     }
-                    selected_tiles
+                    selected_voxels
                 }
-                false => selected_tiles.clone(),
+                false => selected_voxels.clone(),
             },
             _ => {
-                let mut selected_tiles = SelectedTiles::default();
+                let mut selected_voxels = SelectedVoxels::default();
                 if let Some(cursor_tile_pos) = cursor_pos.maybe_voxel_pos() {
-                    selected_tiles.add_tile(cursor_tile_pos);
+                    selected_voxels.insert(cursor_tile_pos);
                 }
-                selected_tiles
+                selected_voxels
             }
         }
     }
@@ -333,14 +297,14 @@ impl CurrentSelection {
         selection_state: &SelectionState,
         map_geometry: &MapGeometry,
     ) -> Self {
-        if let CurrentSelection::Terrain(existing_selection) = self {
+        if let CurrentSelection::Voxels(existing_selection) = self {
             let mut existing_selection = existing_selection.clone();
             existing_selection.add_to_selection(hovered_tile, selection_state, map_geometry);
-            CurrentSelection::Terrain(existing_selection)
+            CurrentSelection::Voxels(existing_selection)
         } else {
-            let mut selected_tiles = SelectedTiles::default();
-            selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-            CurrentSelection::Terrain(selected_tiles)
+            let mut selected_voxels = SelectedVoxels::default();
+            selected_voxels.add_to_selection(hovered_tile, selection_state, map_geometry);
+            CurrentSelection::Voxels(selected_voxels)
         }
     }
 
@@ -359,8 +323,6 @@ impl CurrentSelection {
             self.select_terrain(hovered_tile, selection_state, map_geometry)
         } else if let Some(unit_entity) = cursor_pos.maybe_unit() {
             CurrentSelection::Unit(unit_entity)
-        } else if let Some(structure_entity) = cursor_pos.maybe_structure() {
-            CurrentSelection::Structure(structure_entity)
         } else {
             self.select_terrain(hovered_tile, selection_state, map_geometry)
         }
@@ -402,21 +364,11 @@ impl CurrentSelection {
     ) -> Option<Self> {
         match selection_variant {
             SelectionVariant::Unit => cursor_pos.maybe_unit().map(CurrentSelection::Unit),
-            SelectionVariant::GhostStructure => {
-                cursor_pos
-                    .maybe_ghost_structure()
-                    .map(|ghost_structure_entity| {
-                        CurrentSelection::GhostStructure(ghost_structure_entity)
-                    })
-            }
-            SelectionVariant::Structure => cursor_pos
-                .maybe_structure()
-                .map(CurrentSelection::Structure),
-            SelectionVariant::Terrain => {
+            SelectionVariant::Voxel => {
                 let hovered_tile = cursor_pos.maybe_voxel_pos()?;
-                let mut selected_tiles = SelectedTiles::default();
-                selected_tiles.add_to_selection(hovered_tile, selection_state, map_geometry);
-                Some(CurrentSelection::Terrain(selected_tiles))
+                let mut selected_voxels = SelectedVoxels::default();
+                selected_voxels.add_to_selection(hovered_tile, selection_state, map_geometry);
+                Some(CurrentSelection::Voxels(selected_voxels))
             }
             SelectionVariant::None => None,
         }
@@ -428,14 +380,8 @@ impl CurrentSelection {
 enum SelectionVariant {
     /// A unit.
     Unit,
-    /// A ghost structure.
-    GhostStructure,
-    /// A structure.
-    Structure,
-    /// Terrain.
-    ///
-    /// Note that terraforming details are also stored in the [`CurrentSelection::Terrain`] variant.
-    Terrain,
+    /// A voxel
+    Voxel,
     /// No selection.
     None,
 }
@@ -448,10 +394,8 @@ impl SelectionVariant {
     fn next(&self) -> Self {
         match self {
             Self::None => Self::Unit,
-            Self::Unit => Self::GhostStructure,
-            Self::GhostStructure => Self::Structure,
-            Self::Structure => Self::Terrain,
-            Self::Terrain => Self::Unit,
+            Self::Unit => Self::Voxel,
+            Self::Voxel => Self::Unit,
         }
     }
 
@@ -478,9 +422,7 @@ impl SelectionVariant {
 impl From<&CurrentSelection> for SelectionVariant {
     fn from(selection: &CurrentSelection) -> Self {
         match selection {
-            CurrentSelection::GhostStructure(_) => Self::GhostStructure,
-            CurrentSelection::Structure(_) => Self::Structure,
-            CurrentSelection::Terrain(_) => Self::Terrain,
+            CurrentSelection::Voxels(_) => Self::Voxel,
             CurrentSelection::Unit(_) => Self::Unit,
             CurrentSelection::None => Self::None,
         }
@@ -664,9 +606,9 @@ fn set_selection(
         }
         (SelectionAction::Deselect, SelectionShape::Area { .. } | SelectionShape::Single) => {
             match &mut *current_selection {
-                CurrentSelection::Terrain(ref mut selected_tiles) => {
+                CurrentSelection::Voxels(ref mut selected_voxels) => {
                     if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
-                        selected_tiles.remove_from_selection(
+                        selected_voxels.remove_from_selection(
                             hovered_tile,
                             &selection_state,
                             map_geometry,
@@ -678,9 +620,9 @@ fn set_selection(
         }
         (SelectionAction::Deselect, SelectionShape::Line { .. }) => {
             match &mut *current_selection {
-                CurrentSelection::Terrain(ref mut selected_tiles) => {
+                CurrentSelection::Voxels(ref mut selected_voxels) => {
                     if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
-                        selected_tiles.remove_from_selection(
+                        selected_voxels.remove_from_selection(
                             hovered_tile,
                             &selection_state,
                             map_geometry,
@@ -705,10 +647,10 @@ pub(super) fn set_tile_interactions(
     mut terrain_query: Query<(&VoxelPos, &mut ObjectInteraction)>,
 ) {
     if current_selection.is_changed() || hovered_tiles.is_changed() {
-        for (&voxel_pos, mut object_interaction) in terrain_query.iter_mut() {
+        for (voxel_pos, mut object_interaction) in terrain_query.iter_mut() {
             let hovered = hovered_tiles.contains(&voxel_pos.hex);
-            let selected = if let CurrentSelection::Terrain(selected_tiles) = &*current_selection {
-                selected_tiles.contains_tile(voxel_pos)
+            let selected = if let CurrentSelection::Voxels(selected_voxels) = &*current_selection {
+                selected_voxels.contains(voxel_pos)
             } else {
                 false
             };
@@ -722,7 +664,7 @@ pub(super) fn set_tile_interactions(
 mod tests {
     use bevy::utils::HashSet;
 
-    use super::SelectedTiles;
+    use super::SelectedVoxels;
     use crate::{
         enum_iter::IterableEnum,
         geometry::VoxelPos,
@@ -734,50 +676,50 @@ mod tests {
 
     #[test]
     fn simple_selection() {
-        let mut selected_tiles = SelectedTiles::default();
+        let mut selected_voxels = SelectedVoxels::default();
         let voxel_pos = VoxelPos::default();
 
-        selected_tiles.add_tile(voxel_pos);
-        assert!(selected_tiles.contains_tile(voxel_pos));
-        assert!(!selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selected.len(), 1);
+        selected_voxels.insert(voxel_pos);
+        assert!(selected_voxels.contains(&voxel_pos));
+        assert!(!selected_voxels.is_empty());
+        assert_eq!(selected_voxels.selected.len(), 1);
 
-        selected_tiles.remove_tile(voxel_pos);
-        assert!(!selected_tiles.contains_tile(voxel_pos));
-        assert!(selected_tiles.is_empty());
-        assert_eq!(selected_tiles.selected.len(), 0);
+        selected_voxels.remove(&voxel_pos);
+        assert!(!selected_voxels.contains(&voxel_pos));
+        assert!(selected_voxels.is_empty());
+        assert_eq!(selected_voxels.len(), 0);
     }
 
     #[test]
     fn multi_select() {
-        let mut selected_tiles = SelectedTiles::default();
+        let mut selected_voxels = SelectedVoxels::default();
 
-        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
+        selected_voxels.insert(VoxelPos::from_xy(1, 1));
         // Intentionally doubled
-        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
-        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
-        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
+        selected_voxels.insert(VoxelPos::from_xy(1, 1));
+        selected_voxels.insert(VoxelPos::from_xy(2, 2));
+        selected_voxels.insert(VoxelPos::from_xy(3, 3));
 
-        assert_eq!(selected_tiles.selected.len(), 3);
+        assert_eq!(selected_voxels.selected.len(), 3);
     }
 
     #[test]
     fn clear_selection() {
-        let mut selected_tiles = SelectedTiles::default();
-        selected_tiles.add_tile(VoxelPos::from_xy(1, 1));
-        selected_tiles.add_tile(VoxelPos::from_xy(2, 2));
-        selected_tiles.add_tile(VoxelPos::from_xy(3, 3));
+        let mut selected_voxels = SelectedVoxels::default();
+        selected_voxels.insert(VoxelPos::from_xy(1, 1));
+        selected_voxels.insert(VoxelPos::from_xy(2, 2));
+        selected_voxels.insert(VoxelPos::from_xy(3, 3));
 
-        assert_eq!(selected_tiles.selected.len(), 3);
-        selected_tiles.clear_selection();
-        assert_eq!(selected_tiles.selected.len(), 0);
+        assert_eq!(selected_voxels.selected.len(), 3);
+        selected_voxels.clear();
+        assert_eq!(selected_voxels.selected.len(), 0);
     }
 
     #[test]
     fn relevant_tiles_returns_cursor_pos_with_empty_selection() {
         let cursor_pos = CursorPos::new(VoxelPos::from_xy(24, 7));
-        let mut cursor_pos_selected = SelectedTiles::default();
-        cursor_pos_selected.add_tile(cursor_pos.maybe_voxel_pos().unwrap());
+        let mut cursor_pos_selected = SelectedVoxels::default();
+        cursor_pos_selected.insert(cursor_pos.maybe_voxel_pos().unwrap());
 
         assert_eq!(
             CurrentSelection::None.relevant_tiles(&cursor_pos),
@@ -785,7 +727,7 @@ mod tests {
         );
 
         assert_eq!(
-            CurrentSelection::Terrain(SelectedTiles::default()).relevant_tiles(&cursor_pos),
+            CurrentSelection::Voxels(SelectedVoxels::default()).relevant_tiles(&cursor_pos),
             cursor_pos_selected
         );
     }

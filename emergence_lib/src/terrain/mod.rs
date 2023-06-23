@@ -6,9 +6,11 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
 use crate::asset_management::AssetCollectionExt;
-use crate::construction::zoning::Zoning;
+use crate::construction::terraform::TerraformingAction;
+use crate::crafting::inventories::{InputInventory, OutputInventory};
 use crate::geometry::{MapGeometry, VoxelPos};
 use crate::light::shade::{ReceivedLight, Shade};
+use crate::player_interaction::picking::PickableVoxel;
 use crate::player_interaction::selection::ObjectInteraction;
 use crate::signals::Emitter;
 use crate::simulation::SimulationSet;
@@ -21,7 +23,6 @@ use crate::litter::{
     LitterEmitters,
 };
 
-pub(crate) mod commands;
 pub(crate) mod terrain_assets;
 pub mod terrain_manifest;
 
@@ -62,13 +63,11 @@ pub(crate) struct TerrainBundle {
     /// The location and height of this terrain hex
     voxel_pos: VoxelPos,
     /// Makes the tiles pickable
-    raycast_mesh: RaycastMesh<Terrain>,
+    raycast_mesh: RaycastMesh<PickableVoxel>,
     /// The mesh used for raycasting
     mesh: Handle<Mesh>,
     /// How is the terrain being interacted with?
     object_interaction: ObjectInteraction,
-    /// The structure that should be built here.
-    zoning: Zoning,
     /// The scene used to construct the terrain tile.
     scene_bundle: SceneBundle,
     /// Controls the signals produced by this terrain tile.
@@ -79,6 +78,12 @@ pub(crate) struct TerrainBundle {
     received_light: ReceivedLight,
     /// The components used to track the water table at this tile.
     water_bundle: WaterBundle,
+    /// Any inputs needed to terraform this tile.
+    input_inventory: InputInventory,
+    /// Any outputs produced by terraforming this tile.
+    output_inventory: OutputInventory,
+    /// Any active terraforming processes.
+    terraforming_action: TerraformingAction,
 }
 
 impl TerrainBundle {
@@ -102,10 +107,9 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_id,
             voxel_pos,
-            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            raycast_mesh: RaycastMesh::<PickableVoxel>::default(),
             mesh,
             object_interaction: ObjectInteraction::None,
-            zoning: Zoning::None,
             scene_bundle,
             emitter: Emitter::default(),
             shade: Shade::default(),
@@ -116,6 +120,9 @@ impl TerrainBundle {
                 soil_water_flow_rate: terrain_data.soil_water_flow_rate,
                 ..Default::default()
             },
+            input_inventory: InputInventory::NULL,
+            output_inventory: OutputInventory::NULL,
+            terraforming_action: TerraformingAction::None,
         }
     }
 
@@ -124,15 +131,17 @@ impl TerrainBundle {
         TerrainBundle {
             terrain_id,
             voxel_pos,
-            raycast_mesh: RaycastMesh::<Terrain>::default(),
+            raycast_mesh: RaycastMesh::<PickableVoxel>::default(),
             mesh: Handle::default(),
             object_interaction: ObjectInteraction::None,
-            zoning: Zoning::None,
             scene_bundle: SceneBundle::default(),
             emitter: Emitter::default(),
             shade: Shade::default(),
             received_light: ReceivedLight::default(),
             water_bundle: WaterBundle::default(),
+            input_inventory: InputInventory::NULL,
+            output_inventory: OutputInventory::NULL,
+            terraforming_action: TerraformingAction::None,
         }
     }
 }

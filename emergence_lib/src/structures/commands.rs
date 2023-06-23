@@ -481,7 +481,6 @@ impl Command for SpawnStructurePreviewCommand {
 
         // Spawn a preview
         world.spawn(StructurePreviewBundle::new(
-            self.center,
             self.data,
             scene_handle,
             inherited_material,

@@ -5,11 +5,7 @@ use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, Ra
 use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
-use crate::{
-    asset_management::manifest::Id, construction::ghosts::Ghost, geometry::VoxelPos,
-    structures::structure_manifest::Structure, terrain::terrain_manifest::Terrain,
-    units::unit_manifest::Unit,
-};
+use crate::{asset_management::manifest::Id, geometry::VoxelPos, units::unit_manifest::Unit};
 
 /// Controls raycasting.
 pub(super) struct PickingPlugin;
@@ -17,13 +13,11 @@ pub(super) struct PickingPlugin;
 impl Plugin for PickingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
-            .add_plugin(DefaultRaycastingPlugin::<Terrain>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Structure>::default())
+            .add_plugin(DefaultRaycastingPlugin::<PickableVoxel>::default())
             .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
-            .add_plugin(DefaultRaycastingPlugin::<(Ghost, Structure)>::default())
             .add_system(
                 update_raycast_with_cursor
-                    .before(RaycastSystem::BuildRays::<Terrain>)
+                    .before(RaycastSystem::BuildRays::<PickableVoxel>)
                     .in_base_set(CoreSet::First),
             )
             .add_system(move_cursor_manually.in_base_set(CoreSet::PreUpdate))
@@ -38,7 +32,7 @@ impl Plugin for PickingPlugin {
 /// The position of the mouse cursor and what it is hovering over.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 pub(crate) struct CursorPos {
-    /// The tile position that the cursor is over top of.
+    /// The voxel that the cursor is pointing at, if any.
     voxel_pos: Option<VoxelPos>,
     /// The screen position of the cursor.
     ///
@@ -46,10 +40,6 @@ pub(crate) struct CursorPos {
     screen_pos: Option<Vec2>,
     /// The first unit hit by a cursor raycast, if any.
     hovered_unit: Option<Entity>,
-    /// The first structure hit by a cursor raycast, if any.
-    hovered_structure: Option<Entity>,
-    /// The first ghost structure hit by a cursor raycast, if any.
-    hovered_ghost_structure: Option<Entity>,
 }
 
 impl CursorPos {
@@ -78,16 +68,6 @@ impl CursorPos {
     pub(crate) fn maybe_unit(&self) -> Option<Entity> {
         self.hovered_unit
     }
-
-    /// The hovered structure, if available.
-    pub(crate) fn maybe_structure(&self) -> Option<Entity> {
-        self.hovered_structure
-    }
-
-    /// The hovered ghost structure, if available.
-    pub(crate) fn maybe_ghost_structure(&self) -> Option<Entity> {
-        self.hovered_ghost_structure
-    }
 }
 
 /// Updates the raycast with the cursor position
@@ -96,15 +76,7 @@ impl CursorPos {
 /// and used under the MIT License. Thanks!
 fn update_raycast_with_cursor(
     mut cursor: EventReader<CursorMoved>,
-    mut query: Query<
-        (
-            &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Structure>,
-            &mut RaycastSource<Unit>,
-            &mut RaycastSource<(Ghost, Structure)>,
-        ),
-        With<Camera>,
-    >,
+    mut query: Query<(&mut RaycastSource<Unit>, &mut RaycastSource<PickableVoxel>), With<Camera>>,
 ) {
     // Grab the most recent cursor event if it exists:
     let cursor_position = match cursor.iter().last() {
@@ -112,52 +84,35 @@ fn update_raycast_with_cursor(
         None => return,
     };
 
-    for (mut terrain_raycast, mut structure_raycast, mut unit_raycast, mut ghost_raycast) in
-        query.iter_mut()
-    {
-        terrain_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
-        structure_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
+    for (mut unit_raycast, mut voxel_raycast) in query.iter_mut() {
         unit_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
-        ghost_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
+        voxel_raycast.cast_method = RaycastMethod::Screenspace(cursor_position);
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, FromReflect)]
+pub(crate) struct PickableVoxel;
 
 /// Updates the location of the cursor and what it is hovering over
 fn update_cursor_pos(
     mut cursor_pos: ResMut<CursorPos>,
     camera_query: Query<
-        (
-            &mut RaycastSource<Terrain>,
-            &mut RaycastSource<Structure>,
-            &mut RaycastSource<Unit>,
-            &mut RaycastSource<(Ghost, Structure)>,
-        ),
+        (&mut RaycastSource<PickableVoxel>, &mut RaycastSource<Unit>),
         With<Camera>,
     >,
-    terrain_query: Query<&VoxelPos, With<Id<Terrain>>>,
-    structure_query: Query<Entity, With<Id<Structure>>>,
+    voxel_query: Query<&VoxelPos>,
     unit_query: Query<Entity, With<Id<Unit>>>,
-    ghost_query: Query<Entity, With<Ghost>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let Ok((terrain_raycast, structure_raycast, unit_raycast, ghost_structure_raycast)) =
+    let Ok((voxel_raycast, unit_raycast)) =
         camera_query.get_single() else { return; };
 
-    cursor_pos.voxel_pos = if let Some((terrain_entity, _intersection_data)) =
-        terrain_raycast.get_nearest_intersection()
-    {
-        terrain_query.get(terrain_entity).ok().copied()
-    } else {
-        None
-    };
-
-    cursor_pos.hovered_structure = if let Some((structure_entity, _intersection_data)) =
-        structure_raycast.get_nearest_intersection()
-    {
-        structure_query.get(structure_entity).ok()
-    } else {
-        None
-    };
+    cursor_pos.voxel_pos =
+        if let Some((entity, _intersection_data)) = voxel_raycast.get_nearest_intersection() {
+            voxel_query.get(entity).ok().copied()
+        } else {
+            None
+        };
 
     cursor_pos.hovered_unit =
         if let Some((unit_entity, _intersection_data)) = unit_raycast.get_nearest_intersection() {
@@ -165,14 +120,6 @@ fn update_cursor_pos(
         } else {
             None
         };
-
-    cursor_pos.hovered_ghost_structure = if let Some((ghost_entity, _intersection_data)) =
-        ghost_structure_raycast.get_nearest_intersection()
-    {
-        ghost_query.get(ghost_entity).ok()
-    } else {
-        None
-    };
 
     if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);

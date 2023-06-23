@@ -14,7 +14,9 @@ use crate::{
         AssetCollectionExt,
     },
     geometry::{DiscreteHeight, Facing, Height, MapGeometry, VoxelPos},
-    player_interaction::{clipboard::ClipboardData, selection::ObjectInteraction},
+    player_interaction::{
+        clipboard::ClipboardData, picking::PickableVoxel, selection::ObjectInteraction,
+    },
 };
 
 use self::{
@@ -51,7 +53,7 @@ struct StructureBundle {
     /// The location of this structure
     voxel_pos: VoxelPos,
     /// Makes structures pickable
-    raycast_mesh: RaycastMesh<Structure>,
+    raycast_mesh: RaycastMesh<PickableVoxel>,
     /// How is this structure being interacted with
     object_interaction: ObjectInteraction,
     /// The mesh used for raycasting

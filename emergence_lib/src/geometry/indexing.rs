@@ -25,6 +25,8 @@ pub struct MapGeometry {
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
     terrain_index: HashMap<Hex, Entity>,
+    /// The terraforming ghost entity at each hex, if any.
+    terraforming_index: HashMap<Hex, Entity>,
     /// The height of the terrain at each tile position.
     ///
     /// The set of keys is the set of all valid [`Hex`] positions on the map.
@@ -163,6 +165,7 @@ impl MapGeometry {
         let mut map_geometry = MapGeometry {
             radius,
             terrain_index,
+            terraforming_index: HashMap::default(),
             height_index,
             voxel_index,
             walkable_neighbors: HashMap::default(),
@@ -200,17 +203,6 @@ impl MapGeometry {
     #[must_use]
     pub(crate) fn get_voxel(&self, voxel_pos: VoxelPos) -> Option<&VoxelObject> {
         self.voxel_index.get(&voxel_pos)
-    }
-
-    /// Returns the voxel position directly above the terrain at `hex`
-    #[inline]
-    #[must_use]
-    pub(crate) fn on_top_of_terrain(&self, hex: Hex) -> VoxelPos {
-        let terrain_height: DiscreteHeight = self.get_height(hex).unwrap_or_default();
-        VoxelPos {
-            hex,
-            height: terrain_height.above(),
-        }
     }
 
     /// Are all of the tiles in the `footprint` centered around `center` valid?
@@ -703,6 +695,18 @@ impl MapGeometry {
         self.validate();
 
         Some(entity)
+    }
+
+    /// Records that a terraforming ghost entity can be found at the provided `hex`.
+    pub(crate) fn add_terraforming_ghost(&mut self, hex: Hex, entity: Entity) {
+        self.terraforming_index.insert(hex, entity);
+    }
+
+    /// Removes any terraforming ghost entity found at the provided `hex`.
+    ///
+    /// Returns the removed entity, if any.
+    pub(crate) fn remove_terraforming_ghost(&mut self, hex: Hex) -> Option<Entity> {
+        self.terraforming_index.remove(&hex)
     }
 
     /// Returns an iterator over all of the hex positions that are ocean tiles.

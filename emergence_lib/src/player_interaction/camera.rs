@@ -12,17 +12,15 @@ use bevy_mod_raycast::RaycastSource;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::construction::ghosts::Ghost;
 use crate::geometry::DiscreteHeight;
 use crate::geometry::MapGeometry;
 use crate::geometry::VoxelPos;
-use crate::structures::structure_manifest::Structure;
-use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
 use crate::world_gen::WorldGenState;
 
 use self::speed::Speed;
 
+use super::picking::PickableVoxel;
 use super::selection::CurrentSelection;
 use super::InteractionSystem;
 use super::PlayerAction;
@@ -85,10 +83,8 @@ fn setup_camera(mut commands: Commands) {
         })
         .insert(settings)
         .insert(focus)
-        .insert(RaycastSource::<Terrain>::new())
-        .insert(RaycastSource::<Structure>::new())
-        .insert(RaycastSource::<Unit>::new())
-        .insert(RaycastSource::<(Ghost, Structure)>::new());
+        .insert(RaycastSource::<PickableVoxel>::new())
+        .insert(RaycastSource::<Unit>::new());
 }
 
 /// The position that the camera is looking at.
@@ -324,7 +320,6 @@ fn zoom(
 fn set_camera_focus(
     actions: Res<ActionState<PlayerAction>>,
     selection: Res<CurrentSelection>,
-    tile_pos_query: Query<&VoxelPos>,
     unit_query: Query<&Transform>,
     mut camera_query: Query<(&mut CameraFocus, &mut CameraSettings), With<Camera3d>>,
 ) {
@@ -335,13 +330,14 @@ fn set_camera_focus(
         || settings.camera_mode == CameraMode::FollowUnit
     {
         let tile_to_snap_to = match &*selection {
-            CurrentSelection::GhostStructure(entity)
-            | CurrentSelection::Unit(entity)
-            | CurrentSelection::Structure(entity) => Some(*tile_pos_query.get(*entity).unwrap()),
-            CurrentSelection::Terrain(selected_tiles) => Some(VoxelPos {
-                hex: selected_tiles.center(),
+            CurrentSelection::Voxels(selected_voxels) => Some(VoxelPos {
+                hex: selected_voxels.center(),
                 height: DiscreteHeight::ZERO,
             }),
+            CurrentSelection::Unit(entity) => {
+                let unit_transform = unit_query.get(*entity).unwrap();
+                Some(VoxelPos::from_world_pos(unit_transform.translation))
+            }
             CurrentSelection::None => None,
         };
 

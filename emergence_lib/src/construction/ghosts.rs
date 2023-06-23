@@ -10,6 +10,7 @@ use crate::crafting::workers::WorkersPresent;
 use crate::enum_iter::IterableEnum;
 use crate::geometry::MapGeometry;
 use crate::organisms::energy::StartingEnergy;
+use crate::player_interaction::picking::PickableVoxel;
 use crate::simulation::SimulationSet;
 use crate::structures::commands::StructureCommandsExt;
 use crate::structures::structure_manifest::{Structure, StructureManifest};
@@ -135,7 +136,7 @@ pub(crate) struct GhostStructureBundle {
     /// The direction the ghost is facing
     facing: Facing,
     /// Makes ghost structures pickable
-    raycast_mesh: RaycastMesh<(Ghost, Structure)>,
+    raycast_mesh: RaycastMesh<PickableVoxel>,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
     /// The number of workers that are present / allowed to build this structure.
@@ -172,6 +173,49 @@ impl GhostStructureBundle {
             active_recipe: clipboard_data.active_recipe,
             raycast_mesh: RaycastMesh::default(),
             picking_mesh,
+            workers_present: WorkersPresent::new(6),
+            crafting_state: CraftingState::NeedsInput,
+        }
+    }
+}
+
+/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
+///
+/// Unlike [`GhostStructureBundle`], these are not pickable.
+/// Instead, they are selected by the player by selecting the associated terrain.
+#[derive(Bundle)]
+pub(crate) struct GhostTerraformBundle {
+    /// The type of terraforming action being performed
+    terraforming_action: TerraformingAction,
+    /// Marks this entity as a ghost
+    ghost: Ghost,
+    /// The material to be used by all children in the scene
+    pub(super) inherited_material: InheritedMaterial,
+    /// The child scene that contains the gltF model used
+    pub(super) scene_bundle: SceneBundle,
+    /// The number of workers that are present / allowed to build this structure.
+    workers_present: WorkersPresent,
+    /// Tracks work that needs to be done on this building
+    crafting_state: CraftingState,
+}
+
+impl GhostTerraformBundle {
+    /// Creates a new [`GhostTerraformBundle`].
+    pub(crate) fn new(
+        terraforming_action: TerraformingAction,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        GhostTerraformBundle {
+            terraforming_action,
+            ghost: Ghost,
+            inherited_material,
+            scene_bundle: SceneBundle {
+                scene: scene_handle.clone_weak(),
+                transform: Transform::from_translation(world_pos),
+                ..default()
+            },
             workers_present: WorkersPresent::new(6),
             crafting_state: CraftingState::NeedsInput,
         }
@@ -222,8 +266,6 @@ pub(crate) struct Preview;
 pub(crate) struct PreviewBundle {
     /// Marker component
     pub(super) preview: Preview,
-    /// The location of the preview
-    pub(super) voxel_pos: VoxelPos,
     /// The material to be used by all children in the scene
     pub(super) inherited_material: InheritedMaterial,
     /// The child scene that contains the gltF model used
@@ -244,7 +286,6 @@ pub(crate) struct StructurePreviewBundle {
 impl StructurePreviewBundle {
     /// Creates a new [`StructurePreviewBundle`].
     pub(crate) fn new(
-        voxel_pos: VoxelPos,
         data: ClipboardData,
         scene_handle: Handle<Scene>,
         inherited_material: InheritedMaterial,
@@ -253,7 +294,6 @@ impl StructurePreviewBundle {
         StructurePreviewBundle {
             preview_bundle: PreviewBundle {
                 preview: Preview,
-                voxel_pos,
                 inherited_material,
                 scene_bundle: SceneBundle {
                     scene: scene_handle.clone_weak(),
@@ -263,6 +303,41 @@ impl StructurePreviewBundle {
             },
             structure_id: data.structure_id,
             facing: data.facing,
+        }
+    }
+}
+
+/// The set of components needed to spawn a ghost of a [`TerraformingAction`].
+///
+/// Unlike [`GhostStructureBundle`], these are not pickable.
+/// Instead, they are selected by the player by selecting the associated terrain.
+#[derive(Bundle)]
+pub(crate) struct TerraformPreviewBundle {
+    /// The type of terraforming action being performed
+    terraforming_action: TerraformingAction,
+    /// Shared components for all previews
+    preview_bundle: PreviewBundle,
+}
+
+impl TerraformPreviewBundle {
+    /// Creates a new [`TerraformPreviewBundle`].
+    pub(crate) fn new(
+        terraforming_action: TerraformingAction,
+        scene_handle: Handle<Scene>,
+        inherited_material: InheritedMaterial,
+        world_pos: Vec3,
+    ) -> Self {
+        TerraformPreviewBundle {
+            preview_bundle: PreviewBundle {
+                preview: Preview,
+                inherited_material,
+                scene_bundle: SceneBundle {
+                    scene: scene_handle.clone_weak(),
+                    transform: Transform::from_translation(world_pos),
+                    ..default()
+                },
+            },
+            terraforming_action,
         }
     }
 }

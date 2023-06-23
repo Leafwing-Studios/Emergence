@@ -223,17 +223,9 @@ fn copy_selection(
         let mut map = HashMap::new();
 
         match &*current_selection {
-            CurrentSelection::Structure(entity) | CurrentSelection::GhostStructure(entity) => {
-                let query_item = structure_query.get(*entity).unwrap();
-                let voxel_pos = query_item.voxel_pos;
-                let clipboard_data = query_item.into();
-                map.insert(*voxel_pos, clipboard_data);
-                *tool = Tool::Structures(map);
-                tool.normalize_positions();
-            }
-            CurrentSelection::Terrain(selected_tiles) => {
+            CurrentSelection::Voxels(selected_voxels) => {
                 // If there is no selection, just grab whatever's under the cursor
-                if selected_tiles.is_empty() {
+                if selected_voxels.is_empty() {
                     if let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() {
                         if let Some(entity) = map_geometry.get_ghost_structure(hovered_tile) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
@@ -244,9 +236,7 @@ fn copy_selection(
                         }
                     }
                 } else {
-                    for &hex in selected_tiles.selection().iter() {
-                        // TODO: this doesn't let us select multiple layers of structures effectively
-                        let voxel_pos = map_geometry.on_top_of_terrain(hex);
+                    for &voxel_pos in selected_voxels.iter() {
                         if let Some(entity) = map_geometry.get_ghost_structure(voxel_pos) {
                             let clipboard_data = structure_query.get(entity).unwrap().into();
                             map.insert(VoxelPos::default(), clipboard_data);
