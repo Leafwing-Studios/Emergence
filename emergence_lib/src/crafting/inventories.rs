@@ -19,7 +19,7 @@ use crate::{
 use std::{fmt::Display, time::Duration};
 
 use bevy::prelude::*;
-use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 
 /// The current state in the crafting progress.
@@ -49,7 +49,7 @@ impl CraftingState {
     /// Generates a random crafting state.
     ///
     /// This will always be `InProgress` with a random progress value.
-    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng, recipe_data: &RecipeData) {
+    pub(crate) fn randomize(&mut self, rng: &mut impl Rng, recipe_data: &RecipeData) {
         let distribution = Uniform::new(Duration::ZERO, recipe_data.craft_time);
         let progress = distribution.sample(rng);
         *self = CraftingState::InProgress {
@@ -242,7 +242,7 @@ impl InputInventory {
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
     ///
     /// Note that this only works for [`InputInventory::Exact`].
-    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub(crate) fn randomize(&mut self, rng: &mut impl Rng) {
         if let InputInventory::Exact { inventory } = self {
             for item_slot in inventory.iter_mut() {
                 item_slot.randomize(rng);
@@ -296,7 +296,7 @@ impl OutputInventory {
     };
 
     /// Randomizes the contents of this inventory so that each slot is somewhere between empty and full.
-    pub(crate) fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub(crate) fn randomize(&mut self, rng: &mut impl Rng) {
         for item_slot in self.iter_mut() {
             item_slot.randomize(rng);
         }

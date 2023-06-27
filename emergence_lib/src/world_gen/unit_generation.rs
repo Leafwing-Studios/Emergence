@@ -12,7 +12,7 @@ use crate::units::unit_manifest::UnitManifest;
 use crate::units::UnitBundle;
 
 use bevy::prelude::*;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 use super::GenerationConfig;
 
@@ -63,25 +63,24 @@ pub(super) fn randomize_starting_organisms(
     mut output_inventory_query: Query<&mut OutputInventory>,
     mut crafting_state_query: Query<(&mut CraftingState, &ActiveRecipe)>,
     recipe_manifest: Res<RecipeManifest>,
+    mut rng: ResMut<GlobalRng>,
 ) {
-    let rng = &mut thread_rng();
-
     for mut energy_pool in energy_pool_query.iter_mut() {
-        energy_pool.randomize(rng)
+        energy_pool.randomize(rng.get_mut())
     }
 
     for mut input_inventory in input_inventory_query.iter_mut() {
-        input_inventory.randomize(rng)
+        input_inventory.randomize(rng.get_mut())
     }
 
     for mut output_inventory in output_inventory_query.iter_mut() {
-        output_inventory.randomize(rng)
+        output_inventory.randomize(rng.get_mut())
     }
 
     for (mut crafting_state, active_recipe) in crafting_state_query.iter_mut() {
         if let Some(recipe_id) = active_recipe.recipe_id() {
             let recipe_data = recipe_manifest.get(*recipe_id);
-            crafting_state.randomize(rng, recipe_data);
+            crafting_state.randomize(rng.get_mut(), recipe_data);
         }
     }
 }

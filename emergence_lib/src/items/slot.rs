@@ -1,6 +1,6 @@
 //! A container for a single item type, with a capacity.
 
-use rand::{distributions::Uniform, prelude::Distribution, rngs::ThreadRng};
+use rand::{distributions::Uniform, prelude::Distribution, Rng};
 use serde::{Deserialize, Serialize};
 
 use crate::asset_management::manifest::Id;
@@ -184,7 +184,7 @@ impl ItemSlot {
     /// Randomizes the quantity of items in this slot, return `self`.
     ///
     /// The new value will be chosen uniformly between 0 and `max_item_count`.
-    pub fn randomize(&mut self, rng: &mut ThreadRng) {
+    pub fn randomize(&mut self, rng: &mut impl Rng) {
         let distribution = Uniform::new(0, self.max_item_count);
         self.count = distribution.sample(rng);
     }
