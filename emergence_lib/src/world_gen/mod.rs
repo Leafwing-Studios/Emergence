@@ -205,7 +205,7 @@ impl GenerationConfig {
         landmark_chances.insert(Id::from_name("simple_landmark".to_string()), 1e-1);
 
         let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
-        unit_chances.insert(Id::from_name("simple_unit".to_string()), 1e-1);
+        unit_chances.insert(Id::from_name("simple_unit".to_string()), 1.);
 
         let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
         structure_chances.insert(Id::from_name("simple_structure".to_string()), 1e-1);
