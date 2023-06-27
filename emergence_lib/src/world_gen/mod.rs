@@ -5,9 +5,9 @@ use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
 use crate::utils::noise::SimplexSettings;
-use crate::world_gen::structure_generation::{
-    generate_structures, generate_units, randomize_starting_organisms,
-};
+use crate::world_gen::structure_generation::generate_structures;
+use crate::world_gen::unit_generation::{generate_units, randomize_starting_organisms};
+
 use crate::world_gen::terrain_generation::{
     generate_landmarks, generate_terrain, initialize_water_table,
 };
@@ -18,6 +18,7 @@ use bevy_framepace::{FramepaceSettings, Limiter};
 
 mod structure_generation;
 mod terrain_generation;
+mod unit_generation;
 
 /// Generate the world.
 pub(super) struct GenerationPlugin {
