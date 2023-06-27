@@ -5,7 +5,9 @@ use crate::structures::structure_manifest::Structure;
 use crate::terrain::terrain_manifest::Terrain;
 use crate::units::unit_manifest::Unit;
 use crate::utils::noise::SimplexSettings;
-use crate::world_gen::organism_generation::{generate_organisms, randomize_starting_organisms};
+use crate::world_gen::structure_generation::{
+    generate_structures, generate_units, randomize_starting_organisms,
+};
 use crate::world_gen::terrain_generation::{
     generate_landmarks, generate_terrain, initialize_water_table,
 };
@@ -14,7 +16,7 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_framepace::{FramepaceSettings, Limiter};
 
-mod organism_generation;
+mod structure_generation;
 mod terrain_generation;
 
 /// Generate the world.
@@ -35,7 +37,9 @@ impl Plugin for GenerationPlugin {
                     generate_landmarks,
                     initialize_water_table,
                     apply_system_buffers,
-                    generate_organisms,
+                    generate_structures,
+                    apply_system_buffers,
+                    generate_units,
                     apply_system_buffers,
                     randomize_starting_organisms,
                 )
@@ -256,7 +260,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+        app.add_startup_systems((generate_terrain, generate_structures).chain());
 
         app.update();
     }
@@ -267,7 +271,9 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+        app.add_startup_systems(
+            (generate_terrain, generate_structures, generate_landmarks).chain(),
+        );
 
         app.update();
 
@@ -290,7 +296,9 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_organisms, generate_landmarks).chain());
+        app.add_startup_systems(
+            (generate_terrain, generate_structures, generate_landmarks).chain(),
+        );
 
         app.update();
 
@@ -309,7 +317,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_organisms).chain());
+        app.add_startup_systems((generate_terrain, generate_structures).chain());
 
         app.update();
 

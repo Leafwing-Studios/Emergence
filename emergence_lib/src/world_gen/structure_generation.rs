@@ -18,18 +18,16 @@ use rand::{thread_rng, Rng};
 
 use super::GenerationConfig;
 
-/// Create starting organisms according to [`GenerationConfig`], and randomly place them on
-/// passable tiles.
-pub(super) fn generate_organisms(
+/// Create starting structures according to [`GenerationConfig`], and randomly place them on
+/// top of the terrain.
+pub(super) fn generate_structures(
     mut commands: Commands,
     config: Res<GenerationConfig>,
-    maybe_unit_handles: Option<Res<UnitHandles>>,
-    unit_manifest: Res<UnitManifest>,
     structure_manifest: Res<StructureManifest>,
     map_geometry: Res<MapGeometry>,
     mut rng: ResMut<GlobalRng>,
 ) {
-    info!("Generating organisms...");
+    info!("Generating structures...");
 
     // Collect out so we can mutate the height map to flatten the terrain while in the loop
     for voxel_pos in map_geometry.walkable_voxels() {
@@ -55,7 +53,23 @@ pub(super) fn generate_organisms(
                 }
             }
         }
+    }
+}
 
+/// Create starting units according to [`GenerationConfig`], and randomly place them on
+/// passable tiles.
+pub(super) fn generate_units(
+    mut commands: Commands,
+    config: Res<GenerationConfig>,
+    maybe_unit_handles: Option<Res<UnitHandles>>,
+    unit_manifest: Res<UnitManifest>,
+    map_geometry: Res<MapGeometry>,
+    mut rng: ResMut<GlobalRng>,
+) {
+    info!("Generating units...");
+
+    // Collect out so we can mutate the height map to flatten the terrain while in the loop
+    for voxel_pos in map_geometry.walkable_voxels() {
         for (&unit_id, &chance) in &config.unit_chances {
             if rng.gen::<f32>() < chance {
                 let unit_bundle = if let Some(ref unit_handles) = maybe_unit_handles {
