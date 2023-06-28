@@ -107,8 +107,12 @@ fn set_zoning(
                         }
                         false => {
                             for voxel_pos in relevant_tiles.iter() {
-                                commands
-                                    .spawn_preview_structure(*voxel_pos, clipboard_item.clone());
+                                commands.spawn_preview_structure(
+                                    // We need to build on top of the selected tile,
+                                    // not inside the terrain
+                                    voxel_pos.above(),
+                                    clipboard_item.clone(),
+                                );
                             }
                         }
                     }
@@ -121,10 +125,16 @@ fn set_zoning(
                     for (voxel_pos, clipboard_item) in tool.offset_positions(cursor_tile_pos) {
                         match apply_zoning {
                             true => {
-                                commands.spawn_ghost_structure(voxel_pos, clipboard_item.clone());
+                                commands.spawn_ghost_structure(
+                                    voxel_pos.above(),
+                                    clipboard_item.clone(),
+                                );
                             }
                             false => {
-                                commands.spawn_preview_structure(voxel_pos, clipboard_item.clone());
+                                commands.spawn_preview_structure(
+                                    voxel_pos.above(),
+                                    clipboard_item.clone(),
+                                );
                             }
                         }
                     }
