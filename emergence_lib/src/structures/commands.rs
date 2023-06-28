@@ -314,6 +314,7 @@ impl Command for SpawnStructureGhostCommand {
 
         // Check that the tile is within the bounds of the map
         if !map_geometry.is_valid(self.center.hex) {
+            warn!("Tried to spawn a structure outside of the map bounds.");
             return;
         }
 
@@ -330,8 +331,9 @@ impl Command for SpawnStructureGhostCommand {
         // Check that the tiles needed are appropriate.
         if map_geometry
             .is_space_available(self.center, &footprint, facing)
-            .is_ok()
+            .is_err()
         {
+            warn!("Tried to spawn a structure in an occupied location.");
             return;
         }
 
