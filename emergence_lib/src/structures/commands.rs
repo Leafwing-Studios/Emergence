@@ -330,7 +330,7 @@ impl Command for SpawnStructureGhostCommand {
         // Check that the tiles needed are appropriate.
         if map_geometry
             .is_space_available(self.center, &footprint, facing)
-            .is_ok()
+            .is_err()
         {
             return;
         }
