@@ -2,7 +2,7 @@
 
 use crate::{
     asset_management::manifest::Id,
-    geometry::{DiscreteHeight, Facing, MapGeometry, Volume, VoxelPos},
+    geometry::{DiscreteHeight, Facing, MapGeometry, VoxelPos},
     organisms::energy::StartingEnergy,
     player_interaction::clipboard::ClipboardData,
     simulation::rng::GlobalRng,
@@ -13,7 +13,7 @@ use crate::{
         TerrainBundle,
     },
     utils::noise::simplex_noise,
-    water::WaterVolume,
+    water::{WaterConfig, WaterVolume},
 };
 use bevy::prelude::*;
 use hexx::{shapes::hexagon, Hex};
@@ -129,10 +129,11 @@ pub(super) fn generate_landmarks(
 }
 
 /// Sets the starting water table
-pub(super) fn initialize_water_table(mut water_query: Query<&mut WaterVolume>) {
-    let starting_volume = WaterVolume::new(Volume(1.5));
-
+pub(super) fn initialize_water_table(
+    mut water_query: Query<&mut WaterVolume>,
+    water_config: Res<WaterConfig>,
+) {
     for mut water_volume in water_query.iter_mut() {
-        *water_volume = starting_volume;
+        *water_volume = WaterVolume::new(water_config.initial_water);
     }
 }

@@ -194,6 +194,51 @@ impl GenerationConfig {
         }
     }
 
+    /// A small flat map for testing.
+    pub fn flat() -> Self {
+        let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();
+        // FIXME: load from file somehow
+        terrain_weights.insert(Id::from_name("grassy".to_string()), 1.0);
+        terrain_weights.insert(Id::from_name("swampy".to_string()), 0.3);
+        terrain_weights.insert(Id::from_name("rocky".to_string()), 0.2);
+
+        let mut landmark_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        landmark_chances.insert(Id::from_name("spring".to_string()), 5e-4);
+
+        let mut unit_chances: HashMap<Id<Unit>, f32> = HashMap::new();
+        unit_chances.insert(Id::from_name("basket_crab".to_string()), 1e-2);
+
+        let mut structure_chances: HashMap<Id<Structure>, f32> = HashMap::new();
+        structure_chances.insert(Id::from_name("ant_hive".to_string()), 1e-3);
+        structure_chances.insert(Id::from_name("acacia".to_string()), 2e-2);
+        structure_chances.insert(Id::from_name("leuco".to_string()), 1e-2);
+        structure_chances.insert(Id::from_name("tide_weed".to_string()), 3e-2);
+
+        GenerationConfig {
+            seed: 0,
+            map_radius: 10,
+            number_of_burn_in_ticks: 0,
+            unit_chances,
+            landmark_chances,
+            structure_chances,
+            terrain_weights,
+            low_frequency_noise: SimplexSettings {
+                frequency: 1e-2,
+                amplitude: 0.0,
+                octaves: 4,
+                lacunarity: 1.,
+                gain: 0.5,
+            },
+            high_frequency_noise: SimplexSettings {
+                frequency: 0.1,
+                amplitude: 0.0,
+                octaves: 2,
+                lacunarity: 2.3,
+                gain: 0.5,
+            },
+        }
+    }
+
     /// A tiny world gen config for testing.
     pub fn testing() -> Self {
         let mut terrain_weights: HashMap<Id<Terrain>, f32> = HashMap::new();

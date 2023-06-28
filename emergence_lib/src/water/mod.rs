@@ -39,6 +39,8 @@ pub mod water_dynamics;
 /// Note that soil properties are stored seperately for each soil type in [`TerrainData`](crate::terrain::terrain_manifest::TerrainData).
 #[derive(Resource, Debug, Clone, Copy)]
 pub struct WaterConfig {
+    /// The starting amount of water in each tile.
+    pub initial_water: Volume,
     /// The rate of evaporation per day from each tile.
     pub evaporation_rate: Height,
     /// The rate of precipitation per day on each tile.
@@ -66,6 +68,7 @@ pub struct WaterConfig {
 impl WaterConfig {
     /// The default configuration for in-game water behavior.
     pub const IN_GAME: Self = Self {
+        initial_water: Volume(1.5),
         evaporation_rate: Height(2.0),
         precipitation_rate: Height(2.0),
         emission_rate: Volume(1e4),
@@ -80,8 +83,26 @@ impl WaterConfig {
         },
     };
 
+    /// A dry world with very little water for testing.
+    pub const DRY: Self = Self {
+        initial_water: Volume(0.2),
+        evaporation_rate: Height(2.0),
+        precipitation_rate: Height(2.0),
+        emission_rate: Volume(0.0),
+        emission_pressure: Height(5.0),
+        water_items_per_tile: 50.0,
+        lateral_flow_rate: 1e3,
+        enable_oceans: false,
+        tide_settings: TideSettings {
+            amplitude: Height(0.0),
+            period: Days(0.3),
+            minimum: Height(0.0),
+        },
+    };
+
     /// A configuration that disables all water behavior.
     pub const NULL: Self = Self {
+        initial_water: Volume(0.0),
         evaporation_rate: Height(0.0),
         precipitation_rate: Height(0.0),
         emission_rate: Volume(0.0),
