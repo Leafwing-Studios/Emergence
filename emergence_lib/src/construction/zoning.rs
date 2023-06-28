@@ -76,12 +76,13 @@ fn set_zoning(
         return;
     }
 
-    // Apply zoning
-    let apply_zoning = actions.pressed(PlayerAction::Paste)
+    // If this is true, we'll build ghosts that will be acted on.
+    // Otherwise, we'll just preview.
+    let actually_build = actions.pressed(PlayerAction::Paste)
         || actions.pressed(PlayerAction::UseTool) && !tool.is_empty();
 
     match &*tool {
-        Tool::Terraform(terraform_tool) => match apply_zoning {
+        Tool::Terraform(terraform_tool) => match actually_build {
             true => {
                 for voxel_pos in relevant_tiles.iter() {
                     commands.start_terraform(voxel_pos.hex, (*terraform_tool).into());
@@ -99,10 +100,15 @@ fn set_zoning(
                 0 => (),
                 1 => {
                     let clipboard_item = map.values().next().unwrap();
-                    match apply_zoning {
+                    match actually_build {
                         true => {
                             for voxel_pos in relevant_tiles.iter() {
-                                commands.spawn_ghost_structure(*voxel_pos, clipboard_item.clone());
+                                // We need to build on top of the selected tile,
+                                // not inside the terrain
+                                commands.spawn_ghost_structure(
+                                    voxel_pos.above(),
+                                    clipboard_item.clone(),
+                                );
                             }
                         }
                         false => {
@@ -123,7 +129,7 @@ fn set_zoning(
                     };
 
                     for (voxel_pos, clipboard_item) in tool.offset_positions(cursor_tile_pos) {
-                        match apply_zoning {
+                        match actually_build {
                             true => {
                                 commands.spawn_ghost_structure(
                                     voxel_pos.above(),
