@@ -144,7 +144,7 @@ pub(crate) enum WaterSet {
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WaterConfig::IN_GAME)
+        app.insert_resource(WaterConfig::DRY)
             .init_resource::<Ocean>();
 
         app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
