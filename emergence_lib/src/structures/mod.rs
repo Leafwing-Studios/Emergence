@@ -58,8 +58,6 @@ struct StructureBundle {
     object_interaction: ObjectInteraction,
     /// The mesh used for raycasting
     picking_mesh: Handle<Mesh>,
-    /// A debug material
-    material: Handle<StandardMaterial>,
     /// The child scene that contains the gltF model used
     scene_bundle: SceneBundle,
 }
@@ -82,7 +80,6 @@ impl StructureBundle {
             raycast_mesh: RaycastMesh::default(),
             object_interaction: ObjectInteraction::None,
             picking_mesh,
-            material: Handle::default(),
             scene_bundle: SceneBundle {
                 scene: scene_handle,
                 transform: Transform::from_translation(world_pos),
