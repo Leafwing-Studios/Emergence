@@ -1001,7 +1001,7 @@ impl CurrentAction {
 
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
-        current_tile: VoxelPos,
+        current_voxel: VoxelPos,
         facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
@@ -1011,9 +1011,9 @@ impl CurrentAction {
         // TODO: vary this based on the path type
         const PATH_MULTIPLIER: f32 = 1.5;
 
-        let target_tile = current_tile.neighbor(facing.direction);
-        let entity_standing_on = map_geometry.get_terrain(current_tile.hex).unwrap();
-        let walking_speed = if map_geometry.get_structure(current_tile).is_some() {
+        let target_voxel = current_voxel.neighbor(facing.direction);
+        let entity_standing_on = map_geometry.get_terrain(current_voxel.hex).unwrap();
+        let walking_speed = if map_geometry.get_structure(current_voxel).is_some() {
             PATH_MULTIPLIER
         } else {
             let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
@@ -1022,13 +1022,17 @@ impl CurrentAction {
 
         let walking_duration = UnitAction::MoveForward.duration().as_secs_f32() / walking_speed;
 
-        if map_geometry.is_passable(current_tile, target_tile) {
+        if map_geometry.is_passable(current_voxel, target_voxel) {
             CurrentAction {
                 action: UnitAction::MoveForward,
                 timer: Timer::from_seconds(walking_duration, TimerMode::Once),
                 just_started: true,
             }
         } else {
+            warn!(
+                "Unit tried to move from {} into an impassable voxel at {}",
+                current_voxel, target_voxel
+            );
             CurrentAction::idle()
         }
     }
