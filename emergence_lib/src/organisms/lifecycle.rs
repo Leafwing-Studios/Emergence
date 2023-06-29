@@ -316,7 +316,7 @@ pub(super) fn sprout_seeds(
                 }
             } else {
                 // For units, just make sure the tile is empty.
-                if !map_geometry.is_passable(voxel_pos, voxel_pos) {
+                if map_geometry.is_voxel_clear(voxel_pos).is_err() {
                     continue;
                 }
             }
