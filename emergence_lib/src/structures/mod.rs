@@ -151,17 +151,18 @@ impl Footprint {
 
     /// Returns the highest height of tiles in this footprint after normalization.
     ///
-    /// Returns [`Height::ZERO`] if the footprint is empty or no valid tiles are found.
+    /// Returns [`DiscreteHeight::ZERO`] if the footprint is empty or no valid tiles are found.
     pub(crate) fn height(
         &self,
         facing: Facing,
         center: VoxelPos,
         map_geometry: &MapGeometry,
-    ) -> Option<DiscreteHeight> {
+    ) -> DiscreteHeight {
         self.normalized(facing, center)
             .iter()
             .map(|&voxel_pos| map_geometry.get_height(voxel_pos.hex).unwrap_or_default())
             .reduce(|a, b| a.max(b))
+            .unwrap_or_default()
     }
 
     /// Returns the highest normalized height of tiles in this footprint.
@@ -181,16 +182,16 @@ impl Footprint {
         facing: Facing,
         center: VoxelPos,
         map_geometry: &MapGeometry,
-    ) -> Option<Vec3> {
+    ) -> Vec3 {
         let mut transform_of_center = center.into_world_pos();
 
-        let structure_height = self.height(facing, center, map_geometry)?;
+        let structure_height = self.height(facing, center, map_geometry);
 
         // Adjust the height in case the structure does not cover the origin tile of the footprint.
         // This occurs in bridges, which are elevated above the ground.
         transform_of_center.y = structure_height.into_world_pos() + Height::TOPPER_THICKNESS;
 
-        Some(transform_of_center)
+        transform_of_center
     }
 }
 
