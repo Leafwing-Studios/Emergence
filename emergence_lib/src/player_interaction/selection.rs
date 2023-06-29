@@ -125,23 +125,26 @@ impl SelectedVoxels {
         map_geometry: &MapGeometry,
     ) -> HashSet<VoxelPos> {
         match selection_state.shape {
-            SelectionShape::Single => {
-                SelectedVoxels::draw_hexagon(hovered_tile, selection_state.brush_size)
-            }
-            SelectionShape::Area { center, radius } => SelectedVoxels::draw_hexagon(center, radius),
+            SelectionShape::Single => HashSet::from_iter([hovered_tile]),
+            SelectionShape::Area { center, radius } => SelectedVoxels::draw_hexagon(center, radius)
+                .iter()
+                .filter(|hex| map_geometry.is_valid(**hex))
+                .map(|hex| VoxelPos {
+                    hex: *hex,
+                    height: map_geometry.get_height(*hex).unwrap(),
+                })
+                .collect(),
             SelectionShape::Line { start } => {
                 SelectedVoxels::draw_line(start, hovered_tile, selection_state.brush_size)
+                    .iter()
+                    .filter(|hex| map_geometry.is_valid(**hex))
+                    .map(|hex| VoxelPos {
+                        hex: *hex,
+                        height: map_geometry.get_height(*hex).unwrap(),
+                    })
+                    .collect()
             }
         }
-        // PERF: we could be faster about this by only collecting once
-        .into_iter()
-        // Ensure we don't try to operate off of the map
-        .filter(|hex| map_geometry.is_valid(*hex))
-        .map(|hex| VoxelPos {
-            hex,
-            height: map_geometry.get_height(hex).unwrap(),
-        })
-        .collect()
     }
 }
 
