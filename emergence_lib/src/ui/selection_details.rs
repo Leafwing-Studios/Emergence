@@ -294,7 +294,7 @@ pub(crate) enum SelectionDetails {
 
 /// Get details about the selected object(s).
 fn get_details(
-    selection_type: Res<CurrentSelection>,
+    current_selection: Res<CurrentSelection>,
     mut selection_details: ResMut<SelectionDetails>,
     ghost_structure_query: Query<GhostStructureDetailsQuery>,
     organism_query: Query<OrganismDetailsQuery>,
@@ -306,7 +306,7 @@ fn get_details(
     unit_manifest: Res<UnitManifest>,
     signals: Res<Signals>,
 ) -> Result<(), QueryEntityError> {
-    *selection_details = match &*selection_type {
+    *selection_details = match &*current_selection {
         CurrentSelection::Voxels(selected_voxels) => {
             // FIXME: display info about multiple tiles correctly
             if let Some(voxel_pos) = selected_voxels.iter().next() {

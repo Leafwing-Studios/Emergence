@@ -281,7 +281,7 @@ impl MapGeometry {
         footprint: &Footprint,
         facing: Facing,
     ) -> bool {
-        let Some(height) = footprint.height(facing, center, self) else { return false };
+        let height = footprint.height(facing, center, self);
 
         footprint
             .normalized(facing, center)

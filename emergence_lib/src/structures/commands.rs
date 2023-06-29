@@ -129,11 +129,7 @@ impl Command for SpawnStructureCommand {
             return;
         }
 
-        let map_geometry = world.resource::<MapGeometry>();
-        let world_pos = structure_data
-            .footprint
-            .world_pos(self.data.facing, self.center, map_geometry)
-            .unwrap_or_default();
+        let world_pos = self.center.below().top_of_tile();
 
         let facing = self.data.facing;
 
@@ -320,13 +316,9 @@ impl Command for SpawnStructureGhostCommand {
 
         let manifest = world.resource::<StructureManifest>();
         let footprint = manifest.footprint(structure_id).clone();
-        let structure_data = manifest.get(structure_id);
         let facing = self.data.facing;
 
-        let world_pos = structure_data
-            .footprint
-            .world_pos(self.data.facing, self.center, map_geometry)
-            .unwrap_or_default();
+        let world_pos = self.center.below().top_of_tile();
 
         // Check that the tiles needed are appropriate.
         if map_geometry
@@ -453,10 +445,7 @@ impl Command for SpawnStructurePreviewCommand {
         let geometry = world.resource::<MapGeometry>();
 
         // Compute the world position
-        let world_pos = structure_data
-            .footprint
-            .world_pos(self.data.facing, self.center, map_geometry)
-            .unwrap_or_default();
+        let world_pos = self.center.below().top_of_tile();
 
         // Check that the tiles needed are appropriate.
         let forbidden = geometry
