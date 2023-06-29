@@ -395,7 +395,7 @@ impl MapGeometry {
         }
     }
 
-    /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
+    /// Updates the [`DiscreteHeight`] of the terrain at the provided `hex` to `height`.
     #[inline]
     pub fn update_height(&mut self, hex: Hex, height: DiscreteHeight) {
         let old_height = self.get_height(hex).unwrap();
