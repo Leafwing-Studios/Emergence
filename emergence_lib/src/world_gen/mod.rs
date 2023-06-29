@@ -287,6 +287,7 @@ mod tests {
     use crate::asset_management::manifest::DummyManifestPlugin;
     use crate::geometry::{MapGeometry, VoxelPos};
     use crate::simulation::rng::GlobalRng;
+    use crate::water::WaterConfig;
 
     use super::*;
 
@@ -414,6 +415,7 @@ mod tests {
     fn can_generate_water() {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
+        app.insert_resource(WaterConfig::IN_GAME);
         app.insert_resource(GlobalRng::new(0));
         app.add_startup_systems((generate_terrain, initialize_water_table).chain());
 
@@ -428,6 +430,8 @@ mod tests {
         })
         .add_plugin(DummyManifestPlugin);
         app.insert_resource(GlobalRng::new(0));
+        app.insert_resource(WaterConfig::IN_GAME);
+
         app.update();
 
         let mut unit_query = app.world.query::<&Id<Unit>>();
