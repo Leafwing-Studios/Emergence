@@ -94,13 +94,11 @@ pub(super) fn choose_actions(
                         &map_geometry,
                         &terrain_manifest,
                         &terrain_query,
-                        facing,
                         rng,
                     ),
                     None => CurrentAction::wander(
                         previous_action,
                         unit_pos,
-                        facing,
                         &map_geometry,
                         &terrain_query,
                         &terrain_manifest,
@@ -122,7 +120,6 @@ pub(super) fn choose_actions(
                             &map_geometry,
                             &terrain_manifest,
                             &terrain_query,
-                            facing,
                             rng,
                         )
                     } else {
@@ -159,7 +156,6 @@ pub(super) fn choose_actions(
                                 &map_geometry,
                                 &terrain_manifest,
                                 &terrain_query,
-                                facing,
                                 rng,
                             )
                         }
@@ -437,12 +433,16 @@ pub(super) fn finish_actions(
                     RotationDirection::Right => unit.facing.rotate_clockwise(),
                 },
                 UnitAction::MoveForward => {
-                    let direction = unit.facing.direction;
-                    if let Some(target_voxel) =
-                        map_geometry.walkable_neighbor_in_direction(*unit.voxel_pos, direction)
+                    if let Some(target_voxel) = map_geometry
+                        .walkable_neighbor_in_direction(*unit.voxel_pos, unit.facing.direction)
                     {
                         *unit.voxel_pos = target_voxel;
                         unit.transform.translation = target_voxel.inside_voxel();
+                    } else {
+                        warn!(
+                            "Unit {:?} tried to move forward but no walkable voxel in direction {:?}",
+                            unit.entity, unit.facing.direction
+                        );
                     }
                 }
                 UnitAction::Work { structure_entity } => {
@@ -997,8 +997,7 @@ impl CurrentAction {
 
     /// Move toward the tile this unit is facing if able
     pub(super) fn move_forward(
-        current_tile: VoxelPos,
-        facing: &Facing,
+        current_voxel: VoxelPos,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
@@ -1007,9 +1006,8 @@ impl CurrentAction {
         // TODO: vary this based on the path type
         const PATH_MULTIPLIER: f32 = 1.5;
 
-        let target_tile = current_tile.neighbor(facing.direction);
-        let entity_standing_on = map_geometry.get_terrain(current_tile.hex).unwrap();
-        let walking_speed = if map_geometry.get_structure(current_tile).is_some() {
+        let entity_standing_on = map_geometry.get_terrain(current_voxel.hex).unwrap();
+        let walking_speed = if map_geometry.get_structure(current_voxel).is_some() {
             PATH_MULTIPLIER
         } else {
             let terrain_standing_on = terrain_query.get(entity_standing_on).unwrap();
@@ -1018,14 +1016,10 @@ impl CurrentAction {
 
         let walking_duration = UnitAction::MoveForward.duration().as_secs_f32() / walking_speed;
 
-        if map_geometry.is_passable(current_tile, target_tile) {
-            CurrentAction {
-                action: UnitAction::MoveForward,
-                timer: Timer::from_seconds(walking_duration, TimerMode::Once),
-                just_started: true,
-            }
-        } else {
-            CurrentAction::idle()
+        CurrentAction {
+            action: UnitAction::MoveForward,
+            timer: Timer::from_seconds(walking_duration, TimerMode::Once),
+            just_started: true,
         }
     }
 
@@ -1041,13 +1035,7 @@ impl CurrentAction {
         let required_direction = unit_pos.hex.main_direction_to(target_tile_pos.hex);
 
         if required_direction == facing.direction {
-            CurrentAction::move_forward(
-                unit_pos,
-                facing,
-                map_geometry,
-                terrain_query,
-                terrain_manifest,
-            )
+            CurrentAction::move_forward(unit_pos, map_geometry, terrain_query, terrain_manifest)
         } else {
             CurrentAction::spin_towards(facing, required_direction)
         }
@@ -1123,7 +1111,6 @@ impl CurrentAction {
         map_geometry: &MapGeometry,
         terrain_manifest: &TerrainManifest,
         terrain_query: &Query<&Id<Terrain>>,
-        facing: &Facing,
         rng: &mut ThreadRng,
     ) -> Self {
         if unit_inventory.held_item.is_some() {
@@ -1132,7 +1119,6 @@ impl CurrentAction {
             CurrentAction::wander(
                 previous_action,
                 unit_pos,
-                facing,
                 map_geometry,
                 terrain_query,
                 terrain_manifest,
@@ -1147,20 +1133,15 @@ impl CurrentAction {
     pub(super) fn wander(
         previous_action: UnitAction,
         unit_pos: VoxelPos,
-        facing: &Facing,
         map_geometry: &MapGeometry,
         terrain_query: &Query<&Id<Terrain>>,
         terrain_manifest: &TerrainManifest,
         rng: &mut ThreadRng,
     ) -> Self {
         match previous_action {
-            UnitAction::Spin { .. } => CurrentAction::move_forward(
-                unit_pos,
-                facing,
-                map_geometry,
-                terrain_query,
-                terrain_manifest,
-            ),
+            UnitAction::Spin { .. } => {
+                CurrentAction::move_forward(unit_pos, map_geometry, terrain_query, terrain_manifest)
+            }
             _ => CurrentAction::random_spin(rng),
         }
     }

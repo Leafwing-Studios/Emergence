@@ -11,7 +11,7 @@ use crate::{
     items::inventory::InventoryState, structures::Footprint, units::actions::DeliveryMode,
 };
 
-use super::{DiscreteHeight, Facing, Height, VoxelKind, VoxelObject, VoxelPos};
+use super::{DiscreteHeight, Facing, VoxelKind, VoxelObject, VoxelPos};
 use core::fmt::Display;
 
 /// The overall size and arrangement of the map.
@@ -220,32 +220,6 @@ impl MapGeometry {
             .all(|voxel_pos| self.is_valid(voxel_pos.hex))
     }
 
-    /// Is the provided `voxel_pos` passable?
-    ///
-    /// Tiles that are not part of the map will return `false`.
-    /// Tiles that have a structure will return `false`.
-    /// Tiles that are more than [`Height::MAX_STEP`] above or below the current tile will return `false`.
-    /// Tiles that are completely full of litter will return `false`.
-    #[inline]
-    #[must_use]
-    pub(crate) fn is_passable(&self, starting_pos: VoxelPos, ending_pos: VoxelPos) -> bool {
-        if !self.is_valid(starting_pos.hex) {
-            return false;
-        }
-
-        if !self.is_valid(ending_pos.hex) {
-            return false;
-        }
-
-        if let Some(voxel_data) = self.get_voxel(starting_pos) {
-            if !voxel_data.object_kind.can_walk_through() {
-                return false;
-            }
-        }
-
-        starting_pos.abs_height_diff(ending_pos) <= Height::MAX_STEP
-    }
-
     /// Is there enough space for a structure with the provided `footprint` located at the `center` tile?
     #[inline]
     pub(crate) fn is_space_available(
@@ -421,7 +395,7 @@ impl MapGeometry {
         }
     }
 
-    /// Updates the [`Height`] of the terrain at the provided `hex` to `height`.
+    /// Updates the [`DiscreteHeight`] of the terrain at the provided `hex` to `height`.
     #[inline]
     pub fn update_height(&mut self, hex: Hex, height: DiscreteHeight) {
         let old_height = self.get_height(hex).unwrap();
@@ -864,6 +838,8 @@ impl MapGeometry {
 
     /// Asserts that all of the heights in the map are between `Height::ZERO` and `Height::MAX`.
     fn validate_heights(&self) {
+        use crate::geometry::Height;
+
         for voxel_pos in self.voxel_index.keys() {
             let height = voxel_pos.height();
             assert!(
