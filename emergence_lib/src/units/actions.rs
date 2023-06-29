@@ -437,12 +437,16 @@ pub(super) fn finish_actions(
                     RotationDirection::Right => unit.facing.rotate_clockwise(),
                 },
                 UnitAction::MoveForward => {
-                    let direction = unit.facing.direction;
-                    if let Some(target_voxel) =
-                        map_geometry.walkable_neighbor_in_direction(*unit.voxel_pos, direction)
+                    if let Some(target_voxel) = map_geometry
+                        .walkable_neighbor_in_direction(*unit.voxel_pos, unit.facing.direction)
                     {
                         *unit.voxel_pos = target_voxel;
                         unit.transform.translation = target_voxel.inside_voxel();
+                    } else {
+                        warn!(
+                            "Unit {:?} tried to move forward but no walkable voxel in direction {:?}",
+                            unit.entity, unit.facing.direction
+                        );
                     }
                 }
                 UnitAction::Work { structure_entity } => {
