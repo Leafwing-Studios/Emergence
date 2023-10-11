@@ -51,7 +51,7 @@ impl Plugin for GenerationPlugin {
             .add_systems(
                 PreUpdate,
                 WorldGenState::manage_state.run_if(|world_gen_state: Res<State<WorldGenState>>| {
-                    world_gen_state.0 != WorldGenState::Complete
+                    world_gen_state.get() != WorldGenState::Complete
                 }),
             );
     }
@@ -81,7 +81,7 @@ impl WorldGenState {
         mut maybe_frame_pace_settings: Option<ResMut<FramepaceSettings>>,
         maybe_asset_state: Option<Res<State<AssetState>>>,
     ) {
-        match world_gen_state.0 {
+        match world_gen_state.get() {
             WorldGenState::Waiting => {
                 if let Some(frame_pace_settings) = maybe_frame_pace_settings.as_mut() {
                     // Don't limit the tick rate while generating the world
@@ -91,7 +91,7 @@ impl WorldGenState {
                 }
 
                 if let Some(asset_state) = maybe_asset_state {
-                    if asset_state.0 == AssetState::FullyLoaded {
+                    if asset_state.get() == AssetState::FullyLoaded {
                         next_world_gen_state.set(WorldGenState::Generating);
                     }
                 } else {
