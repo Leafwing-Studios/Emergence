@@ -26,13 +26,15 @@ impl Plugin for ConstructionPlugin {
         app.add_plugin(ghosts::GhostPlugin)
             .add_plugin(zoning::ZoningPlugin)
             // Must run after crafting emitters in order to wipe out their signals
-            .add_system(
+            .add_systems(
+                FixedUpdate,
                 set_emitter_for_structures_to_be_demolished
                     .after(crate::crafting::set_crafting_emitter)
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             )
             .add_systems(
+                FixedUpdate,
                 (terraforming_lifecycle, terraforming_signals)
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),

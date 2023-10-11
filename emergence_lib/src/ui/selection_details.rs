@@ -36,7 +36,8 @@ impl Plugin for SelectionDetailsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectionDetails>()
             .add_startup_system(populate_selection_panel)
-            .add_system(
+            .add_systems(
+                Update,
                 get_details
                     .pipe(clear_details_on_error)
                     .after(InteractionSystem::SelectTiles)
@@ -44,8 +45,11 @@ impl Plugin for SelectionDetailsPlugin {
                     .run_if(in_state(AssetState::FullyLoaded))
                     .run_if(in_state(WorldGenState::Complete)),
             )
-            .add_system(change_camera_mode.after(update_selection_details))
-            .add_system(update_selection_details.run_if(in_state(AssetState::FullyLoaded)));
+            .add_systems(Update, change_camera_mode.after(update_selection_details))
+            .add_systems(
+                Update,
+                update_selection_details.run_if(in_state(AssetState::FullyLoaded)),
+            );
     }
 }
 

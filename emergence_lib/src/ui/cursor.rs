@@ -14,8 +14,8 @@ pub(super) struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(track_cursor.pipe(ignore))
-            .add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
+        app.add_systems(Update, track_cursor.pipe(ignore))
+            .add_systems(Update, set_cursor.run_if(in_state(AssetState::FullyLoaded)));
     }
 }
 

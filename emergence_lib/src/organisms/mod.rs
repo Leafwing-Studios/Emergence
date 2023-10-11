@@ -161,6 +161,7 @@ pub struct OrganismPlugin;
 impl Plugin for OrganismPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            FixedUpdate,
             (
                 consume_energy,
                 kill_organisms_when_out_of_energy,

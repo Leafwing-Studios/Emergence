@@ -35,7 +35,7 @@ impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
         app.insert_resource(GlobalRng::new(self.gen_config.seed))
-            .add_system(sync_rotation_to_facing)
+            .add_systems(FixedUpdate, sync_rotation_to_facing)
             .edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
                 schedule.configure_set(
                     SimulationSet
@@ -44,7 +44,10 @@ impl Plugin for SimulationPlugin {
                         .run_if(world_gen_ready)
                         .run_if(max_ticks_not_reached),
                 );
-                schedule.add_system(update_ticks_this_frame.run_if(max_ticks_not_reached));
+                schedule.add_systems(
+                    Update,
+                    update_ticks_this_frame.run_if(max_ticks_not_reached),
+                );
 
                 schedule.set_build_settings(ScheduleBuildSettings {
                     ambiguity_detection: LogLevel::Warn,

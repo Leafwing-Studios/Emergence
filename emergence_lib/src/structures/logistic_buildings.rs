@@ -32,6 +32,7 @@ pub(super) struct LogisticsPlugin;
 impl Plugin for LogisticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            FixedUpdate,
             (release_items, absorb_items, logistic_buildings_signals)
                 .in_set(SimulationSet)
                 .in_schedule(CoreSchedule::FixedUpdate),

@@ -27,9 +27,12 @@ pub(super) struct StatusPlugin;
 impl Plugin for StatusPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StatusVisualization>()
-            .add_system(add_status_displays.before(display_status))
-            .add_system(cycle_status_visualization.before(display_status))
-            .add_system(display_status.run_if(in_state(AssetState::FullyLoaded)))
+            .add_systems(Update, add_status_displays.before(display_status))
+            .add_systems(Update, cycle_status_visualization.before(display_status))
+            .add_systems(
+                Update,
+                display_status.run_if(in_state(AssetState::FullyLoaded)),
+            )
             .add_plugin(BillboardPlugin);
     }
 }

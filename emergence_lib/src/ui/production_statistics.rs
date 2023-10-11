@@ -27,10 +27,14 @@ impl Plugin for ProductionStatisticsPlugin {
         app.init_resource::<Census>()
             .init_resource::<ItemCount>()
             .add_systems(
+                Update,
                 (census, update_item_count).distributive_run_if(in_state(WorldGenState::Complete)),
             )
             .add_startup_system(spawn_production_statistics_menu)
-            .add_system(update_production_statistics.run_if(in_state(WorldGenState::Complete)));
+            .add_systems(
+                Update,
+                update_production_statistics.run_if(in_state(WorldGenState::Complete)),
+            );
     }
 }
 

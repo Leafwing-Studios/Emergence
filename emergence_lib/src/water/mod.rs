@@ -158,13 +158,15 @@ impl Plugin for WaterPlugin {
                         .in_set(SimulationSet)
                         .chain(),
                 )
-                .add_system(
+                .add_systems(
+                    FixedUpdate,
                     cache_water_volume
                         .before(WaterSet::VerticalWaterMovement)
                         // This needs to respect pausing
                         .in_set(SimulationSet),
                 )
                 .add_systems(
+                    FixedUpdate,
                     (
                         tides,
                         produce_water_from_emitters,
@@ -179,14 +181,18 @@ impl Plugin for WaterPlugin {
                         .chain()
                         .in_set(WaterSet::VerticalWaterMovement),
                 )
-                .add_system(
+                .add_systems(
+                    FixedUpdate,
                     // It is important that the computed height of the water is accurate before we start moving it around.
                     update_water_depth
                         .after(WaterSet::VerticalWaterMovement)
                         .before(WaterSet::HorizontalWaterMovement)
                         .in_set(SimulationSet),
                 )
-                .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
+                .add_systems(
+                    FixedUpdate,
+                    horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement),
+                )
                 .add_systems(
                     (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
                 );

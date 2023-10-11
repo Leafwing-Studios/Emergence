@@ -24,17 +24,19 @@ impl Plugin for SelectionPlugin {
         app.init_resource::<CurrentSelection>()
             .init_resource::<SelectionState>()
             .init_resource::<HoveredTiles>()
-            .add_system(
+            .add_systems(
+                Update,
                 set_selection
                     .in_set(InteractionSystem::SelectTiles)
                     .after(InteractionSystem::ComputeCursorPos),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 set_tile_interactions
                     .in_set(InteractionSystem::SelectTiles)
                     .after(set_selection),
             )
-            .add_system(update_selection_radius);
+            .add_systems(Update, update_selection_radius);
     }
 }
 
@@ -557,7 +559,9 @@ fn set_selection(
     let cursor_pos = &*cursor_pos;
     let map_geometry = &*map_geometry;
 
-    let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() else {return};
+    let Some(hovered_tile) = cursor_pos.maybe_voxel_pos() else {
+        return;
+    };
 
     // Compute how we should handle the selection based on the actions of the player
     selection_state.compute(&tool, actions, hovered_tile);

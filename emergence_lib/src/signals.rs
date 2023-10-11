@@ -40,6 +40,7 @@ pub(crate) struct SignalsPlugin;
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Signals>().add_systems(
+            FixedUpdate,
             (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
                 .in_set(ManageSignals)

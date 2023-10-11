@@ -43,14 +43,14 @@ fn criterion_benchmark(c: &mut Criterion) {
     app.insert_resource(InGameTime::default());
     app.insert_resource(FixedTime::new(Duration::from_secs_f32(1. / 30.)));
 
-    app.add_system(update_water_depth);
+    app.add_systems(FixedUpdate, update_water_depth);
     // Run once to make sure system caches are populated
     app.update();
 
     c.bench_function("compute_water_depth", |b| b.iter(|| app.update()));
 
     let mut schedule = Schedule::default();
-    schedule.add_system(horizontal_water_movement);
+    schedule.add_systems(FixedUpdate, horizontal_water_movement);
     app.world.add_schedule(schedule, CoreSchedule::Outer);
 
     c.bench_function("lateral_water_movement", |b| b.iter(|| app.update()));

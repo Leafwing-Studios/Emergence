@@ -27,11 +27,13 @@ impl Plugin for SelectStructurePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AvailableChoices<Id<Structure>>>()
             .add_systems(
+                Update,
                 (update_structure_choices, spawn_hex_menu::<Id<Structure>>)
                     .chain()
                     .distributive_run_if(in_state(AssetState::FullyLoaded)),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 select_hex
                     .pipe(handle_selection)
                     .run_if(resource_exists::<HexMenuArrangement<Id<Structure>>>()),

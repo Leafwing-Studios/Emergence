@@ -22,14 +22,19 @@ impl Plugin for ClipboardPlugin {
         app.init_resource::<Tool>()
             // We're running this before we select tiles to deliberately introduce a one-frame delay,
             // ensuring that users need to double click to clear the clipboard as well.
-            .add_system(clear_clipboard.before(InteractionSystem::SelectTiles))
-            .add_system(
+            .add_systems(
+                Update,
+                clear_clipboard.before(InteractionSystem::SelectTiles),
+            )
+            .add_systems(
+                Update,
                 copy_selection
                     .in_set(InteractionSystem::SetClipboard)
                     .after(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::SelectTiles),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 rotate_selection
                     .in_set(InteractionSystem::SetClipboard)
                     .after(copy_selection),

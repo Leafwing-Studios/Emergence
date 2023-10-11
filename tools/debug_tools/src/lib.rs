@@ -93,7 +93,7 @@ impl Plugin for DebugToolsPlugin {
             .add_plugin(FrameTimeDiagnosticsPlugin)
             .init_resource::<DebugInfo>()
             .add_plugin(InputManagerPlugin::<DevAction>::default())
-            .add_system(debug_ui::show_debug_info);
+            .add_systems(Update, debug_ui::show_debug_info);
         // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140
         // .add_plugin(ConsolePlugin)
         // .add_console_command::<PrintToLog, _>(print_to_log);

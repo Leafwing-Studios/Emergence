@@ -46,12 +46,14 @@ where
         app.init_asset_loader::<RawManifestLoader<M>>()
             .add_asset::<M>()
             .add_asset_collection::<RawManifestHandle<M>>()
-            .add_system(
+            .add_systems(
+                Update,
                 detect_manifest_creation::<M>
                     .in_set(DetectManifestCreationSet)
                     .in_schedule(OnExit(AssetState::LoadManifests)),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 detect_manifest_modification::<M>
                     .run_if(resource_exists::<Manifest<M::Marker, M::Data>>()),
             );
@@ -103,7 +105,10 @@ pub fn detect_manifest_creation<M>(
     M: IsRawManifest,
 {
     let Some(raw_manifest) = raw_manifests.get(&raw_manifest_handle.handle) else {
-        error!("Raw manifest for {} created, but asset not available!", M::path().display());
+        error!(
+            "Raw manifest for {} created, but asset not available!",
+            M::path().display()
+        );
         return;
     };
 

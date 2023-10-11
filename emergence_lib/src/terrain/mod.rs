@@ -34,6 +34,7 @@ impl Plugin for TerrainPlugin {
         app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
             .add_systems(
+                FixedUpdate,
                 (
                     respond_to_height_changes,
                     make_litter_float.after(respond_to_height_changes),

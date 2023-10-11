@@ -12,7 +12,7 @@ pub(super) struct AtmospherePlugin;
 
 impl Plugin for AtmospherePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(animate_sky_color);
+        app.add_systems(Update, animate_sky_color);
     }
 }
 
@@ -25,7 +25,15 @@ fn animate_sky_color(
     clear_color.0 = match in_game_time.time_of_day() {
         TimeOfDay::Day => weather.get().sky_color(),
         TimeOfDay::Night => {
-            let Color::Hsla { hue, saturation, lightness, alpha } = weather.get().sky_color() else { panic!("Expected HSL color") };
+            let Color::Hsla {
+                hue,
+                saturation,
+                lightness,
+                alpha,
+            } = weather.get().sky_color()
+            else {
+                panic!("Expected HSL color")
+            };
             Color::Hsla {
                 hue,
                 saturation,

@@ -36,6 +36,7 @@ impl Plugin for OverlayPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TileOverlay>()
             .add_systems(
+                Update,
                 (
                     set_overlay_material,
                     set_overlay_height,
@@ -45,11 +46,7 @@ impl Plugin for OverlayPlugin {
                 )
                     .in_set(GraphicsSet),
             )
-            .add_system(
-                spawn_overlay_entities
-                    .in_base_set(CoreSet::PreUpdate)
-                    .in_set(GraphicsSet),
-            );
+            .add_systems(PreUpdate, spawn_overlay_entities.in_set(GraphicsSet));
     }
 }
 
@@ -207,13 +204,25 @@ fn generate_color_gradient(color_low: Color, color_high: Color, n_steps: usize) 
         // Linearly interpolate the colors in the color ramp between SIGNAL_OVERLAY_LOW and SIGNAL_OVERLAY_HIGH
         // Make sure to use HSLA colorspace to avoid weird artifacts
         let t = i as f32 / (n_steps - 1) as f32;
-        let Color::Hsla { hue: low_hue, saturation: low_saturation, lightness: low_lightness, alpha: low_alpha } = color_low else {
-         panic!("Expected HSLA color for `color_low`");
-    };
+        let Color::Hsla {
+            hue: low_hue,
+            saturation: low_saturation,
+            lightness: low_lightness,
+            alpha: low_alpha,
+        } = color_low
+        else {
+            panic!("Expected HSLA color for `color_low`");
+        };
 
-        let Color::Hsla { hue: high_hue, saturation: high_saturation, lightness: high_lightness, alpha: high_alpha } = color_high else {
-        panic!("Expected HSLA color for `color_high`");
-    };
+        let Color::Hsla {
+            hue: high_hue,
+            saturation: high_saturation,
+            lightness: high_lightness,
+            alpha: high_alpha,
+        } = color_high
+        else {
+            panic!("Expected HSLA color for `color_high`");
+        };
 
         let hue = low_hue * (1.0 - t) + high_hue * t;
         let saturation = low_saturation * (1.0 - t) + high_saturation * t;

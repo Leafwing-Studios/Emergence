@@ -43,6 +43,7 @@ impl Plugin for CraftingPlugin {
         app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
             .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
             .add_systems(
+                FixedUpdate,
                 (
                     progress_crafting,
                     gain_energy_when_crafting_completes.after(progress_crafting),

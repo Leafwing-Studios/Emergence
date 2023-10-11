@@ -251,6 +251,7 @@ impl Plugin for UnitsPlugin {
         app.add_plugin(ManifestPlugin::<RawUnitManifest>::new())
             .add_asset_collection::<UnitHandles>()
             .add_systems(
+                FixedUpdate,
                 (
                     actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
                     actions::start_actions

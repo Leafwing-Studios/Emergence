@@ -24,6 +24,8 @@ impl Plugin for TemporalPlugin {
         app.add_state::<PauseState>()
             .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
             .add_systems(
+                Update,
+                FixedUpdate,
                 (
                     advance_in_game_time,
                     move_celestial_bodies,
@@ -33,7 +35,7 @@ impl Plugin for TemporalPlugin {
                     .in_set(SimulationSet)
                     .in_schedule(CoreSchedule::FixedUpdate),
             )
-            .add_system(pause_game)
+            .add_systems(Update, pause_game)
             .init_resource::<InGameTime>();
     }
 }

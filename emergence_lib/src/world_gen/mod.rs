@@ -32,6 +32,7 @@ impl Plugin for GenerationPlugin {
         app.add_state::<WorldGenState>()
             .insert_resource(self.config.clone())
             .add_systems(
+                Update,
                 (
                     generate_terrain,
                     apply_system_buffers,
@@ -47,12 +48,11 @@ impl Plugin for GenerationPlugin {
                     .chain()
                     .in_schedule(OnEnter(WorldGenState::Generating)),
             )
-            .add_system(
-                WorldGenState::manage_state
-                    .in_base_set(CoreSet::PreUpdate)
-                    .run_if(|world_gen_state: Res<State<WorldGenState>>| {
-                        world_gen_state.0 != WorldGenState::Complete
-                    }),
+            .add_systems(
+                PreUpdate,
+                WorldGenState::manage_state.run_if(|world_gen_state: Res<State<WorldGenState>>| {
+                    world_gen_state.0 != WorldGenState::Complete
+                }),
             );
     }
 }
