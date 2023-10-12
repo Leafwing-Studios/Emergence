@@ -11,7 +11,7 @@ use crate::{
     organisms::energy::Energy,
 };
 use bevy::prelude::*;
-use bevy::reflect::{Reflect, TypeUuid};
+use bevy::reflect::{Reflect, TypePath, TypeUuid};
 use bevy::utils::HashMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -373,7 +373,7 @@ impl<T: Display + PartialOrd> Display for Threshold<T> {
 }
 
 /// The [`RecipeManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
 #[uuid = "c711b30c-c3ff-4b86-92d0-f1aff2ec7818"]
 pub struct RawRecipeManifest {
     /// The data for each item.

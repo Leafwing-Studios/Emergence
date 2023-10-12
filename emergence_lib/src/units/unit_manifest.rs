@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of unit.
 
 use bevy::{
-    reflect::{Reflect, TypeUuid},
+    reflect::{Reflect, TypePath, TypeUuid},
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
@@ -88,7 +88,7 @@ impl From<RawUnitData> for UnitData {
 }
 
 /// The [`UnitManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
 #[uuid = "c8f6e1a1-20a0-4629-8df1-2e1fa313fcb9"]
 pub struct RawUnitManifest {
     /// The data for each item.

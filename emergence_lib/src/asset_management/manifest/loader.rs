@@ -7,6 +7,7 @@ use std::{
 
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
+    reflect::TypePath,
     utils::BoxedFuture,
 };
 
@@ -19,7 +20,7 @@ use super::Manifest;
 ///
 /// The processing will primarily remove the string IDs and replace them by numbers.
 pub trait IsRawManifest:
-    std::fmt::Debug + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
+    std::fmt::Debug + TypePath + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
 {
     /// The file extension of this manifest type.
     ///
