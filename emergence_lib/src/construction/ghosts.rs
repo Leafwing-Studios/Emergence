@@ -38,6 +38,7 @@ pub struct GhostPlugin;
 impl Plugin for GhostPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GhostHandles>().add_systems(
+            Fixedupdate,
             (
                 validate_ghost_structures,
                 ghost_structure_signals.after(validate_ghost_structures),
@@ -75,7 +76,7 @@ impl FromWorld for GhostHandles {
 }
 
 /// A marker component that indicates that a structure or terrain element is planned to be built, rather than actually existing.
-#[derive(Reflect, FromReflect, Component, Clone, Copy, Debug)]
+#[derive(Reflect, Component, Clone, Copy, Debug)]
 pub(crate) struct Ghost;
 
 /// A marker component indicating that this structure should be rendered in a transparent style.

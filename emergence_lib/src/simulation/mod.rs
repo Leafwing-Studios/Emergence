@@ -116,5 +116,6 @@ fn max_ticks_not_reached(frame_count: Res<FrameCount>, ticks: Res<TicksThisFrame
 
 /// Ensures that simulation systems do not run until world gen is ready for them.
 fn world_gen_ready(world_gen_state: Res<State<WorldGenState>>) -> bool {
-    world_gen_state.0 == WorldGenState::Complete || world_gen_state.0 == WorldGenState::BurningIn
+    world_gen_state.get() == WorldGenState::Complete
+        || world_gen_state.get() == WorldGenState::BurningIn
 }
