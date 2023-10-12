@@ -91,7 +91,7 @@ fn update_raycast_with_cursor(
 }
 
 /// A marker that's used to identify meshes and sources for raycasting.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, FromReflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 pub(crate) struct PickableVoxel;
 
 /// Updates the location of the cursor and what it is hovering over

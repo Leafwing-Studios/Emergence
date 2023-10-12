@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of terrain.
 
 use bevy::{
-    reflect::{FromReflect, Reflect, TypeUuid},
+    reflect::{Reflect, TypeUuid},
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use crate::{
 };
 
 /// The marker type for [`Id<Terrain>`](super::Id).
-#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, PartialEq, Eq)]
 pub struct Terrain;
 /// Stores the read-only definitions for all items.
 pub type TerrainManifest = Manifest<Terrain, TerrainData>;

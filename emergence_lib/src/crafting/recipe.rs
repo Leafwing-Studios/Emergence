@@ -11,7 +11,7 @@ use crate::{
     organisms::energy::Energy,
 };
 use bevy::prelude::*;
-use bevy::reflect::{FromReflect, Reflect, TypeUuid};
+use bevy::reflect::{Reflect, TypeUuid};
 use bevy::utils::HashMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ use std::{fmt::Display, time::Duration};
 use super::item_tags::ItemTag;
 
 /// The marker type for [`Id<Recipe>`](super::Id).
-#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, PartialEq, Eq)]
 pub struct Recipe;
 
 /// Stores the read-only definitions for all recipes.

@@ -1,7 +1,7 @@
 //! Defines write-only data for each variety of unit.
 
 use bevy::{
-    reflect::{FromReflect, Reflect, TypeUuid},
+    reflect::{Reflect, TypeUuid},
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ use crate::{
 use super::{basic_needs::RawDiet, Manifest};
 
 /// The marker type for [`Id<Unit>`](super::Id).
-#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, PartialEq, Eq)]
 pub struct Unit;
 /// Stores the read-only definitions for all units.
 pub type UnitManifest = Manifest<Unit, UnitData>;

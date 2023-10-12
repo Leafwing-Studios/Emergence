@@ -12,7 +12,7 @@ use crate::{
     water::roots::RootZone,
 };
 use bevy::{
-    reflect::{FromReflect, Reflect, TypeUuid},
+    reflect::{Reflect, TypeUuid},
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use super::Footprint;
 
 /// The marker type for [`Id<Structure>`](super::Id).
-#[derive(Reflect, FromReflect, Clone, Copy, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, PartialEq, Eq)]
 pub struct Structure;
 /// Stores the read-only definitions for all structures.
 pub type StructureManifest = Manifest<Structure, StructureData>;
