@@ -1,13 +1,7 @@
 [workspace]
 resolver = "2"
 
-members = [
-    "emergence_game",
-    "emergence_lib",
-    "emergence_macros",
-    "tools/ci",
-    "tools/debug_tools",
-]
+members = ["emergence_game", "emergence_lib", "emergence_macros", "tools/ci"]
 default-members = ["emergence_game", "emergence_lib"]
 
 # Enable max optimizations for dependencies, but not for our code:
