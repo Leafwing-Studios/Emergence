@@ -5,7 +5,7 @@ use emergence_lib::world_gen::GenerationConfig;
 
 fn main() {
     App::new()
-        .add_pluginss(DefaultPlugins.set(WindowPlugin {
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Emergence".to_string(),
                 present_mode: PresentMode::AutoNoVsync,
