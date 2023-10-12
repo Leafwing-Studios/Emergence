@@ -102,10 +102,8 @@ fn setup_overlay_menu(
     let legend_entity = commands
         .spawn(ImageBundle {
             style: Style {
-                size: Size::new(
-                    Val::Px(TileOverlay::LEGEND_WIDTH as f32),
-                    Val::Px(TileOverlay::N_COLORS as f32),
-                ),
+                width: Val::Px(TileOverlay::LEGEND_WIDTH as f32),
+                height: Val::Px(TileOverlay::N_COLORS as f32),
                 ..Default::default()
             },
             image: UiImage {

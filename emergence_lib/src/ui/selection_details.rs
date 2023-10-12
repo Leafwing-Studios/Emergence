@@ -91,7 +91,8 @@ fn populate_selection_panel(
         .spawn((
             NodeBundle {
                 style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Px(500.)),
+                    width: Val::Percent(100.),
+                    height: Val::Px(500.),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(10.)),
                     ..default()
@@ -268,7 +269,8 @@ fn populate_details<T: Component + Default>(
         .spawn((
             TextBundle {
                 style: Style {
-                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },

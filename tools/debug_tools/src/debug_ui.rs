@@ -53,11 +53,8 @@ fn init_fps_text(commands: &mut Commands, asset_server: Res<AssetServer>) {
         )])
         .with_style(Style {
             position_type: PositionType::Absolute,
-            position: UiRect {
-                top: Val::Px(15.0),
-                left: Val::Px(160.0),
-                ..default()
-            },
+            top: Val::Px(15.),
+            left: Val::Px(160.),
             ..default()
         }),
         FpsText,

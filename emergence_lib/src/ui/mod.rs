@@ -83,7 +83,8 @@ fn setup_ui(mut commands: Commands) {
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
@@ -96,7 +97,8 @@ fn setup_ui(mut commands: Commands) {
                     style: Style {
                         flex_direction: FlexDirection::Column,
                         justify_content: JustifyContent::SpaceBetween,
-                        size: Size::new(Val::Px(200.), Val::Percent(100.)),
+                        width: Val::Px(200.),
+                        height: Val::Percent(100.),
                         ..default()
                     },
                     ..default()
@@ -109,7 +111,8 @@ fn setup_ui(mut commands: Commands) {
                 NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
-                        size: Size::new(Val::Px(400.), Val::Percent(100.)),
+                        width: Val::Px(400.),
+                        height: Val::Percent(100.),
                         ..default()
                     },
                     ..default()
