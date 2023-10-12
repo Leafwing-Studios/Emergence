@@ -64,7 +64,7 @@ pub struct PlayerModifiesWorld;
 /// Actions that the player can take to modify the game world or their view of it.
 ///
 /// This should only store actions that need a dedicated keybinding.
-#[derive(Actionlike, Clone, Debug)]
+#[derive(Actionlike, Reflect, Clone, Debug)]
 pub(crate) enum PlayerAction {
     /// Pause or unpause the game.
     TogglePause,

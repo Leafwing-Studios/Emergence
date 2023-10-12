@@ -101,7 +101,7 @@ impl Plugin for DebugToolsPlugin {
 }
 
 /// Enumerates the actions a developer can take.
-#[derive(Actionlike, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Actionlike, Reflect, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DevAction {
     /// Toggle the overall developer mode setting
     ToggleDevMode,
