@@ -35,7 +35,7 @@ pub(super) struct SelectionDetailsPlugin;
 impl Plugin for SelectionDetailsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectionDetails>()
-            .add_startup_system(populate_selection_panel)
+            .add_systems(Startup, populate_selection_panel)
             .add_systems(
                 Update,
                 get_details

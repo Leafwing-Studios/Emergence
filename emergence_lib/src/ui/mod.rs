@@ -56,7 +56,7 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<Icons<TerraformingTool>>()
         .add_asset_collection::<Icons<CraftingProgress>>()
         .add_asset_collection::<Icons<GoalKind>>()
-        .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
+        .add_systems(PreStartup, setup_ui)
         .add_plugin(ScreenDiagnosticsPlugin::default())
         .add_plugin(ScreenFrameDiagnosticsPlugin)
         .add_plugin(CursorPlugin)

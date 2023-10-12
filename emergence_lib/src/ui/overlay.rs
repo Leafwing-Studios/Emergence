@@ -21,7 +21,7 @@ pub(super) struct OverlayMenuPlugin;
 impl Plugin for OverlayMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, select_overlay)
-            .add_startup_system(setup_overlay_menu)
+            .add_systems(Startup, setup_overlay_menu)
             .add_systems(
                 Update,
                 update_signal_type_display.run_if(in_state(AssetState::FullyLoaded)),

@@ -296,7 +296,7 @@ mod tests {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_system(generate_terrain);
+        app.add_systems(Startup, generate_terrain);
 
         app.update();
     }
@@ -307,7 +307,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_structures).chain());
+        app.add_systems(Startup, (generate_terrain, generate_structures).chain());
 
         app.update();
     }
@@ -318,7 +318,8 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems(
+        app.add_systems(
+            Startup,
             (generate_terrain, generate_structures, generate_landmarks).chain(),
         );
 
@@ -343,7 +344,8 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems(
+        app.add_systems(
+            Startup,
             (generate_terrain, generate_structures, generate_landmarks).chain(),
         );
 
@@ -364,7 +366,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_structures).chain());
+        app.add_systems(Startup, (generate_terrain, generate_structures).chain());
 
         app.update();
 
@@ -384,7 +386,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
-        app.add_startup_system(generate_terrain);
+        app.add_systems(Startup, generate_terrain);
         app.insert_resource(GlobalRng::new(0));
 
         app.update();
@@ -406,7 +408,7 @@ mod tests {
         app.add_plugin(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_landmarks).chain());
+        app.add_systems(Startup, (generate_terrain, generate_landmarks).chain());
 
         app.update();
     }
@@ -417,7 +419,7 @@ mod tests {
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(WaterConfig::IN_GAME);
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, initialize_water_table).chain());
+        app.add_systems(Startup, (generate_terrain, initialize_water_table).chain());
 
         app.update();
     }

@@ -30,7 +30,7 @@ impl Plugin for ProductionStatisticsPlugin {
                 Update,
                 (census, update_item_count).distributive_run_if(in_state(WorldGenState::Complete)),
             )
-            .add_startup_system(spawn_production_statistics_menu)
+            .add_systems(Startup, spawn_production_statistics_menu)
             .add_systems(
                 Update,
                 update_production_statistics.run_if(in_state(WorldGenState::Complete)),
