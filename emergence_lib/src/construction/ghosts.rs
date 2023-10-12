@@ -38,7 +38,7 @@ pub struct GhostPlugin;
 impl Plugin for GhostPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GhostHandles>().add_systems(
-            Fixedupdate,
+            FixedUpdate,
             (
                 validate_ghost_structures,
                 ghost_structure_signals.after(validate_ghost_structures),
