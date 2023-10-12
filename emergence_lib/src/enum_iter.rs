@@ -61,7 +61,7 @@ impl<A: IterableEnum> Default for EnumIter<A> {
     fn default() -> Self {
         EnumIter {
             index: 0,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }

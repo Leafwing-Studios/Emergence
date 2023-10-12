@@ -78,7 +78,7 @@ impl<T> Eq for Id<T> {}
 
 impl<T> PartialOrd for Id<T> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.value.partial_cmp(&other.value)
+        Some(self.cmp(other))
     }
 }
 
@@ -96,10 +96,7 @@ impl<T> Hash for Id<T> {
 
 impl<T> Clone for Id<T> {
     fn clone(&self) -> Self {
-        Self {
-            value: self.value,
-            _phantom: PhantomData,
-        }
+        *self
     }
 }
 

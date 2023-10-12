@@ -176,7 +176,7 @@ impl HoveredTiles {
             }
         };
 
-        self.hovered = HashSet::from_iter(hex_vec.into_iter());
+        self.hovered = HashSet::from_iter(hex_vec);
     }
 }
 

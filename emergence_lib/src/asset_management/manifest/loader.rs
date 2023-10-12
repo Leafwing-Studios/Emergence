@@ -81,7 +81,7 @@ where
 {
     fn default() -> Self {
         Self {
-            _phantom_manifest: PhantomData::default(),
+            _phantom_manifest: PhantomData,
         }
     }
 }

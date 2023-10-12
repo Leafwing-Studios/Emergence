@@ -27,7 +27,7 @@ where
     /// Create a new raw manifest plugin.
     pub(crate) fn new() -> Self {
         Self {
-            _phantom_data: PhantomData::default(),
+            _phantom_data: PhantomData,
         }
     }
 }

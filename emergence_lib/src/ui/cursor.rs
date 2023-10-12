@@ -57,7 +57,7 @@ fn set_cursor(
                 },
                 ..Default::default()
             },
-            Cursor::default(),
+            Cursor,
         ));
     }
 }
