@@ -20,7 +20,7 @@ petitset = "0.2"
 serde = "1.0"
 leafwing_abilities = "0.5.0"
 derive_more = "0.99.17"
-hexx = { version = "0.7", features = ["ser_de"] }
+hexx = { version = "0.10", features = ["ser_de"] }
 bevy_mod_raycast = "0.14"
 itertools = "0.10.5"
 bevy_screen_diagnostics = "0.3"
