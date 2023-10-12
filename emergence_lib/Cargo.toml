@@ -26,7 +26,9 @@ itertools = "0.10.5"
 bevy_screen_diagnostics = "0.3"
 anyhow = "1.0.69"
 serde_json = "1.0.94"
-hashbrown = { version = "0.12", features = ["rayon"] }
+# This must match the version specified in the bevy_utils crate
+# See: https://crates.io/crates/bevy_utils/dependencies
+hashbrown = { version = "0.14", features = ["rayon"] }
 rayon = "1.7.0"
 bevy_framepace = "0.13.0"
 
