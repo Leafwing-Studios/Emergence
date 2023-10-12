@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::TypePath};
 
 use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
@@ -64,7 +64,7 @@ where
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
-pub struct RawManifestHandle<M>
+pub struct RawManifestHandle<M: TypePath>
 where
     M: IsRawManifest,
 {
@@ -74,7 +74,7 @@ where
     handle: Handle<M>,
 }
 
-impl<M> Loadable for RawManifestHandle<M>
+impl<M: TypePath> Loadable for RawManifestHandle<M>
 where
     M: IsRawManifest,
 {
@@ -97,7 +97,7 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-pub fn detect_manifest_creation<M>(
+pub fn detect_manifest_creation<M: TypePath>(
     mut commands: Commands,
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
@@ -119,7 +119,7 @@ pub fn detect_manifest_creation<M>(
 }
 
 /// Update the manifest after the asset has been changed.
-fn detect_manifest_modification<M>(
+fn detect_manifest_modification<M: TypePath>(
     mut ev_asset: EventReader<AssetEvent<M>>,
     raw_manifests: Res<Assets<M>>,
     mut manifest: ResMut<Manifest<M::Marker, M::Data>>,
