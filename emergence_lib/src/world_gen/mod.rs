@@ -50,7 +50,7 @@ impl Plugin for GenerationPlugin {
             .add_systems(
                 PreUpdate,
                 WorldGenState::manage_state.run_if(|world_gen_state: Res<State<WorldGenState>>| {
-                    world_gen_state.get() != WorldGenState::Complete
+                    *world_gen_state.get() != WorldGenState::Complete
                 }),
             );
     }
@@ -90,7 +90,7 @@ impl WorldGenState {
                 }
 
                 if let Some(asset_state) = maybe_asset_state {
-                    if asset_state.get() == AssetState::FullyLoaded {
+                    if *asset_state.get() == AssetState::FullyLoaded {
                         next_world_gen_state.set(WorldGenState::Generating);
                     }
                 } else {
