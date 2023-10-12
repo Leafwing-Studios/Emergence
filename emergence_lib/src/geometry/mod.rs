@@ -21,4 +21,6 @@ pub(crate) const MAP_LAYOUT: HexLayout = HexLayout {
     orientation: hexx::HexOrientation::Flat,
     origin: hexx::Vec2::ZERO,
     hex_size: hexx::Vec2::ONE,
+    invert_x: false,
+    invert_y: false,
 };

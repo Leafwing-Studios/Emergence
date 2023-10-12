@@ -164,6 +164,8 @@ pub(super) fn spawn_hex_menu<D: Choice>(
                         x: CHOICE_ICON_SIZE,
                         y: CHOICE_ICON_SIZE,
                     },
+                    invert_x: false,
+                    invert_y: false,
                 },
             };
 
