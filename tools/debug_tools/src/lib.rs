@@ -8,17 +8,7 @@
 //! These keybindings were chosen because the average person will not want to touch these very
 //! often. Primary, non-modifier keys should be for main gameplay keys.
 
-use bevy::{
-    asset::AssetServer,
-    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
-    prelude::{
-        default, Color, Commands, Component, KeyCode, Plugin, Query, Res, Resource, TextBundle,
-        With,
-    },
-    text::{Text, TextSection, TextStyle},
-    time::Time,
-    ui::{PositionType, Style, UiRect, Val},
-};
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use leafwing_input_manager::prelude::*;
 
 // TODO: see: https://github.com/Leafwing-Studios/Emergence/issues/140

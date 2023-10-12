@@ -1,7 +1,12 @@
 //! Debugging user interface for development
 
-use crate::*;
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
+    prelude::*,
+};
+use leafwing_input_manager::prelude::*;
+
+use crate::{DebugInfo, DevAction, DevControls};
 
 // Modified text_debug example from the Bevy UI examples (https://github.com/bevyengine/bevy/blob/main/examples/ui/text_debug.rs)
 /// Tag for the changing fps text component.
