@@ -4,6 +4,7 @@
 
 use crate::{
     self as emergence_lib,
+    asset_management::AssetState,
     geometry::Volume,
     graphics::palette::infovis::{NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA},
     light::{shade::ReceivedLight, Illuminance},
@@ -46,7 +47,7 @@ impl Plugin for OverlayPlugin {
                 )
                     .in_set(GraphicsSet),
             )
-            .add_systems(PreUpdate, spawn_overlay_entities.in_set(GraphicsSet));
+            .add_systems(OnEnter(AssetState::FullyLoaded), spawn_overlay_entities);
     }
 }
 
