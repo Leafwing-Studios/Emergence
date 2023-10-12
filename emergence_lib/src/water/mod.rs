@@ -148,7 +148,7 @@ impl Plugin for WaterPlugin {
             .init_resource::<Ocean>();
 
         app.configure_sets(
-            FixedUpadte,
+            FixedUpdate,
             (
                 WaterSet::VerticalWaterMovement,
                 WaterSet::HorizontalWaterMovement,

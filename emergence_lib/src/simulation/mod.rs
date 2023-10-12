@@ -18,7 +18,6 @@ use crate::units::UnitsPlugin;
 use crate::water::WaterPlugin;
 use crate::world_gen::{GenerationConfig, GenerationPlugin, WorldGenState};
 use bevy::core::FrameCount;
-use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
 pub mod rng;
