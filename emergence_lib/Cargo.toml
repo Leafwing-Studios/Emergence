@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.11"
-bevy_mod_billboard = "0.3"
+bevy_mod_billboard = "0.4"
 rand = { version = "0.8", features = ["small_rng"] }
 rand_distr = "0.4"
 noisy_bevy = "0.4"
