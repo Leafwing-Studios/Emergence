@@ -94,8 +94,11 @@ pub(super) fn vegetative_spread(
         // PERF: we should just be returning a Vec<VoxelPos> or an [Option<VoxelPos; 6] here and allocating once
         let empty_neighbors = map_geometry.empty_neighbors(voxel_pos);
         let Some(tile_to_spawn_in) = empty_neighbors
-			// Just skip this organism if there are no empty neighbors
-            .choose(&mut rng) else { continue };
+            // Just skip this organism if there are no empty neighbors
+            .choose(&mut rng)
+        else {
+            continue;
+        };
 
         let clipboard_data = ClipboardData {
             structure_id,

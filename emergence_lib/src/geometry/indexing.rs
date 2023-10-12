@@ -595,7 +595,9 @@ impl MapGeometry {
             return;
         }
 
-        let Some(litter_entity) = self.remove_litter(*original_voxel_pos) else { return; };
+        let Some(litter_entity) = self.remove_litter(*original_voxel_pos) else {
+            return;
+        };
         let final_voxel_pos = self.find_litter_location(proposed_voxel_pos);
 
         self.add_litter(final_voxel_pos, InventoryState::Full, litter_entity)
