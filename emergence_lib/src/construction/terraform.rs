@@ -227,7 +227,7 @@ struct TerraformCommand {
 }
 
 impl Command for TerraformCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let map_geometry = world.resource::<MapGeometry>();
         let starting_height = map_geometry.get_height(self.hex).unwrap();
         let final_height = self.action.final_height(starting_height);
@@ -299,7 +299,7 @@ struct CancelTerraformCommand {
 }
 
 impl Command for CancelTerraformCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let map_geometry = world.resource::<MapGeometry>();
         let terrain_entity = map_geometry.get_terrain(self.hex).unwrap();
         let mut terraforming_action = world.get_mut::<TerraformingAction>(terrain_entity).unwrap();
@@ -326,7 +326,7 @@ struct ApplyTerraformingCommand {
 }
 
 impl Command for ApplyTerraformingCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         // Just using system state makes satisfying the borrow checker a lot easier
         let mut system_state = SystemState::<(
             ResMut<MapGeometry>,
