@@ -4,10 +4,10 @@
 
 use crate::{
     self as emergence_lib,
-    asset_management::AssetState,
     geometry::Volume,
     graphics::palette::infovis::{NEUTRAL_INFOVIS_COLOR, OVERLAY_ALPHA},
     light::{shade::ReceivedLight, Illuminance},
+    terrain::terrain_manifest::TerrainManifest,
     water::FlowVelocity,
 };
 use bevy::{
@@ -47,7 +47,10 @@ impl Plugin for OverlayPlugin {
                 )
                     .in_set(GraphicsSet),
             )
-            .add_systems(OnEnter(AssetState::FullyLoaded), spawn_overlay_entities);
+            .add_systems(
+                Update,
+                spawn_overlay_entities.run_if(resource_exists::<TerrainManifest>()),
+            );
     }
 }
 
