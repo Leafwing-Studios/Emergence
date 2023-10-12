@@ -36,24 +36,18 @@ impl Plugin for SimulationPlugin {
         info!("Building simulation plugin...");
         app.insert_resource(GlobalRng::new(self.gen_config.seed))
             .add_systems(FixedUpdate, sync_rotation_to_facing)
-            .edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
-                schedule.configure_set(
-                    SimulationSet
-                        .run_if(in_state(PauseState::Playing))
-                        .run_if(in_state(AssetState::FullyLoaded))
-                        .run_if(world_gen_ready)
-                        .run_if(max_ticks_not_reached),
-                );
-                schedule.add_systems(
-                    Update,
-                    update_ticks_this_frame.run_if(max_ticks_not_reached),
-                );
-
-                schedule.set_build_settings(ScheduleBuildSettings {
-                    ambiguity_detection: LogLevel::Warn,
-                    ..Default::default()
-                });
-            })
+            .configure_set(
+                FixedUpdate,
+                SimulationSet
+                    .run_if(in_state(PauseState::Playing))
+                    .run_if(in_state(AssetState::FullyLoaded))
+                    .run_if(world_gen_ready)
+                    .run_if(max_ticks_not_reached),
+            )
+            .add_systems(
+                Update,
+                update_ticks_this_frame.run_if(max_ticks_not_reached),
+            )
             .insert_resource(TicksThisFrame { current: 0, max: 3 })
             .add_plugin(GenerationPlugin {
                 config: self.gen_config.clone(),
@@ -85,7 +79,7 @@ enum PauseState {
 /// Simulation systems.
 ///
 /// These:
-/// - are run in [`CoreSchedule::FixedUpdate`]
+/// - are run in [`FixedUpdate`]
 /// - only run in [`PauseState::Playing`]
 /// - only run in [`AssetState::FullyLoaded`]
 #[derive(SystemSet, PartialEq, Eq, Hash, Debug, Clone)]

@@ -43,8 +43,7 @@ impl Plugin for GhostPlugin {
                 ghost_structure_signals.after(validate_ghost_structures),
                 ghost_structure_lifecycle.after(validate_ghost_structures),
             )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+                .in_set(SimulationSet),
         );
     }
 }

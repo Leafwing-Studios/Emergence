@@ -44,8 +44,7 @@ impl Plugin for SignalsPlugin {
             (emit_signals, diffuse_signals, degrade_signals)
                 .chain()
                 .in_set(ManageSignals)
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+                .in_set(SimulationSet),
         );
     }
 }

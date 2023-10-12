@@ -32,8 +32,7 @@ impl Plugin for TemporalPlugin {
                     record_elapsed_time_for_lifecycles,
                 )
                     .chain()
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             )
             .add_systems(Update, pause_game)
             .init_resource::<InGameTime>();

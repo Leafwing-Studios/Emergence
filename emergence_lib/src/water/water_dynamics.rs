@@ -462,12 +462,7 @@ mod tests {
             .add_plugin(WaterPlugin)
             .add_plugin(WeatherPlugin)
             .init_resource::<InGameTime>()
-            .add_systems(
-                FixedUpdate,
-                advance_in_game_time
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            );
+            .add_systems(FixedUpdate, advance_in_game_time.in_set(SimulationSet));
 
         let map_geometry = scenario
             .map_shape

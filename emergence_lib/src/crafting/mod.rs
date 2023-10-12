@@ -54,8 +54,7 @@ impl Plugin for CraftingPlugin {
                     set_storage_emitter.before(InteractionSystem::ApplyZoning),
                     clear_empty_storage_slots,
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }

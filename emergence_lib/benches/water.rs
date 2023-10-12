@@ -49,9 +49,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("compute_water_depth", |b| b.iter(|| app.update()));
 
-    let mut schedule = Schedule::default();
-    schedule.add_systems(FixedUpdate, horizontal_water_movement);
-    app.world.add_schedule(schedule, CoreSchedule::Outer);
+    app.add_systems(FixedUpdate, horizontal_water_movement);
 
     c.bench_function("lateral_water_movement", |b| b.iter(|| app.update()));
 }

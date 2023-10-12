@@ -170,8 +170,7 @@ impl Plugin for OrganismPlugin {
                 sprout_seeds,
                 manage_oxygen,
             )
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+                .in_set(SimulationSet),
         );
     }
 }

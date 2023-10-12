@@ -277,8 +277,7 @@ impl Plugin for UnitsPlugin {
                     basic_needs::check_for_oxygen.after(basic_needs::check_for_hunger),
                     age::aging,
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }

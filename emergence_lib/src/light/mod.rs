@@ -28,8 +28,7 @@ impl Plugin for LightPlugin {
             FixedUpdate,
             (compute_light, compute_shade, compute_received_light)
                 .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+                .in_set(SimulationSet),
         );
     }
 }

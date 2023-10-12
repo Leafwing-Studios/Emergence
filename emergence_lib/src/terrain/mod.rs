@@ -50,8 +50,7 @@ impl Plugin for TerrainPlugin {
                         .after(carry_floating_litter_with_current)
                         .in_set(LitterEmitters),
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }
