@@ -43,7 +43,7 @@ impl Plugin for AssetManagementPlugin {
             // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
             .add_systems(
                 Update,
-                apply_system_buffers
+                apply_deferred
                     .after(DetectManifestCreationSet)
                     .in_schedule(OnExit(AssetState::LoadManifests)),
             );

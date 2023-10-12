@@ -35,14 +35,14 @@ impl Plugin for GenerationPlugin {
                 Update,
                 (
                     generate_terrain,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_landmarks,
                     initialize_water_table,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_structures,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_units,
-                    apply_system_buffers,
+                    apply_deferred,
                     randomize_starting_organisms,
                 )
                     .chain()
