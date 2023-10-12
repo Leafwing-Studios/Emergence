@@ -50,15 +50,15 @@ pub mod testing {
     /// Just the game logic and simulation
     pub fn simulation_app(gen_config: GenerationConfig) -> App {
         let mut app = minimal_app();
-        app.add_plugin(SimulationPlugin { gen_config });
+        app.add_plugins(SimulationPlugin { gen_config });
         app
     }
 
     /// Test users interacting with the app
     pub fn interaction_app(gen_config: GenerationConfig) -> App {
         let mut app = simulation_app(gen_config);
-        app.add_plugin(bevy::input::InputPlugin)
-            .add_plugin(crate::player_interaction::InteractionPlugin);
+        app.add_plugins(bevy::input::InputPlugin)
+            .add_plugins(crate::player_interaction::InteractionPlugin);
         app
     }
 }

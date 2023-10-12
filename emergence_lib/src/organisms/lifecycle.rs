@@ -298,7 +298,9 @@ pub(super) fn sprout_seeds(
 
         for item_slot in litter.contents.iter_mut() {
             let item_id = item_slot.item_id();
-            let Some(organism_id) = item_manifest.get(item_id).seed else { continue };
+            let Some(organism_id) = item_manifest.get(item_id).seed else {
+                continue;
+            };
 
             // Generate a random facing now, so we can verify that the new organism fits.
             let facing = Facing::random(rng);
@@ -322,7 +324,9 @@ pub(super) fn sprout_seeds(
             }
 
             // Make sure we can actually remove the item from the slot.
-            let Ok(()) = item_slot.remove_all_or_nothing(1) else { continue };
+            let Ok(()) = item_slot.remove_all_or_nothing(1) else {
+                continue;
+            };
 
             match organism_id {
                 OrganismId::Structure(structure_id) => {

@@ -35,8 +35,8 @@ pub(super) struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawStructureManifest>::new())
-            .add_plugin(LogisticsPlugin)
+        app.add_plugins(ManifestPlugin::<RawStructureManifest>::new())
+            .add_plugins(LogisticsPlugin)
             .add_asset_collection::<StructureHandles>();
     }
 }

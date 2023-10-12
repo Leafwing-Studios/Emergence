@@ -22,13 +22,14 @@ pub(super) struct ZoningPlugin;
 impl Plugin for ZoningPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            Update,
             (mark_for_demolition, set_zoning)
                 .in_set(InteractionSystem::ApplyZoning)
                 .in_set(PlayerModifiesWorld)
                 .after(InteractionSystem::SelectTiles)
                 .after(InteractionSystem::SetClipboard),
         )
-        .add_system(cleanup_previews.after(set_zoning));
+        .add_systems(Update, cleanup_previews.after(set_zoning));
     }
 }
 

@@ -107,7 +107,7 @@ struct SpawnStructureCommand {
 }
 
 impl Command for SpawnStructureCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let geometry = world.resource::<MapGeometry>();
         // Check that the tile is within the bounds of the map
         if !geometry.is_valid(self.center.hex) {
@@ -269,14 +269,16 @@ struct DespawnStructureCommand {
 }
 
 impl Command for DespawnStructureCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let map_geometry = world.resource::<MapGeometry>();
-        let Some(structure_entity) = map_geometry.get_structure(self.center) else { return; };
+        let Some(structure_entity) = map_geometry.get_structure(self.center) else {
+            return;
+        };
 
         let facing = *world.entity(structure_entity).get::<Facing>().unwrap();
-        let Some(&structure_id) = world
-            .entity(structure_entity)
-            .get::<Id<Structure>>() else { return; };
+        let Some(&structure_id) = world.entity(structure_entity).get::<Id<Structure>>() else {
+            return;
+        };
         let structure_manifest = world.resource::<StructureManifest>();
         let structure_data = structure_manifest.get(structure_id);
         let footprint = structure_data.footprint.clone();
@@ -304,7 +306,7 @@ struct SpawnStructureGhostCommand {
 }
 
 impl Command for SpawnStructureGhostCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
 
@@ -402,9 +404,11 @@ struct DespawnGhostCommand {
 }
 
 impl Command for DespawnGhostCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let map_geometry = world.resource::<MapGeometry>();
-        let Some(ghost_entity) = map_geometry.get_ghost_structure(self.voxel_pos) else { return; };
+        let Some(ghost_entity) = map_geometry.get_ghost_structure(self.voxel_pos) else {
+            return;
+        };
 
         let facing = *world.entity(ghost_entity).get::<Facing>().unwrap();
         let center = *world.entity(ghost_entity).get::<VoxelPos>().unwrap();
@@ -429,7 +433,7 @@ struct SpawnStructurePreviewCommand {
 }
 
 impl Command for SpawnStructurePreviewCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let structure_id = self.data.structure_id;
         let map_geometry = world.resource::<MapGeometry>();
 

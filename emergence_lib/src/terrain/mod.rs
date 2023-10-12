@@ -31,9 +31,10 @@ pub(crate) struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
+        app.add_plugins(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
             .add_systems(
+                FixedUpdate,
                 (
                     respond_to_height_changes,
                     make_litter_float.after(respond_to_height_changes),
@@ -49,8 +50,7 @@ impl Plugin for TerrainPlugin {
                         .after(carry_floating_litter_with_current)
                         .in_set(LitterEmitters),
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }

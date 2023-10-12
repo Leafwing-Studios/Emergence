@@ -147,50 +147,55 @@ impl Plugin for WaterPlugin {
         app.insert_resource(WaterConfig::IN_GAME)
             .init_resource::<Ocean>();
 
-        app.edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
-            schedule
-                .configure_sets(
-                    (
-                        WaterSet::VerticalWaterMovement,
-                        WaterSet::HorizontalWaterMovement,
-                        WaterSet::Synchronization,
-                    )
-                        .in_set(SimulationSet)
-                        .chain(),
-                )
-                .add_system(
-                    cache_water_volume
-                        .before(WaterSet::VerticalWaterMovement)
-                        // This needs to respect pausing
-                        .in_set(SimulationSet),
-                )
-                .add_systems(
-                    (
-                        tides,
-                        produce_water_from_emitters,
-                        precipitation,
-                        // This system pulls in a ton of dependencies, so it's best to fail silently when they don't exist
-                        // to allow for integration testing of water behavior.
-                        draw_water_from_roots
-                            .run_if(resource_exists::<StructureManifest>())
-                            .run_if(resource_exists::<ItemManifest>()),
-                        evaporation,
-                    )
-                        .chain()
-                        .in_set(WaterSet::VerticalWaterMovement),
-                )
-                .add_system(
-                    // It is important that the computed height of the water is accurate before we start moving it around.
-                    update_water_depth
-                        .after(WaterSet::VerticalWaterMovement)
-                        .before(WaterSet::HorizontalWaterMovement)
-                        .in_set(SimulationSet),
-                )
-                .add_system(horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement))
-                .add_systems(
-                    (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
-                );
-        });
+        app.configure_sets(
+            FixedUpdate,
+            (
+                WaterSet::VerticalWaterMovement,
+                WaterSet::HorizontalWaterMovement,
+                WaterSet::Synchronization,
+            )
+                .in_set(SimulationSet)
+                .chain(),
+        )
+        .add_systems(
+            FixedUpdate,
+            cache_water_volume
+                .before(WaterSet::VerticalWaterMovement)
+                // This needs to respect pausing
+                .in_set(SimulationSet),
+        )
+        .add_systems(
+            FixedUpdate,
+            (
+                tides,
+                produce_water_from_emitters,
+                precipitation,
+                // This system pulls in a ton of dependencies, so it's best to fail silently when they don't exist
+                // to allow for integration testing of water behavior.
+                draw_water_from_roots
+                    .run_if(resource_exists::<StructureManifest>())
+                    .run_if(resource_exists::<ItemManifest>()),
+                evaporation,
+            )
+                .chain()
+                .in_set(WaterSet::VerticalWaterMovement),
+        )
+        .add_systems(
+            FixedUpdate,
+            // It is important that the computed height of the water is accurate before we start moving it around.
+            update_water_depth
+                .after(WaterSet::VerticalWaterMovement)
+                .before(WaterSet::HorizontalWaterMovement)
+                .in_set(SimulationSet),
+        )
+        .add_systems(
+            FixedUpdate,
+            horizontal_water_movement.in_set(WaterSet::HorizontalWaterMovement),
+        )
+        .add_systems(
+            FixedUpdate,
+            (add_water_emitters, update_water_depth).in_set(WaterSet::Synchronization),
+        );
     }
 }
 
@@ -205,7 +210,7 @@ impl Id<Item> {
 /// The components needed to track the water table.
 ///
 /// These are stored on terrain tile entities.
-/// To fully compute basic water dynamics, you also need the [`VoxelPos`](crate::geometry::VoxelPos) and [`Height`] components.
+/// To fully compute basic water dynamics, you also need the [`VoxelPos`] and [`Height`] components.
 #[derive(Bundle, Debug, Default)]
 pub struct WaterBundle {
     /// The volume of water stored at this tile.

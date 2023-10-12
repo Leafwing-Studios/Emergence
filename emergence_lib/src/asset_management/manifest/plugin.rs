@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::TypePath};
 
 use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
@@ -27,7 +27,7 @@ where
     /// Create a new raw manifest plugin.
     pub(crate) fn new() -> Self {
         Self {
-            _phantom_data: PhantomData::default(),
+            _phantom_data: PhantomData,
         }
     }
 }
@@ -46,12 +46,12 @@ where
         app.init_asset_loader::<RawManifestLoader<M>>()
             .add_asset::<M>()
             .add_asset_collection::<RawManifestHandle<M>>()
-            .add_system(
-                detect_manifest_creation::<M>
-                    .in_set(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::LoadManifests)),
+            .add_systems(
+                OnExit(AssetState::LoadManifests),
+                detect_manifest_creation::<M>.in_set(DetectManifestCreationSet),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 detect_manifest_modification::<M>
                     .run_if(resource_exists::<Manifest<M::Marker, M::Data>>()),
             );
@@ -62,7 +62,7 @@ where
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
-pub struct RawManifestHandle<M>
+pub struct RawManifestHandle<M: TypePath>
 where
     M: IsRawManifest,
 {
@@ -72,7 +72,7 @@ where
     handle: Handle<M>,
 }
 
-impl<M> Loadable for RawManifestHandle<M>
+impl<M: TypePath> Loadable for RawManifestHandle<M>
 where
     M: IsRawManifest,
 {
@@ -95,7 +95,7 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-pub fn detect_manifest_creation<M>(
+pub fn detect_manifest_creation<M: TypePath>(
     mut commands: Commands,
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
@@ -103,7 +103,10 @@ pub fn detect_manifest_creation<M>(
     M: IsRawManifest,
 {
     let Some(raw_manifest) = raw_manifests.get(&raw_manifest_handle.handle) else {
-        error!("Raw manifest for {} created, but asset not available!", M::path().display());
+        error!(
+            "Raw manifest for {} created, but asset not available!",
+            M::path().display()
+        );
         return;
     };
 
@@ -114,7 +117,7 @@ pub fn detect_manifest_creation<M>(
 }
 
 /// Update the manifest after the asset has been changed.
-fn detect_manifest_modification<M>(
+fn detect_manifest_modification<M: TypePath>(
     mut ev_asset: EventReader<AssetEvent<M>>,
     raw_manifests: Res<Assets<M>>,
     mut manifest: ResMut<Manifest<M::Marker, M::Data>>,

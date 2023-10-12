@@ -20,9 +20,12 @@ pub(super) struct OverlayMenuPlugin;
 
 impl Plugin for OverlayMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(select_overlay)
-            .add_startup_system(setup_overlay_menu)
-            .add_system(update_signal_type_display.run_if(in_state(AssetState::FullyLoaded)));
+        app.add_systems(Update, select_overlay)
+            .add_systems(Startup, setup_overlay_menu)
+            .add_systems(
+                Update,
+                update_signal_type_display.run_if(in_state(AssetState::FullyLoaded)),
+            );
     }
 }
 
@@ -99,10 +102,8 @@ fn setup_overlay_menu(
     let legend_entity = commands
         .spawn(ImageBundle {
             style: Style {
-                size: Size::new(
-                    Val::Px(TileOverlay::LEGEND_WIDTH as f32),
-                    Val::Px(TileOverlay::N_COLORS as f32),
-                ),
+                width: Val::Px(TileOverlay::LEGEND_WIDTH as f32),
+                height: Val::Px(TileOverlay::N_COLORS as f32),
                 ..Default::default()
             },
             image: UiImage {

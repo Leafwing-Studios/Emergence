@@ -32,27 +32,26 @@ impl Plugin for GenerationPlugin {
         app.add_state::<WorldGenState>()
             .insert_resource(self.config.clone())
             .add_systems(
+                OnEnter(WorldGenState::Generating),
                 (
                     generate_terrain,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_landmarks,
                     initialize_water_table,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_structures,
-                    apply_system_buffers,
+                    apply_deferred,
                     generate_units,
-                    apply_system_buffers,
+                    apply_deferred,
                     randomize_starting_organisms,
                 )
-                    .chain()
-                    .in_schedule(OnEnter(WorldGenState::Generating)),
+                    .chain(),
             )
-            .add_system(
-                WorldGenState::manage_state
-                    .in_base_set(CoreSet::PreUpdate)
-                    .run_if(|world_gen_state: Res<State<WorldGenState>>| {
-                        world_gen_state.0 != WorldGenState::Complete
-                    }),
+            .add_systems(
+                PreUpdate,
+                WorldGenState::manage_state.run_if(|world_gen_state: Res<State<WorldGenState>>| {
+                    *world_gen_state.get() != WorldGenState::Complete
+                }),
             );
     }
 }
@@ -81,7 +80,7 @@ impl WorldGenState {
         mut maybe_frame_pace_settings: Option<ResMut<FramepaceSettings>>,
         maybe_asset_state: Option<Res<State<AssetState>>>,
     ) {
-        match world_gen_state.0 {
+        match world_gen_state.get() {
             WorldGenState::Waiting => {
                 if let Some(frame_pace_settings) = maybe_frame_pace_settings.as_mut() {
                     // Don't limit the tick rate while generating the world
@@ -91,7 +90,7 @@ impl WorldGenState {
                 }
 
                 if let Some(asset_state) = maybe_asset_state {
-                    if asset_state.0 == AssetState::FullyLoaded {
+                    if *asset_state.get() == AssetState::FullyLoaded {
                         next_world_gen_state.set(WorldGenState::Generating);
                     }
                 } else {
@@ -296,7 +295,7 @@ mod tests {
         let mut app = App::new();
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_system(generate_terrain);
+        app.add_systems(Startup, generate_terrain);
 
         app.update();
     }
@@ -304,10 +303,10 @@ mod tests {
     #[test]
     fn can_generate_organisms() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_structures).chain());
+        app.add_systems(Startup, (generate_terrain, generate_structures).chain());
 
         app.update();
     }
@@ -315,10 +314,11 @@ mod tests {
     #[test]
     fn units_are_on_top_of_empty_ground() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems(
+        app.add_systems(
+            Startup,
             (generate_terrain, generate_structures, generate_landmarks).chain(),
         );
 
@@ -340,10 +340,11 @@ mod tests {
     #[test]
     fn structures_are_above_ground() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems(
+        app.add_systems(
+            Startup,
             (generate_terrain, generate_structures, generate_landmarks).chain(),
         );
 
@@ -361,10 +362,10 @@ mod tests {
     #[test]
     fn structures_exist() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_structures).chain());
+        app.add_systems(Startup, (generate_terrain, generate_structures).chain());
 
         app.update();
 
@@ -382,9 +383,9 @@ mod tests {
     #[test]
     fn terrain_exists() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
-        app.add_startup_system(generate_terrain);
+        app.add_systems(Startup, generate_terrain);
         app.insert_resource(GlobalRng::new(0));
 
         app.update();
@@ -403,10 +404,10 @@ mod tests {
     #[test]
     fn can_generate_landmarks() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, generate_landmarks).chain());
+        app.add_systems(Startup, (generate_terrain, generate_landmarks).chain());
 
         app.update();
     }
@@ -417,7 +418,7 @@ mod tests {
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(WaterConfig::IN_GAME);
         app.insert_resource(GlobalRng::new(0));
-        app.add_startup_systems((generate_terrain, initialize_water_table).chain());
+        app.add_systems(Startup, (generate_terrain, initialize_water_table).chain());
 
         app.update();
     }
@@ -425,10 +426,10 @@ mod tests {
     #[test]
     fn can_generate_world() {
         let mut app = App::new();
-        app.add_plugin(GenerationPlugin {
+        app.add_plugins(GenerationPlugin {
             config: GenerationConfig::testing(),
         })
-        .add_plugin(DummyManifestPlugin);
+        .add_plugins(DummyManifestPlugin);
         app.insert_resource(GlobalRng::new(0));
         app.insert_resource(WaterConfig::IN_GAME);
 

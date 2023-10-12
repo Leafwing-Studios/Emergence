@@ -14,8 +14,8 @@ pub(super) struct WaterRenderingPlugin;
 
 impl Plugin for WaterRenderingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(init_water_handles)
-            .add_system(render_water.in_set(GraphicsSet));
+        app.add_systems(Startup, init_water_handles)
+            .add_systems(Update, render_water.in_set(GraphicsSet));
     }
 }
 

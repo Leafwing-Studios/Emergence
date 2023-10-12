@@ -15,9 +15,8 @@ pub(crate) struct WeatherPlugin;
 impl Plugin for WeatherPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CurrentWeather>().add_systems(
-            (set_daily_weather,)
-                .in_set(super::SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+            FixedUpdate,
+            (set_daily_weather,).in_set(super::SimulationSet),
         );
     }
 }

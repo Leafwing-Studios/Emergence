@@ -56,16 +56,16 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<Icons<TerraformingTool>>()
         .add_asset_collection::<Icons<CraftingProgress>>()
         .add_asset_collection::<Icons<GoalKind>>()
-        .add_startup_system(setup_ui.in_base_set(StartupSet::PreStartup))
-        .add_plugin(ScreenDiagnosticsPlugin::default())
-        .add_plugin(ScreenFrameDiagnosticsPlugin)
-        .add_plugin(CursorPlugin)
-        .add_plugin(SelectionDetailsPlugin)
-        .add_plugin(ProductionStatisticsPlugin)
-        .add_plugin(StatusPlugin)
-        .add_plugin(OverlayMenuPlugin)
-        .add_plugin(SelectStructurePlugin)
-        .add_plugin(SelectTerraformingPlugin);
+        .add_systems(PreStartup, setup_ui)
+        .add_plugins(ScreenDiagnosticsPlugin::default())
+        .add_plugins(ScreenFrameDiagnosticsPlugin)
+        .add_plugins(CursorPlugin)
+        .add_plugins(SelectionDetailsPlugin)
+        .add_plugins(ProductionStatisticsPlugin)
+        .add_plugins(StatusPlugin)
+        .add_plugins(OverlayMenuPlugin)
+        .add_plugins(SelectStructurePlugin)
+        .add_plugins(SelectTerraformingPlugin);
     }
 }
 
@@ -83,7 +83,8 @@ fn setup_ui(mut commands: Commands) {
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
                 justify_content: JustifyContent::SpaceBetween,
                 ..default()
             },
@@ -96,7 +97,8 @@ fn setup_ui(mut commands: Commands) {
                     style: Style {
                         flex_direction: FlexDirection::Column,
                         justify_content: JustifyContent::SpaceBetween,
-                        size: Size::new(Val::Px(200.), Val::Percent(100.)),
+                        width: Val::Px(200.),
+                        height: Val::Percent(100.),
                         ..default()
                     },
                     ..default()
@@ -109,7 +111,8 @@ fn setup_ui(mut commands: Commands) {
                 NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
-                        size: Size::new(Val::Px(400.), Val::Percent(100.)),
+                        width: Val::Px(400.),
+                        height: Val::Percent(100.),
                         ..default()
                     },
                     ..default()

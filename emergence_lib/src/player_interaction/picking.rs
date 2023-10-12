@@ -13,15 +13,15 @@ pub(super) struct PickingPlugin;
 impl Plugin for PickingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
-            .add_plugin(DefaultRaycastingPlugin::<PickableVoxel>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
-            .add_system(
-                update_raycast_with_cursor
-                    .before(RaycastSystem::BuildRays::<PickableVoxel>)
-                    .in_base_set(CoreSet::First),
+            .add_plugins(DefaultRaycastingPlugin::<PickableVoxel>::default())
+            .add_plugins(DefaultRaycastingPlugin::<Unit>::default())
+            .add_systems(
+                First,
+                update_raycast_with_cursor.before(RaycastSystem::BuildRays::<PickableVoxel>),
             )
-            .add_system(move_cursor_manually.in_base_set(CoreSet::PreUpdate))
-            .add_system(
+            .add_systems(PreUpdate, move_cursor_manually)
+            .add_systems(
+                Update,
                 update_cursor_pos
                     .in_set(InteractionSystem::ComputeCursorPos)
                     .after(InteractionSystem::MoveCamera),
@@ -91,7 +91,7 @@ fn update_raycast_with_cursor(
 }
 
 /// A marker that's used to identify meshes and sources for raycasting.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, FromReflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 pub(crate) struct PickableVoxel;
 
 /// Updates the location of the cursor and what it is hovering over
@@ -105,8 +105,9 @@ fn update_cursor_pos(
     unit_query: Query<Entity, With<Id<Unit>>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
 ) {
-    let Ok((voxel_raycast, unit_raycast)) =
-        camera_query.get_single() else { return; };
+    let Ok((voxel_raycast, unit_raycast)) = camera_query.get_single() else {
+        return;
+    };
 
     cursor_pos.voxel_pos =
         if let Some((entity, _intersection_data)) = voxel_raycast.get_nearest_intersection() {

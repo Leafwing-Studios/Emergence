@@ -24,6 +24,7 @@ impl Plugin for SelectTerraformingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AvailableChoices<TerraformingTool>>()
             .add_systems(
+                Update,
                 (
                     update_terraforming_choices,
                     spawn_hex_menu::<TerraformingTool>,
@@ -31,7 +32,8 @@ impl Plugin for SelectTerraformingPlugin {
                     .distributive_run_if(in_state(AssetState::FullyLoaded))
                     .chain(),
             )
-            .add_system(
+            .add_systems(
+                Update,
                 select_hex
                     .pipe(handle_selection)
                     .run_if(resource_exists::<HexMenuArrangement<TerraformingTool>>()),

@@ -248,9 +248,10 @@ pub(crate) enum UnitSystem {
 pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawUnitManifest>::new())
+        app.add_plugins(ManifestPlugin::<RawUnitManifest>::new())
             .add_asset_collection::<UnitHandles>()
             .add_systems(
+                FixedUpdate,
                 (
                     actions::advance_action_timer.in_set(UnitSystem::AdvanceTimers),
                     actions::start_actions
@@ -276,8 +277,7 @@ impl Plugin for UnitsPlugin {
                     basic_needs::check_for_oxygen.after(basic_needs::check_for_hunger),
                     age::aging,
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }

@@ -262,10 +262,15 @@ pub(super) fn carry_floating_litter_with_current(
                 if let Some(direction) = litter_drift.direction {
                     let new_voxel_pos = voxel_pos.neighbor(direction);
                     let source_height = water_depth.surface_height(voxel_pos.height());
-                    let Ok(target_entity) = map_geometry.get_terrain(new_voxel_pos.hex) else { continue };
+                    let Ok(target_entity) = map_geometry.get_terrain(new_voxel_pos.hex) else {
+                        continue;
+                    };
 
                     let Ok((target_tile_pos, target_water_depth)) =
-                        water_height_query.get(target_entity) else { continue };
+                        water_height_query.get(target_entity)
+                    else {
+                        continue;
+                    };
                     let target_height = target_water_depth.surface_height(target_tile_pos.height());
 
                     // Verify that we're not trying to deposit goods up a cliff or waterfall
@@ -311,7 +316,7 @@ struct SpawnLitterCommand {
 }
 
 impl Command for SpawnLitterCommand {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let item_manifest = world.resource::<ItemManifest>();
 
         let litter = Litter::new(self.item, item_manifest);

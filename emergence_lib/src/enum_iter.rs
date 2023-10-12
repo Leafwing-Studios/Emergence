@@ -33,7 +33,7 @@ pub struct EnumIter<A: IterableEnum> {
     index: usize,
     /// Marker used to keep track of which `IterableEnum` this `EnumIter` iterates through.
     ///
-    /// For more information, see [`PhantomData`](std::marker::PhantomData).
+    /// For more information, see [`PhantomData`].
     _phantom: PhantomData<A>,
 }
 
@@ -61,7 +61,7 @@ impl<A: IterableEnum> Default for EnumIter<A> {
     fn default() -> Self {
         EnumIter {
             index: 0,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }

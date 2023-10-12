@@ -14,8 +14,8 @@ pub(super) struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(track_cursor.pipe(ignore))
-            .add_system(set_cursor.run_if(in_state(AssetState::FullyLoaded)));
+        app.add_systems(Update, track_cursor.pipe(ignore))
+            .add_systems(Update, set_cursor.run_if(in_state(AssetState::FullyLoaded)));
     }
 }
 
@@ -46,7 +46,8 @@ fn set_cursor(
         commands.spawn((
             ImageBundle {
                 style: Style {
-                    size: Size::new(Val::Px(CHOICE_ICON_SIZE), Val::Px(CHOICE_ICON_SIZE)),
+                    width: Val::Px(CHOICE_ICON_SIZE),
+                    height: Val::Px(CHOICE_ICON_SIZE),
                     position_type: PositionType::Absolute,
                     ..Default::default()
                 },
@@ -56,7 +57,7 @@ fn set_cursor(
                 },
                 ..Default::default()
             },
-            Cursor::default(),
+            Cursor,
         ));
     }
 }
@@ -69,11 +70,8 @@ fn track_cursor(
     let window = window_query.get_single().ok()?;
     let mut cursor_style = cursor_query.get_single_mut().ok()?;
     let mouse_position = window.cursor_position()?;
-    cursor_style.position = UiRect {
-        // Center the cursor icon on the mouse position
-        left: Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.),
-        bottom: Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.),
-        ..Default::default()
-    };
+    // Center the cursor icon on the mouse position
+    cursor_style.left = Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.);
+    cursor_style.bottom = Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.);
     Some(())
 }

@@ -19,8 +19,8 @@ impl Plugin for LightingPlugin {
             color: LIGHT_STARS,
         })
         // Need to wait for the player camera to spawn
-        .add_startup_system(spawn_celestial_bodies.in_base_set(StartupSet::PostStartup))
-        .add_systems((animate_celestial_body_transform,));
+        .add_systems(PostStartup, spawn_celestial_bodies)
+        .add_systems(Update, (animate_celestial_body_transform,));
     }
 }
 

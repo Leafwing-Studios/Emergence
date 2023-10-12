@@ -18,7 +18,6 @@ use crate::units::UnitsPlugin;
 use crate::water::WaterPlugin;
 use crate::world_gen::{GenerationConfig, GenerationPlugin, WorldGenState};
 use bevy::core::FrameCount;
-use bevy::ecs::schedule::{LogLevel, ScheduleBuildSettings};
 use bevy::prelude::*;
 
 pub mod rng;
@@ -35,37 +34,34 @@ impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         info!("Building simulation plugin...");
         app.insert_resource(GlobalRng::new(self.gen_config.seed))
-            .add_system(sync_rotation_to_facing)
-            .edit_schedule(CoreSchedule::FixedUpdate, |schedule| {
-                schedule.configure_set(
-                    SimulationSet
-                        .run_if(in_state(PauseState::Playing))
-                        .run_if(in_state(AssetState::FullyLoaded))
-                        .run_if(world_gen_ready)
-                        .run_if(max_ticks_not_reached),
-                );
-                schedule.add_system(update_ticks_this_frame.run_if(max_ticks_not_reached));
-
-                schedule.set_build_settings(ScheduleBuildSettings {
-                    ambiguity_detection: LogLevel::Warn,
-                    ..Default::default()
-                });
-            })
+            .add_systems(FixedUpdate, sync_rotation_to_facing)
+            .configure_set(
+                FixedUpdate,
+                SimulationSet
+                    .run_if(in_state(PauseState::Playing))
+                    .run_if(in_state(AssetState::FullyLoaded))
+                    .run_if(world_gen_ready)
+                    .run_if(max_ticks_not_reached),
+            )
+            .add_systems(
+                Update,
+                update_ticks_this_frame.run_if(max_ticks_not_reached),
+            )
             .insert_resource(TicksThisFrame { current: 0, max: 3 })
-            .add_plugin(GenerationPlugin {
+            .add_plugins(GenerationPlugin {
                 config: self.gen_config.clone(),
             })
-            .add_plugin(CraftingPlugin)
-            .add_plugin(ConstructionPlugin)
-            .add_plugin(StructuresPlugin)
-            .add_plugin(TerrainPlugin)
-            .add_plugin(OrganismPlugin)
-            .add_plugin(UnitsPlugin)
-            .add_plugin(SignalsPlugin)
-            .add_plugin(TemporalPlugin)
-            .add_plugin(LightPlugin)
-            .add_plugin(WaterPlugin)
-            .add_plugin(WeatherPlugin);
+            .add_plugins(CraftingPlugin)
+            .add_plugins(ConstructionPlugin)
+            .add_plugins(StructuresPlugin)
+            .add_plugins(TerrainPlugin)
+            .add_plugins(OrganismPlugin)
+            .add_plugins(UnitsPlugin)
+            .add_plugins(SignalsPlugin)
+            .add_plugins(TemporalPlugin)
+            .add_plugins(LightPlugin)
+            .add_plugins(WaterPlugin)
+            .add_plugins(WeatherPlugin);
     }
 }
 
@@ -82,7 +78,7 @@ enum PauseState {
 /// Simulation systems.
 ///
 /// These:
-/// - are run in [`CoreSchedule::FixedUpdate`]
+/// - are run in [`FixedUpdate`]
 /// - only run in [`PauseState::Playing`]
 /// - only run in [`AssetState::FullyLoaded`]
 #[derive(SystemSet, PartialEq, Eq, Hash, Debug, Clone)]
@@ -119,5 +115,6 @@ fn max_ticks_not_reached(frame_count: Res<FrameCount>, ticks: Res<TicksThisFrame
 
 /// Ensures that simulation systems do not run until world gen is ready for them.
 fn world_gen_ready(world_gen_state: Res<State<WorldGenState>>) -> bool {
-    world_gen_state.0 == WorldGenState::Complete || world_gen_state.0 == WorldGenState::BurningIn
+    *world_gen_state.get() == WorldGenState::Complete
+        || *world_gen_state.get() == WorldGenState::BurningIn
 }

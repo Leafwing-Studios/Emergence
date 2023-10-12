@@ -216,9 +216,13 @@ pub fn horizontal_water_movement(
     if water_config.enable_oceans {
         for hex in map_geometry.ocean_tiles() {
             for maybe_neighbor in map_geometry.adjacent_hexes(hex) {
-                let Some(valid_neighbor) = maybe_neighbor else { continue };
+                let Some(valid_neighbor) = maybe_neighbor else {
+                    continue;
+                };
 
-                let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor) else { continue };
+                let Ok(neighbor_entity) = map_geometry.get_terrain(valid_neighbor) else {
+                    continue;
+                };
                 let neighbor_query_item = terrain_query.get(neighbor_entity).unwrap();
 
                 let neighbor_tile_height = map_geometry.get_height(valid_neighbor).unwrap().into();
@@ -455,14 +459,10 @@ mod tests {
     fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
-            .add_plugin(WaterPlugin)
-            .add_plugin(WeatherPlugin)
+            .add_plugins(WaterPlugin)
+            .add_plugins(WeatherPlugin)
             .init_resource::<InGameTime>()
-            .add_system(
-                advance_in_game_time
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
-            );
+            .add_systems(FixedUpdate, advance_in_game_time.in_set(SimulationSet));
 
         let map_geometry = scenario
             .map_shape

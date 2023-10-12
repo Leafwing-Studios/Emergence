@@ -23,19 +23,20 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<PlayerAction>::default())
+        app.add_plugins(InputManagerPlugin::<PlayerAction>::default())
             .init_resource::<ActionState<PlayerAction>>()
             .insert_resource(PlayerAction::default_input_map())
-            .add_plugin(camera::CameraPlugin)
-            .add_plugin(picking::PickingPlugin)
-            .add_plugin(selection::SelectionPlugin)
-            .add_plugin(clipboard::ClipboardPlugin)
-            .configure_set(PlayerModifiesWorld.run_if(in_state(WorldGenState::Complete)));
+            .add_plugins(camera::CameraPlugin)
+            .add_plugins(picking::PickingPlugin)
+            .add_plugins(selection::SelectionPlugin)
+            .add_plugins(clipboard::ClipboardPlugin)
+            .configure_set(
+                Update,
+                PlayerModifiesWorld.run_if(in_state(WorldGenState::Complete)),
+            );
 
-        #[cfg(feature = "debug_tools")]
-        app.add_plugin(debug_tools::DebugToolsPlugin);
         for variant in InteractionSystem::variants() {
-            app.configure_set(variant.run_if(in_state(WorldGenState::Complete)));
+            app.configure_set(Update, variant.run_if(in_state(WorldGenState::Complete)));
         }
     }
 }
@@ -64,7 +65,7 @@ pub struct PlayerModifiesWorld;
 /// Actions that the player can take to modify the game world or their view of it.
 ///
 /// This should only store actions that need a dedicated keybinding.
-#[derive(Actionlike, Clone, Debug)]
+#[derive(Actionlike, Reflect, Clone, Debug)]
 pub(crate) enum PlayerAction {
     /// Pause or unpause the game.
     TogglePause,

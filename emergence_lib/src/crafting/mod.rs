@@ -40,9 +40,10 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
-            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
+        app.add_plugins(ManifestPlugin::<RawItemManifest>::new())
+            .add_plugins(ManifestPlugin::<RawRecipeManifest>::new())
             .add_systems(
+                FixedUpdate,
                 (
                     progress_crafting,
                     gain_energy_when_crafting_completes.after(progress_crafting),
@@ -53,8 +54,7 @@ impl Plugin for CraftingPlugin {
                     set_storage_emitter.before(InteractionSystem::ApplyZoning),
                     clear_empty_storage_slots,
                 )
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             );
     }
 }

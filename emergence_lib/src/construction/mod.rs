@@ -23,19 +23,18 @@ pub(crate) struct ConstructionPlugin;
 
 impl Plugin for ConstructionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ghosts::GhostPlugin)
-            .add_plugin(zoning::ZoningPlugin)
+        app.add_plugins(ghosts::GhostPlugin)
+            .add_plugins(zoning::ZoningPlugin)
             // Must run after crafting emitters in order to wipe out their signals
-            .add_system(
+            .add_systems(
+                FixedUpdate,
                 set_emitter_for_structures_to_be_demolished
                     .after(crate::crafting::set_crafting_emitter)
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                    .in_set(SimulationSet),
             )
             .add_systems(
-                (terraforming_lifecycle, terraforming_signals)
-                    .in_set(SimulationSet)
-                    .in_schedule(CoreSchedule::FixedUpdate),
+                FixedUpdate,
+                (terraforming_lifecycle, terraforming_signals).in_set(SimulationSet),
             );
     }
 }

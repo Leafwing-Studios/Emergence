@@ -24,10 +24,10 @@ pub(super) struct LightPlugin;
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TotalLight>().add_systems(
+            FixedUpdate,
             (compute_light, compute_shade, compute_received_light)
                 .chain()
-                .in_set(SimulationSet)
-                .in_schedule(CoreSchedule::FixedUpdate),
+                .in_set(SimulationSet),
         );
     }
 }
