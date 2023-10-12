@@ -241,13 +241,11 @@ impl HexMenuIconBundle {
                 flip_y: false,
             },
             style: Style {
-                position: UiRect {
-                    left: Val::Px(screen_pos.x),
-                    bottom: Val::Px(screen_pos.y),
-                    ..Default::default()
-                },
+                left: Val::Px(screen_pos.x),
+                bottom: Val::Px(screen_pos.y),
                 position_type: PositionType::Absolute,
-                size: Size::new(Val::Px(layout.hex_size.x), Val::Px(layout.hex_size.y)),
+                width: Val::Px(layout.hex_size.x),
+                height: Val::Px(layout.hex_size.y),
                 ..Default::default()
             },
             // Render above the background
@@ -296,13 +294,11 @@ impl HexMenuBackgroundBundle {
                 flip_y: false,
             },
             style: Style {
-                position: UiRect {
-                    left: Val::Px(screen_pos.x),
-                    bottom: Val::Px(screen_pos.y),
-                    ..Default::default()
-                },
+                left: Val::Px(screen_pos.x),
+                bottom: Val::Px(screen_pos.y),
                 position_type: PositionType::Absolute,
-                size: Size::new(Val::Px(width), Val::Px(height)),
+                width: Val::Px(width),
+                height: Val::Px(height),
                 ..Default::default()
             },
             // Render below the icon

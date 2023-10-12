@@ -46,7 +46,8 @@ fn set_cursor(
         commands.spawn((
             ImageBundle {
                 style: Style {
-                    size: Size::new(Val::Px(CHOICE_ICON_SIZE), Val::Px(CHOICE_ICON_SIZE)),
+                    width: Val::Px(CHOICE_ICON_SIZE),
+                    height: Val::Px(CHOICE_ICON_SIZE),
                     position_type: PositionType::Absolute,
                     ..Default::default()
                 },
