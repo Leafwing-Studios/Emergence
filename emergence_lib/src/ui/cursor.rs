@@ -70,11 +70,8 @@ fn track_cursor(
     let window = window_query.get_single().ok()?;
     let mut cursor_style = cursor_query.get_single_mut().ok()?;
     let mouse_position = window.cursor_position()?;
-    cursor_style.position = UiRect {
-        // Center the cursor icon on the mouse position
-        left: Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.),
-        bottom: Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.),
-        ..Default::default()
-    };
+    // Center the cursor icon on the mouse position
+    cursor_style.left = Val::Px(mouse_position.x - CHOICE_ICON_SIZE / 2.);
+    cursor_style.bottom = Val::Px(mouse_position.y - CHOICE_ICON_SIZE / 2.);
     Some(())
 }

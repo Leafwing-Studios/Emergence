@@ -24,7 +24,6 @@ impl Plugin for TemporalPlugin {
         app.add_state::<PauseState>()
             .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
             .add_systems(
-                Update,
                 FixedUpdate,
                 (
                     advance_in_game_time,
@@ -199,7 +198,7 @@ fn pause_game(
     player_actions: Res<ActionState<PlayerAction>>,
 ) {
     if player_actions.just_pressed(PlayerAction::TogglePause) {
-        next_pause_state.set(match current_pause_state.0 {
+        next_pause_state.set(match current_pause_state.get() {
             PauseState::Paused => PauseState::Playing,
             PauseState::Playing => PauseState::Paused,
         });
