@@ -23,8 +23,8 @@ pub(crate) struct ConstructionPlugin;
 
 impl Plugin for ConstructionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ghosts::GhostPlugin)
-            .add_plugin(zoning::ZoningPlugin)
+        app.add_plugins(ghosts::GhostPlugin)
+            .add_plugins(zoning::ZoningPlugin)
             // Must run after crafting emitters in order to wipe out their signals
             .add_systems(
                 FixedUpdate,

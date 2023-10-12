@@ -459,8 +459,8 @@ mod tests {
     fn water_testing_app(scenario: Scenario) -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
-            .add_plugin(WaterPlugin)
-            .add_plugin(WeatherPlugin)
+            .add_plugins(WaterPlugin)
+            .add_plugins(WeatherPlugin)
             .init_resource::<InGameTime>()
             .add_systems(FixedUpdate, advance_in_game_time.in_set(SimulationSet));
 

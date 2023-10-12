@@ -13,8 +13,8 @@ pub(super) struct PickingPlugin;
 impl Plugin for PickingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
-            .add_plugin(DefaultRaycastingPlugin::<PickableVoxel>::default())
-            .add_plugin(DefaultRaycastingPlugin::<Unit>::default())
+            .add_plugins(DefaultRaycastingPlugin::<PickableVoxel>::default())
+            .add_plugins(DefaultRaycastingPlugin::<Unit>::default())
             .add_systems(
                 First,
                 update_raycast_with_cursor.before(RaycastSystem::BuildRays::<PickableVoxel>),

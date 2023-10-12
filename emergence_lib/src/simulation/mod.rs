@@ -48,20 +48,20 @@ impl Plugin for SimulationPlugin {
                 update_ticks_this_frame.run_if(max_ticks_not_reached),
             )
             .insert_resource(TicksThisFrame { current: 0, max: 3 })
-            .add_plugin(GenerationPlugin {
+            .add_plugins(GenerationPlugin {
                 config: self.gen_config.clone(),
             })
-            .add_plugin(CraftingPlugin)
-            .add_plugin(ConstructionPlugin)
-            .add_plugin(StructuresPlugin)
-            .add_plugin(TerrainPlugin)
-            .add_plugin(OrganismPlugin)
-            .add_plugin(UnitsPlugin)
-            .add_plugin(SignalsPlugin)
-            .add_plugin(TemporalPlugin)
-            .add_plugin(LightPlugin)
-            .add_plugin(WaterPlugin)
-            .add_plugin(WeatherPlugin);
+            .add_plugins(CraftingPlugin)
+            .add_plugins(ConstructionPlugin)
+            .add_plugins(StructuresPlugin)
+            .add_plugins(TerrainPlugin)
+            .add_plugins(OrganismPlugin)
+            .add_plugins(UnitsPlugin)
+            .add_plugins(SignalsPlugin)
+            .add_plugins(TemporalPlugin)
+            .add_plugins(LightPlugin)
+            .add_plugins(WaterPlugin)
+            .add_plugins(WeatherPlugin);
     }
 }
 

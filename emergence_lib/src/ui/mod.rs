@@ -57,15 +57,15 @@ impl Plugin for UiPlugin {
         .add_asset_collection::<Icons<CraftingProgress>>()
         .add_asset_collection::<Icons<GoalKind>>()
         .add_systems(PreStartup, setup_ui)
-        .add_plugin(ScreenDiagnosticsPlugin::default())
-        .add_plugin(ScreenFrameDiagnosticsPlugin)
-        .add_plugin(CursorPlugin)
-        .add_plugin(SelectionDetailsPlugin)
-        .add_plugin(ProductionStatisticsPlugin)
-        .add_plugin(StatusPlugin)
-        .add_plugin(OverlayMenuPlugin)
-        .add_plugin(SelectStructurePlugin)
-        .add_plugin(SelectTerraformingPlugin);
+        .add_plugins(ScreenDiagnosticsPlugin::default())
+        .add_plugins(ScreenFrameDiagnosticsPlugin)
+        .add_plugins(CursorPlugin)
+        .add_plugins(SelectionDetailsPlugin)
+        .add_plugins(ProductionStatisticsPlugin)
+        .add_plugins(StatusPlugin)
+        .add_plugins(OverlayMenuPlugin)
+        .add_plugins(SelectStructurePlugin)
+        .add_plugins(SelectTerraformingPlugin);
     }
 }
 

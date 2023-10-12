@@ -32,7 +32,7 @@ impl Plugin for GenerationPlugin {
         app.add_state::<WorldGenState>()
             .insert_resource(self.config.clone())
             .add_systems(
-                Update,
+                OnEnter(WorldGenState::Generating),
                 (
                     generate_terrain,
                     apply_deferred,
@@ -45,8 +45,7 @@ impl Plugin for GenerationPlugin {
                     apply_deferred,
                     randomize_starting_organisms,
                 )
-                    .chain()
-                    .in_schedule(OnEnter(WorldGenState::Generating)),
+                    .chain(),
             )
             .add_systems(
                 PreUpdate,
@@ -304,7 +303,7 @@ mod tests {
     #[test]
     fn can_generate_organisms() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
         app.add_systems(Startup, (generate_terrain, generate_structures).chain());
@@ -315,7 +314,7 @@ mod tests {
     #[test]
     fn units_are_on_top_of_empty_ground() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
         app.add_systems(
@@ -341,7 +340,7 @@ mod tests {
     #[test]
     fn structures_are_above_ground() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
         app.add_systems(
@@ -363,7 +362,7 @@ mod tests {
     #[test]
     fn structures_exist() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
         app.add_systems(Startup, (generate_terrain, generate_structures).chain());
@@ -384,7 +383,7 @@ mod tests {
     #[test]
     fn terrain_exists() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.add_systems(Startup, generate_terrain);
         app.insert_resource(GlobalRng::new(0));
@@ -405,7 +404,7 @@ mod tests {
     #[test]
     fn can_generate_landmarks() {
         let mut app = App::new();
-        app.add_plugin(DummyManifestPlugin);
+        app.add_plugins(DummyManifestPlugin);
         app.insert_resource(GenerationConfig::testing());
         app.insert_resource(GlobalRng::new(0));
         app.add_systems(Startup, (generate_terrain, generate_landmarks).chain());
@@ -427,10 +426,10 @@ mod tests {
     #[test]
     fn can_generate_world() {
         let mut app = App::new();
-        app.add_plugin(GenerationPlugin {
+        app.add_plugins(GenerationPlugin {
             config: GenerationConfig::testing(),
         })
-        .add_plugin(DummyManifestPlugin);
+        .add_plugins(DummyManifestPlugin);
         app.insert_resource(GlobalRng::new(0));
         app.insert_resource(WaterConfig::IN_GAME);
 

@@ -30,37 +30,34 @@ pub(super) struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            setup_camera.in_schedule(OnEnter(WorldGenState::Complete)),
-        )
-        .add_systems(Update, mousewheel_zoom.before(zoom))
-        .add_systems(Update, zoom)
-        .add_systems(
-            Update,
-            drag_camera
-                .before(set_camera_inclination)
-                .before(rotate_camera),
-        )
-        .add_systems(
-            Update,
-            set_camera_focus
-                // Allow users to break out of CameraMode::Follow by moving the camera manually
-                .before(rotate_camera)
-                .before(pan_camera)
-                // Avoid jittering when the camera is following a unit
-                .after(drag_camera),
-        )
-        .add_systems(
-            Update,
-            set_camera_inclination.before(InteractionSystem::MoveCamera),
-        )
-        .add_systems(Update, rotate_camera.before(InteractionSystem::MoveCamera))
-        .add_systems(Update, pan_camera.before(InteractionSystem::MoveCamera))
-        .add_systems(
-            Update,
-            move_camera_to_goal.in_set(InteractionSystem::MoveCamera),
-        );
+        app.add_systems(OnEnter(WorldGenState::Complete), setup_camera)
+            .add_systems(Update, mousewheel_zoom.before(zoom))
+            .add_systems(Update, zoom)
+            .add_systems(
+                Update,
+                drag_camera
+                    .before(set_camera_inclination)
+                    .before(rotate_camera),
+            )
+            .add_systems(
+                Update,
+                set_camera_focus
+                    // Allow users to break out of CameraMode::Follow by moving the camera manually
+                    .before(rotate_camera)
+                    .before(pan_camera)
+                    // Avoid jittering when the camera is following a unit
+                    .after(drag_camera),
+            )
+            .add_systems(
+                Update,
+                set_camera_inclination.before(InteractionSystem::MoveCamera),
+            )
+            .add_systems(Update, rotate_camera.before(InteractionSystem::MoveCamera))
+            .add_systems(Update, pan_camera.before(InteractionSystem::MoveCamera))
+            .add_systems(
+                Update,
+                move_camera_to_goal.in_set(InteractionSystem::MoveCamera),
+            );
     }
 }
 

@@ -31,7 +31,7 @@ pub(crate) struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawTerrainManifest>::new())
+        app.add_plugins(ManifestPlugin::<RawTerrainManifest>::new())
             .add_asset_collection::<TerrainHandles>()
             .add_systems(
                 FixedUpdate,

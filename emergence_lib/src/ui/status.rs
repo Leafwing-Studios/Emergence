@@ -33,7 +33,7 @@ impl Plugin for StatusPlugin {
                 Update,
                 display_status.run_if(in_state(AssetState::FullyLoaded)),
             )
-            .add_plugin(BillboardPlugin);
+            .add_plugins(BillboardPlugin);
     }
 }
 

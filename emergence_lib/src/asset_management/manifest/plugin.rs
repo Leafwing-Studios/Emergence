@@ -47,10 +47,8 @@ where
             .add_asset::<M>()
             .add_asset_collection::<RawManifestHandle<M>>()
             .add_systems(
-                Update,
-                detect_manifest_creation::<M>
-                    .in_set(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::LoadManifests)),
+                OnExit(AssetState::LoadManifests),
+                detect_manifest_creation::<M>.in_set(DetectManifestCreationSet),
             )
             .add_systems(
                 Update,

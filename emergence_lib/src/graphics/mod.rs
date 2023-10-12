@@ -29,10 +29,10 @@ struct GraphicsSet;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(LightingPlugin)
-            .add_plugin(AtmospherePlugin)
-            .add_plugin(WaterRenderingPlugin)
-            .add_plugin(OverlayPlugin)
+        app.add_plugins(LightingPlugin)
+            .add_plugins(AtmospherePlugin)
+            .add_plugins(WaterRenderingPlugin)
+            .add_plugins(OverlayPlugin)
             .add_systems(Update, render_litter_piles.in_set(GraphicsSet))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(PostUpdate, (inherit_materials, remove_ghostly_shadows))

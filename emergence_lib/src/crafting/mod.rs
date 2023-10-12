@@ -40,8 +40,8 @@ pub(crate) struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(ManifestPlugin::<RawItemManifest>::new())
-            .add_plugin(ManifestPlugin::<RawRecipeManifest>::new())
+        app.add_plugins(ManifestPlugin::<RawItemManifest>::new())
+            .add_plugins(ManifestPlugin::<RawRecipeManifest>::new())
             .add_systems(
                 FixedUpdate,
                 (

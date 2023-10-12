@@ -23,13 +23,13 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(InputManagerPlugin::<PlayerAction>::default())
+        app.add_plugins(InputManagerPlugin::<PlayerAction>::default())
             .init_resource::<ActionState<PlayerAction>>()
             .insert_resource(PlayerAction::default_input_map())
-            .add_plugin(camera::CameraPlugin)
-            .add_plugin(picking::PickingPlugin)
-            .add_plugin(selection::SelectionPlugin)
-            .add_plugin(clipboard::ClipboardPlugin)
+            .add_plugins(camera::CameraPlugin)
+            .add_plugins(picking::PickingPlugin)
+            .add_plugins(selection::SelectionPlugin)
+            .add_plugins(clipboard::ClipboardPlugin)
             .configure_set(
                 Update,
                 PlayerModifiesWorld.run_if(in_state(WorldGenState::Complete)),

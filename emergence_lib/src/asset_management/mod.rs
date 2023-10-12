@@ -42,10 +42,8 @@ impl Plugin for AssetManagementPlugin {
             // This is needed to ensure that the manifest resources are actually created in time for AssetState::Loading
             // BLOCKED: this can be removed in Bevy 0.11, as schedules will automatically flush the commands.
             .add_systems(
-                Update,
-                apply_deferred
-                    .after(DetectManifestCreationSet)
-                    .in_schedule(OnExit(AssetState::LoadManifests)),
+                OnExit(AssetState::LoadManifests),
+                apply_deferred.after(DetectManifestCreationSet),
             );
     }
 }
@@ -173,12 +171,10 @@ impl AssetCollectionExt for App {
         info!("Adding asset collection: {}", std::any::type_name::<T>());
 
         // Begin the loading process
-        self.add_systems(Update, T::initialize.in_schedule(OnEnter(T::STAGE)));
         self.add_systems(
-            Update,
-            T::register_assets_to_load.in_schedule(OnEnter(T::STAGE)),
+            OnEnter(T::STAGE),
+            (T::initialize, T::register_assets_to_load),
         );
-
         // Poll each asset collection
         self.add_systems(Update, T::check_loaded.run_if(in_state(T::STAGE)));
 
