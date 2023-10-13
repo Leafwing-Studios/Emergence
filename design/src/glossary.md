@@ -321,7 +321,7 @@ The direction from which items are loaded onto the belts influence which side of
 **Examples**:
 
 - [Factorio: Transport belt](https://wiki.factorio.com/Transport_belt)
-- [Satisfactory: Conveyor belt](https://satisfactory.fandom.com/wiki/Conveyor_Belt)
+- [Satisfactory: Conveyor belt](https://satisfactory.wiki.gg/wiki/Conveyor_Belts)
 - [Dyson Sphere Program: Conveyor belt](https://dyson-sphere-program.fandom.com/wiki/Conveyor_Belt)
 
 ### Bot
@@ -347,7 +347,7 @@ Often, blueprints can be shared between players and/or be reused during the game
 
 - [Factorio: Blueprint](https://wiki.factorio.com/Blueprint)
 - [Factorio: Ghost](https://wiki.factorio.com/Ghost)
-- [Satisfactory: Blueprint designer](https://satisfactory.fandom.com/wiki/Blueprint_Designer)
+- [Satisfactory: Blueprint designer](https://satisfactory.wiki.gg/wiki/Blueprint_Designer)
 
 ### Clipboard
 
@@ -386,7 +386,7 @@ or with [splitters](glossary.md#splitter) to split one set of goods to one side 
 
 - [Factorio: Filter inserter](https://wiki.factorio.com/Filter_inserter)
 - [Factorio: Splitter](https://wiki.factorio.com/Splitter) (provides filter functionality)
-- [Satisfactory: Smart splitter](https://satisfactory.fandom.com/wiki/Smart_Splitter) (provides filter functionality)
+- [Satisfactory: Smart splitter](https://satisfactory.wiki.gg/wiki/Smart_Splitter) (provides filter functionality)
 - [Dyson Sphere Program: Sorter](https://dyson-sphere-program.fandom.com/wiki/Sorter) (provides filter functionality)
 
 ### Inserter
@@ -404,7 +404,7 @@ A machine to research new technologies, unlocking new machines and other gamepla
 Usually uses **science packs** as input.
 
 - [Factorio: Lab](https://wiki.factorio.com/Lab)
-- [Satisfactory: HUB terminal](https://satisfactory.fandom.com/wiki/The_HUB#HUB_Terminal)
+- [Satisfactory: HUB terminal](https://satisfactory.wiki.gg/wiki/The_HUB#HUB_Terminal)
 - [Dyson Sphere Program: Matrix Lab](https://dyson-sphere-program.fandom.com/wiki/Matrix_Lab)
 
 ### Loader
@@ -477,7 +477,7 @@ The distribution of power is usually separated from the distribution of other re
 (e.g. through an electric network).
 
 - [Factorio: Electric system](https://wiki.factorio.com/Electric_system)
-- [Satisfactory: Power](https://satisfactory.fandom.com/wiki/Power)
+- [Satisfactory: Power](https://satisfactory.wiki.gg/wiki/Power)
 - [Dyson Sphere Program: Power](https://dyson-sphere-program.fandom.com/wiki/Category:Power)
 
 ### Production statistics
@@ -517,7 +517,7 @@ Research is usually very expensive to pace the game.
 **Examples**:
 
 - [Factorio: Research](https://wiki.factorio.com/Research)
-- [Satisfactory: Milestones](https://satisfactory.fandom.com/wiki/Milestones)
+- [Satisfactory: Milestones](https://satisfactory.wiki.gg/wiki/Milestones)
 - [Dyson Sphere Program: Research](https://dyson-sphere-program.fandom.com/wiki/Research)
 
 ### Resource
@@ -559,7 +559,7 @@ In some games there are also many other entities to guide the behavior of large 
 **Examples**:
 
 - [Factorio: Railway](https://wiki.factorio.com/Railway)
-- [Satisfactory: Electric Locomotive](https://satisfactory.fandom.com/wiki/Electric_Locomotive)
+- [Satisfactory: Electric Locomotive](https://satisfactory.wiki.gg/wiki/Electric_Locomotive)
 
 ### Undo
 
