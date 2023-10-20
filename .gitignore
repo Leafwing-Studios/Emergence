@@ -18,3 +18,8 @@ rust-toolchain.toml
 .cargo/
 
 *.blend1
+
+# ignore nix stuff
+.direnv/
+.devenv
+.pre-commit-config.yaml
