@@ -1,6 +1,7 @@
 //! Defines write-only data for each variety of item.
 
 use bevy::{
+    asset::Asset,
     reflect::{Reflect, TypePath, TypeUuid},
     utils::HashMap,
 };
@@ -131,7 +132,7 @@ impl From<RawItemData> for ItemData {
 }
 
 /// The [`ItemManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
+#[derive(Asset, Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
 #[uuid = "cd9f4571-b0c4-4641-8d27-1c9c5ad4c812"]
 pub struct RawItemManifest {
     /// The data for each item.

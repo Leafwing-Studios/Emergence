@@ -12,6 +12,7 @@ use crate::{
     water::roots::RootZone,
 };
 use bevy::{
+    asset::Asset,
     reflect::{Reflect, TypePath, TypeUuid},
     utils::HashMap,
 };
@@ -274,7 +275,7 @@ impl StructureManifest {
 }
 
 /// The [`StructureManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
+#[derive(Asset, Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
 #[uuid = "77ddfe49-be99-4fea-bbba-0c085821f6b8"]
 pub struct RawStructureManifest {
     /// The data for each structure.

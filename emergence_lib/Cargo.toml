@@ -33,6 +33,7 @@ hexx = { version = "0.11", features = ["ser_de"] }
 bevy_mod_raycast = "0.16"
 bevy_screen_diagnostics = "0.4"
 bevy_framepace = "0.14.1"
+thiserror = "1.0.50"
 
 [dev-dependencies]
 criterion = "0.4"

@@ -85,7 +85,7 @@ where
         world.insert_resource(Self { handle });
     }
 
-    fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
+    fn load_state(&self, asset_server: &AssetServer) -> Option<bevy::asset::LoadState> {
         let load_state = asset_server.get_load_state(self.handle.clone_weak());
 
         debug!("Load state: {load_state:?}");
@@ -124,9 +124,9 @@ fn detect_manifest_modification<M: Asset>(
 ) where
     M: IsRawManifest,
 {
-    for ev in ev_asset.iter() {
-        if let AssetEvent::Modified { handle } = ev {
-            let Some(raw_manifest) = raw_manifests.get(handle) else {
+    for ev in ev_asset.read() {
+        if let AssetEvent::Modified { id } = ev {
+            let Some(raw_manifest) = raw_manifests.get(*id) else {
                 warn!("Raw manifest modified, but asset not available!");
                 continue;
             };
