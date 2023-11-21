@@ -1,6 +1,9 @@
 //! Contains [`FallibleEntityCommandExt`] and related code.
 
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::{
+    ecs::system::{EntityCommand, EntityCommands},
+    prelude::*,
+};
 
 /// An extension trait for [`EntityCommands`] that has fallible versions of
 /// the most commonly used commands.
@@ -16,11 +19,19 @@ pub trait FallibleEntityCommandExt<'w, 's, 'a> {
 
 impl<'w, 's, 'a> FallibleEntityCommandExt<'w, 's, 'a> for EntityCommands<'w, 's, 'a> {
     fn try_add_child(&mut self, child: Entity) -> &mut EntityCommands<'w, 's, 'a> {
-        self.add(move |entity, world: &mut World| {
-            if let Some(mut entity_mut) = world.get_entity_mut(entity) {
-                entity_mut.add_child(child);
-            }
-        });
+        self.add(TryAddChild { child });
         self
+    }
+}
+
+struct TryAddChild {
+    child: Entity,
+}
+
+impl EntityCommand for TryAddChild {
+    fn apply(self, id: Entity, world: &mut World) {
+        if let Some(mut entity_mut) = world.get_entity_mut(id) {
+            entity_mut.add_child(self.child);
+        }
     }
 }
