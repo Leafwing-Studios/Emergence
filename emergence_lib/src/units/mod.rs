@@ -11,7 +11,7 @@ use crate::{
     simulation::SimulationSet,
 };
 use bevy::prelude::*;
-use bevy_mod_raycast::RaycastMesh;
+use bevy_mod_raycast::deferred::RaycastMesh;
 use rand::{distributions::WeightedIndex, prelude::Distribution, rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
 

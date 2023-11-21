@@ -8,7 +8,7 @@ use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
-use bevy_mod_raycast::RaycastSource;
+use bevy_mod_raycast::deferred::RaycastSource;
 use leafwing_input_manager::orientation::Rotation;
 use leafwing_input_manager::prelude::ActionState;
 

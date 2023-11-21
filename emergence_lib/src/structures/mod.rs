@@ -4,7 +4,7 @@
 //! but they can also be used for defense, research, reproduction, storage and more exotic effects.
 
 use bevy::{prelude::*, utils::HashSet};
-use bevy_mod_raycast::RaycastMesh;
+use bevy_mod_raycast::deferred::RaycastMesh;
 use hexx::{shapes::hexagon, Hex};
 use serde::{Deserialize, Serialize};
 

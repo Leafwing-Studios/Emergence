@@ -18,7 +18,7 @@ use crate::terrain::terrain_manifest::TerrainManifest;
 use crate::{self as emergence_lib, graphics::InheritedMaterial};
 use bevy::prelude::*;
 use bevy::utils::{Duration, HashMap};
-use bevy_mod_raycast::RaycastMesh;
+use bevy_mod_raycast::deferred::RaycastMesh;
 use emergence_macros::IterableEnum;
 
 use crate::{

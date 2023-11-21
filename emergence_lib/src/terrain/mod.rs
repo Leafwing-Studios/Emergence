@@ -1,7 +1,7 @@
 //! Generating and representing terrain as game objects.
 
 use bevy::prelude::*;
-use bevy_mod_raycast::RaycastMesh;
+use bevy_mod_raycast::deferred::RaycastMesh;
 
 use crate::asset_management::manifest::plugin::ManifestPlugin;
 use crate::asset_management::manifest::Id;
