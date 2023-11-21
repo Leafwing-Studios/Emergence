@@ -16,7 +16,6 @@ use crate::{
         goals::{Goal, GoalKind},
         unit_manifest::Unit,
     },
-    utils::fallible_commands::FallibleEntityCommandExt,
 };
 
 use super::ui_assets::Icons;
