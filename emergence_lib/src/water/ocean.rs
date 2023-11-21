@@ -42,7 +42,7 @@ pub(super) fn tides(
     let settings = water_config.tide_settings;
 
     // The factor of TAU compensates for the natural period of the sine function.
-    let scaled_time = time * std::f32::consts::TAU / settings.delta().0;
+    let scaled_time = time * std::f32::consts::TAU / settings.period.0;
 
     // The sine function can have a range of [-1, 1],
     // so at its lowest point we are subtracting the amplitude.
