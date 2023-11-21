@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use emergence_lib::{
@@ -41,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     app.insert_resource(Ocean::default());
     app.insert_resource(WaterConfig::IN_GAME);
     app.insert_resource(InGameTime::default());
-    app.insert_resource(FixedTime::new(Duration::from_secs_f32(1. / 30.)));
+    app.insert_resource(Time::<Fixed>::from_hz(30.));
 
     app.add_systems(FixedUpdate, update_water_depth);
     // Run once to make sure system caches are populated
