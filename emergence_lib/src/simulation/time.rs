@@ -5,7 +5,7 @@ use std::ops::{Div, Mul};
 
 use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use leafwing_abilities::pool::MaxPoolLessThanZero;
+use leafwing_abilities::pool::MaxPoolLessThanMin;
 use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
 use serde::{Deserialize, Serialize};
@@ -232,15 +232,7 @@ impl TimePool {
 impl Pool for TimePool {
     type Quantity = Days;
 
-    const ZERO: Days = Days(0.);
-
-    fn new(
-        current: Self::Quantity,
-        max: Self::Quantity,
-        _regen_per_second: Self::Quantity,
-    ) -> Self {
-        Self { current, max }
-    }
+    const MIN: Days = Days(0.);
 
     fn current(&self) -> Self::Quantity {
         self.current
@@ -259,22 +251,14 @@ impl Pool for TimePool {
     fn set_max(
         &mut self,
         new_max: Self::Quantity,
-    ) -> Result<(), leafwing_abilities::pool::MaxPoolLessThanZero> {
-        if new_max < Self::ZERO {
-            Err(MaxPoolLessThanZero)
+    ) -> Result<(), leafwing_abilities::pool::MaxPoolLessThanMin> {
+        if new_max < Self::MIN {
+            Err(MaxPoolLessThanMin)
         } else {
             self.max = new_max;
             self.set_current(self.current);
             Ok(())
         }
-    }
-
-    fn regen_per_second(&self) -> Self::Quantity {
-        panic!("Time does not regenerate")
-    }
-
-    fn set_regen_per_second(&mut self, _new_regen_per_second: Self::Quantity) {
-        panic!("Time does not regenerate")
     }
 }
 

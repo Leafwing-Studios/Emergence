@@ -1,7 +1,7 @@
 //! Organisms that are underwater should eventually drown and die.
 use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Sub, SubAssign};
-use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+use leafwing_abilities::{pool::MaxPoolLessThanMin, prelude::Pool};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
@@ -126,15 +126,7 @@ impl Div<f32> for Oxygen {
 
 impl Pool for OxygenPool {
     type Quantity = Oxygen;
-    const ZERO: Oxygen = Oxygen(0.);
-
-    fn new(
-        _current: Self::Quantity,
-        _max: Self::Quantity,
-        _regen_per_second: Self::Quantity,
-    ) -> Self {
-        unimplemented!("Cannot set regen per second for oxygen pool.")
-    }
+    const MIN: Oxygen = Oxygen(0.);
 
     fn current(&self) -> Self::Quantity {
         self.current
@@ -150,22 +142,14 @@ impl Pool for OxygenPool {
         self.max
     }
 
-    fn set_max(&mut self, new_max: Self::Quantity) -> Result<(), MaxPoolLessThanZero> {
-        if new_max < Self::ZERO {
-            Err(MaxPoolLessThanZero)
+    fn set_max(&mut self, new_max: Self::Quantity) -> Result<(), MaxPoolLessThanMin> {
+        if new_max < Self::MIN {
+            Err(MaxPoolLessThanMin)
         } else {
             self.max = new_max;
             self.set_current(self.current);
             Ok(())
         }
-    }
-
-    fn regen_per_second(&self) -> Self::Quantity {
-        Oxygen::REGEN_RATE
-    }
-
-    fn set_regen_per_second(&mut self, _new_regen_per_second: Self::Quantity) {
-        panic!("Cannot set regen per second for oxygen pool.")
     }
 }
 
