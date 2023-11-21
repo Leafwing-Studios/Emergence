@@ -247,7 +247,7 @@ fn mousewheel_zoom(
     mut mouse_wheel_events: EventReader<MouseWheel>,
     mut actions: ResMut<ActionState<PlayerAction>>,
 ) {
-    if let Some(first_event) = mouse_wheel_events.iter().next() {
+    if let Some(first_event) = mouse_wheel_events.read().next() {
         if first_event.y > 0. {
             actions.press(PlayerAction::ZoomIn);
         } else {
@@ -271,7 +271,7 @@ fn drag_camera(
         let rotation_rate = settings.rotation_speed.delta(time.delta()) * settings.drag_ratio;
         let inclination_rate = settings.inclination_speed.delta(time.delta()) * settings.drag_ratio;
 
-        for mouse_motion in mouse_motion_events.iter() {
+        for mouse_motion in mouse_motion_events.read() {
             settings.facing += Rotation::from_radians(mouse_motion.delta.x * rotation_rate);
             let proposed_inclination =
                 settings.inclination.into_radians() + mouse_motion.delta.y * inclination_rate;

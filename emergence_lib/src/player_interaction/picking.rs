@@ -123,7 +123,7 @@ fn update_cursor_pos(
             None
         };
 
-    if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
+    if let Some(last_mouse_position) = cursor_moved_events.read().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);
     }
 }
