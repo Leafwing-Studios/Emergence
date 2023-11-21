@@ -24,7 +24,9 @@ impl<'w, 's, 'a> FallibleEntityCommandExt<'w, 's, 'a> for EntityCommands<'w, 's,
     }
 }
 
+/// Command for [`FallibleEntityCommandExt::try_add_child`].
 struct TryAddChild {
+    /// The child entity to add.
     child: Entity,
 }
 

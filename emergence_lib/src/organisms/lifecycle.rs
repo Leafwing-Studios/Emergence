@@ -155,8 +155,8 @@ impl From<RawLifePath> for LifePath {
     fn from(raw: RawLifePath) -> Self {
         LifePath {
             new_form: raw.new_form.into(),
-            energy_required: raw.energy_required.map(|energy| EnergyPool::simple(energy)),
-            time_required: raw.time_required.map(|time| TimePool::simple(time)),
+            energy_required: raw.energy_required.map(EnergyPool::simple),
+            time_required: raw.time_required.map(TimePool::simple),
         }
     }
 }
