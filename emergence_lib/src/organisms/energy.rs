@@ -189,8 +189,8 @@ pub(crate) enum StartingEnergy {
 }
 
 /// Steadily depletes [`Energy`] over time.
-pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query<&mut EnergyPool>) {
-    let delta_time = fixed_time.period.as_secs_f32();
+pub(super) fn consume_energy(time: Res<Time>, mut energy_query: Query<&mut EnergyPool>) {
+    let delta_time = time.delta().as_secs_f32();
 
     for mut energy_pool in energy_query.iter_mut() {
         // Note that regen rates are almost always negative.

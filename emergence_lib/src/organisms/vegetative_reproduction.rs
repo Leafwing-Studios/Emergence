@@ -56,7 +56,7 @@ pub struct RawVegetativeReproduction {
 impl From<RawVegetativeReproduction> for VegetativeReproduction {
     fn from(raw: RawVegetativeReproduction) -> Self {
         VegetativeReproduction {
-            timer: Timer::from_seconds(raw.period, TimerMode::Once),
+            timer: Timer::from_seconds(raw.delta(), TimerMode::Once),
             energy_threshold: Energy(raw.energy_threshold),
         }
     }
@@ -72,11 +72,11 @@ pub(super) fn vegetative_spread(
     )>,
     map_geometry: Res<MapGeometry>,
     structure_manifest: Res<StructureManifest>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     mut commands: Commands,
 ) {
     let mut rng = rand::thread_rng();
-    let delta_time = fixed_time.period;
+    let delta_time = time.delta();
 
     for (&voxel_pos, &structure_id, mut vegetative_reproduction, mut energy_pool) in
         query.iter_mut()

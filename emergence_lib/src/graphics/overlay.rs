@@ -493,7 +493,7 @@ fn set_overlay_material(
     signals: Res<Signals>,
     map_geometry: Res<MapGeometry>,
     tile_overlay: Res<TileOverlay>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
 ) {
     if tile_overlay.overlay_type == OverlayType::None {
         return;
@@ -547,7 +547,7 @@ fn set_overlay_material(
                     water_volume_query.get(terrain_entity).unwrap();
 
                 let net_water = *current_water_volume - previous_water_volume.0;
-                let volume_per_second = net_water.volume() / fixed_time.period.as_secs_f32();
+                let volume_per_second = net_water.volume() / time.delta().as_secs_f32();
 
                 Some(tile_overlay.get_water_flux_material(volume_per_second))
             }

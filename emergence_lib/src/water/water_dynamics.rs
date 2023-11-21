@@ -39,10 +39,10 @@ pub(super) fn evaporation(
     )>,
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
 ) {
     let evaporation_per_second = water_config.evaporation_rate.0 / in_game_time.seconds_per_day();
-    let elapsed_time = fixed_time.period.as_secs_f32();
+    let elapsed_time = time.delta().as_secs_f32();
 
     let evaporation_rate = evaporation_per_second * elapsed_time;
 
@@ -78,13 +78,13 @@ impl ReceivedLight {
 pub(super) fn precipitation(
     water_config: Res<WaterConfig>,
     in_game_time: Res<InGameTime>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     current_weather: Res<CurrentWeather>,
     mut water_query: Query<&mut WaterVolume>,
 ) {
     let precipitation_per_second =
         water_config.precipitation_rate.0 / in_game_time.seconds_per_day();
-    let elapsed_time = fixed_time.period.as_secs_f32();
+    let elapsed_time = time.delta().as_secs_f32();
 
     let precipitation_rate = Volume(
         precipitation_per_second * elapsed_time * current_weather.get().precipitation_rate(),
@@ -141,13 +141,13 @@ pub fn horizontal_water_movement(
     mut terrain_query: Query<LateralFlowQuery>,
     water_config: Res<WaterConfig>,
     map_geometry: Res<MapGeometry>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     in_game_time: Res<InGameTime>,
     ocean: Res<Ocean>,
 ) {
     let base_water_transfer_amount = water_config.lateral_flow_rate
         / in_game_time.seconds_per_day()
-        * fixed_time.period.as_secs_f32();
+        * time.delta().as_secs_f32();
 
     // PERF: it will probably be much faster to store scratch space on components
     // Stores the total volume to be removed from each tile

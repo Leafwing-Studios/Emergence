@@ -142,7 +142,7 @@ struct CraftingQuery {
 
 /// Progress the state of recipes that are being crafted.
 fn progress_crafting(
-    time: Res<FixedTime>,
+    time: Res<Time>,
     recipe_manifest: Res<RecipeManifest>,
     item_manifest: Res<ItemManifest>,
     terrain_query: Query<&ReceivedLight>,
@@ -192,12 +192,12 @@ fn progress_crafting(
                         // Many hands make light work!
                         if recipe.workers_required() > 0 {
                             updated_progress += Duration::from_secs_f32(
-                                time.period.as_secs_f32()
+                                time.delta().as_secs_f32()
                                     * crafter.workers_present.effective_workers()
                                     / recipe.workers_required() as f32,
                             );
                         } else {
-                            updated_progress += time.period;
+                            updated_progress += time.delta();
                         }
 
                         if updated_progress >= required {

@@ -40,11 +40,8 @@ use super::{
 };
 
 /// Ticks the timer for each [`CurrentAction`].
-pub(super) fn advance_action_timer(
-    mut units_query: Query<&mut CurrentAction>,
-    time: Res<FixedTime>,
-) {
-    let delta = time.period;
+pub(super) fn advance_action_timer(mut units_query: Query<&mut CurrentAction>, time: Res<Time>) {
+    let delta = time.delta();
 
     for mut current_action in units_query.iter_mut() {
         current_action.timer.tick(delta);

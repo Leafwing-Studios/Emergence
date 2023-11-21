@@ -177,11 +177,11 @@ pub(super) fn manage_oxygen(
         (Without<Id<Unit>>, With<Organism>),
     >,
     water_depth_query: Query<&WaterDepth>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     map_geometry: Res<MapGeometry>,
     mut commands: Commands,
 ) {
-    let delta_time = fixed_time.period.as_secs_f32();
+    let delta_time = time.delta().as_secs_f32();
 
     for (entity, &voxel_pos, mut oxygen_pool) in unit_query.iter_mut() {
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();

@@ -22,7 +22,7 @@ pub(crate) struct TemporalPlugin;
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<PauseState>()
-            .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
+            .insert_resource(Time::<Fixed>::from_hz(30.))
             .add_systems(
                 FixedUpdate,
                 (
@@ -165,8 +165,8 @@ impl Default for InGameTime {
 }
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
-pub fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
-    let delta = Days(time.period.as_secs_f32() / in_game_time.seconds_per_day);
+pub fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
+    let delta = Days(time.delta().as_secs_f32() / in_game_time.seconds_per_day);
     in_game_time.elapsed_time += delta;
 }
 
@@ -282,10 +282,10 @@ impl Pool for TimePool {
 fn record_elapsed_time_for_lifecycles(
     mut query: Query<&mut Lifecycle>,
     in_game_time: Res<InGameTime>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
 ) {
     for mut lifecycle in query.iter_mut() {
-        let delta_days = Days(fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day);
+        let delta_days = Days(time.delta().as_secs_f32() / in_game_time.seconds_per_day);
         lifecycle.record_elapsed_time(delta_days);
     }
 }

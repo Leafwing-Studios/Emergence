@@ -472,7 +472,7 @@ pub(super) fn ghost_structure_lifecycle(
         With<Ghost>,
     >,
     structure_manifest: Res<StructureManifest>,
-    time: Res<FixedTime>,
+    time: Res<Time>,
     mut commands: Commands,
 ) {
     for (
@@ -501,7 +501,7 @@ pub(super) fn ghost_structure_lifecycle(
                 let mut updated_progress = progress;
 
                 // Scale construction speed linearly with the number of workers present (and vigor)
-                updated_progress += workers_present.effective_workers() as u32 * time.period;
+                updated_progress += workers_present.effective_workers() as u32 * time.delta();
 
                 *crafting_state = if updated_progress >= required {
                     CraftingState::RecipeComplete
