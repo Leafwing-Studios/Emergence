@@ -1,6 +1,5 @@
 //! Storage of multiple items with a capacity.
 
-use bevy::prelude::warn;
 use itertools::rev;
 use serde::{Deserialize, Serialize};
 
