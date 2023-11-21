@@ -33,7 +33,6 @@ use emergence_lib::{
         SoilWaterCapacity,
     },
 };
-use leafwing_abilities::prelude::Pool;
 
 #[test]
 fn can_serialize_item_manifest() {

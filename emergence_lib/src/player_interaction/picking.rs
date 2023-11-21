@@ -2,7 +2,7 @@
 //! available.
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_raycast::{
-    deferred::{RaycastMethod, RaycastSource, RaycastSystem},
+    deferred::{RaycastMethod, RaycastSource},
     DefaultRaycastingPlugin,
 };
 use leafwing_input_manager::prelude::ActionState;

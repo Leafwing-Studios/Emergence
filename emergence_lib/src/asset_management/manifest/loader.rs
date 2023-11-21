@@ -83,8 +83,8 @@ where
     fn load<'a>(
         &'a self,
         reader: &'a mut bevy::asset::io::Reader,
-        settings: &'a Self::Settings,
-        load_context: &'a mut LoadContext,
+        _settings: &'a Self::Settings,
+        _load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
             let mut bytes = Vec::new();
