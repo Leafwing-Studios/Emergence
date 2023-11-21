@@ -47,6 +47,6 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # If you add something here please also add a comment explaining why it's necessary :)
 # The key of this field is the repo's root URL
 allow-git = [
-  # bevy_mod_picking: waiting on PR merge plus release for Bevy 0.10
-  "https://github.com/soerenmeier/bevy_mod_raycast"
+  # bevy_mod_billobard: waiting on PR merge
+  "https://github.com/robtfm/bevy_mod_billboard",
 ]
