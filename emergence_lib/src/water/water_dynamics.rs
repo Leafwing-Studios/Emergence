@@ -497,7 +497,7 @@ mod tests {
 
         // Our key systems are run in the fixed update schedule.
         // In order to ensure that the water table is updated in our tests, we must advance the fixed time.
-        let mut fixed_time = app.world.resource_mut::<FixedTime>();
+        let mut fixed_time = app.world.resource_mut::<Time<Fixed>>();
         fixed_time.tick(scenario.simulated_duration);
 
         app
