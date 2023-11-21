@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bevy::{prelude::*, reflect::TypePath};
+use bevy::prelude::*;
 
 use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
