@@ -147,7 +147,7 @@ impl Plugin for WaterPlugin {
         app.insert_resource(WaterConfig::IN_GAME)
             .init_resource::<Ocean>();
 
-        app.configure_sets(
+        app.configure_setss(
             FixedUpdate,
             (
                 WaterSet::VerticalWaterMovement,

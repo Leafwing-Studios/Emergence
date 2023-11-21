@@ -79,7 +79,7 @@ fn update_raycast_with_cursor(
     mut query: Query<(&mut RaycastSource<Unit>, &mut RaycastSource<PickableVoxel>), With<Camera>>,
 ) {
     // Grab the most recent cursor event if it exists:
-    let cursor_position = match cursor.iter().last() {
+    let cursor_position = match cursor.read().last() {
         Some(cursor_moved) => cursor_moved.position,
         None => return,
     };
