@@ -62,7 +62,7 @@ where
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
-pub struct RawManifestHandle<M: TypePath>
+pub struct RawManifestHandle<M: Asset>
 where
     M: IsRawManifest,
 {
@@ -72,7 +72,7 @@ where
     handle: Handle<M>,
 }
 
-impl<M: TypePath> Loadable for RawManifestHandle<M>
+impl<M: Asset> Loadable for RawManifestHandle<M>
 where
     M: IsRawManifest,
 {
@@ -95,7 +95,7 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-pub fn detect_manifest_creation<M: TypePath>(
+pub fn detect_manifest_creation<M: Asset>(
     mut commands: Commands,
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
@@ -117,7 +117,7 @@ pub fn detect_manifest_creation<M: TypePath>(
 }
 
 /// Update the manifest after the asset has been changed.
-fn detect_manifest_modification<M: TypePath>(
+fn detect_manifest_modification<M: Asset>(
     mut ev_asset: EventReader<AssetEvent<M>>,
     raw_manifests: Res<Assets<M>>,
     mut manifest: ResMut<Manifest<M::Marker, M::Data>>,
