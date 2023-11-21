@@ -56,7 +56,7 @@ pub struct RawVegetativeReproduction {
 impl From<RawVegetativeReproduction> for VegetativeReproduction {
     fn from(raw: RawVegetativeReproduction) -> Self {
         VegetativeReproduction {
-            timer: Timer::from_seconds(raw.delta(), TimerMode::Once),
+            timer: Timer::from_seconds(raw.period, TimerMode::Once),
             energy_threshold: Energy(raw.energy_threshold),
         }
     }
