@@ -44,7 +44,7 @@ where
         info!("Building RawManifestPlugin for {}", M::path().display());
 
         app.init_asset_loader::<RawManifestLoader<M>>()
-            .add_asset::<M>()
+            .init_asset::<M>()
             .add_asset_collection::<RawManifestHandle<M>>()
             .add_systems(
                 OnExit(AssetState::LoadManifests),
