@@ -1,6 +1,7 @@
 //! Defines write-only data for each variety of terrain.
 
 use bevy::{
+    asset::Asset,
     reflect::{Reflect, TypePath, TypeUuid},
     utils::HashMap,
 };
@@ -60,7 +61,7 @@ impl Default for TerrainData {
 }
 
 /// The [`TerrainManifest`] as seen in the manifest file.
-#[derive(Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
+#[derive(Asset, Debug, Clone, Serialize, Deserialize, TypeUuid, TypePath, PartialEq)]
 #[uuid = "8d6b3b65-9b11-42a9-a795-f95b06653070"]
 pub struct RawTerrainManifest {
     /// The data for each item.

@@ -57,11 +57,11 @@ impl Display for Age {
 /// Advances the age of all units by the elapsed time and kills them if they are too old.
 pub(super) fn aging(
     mut commands: Commands,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     in_game_time: Res<InGameTime>,
     mut query: Query<(&mut Age, Entity)>,
 ) {
-    let delta_time = fixed_time.period.as_secs_f32();
+    let delta_time = time.delta().as_secs_f32();
     let delta_days = Days(delta_time / in_game_time.seconds_per_day());
 
     for (mut age, entity) in query.iter_mut() {

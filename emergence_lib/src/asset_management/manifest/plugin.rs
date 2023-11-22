@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bevy::{prelude::*, reflect::TypePath};
+use bevy::prelude::*;
 
 use crate::asset_management::{AssetCollectionExt, AssetState, Loadable};
 
@@ -44,7 +44,7 @@ where
         info!("Building RawManifestPlugin for {}", M::path().display());
 
         app.init_asset_loader::<RawManifestLoader<M>>()
-            .add_asset::<M>()
+            .init_asset::<M>()
             .add_asset_collection::<RawManifestHandle<M>>()
             .add_systems(
                 OnExit(AssetState::LoadManifests),
@@ -62,7 +62,7 @@ where
 ///
 /// This is necessary to stop the asset from being discarded.
 #[derive(Debug, Clone, Resource)]
-pub struct RawManifestHandle<M: TypePath>
+pub struct RawManifestHandle<M: Asset>
 where
     M: IsRawManifest,
 {
@@ -72,7 +72,7 @@ where
     handle: Handle<M>,
 }
 
-impl<M: TypePath> Loadable for RawManifestHandle<M>
+impl<M: Asset> Loadable for RawManifestHandle<M>
 where
     M: IsRawManifest,
 {
@@ -85,7 +85,7 @@ where
         world.insert_resource(Self { handle });
     }
 
-    fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
+    fn load_state(&self, asset_server: &AssetServer) -> Option<bevy::asset::LoadState> {
         let load_state = asset_server.get_load_state(self.handle.clone_weak());
 
         debug!("Load state: {load_state:?}");
@@ -95,7 +95,7 @@ where
 }
 
 /// Wait for the manifest to be fully loaded and then process it.
-pub fn detect_manifest_creation<M: TypePath>(
+pub fn detect_manifest_creation<M: Asset>(
     mut commands: Commands,
     raw_manifest_handle: Res<RawManifestHandle<M>>,
     raw_manifests: Res<Assets<M>>,
@@ -117,16 +117,16 @@ pub fn detect_manifest_creation<M: TypePath>(
 }
 
 /// Update the manifest after the asset has been changed.
-fn detect_manifest_modification<M: TypePath>(
+fn detect_manifest_modification<M: Asset>(
     mut ev_asset: EventReader<AssetEvent<M>>,
     raw_manifests: Res<Assets<M>>,
     mut manifest: ResMut<Manifest<M::Marker, M::Data>>,
 ) where
     M: IsRawManifest,
 {
-    for ev in ev_asset.iter() {
-        if let AssetEvent::Modified { handle } = ev {
-            let Some(raw_manifest) = raw_manifests.get(handle) else {
+    for ev in ev_asset.read() {
+        if let AssetEvent::Modified { id } = ev {
+            let Some(raw_manifest) = raw_manifests.get(*id) else {
                 warn!("Raw manifest modified, but asset not available!");
                 continue;
             };

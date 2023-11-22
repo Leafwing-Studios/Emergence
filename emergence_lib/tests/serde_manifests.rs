@@ -33,7 +33,6 @@ use emergence_lib::{
         SoilWaterCapacity,
     },
 };
-use leafwing_abilities::prelude::Pool;
 
 #[test]
 fn can_serialize_item_manifest() {
@@ -121,7 +120,7 @@ fn can_serialize_unit_manifest() {
                     organism_variety: RawOrganismVariety {
                         prototypical_form: RawOrganismId::unit("ant"),
                         lifecycle: RawLifecycle::STATIC,
-                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                        energy_pool: EnergyPool::simple(100.),
                     },
                     diet: RawDiet::new("leuco_chunk", 50.),
                     max_impatience: 10,
@@ -139,7 +138,7 @@ fn can_serialize_unit_manifest() {
                     organism_variety: RawOrganismVariety {
                         prototypical_form: RawOrganismId::unit("test_unit"),
                         lifecycle: RawLifecycle::STATIC,
-                        energy_pool: EnergyPool::new_full(Energy(50.), Energy(0.)),
+                        energy_pool: EnergyPool::simple(50.),
                     },
                     diet: RawDiet::new("acacia_leaf", 0.),
                     max_impatience: 0,
@@ -234,7 +233,7 @@ fn can_serialize_structure_manifest() {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("leuco"),
                         lifecycle: RawLifecycle::STATIC,
-                        energy_pool: EnergyPool::new_full(Energy(100.), Energy(-1.)),
+                        energy_pool: EnergyPool::simple(100.),
                     }),
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("leuco_chunk_production"),
@@ -292,7 +291,7 @@ fn can_serialize_structure_manifest() {
                             energy_required: None,
                             time_required: Some(1.),
                         }]),
-                        energy_pool: EnergyPool::new_full(Energy(50.), Energy(-1.)),
+                        energy_pool: EnergyPool::simple(75.),
                     }),
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),
@@ -315,7 +314,7 @@ fn can_serialize_structure_manifest() {
                     organism_variety: Some(RawOrganismVariety {
                         prototypical_form: RawOrganismId::structure("acacia"),
                         lifecycle: RawLifecycle::STATIC,
-                        energy_pool: EnergyPool::new_full(Energy(300.), Energy(-1.)),
+                        energy_pool: EnergyPool::simple(300.),
                     }),
                     kind: RawStructureKind::Crafting {
                         starting_recipe: RawActiveRecipe::new("acacia_leaf_production"),

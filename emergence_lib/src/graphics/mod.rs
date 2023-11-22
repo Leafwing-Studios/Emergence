@@ -36,7 +36,7 @@ impl Plugin for GraphicsPlugin {
             .add_systems(Update, render_litter_piles.in_set(GraphicsSet))
             // Run these after Update to avoid panics due to despawned entities
             .add_systems(PostUpdate, (inherit_materials, remove_ghostly_shadows))
-            .configure_set(
+            .configure_sets(
                 Update,
                 GraphicsSet
                     .run_if(in_state(AssetState::FullyLoaded))

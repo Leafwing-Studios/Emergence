@@ -5,8 +5,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use thiserror::Error;
+
 use bevy::{
-    asset::{AssetLoader, LoadContext, LoadedAsset},
+    asset::{Asset, AssetLoader, AsyncReadExt, LoadContext},
     reflect::TypePath,
     utils::BoxedFuture,
 };
@@ -20,7 +22,7 @@ use super::Manifest;
 ///
 /// The processing will primarily remove the string IDs and replace them by numbers.
 pub trait IsRawManifest:
-    std::fmt::Debug + TypePath + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
+    Asset + std::fmt::Debug + TypePath + TypeUuid + Send + Sync + for<'de> Deserialize<'de> + 'static
 {
     /// The file extension of this manifest type.
     ///
@@ -54,23 +56,41 @@ where
     _phantom_manifest: PhantomData<M>,
 }
 
+/// An erorr produced when loading a raw manifest.
+#[derive(Debug, Error)]
+#[non_exhaustive]
+pub enum RawManifestError {
+    /// An [IO](std::io) Error
+    #[error("Could not load asset: {0}")]
+    Io(#[from] std::io::Error),
+    /// A [RON](ron) Error
+    #[error("Could not parse JSON: {0}")]
+    JsonError(#[from] serde_json::Error),
+}
+
 impl<M> AssetLoader for RawManifestLoader<M>
 where
     M: IsRawManifest,
 {
+    type Asset = M;
+    type Settings = ();
+    type Error = RawManifestError;
+
     fn extensions(&self) -> &[&str] {
         &[<M as IsRawManifest>::EXTENSION]
     }
 
     fn load<'a>(
         &'a self,
-        bytes: &'a [u8],
-        load_context: &'a mut LoadContext,
-    ) -> BoxedFuture<'a, anyhow::Result<(), anyhow::Error>> {
+        reader: &'a mut bevy::asset::io::Reader,
+        _settings: &'a Self::Settings,
+        _load_context: &'a mut LoadContext,
+    ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
-            let raw_manifest = serde_json::from_slice::<M>(bytes)?;
-            load_context.set_default_asset(LoadedAsset::<M>::new(raw_manifest));
-            Ok(())
+            let mut bytes = Vec::new();
+            reader.read_to_end(&mut bytes).await?;
+            let custom_asset = serde_json::from_slice::<M>(&bytes)?;
+            Ok(custom_asset)
         })
     }
 }

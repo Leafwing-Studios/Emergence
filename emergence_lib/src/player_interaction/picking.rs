@@ -1,7 +1,10 @@
 //! Keep track of the mouse cursor in world space, and convert it into a tile position, if
 //! available.
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_mod_raycast::{DefaultRaycastingPlugin, RaycastMethod, RaycastSource, RaycastSystem};
+use bevy_mod_raycast::{
+    deferred::{RaycastMethod, RaycastSource},
+    DefaultRaycastingPlugin,
+};
 use leafwing_input_manager::prelude::ActionState;
 
 use super::{InteractionSystem, PlayerAction};
@@ -13,12 +16,8 @@ pub(super) struct PickingPlugin;
 impl Plugin for PickingPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
-            .add_plugins(DefaultRaycastingPlugin::<PickableVoxel>::default())
-            .add_plugins(DefaultRaycastingPlugin::<Unit>::default())
-            .add_systems(
-                First,
-                update_raycast_with_cursor.before(RaycastSystem::BuildRays::<PickableVoxel>),
-            )
+            .add_plugins(DefaultRaycastingPlugin)
+            .add_systems(First, update_raycast_with_cursor)
             .add_systems(PreUpdate, move_cursor_manually)
             .add_systems(
                 Update,
@@ -79,7 +78,7 @@ fn update_raycast_with_cursor(
     mut query: Query<(&mut RaycastSource<Unit>, &mut RaycastSource<PickableVoxel>), With<Camera>>,
 ) {
     // Grab the most recent cursor event if it exists:
-    let cursor_position = match cursor.iter().last() {
+    let cursor_position = match cursor.read().last() {
         Some(cursor_moved) => cursor_moved.position,
         None => return,
     };
@@ -123,7 +122,7 @@ fn update_cursor_pos(
             None
         };
 
-    if let Some(last_mouse_position) = cursor_moved_events.iter().last() {
+    if let Some(last_mouse_position) = cursor_moved_events.read().last() {
         cursor_pos.screen_pos = Some(last_mouse_position.position);
     }
 }

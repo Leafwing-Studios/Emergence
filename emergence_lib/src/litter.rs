@@ -193,7 +193,7 @@ pub(super) fn carry_floating_litter_with_current(
     )>,
     water_height_query: Query<(&VoxelPos, &WaterDepth), Without<Drift>>,
     net_query: Query<&Footprint, With<AbsorbsItems>>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     mut map_geometry: ResMut<MapGeometry>,
 ) {
     /// Controls how fast litter drifts with the current
@@ -214,7 +214,7 @@ pub(super) fn carry_floating_litter_with_current(
     /// If this is larger than the maximum number of seconds that can be stored in a Duration, the app will panic.
     const MAX_DRIFT_TIME: f32 = 10.0;
 
-    let delta_time = fixed_time.period;
+    let delta_time = time.delta();
     let rng = &mut thread_rng();
     let normal_distribution = Normal::new(0.0, DRIFT_DEVIATION).unwrap();
 

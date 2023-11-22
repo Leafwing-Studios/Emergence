@@ -17,10 +17,10 @@ pub(super) fn produce_water_from_emitters(
     query: Query<(&WaterEmitter, &VoxelPos)>,
     mut terrain_query: Query<(&mut WaterVolume, &WaterDepth)>,
     map_geometry: Res<MapGeometry>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
     in_game_time: Res<InGameTime>,
 ) {
-    let elapsed_time = fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day();
+    let elapsed_time = time.delta().as_secs_f32() / in_game_time.seconds_per_day();
 
     for (water_emitter, &voxel_pos) in query.iter() {
         let terrain_entity = map_geometry.get_terrain(voxel_pos.hex).unwrap();

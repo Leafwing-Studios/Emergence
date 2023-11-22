@@ -145,7 +145,7 @@ pub trait Loadable: Resource + Sized {
     }
 
     /// How far along are we in loading these assets?
-    fn load_state(&self, asset_server: &AssetServer) -> LoadState;
+    fn load_state(&self, asset_server: &AssetServer) -> Option<LoadState>;
 
     /// A system that checks if the asset collection of type `T` loaded.
     fn check_loaded(
@@ -154,7 +154,7 @@ pub trait Loadable: Resource + Sized {
         mut assets_to_load: ResMut<AssetsToLoad>,
     ) {
         let load_state = asset_collection.load_state(&asset_server);
-        if load_state == LoadState::Loaded && assets_to_load.contains::<Self>() {
+        if load_state == Some(LoadState::Loaded) && assets_to_load.contains::<Self>() {
             assets_to_load.remove::<Self>();
         }
     }

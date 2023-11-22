@@ -5,7 +5,7 @@ use std::ops::{Div, Mul};
 
 use bevy::prelude::*;
 use derive_more::{Add, AddAssign, Display, Sub, SubAssign};
-use leafwing_abilities::pool::MaxPoolLessThanZero;
+use leafwing_abilities::pool::MaxPoolLessThanMin;
 use leafwing_abilities::prelude::Pool;
 use leafwing_input_manager::prelude::ActionState;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub(crate) struct TemporalPlugin;
 impl Plugin for TemporalPlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<PauseState>()
-            .insert_resource(FixedTime::new_from_secs(1.0 / 30.))
+            .insert_resource(Time::<Fixed>::from_hz(30.))
             .add_systems(
                 FixedUpdate,
                 (
@@ -165,8 +165,8 @@ impl Default for InGameTime {
 }
 
 /// Advances the in game time based on elapsed clock time when the game is not paused.
-pub fn advance_in_game_time(time: Res<FixedTime>, mut in_game_time: ResMut<InGameTime>) {
-    let delta = Days(time.period.as_secs_f32() / in_game_time.seconds_per_day);
+pub fn advance_in_game_time(time: Res<Time>, mut in_game_time: ResMut<InGameTime>) {
+    let delta = Days(time.delta().as_secs_f32() / in_game_time.seconds_per_day);
     in_game_time.elapsed_time += delta;
 }
 
@@ -232,15 +232,7 @@ impl TimePool {
 impl Pool for TimePool {
     type Quantity = Days;
 
-    const ZERO: Days = Days(0.);
-
-    fn new(
-        current: Self::Quantity,
-        max: Self::Quantity,
-        _regen_per_second: Self::Quantity,
-    ) -> Self {
-        Self { current, max }
-    }
+    const MIN: Days = Days(0.);
 
     fn current(&self) -> Self::Quantity {
         self.current
@@ -259,22 +251,14 @@ impl Pool for TimePool {
     fn set_max(
         &mut self,
         new_max: Self::Quantity,
-    ) -> Result<(), leafwing_abilities::pool::MaxPoolLessThanZero> {
-        if new_max < Self::ZERO {
-            Err(MaxPoolLessThanZero)
+    ) -> Result<(), leafwing_abilities::pool::MaxPoolLessThanMin> {
+        if new_max < Self::MIN {
+            Err(MaxPoolLessThanMin)
         } else {
             self.max = new_max;
             self.set_current(self.current);
             Ok(())
         }
-    }
-
-    fn regen_per_second(&self) -> Self::Quantity {
-        panic!("Time does not regenerate")
-    }
-
-    fn set_regen_per_second(&mut self, _new_regen_per_second: Self::Quantity) {
-        panic!("Time does not regenerate")
     }
 }
 
@@ -282,10 +266,10 @@ impl Pool for TimePool {
 fn record_elapsed_time_for_lifecycles(
     mut query: Query<&mut Lifecycle>,
     in_game_time: Res<InGameTime>,
-    fixed_time: Res<FixedTime>,
+    time: Res<Time>,
 ) {
     for mut lifecycle in query.iter_mut() {
-        let delta_days = Days(fixed_time.period.as_secs_f32() / in_game_time.seconds_per_day);
+        let delta_days = Days(time.delta().as_secs_f32() / in_game_time.seconds_per_day);
         lifecycle.record_elapsed_time(delta_days);
     }
 }

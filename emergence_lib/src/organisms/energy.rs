@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use core::fmt::Display;
 use core::ops::{Div, Mul};
 use derive_more::{Add, AddAssign, Sub, SubAssign};
-use leafwing_abilities::{pool::MaxPoolLessThanZero, prelude::Pool};
+use leafwing_abilities::{pool::MaxPoolLessThanMin, prelude::Pool};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +31,13 @@ pub struct EnergyPool {
 impl EnergyPool {
     /// Quickly construct a new empty energy pool with a max energy of `max` and no regeneration.
     pub fn simple(max: f32) -> Self {
-        EnergyPool::new_empty(Energy(max), Energy(0.))
+        EnergyPool {
+            current: Energy(0.),
+            max: Energy(max),
+            warning_threshold: Energy(0.),
+            satiation_threshold: Energy(max),
+            regen_per_second: Energy(0.),
+        }
     }
 
     /// Randomizes the energy pool's current energy between `warning_threshold` and `max`.
@@ -125,22 +131,7 @@ impl Div<f32> for Energy {
 
 impl Pool for EnergyPool {
     type Quantity = Energy;
-    const ZERO: Energy = Energy(0.);
-
-    fn new(current: Self::Quantity, max: Self::Quantity, regen_per_second: Self::Quantity) -> Self {
-        // TODO: don't hard code this.
-        // Blocked on: https://github.com/Leafwing-Studios/leafwing_abilities/issues/18
-        let warning_threshold = 0.25 * max;
-        let satiation_threshold = 0.75 * max;
-
-        EnergyPool {
-            current,
-            warning_threshold,
-            satiation_threshold,
-            max,
-            regen_per_second,
-        }
-    }
+    const MIN: Energy = Energy(0.);
 
     fn current(&self) -> Self::Quantity {
         self.current
@@ -156,22 +147,14 @@ impl Pool for EnergyPool {
         self.max
     }
 
-    fn set_max(&mut self, new_max: Self::Quantity) -> Result<(), MaxPoolLessThanZero> {
-        if new_max < Self::ZERO {
-            Err(MaxPoolLessThanZero)
+    fn set_max(&mut self, new_max: Self::Quantity) -> Result<(), MaxPoolLessThanMin> {
+        if new_max < Self::MIN {
+            Err(MaxPoolLessThanMin)
         } else {
             self.max = new_max;
             self.set_current(self.current);
             Ok(())
         }
-    }
-
-    fn regen_per_second(&self) -> Self::Quantity {
-        self.regen_per_second
-    }
-
-    fn set_regen_per_second(&mut self, new_regen_per_second: Self::Quantity) {
-        self.regen_per_second = new_regen_per_second;
     }
 }
 
@@ -189,8 +172,8 @@ pub(crate) enum StartingEnergy {
 }
 
 /// Steadily depletes [`Energy`] over time.
-pub(super) fn consume_energy(fixed_time: Res<FixedTime>, mut energy_query: Query<&mut EnergyPool>) {
-    let delta_time = fixed_time.period.as_secs_f32();
+pub(super) fn consume_energy(time: Res<Time>, mut energy_query: Query<&mut EnergyPool>) {
+    let delta_time = time.delta().as_secs_f32();
 
     for mut energy_pool in energy_query.iter_mut() {
         // Note that regen rates are almost always negative.

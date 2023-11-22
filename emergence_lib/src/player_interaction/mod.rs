@@ -30,13 +30,13 @@ impl Plugin for InteractionPlugin {
             .add_plugins(picking::PickingPlugin)
             .add_plugins(selection::SelectionPlugin)
             .add_plugins(clipboard::ClipboardPlugin)
-            .configure_set(
+            .configure_sets(
                 Update,
                 PlayerModifiesWorld.run_if(in_state(WorldGenState::Complete)),
             );
 
         for variant in InteractionSystem::variants() {
-            app.configure_set(Update, variant.run_if(in_state(WorldGenState::Complete)));
+            app.configure_sets(Update, variant.run_if(in_state(WorldGenState::Complete)));
         }
     }
 }

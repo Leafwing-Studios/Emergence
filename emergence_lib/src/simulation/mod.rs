@@ -35,7 +35,7 @@ impl Plugin for SimulationPlugin {
         info!("Building simulation plugin...");
         app.insert_resource(GlobalRng::new(self.gen_config.seed))
             .add_systems(FixedUpdate, sync_rotation_to_facing)
-            .configure_set(
+            .configure_sets(
                 FixedUpdate,
                 SimulationSet
                     .run_if(in_state(PauseState::Playing))

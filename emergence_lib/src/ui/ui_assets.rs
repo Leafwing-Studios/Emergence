@@ -38,7 +38,7 @@ impl Loadable for UiElements {
         });
     }
 
-    fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
+    fn load_state(&self, asset_server: &AssetServer) -> Option<bevy::asset::LoadState> {
         asset_server.get_load_state(&self.hex_menu_background)
     }
 }
@@ -223,12 +223,12 @@ where
         world.insert_resource(icons);
     }
 
-    fn load_state(&self, asset_server: &AssetServer) -> bevy::asset::LoadState {
+    fn load_state(&self, asset_server: &AssetServer) -> Option<LoadState> {
         for (data, icon_handle) in &self.map {
             let load_state = asset_server.get_load_state(icon_handle);
 
-            if load_state != LoadState::Loaded {
-                let maybe_path = asset_server.get_handle_path(icon_handle);
+            if load_state != Some(LoadState::Loaded) {
+                let maybe_path = asset_server.get_path(icon_handle);
                 let path = maybe_path
                     .map(|p| format!("{:?}", p.path()))
                     .unwrap_or("unknown_path".to_string());
@@ -238,6 +238,6 @@ where
             }
         }
 
-        LoadState::Loaded
+        Some(LoadState::Loaded)
     }
 }

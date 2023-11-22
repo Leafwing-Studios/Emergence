@@ -50,12 +50,12 @@ impl Loadable for UnitHandles {
         world.insert_resource(handles);
     }
 
-    fn load_state(&self, asset_server: &AssetServer) -> LoadState {
+    fn load_state(&self, asset_server: &AssetServer) -> Option<LoadState> {
         for (unit, scene_handle) in &self.scenes {
             let scene_load_state = asset_server.get_load_state(scene_handle);
 
-            if scene_load_state != LoadState::Loaded {
-                let maybe_path = asset_server.get_handle_path(scene_handle);
+            if scene_load_state != Some(LoadState::Loaded) {
+                let maybe_path = asset_server.get_path(scene_handle);
                 let path = maybe_path
                     .map(|p| format!("{:?}", p.path()))
                     .unwrap_or("unknown_path".to_string());
@@ -65,6 +65,6 @@ impl Loadable for UnitHandles {
             }
         }
 
-        LoadState::Loaded
+        Some(LoadState::Loaded)
     }
 }
