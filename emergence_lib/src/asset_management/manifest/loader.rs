@@ -63,7 +63,7 @@ pub enum RawManifestError {
     /// An [IO](std::io) Error
     #[error("Could not load asset: {0}")]
     Io(#[from] std::io::Error),
-    /// A [RON](ron) Error
+    /// A [serde_json](serde_json) Error
     #[error("Could not parse JSON: {0}")]
     JsonError(#[from] serde_json::Error),
 }
