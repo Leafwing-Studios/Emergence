@@ -1,0 +1,389 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Creative Automation: Case Studies - Game Design for Emergence</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../steam-page.html"><strong aria-hidden="true">1.</strong> Draft Steam Page</a></li><li class="chapter-item expanded "><a href="../glossary.html"><strong aria-hidden="true">2.</strong> Glossary</a></li><li class="chapter-item expanded "><a href="../risk-assessment.html"><strong aria-hidden="true">3.</strong> Risk Assessment</a></li><li class="chapter-item expanded "><a href="../high-level/index.html"><strong aria-hidden="true">4.</strong> High Level Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../high-level/game-thesis.html"><strong aria-hidden="true">4.1.</strong> Game Thesis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-analysis.html"><strong aria-hidden="true">4.2.</strong> Genre Analysis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-mechanics.html"><strong aria-hidden="true">4.3.</strong> Genre Mechanics</a></li><li class="chapter-item expanded "><a href="../high-level/mechanical-translation.html"><strong aria-hidden="true">4.4.</strong> Mapping genre mechanics to Emergence</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation.html"><strong aria-hidden="true">4.5.</strong> Creative Automation</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation-case-studies.html" class="active"><strong aria-hidden="true">4.6.</strong> Creative Automation: Case Studies</a></li></ol></li><li class="chapter-item expanded "><a href="../player-actions/index.html"><strong aria-hidden="true">5.</strong> Player Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../player-actions/selection-tools.html"><strong aria-hidden="true">5.1.</strong> Selection Tools</a></li><li class="chapter-item expanded "><a href="../player-actions/zoning.html"><strong aria-hidden="true">5.2.</strong> Zoning</a></li><li class="chapter-item expanded "><a href="../player-actions/terraforming.html"><strong aria-hidden="true">5.3.</strong> Terraforming</a></li><li class="chapter-item expanded "><a href="../player-actions/informational-tools.html"><strong aria-hidden="true">5.4.</strong> Informational Tools</a></li></ol></li><li class="chapter-item expanded "><a href="../research/index.html"><strong aria-hidden="true">6.</strong> Research</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../research/domestication.html"><strong aria-hidden="true">6.1.</strong> Domestication</a></li><li class="chapter-item expanded "><a href="../research/guided-evolution.html"><strong aria-hidden="true">6.2.</strong> Genetics</a></li><li class="chapter-item expanded "><a href="../research/technology.html"><strong aria-hidden="true">6.3.</strong> Technology</a></li></ol></li><li class="chapter-item expanded "><a href="../production-chains/index.html"><strong aria-hidden="true">7.</strong> Production Chains</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../production-chains/recipes.html"><strong aria-hidden="true">7.1.</strong> Recipes</a></li><li class="chapter-item expanded "><a href="../production-chains/raw-resources.html"><strong aria-hidden="true">7.2.</strong> Raw Resources</a></li><li class="chapter-item expanded "><a href="../production-chains/intermediates.html"><strong aria-hidden="true">7.3.</strong> Intermediates</a></li><li class="chapter-item expanded "><a href="../production-chains/end-products.html"><strong aria-hidden="true">7.4.</strong> End Products</a></li><li class="chapter-item expanded "><a href="../production-chains/example-leafcutter.html"><strong aria-hidden="true">7.5.</strong> Example Production Chain: Leafcutter Ant Cultivation</a></li></ol></li><li class="chapter-item expanded "><a href="../organisms/index.html"><strong aria-hidden="true">8.</strong> Organisms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../organisms/life-cycles.html"><strong aria-hidden="true">8.1.</strong> Life Cycles</a></li><li class="chapter-item expanded "><a href="../organisms/sessile-organisms.html"><strong aria-hidden="true">8.2.</strong> Sessile Organisms</a></li><li class="chapter-item expanded "><a href="../organisms/units.html"><strong aria-hidden="true">8.3.</strong> Units</a></li></ol></li><li class="chapter-item expanded "><a href="../water.html"><strong aria-hidden="true">9.</strong> Water</a></li><li class="chapter-item expanded "><a href="../logistics/index.html"><strong aria-hidden="true">10.</strong> Logistics</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/index.html"><strong aria-hidden="true">10.1.</strong> Signals</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/configuring-properties.html"><strong aria-hidden="true">10.1.1.</strong> Configuring Signal Properties</a></li></ol></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Game Design for Emergence</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="creative-automation-case-studies"><a class="header" href="#creative-automation-case-studies">Creative Automation: Case Studies</a></h1>
+<p>The terms and categories here are taken from the <a href="creative-automation.html">creative automation</a> page: read that first!</p>
+<h2 id="emergence"><a class="header" href="#emergence">Emergence</a></h2>
+<p><strong>Conclusion:</strong> Creativity will be low until more systems are in place, but potential is excellent. Clear and satisfying aesthetics will be key to creating a compelling contraption. Disruptions should be tunable to ensure every player can reach an optional pressure level.</p>
+<h3 id="interesting-goals"><a class="header" href="#interesting-goals">Interesting Goals</a></h3>
+<p>Standard factory building goals are present,
+but an emphasis on sustainability and resilience add even more goals to consider.</p>
+<p>Stronger spatial and temporal variability increase the importance of considering tradeoffs and tailoring solutions to conditions.</p>
+<h3 id="distinct-paths"><a class="header" href="#distinct-paths">Distinct Paths</a></h3>
+<p>Initial prototypes will be quite weak, simply due to scale.</p>
+<p>Adding more systems and organisms will enhance this substantially.</p>
+<h3 id="low-pressure"><a class="header" href="#low-pressure">Low Pressure</a></h3>
+<p>Aesthetics are well-suited to chill alien cottage-core vibes.
+Disruptions are planned as an important gameplay mechanic: need excellent tuning levers to ensure that space for creativity isn't removed.
+Cascading failures shouldn't be too severe by default.</p>
+<h3 id="compelling-aesthetics"><a class="header" href="#compelling-aesthetics">Compelling Aesthetics</a></h3>
+<p>This is one of <em>Emergence's</em> key strengths.
+Unique fantasy that lends itself well to a bustling, automated hub.</p>
+<p>Aesthetic differentation will require more content than MVP.</p>
+<p>Potential for very compelling contraptions.
+Audio and timing and visual clarity will be tricky but essential to creating good contraptions.</p>
+<h2 id="factorio"><a class="header" href="#factorio"><a href="https://store.steampowered.com/app/427520/Factorio/">Factorio</a></a></h2>
+<p><strong>Conclusion:</strong> top-tier creative automation, especially in modded games.
+Lots of options that differ in interesting ways.
+Limited aesthetic choices.</p>
+<h3 id="interesting-goals-1"><a class="header" href="#interesting-goals-1">Interesting Goals</a></h3>
+<p>Science construction is interesting and clear.
+Secondary optimization objectives are often meaningful.</p>
+<p>Trains and bots are great end products: powerful and intrinsically satisfying.
+Player upgrades like cars and suits serve as additional chase goals.
+While combat is frustrating, it serves as a clear motivator in games where it's enabled.</p>
+<h3 id="distinct-paths-1"><a class="header" href="#distinct-paths-1">Distinct Paths</a></h3>
+<p>Micro-optimizations have tons of diversity.
+Layouts, bots vs belts vs trains, modules and more.</p>
+<p>In base Factorio, there's very limited branching in recipe paths, which leads to limited choice.
+Dramatically improved in mod packs like AngelBob's.</p>
+<h3 id="low-pressure-1"><a class="header" href="#low-pressure-1">Low Pressure</a></h3>
+<p>Passes with flying colors.
+Biters can impact this, especially early game.
+Most people turn them off though, or keep them at a difficulty where they're not a serious challenge.</p>
+<p>Good feedback loop with biters where struggling players can simply divert resources to defense, or slow down production.</p>
+<h3 id="compelling-aesthetics-1"><a class="header" href="#compelling-aesthetics-1">Compelling Aesthetics</a></h3>
+<p>Great theme, compelling contraptions.</p>
+<p>Animations of inserters, moving belts, and sounds of assembling machines are standout elements.</p>
+<h2 id="stardew-valley"><a class="header" href="#stardew-valley"><a href="https://store.steampowered.com/app/413150/Stardew_Valley/">Stardew Valley</a></a></h2>
+<p><strong>Conclusion:</strong> Decent creativity, very limited automation with no diverse paths and weak secondary goals. No good resource transformation chains. Everything just turns into money.</p>
+<h3 id="interesting-goals-2"><a class="header" href="#interesting-goals-2">Interesting Goals</a></h3>
+<p>The Community Centre goals provide great open-ended freedom.
+Once those are complete though, the player can feel quite aimless.</p>
+<p>Little gameplay incentive to produce more diversified products.
+Once you've completed a bundle, you can largely just turn everything into cash.
+Often results in players planting highly profitable monocultures.</p>
+<p>Good aesthetic variation (cow farm! crab pots! fruit trees!) but options are often blatantly imbalanced.</p>
+<h3 id="distinct-paths-2"><a class="header" href="#distinct-paths-2">Distinct Paths</a></h3>
+<p>Automation overall is weak and frustrating.
+Lots of manual labor with no way to automate end-to-end incentivizes homogenous designs.
+Effectively no recipe diversity or room for micro-optimization beyond farm layout.</p>
+<p>Solution space is too simple: often only one or two optimal solutions!</p>
+<p>Build diversity is low impact and low dimensionality: very few meaningful choices.</p>
+<h3 id="low-pressure-2"><a class="header" href="#low-pressure-2">Low Pressure</a></h3>
+<p>Literally the point of the game.</p>
+<p>You can see creativity disappear in the speedruns, where pressure is artificially added.</p>
+<h3 id="compelling-aesthetics-2"><a class="header" href="#compelling-aesthetics-2">Compelling Aesthetics</a></h3>
+<p>Lots of good aesthetic variation, and a compelling theme!
+Distinct playthroughs often get creative variation almost entirely due to the strength of aesthetics.</p>
+<h2 id="forager"><a class="header" href="#forager"><a href="https://store.steampowered.com/app/751780/Forager/">Forager</a></a></h2>
+<p><strong>Conclusion:</strong> Very dull automation, very limited creativity. Very mindless.</p>
+<h3 id="interesting-goals-3"><a class="header" href="#interesting-goals-3">Interesting Goals</a></h3>
+<p>Almost none: follow the preplanned achievements and make number go up.</p>
+<h3 id="distinct-paths-3"><a class="header" href="#distinct-paths-3">Distinct Paths</a></h3>
+<p>Very few options.
+Suffers from many of the same problems as Stardew Valley,
+with lots of manual labor and no way to chain machines together.</p>
+<h3 id="low-pressure-3"><a class="header" href="#low-pressure-3">Low Pressure</a></h3>
+<p>Extremely low pressure: it's an idle game.</p>
+<h3 id="compelling-aesthetics-3"><a class="header" href="#compelling-aesthetics-3">Compelling Aesthetics</a></h3>
+<p>Decent game feel, but very homogenous with no variation on the theme.</p>
+<h2 id="the-incredible-machine"><a class="header" href="#the-incredible-machine"><a href="https://en.wikipedia.org/wiki/The_Incredible_Machine">The Incredible Machine</a></a></h2>
+<p><strong>Conclusion:</strong> Great creativity, but no sense of progression and these are simply contraptions rather than automation.</p>
+<h3 id="interesting-goals-4"><a class="header" href="#interesting-goals-4">Interesting Goals</a></h3>
+<p>Lots of interesting goals, but secondary goals are basically missing.</p>
+<p>Campaign is effectively introductory: map editor mode is the real creative sandbox.</p>
+<p>Solving challenges created by other players is often the point.</p>
+<h3 id="distinct-paths-4"><a class="header" href="#distinct-paths-4">Distinct Paths</a></h3>
+<p>Incredible for this.
+So many wild gizmos, and possible creative physics-driven interactions.</p>
+<p>Lack of secondary goals hurts feeling of distinctness.
+Could be dramatically strengthened with innovations from Opus Magnum.</p>
+<h3 id="low-pressure-4"><a class="header" href="#low-pressure-4">Low Pressure</a></h3>
+<p>Yep! It's just a puzzle game.</p>
+<h3 id="compelling-aesthetics-4"><a class="header" href="#compelling-aesthetics-4">Compelling Aesthetics</a></h3>
+<p>Fantastic: great game feel in the contraptions.</p>
+<p>Fun, silly, intuitive components.</p>
+<h2 id="opus-magnum"><a class="header" href="#opus-magnum"><a href="https://store.steampowered.com/app/558990/Opus_Magnum/">Opus Magnum</a></a></h2>
+<p><strong>Conclusion:</strong> Awesome creative automation, but these are mostly just contraptions without a larger purpose.</p>
+<h3 id="interesting-goals-5"><a class="header" href="#interesting-goals-5">Interesting Goals</a></h3>
+<p>Pre-baked puzzles, but with really explicit and interesting multi-objective optimization:</p>
+<ul>
+<li>space</li>
+<li>cycles</li>
+<li>cost</li>
+<li>instructions</li>
+</ul>
+<p>These are made explicit to the player, and histogram leaderboards encourage competitive optimization.</p>
+<h3 id="distinct-paths-5"><a class="header" href="#distinct-paths-5">Distinct Paths</a></h3>
+<p>Fantastic: lots of recipe paths, fantastic constraints and tradeoffs on how to move things around.</p>
+<h3 id="low-pressure-5"><a class="header" href="#low-pressure-5">Low Pressure</a></h3>
+<p>Great, it's a puzzle game.</p>
+<h3 id="compelling-aesthetics-5"><a class="header" href="#compelling-aesthetics-5">Compelling Aesthetics</a></h3>
+<p>Clean and clear aesthetics, cohesive if mostly abstract theme, great whirring and moving contraptions.</p>
+<h2 id="oxygen-not-included"><a class="header" href="#oxygen-not-included"><a href="https://store.steampowered.com/app/457140/Oxygen_Not_Included/">Oxygen Not Included</a></a></h2>
+<p><strong>Conclusion:</strong> Good but not great creative automation. Automation options take a long time to unlock. Too many challenges have Best Solutions.</p>
+<h3 id="interesting-goals-6"><a class="header" href="#interesting-goals-6">Interesting Goals</a></h3>
+<p>Challenges are largely &quot;satisfy&quot;, not &quot;optimize&quot;.
+Figuring out how to:</p>
+<ul>
+<li>get food</li>
+<li>get water</li>
+<li>get power</li>
+<li>produce oxygen</li>
+<li>manage excess heat</li>
+</ul>
+<p>is interesting as a new player, but can be dull once the mechanics are understood.
+Very little incentive to actually fine tune working processes.</p>
+<h3 id="distinct-paths-6"><a class="header" href="#distinct-paths-6">Distinct Paths</a></h3>
+<p>Lots of good options for each path, mostly restricted by world gen.</p>
+<p>Some setups are simpler / more efficient / more reliable (hi Self-Power-Oxygen-Machines) and end up completely dominating over more interesting ones (like Morb farming).</p>
+<p>Duplicant behavior can be hard to understand and optimize for in frustrating ways.</p>
+<p>Limited tools for genuine automation until quite late in the game.</p>
+<h3 id="low-pressure-6"><a class="header" href="#low-pressure-6">Low Pressure</a></h3>
+<p>Great: intermittent emergency failures don't detract from long periods of tweaking and daydreaming.</p>
+<p>Generous pause functionality (you can pan and investigate) is essential to making this work.</p>
+<h3 id="compelling-aesthetics-6"><a class="header" href="#compelling-aesthetics-6">Compelling Aesthetics</a></h3>
+<h2 id="minecraft"><a class="header" href="#minecraft"><a href="https://www.minecraft.net/en-us">Minecraft</a></a></h2>
+<p><strong>Conclusion:</strong> Solid creative automation. Often hard to find goals.</p>
+<h3 id="interesting-goals-7"><a class="header" href="#interesting-goals-7">Interesting Goals</a></h3>
+<h3 id="distinct-paths-7"><a class="header" href="#distinct-paths-7">Distinct Paths</a></h3>
+<h3 id="low-pressure-7"><a class="header" href="#low-pressure-7">Low Pressure</a></h3>
+<h3 id="compelling-aesthetics-7"><a class="header" href="#compelling-aesthetics-7">Compelling Aesthetics</a></h3>
+<h2 id="terraria"><a class="header" href="#terraria"><a href="https://store.steampowered.com/app/105600/Terraria/">Terraria</a></a></h2>
+<p><strong>Conclusion:</strong> Limited tools for creative automation. Very little point in doing so.</p>
+<h3 id="interesting-goals-8"><a class="header" href="#interesting-goals-8">Interesting Goals</a></h3>
+<h3 id="distinct-paths-8"><a class="header" href="#distinct-paths-8">Distinct Paths</a></h3>
+<h3 id="low-pressure-8"><a class="header" href="#low-pressure-8">Low Pressure</a></h3>
+<h3 id="compelling-aesthetics-8"><a class="header" href="#compelling-aesthetics-8">Compelling Aesthetics</a></h3>
+<h3 id="atrio-the-dark-wild"><a class="header" href="#atrio-the-dark-wild">Atrio: The Dark Wild</a></h3>
+<p><strong>Conclusion:</strong> Great aesthetics. Tools to add diversity to automation take a very long time to unlock and goals are hard to come by.</p>
+<h4 id="interesting-goals-9"><a class="header" href="#interesting-goals-9">Interesting Goals</a></h4>
+<h3 id="distinct-paths-9"><a class="header" href="#distinct-paths-9">Distinct Paths</a></h3>
+<h3 id="low-pressure-9"><a class="header" href="#low-pressure-9">Low Pressure</a></h3>
+<h3 id="compelling-aesthetics-9"><a class="header" href="#compelling-aesthetics-9">Compelling Aesthetics</a></h3>
+<h2 id="shapezio"><a class="header" href="#shapezio"><a href="https://store.steampowered.com/bundle/21489/shapez_Full_Edition/">Shapez.io</a></a></h2>
+<p><strong>Conclusion:</strong> Limited options for performing each step.
+Pretty but uninspiring aesthetics: highly abstract and so there's little to express yourself with.</p>
+<h3 id="interesting-goals-10"><a class="header" href="#interesting-goals-10">Interesting Goals</a></h3>
+<h3 id="distinct-paths-10"><a class="header" href="#distinct-paths-10">Distinct Paths</a></h3>
+<h3 id="low-pressure-10"><a class="header" href="#low-pressure-10">Low Pressure</a></h3>
+<h3 id="compelling-aesthetics-10"><a class="header" href="#compelling-aesthetics-10">Compelling Aesthetics</a></h3>
+<h2 id="mindustry"><a class="header" href="#mindustry"><a href="https://store.steampowered.com/app/1127400/Mindustry/">Mindustry</a></a></h2>
+<p><strong>Conclusion:</strong> Creativity is driven by combat and variation in map design. A bit forced, but still good!</p>
+<h3 id="interesting-goals-11"><a class="header" href="#interesting-goals-11">Interesting Goals</a></h3>
+<h3 id="distinct-paths-11"><a class="header" href="#distinct-paths-11">Distinct Paths</a></h3>
+<h3 id="low-pressure-11"><a class="header" href="#low-pressure-11">Low Pressure</a></h3>
+<h3 id="compelling-aesthetic"><a class="header" href="#compelling-aesthetic">Compelling Aesthetic</a></h3>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../high-level/creative-automation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../player-actions/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../high-level/creative-automation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../player-actions/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

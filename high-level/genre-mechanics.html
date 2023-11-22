@@ -1,0 +1,585 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Genre Mechanics - Game Design for Emergence</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../steam-page.html"><strong aria-hidden="true">1.</strong> Draft Steam Page</a></li><li class="chapter-item expanded "><a href="../glossary.html"><strong aria-hidden="true">2.</strong> Glossary</a></li><li class="chapter-item expanded "><a href="../risk-assessment.html"><strong aria-hidden="true">3.</strong> Risk Assessment</a></li><li class="chapter-item expanded "><a href="../high-level/index.html"><strong aria-hidden="true">4.</strong> High Level Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../high-level/game-thesis.html"><strong aria-hidden="true">4.1.</strong> Game Thesis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-analysis.html"><strong aria-hidden="true">4.2.</strong> Genre Analysis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-mechanics.html" class="active"><strong aria-hidden="true">4.3.</strong> Genre Mechanics</a></li><li class="chapter-item expanded "><a href="../high-level/mechanical-translation.html"><strong aria-hidden="true">4.4.</strong> Mapping genre mechanics to Emergence</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation.html"><strong aria-hidden="true">4.5.</strong> Creative Automation</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation-case-studies.html"><strong aria-hidden="true">4.6.</strong> Creative Automation: Case Studies</a></li></ol></li><li class="chapter-item expanded "><a href="../player-actions/index.html"><strong aria-hidden="true">5.</strong> Player Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../player-actions/selection-tools.html"><strong aria-hidden="true">5.1.</strong> Selection Tools</a></li><li class="chapter-item expanded "><a href="../player-actions/zoning.html"><strong aria-hidden="true">5.2.</strong> Zoning</a></li><li class="chapter-item expanded "><a href="../player-actions/terraforming.html"><strong aria-hidden="true">5.3.</strong> Terraforming</a></li><li class="chapter-item expanded "><a href="../player-actions/informational-tools.html"><strong aria-hidden="true">5.4.</strong> Informational Tools</a></li></ol></li><li class="chapter-item expanded "><a href="../research/index.html"><strong aria-hidden="true">6.</strong> Research</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../research/domestication.html"><strong aria-hidden="true">6.1.</strong> Domestication</a></li><li class="chapter-item expanded "><a href="../research/guided-evolution.html"><strong aria-hidden="true">6.2.</strong> Genetics</a></li><li class="chapter-item expanded "><a href="../research/technology.html"><strong aria-hidden="true">6.3.</strong> Technology</a></li></ol></li><li class="chapter-item expanded "><a href="../production-chains/index.html"><strong aria-hidden="true">7.</strong> Production Chains</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../production-chains/recipes.html"><strong aria-hidden="true">7.1.</strong> Recipes</a></li><li class="chapter-item expanded "><a href="../production-chains/raw-resources.html"><strong aria-hidden="true">7.2.</strong> Raw Resources</a></li><li class="chapter-item expanded "><a href="../production-chains/intermediates.html"><strong aria-hidden="true">7.3.</strong> Intermediates</a></li><li class="chapter-item expanded "><a href="../production-chains/end-products.html"><strong aria-hidden="true">7.4.</strong> End Products</a></li><li class="chapter-item expanded "><a href="../production-chains/example-leafcutter.html"><strong aria-hidden="true">7.5.</strong> Example Production Chain: Leafcutter Ant Cultivation</a></li></ol></li><li class="chapter-item expanded "><a href="../organisms/index.html"><strong aria-hidden="true">8.</strong> Organisms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../organisms/life-cycles.html"><strong aria-hidden="true">8.1.</strong> Life Cycles</a></li><li class="chapter-item expanded "><a href="../organisms/sessile-organisms.html"><strong aria-hidden="true">8.2.</strong> Sessile Organisms</a></li><li class="chapter-item expanded "><a href="../organisms/units.html"><strong aria-hidden="true">8.3.</strong> Units</a></li></ol></li><li class="chapter-item expanded "><a href="../water.html"><strong aria-hidden="true">9.</strong> Water</a></li><li class="chapter-item expanded "><a href="../logistics/index.html"><strong aria-hidden="true">10.</strong> Logistics</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/index.html"><strong aria-hidden="true">10.1.</strong> Signals</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/configuring-properties.html"><strong aria-hidden="true">10.1.1.</strong> Configuring Signal Properties</a></li></ol></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Game Design for Emergence</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="factory-builder-mechanics"><a class="header" href="#factory-builder-mechanics">Factory-Builder Mechanics</a></h1>
+<h2 id="core-mechanics"><a class="header" href="#core-mechanics">Core Mechanics</a></h2>
+<p>These are the basic building blocks needed to satisfy the core gameplay loop of the genre.</p>
+<ul>
+<li><strong>Resource patches</strong>
+<ul>
+<li>Extract raw resources from the environment at specific locations</li>
+<li>Sometimes limited, sometimes infinite</li>
+<li>Commonly trees, ores and water</li>
+</ul>
+</li>
+<li><strong>Recipes</strong>
+<ul>
+<li>How different resources can be combined together</li>
+<li>Raw resources become intermediates become end products (which have a genuine in-game use)</li>
+<li>Recipes are very rarely reversible (or come at a high cost to do so), forcing players to consider which intermediate to transport</li>
+<li>Example: iron ore (raw resource) can become iron plates (intermediate) which are turned into gears (intermediate) which are combined with iron plates to make belts (end product)</li>
+</ul>
+</li>
+<li><strong>Assemblers</strong>
+<ul>
+<li>Often, select a specific recipe for the assembler to make
+<ul>
+<li>Sometimes inferred from inputs</li>
+</ul>
+</li>
+<li>Not all assemblers can make all recipes</li>
+<li>Can often be upgraded</li>
+<li>Often paired with <strong>inserters</strong> in some form to load and unload resources</li>
+<li>Commonly assembling machines, chemical plants, cooking stations or so on</li>
+</ul>
+</li>
+<li><strong>Transporters</strong>
+<ul>
+<li>Moves goods from place to place</li>
+<li>Examples: belts, pipes, trains, bots
+<ul>
+<li>Belts and pipes are efficient and good for small areas</li>
+<li>Trains move large amounts of goods in burst, but have a high investment cost</li>
+<li>Bots are able to move goods in a more flexible and dynamic way, but require heavy upfront and ongoing costs</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Storage</strong>
+<ul>
+<li>Stores pools of resources in one place</li>
+<li>Has a limited capacity</li>
+<li>Commonly varies by size, cost to produce, spatial footprint, and materials that can be stored</li>
+<li>Mixed storage is sometimes possible, but almost always a noob trap</li>
+</ul>
+</li>
+<li><strong>Resource sinks</strong>
+<ul>
+<li>Provides ways to consume resources</li>
+<li>Can be thought of as &quot;the point&quot;</li>
+<li>Commonly: researching technology, combat, maintenance costs</li>
+</ul>
+</li>
+</ul>
+<h2 id="advanced-mechanics"><a class="header" href="#advanced-mechanics">Advanced Mechanics</a></h2>
+<p>Game mechanics that are tightly integrated with the core loop and add rich complexity.
+These are optional, but commonly included in some form.</p>
+<ul>
+<li><strong>Distributed resource costs</strong>
+<ul>
+<li>Used to add a cost to actions</li>
+<li>Generally required by basically everything, but has much weaker spatial constraints for transportation and distribution</li>
+<li>Must be transmitted through the base</li>
+<li>Typically modelled as electricity</li>
+<li>Often something that is revisited, scaled up, and upgraded through the course of a playthrough</li>
+</ul>
+</li>
+<li><strong>Fluids</strong>
+<ul>
+<li>Requires a parallel distribution and storage network (in contrast to solid items)</li>
+<li>Ex: using pipes and tanks instead of belts and chests</li>
+</ul>
+</li>
+<li><strong>Filters</strong>
+<ul>
+<li>Splits mixed streams of goods</li>
+<li>Belt splitters, liquid filters and inserters (via selective pickup) can serve this purpose</li>
+</ul>
+</li>
+<li><strong>Splitters</strong>
+<ul>
+<li>Divides a stream of goods into two or more parts, generally evenly</li>
+<li>Ex: belt splitters, pipes</li>
+</ul>
+</li>
+<li><strong>Prioritizers</strong>
+<ul>
+<li>One use of a resource, either locally or globally, is deemed &quot;more important&quot; than others</li>
+<li>May be able to prioritize both input and output!</li>
+<li>Goods will be diverted to the more important path until that path is backed up</li>
+<li>Ex: belt sideloading, splitter priority</li>
+</ul>
+</li>
+<li><strong>Bypasses</strong>
+<ul>
+<li>Underground belts and pipes, train intersections</li>
+<li>Allows more complex logistical configurations</li>
+<li>Always more costly than alternative</li>
+</ul>
+</li>
+<li><strong>Spatial constraints</strong>
+<ul>
+<li>Features of the physical environment that must be worked around</li>
+<li>Sometimes doubles as resource patches</li>
+<li>Commonly cliffs, water, finitely sized planets, or simply &quot;end of map&quot;</li>
+</ul>
+</li>
+<li><strong>Technology</strong>
+<ul>
+<li>process and spend resources to unlock new options</li>
+</ul>
+</li>
+<li><strong>Production enhancements</strong>
+<ul>
+<li>Modules: boosts the effectiveness of the building they are installed in</li>
+<li>Beacons: boosts some factor of nearby buildings</li>
+<li>Upgraded buildings: higher cost, but better throughput or efficiency</li>
+<li>Researched passives: &quot;everything of type X is now Y% more efficient&quot;</li>
+<li>Alternative recipe paths: more complex paths may be more efficient, or make use of alternative feedstocks</li>
+</ul>
+</li>
+<li><strong>Multiple transportation options</strong>
+<ul>
+<li>Multiple options for transporting goods that have distinct tradeoffs (setup cost, latency, throughput, batching)</li>
+</ul>
+</li>
+<li><strong>Cyclic production pathways</strong>
+<ul>
+<li>Some outputs must be processed and reused as inputs</li>
+<li>Forces more interesting and more challenging factory designs</li>
+<li>Examples: Angel's farms, Angel's slurry filters</li>
+</ul>
+</li>
+<li><strong>Byproducts</strong>
+<ul>
+<li>Some outputs of a factory process are undesirable</li>
+<li>These must be reused for another process, recycled into something else, or desposed of at some cost</li>
+</ul>
+</li>
+<li><strong>Pollution</strong>
+<ul>
+<li>Created by extracting, refining and consuming resources</li>
+<li>Have only seen atmospheric pollution</li>
+<li>Discourages excess production</li>
+<li>Can reduce productivity of other resources or provoke combat</li>
+</ul>
+</li>
+<li><strong>Stochastic outputs</strong>
+<ul>
+<li>Some factory processes don't always produce the same output, and instead produce one of several outpus randomly</li>
+<li>Forces more robust designs, especially with regard to timing and surge capacity</li>
+</ul>
+</li>
+<li><strong>Degrading products</strong>
+<ul>
+<li>Goods that have a &quot;shelf-life&quot;, and become less useful or turn into waste over time</li>
+<li>Most commonly used for food</li>
+<li>Often adds storage constraints</li>
+<li>Often requires carefully managing throughput of production</li>
+</ul>
+</li>
+<li><strong>Hazardous goods</strong>
+<ul>
+<li>Goods that are dangerous to store, especially in excess</li>
+<li>Punishes overproduction</li>
+<li>Creates storage constraints</li>
+<li>Examples: explosives, flammable goods, realistic electricity</li>
+</ul>
+</li>
+<li><strong>Environmental process bounds</strong>
+<ul>
+<li>Some steps can only be done when conditions are in the right range</li>
+<li>Commonly seen in Oxygen Not Included: specific temperature ranges, atmospheric gases, pressure ranges</li>
+</ul>
+</li>
+</ul>
+<h2 id="supplementary-mechanics"><a class="header" href="#supplementary-mechanics">Supplementary Mechanics</a></h2>
+<p>These features supplement the core gameplay loop by providing additional things to do or consider, but are not needed.</p>
+<ul>
+<li><strong>Exploration</strong>
+<ul>
+<li>Fog of war</li>
+<li>Maps</li>
+<li>Additional zones to build and explore in</li>
+<li>Usually but not always paired with a player avatar</li>
+</ul>
+</li>
+<li><strong>Combat</strong>
+<ul>
+<li>Adds another goal beyond research</li>
+<li>Adds challenge and excitement</li>
+<li>Often becomes more challenging as production grows (to avoid mindless exploitation)</li>
+</ul>
+</li>
+</ul>
+<h2 id="quality-of-life-qol-features"><a class="header" href="#quality-of-life-qol-features">Quality of Life (QOL) Features</a></h2>
+<p>These things make the game loop more pleasant:</p>
+<ul>
+<li><strong>Cut-copy-paste</strong>
+<ul>
+<li>Select groups of buildings (and their settings), and add them to your <strong>clipboard</strong></li>
+<li>Buildings that are cut are <strong>marked for deletion</strong></li>
+<li>Selections can be flipped and rotated</li>
+<li>Paste these buildings to create <strong>ghosts</strong> (phantom buildings that are <strong>marked for construction</strong>)</li>
+<li>Ghosts can then be built later by hand or via bots</li>
+</ul>
+</li>
+<li><strong>Undo</strong>
+<ul>
+<li>Reverse previous actions or directions</li>
+<li>Best paired with <strong>redo</strong></li>
+<li>Redone actions will leave ghosts, rather than actually placing the tiles</li>
+</ul>
+</li>
+<li><strong>Pipette</strong>
+<ul>
+<li>Add a copy of buildings (and their settings) to your cursor</li>
+</ul>
+</li>
+<li><strong>Blueprints</strong>
+<ul>
+<li>Save copy-pasted designs</li>
+<li>Share them with friends</li>
+</ul>
+</li>
+<li><strong>Recipe look-up</strong>
+<ul>
+<li>Figure out what items can be turned into</li>
+<li>Figure out how items can be made</li>
+</ul>
+</li>
+<li><strong>Research search</strong>
+<ul>
+<li>Search for terms in the research tree, and see what is needed to unlock various recipes</li>
+</ul>
+</li>
+<li><strong>Production statistics</strong>
+<ul>
+<li>View how much of each resource you are producing and consuming over time</li>
+</ul>
+</li>
+<li><strong>Alerts</strong>
+<ul>
+<li>Warn the player when something that requires urgent action has occurred</li>
+</ul>
+</li>
+<li><strong>Labs</strong>
+<ul>
+<li>Prototype and measure designs in a sandbox environment</li>
+</ul>
+</li>
+<li><strong>Production planner</strong>
+<ul>
+<li>Analyze theoretical performance and ratios of resource pathways</li>
+</ul>
+</li>
+<li><strong>Map</strong>
+<ul>
+<li>Summarizes the area visually</li>
+<li>Often paired with a small, always-on-screen <strong>minimap</strong></li>
+<li>Augmented with <strong>map markers</strong>, which are player-made indicators of specific locations (ideally text + an icon)</li>
+</ul>
+</li>
+<li><strong>Notes</strong>
+<ul>
+<li>TODO lists are a common and important use case</li>
+<li>An in-game way to record what to do next, add flavor, or explain why something was done this way</li>
+<li>Ideally tied to a location</li>
+<li>Sometimes map makers are repurposed, sometimes this relies on in-game signs, or is spelled out manually using building mechanics</li>
+</ul>
+</li>
+<li><strong>Overlays</strong>
+<ul>
+<li>Display information about various important factors on the map or in-world display</li>
+<li>Extremely useful to visually communicate the operation of various systems without cluttering aesthetics</li>
+</ul>
+</li>
+<li><strong>Time control</strong>
+<ul>
+<li>Pause, speed up or slow down time</li>
+<li>Pausing and slowing down is useful for accessibility and to respond to crises</li>
+<li>Speeding up is used to accelerate through boring parts of the game
+<ul>
+<li>This is probably a design smell that should be dealt with rather than papered over</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>State indicators</strong>
+<ul>
+<li>See how machines are configured</li>
+<li>See if machines are working</li>
+<li>See what's inside storage</li>
+<li>Usually toggled to reduce clutter</li>
+</ul>
+</li>
+</ul>
+<h2 id="meta-features"><a class="header" href="#meta-features">Meta Features</a></h2>
+<p>These are optional ways to enhance the game experience and add replay value.
+They do not live in the game itself.</p>
+<ul>
+<li><strong>Tutorial</strong>
+<ul>
+<li>Learn to play the game via a simple, relatively scripted scenario.</li>
+<li>Good UX design and achievements may be able to remove the need for this</li>
+</ul>
+</li>
+<li><strong>Modding</strong>
+<ul>
+<li>Tweak the gameplay, tuning levers, aesthetics of the game</li>
+<li>Add more content and systems</li>
+<li>Often a built-in manager for downloading and enabling mods</li>
+</ul>
+</li>
+<li><strong>Small-group multiplayer</strong>
+<ul>
+<li>Play online with your friends</li>
+</ul>
+</li>
+<li><strong>Map editor</strong>
+<ul>
+<li>Manually change the map</li>
+</ul>
+</li>
+<li><strong>Controllable world generation</strong>
+<ul>
+<li>Change the rules of the game (combat or not, pollution or not, resource costs) to customize play experience</li>
+<li>Change the quantity and distribution of resource patches and spatial constraints</li>
+<li>Provide a set seed so others can play the same map as you</li>
+</ul>
+</li>
+<li><strong>Alternate terminal goals</strong>
+<ul>
+<li>Achievements, score counters, etc.</li>
+<li>Provides alternate metrics to optimize above simply creating the required products</li>
+</ul>
+</li>
+<li><strong>Challenge scenarios</strong>
+<ul>
+<li>Specific world or factory conditions that make the game harder</li>
+<li>Ex: ribbon worlds, death worlds, seablock, missing resources, etc.</li>
+</ul>
+</li>
+<li><strong>Social media sharing</strong>
+<ul>
+<li>Easily share factory designs and entertaining moments with others</li>
+</ul>
+</li>
+<li><strong>Wiki</strong>
+<ul>
+<li>Online repository of information about the game</li>
+</ul>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../high-level/genre-analysis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../high-level/mechanical-translation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../high-level/genre-analysis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../high-level/mechanical-translation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,706 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Water - Game Design for Emergence</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="steam-page.html"><strong aria-hidden="true">1.</strong> Draft Steam Page</a></li><li class="chapter-item expanded "><a href="glossary.html"><strong aria-hidden="true">2.</strong> Glossary</a></li><li class="chapter-item expanded "><a href="risk-assessment.html"><strong aria-hidden="true">3.</strong> Risk Assessment</a></li><li class="chapter-item expanded "><a href="high-level/index.html"><strong aria-hidden="true">4.</strong> High Level Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="high-level/game-thesis.html"><strong aria-hidden="true">4.1.</strong> Game Thesis</a></li><li class="chapter-item expanded "><a href="high-level/genre-analysis.html"><strong aria-hidden="true">4.2.</strong> Genre Analysis</a></li><li class="chapter-item expanded "><a href="high-level/genre-mechanics.html"><strong aria-hidden="true">4.3.</strong> Genre Mechanics</a></li><li class="chapter-item expanded "><a href="high-level/mechanical-translation.html"><strong aria-hidden="true">4.4.</strong> Mapping genre mechanics to Emergence</a></li><li class="chapter-item expanded "><a href="high-level/creative-automation.html"><strong aria-hidden="true">4.5.</strong> Creative Automation</a></li><li class="chapter-item expanded "><a href="high-level/creative-automation-case-studies.html"><strong aria-hidden="true">4.6.</strong> Creative Automation: Case Studies</a></li></ol></li><li class="chapter-item expanded "><a href="player-actions/index.html"><strong aria-hidden="true">5.</strong> Player Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="player-actions/selection-tools.html"><strong aria-hidden="true">5.1.</strong> Selection Tools</a></li><li class="chapter-item expanded "><a href="player-actions/zoning.html"><strong aria-hidden="true">5.2.</strong> Zoning</a></li><li class="chapter-item expanded "><a href="player-actions/terraforming.html"><strong aria-hidden="true">5.3.</strong> Terraforming</a></li><li class="chapter-item expanded "><a href="player-actions/informational-tools.html"><strong aria-hidden="true">5.4.</strong> Informational Tools</a></li></ol></li><li class="chapter-item expanded "><a href="research/index.html"><strong aria-hidden="true">6.</strong> Research</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="research/domestication.html"><strong aria-hidden="true">6.1.</strong> Domestication</a></li><li class="chapter-item expanded "><a href="research/guided-evolution.html"><strong aria-hidden="true">6.2.</strong> Genetics</a></li><li class="chapter-item expanded "><a href="research/technology.html"><strong aria-hidden="true">6.3.</strong> Technology</a></li></ol></li><li class="chapter-item expanded "><a href="production-chains/index.html"><strong aria-hidden="true">7.</strong> Production Chains</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="production-chains/recipes.html"><strong aria-hidden="true">7.1.</strong> Recipes</a></li><li class="chapter-item expanded "><a href="production-chains/raw-resources.html"><strong aria-hidden="true">7.2.</strong> Raw Resources</a></li><li class="chapter-item expanded "><a href="production-chains/intermediates.html"><strong aria-hidden="true">7.3.</strong> Intermediates</a></li><li class="chapter-item expanded "><a href="production-chains/end-products.html"><strong aria-hidden="true">7.4.</strong> End Products</a></li><li class="chapter-item expanded "><a href="production-chains/example-leafcutter.html"><strong aria-hidden="true">7.5.</strong> Example Production Chain: Leafcutter Ant Cultivation</a></li></ol></li><li class="chapter-item expanded "><a href="organisms/index.html"><strong aria-hidden="true">8.</strong> Organisms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="organisms/life-cycles.html"><strong aria-hidden="true">8.1.</strong> Life Cycles</a></li><li class="chapter-item expanded "><a href="organisms/sessile-organisms.html"><strong aria-hidden="true">8.2.</strong> Sessile Organisms</a></li><li class="chapter-item expanded "><a href="organisms/units.html"><strong aria-hidden="true">8.3.</strong> Units</a></li></ol></li><li class="chapter-item expanded "><a href="water.html" class="active"><strong aria-hidden="true">9.</strong> Water</a></li><li class="chapter-item expanded "><a href="logistics/index.html"><strong aria-hidden="true">10.</strong> Logistics</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="logistics/signals/index.html"><strong aria-hidden="true">10.1.</strong> Signals</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="logistics/signals/configuring-properties.html"><strong aria-hidden="true">10.1.1.</strong> Configuring Signal Properties</a></li></ol></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Game Design for Emergence</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="water"><a class="header" href="#water">Water</a></h1>
+<p>Meaningful water is one of the defining elements of <em>Emergence</em>.
+It is:</p>
+<ul>
+<li>an essential factory resource</li>
+<li>a key aesthetic pillar</li>
+<li>a logistical challenge and opportunity</li>
+<li>defines both macro (biome) and micro-scale environmental variability.</li>
+</ul>
+<h2 id="prior-art"><a class="header" href="#prior-art">Prior Art</a></h2>
+<p>While water is in a large number of games in the builder meta-genre, it rarely has a real mechanical impact (or behaves in meaningfully water-like ways!).
+Instead, it is used:</p>
+<ul>
+<li>for aesthetic effect (<em>Against the Storm</em>, <em>Factorio</em>)</li>
+<li>as a reskinned resource (<em>Mindustry</em>, <em>Against the Storm</em>, <em>Factorio</em>)</li>
+<li>as a medium for first-person transport (<em>Raft</em>, <em>Stormworks</em>)</li>
+</ul>
+<p>Some games do a better job though: let's focus on a few particularly relevant examples.</p>
+<h3 id="factorio"><a class="header" href="#factorio">Factorio</a></h3>
+<p>Water is a resource. It can be extracted endlessly and rapidly, and shipped huge distances.
+It's vital for power production (both initially and in the late game), but in base Factorio it's only used after that for oil production.</p>
+<p>Water is also an obstacle, both for the player's factory and the biters. It serves as both a natural defense and limit to factory growth.
+This can be overcome by building landfill, a mid-game tech that allows players to replace water with land.</p>
+<p>This defense vs expansion tradeoff is by far the most interesting tension in how Factorio uses water.
+Players want to build beside water to reduce the cost of defending a base (and have water for steam for power production),
+but this will shape how their factory must grow.</p>
+<p>Ultimately this doesn't end up mattering a ton, as marginal costs to longer distance transportation of goods is quite low.</p>
+<p>Critically though, the utter impassability of Factorio's water severely hamstrings their map design.
+Only lakes can exist, as river networks would completely stop the ability for players to ship goods, explore or be attacked by biters.
+Islands would be simply unreachable.</p>
+<p>This means that interesting potential mechanics (choke points! river shipping! ocean liners! islands with unique resources!) are unexplored,
+and water ends up feeling largely cosmetic.</p>
+<h3 id="sea-block"><a class="header" href="#sea-block">Sea Block</a></h3>
+<p>The AngelBob's mod pack for Factorio, especially in its SeaBlock form, does much more interesting things with water:</p>
+<ul>
+<li>as a thematic element: surrounded by water, you must find a way to make something from nothing</li>
+<li>as a source for hydrogen and oxygen</li>
+<li>as a source of raw resources, by purifying or evaporating water
+<ul>
+<li>mud, geodes, slag</li>
+<li>purified, mineralized and salt water</li>
+</ul>
+</li>
+<li>as a waste output from processes</li>
+<li>as a way to eliminate excess resources by transforming solid waste into a water type and then eliminating via clarifiers</li>
+<li>as an input for renewable plant growth (which then feeds animals or can be used directly to make key goods or power)</li>
+<li>as a solvent for chemicals like sulfuric acid</li>
+<li>to add serious costs (but not spatial constraints) to expanding the factory footprint</li>
+</ul>
+<h3 id="timberborn"><a class="header" href="#timberborn">Timberborn</a></h3>
+<p><em>Timberborn</em> has by far the most sophisticated water dynamics in the genre to date.
+Key features:</p>
+<ul>
+<li>seasonal variability: water flows most of the time, then stops for a modest drought</li>
+<li>steady evaporation</li>
+<li>controls where and when crops can be grown</li>
+<li>beavers must drink water to not die</li>
+<li>flows downstream, and dynamically responds to height changes</li>
+<li>can be stored, either in open pits, via dams or in dedicated storage structures</li>
+<li>irrigation</li>
+<li>some buildings and crops require shallow water</li>
+<li>bridges of limited length to cross water</li>
+<li>limits navigation and complicates logistics</li>
+</ul>
+<p>However, it has several key limitations:</p>
+<ul>
+<li>serious aesthetic issues: dried terrain looks horrible</li>
+<li>most of the interesting tools to control water flow (digging holes, pumping water, irrigation) are limited to late game</li>
+<li>drought mechanics are frustrating: limited ability to respond but strong ability to predict, leaving you to slowly watch as your population dies when things go wrong</li>
+<li>immersion challenges: growing crops doesn't take more water, no floods, no rainfall, water from nowhere</li>
+<li>river-centric design with high water sources seems quite fragile: hand-authored maps only</li>
+</ul>
+<h3 id="oxygen-not-included"><a class="header" href="#oxygen-not-included">Oxygen Not Included</a></h3>
+<p>In ONI, water is an essential resource. It comes in three forms: water, polluted water, and salt water and is regularly converted back and forth between them.</p>
+<p>It is used for:</p>
+<ul>
+<li>sanitation</li>
+<li>crop production (optional)</li>
+<li>oxygen production (optional, but very effective)</li>
+<li>heat exchange</li>
+<li>luxury end products</li>
+</ul>
+<p>Water can carry germs, and is routinely recycled as part of gameplay to avoid spreading germs.
+Water also has a temperature, and water's role as a heat exchange fluid is quite important in the early game.</p>
+<p>Water leaks through some soil types, forming irritating puddles that must be cleaned up.</p>
+<p>Water can also be frozen, forming various types of ice (each with their own freezing point!) or boiled, creating steam that can be used to drive engines (or accidentally kill your workers).</p>
+<p>For better or worse, the water mechanics in ONI wildly violate conservation laws: it is possible to create water from nothing, and destroy it.
+To resolve this, geysers are a key feature, continually producing water. They can however be blocked to limit production.</p>
+<h2 id="gameplay-value-of-water"><a class="header" href="#gameplay-value-of-water">Gameplay value of water</a></h2>
+<p>Water must:</p>
+<ul>
+<li>be finite but renewable
+<ul>
+<li>varies heavily by biome</li>
+<li>some types of water may be scarce while others are abundant</li>
+</ul>
+</li>
+<li>be an important source of external temporal variability
+<ul>
+<li>weather</li>
+<li>seasons</li>
+</ul>
+</li>
+<li>be an important source of external spatial variability
+<ul>
+<li>geography shaping water dynamics</li>
+<li>biomes</li>
+</ul>
+</li>
+<li>present meaningful barriers to exploration and logistics that can be overcome
+<ul>
+<li>units cannot cross deep or extended water</li>
+<li>units move more slowly in shallow water</li>
+<li>units can cross water via bridges (limited span), terraforming (expensive) or water transport (spiky, complex)</li>
+</ul>
+</li>
+<li>offer meaningful opportunities for logistics and defense
+<ul>
+<li>goods can be carried on the water
+<ul>
+<li>goods should naturally float downriver (implying a water velocity)</li>
+<li>goods should also be able to be ferried up river or across relatively still bodies of water at higher cost</li>
+</ul>
+</li>
+<li>moats! flood traps! navies!</li>
+</ul>
+</li>
+<li>be able to be meaningfully observed and understood by the player
+<ul>
+<li>weather and season cues</li>
+<li>selection details</li>
+<li>overlays</li>
+<li>surface water visualization</li>
+</ul>
+</li>
+<li>be able to be meaningfully manipulated by the player, especially in the mid and late game
+<ul>
+<li>terraforming allows players to durably shape the landscape, at fairly high time investment</li>
+<li>as water flows downhill, players must be able to raise water to higher levels reliably</li>
+</ul>
+</li>
+<li>can be stored
+<ul>
+<li>surface-area based evaporation mechanics mean that deep holes are effective natural storage</li>
+<li>lower loss storage should be possible, but expensive</li>
+</ul>
+</li>
+<li>can be transported
+<ul>
+<li>canals work great for both irrigation and transport</li>
+<li>more flexible (upstream, dynamic) mechanisms should be possible but expensive</li>
+</ul>
+</li>
+<li>reach a stable equilibrium, even as water is added or removed from the system
+<ul>
+<li>surface-area based evaporation mechanics do an excellent job stabilizing this</li>
+<li>draining to the ocean / filling up from the ocean also stabilizes this effectively</li>
+</ul>
+</li>
+</ul>
+<p>Water should:</p>
+<ul>
+<li>play other meaningful roles in factory production chains
+<ul>
+<li>solution and evaporation of solids</li>
+<li>to create mud</li>
+<li>cooking</li>
+<li>washing and purification</li>
+<li>fertilized water distributed via irrigation</li>
+<li>circular processing is a key element</li>
+</ul>
+</li>
+<li>be a useful trigger for conditional effects that players can use to respond to changes
+<ul>
+<li>seeds that only germinate in water / plants that only become non-dormant when wet</li>
+<li>goods that begin to float and move when submerged</li>
+<li>specialized storage that allows stored goods to float when submerged</li>
+</ul>
+</li>
+<li>be fairly expensive to transport from place to place (to preserve spatial variability)
+<ul>
+<li>canals are the main exception to this - they require significant investment though</li>
+</ul>
+</li>
+<li>be somewhat expensive to store for long periods of time (to preserve temporal variability)</li>
+<li>flow downriver even over shallow gradients
+<ul>
+<li>this creates much more natural river designs</li>
+<li>implies continuous water height</li>
+</ul>
+</li>
+<li>flow relatively quickly</li>
+<li>be required by plants to grow
+<ul>
+<li>roots are the primary mechanism of gathering water</li>
+<li>not all plants require the same type of water</li>
+<li>manually watering also works though</li>
+</ul>
+</li>
+<li>flow through canals and other player-made paths</li>
+</ul>
+<p>Water should not:</p>
+<ul>
+<li>create extreme levels of disruption
+<ul>
+<li>no extreme floods (without very strong tools to mitigate it)</li>
+<li>stored goods are never washed away</li>
+</ul>
+</li>
+<li>create disruption that requires constant manual work to respond to</li>
+</ul>
+<h2 id="aesthetic-and-versimilitude-constraints"><a class="header" href="#aesthetic-and-versimilitude-constraints">Aesthetic and versimilitude constraints</a></h2>
+<p>Water must:</p>
+<ul>
+<li>create lakes</li>
+<li>create rivers</li>
+<li>create marshes</li>
+<li>move laterally, flowing downhill</li>
+<li>have plausible sources
+<ul>
+<li>recipes that create more water than they consume should be treated with extreme caution</li>
+<li>sinks are much less concerning: evaporation is widespread, and water is often incorporated into products</li>
+</ul>
+</li>
+<li>fill up during the rain</li>
+<li>dry out over time (faster from wider pools)</li>
+<li>be able to support crops on rainfall alone
+<ul>
+<li>follows from the fact that plants need water</li>
+<li>WARNING: this does not work reliably with the current set of water mechanics: plants growing on hills generally die</li>
+</ul>
+</li>
+<li>cause loose goods to float</li>
+</ul>
+<p>Water should:</p>
+<ul>
+<li>create waterfalls
+<ul>
+<li>WARNING: this needs serious design, as it is not at all supported currently</li>
+</ul>
+</li>
+<li>interact naturally with oceans</li>
+<li>create tidepools</li>
+<li>support tides</li>
+<li>leak out of imperfect holding vessels</li>
+<li>vary by biome
+<ul>
+<li>in Terraria, weather is dictated by the biome</li>
+<li>in Minecraft, climate dictates which biomes go where</li>
+</ul>
+</li>
+<li>meaningfully interact with soil type in plausible ways</li>
+<li>come in different flavors: salt water, muddy water etc.
+<ul>
+<li>WARNING: this needs serious design consideration, fluid mixing is hard</li>
+</ul>
+</li>
+<li>carry dissolved / suspended solids
+<ul>
+<li>WARNING: this needs more design</li>
+</ul>
+</li>
+<li>cause organisms to drown
+<ul>
+<li>organisms should only drown when they are overtopped completely</li>
+</ul>
+</li>
+<li>push light organisms with the current</li>
+</ul>
+<p>Water should not:</p>
+<ul>
+<li>have waves
+<ul>
+<li>this level of simulation is too fine-scale, and will create pointless disruption with poor tools to manage it</li>
+</ul>
+</li>
+<li>behave erratically (flickering, oscillations, teleporting etc.)
+<ul>
+<li>visually distracting</li>
+<li>severly detracts from aesthetics</li>
+<li>likely to cause weird exploits</li>
+</ul>
+</li>
+</ul>
+<h2 id="base-water-mechanics"><a class="header" href="#base-water-mechanics">Base water mechanics</a></h2>
+<p><em>Emergence</em> uses an unconventional (for a video game) approach to modelling water: ground water dynamics.
+This allows for intuitive emergent behavior, good hooks (especially for plant growth!) and a ton of creative power relative to the simplicity of the design.</p>
+<p>Water is stored on a per-tile basis.
+Water first fills all available pore space in the soil as <strong>surface water</strong>. Above that level, it overflows as <strong>surface water</strong>.
+The characteristics of soil and surface water differ dramatically, creating a meaningful (and intuitive) nonlinearity in behavior.
+Water characteristics also vary by soil type, allowing for meaningful emergent distinctions between different soil types (and thus biomes).</p>
+<p>Water has <strong>momentum</strong>: the velocity of the water at a tile is determined in part by how fast it was moving before it moved into the tile it was added to.
+This enables us to make straight rivers faster, and makes critical overflow and top-up mechanics more reliable.</p>
+<h3 id="lateral-water-movement"><a class="header" href="#lateral-water-movement">Lateral water movement</a></h3>
+<p>Water flows from high to low.
+The rate at which this flow occurs is proportional to the difference in height of the water column.</p>
+<p>The overall effect creates a <strong>flow velocity</strong>, which can be used to transport floating goods, push units and more.</p>
+<h2 id="creating-water"><a class="header" href="#creating-water">Creating water</a></h2>
+<h3 id="precipitation"><a class="header" href="#precipitation">Precipitation</a></h3>
+<p>Precipitation is similarly simple: on each tile, add water based on the current weather.
+This operates to refill water reserves that are far from rivers and oceans.</p>
+<h3 id="emitters"><a class="header" href="#emitters">Emitters</a></h3>
+<p>Emitters are point sources of water, constantly pouring forth from the ground.</p>
+<p>Emitters can be produced by players, but these are dramatically weaker (and come at a high cost) relative to built-in emitters.</p>
+<h3 id="tidal-inflow"><a class="header" href="#tidal-inflow">Tidal inflow</a></h3>
+<p>Water can flow into the world via tides.</p>
+<p>This produces huge amounts of water across the entire coast, but the water is only salt water.</p>
+<h2 id="destroying-water"><a class="header" href="#destroying-water">Destroying water</a></h2>
+<h3 id="crafting"><a class="header" href="#crafting">Crafting</a></h3>
+<p>Water can be used by plants to perform photosynthesis.
+This is the primary use and sink of water.
+Water used in this way is drawn in by roots, which have both an area (typically a radius) and a depth.</p>
+<p>Water can also be stored in item form using reusable containers, and carried back and forth.
+Water used for crafting must be supplied in this form.
+When these containers are emptied, they add water to the tile that they are on.</p>
+<h3 id="evaporation"><a class="header" href="#evaporation">Evaporation</a></h3>
+<p>Evaporation is simple: water is removed from each tile.
+This varies with:</p>
+<ul>
+<li>the presence or absence of surface water</li>
+<li>the soil type (if no surface water is present)</li>
+<li>the light level on each tile (which in turn varies with local conditions, time of day and weather)</li>
+</ul>
+<p>Because surface water evaporates at a much faster rate than soil water, this leads to a substantially stable equilibrium with rivers and islands.
+As the amount of water increases locally, the rate of evaporation also increases automatically, creating a local balance.</p>
+<h3 id="drain-to-ocean"><a class="header" href="#drain-to-ocean">Drain to ocean</a></h3>
+<p>When water flows into the ocean (because the water level is lower there than anywhere else), it is simply destroyed: oceans are very big!</p>
+<p>This acts as an ultimate water sink, and avoids flooding the map, even with very powerful rivers.</p>
+<h2 id="storing-water"><a class="header" href="#storing-water">Storing water</a></h2>
+<h3 id="holes"><a class="header" href="#holes">Holes</a></h3>
+<p>Water can be deliberately stored in holes in the ground.
+This is cheap and relatively effective (especially deep, shaded holes) but can be challenging to extract again and make use of.</p>
+<h3 id="in-containers"><a class="header" href="#in-containers">In containers</a></h3>
+<p>Water can be captured by more expensive, disposable sealed containers, which can then be stored in standard item storage.
+This is lossless, but not very dense and quite expensive.</p>
+<p>This is intended purely as a buffer for crafting.</p>
+<h3 id="storage-tanks"><a class="header" href="#storage-tanks">Storage tanks</a></h3>
+<p>Storage tanks can store large volumes of water without water loss.</p>
+<p>They can be moved, but are super heavy (requiring multiple crabs to move). Unsurprisingly, they're lighter when empty.</p>
+<h2 id="moving-water"><a class="header" href="#moving-water">Moving water</a></h2>
+<h3 id="in-pots"><a class="header" href="#in-pots">In pots</a></h3>
+<p>Basket crabs can choose to wear a heavier earthen pot, rather than a basket.
+These are water-tight and can carry fluids.</p>
+<p>When a basket crab wearing a pot travels under water, its pot automatically fills.</p>
+<h3 id="in-containers-1"><a class="header" href="#in-containers-1">In containers</a></h3>
+<p>With the help of an organic, consumable sealed containers, water can be transformed into a solid item.
+These can be used directly in crafting recipes, but can also be broken, releasing water into the ground.</p>
+<h3 id="in-storage-tanks"><a class="header" href="#in-storage-tanks">In storage tanks</a></h3>
+<p>Storage tanks can be shipped using large, dedicated workers in a matter very similar to tanker trains.
+This is a great way to transport huge volumes of water, but is significantly challenging logistically and results in bursty transport.</p>
+<h3 id="canals"><a class="header" href="#canals">Canals</a></h3>
+<p>Canals are the primary way to move water across the map.
+These flow downhill, and while they require significant and disruptive engineering effort, they are entirely passive.
+Some water is lost due to evaporation, but this can be substantially mitigated through shading.</p>
+<h3 id="fountain-reeds"><a class="header" href="#fountain-reeds">Fountain reeds</a></h3>
+<p>Fountain reeds are the primary vertical pump: they draw in shallow water from a large region, and spit it out in a vertical fountain.
+By default, this has minimal effect: it creates a bit of water churn.</p>
+<p>With upgrades though, this can be tilted to the side, allowing you to move water up terraces.</p>
+<h2 id="converting-water"><a class="header" href="#converting-water">Converting water</a></h2>
+<p>TBD.</p>
+<h2 id="floating-goods-down-river"><a class="header" href="#floating-goods-down-river">Floating goods down-river</a></h2>
+<p>Litter which is sufficiently light floats on the surface of the water, travelling in a rate (and direction) proportional to the flow velocity.
+Each tile may only have one litter pile on it: litter that exceeds the stack size of the item (or is of a different type) piles up.</p>
+<p>This effect is slightly randomized to reduce log jams and create a more visually appealing effect.</p>
+<h3 id="adding-floating-goods-to-rivers"><a class="header" href="#adding-floating-goods-to-rivers">Adding floating goods to rivers</a></h3>
+<p>Litter on the ground will automatically start floating once the tile floods.</p>
+<p>While this can happen accidentally, the primary mechanism for adding goods to rivers is via chutes.
+Chutes have an item filter, which control which item they are requesting.
+Once items are added to the chutes, they are dropped at their output tile as litter.</p>
+<p>Water striders can be loaded directly by adjacent workers.</p>
+<h3 id="removing-floating-goods-from-rivers"><a class="header" href="#removing-floating-goods-from-rivers">Removing floating goods from rivers</a></h3>
+<p>Nets collect any floating litter that attempts to move into their tile.
+However, they let water pass through unhindered.
+They have storage inventories, and can become full.</p>
+<p>Units can also reach floating goods as long as they are in adjacent tile.
+This is an effective distribution mechanism for last-mile transport.</p>
+<h3 id="filtering-and-sorting-floating-goods"><a class="header" href="#filtering-and-sorting-floating-goods">Filtering and sorting floating goods</a></h3>
+<p>Streams of goods that contain only a single kind of good are generally much easier to work with.
+Mixed streams may be created either by accident (through random junk accumulating in your river),
+or deliberately, when we need to move multiple types of goods through a single waterway.</p>
+<p>There are four fundamental operations a player may want to perform. Let's go over how they might accomplish each:</p>
+<ul>
+<li><strong>allow list:</strong> remove all floating goods except those that match the provided filter
+<ul>
+<li>WARNING: no good mechanism exists yet</li>
+</ul>
+</li>
+<li><strong>block list:</strong> remove only floating goods that match the provided filter
+<ul>
+<li>use a narrow stream, and create a demand for the good on the shores. Workers wait beside the shore, grabbing goods
+<ul>
+<li>very simple, no tech needed</li>
+<li>fails if there are not enough workers (or demand is stopped)</li>
+<li>only works with narrow streams</li>
+</ul>
+</li>
+<li>use swimming workers, and create a demand for the goods
+<ul>
+<li>requires workers that can swim or wade succesfully</li>
+<li>fails if there are not enough workers (or demand is stopped)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>purge:</strong> remove all floating goods
+<ul>
+<li>add a net, which is routinely cleaned
+<ul>
+<li>can be challenging to build nets across wide rivers</li>
+<li>nets will block water striders</li>
+<li>can back up if net is not emptied fast enough</li>
+</ul>
+</li>
+<li>WARNING: no mechanism exists that works with water striders yet</li>
+</ul>
+</li>
+<li><strong>filtered split:</strong> split the stream, filtering goods to the left and right
+<ul>
+<li>create a net, then split the river beyond the net with a chute for each
+<ul>
+<li>no added tech needed</li>
+<li>very labor intensive</li>
+<li>scales to multiple rivers</li>
+<li>scales to wider rivers</li>
+</ul>
+</li>
+<li>WARNING: this mechanism is extremely labor intensive</li>
+</ul>
+</li>
+</ul>
+<h3 id="merging-dividing-and-balancing-floating-goods"><a class="header" href="#merging-dividing-and-balancing-floating-goods">Merging, dividing and balancing floating goods</a></h3>
+<p>Merging streams is straightforward: simply join the streams.
+There are complications involved, since this will cause their height to drop to the lowest height.
+During implementation, we need to be careful to deliberate about when one stream of good never dominates over the other.</p>
+<p>Dividing streams is similarly easy: simply fork the streams.</p>
+<p>Balancing goods between two streams seems quite challenging.
+Players could use an overflow mechanism that gets extracted, and then a chute leading to the other stream.
+Repeat, and we have basic, although quite costly, balancing.</p>
+<p>Fortunately this shouldn't be nearly as necessary as in Factorio.
+To increase throughput, simply make a wider, faster flowing river!</p>
+<h3 id="top-up-and-overflow-mechanisms"><a class="header" href="#top-up-and-overflow-mechanisms">Top-up and overflow mechanisms</a></h3>
+<p><strong>Overflow</strong> mechanisms allow players to divert excess goods to a lower priority use.
+If water has velocity, we should be able to get this working by creating side channels.
+By splitting it off of the main path, goods will only attempt to drift there when the main path is backed up.</p>
+<p><strong>Top-up</strong> mechanisms allow players to add goods, but only when needed.
+Similarly, we should be able to use incoming side channels, much like how side loading works in Factorio.
+If the main river is backed up, goods should only be added from the side channel when there is space for them.</p>
+<h3 id="increasing-throughput"><a class="header" href="#increasing-throughput">Increasing throughput</a></h3>
+<p>Increasing the throughput of a river can be done in several ways:</p>
+<ol>
+<li>Increase its width
+<ol>
+<li>Very simple to do (and discover)</li>
+<li>Tends to lead to logistical complications in construction, efficient loading, and efficient unloading</li>
+</ol>
+</li>
+<li>Increase its speed by changing the height differential
+<ol>
+<li>Requires extensive renovation along the entire length</li>
+<li>Relies on good mechanisms to raise water higher</li>
+</ol>
+</li>
+<li>Increase its speed by straightening it out
+<ol>
+<li>Can be performed locally</li>
+<li>Can only be done up to a point</li>
+<li>May requiring refactoring your factory around it</li>
+</ol>
+</li>
+<li>Store goods more effectively
+<ol>
+<li>Containers can be used rather than raw goods, which will store more total items per tile</li>
+</ol>
+</li>
+<li>Create multiple parallel rivers using splitting and merging
+<ol>
+<li>Works well when you need narrow rivers for whatever reason</li>
+<li>Less space efficient (but you can grow things in the middle)</li>
+</ol>
+</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="organisms/units.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="logistics/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="organisms/units.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="logistics/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

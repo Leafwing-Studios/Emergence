@@ -1,0 +1,683 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Glossary - Game Design for Emergence</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="steam-page.html"><strong aria-hidden="true">1.</strong> Draft Steam Page</a></li><li class="chapter-item expanded "><a href="glossary.html" class="active"><strong aria-hidden="true">2.</strong> Glossary</a></li><li class="chapter-item expanded "><a href="risk-assessment.html"><strong aria-hidden="true">3.</strong> Risk Assessment</a></li><li class="chapter-item expanded "><a href="high-level/index.html"><strong aria-hidden="true">4.</strong> High Level Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="high-level/game-thesis.html"><strong aria-hidden="true">4.1.</strong> Game Thesis</a></li><li class="chapter-item expanded "><a href="high-level/genre-analysis.html"><strong aria-hidden="true">4.2.</strong> Genre Analysis</a></li><li class="chapter-item expanded "><a href="high-level/genre-mechanics.html"><strong aria-hidden="true">4.3.</strong> Genre Mechanics</a></li><li class="chapter-item expanded "><a href="high-level/mechanical-translation.html"><strong aria-hidden="true">4.4.</strong> Mapping genre mechanics to Emergence</a></li><li class="chapter-item expanded "><a href="high-level/creative-automation.html"><strong aria-hidden="true">4.5.</strong> Creative Automation</a></li><li class="chapter-item expanded "><a href="high-level/creative-automation-case-studies.html"><strong aria-hidden="true">4.6.</strong> Creative Automation: Case Studies</a></li></ol></li><li class="chapter-item expanded "><a href="player-actions/index.html"><strong aria-hidden="true">5.</strong> Player Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="player-actions/selection-tools.html"><strong aria-hidden="true">5.1.</strong> Selection Tools</a></li><li class="chapter-item expanded "><a href="player-actions/zoning.html"><strong aria-hidden="true">5.2.</strong> Zoning</a></li><li class="chapter-item expanded "><a href="player-actions/terraforming.html"><strong aria-hidden="true">5.3.</strong> Terraforming</a></li><li class="chapter-item expanded "><a href="player-actions/informational-tools.html"><strong aria-hidden="true">5.4.</strong> Informational Tools</a></li></ol></li><li class="chapter-item expanded "><a href="research/index.html"><strong aria-hidden="true">6.</strong> Research</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="research/domestication.html"><strong aria-hidden="true">6.1.</strong> Domestication</a></li><li class="chapter-item expanded "><a href="research/guided-evolution.html"><strong aria-hidden="true">6.2.</strong> Genetics</a></li><li class="chapter-item expanded "><a href="research/technology.html"><strong aria-hidden="true">6.3.</strong> Technology</a></li></ol></li><li class="chapter-item expanded "><a href="production-chains/index.html"><strong aria-hidden="true">7.</strong> Production Chains</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="production-chains/recipes.html"><strong aria-hidden="true">7.1.</strong> Recipes</a></li><li class="chapter-item expanded "><a href="production-chains/raw-resources.html"><strong aria-hidden="true">7.2.</strong> Raw Resources</a></li><li class="chapter-item expanded "><a href="production-chains/intermediates.html"><strong aria-hidden="true">7.3.</strong> Intermediates</a></li><li class="chapter-item expanded "><a href="production-chains/end-products.html"><strong aria-hidden="true">7.4.</strong> End Products</a></li><li class="chapter-item expanded "><a href="production-chains/example-leafcutter.html"><strong aria-hidden="true">7.5.</strong> Example Production Chain: Leafcutter Ant Cultivation</a></li></ol></li><li class="chapter-item expanded "><a href="organisms/index.html"><strong aria-hidden="true">8.</strong> Organisms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="organisms/life-cycles.html"><strong aria-hidden="true">8.1.</strong> Life Cycles</a></li><li class="chapter-item expanded "><a href="organisms/sessile-organisms.html"><strong aria-hidden="true">8.2.</strong> Sessile Organisms</a></li><li class="chapter-item expanded "><a href="organisms/units.html"><strong aria-hidden="true">8.3.</strong> Units</a></li></ol></li><li class="chapter-item expanded "><a href="water.html"><strong aria-hidden="true">9.</strong> Water</a></li><li class="chapter-item expanded "><a href="logistics/index.html"><strong aria-hidden="true">10.</strong> Logistics</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="logistics/signals/index.html"><strong aria-hidden="true">10.1.</strong> Signals</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="logistics/signals/configuring-properties.html"><strong aria-hidden="true">10.1.1.</strong> Configuring Signal Properties</a></li></ol></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Game Design for Emergence</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="glossary"><a class="header" href="#glossary">Glossary</a></h1>
+<p>These definitions are intended to be relatively brief and opinionated.
+They are not authoritative!</p>
+<!-- Please try to keep the terms sorted alphabetically. -->
+<h2 id="game-design"><a class="header" href="#game-design">Game Design</a></h2>
+<p>Key concepts and terms from game design.</p>
+<h3 id="accessibility"><a class="header" href="#accessibility">Accessibility</a></h3>
+<p>How easy and/or comfortable a game is to play for players with a wide range of ability levels or impairments.</p>
+<p>Vision, hearing and motor disabilties are the most common category here, but difficulty, time commitments and mental health concerns can also be reasonably considered under a broad banner of accessibility.</p>
+<h3 id="achievements"><a class="header" href="#achievements">Achievements</a></h3>
+<p>Rewarded for accomplishing challenging or interesting in-game tasks.
+These are often associated with <strong>achievement points</strong>, awarded based on the difficulty of each achievement.</p>
+<p>Can serve as an important form of <a href="glossary.html#tutorialization">tutorialization</a>, as it lays out [goals] for players to chase after (and are a good spot for hints).</p>
+<p>Achievements typically tie into out-of-game systems on <a href="https://partner.steamgames.com/doc/features/achievements">Steam</a> or consoles to track accumulated achievements.</p>
+<h3 id="agency"><a class="header" href="#agency">Agency</a></h3>
+<p>The extent to which players feel like they can shape the broader <a href="glossary.html#narrative">narrative</a> or <a href="glossary.html#mechanic">mechanics</a> of the game.</p>
+<h3 id="art-style"><a class="header" href="#art-style">Art style</a></h3>
+<p>The techniques, colors, scale and elements that are used in the visual elements of a game.</p>
+<h3 id="automation"><a class="header" href="#automation">Automation</a></h3>
+<p>Repetitive work that is done automatically by in-game entities and systems.</p>
+<h3 id="challenge"><a class="header" href="#challenge">Challenge</a></h3>
+<p>Difficulty that is fun and rewarding for players to overcome.</p>
+<h3 id="cohesion"><a class="header" href="#cohesion">Cohesion</a></h3>
+<p>The degree to which game elements (usually <a href="glossary.html#theme">thematic</a> or <a href="glossary.html#art-style">artistic</a>) feel like they belong together as part of a greater whole.</p>
+<h3 id="constraint"><a class="header" href="#constraint">Constraint</a></h3>
+<p>A limitation of the <a href="glossary.html#design-space">design space</a>, which must (or should) be respected when doing game design.</p>
+<p>Constraints can be:</p>
+<ol>
+<li><strong>External:</strong> imposed by problems beyond the game designer's control. Budget, cultural sensitivity and market demands are common examples.</li>
+<li><strong>Arbitrary:</strong> imposed by the designers themselves, in order to limit the design space in interesting ways.</li>
+<li><strong>Internal:</strong> implied via existing elements of the game, or the combination of other constraints.</li>
+</ol>
+<p>While constraints are limiting, they're a powerful tool to create a more focused game and are great sparks for creativity.</p>
+<p>Constraints exist on a continuum between <strong>soft</strong> (flexible, can be ignored with a good enough reason) and <strong>hard</strong> (must be respected at all times).</p>
+<p>Constraints can be in <a href="glossary.html#tension">tension</a> with each other.</p>
+<h3 id="cycle-mechanics-design"><a class="header" href="#cycle-mechanics-design">Cycle (mechanics design)</a></h3>
+<p>A set of elements of the same type that share strong mechanical (and often thematic) similarities.</p>
+<h3 id="design-by-stumble"><a class="header" href="#design-by-stumble">Design-by-stumble</a></h3>
+<p>Making games is hard!
+Starting with an existing, successful game is a popular and effective strategy.</p>
+<p>However, you should critically examine the <a href="glossary.html#genre">genre</a> of the game you are starting from,
+and identify clear areas to focus on and improve.</p>
+<p>Otherwise, your game development process will proceed as if by <a href="https://en.wikipedia.org/wiki/Random_walk">random walk</a>:
+changes made without a reason are as likely to be harmful as helpful, and your game will be unfocused.</p>
+<h3 id="design-space"><a class="header" href="#design-space">Design space</a></h3>
+<p>The set of all possible games or solutions that obey all of the <a href="glossary.html#constraint">constraints</a>.</p>
+<h3 id="depth-and-complexity"><a class="header" href="#depth-and-complexity">Depth and complexity</a></h3>
+<p><strong>Depth</strong> is a fuzzy term that gets at the notion of game <strong>richness</strong>: how many interesting choices are there, how much replay value exists?</p>
+<p><strong>Complexity</strong> is a similarly fuzzy term that attempts to capture a measure of the number of &quot;moving parts&quot; of a game, and how challenging it is to understand.</p>
+<p>Depth is generally viewed as a positive attribute, while complexity is generally viewed as a negative attribute.
+Games which have high depth relative to their complexity are often considered <strong>elegant.</strong></p>
+<p>Dependending on their player base, games have a varying <strong>complexity budget.</strong>
+This fuzzy term represents each player's ability to keep track of rules, learn new mechanics and reason effectively about their <a href="glossary.html#interesting-choices">choices</a>.
+If this budget is exceeded, players will be frustrated and confused by your game.</p>
+<h3 id="diagetic"><a class="header" href="#diagetic">Diagetic</a></h3>
+<p>A <a href="glossary.html#mechanic">mechanic</a> that is presented as occurring in the literal <a href="glossary.html#game-world">game world</a>.
+For example, most user interfaces are presented as something that only exists for the player's convenience, but doesn't exist in the game.
+However, in <em>Halo</em>, the display is part of the soldier's visor, and thus literally exists in the game.</p>
+<p>Antonym: <strong>non-diagetic</strong></p>
+<h3 id="double-edged"><a class="header" href="#double-edged">Double-edged</a></h3>
+<p>An <a href="glossary.html#upgrade">upgrade</a> or other <a href="glossary.html#mechanic">mechanic</a> that has both benefits and drawbacks.
+These are typically stronger than their strictly positive equivalents in order to be <a href="glossary.html#interesting-choices">balanced</a>.</p>
+<h3 id="early-game-mid-game-and-late-game"><a class="header" href="#early-game-mid-game-and-late-game">Early game, mid game and late game</a></h3>
+<p>These are broad stages of a game, which proceed one after another.</p>
+<p><a href="glossary.html#depth-and-complexity">Total complexity</a> typically increases as the game unfolds, as the complexity budget is often limited by the rate at which players can learn and master new mechanics.</p>
+<h3 id="focus-game-design"><a class="header" href="#focus-game-design">Focus (game design)</a></h3>
+<p>A game is said to be focused if it has a clear goal and its <a href="glossary.html#system-game-design">systems</a> are  built to serve that goal.</p>
+<h3 id="flavor-text"><a class="header" href="#flavor-text">Flavor text</a></h3>
+<p>Writing (or sometimes other elements by analogy) that has no <a href="glossary.html#mechanic">mechanical</a> impact or explanation,
+and instead serves to enhance the theme and tone of the game.</p>
+<h3 id="game-feel"><a class="header" href="#game-feel">Game feel</a></h3>
+<p>How satisfying, smooth, intuitive and natural a game feels to play.
+Games with great game feel start to feel like extensions of the player's body as they master the game.</p>
+<h3 id="genre"><a class="header" href="#genre">Genre</a></h3>
+<p>A cluster of related games.
+These can be explained either by definition (where you list key properties of games in the genre) or by example (where you list games that fall into the genre and those that do not).</p>
+<h3 id="hook-game-marketing"><a class="header" href="#hook-game-marketing">Hook (game marketing)</a></h3>
+<p>The unique selling point of a game, that draws interest and encourages players to try out and keep playing your game instead of the competitors in your genre.</p>
+<h3 id="hook-game-systems"><a class="header" href="#hook-game-systems">Hook (game systems)</a></h3>
+<p>A reusable game <a href="glossary.html#mechanic">mechanic</a> that can be used to connect <a href="glossary.html#system-game-design">game systems</a>, increasing <a href="glossary.html#cohesion">cohesion</a> and <a href="glossary.html#depth-and-complexity">depth</a>.</p>
+<h3 id="interesting-choices"><a class="header" href="#interesting-choices">Interesting choices</a></h3>
+<p>Games are sometimes said to be a &quot;series of interesting choices&quot;.
+In order for choices to be interesting, players must be able to:</p>
+<ol>
+<li>Understand the choices they have</li>
+<li>Understand the implication of each choice</li>
+<li>Care about the impact that the choice has on the game</li>
+<li>Decide differently based on game conditions</li>
+</ol>
+<p>Choices are said to be <strong>balanced</strong> if they provide roughly equivalent benefits (or drawbacks) to the players.</p>
+<h3 id="lens-game-analysis"><a class="header" href="#lens-game-analysis">Lens (game analysis)</a></h3>
+<p>A perspective on the design of a game.
+See <a href="https://schellgames.com/art-of-game-design">the deck of lenses</a> for an excellent set of questions to ask about your games.</p>
+<h3 id="loop"><a class="header" href="#loop">Loop</a></h3>
+<p>A path through a <a href="glossary.html#system-game-design">game system</a> that leads back to itself.</p>
+<p>Each step in a loop can be <strong>reinforcing</strong> (positive feedback) or <strong>dampening</strong> (negative feedback), resulting in an overall reinforcing or dampening cycle.</p>
+<h3 id="ludotography"><a class="header" href="#ludotography">Ludotography</a></h3>
+<p>The telling of a story through gameplay.
+From <a href="https://www.youtube.com/watch?v=5ebIizhEgxg&amp;t=521s">this video</a>.</p>
+<h3 id="mechanic"><a class="header" href="#mechanic">Mechanic</a></h3>
+<p>A rule about how the game works.</p>
+<h3 id="narrative"><a class="header" href="#narrative">Narrative</a></h3>
+<p>The story of a game.
+Unlike most traditional works of art, narratives are often implicit or branching in games.</p>
+<h3 id="noob-trap"><a class="header" href="#noob-trap">Noob-trap</a></h3>
+<p>Features that seem helpful or appealing to beginners, but actually aren't.</p>
+<p>Using them is less effective in almost every circumstance than an alternative, or develops bad habits.</p>
+<h3 id="plausibility-and-realism"><a class="header" href="#plausibility-and-realism">Plausibility and realism</a></h3>
+<p>Fictional worlds are plausible if they have a set of learnable, internally consistent rules.
+They are realistic to the extent to which these rules match those of real life.</p>
+<p>Worlds that lack plausibility will not be <strong>immersive</strong>, and will not feel <a href="glossary.html#cohesion">coherent</a>.</p>
+<h3 id="player-avatar"><a class="header" href="#player-avatar">Player avatar</a></h3>
+<p>The in-game unit that represents the player.</p>
+<h3 id="player-experience"><a class="header" href="#player-experience">Player experience</a></h3>
+<p>What the player is actually doing, and how they feel.</p>
+<h3 id="player-goals"><a class="header" href="#player-goals">Player goals</a></h3>
+<p>In-game objectives that players set for themselves that give them a reason to keep playing.
+These are often complementary to player fun: fun will keep players engaged and enjoying themselves from moment to moment,
+but chasing after and reaching goals gives a deeper satisfaction and sense of mastery.</p>
+<h3 id="polish"><a class="header" href="#polish">Polish</a></h3>
+<p>Work done to improve how pretty, <a href="glossary.html#cohesion">cohesive</a>, and bug-free a game is.
+Games where these qualities are high are said to be <strong>polished.</strong></p>
+<h3 id="progression"><a class="header" href="#progression">Progression</a></h3>
+<p>The increase in player power and options over time.
+Progression exists on a continuum between <strong>vertical</strong>, which is focused on power growth, and <strong>horizontal</strong>, which is focused on expanded options.</p>
+<h3 id="prototype"><a class="header" href="#prototype">Prototype</a></h3>
+<p>A quick implementation of a game design idea used to test a <strong>hypothesis</strong> about how a <a href="glossary.html#mechanic">mechanic</a> will work or <a href="glossary.html#player-experience">feel</a> in practice.</p>
+<h3 id="quality-of-life"><a class="header" href="#quality-of-life">Quality of life</a></h3>
+<p>Features which improve <a href="glossary.html#game-feel">game feel</a> and reduce player frustration.
+This is often done by reducing the amount of manual repetitive work, alleviating limitations like storage space, or reducing the ongoing complexity budget required by game mechanics.</p>
+<h3 id="randomness"><a class="header" href="#randomness">Randomness</a></h3>
+<p>There are two kinds of randomness: <strong>input randomness</strong> and <strong>output randomness</strong>.</p>
+<p>Input randomness controls which options a player is presented with, while output randomness varies the effect of a player's choice.
+Both add <a href="glossary.html#challenge">challenge</a> and surprise, but input randomness is typically less frustrating.</p>
+<p>See this <a href="https://www.youtube.com/watch?v=dwI5b-wRLic">GMTK video</a> for more.</p>
+<h3 id="simulationism"><a class="header" href="#simulationism">Simulationism</a></h3>
+<p>A style of game design that attempts to accurately simulate real-world systems in an <a href="glossary.html#plausibility-and-realism">realistic</a> fashion.</p>
+<h3 id="system-game-design"><a class="header" href="#system-game-design">System (game design)</a></h3>
+<p>A collection of <a href="glossary.html#mechanic">mechanics</a> that work together to produce part of the <a href="glossary.html#player-experience">player experience</a>.
+Systems generally have <a href="glossary.html#loop">loops</a> back to themself, or <a href="glossary.html#hook-game-systems">hook</a> into other systems
+in order to keep the player engaged and create <a href="glossary.html#depth-and-complexity">depth</a>.</p>
+<h3 id="tension"><a class="header" href="#tension">Tension</a></h3>
+<p>Elements of the game design that are, at least on their face, contrasting or opposed.
+Tension must be handled carefully: tackled poorly, it leads to poor <a href="glossary.html#cohesion">cohesion</a> or <a href="glossary.html#focus-game-design">focus</a>.
+Tackled with thought and skill, tension can creating unique and interesting <a href="glossary.html#theme">themes</a>, <a href="glossary.html#tone">tone</a> or systems.</p>
+<h3 id="theme"><a class="header" href="#theme">Theme</a></h3>
+<p>The setting, aesthetics and &quot;fictional genre&quot; of a game.
+This is the core of <a href="glossary.html#worldbuilding">worldbuilding</a>, and sets the basic rules of the fictional universe.</p>
+<p>Can be described using:</p>
+<ul>
+<li>very broad terms like &quot;sci-fi&quot;</li>
+<li>more specific like &quot;colonial fantasy focused on the war between burgeoning powers&quot;</li>
+<li>hearken to specific media like &quot;Diablo&quot; or &quot;Bladerunner&quot;</li>
+</ul>
+<p>This can be extended to discuss the <strong>big questions</strong> that a game is attempting to explore, like &quot;what does it mean to be human&quot;.</p>
+<h3 id="tone"><a class="header" href="#tone">Tone</a></h3>
+<p>The emotional weight and mood of a game.
+Often discussed in concert with a game's [theme]: &quot;cheerful steampunk&quot; is very different than &quot;horrific steampunk&quot; is very different than &quot;gloomy steampunk&quot;.</p>
+<h3 id="tuning-levers"><a class="header" href="#tuning-levers">Tuning levers</a></h3>
+<p>Parts of a <a href="glossary.html#mechanic">mechanic</a> that can be easily tweaked to modify the <a href="glossary.html#interesting-choices">balance</a> of a <a href="glossary.html#system-game-design">system</a>.</p>
+<h3 id="tutorialization"><a class="header" href="#tutorialization">Tutorialization</a></h3>
+<p>The practice of teaching new players how to play your game.</p>
+<h3 id="upgrade"><a class="header" href="#upgrade">Upgrade</a></h3>
+<p>An improvement to a <a href="glossary.html#mechanic">mechanic</a>.
+Upgrades are usually but not always selected by players to give them a sense of <a href="glossary.html#agency">agency</a>.</p>
+<h3 id="worldbuilding"><a class="header" href="#worldbuilding">Worldbuilding</a></h3>
+<p>The lore, places, people, <a href="glossary.html#art-style">aesthetics</a> and internally consistent rules of your fictional universe.</p>
+<h3 id="world-generation"><a class="header" href="#world-generation">World generation</a></h3>
+<p>Usually refers to the <a href="glossary.html#procedural-generation">procedural generation</a> of a game world, or parts of a game world, in opposition to the crafting of a world (or level) by hand.</p>
+<p>Closely related to concepts of:</p>
+<ul>
+<li><a href="glossary.html#randomness">randomness</a>: a pristine world provides a particular set of options for a player to begin engaging with, and these options should allow the player to meaningfully engage given the <a href="glossary.html#mechanic">mechanics</a> available to them</li>
+<li><a href="glossary.html#plausibility-and-realism">plausibility/realism</a>: a procedurally generated world must make sense given the game's <a href="glossary.html#worldbuilding">world building</a></li>
+</ul>
+<h2 id="factory-builders"><a class="header" href="#factory-builders">Factory Builders</a></h2>
+<p>Terms defined here are standard elements of the factory builder genre.</p>
+<h3 id="alert"><a class="header" href="#alert">Alert</a></h3>
+<p>A notification that lets the player know when something has gone wrong.</p>
+<h3 id="assembler"><a class="header" href="#assembler">Assembler</a></h3>
+<p>A building or machine that can be used to process items via a <a href="glossary.html#recipe">recipe</a>.</p>
+<h3 id="balancer"><a class="header" href="#balancer">Balancer</a></h3>
+<p>Joins two or more item streams and evenly distributes items across them.</p>
+<p>Commonly combined with <a href="glossary.html#balancer">balancers</a> or built out of <a href="glossary.html#splitter">splitters</a>.</p>
+<h3 id="belt"><a class="header" href="#belt">Belt</a></h3>
+<p>A belt is a simple logistic entity which transports goods in a single direction.
+Multiple belts need to be chained together to provide effective transportation.
+Belts usually have a maximum amount of goods they can transport per unit of time.
+They can transport any type of solid goods and different goods can be mixed.</p>
+<p>Notably, in Factorio, belts have two &quot;sides&quot;, where each side can contain different types of items.
+The direction from which items are loaded onto the belts influence which side of the belt the items are put on.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Transport_belt">Factorio: Transport belt</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Conveyor_Belts">Satisfactory: Conveyor belt</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Conveyor_Belt">Dyson Sphere Program: Conveyor belt</a></li>
+</ul>
+<h3 id="bot"><a class="header" href="#bot">Bot</a></h3>
+<p>Bots are units which can automate specific player actions.
+They often require a lot more upfront investments than machines, but are a lot more flexible.
+Compared to machines, bots can move around freely.
+Some actions can only be automated through bots, e.g. constructing new entities.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Construction_robot">Factorio: Construction robot</a></li>
+<li><a href="https://wiki.factorio.com/Logistic_robot">Factorio: Logistic robot</a></li>
+</ul>
+<h3 id="blueprint"><a class="header" href="#blueprint">Blueprint</a></h3>
+<p>Blueprints are placeholders for multiple entities to be constructed.
+Entity settings (e.g. recipes or other configurations) are preserved in the blueprint.
+They can serve as a planning tool for the player, but also be used as instructions for bots.
+Often, blueprints can be shared between players and/or be reused during the game.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Blueprint">Factorio: Blueprint</a></li>
+<li><a href="https://wiki.factorio.com/Ghost">Factorio: Ghost</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Blueprint_Designer">Satisfactory: Blueprint designer</a></li>
+</ul>
+<h3 id="clipboard"><a class="header" href="#clipboard">Clipboard</a></h3>
+<p>Similar to blueprints, the clipboard allows the quick reuse of factory layouts.
+A set of entities can be marked to be copied and then pasted at a different position at a later time.
+Usually, the entities are not built directly, but only pasted as placeholders.</p>
+<p>In contrast to blueprints, players can usually only have one layout in the clipboard.
+Previously copied layouts are simply overwritten.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Controls#Tools">Factorio: Controls/Tools</a> (copy/paste/cut)</li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Mass_Construction_(Lv1)">Dyson Sphere Program: Mass Construction (Lv1)</a> (enables copy/paste functionality)</li>
+</ul>
+<h3 id="creative-mode"><a class="header" href="#creative-mode">Creative mode</a></h3>
+<p>A game mode where the player can freely test out designs and modify the environment in unconstrained ways.</p>
+<p>Often incorporated into the game itself as a &quot;sandbox&quot; or &quot;lab&quot;, not to be confused with the other genre-specific meaning of either of those terms.</p>
+<h3 id="encyclopedia"><a class="header" href="#encyclopedia">Encyclopedia</a></h3>
+<p>A list of in-game elements (items, locations, mechanics) that explains what they are and key properties.</p>
+<p>Intended as an in-game substitute for a wiki.
+Often contains <a href="glossary.html#flavor-text">flavor text</a>, and serves as a primary mechanism to explain <a href="glossary.html#worldbuilding">worldbuilding</a> to players in this genre.</p>
+<h3 id="filter"><a class="header" href="#filter">Filter</a></h3>
+<p>Filters allow only one set of goods to pass through.
+Can be combined with <a href="glossary.html#inserter">inserters</a> to only transfer one set of goods
+or with <a href="glossary.html#splitter">splitters</a> to split one set of goods to one side and all other goods to the other side.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Filter_inserter">Factorio: Filter inserter</a></li>
+<li><a href="https://wiki.factorio.com/Splitter">Factorio: Splitter</a> (provides filter functionality)</li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Smart_Splitter">Satisfactory: Smart splitter</a> (provides filter functionality)</li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Sorter">Dyson Sphere Program: Sorter</a> (provides filter functionality)</li>
+</ul>
+<h3 id="inserter"><a class="header" href="#inserter">Inserter</a></h3>
+<p>Inserters transfer goods from one entity to another.
+Often, inserters are required to insert goods into machines.
+Inserters are usually available with different ranges, either as separate entities or as configuration option.</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Inserters">Factorio: Inserters</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Sorter">Dyson Sphere Program: Sorter</a> (provides inserter functionality)</li>
+</ul>
+<h3 id="lab"><a class="header" href="#lab">Lab</a></h3>
+<p>A machine to research new technologies, unlocking new machines and other gameplay features.
+Usually uses <strong>science packs</strong> as input.</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Lab">Factorio: Lab</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/The_HUB#HUB_Terminal">Satisfactory: HUB terminal</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Matrix_Lab">Dyson Sphere Program: Matrix Lab</a></li>
+</ul>
+<h3 id="loader"><a class="header" href="#loader">Loader</a></h3>
+<p>An entity that can load or unload the contents of a container as fast as the input/output belt can handle.
+In many games (like Mindustry), this is built into assemblers directly and inserters simply don't exist.</p>
+<ul>
+<li><a href="https://www.factorio.com/blog/post/fff-128">Factorio</a>, where it was initially considered but ultimately not included</li>
+</ul>
+<h3 id="logistic-network"><a class="header" href="#logistic-network">Logistic network</a></h3>
+<p>A network of connected logistic elements that can interact with each other.
+It's composed of:</p>
+<ul>
+<li><strong>producers</strong>, who provide resources to the network</li>
+<li><strong>consumers</strong>, who take resources out of the network and use them</li>
+<li>the connection between these nodes</li>
+</ul>
+<p>A single entity might be both a producer and a consumer.
+In the same game there may be different separated sets of logistic networks.
+The consumers in the network (e.g. logistic bots) can access the producers in the network (e.g. logistic chests), but not outside of it.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Logistic_network">Factorio: Logistic network</a></li>
+</ul>
+<h3 id="map"><a class="header" href="#map">Map</a></h3>
+<p>An abstract representation of the geography of the game world.
+Typically stylized, and intended to communicate large amounts of information comfortably.</p>
+<p>Unexplored areas are covered in <strong>fog of war</strong>, concealing them.</p>
+<h3 id="notes"><a class="header" href="#notes">Notes</a></h3>
+<p>Player-written in-game notes.
+Often integrated with the <a href="glossary.html#map">map</a>.
+Typically used for:</p>
+<ul>
+<li>marking important locations</li>
+<li>recording what to do next</li>
+<li>ideas for potential improvements</li>
+<li>explanations of why weird decisions were made</li>
+</ul>
+<p>Serves as a combination of programming comments, map annotations and project management tools.</p>
+<h3 id="overlay"><a class="header" href="#overlay">Overlay</a></h3>
+<p>Overlays are UI elements which allow the player to view additional information about entities or processes.
+They help convey information that is not easily visible by the in-game graphics alone.
+The player can switch between different overlays to access different types of information or disable them entirely.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li>Factorio: &quot;Alt mode&quot;</li>
+<li><a href="https://oxygennotincluded.fandom.com/wiki/Overlays">Oxygen Not Included: Overlays</a></li>
+</ul>
+<h3 id="pipette"><a class="header" href="#pipette">Pipette</a></h3>
+<p>The pipette is a tool to select an entity and/or its configuration directly from the screen.
+It works similarly to copy/paste functionality with the <a href="glossary.html#clipboard">clipboard</a>, but for a singular entity.
+This is usually a UI tool instead of a physical tool to build in the game.</p>
+<h3 id="power"><a class="header" href="#power">Power</a></h3>
+<p>Power is a special type of resource that is required for machines to run.
+Power needs to be produced and then distributed to the machines.
+Often, there are different means of production (e.g. steam power, solar power, nuclear power) with different upfront costs and production rates.
+The distribution of power is usually separated from the distribution of other resources
+(e.g. through an electric network).</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Electric_system">Factorio: Electric system</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Power">Satisfactory: Power</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Category:Power">Dyson Sphere Program: Power</a></li>
+</ul>
+<h3 id="production-statistics"><a class="header" href="#production-statistics">Production statistics</a></h3>
+<p>Records how much of each resource you're producing and consuming.
+Advanced versions have sophisticated filting</p>
+<p>Works well in a dashboard format.</p>
+<h3 id="prioritizer"><a class="header" href="#prioritizer">Prioritizer</a></h3>
+<p>Joins two or more streams of inputs, causing the input or output to take priority:</p>
+<ul>
+<li><strong>input priority:</strong> if output flow is greater than input flow, take from the stream with priority</li>
+<li><strong>output priority:</strong> if input flow is greater than output flow, send goods to the stream with priority</li>
+</ul>
+<p>Commonly combined with <a href="glossary.html#balancer">balancers</a>.</p>
+<h3 id="recipe"><a class="header" href="#recipe">Recipe</a></h3>
+<p>How items can be combined to make new items.
+Contains:</p>
+<ul>
+<li>input(s), including quantities</li>
+<li>output(s), including quantities</li>
+<li>processing time</li>
+<li>what <a href="glossary.html#assemblers">assemblers</a> can be used to make it</li>
+</ul>
+<h3 id="recipe-1"><a class="header" href="#recipe-1">Recipe</a></h3>
+<h3 id="research"><a class="header" href="#research">Research</a></h3>
+<p>Research is the main means of progression.
+Researching new technologies unlocks more machines, enables more advanced processes or improves existing features.
+Research is usually very expensive to pace the game.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Research">Factorio: Research</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Milestones">Satisfactory: Milestones</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Research">Dyson Sphere Program: Research</a></li>
+</ul>
+<h3 id="resource"><a class="header" href="#resource">Resource</a></h3>
+<p>An item that can be processed further to produce different items.</p>
+<p>There are different types of resources:</p>
+<ul>
+<li><strong>Raw resource</strong>: A foundational resource that can be extracted directly from the environment.</li>
+<li><strong>Intermediate resource</strong>: A resource that cannot be extracted nor used directly.
+It's an intermediate set towards the production of end products.</li>
+<li><strong>End product</strong>: A resource that can be used directly for some in-game benefit.</li>
+</ul>
+<h3 id="sandbox"><a class="header" href="#sandbox">Sandbox</a></h3>
+<h3 id="science-pack"><a class="header" href="#science-pack">Science pack</a></h3>
+<p>An intermediate resource that can be used to research technologies in a <a href="glossary.html#lab">lab</a>.
+Often, many science packs are required to unlock one technology.
+Sometimes, science packs are available in different types with different recipes,
+different technologies require different science pack types to be unlocked.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Science_pack">Factorio: Science pack</a></li>
+<li><a href="https://dyson-sphere-program.fandom.com/wiki/Category:Science_Matrices">Dyson Sphere Program: Science matrices</a></li>
+</ul>
+<h3 id="splitter"><a class="header" href="#splitter">Splitter</a></h3>
+<p>Splits streams of goods into two.</p>
+<h3 id="train"><a class="header" href="#train">Train</a></h3>
+<p>An entity to efficiently move big amounts of resources over large distances.
+Usually require a much higher upfront investment than <a href="glossary.html#belt">belts</a>, but are better suited for long distances.
+They are high latency, and move goods in clumped bursts.
+In some games there are also many other entities to guide the behavior of large train networks.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><a href="https://wiki.factorio.com/Railway">Factorio: Railway</a></li>
+<li><a href="https://satisfactory.wiki.gg/wiki/Electric_Locomotive">Satisfactory: Electric Locomotive</a></li>
+</ul>
+<h3 id="undo"><a class="header" href="#undo">Undo</a></h3>
+<p>Reverse previous directions or actions.
+Ideally combined with a <strong>redo</strong> functionality.</p>
+<p>If buildings exist / don't exist when they need to, <strong>marks structures for deletion</strong>, or creates <a href="glossary.html#blueprint">ghosts</a> in their place.</p>
+<h2 id="ecology"><a class="header" href="#ecology">Ecology</a></h2>
+<p>These terms come from the science of ecology and its related fields.</p>
+<h3 id="nutrient-cycle"><a class="header" href="#nutrient-cycle">Nutrient cycle</a></h3>
+<p>The recycling flow of nutrients between organisms, decaying matter and inorganic stores.</p>
+<h3 id="soil"><a class="header" href="#soil">Soil</a></h3>
+<p>Dirt, but viewed scientifically.
+Useful for growing stuff.</p>
+<p>Soil has four main components, which vary in <a href="glossary.html#water-storage-capacity">water storage capacity</a> and <a href="glossary.html#water-drainage">drainage</a>.</p>
+<ol>
+<li>Sand: large particles. Drains well, but water storage capacity suffers.</li>
+<li>Silt: medium particles. Pretty balanced.</li>
+<li>Clay: small particles. Drains terrible, but with great water storage capacity.</li>
+<li>Organic matter: used to be living stuff, carefully prepared and mixed in the soil. Great drainage and water storage, but decomposes.</li>
+</ol>
+<h3 id="water-cycle"><a class="header" href="#water-cycle">Water cycle</a></h3>
+<p>The recycling flow of water: from rain to lakes and rivers and soil to plants and animals to eventual evaporation.</p>
+<h3 id="water-storage-capacity"><a class="header" href="#water-storage-capacity">Water storage capacity</a></h3>
+<p>How much water remains in soil after being flooded and drained.
+Too low and your plants will be susceptible to drought.</p>
+<h3 id="water-drainage"><a class="header" href="#water-drainage">Water drainage</a></h3>
+<p>How quickly water can drain out of soil.
+Too low and your plants will be susceptible to flooding.</p>
+<h2 id="emergence"><a class="header" href="#emergence">Emergence</a></h2>
+<p>These terms are specific to the game design of <em>Emergence</em>.
+Even if they have an external meaning, when used in this book, they will reflect this meaning.</p>
+<h3 id="assimiliation"><a class="header" href="#assimiliation">Assimiliation</a></h3>
+<p>Capturing and domesticating a species, giving you access to it as part of your colony.</p>
+<h3 id="building"><a class="header" href="#building">Building</a></h3>
+<p>An inorganic <a href="glossary.html#structure">structure</a> that is not alive.</p>
+<h3 id="life-cycle"><a class="header" href="#life-cycle"><a href="organisms/life-cycles.html">Life cycle</a></a></h3>
+<p>The collection of <a href="glossary.html#life-stage">life stages</a> of an organism, and the pathways between them.</p>
+<h3 id="life-stage"><a class="header" href="#life-stage"><a href="organisms/life-cycles.html">Life stage</a></a></h3>
+<p>A form in an organism's life cycle.
+This controls its appearance, capacities, needs, and which life cycles it can transition to.</p>
+<p>These are modelled in discrete steps to improve clarity and reduce complexity for players.</p>
+<h3 id="milestone"><a class="header" href="#milestone">Milestone</a></h3>
+<p>Per-playthrough accomplishments.
+Contrast to <a href="glossary.html#achievements">achievements</a>, which are unlocked a single time for each player.</p>
+<h3 id="organism"><a class="header" href="#organism"><a href="organisms/index.html">Organism</a></a></h3>
+<p>A living creature (plant, animal, fungal or otherwise) with <a href="glossary.html#life-cycle">life cycle</a>.
+Organisms can be split into <a href="glossary.html#unit">units</a>, which move, and <a href="glossary.html#sessile-organism">sessile organisms</a> which do not.</p>
+<h3 id="signal"><a class="header" href="#signal"><a href="signals/index.html">Signal</a></a></h3>
+<p>Every physical object in the game emits signals that correspond to their identity.
+These spread over time, and are used for pathfinding and work prioritization.
+There are three flavors of signal:</p>
+<ul>
+<li>presence</li>
+<li>supplying (a <a href="https://en.wikipedia.org/wiki/Kanban#Operation">&quot;push&quot;</a> signal)</li>
+<li>requesting (a <a href="https://en.wikipedia.org/wiki/Kanban#Operation">&quot;pull&quot;</a> signal)</li>
+</ul>
+<p>Depending on their needs and preferences, units will proactively pick up items from buildings that are supplying items,
+and move them to buildings that are requesting items of that type (or simply storing those items).
+Alternatively, units will proactively carry items away from buildings that are supplying them.</p>
+<p>As a result, signals serve as both a pathfinding tool and a <a href="glossary.html#logistic-network">logistic network</a> to transport goods through the factory.</p>
+<h3 id="strain"><a class="header" href="#strain">Strain</a></h3>
+<p>A genetically homogenous subset of a species.
+These have their own upgrades and <a href="glossary.html#signal">signal</a> properties.</p>
+<h3 id="sessile-organism"><a class="header" href="#sessile-organism"><a href="organisms/sessile-organisms.html">Sessile organism</a></a></h3>
+<p>An <a href="glossary.html#organism">organism</a> that cannot move.
+Complement to a <a href="glossary.html#unit">unit</a>, and a subset of a <a href="glossary.html#structure">structure</a>.</p>
+<h3 id="structure"><a class="header" href="#structure">Structure</a></h3>
+<p>Each structure occupies one or more tiles, excluding any other structures from its space.</p>
+<h3 id="unit"><a class="header" href="#unit"><a href="organisms/units.html">Unit</a></a></h3>
+<p>An <a href="glossary.html#organism">organism</a> that can move, plan and act.
+Complement to a <a href="glossary.html#sessile-organism">sessile organism</a>.</p>
+<h3 id="work"><a class="header" href="#work"><a href="organisms/units.html#work">Work</a></a></h3>
+<p>A task that must be completed by a <a href="glossary.html#unit">unit</a>, measured in seconds to complete.
+Tasks can be left partially complete, and can be picked up by other workers later.
+Work always occurs at a fixed location, usually a <a href="glossary.html#structure">structure</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="steam-page.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="risk-assessment.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="steam-page.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="risk-assessment.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

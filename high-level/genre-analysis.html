@@ -1,0 +1,455 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Genre Analysis - Game Design for Emergence</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../steam-page.html"><strong aria-hidden="true">1.</strong> Draft Steam Page</a></li><li class="chapter-item expanded "><a href="../glossary.html"><strong aria-hidden="true">2.</strong> Glossary</a></li><li class="chapter-item expanded "><a href="../risk-assessment.html"><strong aria-hidden="true">3.</strong> Risk Assessment</a></li><li class="chapter-item expanded "><a href="../high-level/index.html"><strong aria-hidden="true">4.</strong> High Level Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../high-level/game-thesis.html"><strong aria-hidden="true">4.1.</strong> Game Thesis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-analysis.html" class="active"><strong aria-hidden="true">4.2.</strong> Genre Analysis</a></li><li class="chapter-item expanded "><a href="../high-level/genre-mechanics.html"><strong aria-hidden="true">4.3.</strong> Genre Mechanics</a></li><li class="chapter-item expanded "><a href="../high-level/mechanical-translation.html"><strong aria-hidden="true">4.4.</strong> Mapping genre mechanics to Emergence</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation.html"><strong aria-hidden="true">4.5.</strong> Creative Automation</a></li><li class="chapter-item expanded "><a href="../high-level/creative-automation-case-studies.html"><strong aria-hidden="true">4.6.</strong> Creative Automation: Case Studies</a></li></ol></li><li class="chapter-item expanded "><a href="../player-actions/index.html"><strong aria-hidden="true">5.</strong> Player Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../player-actions/selection-tools.html"><strong aria-hidden="true">5.1.</strong> Selection Tools</a></li><li class="chapter-item expanded "><a href="../player-actions/zoning.html"><strong aria-hidden="true">5.2.</strong> Zoning</a></li><li class="chapter-item expanded "><a href="../player-actions/terraforming.html"><strong aria-hidden="true">5.3.</strong> Terraforming</a></li><li class="chapter-item expanded "><a href="../player-actions/informational-tools.html"><strong aria-hidden="true">5.4.</strong> Informational Tools</a></li></ol></li><li class="chapter-item expanded "><a href="../research/index.html"><strong aria-hidden="true">6.</strong> Research</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../research/domestication.html"><strong aria-hidden="true">6.1.</strong> Domestication</a></li><li class="chapter-item expanded "><a href="../research/guided-evolution.html"><strong aria-hidden="true">6.2.</strong> Genetics</a></li><li class="chapter-item expanded "><a href="../research/technology.html"><strong aria-hidden="true">6.3.</strong> Technology</a></li></ol></li><li class="chapter-item expanded "><a href="../production-chains/index.html"><strong aria-hidden="true">7.</strong> Production Chains</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../production-chains/recipes.html"><strong aria-hidden="true">7.1.</strong> Recipes</a></li><li class="chapter-item expanded "><a href="../production-chains/raw-resources.html"><strong aria-hidden="true">7.2.</strong> Raw Resources</a></li><li class="chapter-item expanded "><a href="../production-chains/intermediates.html"><strong aria-hidden="true">7.3.</strong> Intermediates</a></li><li class="chapter-item expanded "><a href="../production-chains/end-products.html"><strong aria-hidden="true">7.4.</strong> End Products</a></li><li class="chapter-item expanded "><a href="../production-chains/example-leafcutter.html"><strong aria-hidden="true">7.5.</strong> Example Production Chain: Leafcutter Ant Cultivation</a></li></ol></li><li class="chapter-item expanded "><a href="../organisms/index.html"><strong aria-hidden="true">8.</strong> Organisms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../organisms/life-cycles.html"><strong aria-hidden="true">8.1.</strong> Life Cycles</a></li><li class="chapter-item expanded "><a href="../organisms/sessile-organisms.html"><strong aria-hidden="true">8.2.</strong> Sessile Organisms</a></li><li class="chapter-item expanded "><a href="../organisms/units.html"><strong aria-hidden="true">8.3.</strong> Units</a></li></ol></li><li class="chapter-item expanded "><a href="../water.html"><strong aria-hidden="true">9.</strong> Water</a></li><li class="chapter-item expanded "><a href="../logistics/index.html"><strong aria-hidden="true">10.</strong> Logistics</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/index.html"><strong aria-hidden="true">10.1.</strong> Signals</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../logistics/signals/configuring-properties.html"><strong aria-hidden="true">10.1.1.</strong> Configuring Signal Properties</a></li></ol></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Game Design for Emergence</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="genre-analysis-factory-builders"><a class="header" href="#genre-analysis-factory-builders">Genre Analysis: Factory Builders</a></h1>
+<h2 id="defining-games"><a class="header" href="#defining-games">Defining Games</a></h2>
+<ul>
+<li>Factorio
+<ul>
+<li>colonize an alien planet and launch a rocket</li>
+</ul>
+</li>
+<li>Satisfactory
+<ul>
+<li>open world first person factory building</li>
+</ul>
+</li>
+<li>Shapez.io
+<ul>
+<li>abstract factory puzzles</li>
+</ul>
+</li>
+<li>Dyson Sphere Program
+<ul>
+<li>gather resources from an entire solar system</li>
+</ul>
+</li>
+</ul>
+<h2 id="defining-characteristics"><a class="header" href="#defining-characteristics">Defining characteristics</a></h2>
+<ul>
+<li>automated resource extraction and refinement</li>
+<li>logistical challenges driven by spatial constraints</li>
+<li>optional optimization of existing systems (generally optimizing resource throughput)</li>
+<li>gated technology progression</li>
+<li>problems/puzzles/modules flow into each other (as opposed to puzzle games or zachlikes where they are explicitly independent)</li>
+<li>partially self-directed goals</li>
+<li>challenge can be overcome by spending time waiting</li>
+<li>highly moddable</li>
+<li>procedurally generated world</li>
+</ul>
+<h2 id="why-is-this-genre-fun"><a class="header" href="#why-is-this-genre-fun">Why is this genre fun?</a></h2>
+<ul>
+<li>puzzle like, but complete solutions are easy to achieve</li>
+<li>optional optimizations on top of said solutions</li>
+<li>satisfaction of watching your contraptions run</li>
+<li>satisfaction of taming the wild</li>
+<li>interesting, unexpected failures due to unexpected interactions or subtle bugs in the player's design</li>
+<li>gameplay can be extended, enhanced, or changed through mods or built in options</li>
+<li>hits on &quot;engineering creativity&quot; in a way that other games don't
+<ul>
+<li>engineering creatvitiy is more about coming up with solutions within constraints. It's not a blank canvas. It's based on analytically evaluable metrics</li>
+</ul>
+</li>
+<li>scratches similar itches to programming, but with clearer gradients and fewer frustrations
+<ul>
+<li>great debugging: can see what's working and why with exceptional visualization</li>
+<li>basic solutions are straightforward</li>
+<li>very weak syntax constraints, very intuitive syntax</li>
+<li>solutions generally do not need to be as robust as in the real world</li>
+<li>tech progression doesn't break previous (natural) assumptions</li>
+<li>good quality of life tools and docs</li>
+</ul>
+</li>
+</ul>
+<h2 id="adjacent-genres"><a class="header" href="#adjacent-genres">Adjacent Genres</a></h2>
+<p>This list is roughly ordered by the closeness to the genre.</p>
+<ul>
+<li>Zachlike puzzles (automation heavy puzzle games)
+<ul>
+<li>Opus Magnum, Incredible machine</li>
+<li>Greater focus on additional (secondary) optimization constraints (which are provided by the game)</li>
+<li>Micro-optimization as an entire game</li>
+</ul>
+</li>
+<li>Base and city builders
+<ul>
+<li>Sim City, The Sims, Cities: Skylines, Dragon Quest Builders</li>
+<li>Build out a complex and delightful area, but with no / little automation</li>
+<li>Most of the actual functioning of your constructions is abstracted away</li>
+</ul>
+</li>
+<li>Colony sims
+<ul>
+<li>Rimworld, Dwarf Fortress, Oxygen Not Included</li>
+<li>Balance complex systems, but with a focus on the needs of your workers, not scaling production</li>
+<li>More about the emergent push and pull of life in the colony. Less about steadily pushing towards some goal.</li>
+</ul>
+</li>
+<li>Idle games
+<ul>
+<li>Cookie Clicker, Candy Box</li>
+<li>Automate everything, but without the complex chains</li>
+<li>Additional mechanics and optimization opportunities unfold over time</li>
+</ul>
+</li>
+<li>Train simulators
+<ul>
+<li>Open TTD, Mini Metro</li>
+<li>Focusing almost entirely on logistic networks powered by trains</li>
+</ul>
+</li>
+<li>Real Time Strategy
+<ul>
+<li>Starcraft, Warcraft III, Red Alert</li>
+<li>Command units, build bases, and extract resources</li>
+<li>Very little automation: resource production is almost entirely abstracted</li>
+<li>Much more time pressure!</li>
+</ul>
+</li>
+<li>Level builders
+<ul>
+<li>Y'know, like Mario Maker</li>
+<li>Focused on creating interesting experiences and, in some cases, creating fun and interesting contraptions</li>
+</ul>
+</li>
+<li>Tower defenses
+<ul>
+<li>Dungeon Warfare 2, Bloons TD, Gemcraft</li>
+<li>In high quality games, there are strong optimization and contraption elements</li>
+</ul>
+</li>
+</ul>
+<h2 id="blended-genre-games"><a class="header" href="#blended-genre-games">Blended Genre Games</a></h2>
+<p>These games are all factory builders combined with the genre(s) in brackets.</p>
+<ul>
+<li>Mindustry (tower defense, RTS)</li>
+<li>Hydroneer | Astroneeer | Atrio (exploration)</li>
+<li>Automachef (Zachlike, cooking game)</li>
+<li>Infinifactory (Zachlike)</li>
+<li>Timberborn (city builder)</li>
+<li>Minecraft (survival crafting / creative sandbox)</li>
+</ul>
+<h2 id="progression-loop"><a class="header" href="#progression-loop">Progression Loop</a></h2>
+<ul>
+<li>acquire goal (generally something to produce)</li>
+<li>determine recipe</li>
+<li>(optional) unlock tech prerequisites</li>
+<li>find relevant inputs (raw resources or previously produced items)</li>
+<li>(optional) if necessary, rework existing parts of the factory to produce relevant inputs</li>
+<li>build prototype</li>
+<li>(optional) optimize and scale prototype</li>
+<li>integrate with larger factory</li>
+<li>reap fuits of your labor</li>
+<li>(ad hoc) discover and fix issues with previous designs</li>
+</ul>
+<h2 id="sources-of-challenge"><a class="header" href="#sources-of-challenge">Sources of Challenge</a></h2>
+<ul>
+<li>player-driven optimization</li>
+<li>determining production chains</li>
+<li>physical layout of factory elements (making sure they reach each other and all fit, etc.)</li>
+<li>transport logistics (moving things around the factory)</li>
+<li>refactoring previously constructed parts of the factory as new requirements (or better methods) are discovered</li>
+<li>returning to your factory after a break, and needing to refresh yourself on how it works</li>
+<li>(optional) combat disrupting operations</li>
+<li>(optional) temporal variation disrupting operations, often by creating instability in resource supply or demand</li>
+</ul>
+<h2 id="design-tensions"><a class="header" href="#design-tensions">Design Tensions</a></h2>
+<p>What goals of the genre are in tension with each other?
+Note that many of these design tensions are not unique to factory builders.</p>
+<ul>
+<li>mechanical complexity vs meaningful richness</li>
+<li>helpful innovations vs trivializing the game
+<ul>
+<li>unlocking new tech can sometimes remove interesting challenges instead of creating interesting opportunity for improvement</li>
+<li>(insert roast of Factorio's logistics robots here)</li>
+</ul>
+</li>
+<li>disruption forces interesting changes vs frustration and sadness to see your stuff get wrecked</li>
+<li>long play time vs tedious waiting around</li>
+<li>giant automated bases vs computational limits</li>
+<li>joy of optimizing and creating big factories vs uncomfortable implications of industrialization and colonialism</li>
+<li>accurate simulation of reality vs clear and interesting puzzle situations</li>
+</ul>
+<h2 id="common-problems--room-for-improvement"><a class="header" href="#common-problems--room-for-improvement">Common Problems / Room for Improvement</a></h2>
+<ul>
+<li>mediocre combat
+<ul>
+<li>poorly integrated</li>
+<li>frustrating</li>
+<li>snowbally</li>
+<li>thematically incoherent</li>
+<li>difficult to balance</li>
+<li>limited depth</li>
+</ul>
+</li>
+<li>poorly managed complexity in UX</li>
+<li>poor tutorialization</li>
+<li>bland, unoriginal aesthetics</li>
+<li>unoriginal contraption mechanisms
+<ul>
+<li>everyone uses inserters and belts</li>
+</ul>
+</li>
+<li>boring and low-impact environmental variability</li>
+<li>copy-paste of optimized designs</li>
+<li>treadmill-style tech progression: same mechanics, but with a different coat of paint and &quot;numbers go up&quot;
+<ul>
+<li>driven by lack of end products</li>
+</ul>
+</li>
+<li>terrain modification that makes the world less interesting</li>
+<li>no meaningful penalties for overproduction of resources and mindless expansion</li>
+<li>frustrating control schemes, especially in games with a player avatar
+<ul>
+<li>also results in difficulty seeing the whole factory at once</li>
+</ul>
+</li>
+<li>missing QOL features</li>
+</ul>
+<h2 id="drivers-of-player-churn"><a class="header" href="#drivers-of-player-churn">Drivers of Player Churn</a></h2>
+<ul>
+<li>overwhelming UI and bad control at start of game</li>
+<li>players are intimidated by engineering</li>
+<li>large portion of base is destroyed/disabled</li>
+<li>positive feedback loops on failure</li>
+<li>difficulty recovering from failure states</li>
+<li>no clear goal at any point</li>
+<li>tedious tasks</li>
+<li>poor pacing</li>
+<li>performance issues</li>
+</ul>
+<h2 id="expected-business-model"><a class="header" href="#expected-business-model">Expected Business Model</a></h2>
+<ul>
+<li>early access
+<ul>
+<li>incorporates player feedback</li>
+</ul>
+</li>
+<li>live service development</li>
+<li>(optional) modding</li>
+<li>(optional) small group multiplayer</li>
+<li>(optional) expansions</li>
+<li>NO microtransactions</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../high-level/game-thesis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../high-level/genre-mechanics.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../high-level/game-thesis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../high-level/genre-mechanics.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
